@@ -1,0 +1,7 @@
+bin/
+obj/
+test_output.txt
+test_output.log
+.DS_Store
+*.user
+*.suo

@@ -1,0 +1,54 @@
+using Xunit;
+using RoguelikeToolkit.Planet.Core;
+using System;
+
+namespace RoguelikeToolkit.Planet.Core.Tests;
+
+public class AdjacencyTests
+{
+    private struct DummyData { public int value; }
+
+    [Theory]
+    [InlineData(1)]
+    [InlineData(2)]
+    [InlineData(5)]
+    [InlineData(10)]
+    public void HexSphereStore_CalculatesCorrectTileCount(int size)
+    {
+        int expected = 10 * size * size + 2;
+        Assert.Equal(expected, HexSphereStore<DummyData>.GetTileCount(size));
+    }
+
+    [Fact]
+    public void HexSphereStore_GetAdjacent_ReturnsFiveForPentagon()
+    {
+        using var store = new HexSphereStore<DummyData>(1);
+        Span<int> neighbors = stackalloc int[6];
+        int count = store.GetAdjacent(0, neighbors);
+
+        Assert.Equal(5, count);
+        Assert.Equal(1, neighbors[0]); // Testing dummy adjacency logic
+    }
+
+    [Fact]
+    public void HexSphereStore_GetAdjacent_ReturnsSixForHexagon()
+    {
+        using var store = new HexSphereStore<DummyData>(2); // size 2 -> 42 tiles
+        Span<int> neighbors = stackalloc int[6];
+        int count = store.GetAdjacent(15, neighbors);
+
+        Assert.Equal(6, count);
+        Assert.Equal(16, neighbors[0]); // Testing dummy adjacency logic
+    }
+
+    [Fact]
+    public void HexSphereStore_GetTileIndex_ReturnsValidIndex()
+    {
+        using var store = new HexSphereStore<DummyData>(2);
+        var coord = new GeoCoord(45, 90);
+        int index = store.GetTileIndex(coord);
+
+        Assert.True(index >= 0);
+        Assert.True(index < store.TileCount);
+    }
+}
