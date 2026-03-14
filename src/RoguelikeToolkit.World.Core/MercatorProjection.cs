@@ -1,6 +1,6 @@
 using System;
 
-namespace RoguelikeToolkit.Planet.Core;
+namespace RoguelikeToolkit.World.Core;
 
 public class MercatorProjection : IProjection
 {

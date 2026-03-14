@@ -1,8 +1,0 @@
-<Solution>
-  <Folder Name="/src/">
-    <Project Path="src/RoguelikeToolkit.Planet.Core/RoguelikeToolkit.Planet.Core.csproj" />
-  </Folder>
-  <Folder Name="/tests/">
-    <Project Path="tests/RoguelikeToolkit.Planet.Core.Tests/RoguelikeToolkit.Planet.Core.Tests.csproj" />
-  </Folder>
-</Solution>

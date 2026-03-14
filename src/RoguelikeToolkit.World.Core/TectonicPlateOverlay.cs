@@ -2,7 +2,7 @@ using System;
 using SharpArena.Allocators;
 using SharpArena.Collections;
 
-namespace RoguelikeToolkit.Planet.Core;
+namespace RoguelikeToolkit.World.Core;
 
 public struct TectonicPlate
 {
