@@ -1,7 +1,7 @@
 using System;
 using System.Collections.Generic;
 
-namespace RoguelikeToolkit.Planet.Core;
+namespace RoguelikeToolkit.World.Core;
 
 public interface IMapOverlay<T> where T : unmanaged
 {

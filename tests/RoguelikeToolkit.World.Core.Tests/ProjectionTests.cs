@@ -1,8 +1,8 @@
 using Xunit;
-using RoguelikeToolkit.Planet.Core;
+using RoguelikeToolkit.World.Core;
 using System;
 
-namespace RoguelikeToolkit.Planet.Core.Tests;
+namespace RoguelikeToolkit.World.Core.Tests;
 
 public class ProjectionTests
 {

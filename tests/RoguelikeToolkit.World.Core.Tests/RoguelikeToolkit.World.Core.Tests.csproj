@@ -20,7 +20,7 @@
   </ItemGroup>
 
   <ItemGroup>
-    <ProjectReference Include="..\..\src\RoguelikeToolkit.Planet.Core\RoguelikeToolkit.Planet.Core.csproj" />
+    <ProjectReference Include="..\..\src\RoguelikeToolkit.World.Core\RoguelikeToolkit.World.Core.csproj" />
   </ItemGroup>
 
 </Project>

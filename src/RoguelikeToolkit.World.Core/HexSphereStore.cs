@@ -2,7 +2,7 @@ using System;
 using System.IO;
 using System.IO.MemoryMappedFiles;
 
-namespace RoguelikeToolkit.Planet.Core;
+namespace RoguelikeToolkit.World.Core;
 
 /// <summary>
 /// A zero-heap store for an icosahedral spherical hex grid.
