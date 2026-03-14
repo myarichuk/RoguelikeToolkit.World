@@ -9,8 +9,15 @@
         Background="#1E1E1E">
 
     <Grid>
-        <!-- The OpenGL control for 3D rendering -->
-        <local:GlControl x:Name="GlView" />
+        <!-- Container for hit testing -->
+        <Border Background="Transparent"
+                PointerPressed="GlViewContainer_PointerPressed"
+                PointerReleased="GlViewContainer_PointerReleased"
+                PointerMoved="GlViewContainer_PointerMoved"
+                PointerWheelChanged="GlViewContainer_PointerWheelChanged">
+            <!-- The OpenGL control for 3D rendering -->
+            <local:GlControl x:Name="GlView" />
+        </Border>
 
         <!-- Overlay UI -->
         <Border Padding="20" HorizontalAlignment="Right" VerticalAlignment="Bottom">
@@ -29,7 +36,7 @@
                     <Button x:Name="BtnZoomOut" Content="Zoom Out" Background="#40FFFFFF" Foreground="White" HorizontalAlignment="Stretch" HorizontalContentAlignment="Center"/>
                 </UniformGrid>
 
-                <CheckBox x:Name="ChkTogglePlates" Content="Show Plates" IsChecked="False" Foreground="White" Margin="5"/>
+                <CheckBox x:Name="ChkTogglePlates" Content="Show Plates" IsChecked="True" Foreground="White" Margin="5"/>
 
                 <TextBlock Text="Left-drag: Rotate" Foreground="LightGray" FontSize="12" Margin="5,0,0,0"/>
                 <TextBlock Text="Right-drag: Pan" Foreground="LightGray" FontSize="12" Margin="5,0,0,0"/>

@@ -12,14 +12,11 @@ namespace RoguelikeToolkit.World.App
     {
         public float Yaw { get; set; } = 0f;
         public float Pitch { get; set; } = 0f;
-        public float Distance { get; set; } = 3f;
+        public float Distance { get; set; } = 2.2f;
         public float PanX { get; set; } = 0f;
         public float PanY { get; set; } = 0f;
-        public bool ShowPlates { get; set; } = false;
+        public bool ShowPlates { get; set; } = true;
 
-        private Point _lastMousePosition;
-        private bool _isLeftDown = false;
-        private bool _isRightDown = false;
 
         private int _shaderProgram;
         private int _vao;
@@ -102,7 +99,7 @@ namespace RoguelikeToolkit.World.App
                 vec3 a3 = smoothstep(vec3(0.0), d * 1.5, Barycentric);
                 float edgeFactor = min(min(a3.x, a3.y), a3.z);
 
-                vec3 edgeColor = vec3(0.8, 0.8, 0.8);
+                vec3 edgeColor = vec3(0.6, 0.6, 0.6);
 
                 // Blend edge and base color
                 vec3 finalColor = mix(edgeColor, baseColor, edgeFactor);
@@ -115,65 +112,6 @@ namespace RoguelikeToolkit.World.App
         {
             _plateOverlay = new TectonicPlateOverlay(5, 12);
             _plateOverlay.Generate();
-        }
-
-        protected override void OnPointerPressed(PointerPressedEventArgs e)
-        {
-            base.OnPointerPressed(e);
-            var point = e.GetCurrentPoint(this);
-            _lastMousePosition = point.Position;
-
-            if (point.Properties.IsLeftButtonPressed) _isLeftDown = true;
-            if (point.Properties.IsRightButtonPressed) _isRightDown = true;
-        }
-
-        protected override void OnPointerReleased(PointerReleasedEventArgs e)
-        {
-            base.OnPointerReleased(e);
-            if (e.InitialPressMouseButton == MouseButton.Left) _isLeftDown = false;
-            if (e.InitialPressMouseButton == MouseButton.Right) _isRightDown = false;
-        }
-
-        protected override void OnPointerMoved(PointerEventArgs e)
-        {
-            base.OnPointerMoved(e);
-            var point = e.GetCurrentPoint(this);
-
-            if (_isLeftDown)
-            {
-                var deltaX = (float)(point.Position.X - _lastMousePosition.X);
-                var deltaY = (float)(point.Position.Y - _lastMousePosition.Y);
-                Yaw += deltaX * 0.5f;
-                Pitch += deltaY * 0.5f;
-
-                if (Pitch > 89.0f) Pitch = 89.0f;
-                if (Pitch < -89.0f) Pitch = -89.0f;
-
-                RequestNextFrameRendering();
-            }
-
-            if (_isRightDown)
-            {
-                var deltaX = (float)(point.Position.X - _lastMousePosition.X);
-                var deltaY = (float)(point.Position.Y - _lastMousePosition.Y);
-
-                float panSpeed = 0.005f * Distance;
-                PanX -= deltaX * panSpeed;
-                PanY += deltaY * panSpeed;
-
-                RequestNextFrameRendering();
-            }
-
-            _lastMousePosition = point.Position;
-        }
-
-        protected override void OnPointerWheelChanged(PointerWheelEventArgs e)
-        {
-            base.OnPointerWheelChanged(e);
-            Distance -= (float)e.Delta.Y * 0.5f;
-            if (Distance < 1.1f) Distance = 1.1f;
-            if (Distance > 20.0f) Distance = 20.0f;
-            RequestNextFrameRendering();
         }
 
         public void RenderFrame()
@@ -349,6 +287,9 @@ namespace RoguelikeToolkit.World.App
 
         protected override void OnOpenGlRender(GlInterface gl, int fb)
         {
+            var scale = VisualRoot?.RenderScaling ?? 1.0;
+            gl.Viewport(0, 0, (int)(Bounds.Width * scale), (int)(Bounds.Height * scale));
+
             gl.ClearColor(0.1f, 0.1f, 0.15f, 1.0f);
             gl.Clear(GlConsts.GL_COLOR_BUFFER_BIT | GlConsts.GL_DEPTH_BUFFER_BIT);
             gl.Enable(GlConsts.GL_DEPTH_TEST);
