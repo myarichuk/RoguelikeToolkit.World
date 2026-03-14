@@ -39,6 +39,65 @@ namespace RoguelikeToolkit.World.App
             this.KeyDown += MainWindow_KeyDown;
         }
 
+        private Avalonia.Point _lastMousePosition;
+        private bool _isLeftDown;
+        private bool _isRightDown;
+
+        private void GlViewContainer_PointerPressed(object sender, PointerPressedEventArgs e)
+        {
+            var point = e.GetCurrentPoint(this);
+            _lastMousePosition = point.Position;
+
+            if (point.Properties.IsLeftButtonPressed) _isLeftDown = true;
+            if (point.Properties.IsRightButtonPressed) _isRightDown = true;
+        }
+
+        private void GlViewContainer_PointerReleased(object sender, PointerReleasedEventArgs e)
+        {
+            if (e.InitialPressMouseButton == MouseButton.Left) _isLeftDown = false;
+            if (e.InitialPressMouseButton == MouseButton.Right) _isRightDown = false;
+        }
+
+        private void GlViewContainer_PointerMoved(object sender, PointerEventArgs e)
+        {
+            var point = e.GetCurrentPoint(this);
+
+            if (_isLeftDown)
+            {
+                var deltaX = (float)(point.Position.X - _lastMousePosition.X);
+                var deltaY = (float)(point.Position.Y - _lastMousePosition.Y);
+                GlView.Yaw += deltaX * 0.5f;
+                GlView.Pitch += deltaY * 0.5f;
+
+                if (GlView.Pitch > 89.0f) GlView.Pitch = 89.0f;
+                if (GlView.Pitch < -89.0f) GlView.Pitch = -89.0f;
+
+                GlView.RenderFrame();
+            }
+
+            if (_isRightDown)
+            {
+                var deltaX = (float)(point.Position.X - _lastMousePosition.X);
+                var deltaY = (float)(point.Position.Y - _lastMousePosition.Y);
+
+                float panSpeed = 0.005f * GlView.Distance;
+                GlView.PanX -= deltaX * panSpeed;
+                GlView.PanY += deltaY * panSpeed;
+
+                GlView.RenderFrame();
+            }
+
+            _lastMousePosition = point.Position;
+        }
+
+        private void GlViewContainer_PointerWheelChanged(object sender, PointerWheelEventArgs e)
+        {
+            GlView.Distance -= (float)e.Delta.Y * 0.5f;
+            if (GlView.Distance < 1.1f) GlView.Distance = 1.1f;
+            if (GlView.Distance > 20.0f) GlView.Distance = 20.0f;
+            GlView.RenderFrame();
+        }
+
         private void MainWindow_KeyDown(object? sender, KeyEventArgs e)
         {
             switch (e.Key)
