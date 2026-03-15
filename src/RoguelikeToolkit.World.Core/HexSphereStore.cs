@@ -90,11 +90,39 @@ public unsafe class HexSphereStore<T> : IDisposable where T : unmanaged
         int ringIndex = (int)(normalizedLat * rings);
 
         int tilesInRing = _tileCount / rings;
+        if (tilesInRing == 0) tilesInRing = 1;
         int tileInRing = (int)(normalizedLon * tilesInRing);
 
         int index = ringIndex * tilesInRing + tileInRing;
         if (index >= _tileCount) index = _tileCount - 1;
         return index;
+    }
+
+    /// <summary>
+    /// Converts a tile index back to an approximate geo coordinate.
+    /// Reverses the logic in GetTileIndex.
+    /// </summary>
+    public GeoCoord GetGeoCoord(int index)
+    {
+        if (index < 0) index = 0;
+        if (index >= _tileCount) index = _tileCount - 1;
+
+        int rings = _size * 3;
+        if (rings == 0) rings = 1;
+        int tilesInRing = _tileCount / rings;
+        if (tilesInRing == 0) tilesInRing = 1;
+
+        int ringIndex = index / tilesInRing;
+        int tileInRing = index % tilesInRing;
+
+        // Add 0.5 to get the center of the tile
+        double normalizedLat = (ringIndex + 0.5) / rings;
+        double normalizedLon = (tileInRing + 0.5) / tilesInRing;
+
+        double lat = normalizedLat * 180.0 - 90.0;
+        double lon = normalizedLon * 360.0 - 180.0;
+
+        return new GeoCoord(lat, lon);
     }
 
     /// <summary>

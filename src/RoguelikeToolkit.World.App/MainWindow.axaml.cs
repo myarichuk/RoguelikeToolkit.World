@@ -19,6 +19,7 @@ namespace RoguelikeToolkit.World.App
             var btnZoomOut = this.FindControl<Button>("BtnZoomOut");
             var chkTogglePlates = this.FindControl<CheckBox>("ChkTogglePlates");
             var chkToggleHexes = this.FindControl<CheckBox>("ChkToggleHexes");
+            var sldSeedCount = this.FindControl<Slider>("SldSeedCount");
 
             if (btnRotLeft != null) btnRotLeft.Click += (s, e) => { GlView.Yaw -= 10f; GlView.RenderFrame(); };
             if (btnRotRight != null) btnRotRight.Click += (s, e) => { GlView.Yaw += 10f; GlView.RenderFrame(); };
@@ -26,6 +27,14 @@ namespace RoguelikeToolkit.World.App
             if (btnRotDown != null) btnRotDown.Click += (s, e) => { GlView.Pitch += 10f; GlView.RenderFrame(); };
             if (btnZoomIn != null) btnZoomIn.Click += (s, e) => { GlView.Distance -= 1f; GlView.RenderFrame(); };
             if (btnZoomOut != null) btnZoomOut.Click += (s, e) => { GlView.Distance += 1f; GlView.RenderFrame(); };
+
+            if (sldSeedCount != null)
+            {
+                sldSeedCount.ValueChanged += (s, e) =>
+                {
+                    GlView.SetPlateCount((int)e.NewValue);
+                };
+            }
 
             if (chkTogglePlates != null)
             {
@@ -67,20 +76,36 @@ namespace RoguelikeToolkit.World.App
                 var txtLat = this.FindControl<TextBlock>("TxtHexLat");
                 var txtLon = this.FindControl<TextBlock>("TxtHexLon");
                 var txtIndex = this.FindControl<TextBlock>("TxtHexIndex");
+                var txtPlate = this.FindControl<TextBlock>("TxtHexPlate");
 
                 if (txtLat != null) txtLat.Text = $"Lat: {lat:F2}";
                 if (txtLon != null) txtLon.Text = $"Lon: {lon:F2}";
                 if (txtIndex != null) txtIndex.Text = $"Index: {tileIndex}";
+
+                if (txtPlate != null && tileIndex >= 0)
+                {
+                    var plate = GlView.PlateLayer?.Store[tileIndex];
+                    if (plate.HasValue)
+                    {
+                        txtPlate.Text = $"Plate ID: {plate.Value.Id}";
+                    }
+                    else
+                    {
+                        txtPlate.Text = $"Plate ID: --";
+                    }
+                }
             }
             else
             {
                 var txtLat = this.FindControl<TextBlock>("TxtHexLat");
                 var txtLon = this.FindControl<TextBlock>("TxtHexLon");
                 var txtIndex = this.FindControl<TextBlock>("TxtHexIndex");
+                var txtPlate = this.FindControl<TextBlock>("TxtHexPlate");
 
                 if (txtLat != null) txtLat.Text = "Lat: --";
                 if (txtLon != null) txtLon.Text = "Lon: --";
                 if (txtIndex != null) txtIndex.Text = "Index: --";
+                if (txtPlate != null) txtPlate.Text = "Plate ID: --";
             }
         }
 

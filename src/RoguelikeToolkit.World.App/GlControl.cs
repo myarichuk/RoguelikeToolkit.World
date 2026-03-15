@@ -16,9 +16,11 @@ namespace RoguelikeToolkit.World.App
         public float PanX { get; set; } = 0f;
         public float PanY { get; set; } = 0f;
         public bool ShowPlates { get; set; } = true;
-        public bool ShowHexes { get; set; } = false;
+        public bool ShowHexes { get; set; } = true;
         public RoguelikeToolkit.World.App.Vector3 SelectedHexCenter { get; set; } = new RoguelikeToolkit.World.App.Vector3(0, 0, 0);
 
+        public WorldMap Map => _map;
+        public TectonicPlateLayer PlateLayer => _plateLayer;
 
         private int _shaderProgram;
         private int _vao;
@@ -39,7 +41,8 @@ namespace RoguelikeToolkit.World.App
         private float[] _barycentric = Array.Empty<float>();
         private float[] _colors = Array.Empty<float>();
 
-        private TectonicPlateOverlay _plateOverlay;
+        private WorldMap _map;
+        private TectonicPlateLayer _plateLayer;
 
         private const string VertexShaderSource = @"
             #version 330 core
@@ -168,9 +171,53 @@ namespace RoguelikeToolkit.World.App
 
         public GlControl()
         {
-            _plateOverlay = new TectonicPlateOverlay(5, 12);
-            _plateOverlay.Generate();
+            _map = new WorldMap(5);
+            _plateLayer = new TectonicPlateLayer(5, 12);
+            _map.RegisterLayer(_plateLayer);
+            _plateLayer.Generate();
         }
+
+        public void SetPlateCount(int count)
+        {
+            if (_plateLayer == null || count == _plateLayer.SeedCount) return;
+
+            _plateLayer.SeedCount = count;
+            _plateLayer.Generate();
+
+            Random rnd = new Random(42);
+            var plateColors = new System.Collections.Generic.Dictionary<int, RoguelikeToolkit.World.App.Vector3>();
+
+            for (int i = 0; i < _vertexCount; i++)
+            {
+                double lat = Math.Asin(_positions[i * 3 + 2]) * 180.0 / Math.PI;
+                double lon = Math.Atan2(_positions[i * 3 + 1], _positions[i * 3]) * 180.0 / Math.PI;
+
+                var coord = new GeoCoord(lat, lon);
+                var plate = _plateLayer.GetValue(coord);
+
+                if (!plateColors.TryGetValue(plate.Id, out var color))
+                {
+                    color = new RoguelikeToolkit.World.App.Vector3(
+                        (float)rnd.NextDouble(),
+                        (float)rnd.NextDouble(),
+                        (float)rnd.NextDouble());
+                    plateColors[plate.Id] = color;
+                }
+
+                _colors[i * 3] = color.X;
+                _colors[i * 3 + 1] = color.Y;
+                _colors[i * 3 + 2] = color.Z;
+            }
+
+            // Must run on UI/OpenGL thread. This will just queue a render which will pick up the new buffer
+            // Since SetPlateCount is called from the UI thread, we can update the VBO directly if we have a GL context,
+            // but in Avalonia we typically do this during OnOpenGlRender.
+            // For now, we set a flag to update the buffer next frame.
+            _needsColorBufferUpdate = true;
+            RenderFrame();
+        }
+
+        private bool _needsColorBufferUpdate = false;
 
         public void RenderFrame()
         {
@@ -271,7 +318,7 @@ namespace RoguelikeToolkit.World.App
                 double lon = Math.Atan2(vPos[i].Y, vPos[i].X) * 180.0 / Math.PI;
 
                 var coord = new GeoCoord(lat, lon);
-                var plate = _plateOverlay.GetValue(coord);
+                var plate = _plateLayer.GetValue(coord);
 
                 if (!plateColors.TryGetValue(plate.Id, out var color))
                 {
@@ -348,6 +395,18 @@ namespace RoguelikeToolkit.World.App
 
         protected override void OnOpenGlRender(GlInterface gl, int fb)
         {
+            if (_needsColorBufferUpdate && _vboColor != 0)
+            {
+                gl.BindBuffer(GlConsts.GL_ARRAY_BUFFER, _vboColor);
+                fixed (float* p = _colors)
+                {
+                    int GL_DYNAMIC_DRAW = 0x88E8;
+                    gl.BufferData(GlConsts.GL_ARRAY_BUFFER, (IntPtr)(_colors.Length * sizeof(float)), (IntPtr)p, GL_DYNAMIC_DRAW);
+                }
+                gl.BindBuffer(GlConsts.GL_ARRAY_BUFFER, 0);
+                _needsColorBufferUpdate = false;
+            }
+
             var scale = VisualRoot?.RenderScaling ?? 1.0;
             gl.Viewport(0, 0, (int)(Bounds.Width * scale), (int)(Bounds.Height * scale));
 
