@@ -51,4 +51,16 @@ public class AdjacencyTests
         Assert.True(index >= 0);
         Assert.True(index < store.TileCount);
     }
+
+    [Fact]
+    public void HexSphereStore_Indexer_ThrowsIndexOutOfRangeException_WhenIndexIsOutOfBounds()
+    {
+        using var store = new HexSphereStore<DummyData>(1);
+
+        // Accessing at TileCount should throw since valid indices are 0 to TileCount - 1
+        Assert.Throws<IndexOutOfRangeException>(() => store[store.TileCount]);
+
+        // Accessing negative index should also throw
+        Assert.Throws<IndexOutOfRangeException>(() => store[-1]);
+    }
 }
