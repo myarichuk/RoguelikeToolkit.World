@@ -199,62 +199,7 @@ public unsafe class WorldDataStore : IDisposable
         for (int i = 0; i < tileCount; i++)
             targets[i] = i < 12 ? 5 : 6;
 
-        var adjacency = new HashSet<int>[tileCount];
-        for (int i = 0; i < tileCount; i++)
-            adjacency[i] = new HashSet<int>();
-
-        for (int i = 0; i < tileCount; i++)
-        {
-            var distances = new List<(double dist, int index)>(tileCount - 1);
-            var source = Vector3D.FromGeoCoord(centers[i]);
-            for (int j = 0; j < tileCount; j++)
-            {
-                if (i == j) continue;
-                var target = Vector3D.FromGeoCoord(centers[j]);
-                var delta = source - target;
-                distances.Add((Vector3D.Dot(delta, delta), j));
-            }
-
-            foreach (var (_, candidate) in distances.OrderBy(x => x.dist))
-            {
-                if (adjacency[i].Count >= targets[i]) break;
-                if (adjacency[candidate].Count >= targets[candidate]) continue;
-                adjacency[i].Add(candidate);
-                adjacency[candidate].Add(i);
-            }
-        }
-
-        for (int i = 0; i < tileCount; i++)
-        {
-            while (adjacency[i].Count < targets[i])
-            {
-                int bestCandidate = -1;
-                double bestDistance = double.MaxValue;
-                var source = Vector3D.FromGeoCoord(centers[i]);
-
-                for (int candidate = 0; candidate < tileCount; candidate++)
-                {
-                    if (candidate == i) continue;
-                    if (adjacency[i].Contains(candidate)) continue;
-                    if (adjacency[candidate].Count >= targets[candidate]) continue;
-
-                    var target = Vector3D.FromGeoCoord(centers[candidate]);
-                    var delta = source - target;
-                    var dist = Vector3D.Dot(delta, delta);
-                    if (dist < bestDistance)
-                    {
-                        bestDistance = dist;
-                        bestCandidate = candidate;
-                    }
-                }
-
-                if (bestCandidate == -1)
-                    throw new InvalidOperationException($"Failed to build world topology for size {size}.");
-
-                adjacency[i].Add(bestCandidate);
-                adjacency[bestCandidate].Add(i);
-            }
-        }
+        var adjacency = BuildAdjacencyFromDegreeSequence(size, targets);
 
         var offsets = new int[tileCount + 1];
         int totalNeighbors = 0;
@@ -279,6 +224,73 @@ public unsafe class WorldDataStore : IDisposable
             NeighborOffsets = offsets,
             Neighbors = neighbors
         };
+    }
+
+    private static HashSet<int>[] BuildAdjacencyFromDegreeSequence(int size, int[] degrees)
+    {
+        var adjacency = new HashSet<int>[degrees.Length];
+        var remaining = new int[degrees.Length];
+
+        for (int i = 0; i < degrees.Length; i++)
+        {
+            adjacency[i] = new HashSet<int>();
+            remaining[i] = degrees[i];
+        }
+
+        while (true)
+        {
+            int node = -1;
+            int maxDegree = 0;
+            for (int i = 0; i < remaining.Length; i++)
+            {
+                if (remaining[i] > maxDegree)
+                {
+                    maxDegree = remaining[i];
+                    node = i;
+                }
+            }
+
+            if (node == -1)
+                break;
+
+            var candidates = new List<int>(remaining.Length - 1);
+            for (int i = 0; i < remaining.Length; i++)
+            {
+                if (i == node || remaining[i] <= 0 || adjacency[node].Contains(i))
+                    continue;
+
+                candidates.Add(i);
+            }
+
+            candidates.Sort((a, b) =>
+            {
+                int byDegree = remaining[b].CompareTo(remaining[a]);
+                return byDegree != 0 ? byDegree : a.CompareTo(b);
+            });
+
+            if (candidates.Count < maxDegree)
+            {
+                throw new InvalidOperationException(
+                    $"Failed to build world topology for size {size}: invalid degree sequence.");
+            }
+
+            for (int i = 0; i < maxDegree; i++)
+            {
+                int candidate = candidates[i];
+                adjacency[node].Add(candidate);
+                adjacency[candidate].Add(node);
+                remaining[candidate]--;
+                if (remaining[candidate] < 0)
+                {
+                    throw new InvalidOperationException(
+                        $"Failed to build world topology for size {size}: invalid degree sequence.");
+                }
+            }
+
+            remaining[node] = 0;
+        }
+
+        return adjacency;
     }
 
     private static GeoCoord[] BuildCenters(int tileCount)

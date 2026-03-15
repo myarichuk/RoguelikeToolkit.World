@@ -76,6 +76,18 @@ public class AdjacencyTests
         }
     }
 
+
+    [Fact]
+    public void WorldDataStore_TopologyBuildsForLargerSize()
+    {
+        using var store = new WorldDataStore(5);
+
+        Span<int> neighbors = stackalloc int[6];
+        int count = store.GetAdjacent(store.TileCount - 1, neighbors);
+
+        Assert.Equal(6, count);
+    }
+
     [Fact]
     public void WorldDataStore_GetTileIndex_MapsCenterBackToSameTile()
     {
