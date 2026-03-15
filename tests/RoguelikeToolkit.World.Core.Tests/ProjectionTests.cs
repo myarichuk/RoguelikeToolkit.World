@@ -55,4 +55,28 @@ public class ProjectionTests
         Assert.Equal(original.Latitude, inverted.Latitude, 5);
         Assert.Equal(original.Longitude, inverted.Longitude, 5);
     }
+
+    [Theory]
+    [InlineData(0, 180)]
+    [InlineData(90, 180)]
+    [InlineData(-90, 180)]
+    [InlineData(0, -180)]
+    [InlineData(0, 100)] // Center is (0,0), so dLon > 90deg cos(dLon) < 0, cosC < 0
+    [InlineData(0, -100)]
+    // Math.Cos(90) in radians evaluates to a very small positive number (e.g. 6.12e-17)
+    // rather than exactly 0, so we use points definitely on the back half of the sphere.
+    [InlineData(0, 179)]
+    [InlineData(0, -179)]
+    [InlineData(45, 180)]
+    [InlineData(-45, 180)]
+    public void Gnomonic_Project_BackHalfOfSphere_ShouldReturnNaN(double lat, double lon)
+    {
+        var projection = new GnomonicProjection(1.0, new GeoCoord(0, 0));
+        var original = new GeoCoord(lat, lon);
+
+        var projected = projection.Project(original);
+
+        Assert.True(double.IsNaN(projected.X));
+        Assert.True(double.IsNaN(projected.Y));
+    }
 }
