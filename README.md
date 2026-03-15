@@ -11,6 +11,7 @@ The hex sphere data structure is backed by a single memory mapped file, represen
 - All layer data (such as `TectonicPlate` and `LocalMapInfo`) are unmanaged blittable structs.
 - Layers are registered with the `WorldDataStore` prior to allocation (`DataStore.RegisterLayer<T>()`). The store dynamically calculates byte offsets for all registered layers to store them contiguously.
 - When `Allocate()` is called, a single `MemoryMappedFile` is initialized, guaranteeing zero-allocation, cache-friendly lookups thereafter.
+- Tile topology (tile center coordinates + adjacency) is now precomputed once per world size and stored in contiguous arrays indexed by tile id. `GetTileIndex`, `GetGeoCoord`, and `GetAdjacent` all read from this canonical topology table.
 
 ### 2. Pluggable Generation Pipeline: `WorldGenerationPipeline`
 World generation logic is abstracted into discrete, pluggable pipeline stages (`IWorldGeneratorStage`). The visualizer (or any consuming application) simply sets up the pipeline, discovers the stages, and executes them over the `WorldMap`.
