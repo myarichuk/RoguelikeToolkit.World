@@ -2,8 +2,10 @@
   <Folder Name="/src/">
     <Project Path="src/RoguelikeToolkit.World.Core/RoguelikeToolkit.World.Core.csproj" />
     <Project Path="src/RoguelikeToolkit.World.App/RoguelikeToolkit.World.App.csproj" />
+    <Project Path="src/RoguelikeToolkit.World.Presentation/RoguelikeToolkit.World.Presentation.csproj" />
   </Folder>
   <Folder Name="/tests/">
     <Project Path="tests/RoguelikeToolkit.World.Core.Tests/RoguelikeToolkit.World.Core.Tests.csproj" />
+    <Project Path="tests/RoguelikeToolkit.World.Presentation.Tests/RoguelikeToolkit.World.Presentation.Tests.csproj" />
   </Folder>
 </Solution>

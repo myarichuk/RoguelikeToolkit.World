@@ -58,8 +58,3 @@ public readonly record struct Vector3D(double X, double Y, double Z)
     }
 }
 
-public interface IProjection
-{
-    Vector2D Project(GeoCoord coord);
-    GeoCoord Inverse(Vector2D point);
-}

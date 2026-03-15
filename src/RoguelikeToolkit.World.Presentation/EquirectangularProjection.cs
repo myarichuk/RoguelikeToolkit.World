@@ -1,6 +1,7 @@
 using System;
 
-namespace RoguelikeToolkit.World.Core;
+using RoguelikeToolkit.World.Core;
+namespace RoguelikeToolkit.World.Presentation;
 
 public class EquirectangularProjection : IProjection
 {

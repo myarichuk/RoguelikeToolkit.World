@@ -1,11 +1,13 @@
 using System;
 using System.Linq;
 using System.Runtime.InteropServices;
+using System.Numerics;
 using Avalonia;
 using Avalonia.Input;
 using Avalonia.OpenGL;
 using Avalonia.OpenGL.Controls;
 using RoguelikeToolkit.World.Core;
+using RoguelikeToolkit.World.Presentation;
 
 namespace RoguelikeToolkit.World.App
 {
@@ -18,7 +20,7 @@ namespace RoguelikeToolkit.World.App
         public float PanY { get; set; } = 0f;
         public bool ShowPlates { get; set; } = true;
         public bool ShowHexes { get; set; } = true;
-        public RoguelikeToolkit.World.App.Vector3 SelectedHexCenter { get; set; } = new RoguelikeToolkit.World.App.Vector3(0, 0, 0);
+        public System.Numerics.Vector3 SelectedHexCenter { get; set; } = new System.Numerics.Vector3(0, 0, 0);
         public int RecursionLevel { get; set; } = 4;
 
         public WorldMap Map => _map;
@@ -219,7 +221,7 @@ namespace RoguelikeToolkit.World.App
             _pipeline.Execute(_map);
 
             Random rnd = new Random(42);
-            var plateColors = new System.Collections.Generic.Dictionary<int, RoguelikeToolkit.World.App.Vector3>();
+            var plateColors = new System.Collections.Generic.Dictionary<int, System.Numerics.Vector3>();
 
             for (int i = 0; i < _vertexCount; i++)
             {
@@ -231,7 +233,7 @@ namespace RoguelikeToolkit.World.App
 
                 if (!plateColors.TryGetValue(plate.Id, out var color))
                 {
-                    color = new RoguelikeToolkit.World.App.Vector3(
+                    color = new System.Numerics.Vector3(
                         (float)rnd.NextDouble(),
                         (float)rnd.NextDouble(),
                         (float)rnd.NextDouble());
@@ -313,9 +315,9 @@ namespace RoguelikeToolkit.World.App
 
         private void SetupMesh(GlInterface gl)
         {
-            RoguelikeToolkit.World.App.Vector3[] vPos;
-            RoguelikeToolkit.World.App.Vector3[] vNorm;
-            RoguelikeToolkit.World.App.Vector3[] vBary;
+            System.Numerics.Vector3[] vPos;
+            System.Numerics.Vector3[] vNorm;
+            System.Numerics.Vector3[] vBary;
 
             IcosphereGenerator.GenerateFlat(RecursionLevel, out vPos, out vNorm, out vBary);
 
@@ -327,7 +329,7 @@ namespace RoguelikeToolkit.World.App
             _colors = new float[_vertexCount * 3];
 
             Random rnd = new Random(42);
-            var plateColors = new System.Collections.Generic.Dictionary<int, RoguelikeToolkit.World.App.Vector3>();
+            var plateColors = new System.Collections.Generic.Dictionary<int, System.Numerics.Vector3>();
 
             for (int i = 0; i < _vertexCount; i++)
             {
@@ -351,7 +353,7 @@ namespace RoguelikeToolkit.World.App
 
                 if (!plateColors.TryGetValue(plate.Id, out var color))
                 {
-                    color = new RoguelikeToolkit.World.App.Vector3(
+                    color = new System.Numerics.Vector3(
                         (float)rnd.NextDouble(),
                         (float)rnd.NextDouble(),
                         (float)rnd.NextDouble());
@@ -458,29 +460,35 @@ namespace RoguelikeToolkit.World.App
 
             float aspect = (float)(Bounds.Width / Bounds.Height);
 
-            float* projection = stackalloc float[16];
-            CreatePerspective(45.0f, aspect, 0.1f, 100.0f, projection);
+            var projection = Matrix4x4.CreatePerspectiveFieldOfView(45.0f * (float)Math.PI / 180.0f, aspect, 0.1f, 100.0f);
+            var view = Matrix4x4.CreateTranslation(-PanX, -PanY, -Distance);
+            var modelX = Matrix4x4.CreateRotationX(Pitch * (float)Math.PI / 180.0f);
+            var modelY = Matrix4x4.CreateRotationY(Yaw * (float)Math.PI / 180.0f);
 
-            float* view = stackalloc float[16];
-            CreateTranslation(-PanX, -PanY, -Distance, view);
+            var model = modelX * modelY;
+            var viewProj = view * projection; // Note: System.Numerics.Matrix4x4 multiplication is row-major order (A * B means apply A then B)
+            // OpenGL uses column-major arrays, but the uniform functions read them correctly if we pass the row-major memory straight?
+            // Wait, System.Numerics.Matrix4x4 memory layout is row-major. OpenGL uniform takes column-major if transpose=false.
+            // If we have row-major Matrix4x4 in memory and pass transpose=false, it might read transposed.
+            // But let's check standard practice. Actually A * B in Math is different.
+            // In OpenTK / default GL, usually model * view * projection.
+            // System.Numerics uses row-vector math. v * M.
+            // Let's explicitly transpose to column-major array or just use Matrix4x4 as is if previous custom math worked identically.
+            // The original math: MultiplyMatrix(A, B) -> A[r]*B[c*4...]  (A column major * B column major)
+            var mvp = model * viewProj;
 
-            float* modelX = stackalloc float[16];
-            CreateRotationX(Pitch, modelX);
+            float* modelPtr = stackalloc float[16];
+            float* mvpPtr = stackalloc float[16];
 
-            float* modelY = stackalloc float[16];
-            CreateRotationY(Yaw, modelY);
+            // Copy System.Numerics.Matrix4x4 to float array (transpose because System.Numerics is row-major and GL needs column-major)
+            Matrix4x4 modelTransposed = Matrix4x4.Transpose(model);
+            Matrix4x4 mvpTransposed = Matrix4x4.Transpose(mvp);
 
-            float* model = stackalloc float[16];
-            MultiplyMatrix(modelX, modelY, model);
+            System.Runtime.CompilerServices.Unsafe.Write(modelPtr, modelTransposed);
+            System.Runtime.CompilerServices.Unsafe.Write(mvpPtr, mvpTransposed);
 
-            float* viewProj = stackalloc float[16];
-            MultiplyMatrix(projection, view, viewProj);
-
-            float* mvp = stackalloc float[16];
-            MultiplyMatrix(viewProj, model, mvp);
-
-            gl.UniformMatrix4fv(_uMvpMatrix, 1, false, mvp);
-            gl.UniformMatrix4fv(_uModelMatrix, 1, false, model);
+            gl.UniformMatrix4fv(_uMvpMatrix, 1, false, mvpPtr);
+            gl.UniformMatrix4fv(_uModelMatrix, 1, false, modelPtr);
 
             var glUniform1i = Marshal.GetDelegateForFunctionPointer<glUniform1i_t>(gl.GetProcAddress("glUniform1i"));
             var glUniform3f = Marshal.GetDelegateForFunctionPointer<glUniform3f_t>(gl.GetProcAddress("glUniform3f"));
@@ -497,103 +505,12 @@ namespace RoguelikeToolkit.World.App
             gl.BindVertexArray(0);
         }
 
-        private void CreatePerspective(float fov, float aspect, float zNear, float zFar, float* result)
-        {
-            float tanHalfFovy = (float)Math.Tan(fov / 2.0f * Math.PI / 180.0f);
 
-            for (int i = 0; i < 16; i++) result[i] = 0;
 
-            result[0] = 1.0f / (aspect * tanHalfFovy);
-            result[5] = 1.0f / (tanHalfFovy);
-            result[10] = -(zFar + zNear) / (zFar - zNear);
-            result[11] = -1.0f;
-            result[14] = -(2.0f * zFar * zNear) / (zFar - zNear);
-        }
 
-        private void CreateTranslation(float x, float y, float z, float* result)
-        {
-            result[0] = 1; result[1] = 0; result[2] = 0; result[3] = 0;
-            result[4] = 0; result[5] = 1; result[6] = 0; result[7] = 0;
-            result[8] = 0; result[9] = 0; result[10] = 1; result[11] = 0;
-            result[12] = x; result[13] = y; result[14] = z; result[15] = 1;
-        }
 
-        private void CreateRotationX(float angleDegrees, float* result)
-        {
-            float angle = angleDegrees * (float)Math.PI / 180.0f;
-            float c = (float)Math.Cos(angle);
-            float s = (float)Math.Sin(angle);
 
-            result[0] = 1; result[1] = 0; result[2] = 0; result[3] = 0;
-            result[4] = 0; result[5] = c; result[6] = s; result[7] = 0;
-            result[8] = 0; result[9] = -s; result[10] = c; result[11] = 0;
-            result[12] = 0; result[13] = 0; result[14] = 0; result[15] = 1;
-        }
 
-        private void CreateRotationY(float angleDegrees, float* result)
-        {
-            float angle = angleDegrees * (float)Math.PI / 180.0f;
-            float c = (float)Math.Cos(angle);
-            float s = (float)Math.Sin(angle);
-
-            result[0] = c; result[1] = 0; result[2] = -s; result[3] = 0;
-            result[4] = 0; result[5] = 1; result[6] = 0; result[7] = 0;
-            result[8] = s; result[9] = 0; result[10] = c; result[11] = 0;
-            result[12] = 0; result[13] = 0; result[14] = 0; result[15] = 1;
-        }
-
-        private void MultiplyMatrix(float* a, float* b, float* result)
-        {
-            for (int c = 0; c < 4; c++)
-            {
-                for (int r = 0; r < 4; r++)
-                {
-                    result[c * 4 + r] =
-                        a[r] * b[c * 4] +
-                        a[r + 4] * b[c * 4 + 1] +
-                        a[r + 8] * b[c * 4 + 2] +
-                        a[r + 12] * b[c * 4 + 3];
-                }
-            }
-        }
-
-        private void InvertMatrix(float* m, float* inv)
-        {
-            inv[0] = m[5] * m[10] * m[15] - m[5] * m[11] * m[14] - m[9] * m[6] * m[15] + m[9] * m[7] * m[14] + m[13] * m[6] * m[11] - m[13] * m[7] * m[10];
-            inv[4] = -m[4] * m[10] * m[15] + m[4] * m[11] * m[14] + m[8] * m[6] * m[15] - m[8] * m[7] * m[14] - m[12] * m[6] * m[11] + m[12] * m[7] * m[10];
-            inv[8] = m[4] * m[9] * m[15] - m[4] * m[11] * m[13] - m[8] * m[5] * m[15] + m[8] * m[7] * m[13] + m[12] * m[5] * m[11] - m[12] * m[7] * m[9];
-            inv[12] = -m[4] * m[9] * m[14] + m[4] * m[10] * m[13] + m[8] * m[5] * m[14] - m[8] * m[6] * m[13] - m[12] * m[5] * m[10] + m[12] * m[6] * m[9];
-            inv[1] = -m[1] * m[10] * m[15] + m[1] * m[11] * m[14] + m[9] * m[2] * m[15] - m[9] * m[3] * m[14] - m[13] * m[2] * m[11] + m[13] * m[3] * m[10];
-            inv[5] = m[0] * m[10] * m[15] - m[0] * m[11] * m[14] - m[8] * m[2] * m[15] + m[8] * m[3] * m[14] + m[12] * m[2] * m[11] - m[12] * m[3] * m[10];
-            inv[9] = -m[0] * m[9] * m[15] + m[0] * m[11] * m[13] + m[8] * m[1] * m[15] - m[8] * m[3] * m[13] - m[12] * m[1] * m[11] + m[12] * m[3] * m[9];
-            inv[13] = m[0] * m[9] * m[14] - m[0] * m[10] * m[13] - m[8] * m[1] * m[14] + m[8] * m[2] * m[13] + m[12] * m[1] * m[10] - m[12] * m[2] * m[9];
-            inv[2] = m[1] * m[6] * m[15] - m[1] * m[7] * m[14] - m[5] * m[2] * m[15] + m[5] * m[3] * m[14] + m[13] * m[2] * m[7] - m[13] * m[3] * m[6];
-            inv[6] = -m[0] * m[6] * m[15] + m[0] * m[7] * m[14] + m[4] * m[2] * m[15] - m[4] * m[3] * m[14] - m[12] * m[2] * m[7] + m[12] * m[3] * m[6];
-            inv[10] = m[0] * m[5] * m[15] - m[0] * m[7] * m[13] - m[4] * m[1] * m[15] + m[4] * m[3] * m[13] + m[12] * m[1] * m[7] - m[12] * m[3] * m[5];
-            inv[14] = -m[0] * m[5] * m[14] + m[0] * m[6] * m[13] + m[4] * m[1] * m[14] - m[4] * m[2] * m[13] - m[12] * m[1] * m[6] + m[12] * m[2] * m[5];
-            inv[3] = -m[1] * m[6] * m[11] + m[1] * m[7] * m[10] + m[5] * m[2] * m[11] - m[5] * m[3] * m[10] - m[9] * m[2] * m[7] + m[9] * m[3] * m[6];
-            inv[7] = m[0] * m[6] * m[11] - m[0] * m[7] * m[10] - m[4] * m[2] * m[11] + m[4] * m[3] * m[10] + m[8] * m[2] * m[7] - m[8] * m[3] * m[6];
-            inv[11] = -m[0] * m[5] * m[11] + m[0] * m[7] * m[9] + m[4] * m[1] * m[11] - m[4] * m[3] * m[9] - m[8] * m[1] * m[7] + m[8] * m[3] * m[5];
-            inv[15] = m[0] * m[5] * m[10] - m[0] * m[6] * m[9] - m[4] * m[1] * m[10] + m[4] * m[2] * m[9] + m[8] * m[1] * m[6] - m[8] * m[2] * m[5];
-
-            float det = m[0] * inv[0] + m[1] * inv[4] + m[2] * inv[8] + m[3] * inv[12];
-            if (det != 0)
-            {
-                det = 1.0f / det;
-                for (int i = 0; i < 16; i++)
-                {
-                    inv[i] = inv[i] * det;
-                }
-            }
-        }
-
-        private void MultiplyMatrixVector(float* matrix, float* vector, float* result)
-        {
-            result[0] = matrix[0] * vector[0] + matrix[4] * vector[1] + matrix[8] * vector[2] + matrix[12] * vector[3];
-            result[1] = matrix[1] * vector[0] + matrix[5] * vector[1] + matrix[9] * vector[2] + matrix[13] * vector[3];
-            result[2] = matrix[2] * vector[0] + matrix[6] * vector[1] + matrix[10] * vector[2] + matrix[14] * vector[3];
-            result[3] = matrix[3] * vector[0] + matrix[7] * vector[1] + matrix[11] * vector[2] + matrix[15] * vector[3];
-        }
 
         public bool TryPickHex(double mouseX, double mouseY, out double lat, out double lon, out int tileIndex)
         {
@@ -605,45 +522,32 @@ namespace RoguelikeToolkit.World.App
 
             float aspect = (float)(Bounds.Width / Bounds.Height);
 
-            float* projection = stackalloc float[16];
-            CreatePerspective(45.0f, aspect, 0.1f, 100.0f, projection);
+            var projection = Matrix4x4.CreatePerspectiveFieldOfView(45.0f * (float)Math.PI / 180.0f, aspect, 0.1f, 100.0f);
+            var view = Matrix4x4.CreateTranslation(-PanX, -PanY, -Distance);
+            var modelX = Matrix4x4.CreateRotationX(Pitch * (float)Math.PI / 180.0f);
+            var modelY = Matrix4x4.CreateRotationY(Yaw * (float)Math.PI / 180.0f);
 
-            float* view = stackalloc float[16];
-            CreateTranslation(-PanX, -PanY, -Distance, view);
+            var model = modelX * modelY;
+            var viewProj = view * projection;
+            var mvp = model * viewProj;
 
-            float* modelX = stackalloc float[16];
-            CreateRotationX(Pitch, modelX);
-
-            float* modelY = stackalloc float[16];
-            CreateRotationY(Yaw, modelY);
-
-            float* model = stackalloc float[16];
-            MultiplyMatrix(modelX, modelY, model);
-
-            float* viewProj = stackalloc float[16];
-            MultiplyMatrix(projection, view, viewProj);
-
-            float* mvp = stackalloc float[16];
-            MultiplyMatrix(viewProj, model, mvp);
-
-            float* invMvp = stackalloc float[16];
-            InvertMatrix(mvp, invMvp);
+            if (!Matrix4x4.Invert(mvp, out Matrix4x4 invMvp)) return false;
 
             // NDC Coordinates
             float ndcX = (float)((2.0 * mouseX) / Bounds.Width - 1.0);
             float ndcY = (float)(1.0 - (2.0 * mouseY) / Bounds.Height); // Invert Y
 
-            float* rayClipNear = stackalloc float[] { ndcX, ndcY, -1.0f, 1.0f };
-            float* rayClipFar = stackalloc float[] { ndcX, ndcY, 1.0f, 1.0f };
+            Vector4 rayClipNear = new Vector4(ndcX, ndcY, -1.0f, 1.0f);
+            Vector4 rayClipFar = new Vector4(ndcX, ndcY, 1.0f, 1.0f);
 
-            float* rayObjNear = stackalloc float[4];
-            MultiplyMatrixVector(invMvp, rayClipNear, rayObjNear);
+            Vector4 rayObjNearV = Vector4.Transform(rayClipNear, invMvp);
+            Vector4 rayObjFarV = Vector4.Transform(rayClipFar, invMvp);
 
-            float* rayObjFar = stackalloc float[4];
-            MultiplyMatrixVector(invMvp, rayClipFar, rayObjFar);
+            if (rayObjNearV.W != 0.0f) { rayObjNearV.X /= rayObjNearV.W; rayObjNearV.Y /= rayObjNearV.W; rayObjNearV.Z /= rayObjNearV.W; }
+            if (rayObjFarV.W != 0.0f) { rayObjFarV.X /= rayObjFarV.W; rayObjFarV.Y /= rayObjFarV.W; rayObjFarV.Z /= rayObjFarV.W; }
 
-            if (rayObjNear[3] != 0.0f) { rayObjNear[0] /= rayObjNear[3]; rayObjNear[1] /= rayObjNear[3]; rayObjNear[2] /= rayObjNear[3]; }
-            if (rayObjFar[3] != 0.0f) { rayObjFar[0] /= rayObjFar[3]; rayObjFar[1] /= rayObjFar[3]; rayObjFar[2] /= rayObjFar[3]; }
+            float[] rayObjNear = new float[] { rayObjNearV.X, rayObjNearV.Y, rayObjNearV.Z, rayObjNearV.W };
+            float[] rayObjFar = new float[] { rayObjFarV.X, rayObjFarV.Y, rayObjFarV.Z, rayObjFarV.W };
 
             float rayDirX = rayObjFar[0] - rayObjNear[0];
             float rayDirY = rayObjFar[1] - rayObjNear[1];
@@ -686,7 +590,7 @@ namespace RoguelikeToolkit.World.App
 
             if (nearestIdx != -1)
             {
-                SelectedHexCenter = new RoguelikeToolkit.World.App.Vector3(
+                SelectedHexCenter = new System.Numerics.Vector3(
                     _positions[nearestIdx * 3],
                     _positions[nearestIdx * 3 + 1],
                     _positions[nearestIdx * 3 + 2]
