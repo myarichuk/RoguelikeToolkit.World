@@ -10,14 +10,58 @@ public class AdjacencyTests
     private struct DummyData { public int value; }
 
     [Theory]
-    [InlineData(1)]
-    [InlineData(2)]
-    [InlineData(5)]
-    [InlineData(10)]
-    public void WorldDataStore_CalculatesCorrectTileCount(int size)
+    [InlineData(0, 12)]
+    [InlineData(1, 42)]
+    [InlineData(2, 162)]
+    [InlineData(3, 642)]
+    public void WorldDataStore_CalculatesCorrectTileCount(int size, int expected)
     {
-        int expected = 10 * size * size + 2;
         Assert.Equal(expected, WorldDataStore.GetTileCount(size));
+    }
+
+    [Fact]
+    public void WorldTopology_IsSphericalManifold()
+    {
+        using var store = new WorldDataStore(2);
+
+        int pentagonCount = 0;
+
+        for (int i = 0; i < store.TileCount; i++)
+        {
+            Span<int> neighbors = stackalloc int[6];
+            int count = store.GetAdjacent(i, neighbors);
+
+            Assert.True(count == 5 || count == 6);
+            if (count == 5)
+            {
+                pentagonCount++;
+            }
+
+            // Check spherical manifold property: every adjacent pair shares exactly 2 common neighbors
+            for (int n = 0; n < count; n++)
+            {
+                int neighbor = neighbors[n];
+
+                Span<int> neighborNeighbors = stackalloc int[6];
+                int neighborCount = store.GetAdjacent(neighbor, neighborNeighbors);
+
+                int sharedCount = 0;
+                for (int x = 0; x < count; x++)
+                {
+                    for (int y = 0; y < neighborCount; y++)
+                    {
+                        if (neighbors[x] == neighborNeighbors[y])
+                        {
+                            sharedCount++;
+                        }
+                    }
+                }
+
+                Assert.Equal(2, sharedCount);
+            }
+        }
+
+        Assert.Equal(12, pentagonCount);
     }
 
     [Fact]
@@ -25,20 +69,25 @@ public class AdjacencyTests
     {
         using var store = new WorldDataStore(2);
 
+        int pentagonCount = 0;
+        int hexagonCount = 0;
         for (int i = 0; i < store.TileCount; i++)
         {
             Span<int> neighbors = stackalloc int[6];
             int count = store.GetAdjacent(i, neighbors);
 
-            if (i < 12)
+            if (count == 5)
             {
-                Assert.Equal(5, count);
+                pentagonCount++;
             }
-            else
+            else if (count == 6)
             {
-                Assert.Equal(6, count);
+                hexagonCount++;
             }
         }
+
+        Assert.Equal(12, pentagonCount);
+        Assert.Equal(store.TileCount - 12, hexagonCount);
     }
 
     [Fact]
