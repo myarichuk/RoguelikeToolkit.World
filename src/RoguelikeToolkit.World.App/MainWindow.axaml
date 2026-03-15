@@ -51,6 +51,14 @@
                     <Button x:Name="BtnZoomOut" Content="Zoom Out" Background="#40FFFFFF" Foreground="White" HorizontalAlignment="Stretch" HorizontalContentAlignment="Center"/>
                 </UniformGrid>
 
+                <TextBlock Text="Projection Mode:" Foreground="White" Margin="5,5,5,0"/>
+                <ComboBox x:Name="CmbProjection" SelectedIndex="0" HorizontalAlignment="Stretch" Margin="5,0,5,5">
+                    <ComboBoxItem>Sphere</ComboBoxItem>
+                    <ComboBoxItem>Equirectangular</ComboBoxItem>
+                    <ComboBoxItem>Mercator</ComboBoxItem>
+                    <ComboBoxItem>Gnomonic</ComboBoxItem>
+                </ComboBox>
+
                 <TextBlock Text="Hex Size (Subdivision Level):" Foreground="White" Margin="5,5,5,0"/>
                 <Slider x:Name="SldRecursionLevel" Minimum="1" Maximum="6" Value="4" TickFrequency="1" IsSnapToTickEnabled="True" Margin="5,0,5,5"/>
 

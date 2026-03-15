@@ -114,14 +114,14 @@ namespace RoguelikeToolkit.World.Presentation
             foreach (var face in faces)
             {
                 // Unshared vertices for edge shader (barycentric)
-                outVertices[index] = vertices[face.v1];
-                outVertices[index + 1] = vertices[face.v2];
-                outVertices[index + 2] = vertices[face.v3];
+                outVertices[index] = Vector3.Normalize(vertices[face.v1]);
+                outVertices[index + 1] = Vector3.Normalize(vertices[face.v2]);
+                outVertices[index + 2] = Vector3.Normalize(vertices[face.v3]);
 
                 // Proper normals (since it's a unit sphere, normals equal positions)
-                outNormals[index] = vertices[face.v1];
-                outNormals[index + 1] = vertices[face.v2];
-                outNormals[index + 2] = vertices[face.v3];
+                outNormals[index] = outVertices[index];
+                outNormals[index + 1] = outVertices[index + 1];
+                outNormals[index + 2] = outVertices[index + 2];
 
                 // Barycentric coordinates
                 outBarycentric[index] = new Vector3(1, 0, 0);
