@@ -19,6 +19,16 @@
             <local:GlControl x:Name="GlView" />
         </Border>
 
+        <!-- Hex Info Overlay -->
+        <Border Padding="20" HorizontalAlignment="Left" VerticalAlignment="Top">
+            <StackPanel Spacing="5" Background="#80000000" Margin="10" Padding="10">
+                <TextBlock Text="Selected Hex" Foreground="White" FontWeight="Bold" HorizontalAlignment="Center" Margin="0,0,0,5"/>
+                <TextBlock x:Name="TxtHexLat" Text="Lat: --" Foreground="White"/>
+                <TextBlock x:Name="TxtHexLon" Text="Lon: --" Foreground="White"/>
+                <TextBlock x:Name="TxtHexIndex" Text="Index: --" Foreground="White"/>
+            </StackPanel>
+        </Border>
+
         <!-- Overlay UI -->
         <Border Padding="20" HorizontalAlignment="Right" VerticalAlignment="Bottom">
             <StackPanel Spacing="10" Background="#80000000">
@@ -37,6 +47,7 @@
                 </UniformGrid>
 
                 <CheckBox x:Name="ChkTogglePlates" Content="Show Plates" IsChecked="True" Foreground="White" Margin="5"/>
+                <CheckBox x:Name="ChkToggleHexes" Content="Show Hexes" IsChecked="False" Foreground="White" Margin="5"/>
 
                 <TextBlock Text="Left-drag: Rotate" Foreground="LightGray" FontSize="12" Margin="5,0,0,0"/>
                 <TextBlock Text="Right-drag: Pan" Foreground="LightGray" FontSize="12" Margin="5,0,0,0"/>
