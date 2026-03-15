@@ -2,6 +2,7 @@ using System;
 using System.Runtime.InteropServices;
 using Avalonia;
 using Avalonia.Input;
+using System.Collections.Generic;
 using Avalonia.OpenGL;
 using Avalonia.OpenGL.Controls;
 using RoguelikeToolkit.World.Core;
@@ -40,6 +41,16 @@ namespace RoguelikeToolkit.World.App
         private float[] _normals = Array.Empty<float>();
         private float[] _barycentric = Array.Empty<float>();
         private float[] _colors = Array.Empty<float>();
+
+        private class KdNode
+        {
+            public float X, Y, Z;
+            public int Index;
+            public KdNode? Left;
+            public KdNode? Right;
+        }
+
+        private KdNode? _kdRoot;
 
         private WorldMap _map;
         private TectonicPlateLayer _plateLayer;
@@ -388,6 +399,81 @@ namespace RoguelikeToolkit.World.App
             gl.EnableVertexAttribArray(3);
 
             gl.BindVertexArray(0);
+
+            BuildKdTree();
+        }
+
+        private void BuildKdTree()
+        {
+            int numPoints = _positions.Length / 3;
+            if (numPoints == 0) return;
+
+            var indices = new int[numPoints];
+            for (int i = 0; i < numPoints; i++) indices[i] = i;
+
+            _kdRoot = BuildKdTreeRecursive(indices, 0, numPoints - 1, 0);
+        }
+
+        private KdNode? NearestKdNode(KdNode? node, float tx, float ty, float tz, int depth, KdNode? best, ref float bestDistSq)
+        {
+            if (node == null) return best;
+
+            float dx = node.X - tx;
+            float dy = node.Y - ty;
+            float dz = node.Z - tz;
+            float distSq = dx * dx + dy * dy + dz * dz;
+
+            if (distSq < bestDistSq)
+            {
+                bestDistSq = distSq;
+                best = node;
+            }
+
+            int axis = depth % 3;
+            float axisDist = 0;
+            if (axis == 0) axisDist = tx - node.X;
+            else if (axis == 1) axisDist = ty - node.Y;
+            else axisDist = tz - node.Z;
+
+            KdNode? first = axisDist <= 0 ? node.Left : node.Right;
+            KdNode? second = axisDist <= 0 ? node.Right : node.Left;
+
+            best = NearestKdNode(first, tx, ty, tz, depth + 1, best, ref bestDistSq);
+
+            if (axisDist * axisDist < bestDistSq)
+            {
+                best = NearestKdNode(second, tx, ty, tz, depth + 1, best, ref bestDistSq);
+            }
+
+            return best;
+        }
+
+        private KdNode? BuildKdTreeRecursive(int[] indices, int start, int end, int depth)
+        {
+            if (start > end) return null;
+
+            int axis = depth % 3;
+
+            // Sort indices subarray by the specified axis
+            Array.Sort(indices, start, end - start + 1, Comparer<int>.Create((a, b) =>
+            {
+                float valA = _positions[a * 3 + axis];
+                float valB = _positions[b * 3 + axis];
+                return valA.CompareTo(valB);
+            }));
+
+            int mid = start + (end - start) / 2;
+            int idx = indices[mid];
+
+            return new KdNode
+            {
+                X = _positions[idx * 3],
+                Y = _positions[idx * 3 + 1],
+                Z = _positions[idx * 3 + 2],
+                Index = idx,
+                Left = BuildKdTreeRecursive(indices, start, mid - 1, depth + 1),
+                Right = BuildKdTreeRecursive(indices, mid + 1, end, depth + 1)
+            };
         }
 
         delegate void glUniform1i_t(int location, int v0);
@@ -622,17 +708,29 @@ namespace RoguelikeToolkit.World.App
             float minDistsq = float.MaxValue;
             int nearestIdx = -1;
 
-            for (int i = 0; i < _positions.Length / 3; i++)
+            if (_kdRoot != null)
             {
-                float dx = _positions[i * 3] - hitX;
-                float dy = _positions[i * 3 + 1] - hitY;
-                float dz = _positions[i * 3 + 2] - hitZ;
-                float distSq = dx * dx + dy * dy + dz * dz;
-
-                if (distSq < minDistsq)
+                var bestNode = NearestKdNode(_kdRoot, hitX, hitY, hitZ, 0, null, ref minDistsq);
+                if (bestNode != null)
                 {
-                    minDistsq = distSq;
-                    nearestIdx = i;
+                    nearestIdx = bestNode.Index;
+                }
+            }
+            else
+            {
+                // Fallback just in case
+                for (int i = 0; i < _positions.Length / 3; i++)
+                {
+                    float dx = _positions[i * 3] - hitX;
+                    float dy = _positions[i * 3 + 1] - hitY;
+                    float dz = _positions[i * 3 + 2] - hitZ;
+                    float distSq = dx * dx + dy * dy + dz * dz;
+
+                    if (distSq < minDistsq)
+                    {
+                        minDistsq = distSq;
+                        nearestIdx = i;
+                    }
                 }
             }
 
