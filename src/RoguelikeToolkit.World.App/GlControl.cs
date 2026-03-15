@@ -18,9 +18,11 @@ namespace RoguelikeToolkit.World.App
         public bool ShowPlates { get; set; } = true;
         public bool ShowHexes { get; set; } = true;
         public RoguelikeToolkit.World.App.Vector3 SelectedHexCenter { get; set; } = new RoguelikeToolkit.World.App.Vector3(0, 0, 0);
+        public int RecursionLevel { get; set; } = 4;
 
         public WorldMap Map => _map;
         public TectonicPlateLayer PlateLayer => _plateLayer;
+        public LocalMapLayer LocalLayer => _localLayer;
 
         private int _shaderProgram;
         private int _vao;
@@ -41,8 +43,9 @@ namespace RoguelikeToolkit.World.App
         private float[] _barycentric = Array.Empty<float>();
         private float[] _colors = Array.Empty<float>();
 
-        private WorldMap _map;
-        private TectonicPlateLayer _plateLayer;
+        private WorldMap _map = null!;
+        private TectonicPlateLayer _plateLayer = null!;
+        private LocalMapLayer _localLayer = null!;
 
         private const string VertexShaderSource = @"
             #version 330 core
@@ -171,10 +174,37 @@ namespace RoguelikeToolkit.World.App
 
         public GlControl()
         {
-            _map = new WorldMap(5);
-            _plateLayer = new TectonicPlateLayer(5, 12);
+            InitializeLayers();
+        }
+
+        private void InitializeLayers()
+        {
+            // Clean up existing map if it exists
+            _map?.Dispose();
+
+            int size = RecursionLevel + 1; // Basic mapping from recursion level to subdivision size
+            _map = new WorldMap(size);
+
+            int seedCount = _plateLayer?.SeedCount ?? 12;
+
+            _plateLayer = new TectonicPlateLayer(size, seedCount);
             _map.RegisterLayer(_plateLayer);
             _plateLayer.Generate();
+
+            _localLayer = new LocalMapLayer(size, 42, _plateLayer);
+            _map.RegisterLayer(_localLayer);
+            _localLayer.Generate();
+        }
+
+        public void SetRecursionLevel(int level)
+        {
+            if (level == RecursionLevel) return;
+            RecursionLevel = level;
+
+            InitializeLayers();
+
+            _needsMeshRebuild = true;
+            RenderFrame();
         }
 
         public void SetPlateCount(int count)
@@ -218,6 +248,7 @@ namespace RoguelikeToolkit.World.App
         }
 
         private bool _needsColorBufferUpdate = false;
+        private bool _needsMeshRebuild = false;
 
         public void RenderFrame()
         {
@@ -282,12 +313,11 @@ namespace RoguelikeToolkit.World.App
 
         private void SetupMesh(GlInterface gl)
         {
-            int recursionLevel = 4;
             RoguelikeToolkit.World.App.Vector3[] vPos;
             RoguelikeToolkit.World.App.Vector3[] vNorm;
             RoguelikeToolkit.World.App.Vector3[] vBary;
 
-            IcosphereGenerator.GenerateFlat(recursionLevel, out vPos, out vNorm, out vBary);
+            IcosphereGenerator.GenerateFlat(RecursionLevel, out vPos, out vNorm, out vBary);
 
             _vertexCount = vPos.Length;
 
@@ -395,7 +425,23 @@ namespace RoguelikeToolkit.World.App
 
         protected override void OnOpenGlRender(GlInterface gl, int fb)
         {
-            if (_needsColorBufferUpdate && _vboColor != 0)
+            if (_needsMeshRebuild)
+            {
+                // Delete old buffers
+                int[] buffers = new int[] { _vboPos, _vboNormal, _vboBary, _vboColor };
+                fixed (int* pBuffers = buffers)
+                {
+                    gl.DeleteBuffers(4, pBuffers);
+                }
+
+                int vao = _vao;
+                gl.DeleteVertexArrays(1, &vao);
+
+                SetupMesh(gl);
+                _needsMeshRebuild = false;
+                _needsColorBufferUpdate = false; // Handled by SetupMesh
+            }
+            else if (_needsColorBufferUpdate && _vboColor != 0)
             {
                 gl.BindBuffer(GlConsts.GL_ARRAY_BUFFER, _vboColor);
                 fixed (float* p = _colors)
@@ -656,7 +702,7 @@ namespace RoguelikeToolkit.World.App
                 if (normalizedLat < 0) normalizedLat = 0;
                 if (normalizedLat >= 1) normalizedLat = 0.999999;
 
-                int size = 5;
+                int size = RecursionLevel + 1;
                 int tileCount = 10 * size * size + 2;
                 int rings = size * 3;
                 int ringIndex = (int)(normalizedLat * rings);

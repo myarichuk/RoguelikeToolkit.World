@@ -20,6 +20,7 @@ namespace RoguelikeToolkit.World.App
             var chkTogglePlates = this.FindControl<CheckBox>("ChkTogglePlates");
             var chkToggleHexes = this.FindControl<CheckBox>("ChkToggleHexes");
             var sldSeedCount = this.FindControl<Slider>("SldSeedCount");
+            var sldRecursionLevel = this.FindControl<Slider>("SldRecursionLevel");
 
             if (btnRotLeft != null) btnRotLeft.Click += (s, e) => { GlView.Yaw -= 10f; GlView.RenderFrame(); };
             if (btnRotRight != null) btnRotRight.Click += (s, e) => { GlView.Yaw += 10f; GlView.RenderFrame(); };
@@ -33,6 +34,14 @@ namespace RoguelikeToolkit.World.App
                 sldSeedCount.ValueChanged += (s, e) =>
                 {
                     GlView.SetPlateCount((int)e.NewValue);
+                };
+            }
+
+            if (sldRecursionLevel != null)
+            {
+                sldRecursionLevel.ValueChanged += (s, e) =>
+                {
+                    GlView.SetRecursionLevel((int)e.NewValue);
                 };
             }
 
@@ -77,6 +86,8 @@ namespace RoguelikeToolkit.World.App
                 var txtLon = this.FindControl<TextBlock>("TxtHexLon");
                 var txtIndex = this.FindControl<TextBlock>("TxtHexIndex");
                 var txtPlate = this.FindControl<TextBlock>("TxtHexPlate");
+                var txtBiome = this.FindControl<TextBlock>("TxtHexBiome");
+                var txtDanger = this.FindControl<TextBlock>("TxtHexDanger");
 
                 if (txtLat != null) txtLat.Text = $"Lat: {lat:F2}";
                 if (txtLon != null) txtLon.Text = $"Lon: {lon:F2}";
@@ -94,6 +105,21 @@ namespace RoguelikeToolkit.World.App
                         txtPlate.Text = $"Plate ID: --";
                     }
                 }
+
+                if (txtBiome != null && txtDanger != null && tileIndex >= 0)
+                {
+                    var localInfo = GlView.LocalLayer?.Store[tileIndex];
+                    if (localInfo.HasValue)
+                    {
+                        txtBiome.Text = $"Biome: {localInfo.Value.Biome}";
+                        txtDanger.Text = $"Danger: {localInfo.Value.DangerLevel}";
+                    }
+                    else
+                    {
+                        txtBiome.Text = $"Biome: --";
+                        txtDanger.Text = $"Danger: --";
+                    }
+                }
             }
             else
             {
@@ -101,11 +127,15 @@ namespace RoguelikeToolkit.World.App
                 var txtLon = this.FindControl<TextBlock>("TxtHexLon");
                 var txtIndex = this.FindControl<TextBlock>("TxtHexIndex");
                 var txtPlate = this.FindControl<TextBlock>("TxtHexPlate");
+                var txtBiome = this.FindControl<TextBlock>("TxtHexBiome");
+                var txtDanger = this.FindControl<TextBlock>("TxtHexDanger");
 
                 if (txtLat != null) txtLat.Text = "Lat: --";
                 if (txtLon != null) txtLon.Text = "Lon: --";
                 if (txtIndex != null) txtIndex.Text = "Index: --";
                 if (txtPlate != null) txtPlate.Text = "Plate ID: --";
+                if (txtBiome != null) txtBiome.Text = "Biome: --";
+                if (txtDanger != null) txtDanger.Text = "Danger: --";
             }
         }
 
