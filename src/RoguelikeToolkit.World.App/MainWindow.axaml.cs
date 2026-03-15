@@ -21,13 +21,25 @@ namespace RoguelikeToolkit.World.App
             var chkToggleHexes = this.FindControl<CheckBox>("ChkToggleHexes");
             var sldSeedCount = this.FindControl<Slider>("SldSeedCount");
             var sldRecursionLevel = this.FindControl<Slider>("SldRecursionLevel");
+            var cmbProjection = this.FindControl<ComboBox>("CmbProjection");
 
-            if (btnRotLeft != null) btnRotLeft.Click += (s, e) => { GlView.Yaw -= 10f; GlView.RenderFrame(); };
-            if (btnRotRight != null) btnRotRight.Click += (s, e) => { GlView.Yaw += 10f; GlView.RenderFrame(); };
-            if (btnRotUp != null) btnRotUp.Click += (s, e) => { GlView.Pitch -= 10f; GlView.RenderFrame(); };
-            if (btnRotDown != null) btnRotDown.Click += (s, e) => { GlView.Pitch += 10f; GlView.RenderFrame(); };
+            if (btnRotLeft != null) btnRotLeft.Click += (s, e) => { if (GlView.ProjectionMode == ProjectionType.Sphere) { GlView.Yaw -= 10f; GlView.RenderFrame(); } };
+            if (btnRotRight != null) btnRotRight.Click += (s, e) => { if (GlView.ProjectionMode == ProjectionType.Sphere) { GlView.Yaw += 10f; GlView.RenderFrame(); } };
+            if (btnRotUp != null) btnRotUp.Click += (s, e) => { if (GlView.ProjectionMode == ProjectionType.Sphere) { GlView.Pitch -= 10f; GlView.RenderFrame(); } };
+            if (btnRotDown != null) btnRotDown.Click += (s, e) => { if (GlView.ProjectionMode == ProjectionType.Sphere) { GlView.Pitch += 10f; GlView.RenderFrame(); } };
             if (btnZoomIn != null) btnZoomIn.Click += (s, e) => { GlView.Distance -= 1f; GlView.RenderFrame(); };
             if (btnZoomOut != null) btnZoomOut.Click += (s, e) => { GlView.Distance += 1f; GlView.RenderFrame(); };
+
+            if (cmbProjection != null)
+            {
+                cmbProjection.SelectionChanged += (s, e) =>
+                {
+                    if (cmbProjection.SelectedIndex >= 0)
+                    {
+                        GlView.SetProjectionMode((ProjectionType)cmbProjection.SelectedIndex);
+                    }
+                };
+            }
 
             if (sldSeedCount != null)
             {
@@ -153,11 +165,21 @@ namespace RoguelikeToolkit.World.App
             {
                 var deltaX = (float)(point.Position.X - _lastMousePosition.X);
                 var deltaY = (float)(point.Position.Y - _lastMousePosition.Y);
-                GlView.Yaw += deltaX * 0.5f;
-                GlView.Pitch += deltaY * 0.5f;
 
-                if (GlView.Pitch > 89.0f) GlView.Pitch = 89.0f;
-                if (GlView.Pitch < -89.0f) GlView.Pitch = -89.0f;
+                if (GlView.ProjectionMode == ProjectionType.Sphere)
+                {
+                    GlView.Yaw += deltaX * 0.5f;
+                    GlView.Pitch += deltaY * 0.5f;
+
+                    if (GlView.Pitch > 89.0f) GlView.Pitch = 89.0f;
+                    if (GlView.Pitch < -89.0f) GlView.Pitch = -89.0f;
+                }
+                else
+                {
+                    float panSpeed = 0.005f * GlView.Distance;
+                    GlView.PanX -= deltaX * panSpeed;
+                    GlView.PanY += deltaY * panSpeed;
+                }
 
                 GlView.RenderFrame();
             }
@@ -190,16 +212,20 @@ namespace RoguelikeToolkit.World.App
             switch (e.Key)
             {
                 case Key.Left:
-                    GlView.Yaw -= 5f;
+                    if (GlView.ProjectionMode == ProjectionType.Sphere) GlView.Yaw -= 5f;
+                    else GlView.PanX -= 0.1f * GlView.Distance;
                     break;
                 case Key.Right:
-                    GlView.Yaw += 5f;
+                    if (GlView.ProjectionMode == ProjectionType.Sphere) GlView.Yaw += 5f;
+                    else GlView.PanX += 0.1f * GlView.Distance;
                     break;
                 case Key.Up:
-                    GlView.Pitch -= 5f;
+                    if (GlView.ProjectionMode == ProjectionType.Sphere) GlView.Pitch -= 5f;
+                    else GlView.PanY += 0.1f * GlView.Distance;
                     break;
                 case Key.Down:
-                    GlView.Pitch += 5f;
+                    if (GlView.ProjectionMode == ProjectionType.Sphere) GlView.Pitch += 5f;
+                    else GlView.PanY -= 0.1f * GlView.Distance;
                     break;
                 case Key.Add:
                 case Key.OemPlus:

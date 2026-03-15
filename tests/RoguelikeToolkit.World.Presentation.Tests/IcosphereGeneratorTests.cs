@@ -21,11 +21,15 @@ namespace RoguelikeToolkit.World.Presentation.Tests
             Assert.Equal(expectedCount, barycentric.Length);
         }
 
-        [Fact]
-        public void GenerateFlat_VerticesAreNormalized()
+        [Theory]
+        [InlineData(0)]
+        [InlineData(1)]
+        [InlineData(2)]
+        [InlineData(3)]
+        public void GenerateFlat_VerticesAreNormalized(int recursionLevel)
         {
             Vector3[] vertices, normals, barycentric;
-            IcosphereGenerator.GenerateFlat(0, out vertices, out normals, out barycentric);
+            IcosphereGenerator.GenerateFlat(recursionLevel, out vertices, out normals, out barycentric);
 
             foreach (var vertex in vertices)
             {

@@ -11,8 +11,18 @@ using RoguelikeToolkit.World.Presentation;
 
 namespace RoguelikeToolkit.World.App
 {
+    public enum ProjectionType
+    {
+        Sphere,
+        Equirectangular,
+        Mercator,
+        Gnomonic
+    }
+
     public unsafe class GlControl : OpenGlControlBase
     {
+        public ProjectionType ProjectionMode { get; set; } = ProjectionType.Sphere;
+
         public float Yaw { get; set; } = 0f;
         public float Pitch { get; set; } = 0f;
         public float Distance { get; set; } = 2.2f;
@@ -223,10 +233,35 @@ namespace RoguelikeToolkit.World.App
             Random rnd = new Random(42);
             var plateColors = new System.Collections.Generic.Dictionary<int, System.Numerics.Vector3>();
 
+            IProjection? projectionObj = ProjectionMode switch
+            {
+                ProjectionType.Equirectangular => new EquirectangularProjection(1.0),
+                ProjectionType.Mercator => new MercatorProjection(1.0),
+                ProjectionType.Gnomonic => new GnomonicProjection(1.0),
+                _ => null
+            };
+
             for (int i = 0; i < _vertexCount; i++)
             {
-                double lat = Math.Asin(_positions[i * 3 + 2]) * 180.0 / Math.PI;
-                double lon = Math.Atan2(_positions[i * 3 + 1], _positions[i * 3]) * 180.0 / Math.PI;
+                double lat, lon;
+                if (projectionObj != null)
+                {
+                    if (float.IsNaN(_positions[i * 3]))
+                    {
+                        lat = 0; lon = 0;
+                    }
+                    else
+                    {
+                        var geo = projectionObj.Inverse(new Vector2D(_positions[i * 3], _positions[i * 3 + 1]));
+                        lat = geo.Latitude;
+                        lon = geo.Longitude;
+                    }
+                }
+                else
+                {
+                    lat = Math.Asin(_positions[i * 3 + 2]) * 180.0 / Math.PI;
+                    lon = Math.Atan2(_positions[i * 3 + 1], _positions[i * 3]) * 180.0 / Math.PI;
+                }
 
                 var coord = new GeoCoord(lat, lon);
                 var plate = _plateLayer.GetValue(coord);
@@ -246,6 +281,23 @@ namespace RoguelikeToolkit.World.App
             }
 
             _needsColorBufferUpdate = true;
+            RenderFrame();
+        }
+
+        public void SetProjectionMode(ProjectionType mode)
+        {
+            if (mode == ProjectionMode) return;
+            ProjectionMode = mode;
+
+            if (mode != ProjectionType.Sphere)
+            {
+                Yaw = 0;
+                Pitch = 0;
+                PanX = 0;
+                PanY = 0;
+            }
+
+            _needsMeshRebuild = true;
             RenderFrame();
         }
 
@@ -321,6 +373,53 @@ namespace RoguelikeToolkit.World.App
 
             IcosphereGenerator.GenerateFlat(RecursionLevel, out vPos, out vNorm, out vBary);
 
+            IProjection? projectionObj = ProjectionMode switch
+            {
+                ProjectionType.Equirectangular => new EquirectangularProjection(1.0),
+                ProjectionType.Mercator => new MercatorProjection(1.0),
+                ProjectionType.Gnomonic => new GnomonicProjection(1.0),
+                _ => null
+            };
+
+            // Calculate projections
+            if (projectionObj != null)
+            {
+                for (int i = 0; i < vPos.Length; i += 3)
+                {
+                    var p1 = vPos[i];
+                    var p2 = vPos[i + 1];
+                    var p3 = vPos[i + 2];
+
+                    double lat1 = Math.Asin(p1.Z) * 180.0 / Math.PI;
+                    double lon1 = Math.Atan2(p1.Y, p1.X) * 180.0 / Math.PI;
+                    double lat2 = Math.Asin(p2.Z) * 180.0 / Math.PI;
+                    double lon2 = Math.Atan2(p2.Y, p2.X) * 180.0 / Math.PI;
+                    double lat3 = Math.Asin(p3.Z) * 180.0 / Math.PI;
+                    double lon3 = Math.Atan2(p3.Y, p3.X) * 180.0 / Math.PI;
+
+                    // Hide triangles spanning more than 180 deg in longitude (wrap-around dateline)
+                    if (Math.Max(lon1, Math.Max(lon2, lon3)) - Math.Min(lon1, Math.Min(lon2, lon3)) > 180.0)
+                    {
+                        vPos[i] = new Vector3(float.NaN, float.NaN, float.NaN);
+                        vPos[i + 1] = new Vector3(float.NaN, float.NaN, float.NaN);
+                        vPos[i + 2] = new Vector3(float.NaN, float.NaN, float.NaN);
+                        continue;
+                    }
+
+                    var c1 = projectionObj.Project(new GeoCoord(lat1, lon1));
+                    var c2 = projectionObj.Project(new GeoCoord(lat2, lon2));
+                    var c3 = projectionObj.Project(new GeoCoord(lat3, lon3));
+
+                    vPos[i] = new Vector3((float)c1.X, (float)c1.Y, 0);
+                    vPos[i + 1] = new Vector3((float)c2.X, (float)c2.Y, 0);
+                    vPos[i + 2] = new Vector3((float)c3.X, (float)c3.Y, 0);
+
+                    vNorm[i] = new Vector3(0, 0, 1);
+                    vNorm[i + 1] = new Vector3(0, 0, 1);
+                    vNorm[i + 2] = new Vector3(0, 0, 1);
+                }
+            }
+
             _vertexCount = vPos.Length;
 
             _positions = new float[_vertexCount * 3];
@@ -345,8 +444,28 @@ namespace RoguelikeToolkit.World.App
                 _barycentric[i * 3 + 1] = vBary[i].Y;
                 _barycentric[i * 3 + 2] = vBary[i].Z;
 
-                double lat = Math.Asin(vPos[i].Z) * 180.0 / Math.PI;
-                double lon = Math.Atan2(vPos[i].Y, vPos[i].X) * 180.0 / Math.PI;
+                // Even in 2D projection, we still need to assign colors based on their original latitude/longitude
+                // which unfortunately we lost by projecting.
+                // We'll calculate lat/lon here depending on projection, or just store the original position temporarily.
+                double lat, lon;
+                if (projectionObj != null)
+                {
+                    if (float.IsNaN(vPos[i].X))
+                    {
+                        lat = 0; lon = 0;
+                    }
+                    else
+                    {
+                        var geo = projectionObj.Inverse(new Vector2D(vPos[i].X, vPos[i].Y));
+                        lat = geo.Latitude;
+                        lon = geo.Longitude;
+                    }
+                }
+                else
+                {
+                    lat = Math.Asin(vPos[i].Z) * 180.0 / Math.PI;
+                    lon = Math.Atan2(vPos[i].Y, vPos[i].X) * 180.0 / Math.PI;
+                }
 
                 var coord = new GeoCoord(lat, lon);
                 var plate = _plateLayer.GetValue(coord);
@@ -466,26 +585,14 @@ namespace RoguelikeToolkit.World.App
             var modelY = Matrix4x4.CreateRotationY(Yaw * (float)Math.PI / 180.0f);
 
             var model = modelX * modelY;
-            var viewProj = view * projection; // Note: System.Numerics.Matrix4x4 multiplication is row-major order (A * B means apply A then B)
-            // OpenGL uses column-major arrays, but the uniform functions read them correctly if we pass the row-major memory straight?
-            // Wait, System.Numerics.Matrix4x4 memory layout is row-major. OpenGL uniform takes column-major if transpose=false.
-            // If we have row-major Matrix4x4 in memory and pass transpose=false, it might read transposed.
-            // But let's check standard practice. Actually A * B in Math is different.
-            // In OpenTK / default GL, usually model * view * projection.
-            // System.Numerics uses row-vector math. v * M.
-            // Let's explicitly transpose to column-major array or just use Matrix4x4 as is if previous custom math worked identically.
-            // The original math: MultiplyMatrix(A, B) -> A[r]*B[c*4...]  (A column major * B column major)
+            var viewProj = view * projection;
             var mvp = model * viewProj;
 
             float* modelPtr = stackalloc float[16];
             float* mvpPtr = stackalloc float[16];
 
-            // Copy System.Numerics.Matrix4x4 to float array (transpose because System.Numerics is row-major and GL needs column-major)
-            Matrix4x4 modelTransposed = Matrix4x4.Transpose(model);
-            Matrix4x4 mvpTransposed = Matrix4x4.Transpose(mvp);
-
-            System.Runtime.CompilerServices.Unsafe.Write(modelPtr, modelTransposed);
-            System.Runtime.CompilerServices.Unsafe.Write(mvpPtr, mvpTransposed);
+            System.Runtime.CompilerServices.Unsafe.Write(modelPtr, model);
+            System.Runtime.CompilerServices.Unsafe.Write(mvpPtr, mvp);
 
             gl.UniformMatrix4fv(_uMvpMatrix, 1, false, mvpPtr);
             gl.UniformMatrix4fv(_uModelMatrix, 1, false, modelPtr);
@@ -596,8 +703,25 @@ namespace RoguelikeToolkit.World.App
                     _positions[nearestIdx * 3 + 2]
                 );
 
-                lat = Math.Asin(SelectedHexCenter.Z) * 180.0 / Math.PI;
-                lon = Math.Atan2(SelectedHexCenter.Y, SelectedHexCenter.X) * 180.0 / Math.PI;
+                IProjection? projectionObj = ProjectionMode switch
+                {
+                    ProjectionType.Equirectangular => new EquirectangularProjection(1.0),
+                    ProjectionType.Mercator => new MercatorProjection(1.0),
+                    ProjectionType.Gnomonic => new GnomonicProjection(1.0),
+                    _ => null
+                };
+
+                if (projectionObj != null)
+                {
+                    var geo = projectionObj.Inverse(new Vector2D(SelectedHexCenter.X, SelectedHexCenter.Y));
+                    lat = geo.Latitude;
+                    lon = geo.Longitude;
+                }
+                else
+                {
+                    lat = Math.Asin(SelectedHexCenter.Z) * 180.0 / Math.PI;
+                    lon = Math.Atan2(SelectedHexCenter.Y, SelectedHexCenter.X) * 180.0 / Math.PI;
+                }
 
                 double normalizedLon = (lon + 180.0) / 360.0;
                 double normalizedLat = (lat + 90.0) / 180.0;
