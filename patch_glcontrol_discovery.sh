@@ -1,3 +1,5 @@
+#!/bin/bash
+cat << 'INNER_EOF' > src/RoguelikeToolkit.World.App/GlControl.cs
 using System;
 using System.Linq;
 using System.Runtime.InteropServices;
@@ -719,3 +721,4 @@ namespace RoguelikeToolkit.World.App
         }
     }
 }
+INNER_EOF

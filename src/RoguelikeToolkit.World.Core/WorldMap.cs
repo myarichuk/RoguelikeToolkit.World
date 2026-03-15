@@ -8,14 +8,18 @@ public class WorldMap : IDisposable
     private readonly int _size;
     private readonly Dictionary<Type, object> _layers = new();
 
+    public WorldDataStore DataStore { get; }
+
     public WorldMap(int size)
     {
         _size = size;
+        DataStore = new WorldDataStore(size);
     }
 
     public void RegisterLayer<T>(IMapLayer<T> layer) where T : unmanaged
     {
         _layers[typeof(T)] = layer;
+        DataStore.RegisterLayer<T>();
     }
 
     public IMapLayer<T>? GetLayer<T>() where T : unmanaged
@@ -37,5 +41,6 @@ public class WorldMap : IDisposable
             }
         }
         _layers.Clear();
+        DataStore.Dispose();
     }
 }

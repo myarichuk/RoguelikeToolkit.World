@@ -1,3 +1,5 @@
+#!/bin/bash
+cat << 'INNER_EOF' > tests/RoguelikeToolkit.World.Core.Tests/SecurityTests.cs
 using System;
 using System.IO;
 using Xunit;
@@ -71,3 +73,4 @@ public class SecurityTests : IDisposable
         // Cleanup happens in the test finally blocks
     }
 }
+INNER_EOF

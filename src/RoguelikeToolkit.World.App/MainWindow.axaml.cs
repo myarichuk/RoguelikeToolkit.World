@@ -95,7 +95,7 @@ namespace RoguelikeToolkit.World.App
 
                 if (txtPlate != null && tileIndex >= 0)
                 {
-                    var plate = GlView.PlateLayer?.Store[tileIndex];
+                    var plate = GlView.PlateLayer?.Store.GetRef<RoguelikeToolkit.World.Core.TectonicPlate>(tileIndex);
                     if (plate.HasValue)
                     {
                         txtPlate.Text = $"Plate ID: {plate.Value.Id}";
@@ -108,7 +108,7 @@ namespace RoguelikeToolkit.World.App
 
                 if (txtBiome != null && txtDanger != null && tileIndex >= 0)
                 {
-                    var localInfo = GlView.LocalLayer?.Store[tileIndex];
+                    var localInfo = GlView.LocalLayer?.Store.GetRef<RoguelikeToolkit.World.Core.LocalMapInfo>(tileIndex);
                     if (localInfo.HasValue)
                     {
                         txtBiome.Text = $"Biome: {localInfo.Value.Biome}";

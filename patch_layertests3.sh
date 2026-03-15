@@ -1,3 +1,5 @@
+#!/bin/bash
+cat << 'INNER_EOF' > tests/RoguelikeToolkit.World.Core.Tests/LayerTests.cs
 using Xunit;
 using RoguelikeToolkit.World.Core;
 using System;
@@ -74,3 +76,4 @@ public class LayerTests
         }
     }
 }
+INNER_EOF

@@ -1,3 +1,5 @@
+#!/bin/bash
+cat << 'INNER_EOF' > src/RoguelikeToolkit.World.Core/LocalMapLayer.cs
 using System;
 using SharpArena.Allocators;
 
@@ -18,6 +20,31 @@ public class LocalMapLayer : IMapLayer<LocalMapInfo>, IDisposable
         _tectonicLayer = tectonicLayer;
     }
 
+    public void Generate()
+    {
+        var span = _store.GetSpan<LocalMapInfo>();
+
+        uint state = (uint)_seed;
+        if (state == 0) state = 1;
+
+        uint NextRandom()
+        {
+            state ^= state << 13;
+            state ^= state >> 17;
+            state ^= state << 5;
+            return state;
+        }
+
+        for (int i = 0; i < span.Length; i++)
+        {
+            span[i] = new LocalMapInfo
+            {
+                Seed = NextRandom(),
+                Biome = BiomeType.Ocean,
+                DangerLevel = 0
+            };
+        }
+    }
 
     public LocalMapInfo GetValue(GeoCoord coord)
     {
@@ -30,3 +57,4 @@ public class LocalMapLayer : IMapLayer<LocalMapInfo>, IDisposable
         // Don't dispose WorldDataStore here since it's centrally managed
     }
 }
+INNER_EOF
