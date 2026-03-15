@@ -463,23 +463,30 @@ namespace RoguelikeToolkit.World.App
             gl.UseProgram(_shaderProgram);
 
             float aspect = (float)(Bounds.Width / Bounds.Height);
-            var projection = CreatePerspective(45.0f, aspect, 0.1f, 100.0f);
-            var view = CreateTranslation(-PanX, -PanY, -Distance);
-            var modelX = CreateRotationX(Pitch);
-            var modelY = CreateRotationY(Yaw);
-            var model = MultiplyMatrix(modelX, modelY);
-            var viewProj = MultiplyMatrix(projection, view);
-            var mvp = MultiplyMatrix(viewProj, model);
 
-            fixed (float* pMvp = mvp)
-            {
-                gl.UniformMatrix4fv(_uMvpMatrix, 1, false, pMvp);
-            }
+            float* projection = stackalloc float[16];
+            CreatePerspective(45.0f, aspect, 0.1f, 100.0f, projection);
 
-            fixed (float* pModel = model)
-            {
-                gl.UniformMatrix4fv(_uModelMatrix, 1, false, pModel);
-            }
+            float* view = stackalloc float[16];
+            CreateTranslation(-PanX, -PanY, -Distance, view);
+
+            float* modelX = stackalloc float[16];
+            CreateRotationX(Pitch, modelX);
+
+            float* modelY = stackalloc float[16];
+            CreateRotationY(Yaw, modelY);
+
+            float* model = stackalloc float[16];
+            MultiplyMatrix(modelX, modelY, model);
+
+            float* viewProj = stackalloc float[16];
+            MultiplyMatrix(projection, view, viewProj);
+
+            float* mvp = stackalloc float[16];
+            MultiplyMatrix(viewProj, model, mvp);
+
+            gl.UniformMatrix4fv(_uMvpMatrix, 1, false, mvp);
+            gl.UniformMatrix4fv(_uModelMatrix, 1, false, model);
 
             var glUniform1i = Marshal.GetDelegateForFunctionPointer<glUniform1i_t>(gl.GetProcAddress("glUniform1i"));
             var glUniform3f = Marshal.GetDelegateForFunctionPointer<glUniform3f_t>(gl.GetProcAddress("glUniform3f"));
@@ -496,61 +503,53 @@ namespace RoguelikeToolkit.World.App
             gl.BindVertexArray(0);
         }
 
-        private float[] CreatePerspective(float fov, float aspect, float zNear, float zFar)
+        private void CreatePerspective(float fov, float aspect, float zNear, float zFar, float* result)
         {
-            float[] result = new float[16];
             float tanHalfFovy = (float)Math.Tan(fov / 2.0f * Math.PI / 180.0f);
+
+            for (int i = 0; i < 16; i++) result[i] = 0;
 
             result[0] = 1.0f / (aspect * tanHalfFovy);
             result[5] = 1.0f / (tanHalfFovy);
             result[10] = -(zFar + zNear) / (zFar - zNear);
             result[11] = -1.0f;
             result[14] = -(2.0f * zFar * zNear) / (zFar - zNear);
-
-            return result;
         }
 
-        private float[] CreateTranslation(float x, float y, float z)
+        private void CreateTranslation(float x, float y, float z, float* result)
         {
-            return new float[] {
-                1, 0, 0, 0,
-                0, 1, 0, 0,
-                0, 0, 1, 0,
-                x, y, z, 1
-            };
+            result[0] = 1; result[1] = 0; result[2] = 0; result[3] = 0;
+            result[4] = 0; result[5] = 1; result[6] = 0; result[7] = 0;
+            result[8] = 0; result[9] = 0; result[10] = 1; result[11] = 0;
+            result[12] = x; result[13] = y; result[14] = z; result[15] = 1;
         }
 
-        private float[] CreateRotationX(float angleDegrees)
+        private void CreateRotationX(float angleDegrees, float* result)
         {
             float angle = angleDegrees * (float)Math.PI / 180.0f;
             float c = (float)Math.Cos(angle);
             float s = (float)Math.Sin(angle);
 
-            return new float[] {
-                1, 0, 0, 0,
-                0, c, s, 0,
-                0, -s, c, 0,
-                0, 0, 0, 1
-            };
+            result[0] = 1; result[1] = 0; result[2] = 0; result[3] = 0;
+            result[4] = 0; result[5] = c; result[6] = s; result[7] = 0;
+            result[8] = 0; result[9] = -s; result[10] = c; result[11] = 0;
+            result[12] = 0; result[13] = 0; result[14] = 0; result[15] = 1;
         }
 
-        private float[] CreateRotationY(float angleDegrees)
+        private void CreateRotationY(float angleDegrees, float* result)
         {
             float angle = angleDegrees * (float)Math.PI / 180.0f;
             float c = (float)Math.Cos(angle);
             float s = (float)Math.Sin(angle);
 
-            return new float[] {
-                c, 0, -s, 0,
-                0, 1, 0, 0,
-                s, 0, c, 0,
-                0, 0, 0, 1
-            };
+            result[0] = c; result[1] = 0; result[2] = -s; result[3] = 0;
+            result[4] = 0; result[5] = 1; result[6] = 0; result[7] = 0;
+            result[8] = s; result[9] = 0; result[10] = c; result[11] = 0;
+            result[12] = 0; result[13] = 0; result[14] = 0; result[15] = 1;
         }
 
-        private float[] MultiplyMatrix(float[] a, float[] b)
+        private void MultiplyMatrix(float* a, float* b, float* result)
         {
-            float[] result = new float[16];
             for (int c = 0; c < 4; c++)
             {
                 for (int r = 0; r < 4; r++)
@@ -562,13 +561,10 @@ namespace RoguelikeToolkit.World.App
                         a[r + 12] * b[c * 4 + 3];
                 }
             }
-            return result;
         }
 
-        private float[] InvertMatrix(float[] m)
+        private void InvertMatrix(float* m, float* inv)
         {
-            float[] inv = new float[16];
-
             inv[0] = m[5] * m[10] * m[15] - m[5] * m[11] * m[14] - m[9] * m[6] * m[15] + m[9] * m[7] * m[14] + m[13] * m[6] * m[11] - m[13] * m[7] * m[10];
             inv[4] = -m[4] * m[10] * m[15] + m[4] * m[11] * m[14] + m[8] * m[6] * m[15] - m[8] * m[7] * m[14] - m[12] * m[6] * m[11] + m[12] * m[7] * m[10];
             inv[8] = m[4] * m[9] * m[15] - m[4] * m[11] * m[13] - m[8] * m[5] * m[15] + m[8] * m[7] * m[13] + m[12] * m[5] * m[11] - m[12] * m[7] * m[9];
@@ -587,25 +583,22 @@ namespace RoguelikeToolkit.World.App
             inv[15] = m[0] * m[5] * m[10] - m[0] * m[6] * m[9] - m[4] * m[1] * m[10] + m[4] * m[2] * m[9] + m[8] * m[1] * m[6] - m[8] * m[2] * m[5];
 
             float det = m[0] * inv[0] + m[1] * inv[4] + m[2] * inv[8] + m[3] * inv[12];
-            if (det == 0) return inv;
-
-            det = 1.0f / det;
-            for (int i = 0; i < 16; i++)
+            if (det != 0)
             {
-                inv[i] = inv[i] * det;
+                det = 1.0f / det;
+                for (int i = 0; i < 16; i++)
+                {
+                    inv[i] = inv[i] * det;
+                }
             }
-
-            return inv;
         }
 
-        private float[] MultiplyMatrixVector(float[] matrix, float[] vector)
+        private void MultiplyMatrixVector(float* matrix, float* vector, float* result)
         {
-            float[] result = new float[4];
             result[0] = matrix[0] * vector[0] + matrix[4] * vector[1] + matrix[8] * vector[2] + matrix[12] * vector[3];
             result[1] = matrix[1] * vector[0] + matrix[5] * vector[1] + matrix[9] * vector[2] + matrix[13] * vector[3];
             result[2] = matrix[2] * vector[0] + matrix[6] * vector[1] + matrix[10] * vector[2] + matrix[14] * vector[3];
             result[3] = matrix[3] * vector[0] + matrix[7] * vector[1] + matrix[11] * vector[2] + matrix[15] * vector[3];
-            return result;
         }
 
         public bool TryPickHex(double mouseX, double mouseY, out double lat, out double lon, out int tileIndex)
@@ -617,25 +610,43 @@ namespace RoguelikeToolkit.World.App
             if (_positions == null || _positions.Length == 0) return false;
 
             float aspect = (float)(Bounds.Width / Bounds.Height);
-            var projection = CreatePerspective(45.0f, aspect, 0.1f, 100.0f);
-            var view = CreateTranslation(-PanX, -PanY, -Distance);
-            var modelX = CreateRotationX(Pitch);
-            var modelY = CreateRotationY(Yaw);
-            var model = MultiplyMatrix(modelX, modelY);
-            var viewProj = MultiplyMatrix(projection, view);
-            var mvp = MultiplyMatrix(viewProj, model);
 
-            var invMvp = InvertMatrix(mvp);
+            float* projection = stackalloc float[16];
+            CreatePerspective(45.0f, aspect, 0.1f, 100.0f, projection);
+
+            float* view = stackalloc float[16];
+            CreateTranslation(-PanX, -PanY, -Distance, view);
+
+            float* modelX = stackalloc float[16];
+            CreateRotationX(Pitch, modelX);
+
+            float* modelY = stackalloc float[16];
+            CreateRotationY(Yaw, modelY);
+
+            float* model = stackalloc float[16];
+            MultiplyMatrix(modelX, modelY, model);
+
+            float* viewProj = stackalloc float[16];
+            MultiplyMatrix(projection, view, viewProj);
+
+            float* mvp = stackalloc float[16];
+            MultiplyMatrix(viewProj, model, mvp);
+
+            float* invMvp = stackalloc float[16];
+            InvertMatrix(mvp, invMvp);
 
             // NDC Coordinates
             float ndcX = (float)((2.0 * mouseX) / Bounds.Width - 1.0);
             float ndcY = (float)(1.0 - (2.0 * mouseY) / Bounds.Height); // Invert Y
 
-            float[] rayClipNear = new float[] { ndcX, ndcY, -1.0f, 1.0f };
-            float[] rayClipFar = new float[] { ndcX, ndcY, 1.0f, 1.0f };
+            float* rayClipNear = stackalloc float[] { ndcX, ndcY, -1.0f, 1.0f };
+            float* rayClipFar = stackalloc float[] { ndcX, ndcY, 1.0f, 1.0f };
 
-            float[] rayObjNear = MultiplyMatrixVector(invMvp, rayClipNear);
-            float[] rayObjFar = MultiplyMatrixVector(invMvp, rayClipFar);
+            float* rayObjNear = stackalloc float[4];
+            MultiplyMatrixVector(invMvp, rayClipNear, rayObjNear);
+
+            float* rayObjFar = stackalloc float[4];
+            MultiplyMatrixVector(invMvp, rayClipFar, rayObjFar);
 
             if (rayObjNear[3] != 0.0f) { rayObjNear[0] /= rayObjNear[3]; rayObjNear[1] /= rayObjNear[3]; rayObjNear[2] /= rayObjNear[3]; }
             if (rayObjFar[3] != 0.0f) { rayObjFar[0] /= rayObjFar[3]; rayObjFar[1] /= rayObjFar[3]; rayObjFar[2] /= rayObjFar[3]; }
