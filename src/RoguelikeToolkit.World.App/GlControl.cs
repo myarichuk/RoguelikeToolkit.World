@@ -519,10 +519,8 @@ namespace RoguelikeToolkit.World.App
             return result;
         }
 
-        private float[] InvertMatrix(float[] m)
+        private void InvertMatrix(ReadOnlySpan<float> m, Span<float> inv)
         {
-            float[] inv = new float[16];
-
             inv[0] = m[5] * m[10] * m[15] - m[5] * m[11] * m[14] - m[9] * m[6] * m[15] + m[9] * m[7] * m[14] + m[13] * m[6] * m[11] - m[13] * m[7] * m[10];
             inv[4] = -m[4] * m[10] * m[15] + m[4] * m[11] * m[14] + m[8] * m[6] * m[15] - m[8] * m[7] * m[14] - m[12] * m[6] * m[11] + m[12] * m[7] * m[10];
             inv[8] = m[4] * m[9] * m[15] - m[4] * m[11] * m[13] - m[8] * m[5] * m[15] + m[8] * m[7] * m[13] + m[12] * m[5] * m[11] - m[12] * m[7] * m[9];
@@ -541,25 +539,21 @@ namespace RoguelikeToolkit.World.App
             inv[15] = m[0] * m[5] * m[10] - m[0] * m[6] * m[9] - m[4] * m[1] * m[10] + m[4] * m[2] * m[9] + m[8] * m[1] * m[6] - m[8] * m[2] * m[5];
 
             float det = m[0] * inv[0] + m[1] * inv[4] + m[2] * inv[8] + m[3] * inv[12];
-            if (det == 0) return inv;
+            if (det == 0) return;
 
             det = 1.0f / det;
             for (int i = 0; i < 16; i++)
             {
                 inv[i] = inv[i] * det;
             }
-
-            return inv;
         }
 
-        private float[] MultiplyMatrixVector(float[] matrix, float[] vector)
+        private void MultiplyMatrixVector(ReadOnlySpan<float> matrix, ReadOnlySpan<float> vector, Span<float> result)
         {
-            float[] result = new float[4];
             result[0] = matrix[0] * vector[0] + matrix[4] * vector[1] + matrix[8] * vector[2] + matrix[12] * vector[3];
             result[1] = matrix[1] * vector[0] + matrix[5] * vector[1] + matrix[9] * vector[2] + matrix[13] * vector[3];
             result[2] = matrix[2] * vector[0] + matrix[6] * vector[1] + matrix[10] * vector[2] + matrix[14] * vector[3];
             result[3] = matrix[3] * vector[0] + matrix[7] * vector[1] + matrix[11] * vector[2] + matrix[15] * vector[3];
-            return result;
         }
 
         public bool TryPickHex(double mouseX, double mouseY, out double lat, out double lon, out int tileIndex)
@@ -579,17 +573,21 @@ namespace RoguelikeToolkit.World.App
             var viewProj = MultiplyMatrix(projection, view);
             var mvp = MultiplyMatrix(viewProj, model);
 
-            var invMvp = InvertMatrix(mvp);
+            Span<float> invMvp = stackalloc float[16];
+            InvertMatrix(mvp, invMvp);
 
             // NDC Coordinates
             float ndcX = (float)((2.0 * mouseX) / Bounds.Width - 1.0);
             float ndcY = (float)(1.0 - (2.0 * mouseY) / Bounds.Height); // Invert Y
 
-            float[] rayClipNear = new float[] { ndcX, ndcY, -1.0f, 1.0f };
-            float[] rayClipFar = new float[] { ndcX, ndcY, 1.0f, 1.0f };
+            Span<float> rayClipNear = stackalloc float[] { ndcX, ndcY, -1.0f, 1.0f };
+            Span<float> rayClipFar = stackalloc float[] { ndcX, ndcY, 1.0f, 1.0f };
 
-            float[] rayObjNear = MultiplyMatrixVector(invMvp, rayClipNear);
-            float[] rayObjFar = MultiplyMatrixVector(invMvp, rayClipFar);
+            Span<float> rayObjNear = stackalloc float[4];
+            MultiplyMatrixVector(invMvp, rayClipNear, rayObjNear);
+
+            Span<float> rayObjFar = stackalloc float[4];
+            MultiplyMatrixVector(invMvp, rayClipFar, rayObjFar);
 
             if (rayObjNear[3] != 0.0f) { rayObjNear[0] /= rayObjNear[3]; rayObjNear[1] /= rayObjNear[3]; rayObjNear[2] /= rayObjNear[3]; }
             if (rayObjFar[3] != 0.0f) { rayObjFar[0] /= rayObjFar[3]; rayObjFar[1] /= rayObjFar[3]; rayObjFar[2] /= rayObjFar[3]; }
