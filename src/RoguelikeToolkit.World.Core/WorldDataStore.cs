@@ -1,45 +1,69 @@
 using System;
+using System.Collections.Generic;
 using System.IO;
 using System.IO.MemoryMappedFiles;
 
 namespace RoguelikeToolkit.World.Core;
 
 /// <summary>
-/// A zero-heap store for an icosahedral spherical hex grid.
+/// A zero-heap central data store for all layers in an icosahedral spherical hex grid.
 /// Pentagons are at indices 0-11.
 /// Size determines the subdivision level.
 /// </summary>
-public unsafe class HexSphereStore<T> : IDisposable where T : unmanaged
+public unsafe class WorldDataStore : IDisposable
 {
-    private readonly MemoryMappedFile _mmf;
-    private readonly MemoryMappedViewAccessor _accessor;
-    private readonly byte* _ptr;
+    private MemoryMappedFile? _mmf;
+    private MemoryMappedViewAccessor? _accessor;
+    private byte* _ptr;
     private readonly int _tileCount;
     private readonly int _size;
+    private readonly string? _filePath;
+
+    private readonly Dictionary<Type, long> _layerOffsets = new();
+    private long _currentTotalBytes = 0;
 
     public int Size => _size;
     public int TileCount => _tileCount;
 
-    // Total hexes for icosahedral grid = 10 * size^2 + 2 (the 2 is for the 12 pentagons vs hexes)
-    // Actually the standard formula for subdivisions:
-    // f = 10 * n^2 (faces)
-    // v = 10 * n^2 + 2 (vertices of triangular grid = tiles of hex grid)
     public static int GetTileCount(int size) => 10 * size * size + 2;
 
-    public HexSphereStore(int size, string? filePath = null)
+    public WorldDataStore(int size, string? filePath = null)
     {
         _size = size;
         _tileCount = GetTileCount(size);
-        long byteLength = (long)_tileCount * sizeof(T);
+        _filePath = filePath;
+    }
 
-        if (filePath != null)
+    /// <summary>
+    /// Registers a layer of type T. This calculates the necessary byte offset for the layer.
+    /// Note: Call Allocate() after registering all layers to actually create the memory mapped file.
+    /// </summary>
+    public void RegisterLayer<T>() where T : unmanaged
+    {
+        var type = typeof(T);
+        if (_layerOffsets.ContainsKey(type)) return; // Already registered
+
+        if (_mmf != null)
+        {
+            throw new InvalidOperationException("Cannot register layers after Allocate() has been called.");
+        }
+
+        _layerOffsets[type] = _currentTotalBytes;
+        _currentTotalBytes += (long)_tileCount * sizeof(T);
+    }
+
+    /// <summary>
+    /// Allocates the memory mapped file with the total byte size of all registered layers.
+    /// </summary>
+    public void Allocate()
+    {
+        if (_currentTotalBytes == 0) return;
+        if (_mmf != null) return;
+
+        if (_filePath != null)
         {
             var baseDirectory = Path.GetFullPath(Environment.CurrentDirectory);
-            var fullPath = Path.GetFullPath(Path.Combine(baseDirectory, filePath));
-
-            // Ensure the resolved path strictly resides within the current working directory.
-            // This prevents both directory traversal (e.g., ../../etc/passwd)
-            // and mapping arbitrary absolute paths (e.g., /etc/passwd or C:\Windows\System32\sam)
+            var fullPath = Path.GetFullPath(Path.Combine(baseDirectory, _filePath));
 
             string baseDirectoryWithSeparator = baseDirectory;
             if (!baseDirectoryWithSeparator.EndsWith(Path.DirectorySeparatorChar.ToString()))
@@ -47,65 +71,66 @@ public unsafe class HexSphereStore<T> : IDisposable where T : unmanaged
                 baseDirectoryWithSeparator += Path.DirectorySeparatorChar;
             }
 
-            // Use Ordinal instead of OrdinalIgnoreCase for case-sensitive file systems like Linux
             if (!fullPath.StartsWith(baseDirectoryWithSeparator, StringComparison.Ordinal) &&
                 fullPath != baseDirectory)
             {
                 throw new UnauthorizedAccessException("Path traversal is not allowed.");
             }
 
-            _mmf = MemoryMappedFile.CreateFromFile(fullPath, FileMode.OpenOrCreate, null, byteLength);
+            _mmf = MemoryMappedFile.CreateFromFile(fullPath, FileMode.OpenOrCreate, null, _currentTotalBytes);
         }
         else
         {
-            _mmf = MemoryMappedFile.CreateNew(null, byteLength);
+            _mmf = MemoryMappedFile.CreateNew(null, _currentTotalBytes);
         }
 
-        _accessor = _mmf.CreateViewAccessor(0, byteLength);
-        _accessor.SafeMemoryMappedViewHandle.AcquirePointer(ref _ptr);
+        _accessor = _mmf.CreateViewAccessor(0, _currentTotalBytes);
+        byte* ptr = null;
+        _accessor.SafeMemoryMappedViewHandle.AcquirePointer(ref ptr);
+        _ptr = ptr;
 
-        // Zero initialize just to be sure if new memory
-        if (filePath == null)
+        // Zero initialize if new memory
+        if (_filePath == null)
         {
-            var span = GetSpan();
-            span.Clear();
+            new Span<byte>(_ptr, (int)_currentTotalBytes).Clear();
         }
     }
 
-    public Span<T> GetSpan()
+    public Span<T> GetSpan<T>() where T : unmanaged
     {
-        return new Span<T>(_ptr, _tileCount);
-    }
-
-    public ref T this[int index]
-    {
-        get
+        if (_ptr == null) throw new InvalidOperationException("Store not allocated. Call Allocate() first.");
+        if (!_layerOffsets.TryGetValue(typeof(T), out long offset))
         {
-            if ((uint)index >= (uint)_tileCount)
-                throw new IndexOutOfRangeException();
-            return ref ((T*)_ptr)[index];
+            throw new ArgumentException($"Layer of type {typeof(T).Name} is not registered.");
         }
+
+        return new Span<T>(_ptr + offset, _tileCount);
     }
 
-    /// <summary>
-    /// Converts a geo coordinate to an approximate tile index.
-    /// This is a simplified icosahedral mapping for test purposes.
-    /// Real icosahedral mapping requires complex projection per triangle.
-    /// </summary>
+    public ref T GetRef<T>(int index) where T : unmanaged
+    {
+        if ((uint)index >= (uint)_tileCount)
+            throw new IndexOutOfRangeException();
+
+        if (_ptr == null) throw new InvalidOperationException("Store not allocated. Call Allocate() first.");
+        if (!_layerOffsets.TryGetValue(typeof(T), out long offset))
+        {
+            throw new ArgumentException($"Layer of type {typeof(T).Name} is not registered.");
+        }
+
+        return ref ((T*)(_ptr + offset))[index];
+    }
+
     public int GetTileIndex(GeoCoord coord)
     {
-        // Simple mock implementation for testing
-        // Just map longitude and latitude to a rough index based on size
-        double normalizedLon = (coord.Longitude + 180.0) / 360.0; // 0 to 1
-        double normalizedLat = (coord.Latitude + 90.0) / 180.0;   // 0 to 1
+        double normalizedLon = (coord.Longitude + 180.0) / 360.0;
+        double normalizedLat = (coord.Latitude + 90.0) / 180.0;
 
-        // Clamp
         if (normalizedLon < 0) normalizedLon = 0;
         if (normalizedLon >= 1) normalizedLon = 0.999999;
         if (normalizedLat < 0) normalizedLat = 0;
         if (normalizedLat >= 1) normalizedLat = 0.999999;
 
-        // Number of rings roughly
         int rings = _size * 3;
         int ringIndex = (int)(normalizedLat * rings);
 
@@ -118,10 +143,6 @@ public unsafe class HexSphereStore<T> : IDisposable where T : unmanaged
         return index;
     }
 
-    /// <summary>
-    /// Converts a tile index back to an approximate geo coordinate.
-    /// Reverses the logic in GetTileIndex.
-    /// </summary>
     public GeoCoord GetGeoCoord(int index)
     {
         if (index < 0) index = 0;
@@ -135,7 +156,6 @@ public unsafe class HexSphereStore<T> : IDisposable where T : unmanaged
         int ringIndex = index / tilesInRing;
         int tileInRing = index % tilesInRing;
 
-        // Add 0.5 to get the center of the tile
         double normalizedLat = (ringIndex + 0.5) / rings;
         double normalizedLon = (tileInRing + 0.5) / tilesInRing;
 
@@ -145,19 +165,11 @@ public unsafe class HexSphereStore<T> : IDisposable where T : unmanaged
         return new GeoCoord(lat, lon);
     }
 
-    /// <summary>
-    /// Gets adjacent tile indices.
-    /// </summary>
     public int GetAdjacent(int index, Span<int> neighbors)
     {
-        // For pentagons (first 12 indices or specific indices depending on projection mapping)
-        // they have 5 neighbors, others have 6.
-        // Simplified mock logic for tests.
-
         int count = 0;
         if (index < 12)
         {
-            // Pentagon mock neighbors
             for (int i = 0; i < 5; i++)
             {
                 if (count < neighbors.Length)
@@ -168,7 +180,6 @@ public unsafe class HexSphereStore<T> : IDisposable where T : unmanaged
         }
         else
         {
-            // Hexagon mock neighbors
             for (int i = 0; i < 6; i++)
             {
                 if (count < neighbors.Length)
@@ -182,11 +193,15 @@ public unsafe class HexSphereStore<T> : IDisposable where T : unmanaged
 
     public void Dispose()
     {
-        if (_ptr != null)
+        if (_ptr != null && _accessor != null)
         {
             _accessor.SafeMemoryMappedViewHandle.ReleasePointer();
         }
         _accessor?.Dispose();
         _mmf?.Dispose();
+
+        _ptr = null;
+        _accessor = null;
+        _mmf = null;
     }
 }

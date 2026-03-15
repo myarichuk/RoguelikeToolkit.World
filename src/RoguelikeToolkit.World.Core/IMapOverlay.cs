@@ -5,7 +5,6 @@ namespace RoguelikeToolkit.World.Core;
 
 public interface IMapLayer<T> where T : unmanaged
 {
-    HexSphereStore<T> Store { get; }
-    void Generate();
+    WorldDataStore Store { get; }
     T GetValue(GeoCoord coord);
 }

@@ -13,16 +13,16 @@ public class AdjacencyTests
     [InlineData(2)]
     [InlineData(5)]
     [InlineData(10)]
-    public void HexSphereStore_CalculatesCorrectTileCount(int size)
+    public void WorldDataStore_CalculatesCorrectTileCount(int size)
     {
         int expected = 10 * size * size + 2;
-        Assert.Equal(expected, HexSphereStore<DummyData>.GetTileCount(size));
+        Assert.Equal(expected, WorldDataStore.GetTileCount(size));
     }
 
     [Fact]
-    public void HexSphereStore_GetAdjacent_ReturnsFiveForPentagon()
+    public void WorldDataStore_GetAdjacent_ReturnsFiveForPentagon()
     {
-        using var store = new HexSphereStore<DummyData>(1);
+        using var store = new WorldDataStore(1);
         Span<int> neighbors = stackalloc int[6];
         int count = store.GetAdjacent(0, neighbors);
 
@@ -31,9 +31,9 @@ public class AdjacencyTests
     }
 
     [Fact]
-    public void HexSphereStore_GetAdjacent_ReturnsSixForHexagon()
+    public void WorldDataStore_GetAdjacent_ReturnsSixForHexagon()
     {
-        using var store = new HexSphereStore<DummyData>(2); // size 2 -> 42 tiles
+        using var store = new WorldDataStore(2); // size 2 -> 42 tiles
         Span<int> neighbors = stackalloc int[6];
         int count = store.GetAdjacent(15, neighbors);
 
@@ -42,9 +42,9 @@ public class AdjacencyTests
     }
 
     [Fact]
-    public void HexSphereStore_GetTileIndex_ReturnsValidIndex()
+    public void WorldDataStore_GetTileIndex_ReturnsValidIndex()
     {
-        using var store = new HexSphereStore<DummyData>(2);
+        using var store = new WorldDataStore(2);
         var coord = new GeoCoord(45, 90);
         int index = store.GetTileIndex(coord);
 
@@ -53,14 +53,14 @@ public class AdjacencyTests
     }
 
     [Fact]
-    public void HexSphereStore_Indexer_ThrowsIndexOutOfRangeException_WhenIndexIsOutOfBounds()
+    public void WorldDataStore_Indexer_ThrowsIndexOutOfRangeException_WhenIndexIsOutOfBounds()
     {
-        using var store = new HexSphereStore<DummyData>(1);
+        using var store = new WorldDataStore(1);
 
         // Accessing at TileCount should throw since valid indices are 0 to TileCount - 1
-        Assert.Throws<IndexOutOfRangeException>(() => store[store.TileCount]);
+        Assert.Throws<IndexOutOfRangeException>(() => store.GetRef<DummyData>(store.TileCount));
 
         // Accessing negative index should also throw
-        Assert.Throws<IndexOutOfRangeException>(() => store[-1]);
+        Assert.Throws<IndexOutOfRangeException>(() => store.GetRef<DummyData>(-1));
     }
 }

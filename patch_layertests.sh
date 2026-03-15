@@ -1,0 +1,3 @@
+#!/bin/bash
+sed -i 's/using var layer = new TectonicPlateLayer(new WorldDataStore(5), 5, seed: 1234, arena: arena);/var store = new WorldDataStore(5);\n        store.RegisterLayer<TectonicPlate>();\n        store.Allocate();\n        using var layer = new TectonicPlateLayer(store, 5, seed: 1234, arena: arena);/g' tests/RoguelikeToolkit.World.Core.Tests/LayerTests.cs
+sed -i 's/using var warmupLayer = new TectonicPlateLayer(new WorldDataStore(1), 1, 1, warmupArena);/var warmupStore = new WorldDataStore(1);\n        warmupStore.RegisterLayer<TectonicPlate>();\n        warmupStore.Allocate();\n        using var warmupLayer = new TectonicPlateLayer(warmupStore, 1, 1, warmupArena);/g' tests/RoguelikeToolkit.World.Core.Tests/LayerTests.cs
