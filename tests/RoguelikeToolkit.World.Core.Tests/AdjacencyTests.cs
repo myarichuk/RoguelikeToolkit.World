@@ -1,6 +1,7 @@
 using Xunit;
 using RoguelikeToolkit.World.Core;
 using System;
+using System.Collections.Generic;
 
 namespace RoguelikeToolkit.World.Core.Tests;
 
@@ -20,36 +21,72 @@ public class AdjacencyTests
     }
 
     [Fact]
-    public void WorldDataStore_GetAdjacent_ReturnsFiveForPentagon()
-    {
-        using var store = new WorldDataStore(1);
-        Span<int> neighbors = stackalloc int[6];
-        int count = store.GetAdjacent(0, neighbors);
-
-        Assert.Equal(5, count);
-        Assert.Equal(1, neighbors[0]); // Testing dummy adjacency logic
-    }
-
-    [Fact]
-    public void WorldDataStore_GetAdjacent_ReturnsSixForHexagon()
-    {
-        using var store = new WorldDataStore(2); // size 2 -> 42 tiles
-        Span<int> neighbors = stackalloc int[6];
-        int count = store.GetAdjacent(15, neighbors);
-
-        Assert.Equal(6, count);
-        Assert.Equal(16, neighbors[0]); // Testing dummy adjacency logic
-    }
-
-    [Fact]
-    public void WorldDataStore_GetTileIndex_ReturnsValidIndex()
+    public void WorldDataStore_GetAdjacent_ReturnsFiveNeighborsForPentagonsAndSixForHexagons()
     {
         using var store = new WorldDataStore(2);
-        var coord = new GeoCoord(45, 90);
-        int index = store.GetTileIndex(coord);
 
-        Assert.True(index >= 0);
-        Assert.True(index < store.TileCount);
+        for (int i = 0; i < store.TileCount; i++)
+        {
+            Span<int> neighbors = stackalloc int[6];
+            int count = store.GetAdjacent(i, neighbors);
+
+            if (i < 12)
+            {
+                Assert.Equal(5, count);
+            }
+            else
+            {
+                Assert.Equal(6, count);
+            }
+        }
+    }
+
+    [Fact]
+    public void WorldDataStore_GetAdjacent_ReturnsSymmetricInRangeUniqueNeighbors()
+    {
+        using var store = new WorldDataStore(3);
+
+        for (int i = 0; i < store.TileCount; i++)
+        {
+            Span<int> neighbors = stackalloc int[6];
+            int count = store.GetAdjacent(i, neighbors);
+            var seen = new HashSet<int>();
+
+            for (int n = 0; n < count; n++)
+            {
+                int neighbor = neighbors[n];
+                Assert.InRange(neighbor, 0, store.TileCount - 1);
+                Assert.NotEqual(i, neighbor);
+                Assert.True(seen.Add(neighbor));
+
+                Span<int> reverse = stackalloc int[6];
+                int reverseCount = store.GetAdjacent(neighbor, reverse);
+                bool found = false;
+                for (int r = 0; r < reverseCount; r++)
+                {
+                    if (reverse[r] == i)
+                    {
+                        found = true;
+                        break;
+                    }
+                }
+
+                Assert.True(found);
+            }
+        }
+    }
+
+    [Fact]
+    public void WorldDataStore_GetTileIndex_MapsCenterBackToSameTile()
+    {
+        using var store = new WorldDataStore(2);
+
+        for (int i = 0; i < store.TileCount; i++)
+        {
+            var coord = store.GetGeoCoord(i);
+            int index = store.GetTileIndex(coord);
+            Assert.Equal(i, index);
+        }
     }
 
     [Fact]
@@ -57,10 +94,7 @@ public class AdjacencyTests
     {
         using var store = new WorldDataStore(1);
 
-        // Accessing at TileCount should throw since valid indices are 0 to TileCount - 1
         Assert.Throws<IndexOutOfRangeException>(() => store.GetRef<DummyData>(store.TileCount));
-
-        // Accessing negative index should also throw
         Assert.Throws<IndexOutOfRangeException>(() => store.GetRef<DummyData>(-1));
     }
 }

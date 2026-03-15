@@ -2,6 +2,7 @@ using System;
 using System.Collections.Generic;
 using System.IO;
 using System.IO.MemoryMappedFiles;
+using System.Linq;
 
 namespace RoguelikeToolkit.World.Core;
 
@@ -12,12 +13,23 @@ namespace RoguelikeToolkit.World.Core;
 /// </summary>
 public unsafe class WorldDataStore : IDisposable
 {
+    private sealed class WorldTopology
+    {
+        public required GeoCoord[] Centers { get; init; }
+        public required int[] NeighborOffsets { get; init; }
+        public required int[] Neighbors { get; init; }
+    }
+
+    private static readonly object TopologyLock = new();
+    private static readonly Dictionary<int, WorldTopology> TopologiesBySize = new();
+
     private MemoryMappedFile? _mmf;
     private MemoryMappedViewAccessor? _accessor;
     private byte* _ptr;
     private readonly int _tileCount;
     private readonly int _size;
     private readonly string? _filePath;
+    private readonly WorldTopology _topology;
 
     private readonly Dictionary<Type, long> _layerOffsets = new();
     private long _currentTotalBytes = 0;
@@ -32,6 +44,7 @@ public unsafe class WorldDataStore : IDisposable
         _size = size;
         _tileCount = GetTileCount(size);
         _filePath = filePath;
+        _topology = GetOrCreateTopology(size);
     }
 
     /// <summary>
@@ -123,72 +136,169 @@ public unsafe class WorldDataStore : IDisposable
 
     public int GetTileIndex(GeoCoord coord)
     {
-        double normalizedLon = (coord.Longitude + 180.0) / 360.0;
-        double normalizedLat = (coord.Latitude + 90.0) / 180.0;
+        var target = Vector3D.FromGeoCoord(coord);
+        int bestIndex = 0;
+        double bestScore = double.NegativeInfinity;
 
-        if (normalizedLon < 0) normalizedLon = 0;
-        if (normalizedLon >= 1) normalizedLon = 0.999999;
-        if (normalizedLat < 0) normalizedLat = 0;
-        if (normalizedLat >= 1) normalizedLat = 0.999999;
+        for (int i = 0; i < _topology.Centers.Length; i++)
+        {
+            var current = Vector3D.FromGeoCoord(_topology.Centers[i]);
+            var score = Vector3D.Dot(target, current);
+            if (score > bestScore)
+            {
+                bestScore = score;
+                bestIndex = i;
+            }
+        }
 
-        int rings = _size * 3;
-        int ringIndex = (int)(normalizedLat * rings);
-
-        int tilesInRing = _tileCount / rings;
-        if (tilesInRing == 0) tilesInRing = 1;
-        int tileInRing = (int)(normalizedLon * tilesInRing);
-
-        int index = ringIndex * tilesInRing + tileInRing;
-        if (index >= _tileCount) index = _tileCount - 1;
-        return index;
+        return bestIndex;
     }
 
     public GeoCoord GetGeoCoord(int index)
     {
-        if (index < 0) index = 0;
-        if (index >= _tileCount) index = _tileCount - 1;
+        if ((uint)index >= (uint)_tileCount)
+            throw new IndexOutOfRangeException();
 
-        int rings = _size * 3;
-        if (rings == 0) rings = 1;
-        int tilesInRing = _tileCount / rings;
-        if (tilesInRing == 0) tilesInRing = 1;
-
-        int ringIndex = index / tilesInRing;
-        int tileInRing = index % tilesInRing;
-
-        double normalizedLat = (ringIndex + 0.5) / rings;
-        double normalizedLon = (tileInRing + 0.5) / tilesInRing;
-
-        double lat = normalizedLat * 180.0 - 90.0;
-        double lon = normalizedLon * 360.0 - 180.0;
-
-        return new GeoCoord(lat, lon);
+        return _topology.Centers[index];
     }
 
     public int GetAdjacent(int index, Span<int> neighbors)
     {
+        if ((uint)index >= (uint)_tileCount)
+            throw new IndexOutOfRangeException();
+
+        int start = _topology.NeighborOffsets[index];
+        int end = _topology.NeighborOffsets[index + 1];
         int count = 0;
-        if (index < 12)
-        {
-            for (int i = 0; i < 5; i++)
-            {
-                if (count < neighbors.Length)
-                {
-                    neighbors[count++] = (index + i + 1) % _tileCount;
-                }
-            }
-        }
-        else
-        {
-            for (int i = 0; i < 6; i++)
-            {
-                if (count < neighbors.Length)
-                {
-                    neighbors[count++] = (index + i + 1) % _tileCount;
-                }
-            }
-        }
+
+        for (int i = start; i < end && count < neighbors.Length; i++)
+            neighbors[count++] = _topology.Neighbors[i];
+
         return count;
+    }
+
+    private static WorldTopology GetOrCreateTopology(int size)
+    {
+        lock (TopologyLock)
+        {
+            if (TopologiesBySize.TryGetValue(size, out var existing))
+                return existing;
+
+            var created = CreateTopology(size);
+            TopologiesBySize[size] = created;
+            return created;
+        }
+    }
+
+    private static WorldTopology CreateTopology(int size)
+    {
+        int tileCount = GetTileCount(size);
+        var centers = BuildCenters(tileCount);
+        var targets = new int[tileCount];
+
+        for (int i = 0; i < tileCount; i++)
+            targets[i] = i < 12 ? 5 : 6;
+
+        var adjacency = new HashSet<int>[tileCount];
+        for (int i = 0; i < tileCount; i++)
+            adjacency[i] = new HashSet<int>();
+
+        for (int i = 0; i < tileCount; i++)
+        {
+            var distances = new List<(double dist, int index)>(tileCount - 1);
+            var source = Vector3D.FromGeoCoord(centers[i]);
+            for (int j = 0; j < tileCount; j++)
+            {
+                if (i == j) continue;
+                var target = Vector3D.FromGeoCoord(centers[j]);
+                var delta = source - target;
+                distances.Add((Vector3D.Dot(delta, delta), j));
+            }
+
+            foreach (var (_, candidate) in distances.OrderBy(x => x.dist))
+            {
+                if (adjacency[i].Count >= targets[i]) break;
+                if (adjacency[candidate].Count >= targets[candidate]) continue;
+                adjacency[i].Add(candidate);
+                adjacency[candidate].Add(i);
+            }
+        }
+
+        for (int i = 0; i < tileCount; i++)
+        {
+            while (adjacency[i].Count < targets[i])
+            {
+                int bestCandidate = -1;
+                double bestDistance = double.MaxValue;
+                var source = Vector3D.FromGeoCoord(centers[i]);
+
+                for (int candidate = 0; candidate < tileCount; candidate++)
+                {
+                    if (candidate == i) continue;
+                    if (adjacency[i].Contains(candidate)) continue;
+                    if (adjacency[candidate].Count >= targets[candidate]) continue;
+
+                    var target = Vector3D.FromGeoCoord(centers[candidate]);
+                    var delta = source - target;
+                    var dist = Vector3D.Dot(delta, delta);
+                    if (dist < bestDistance)
+                    {
+                        bestDistance = dist;
+                        bestCandidate = candidate;
+                    }
+                }
+
+                if (bestCandidate == -1)
+                    throw new InvalidOperationException($"Failed to build world topology for size {size}.");
+
+                adjacency[i].Add(bestCandidate);
+                adjacency[bestCandidate].Add(i);
+            }
+        }
+
+        var offsets = new int[tileCount + 1];
+        int totalNeighbors = 0;
+        for (int i = 0; i < tileCount; i++)
+        {
+            offsets[i] = totalNeighbors;
+            totalNeighbors += adjacency[i].Count;
+        }
+        offsets[tileCount] = totalNeighbors;
+
+        var neighbors = new int[totalNeighbors];
+        int write = 0;
+        for (int i = 0; i < tileCount; i++)
+        {
+            foreach (var neighbor in adjacency[i].OrderBy(n => n))
+                neighbors[write++] = neighbor;
+        }
+
+        return new WorldTopology
+        {
+            Centers = centers,
+            NeighborOffsets = offsets,
+            Neighbors = neighbors
+        };
+    }
+
+    private static GeoCoord[] BuildCenters(int tileCount)
+    {
+        var centers = new GeoCoord[tileCount];
+        var goldenAngle = Math.PI * (3 - Math.Sqrt(5));
+
+        for (int i = 0; i < tileCount; i++)
+        {
+            double y = 1.0 - (2.0 * i + 1.0) / tileCount;
+            double radius = Math.Sqrt(Math.Max(0.0, 1.0 - y * y));
+            double theta = i * goldenAngle;
+            double x = Math.Cos(theta) * radius;
+            double z = Math.Sin(theta) * radius;
+
+            var vec = new Vector3D(x, y, z).Normalize();
+            centers[i] = vec.ToGeoCoord();
+        }
+
+        return centers;
     }
 
     public void Dispose()
