@@ -45,4 +45,6 @@ public class MyBiomeGenerationStage : IWorldGeneratorStage
 ```
 
 ### Step 3: Injecting the Plugin
-The `WorldGenerationPipeline` can discover stages via reflection. By calling `pipeline.Discover("Plugins")`, the core library will search the executing assembly as well as any external `.dll` files placed within the specified `"Plugins"` directory. Your custom stage assembly will automatically be loaded, instantiated, and injected into the pipeline's execution order.
+The `WorldGenerationPipeline` can discover stages via reflection. By default, calling `pipeline.Discover("Plugins")` merges discovered stages with manually added stages and skips stage types that are already present. If you want a clean rebuild from discovery only, call `pipeline.DiscoverAndReplace("Plugins")` (or `pipeline.ResetStages()` first).
+
+Discovery failures are reported structurally: pass a diagnostics callback to `Discover(..., onDiagnostic)` to collect non-fatal load/activation errors, or omit the callback to fail fast with an `AggregateException`.
