@@ -249,7 +249,7 @@ namespace RoguelikeToolkit.World.App
             _barycentric = new float[_vertexCount * 3];
             _colors = new float[_vertexCount * 3];
 
-            Random rnd = new Random(42);
+            Random rnd = Random.Shared;
             var plateColors = new System.Collections.Generic.Dictionary<int, RoguelikeToolkit.World.App.Vector3>();
 
             for (int i = 0; i < _vertexCount; i++)

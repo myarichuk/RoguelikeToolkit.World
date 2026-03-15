@@ -20,11 +20,11 @@ public class TectonicPlateOverlay : IMapOverlay<TectonicPlate>, IDisposable
 
     public HexSphereStore<TectonicPlate> Store => _store;
 
-    public TectonicPlateOverlay(int size, int seedCount, int seed = 42, ArenaAllocator? arena = null)
+    public TectonicPlateOverlay(int size, int seedCount, int? seed = null, ArenaAllocator? arena = null)
     {
         _store = new HexSphereStore<TectonicPlate>(size);
         _seedCount = seedCount;
-        _seed = seed;
+        _seed = seed ?? Random.Shared.Next();
         _arena = arena ?? new ArenaAllocator();
     }
 
