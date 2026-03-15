@@ -18,7 +18,7 @@ public class SecurityTests : IDisposable
         var validPath = "valid_test_store.bin";
         try
         {
-            var store = new WorldDataStore(1, validPath);
+            using var store = new WorldDataStore(1, validPath);
             store.RegisterLayer<DummyData>();
             store.Allocate();
             Assert.True(File.Exists(validPath));
@@ -40,7 +40,7 @@ public class SecurityTests : IDisposable
 
         Assert.Throws<UnauthorizedAccessException>(() =>
         {
-            var store = new WorldDataStore(1, traversalPath);
+            using var store = new WorldDataStore(1, traversalPath);
             store.RegisterLayer<DummyData>();
             store.Allocate();
         });
@@ -60,7 +60,7 @@ public class SecurityTests : IDisposable
 
         Assert.Throws<UnauthorizedAccessException>(() =>
         {
-            var store = new WorldDataStore(1, absolutePath);
+            using var store = new WorldDataStore(1, absolutePath);
             store.RegisterLayer<DummyData>();
             store.Allocate();
         });
