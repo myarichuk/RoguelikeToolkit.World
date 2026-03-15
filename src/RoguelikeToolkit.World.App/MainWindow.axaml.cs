@@ -18,6 +18,7 @@ namespace RoguelikeToolkit.World.App
             var btnZoomIn = this.FindControl<Button>("BtnZoomIn");
             var btnZoomOut = this.FindControl<Button>("BtnZoomOut");
             var chkTogglePlates = this.FindControl<CheckBox>("ChkTogglePlates");
+            var chkToggleHexes = this.FindControl<CheckBox>("ChkToggleHexes");
 
             if (btnRotLeft != null) btnRotLeft.Click += (s, e) => { GlView.Yaw -= 10f; GlView.RenderFrame(); };
             if (btnRotRight != null) btnRotRight.Click += (s, e) => { GlView.Yaw += 10f; GlView.RenderFrame(); };
@@ -31,6 +32,15 @@ namespace RoguelikeToolkit.World.App
                 chkTogglePlates.IsCheckedChanged += (s, e) =>
                 {
                     GlView.ShowPlates = chkTogglePlates.IsChecked ?? false;
+                    GlView.RenderFrame();
+                };
+            }
+
+            if (chkToggleHexes != null)
+            {
+                chkToggleHexes.IsCheckedChanged += (s, e) =>
+                {
+                    GlView.ShowHexes = chkToggleHexes.IsChecked ?? false;
                     GlView.RenderFrame();
                 };
             }
@@ -50,6 +60,28 @@ namespace RoguelikeToolkit.World.App
 
             if (point.Properties.IsLeftButtonPressed) _isLeftDown = true;
             if (point.Properties.IsRightButtonPressed) _isRightDown = true;
+
+            // Attempt to pick a hex
+            if (GlView.TryPickHex(point.Position.X, point.Position.Y, out double lat, out double lon, out int tileIndex))
+            {
+                var txtLat = this.FindControl<TextBlock>("TxtHexLat");
+                var txtLon = this.FindControl<TextBlock>("TxtHexLon");
+                var txtIndex = this.FindControl<TextBlock>("TxtHexIndex");
+
+                if (txtLat != null) txtLat.Text = $"Lat: {lat:F2}";
+                if (txtLon != null) txtLon.Text = $"Lon: {lon:F2}";
+                if (txtIndex != null) txtIndex.Text = $"Index: {tileIndex}";
+            }
+            else
+            {
+                var txtLat = this.FindControl<TextBlock>("TxtHexLat");
+                var txtLon = this.FindControl<TextBlock>("TxtHexLon");
+                var txtIndex = this.FindControl<TextBlock>("TxtHexIndex");
+
+                if (txtLat != null) txtLat.Text = "Lat: --";
+                if (txtLon != null) txtLon.Text = "Lon: --";
+                if (txtIndex != null) txtIndex.Text = "Index: --";
+            }
         }
 
         private void GlViewContainer_PointerReleased(object sender, PointerReleasedEventArgs e)
