@@ -9,6 +9,19 @@ public class ProjectionTests
     private const double Tolerance = 1e-6;
 
     [Theory]
+    [InlineData(Math.PI, 180)]
+    [InlineData(Math.PI / 2, 90)]
+    [InlineData(0, 0)]
+    [InlineData(-Math.PI / 2, -90)]
+    [InlineData(-Math.PI, -180)]
+    public void GeoCoord_FromRadians_ConvertsCorrectly(double rad, double expectedDeg)
+    {
+        var coord = GeoCoord.FromRadians(rad, rad);
+        Assert.Equal(expectedDeg, coord.Latitude, 5);
+        Assert.Equal(expectedDeg, coord.Longitude, 5);
+    }
+
+    [Theory]
     [InlineData(0, 0)]
     [InlineData(45, 45)]
     [InlineData(-45, -45)]
