@@ -38,7 +38,12 @@ public unsafe class WorldDataStore : IDisposable
     public int Size => _size;
     public int TileCount => _tileCount;
 
-    public static int GetTileCount(int size) => 10 * size * size + 2;
+    public static int GetTileCount(int size)
+    {
+        // size acts as the recursion level
+        // V = 10 * 4^recursionLevel + 2
+        return 10 * (1 << (2 * size)) + 2;
+    }
 
     public WorldDataStore(int size, string? filePath = null)
     {
@@ -196,17 +201,30 @@ public unsafe class WorldDataStore : IDisposable
         }
     }
 
-    private static WorldTopology CreateTopology(int size)
+    private static WorldTopology CreateTopology(int recursionLevel)
     {
-        int tileCount = GetTileCount(size);
-        var tileVectors = BuildTileVectors(tileCount);
-        var centers = BuildCenters(tileVectors);
-        var targets = new int[tileCount];
+        IcosphereGenerator.Generate(recursionLevel, out Vector3D[] vertices, out TriangleIndices[] faces);
 
+        int tileCount = vertices.Length;
+
+        // Build adjacency from faces
+        var adjacency = new HashSet<int>[tileCount];
         for (int i = 0; i < tileCount; i++)
-            targets[i] = i < 12 ? 5 : 6;
+        {
+            adjacency[i] = new HashSet<int>();
+        }
 
-        var adjacency = BuildAdjacencyFromDegreeSequence(size, targets);
+        foreach (var face in faces)
+        {
+            adjacency[face.v1].Add(face.v2);
+            adjacency[face.v1].Add(face.v3);
+
+            adjacency[face.v2].Add(face.v1);
+            adjacency[face.v2].Add(face.v3);
+
+            adjacency[face.v3].Add(face.v1);
+            adjacency[face.v3].Add(face.v2);
+        }
 
         var offsets = new int[tileCount + 1];
         int totalNeighbors = 0;
@@ -225,109 +243,19 @@ public unsafe class WorldDataStore : IDisposable
                 neighbors[write++] = neighbor;
         }
 
+        var centers = new GeoCoord[tileCount];
+        for (int i = 0; i < tileCount; i++)
+        {
+            centers[i] = vertices[i].ToGeoCoord();
+        }
+
         return new WorldTopology
         {
             Centers = centers,
-            TileVectors = tileVectors,
+            TileVectors = vertices,
             NeighborOffsets = offsets,
             Neighbors = neighbors
         };
-    }
-
-    private static HashSet<int>[] BuildAdjacencyFromDegreeSequence(int size, int[] degrees)
-    {
-        var adjacency = new HashSet<int>[degrees.Length];
-        var remaining = new int[degrees.Length];
-
-        for (int i = 0; i < degrees.Length; i++)
-        {
-            adjacency[i] = new HashSet<int>();
-            remaining[i] = degrees[i];
-        }
-
-        while (true)
-        {
-            int node = -1;
-            int maxDegree = 0;
-            for (int i = 0; i < remaining.Length; i++)
-            {
-                if (remaining[i] > maxDegree)
-                {
-                    maxDegree = remaining[i];
-                    node = i;
-                }
-            }
-
-            if (node == -1)
-                break;
-
-            var candidates = new List<int>(remaining.Length - 1);
-            for (int i = 0; i < remaining.Length; i++)
-            {
-                if (i == node || remaining[i] <= 0 || adjacency[node].Contains(i))
-                    continue;
-
-                candidates.Add(i);
-            }
-
-            candidates.Sort((a, b) =>
-            {
-                int byDegree = remaining[b].CompareTo(remaining[a]);
-                return byDegree != 0 ? byDegree : a.CompareTo(b);
-            });
-
-            if (candidates.Count < maxDegree)
-            {
-                throw new InvalidOperationException(
-                    $"Failed to build world topology for size {size}: invalid degree sequence.");
-            }
-
-            for (int i = 0; i < maxDegree; i++)
-            {
-                int candidate = candidates[i];
-                adjacency[node].Add(candidate);
-                adjacency[candidate].Add(node);
-                remaining[candidate]--;
-                if (remaining[candidate] < 0)
-                {
-                    throw new InvalidOperationException(
-                        $"Failed to build world topology for size {size}: invalid degree sequence.");
-                }
-            }
-
-            remaining[node] = 0;
-        }
-
-        return adjacency;
-    }
-
-    private static GeoCoord[] BuildCenters(Vector3D[] tileVectors)
-    {
-        var centers = new GeoCoord[tileVectors.Length];
-
-        for (int i = 0; i < tileVectors.Length; i++)
-            centers[i] = tileVectors[i].ToGeoCoord();
-
-        return centers;
-    }
-
-    private static Vector3D[] BuildTileVectors(int tileCount)
-    {
-        var vectors = new Vector3D[tileCount];
-        var goldenAngle = Math.PI * (3 - Math.Sqrt(5));
-
-        for (int i = 0; i < tileCount; i++)
-        {
-            double y = 1.0 - (2.0 * i + 1.0) / tileCount;
-            double radius = Math.Sqrt(Math.Max(0.0, 1.0 - y * y));
-            double theta = i * goldenAngle;
-            double x = Math.Cos(theta) * radius;
-            double z = Math.Sin(theta) * radius;
-
-            vectors[i] = new Vector3D(x, y, z).Normalize();
-        }
-
-        return vectors;
     }
 
     public void Dispose()

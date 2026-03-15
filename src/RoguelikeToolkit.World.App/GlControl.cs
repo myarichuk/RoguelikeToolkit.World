@@ -179,7 +179,7 @@ namespace RoguelikeToolkit.World.App
             // Clean up existing map if it exists
             _map?.Dispose();
 
-            int size = RecursionLevel + 1; // Basic mapping from recursion level to subdivision size
+            int size = RecursionLevel;
             _map = new WorldMap(size);
 
             int seedCount = _plateLayer?.SeedCount ?? 12;
@@ -730,11 +730,13 @@ namespace RoguelikeToolkit.World.App
                 if (normalizedLat < 0) normalizedLat = 0;
                 if (normalizedLat >= 1) normalizedLat = 0.999999;
 
-                int size = RecursionLevel + 1;
-                int tileCount = 10 * size * size + 2;
-                int rings = size * 3;
+                int size = RecursionLevel;
+                int tileCount = WorldDataStore.GetTileCount(size);
+                int rings = (1 << size) * 3;
+                if (rings == 0) rings = 3;
                 int ringIndex = (int)(normalizedLat * rings);
                 int tilesInRing = tileCount / rings;
+                if (tilesInRing == 0) tilesInRing = 1;
                 int tileInRing = (int)(normalizedLon * tilesInRing);
                 tileIndex = ringIndex * tilesInRing + tileInRing;
                 if (tileIndex >= tileCount) tileIndex = tileCount - 1;

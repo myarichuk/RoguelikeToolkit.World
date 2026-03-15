@@ -1,8 +1,7 @@
 using System;
 using System.Collections.Generic;
-using System.Numerics;
 
-namespace RoguelikeToolkit.World.Presentation
+namespace RoguelikeToolkit.World.Core
 {
     public struct TriangleIndices
     {
@@ -12,14 +11,13 @@ namespace RoguelikeToolkit.World.Presentation
 
     public static class IcosphereGenerator
     {
-        private static int AddVertex(Vector3 p, List<Vector3> vertices)
+        private static int AddVertex(Vector3D p, List<Vector3D> vertices)
         {
-            float length = p.Length();
-            vertices.Add(new Vector3(p.X / length, p.Y / length, p.Z / length));
+            vertices.Add(p.Normalize());
             return vertices.Count - 1;
         }
 
-        private static int GetMiddlePoint(int p1, int p2, ref List<Vector3> vertices, ref Dictionary<long, int> cache)
+        private static int GetMiddlePoint(int p1, int p2, ref List<Vector3D> vertices, ref Dictionary<long, int> cache)
         {
             bool firstIsSmaller = p1 < p2;
             long smallerIndex = firstIsSmaller ? p1 : p2;
@@ -31,36 +29,40 @@ namespace RoguelikeToolkit.World.Presentation
                 return ret;
             }
 
-            Vector3 point1 = vertices[p1];
-            Vector3 point2 = vertices[p2];
-            Vector3 middle = (point1 + point2) / 2.0f;
+            Vector3D point1 = vertices[p1];
+            Vector3D point2 = vertices[p2];
+            Vector3D middle = new Vector3D(
+                (point1.X + point2.X) / 2.0,
+                (point1.Y + point2.Y) / 2.0,
+                (point1.Z + point2.Z) / 2.0
+            );
 
             int i = AddVertex(middle, vertices);
             cache.Add(key, i);
             return i;
         }
 
-        public static void GenerateFlat(int recursionLevel, out Vector3[] outVertices, out Vector3[] outNormals, out Vector3[] outBarycentric)
+        public static void Generate(int recursionLevel, out Vector3D[] outVertices, out TriangleIndices[] outFaces)
         {
-            List<Vector3> vertices = new List<Vector3>();
+            List<Vector3D> vertices = new List<Vector3D>();
             Dictionary<long, int> middlePointIndexCache = new Dictionary<long, int>();
 
-            float t = (float)(1.0 + Math.Sqrt(5.0)) / 2.0f;
+            double t = (1.0 + Math.Sqrt(5.0)) / 2.0;
 
-            AddVertex(new Vector3(-1, t, 0), vertices);
-            AddVertex(new Vector3(1, t, 0), vertices);
-            AddVertex(new Vector3(-1, -t, 0), vertices);
-            AddVertex(new Vector3(1, -t, 0), vertices);
+            AddVertex(new Vector3D(-1, t, 0), vertices);
+            AddVertex(new Vector3D(1, t, 0), vertices);
+            AddVertex(new Vector3D(-1, -t, 0), vertices);
+            AddVertex(new Vector3D(1, -t, 0), vertices);
 
-            AddVertex(new Vector3(0, -1, t), vertices);
-            AddVertex(new Vector3(0, 1, t), vertices);
-            AddVertex(new Vector3(0, -1, -t), vertices);
-            AddVertex(new Vector3(0, 1, -t), vertices);
+            AddVertex(new Vector3D(0, -1, t), vertices);
+            AddVertex(new Vector3D(0, 1, t), vertices);
+            AddVertex(new Vector3D(0, -1, -t), vertices);
+            AddVertex(new Vector3D(0, 1, -t), vertices);
 
-            AddVertex(new Vector3(t, 0, -1), vertices);
-            AddVertex(new Vector3(t, 0, 1), vertices);
-            AddVertex(new Vector3(-t, 0, -1), vertices);
-            AddVertex(new Vector3(-t, 0, 1), vertices);
+            AddVertex(new Vector3D(t, 0, -1), vertices);
+            AddVertex(new Vector3D(t, 0, 1), vertices);
+            AddVertex(new Vector3D(-t, 0, -1), vertices);
+            AddVertex(new Vector3D(-t, 0, 1), vertices);
 
             List<TriangleIndices> faces = new List<TriangleIndices>();
 
@@ -105,18 +107,30 @@ namespace RoguelikeToolkit.World.Presentation
                 faces = faces2;
             }
 
-            int vertexCount = faces.Count * 3;
-            outVertices = new Vector3[vertexCount];
-            outNormals = new Vector3[vertexCount];
-            outBarycentric = new Vector3[vertexCount];
+            outVertices = vertices.ToArray();
+            outFaces = faces.ToArray();
+        }
+
+        public static void GenerateFlat(int recursionLevel, out System.Numerics.Vector3[] outVertices, out System.Numerics.Vector3[] outNormals, out System.Numerics.Vector3[] outBarycentric)
+        {
+            Generate(recursionLevel, out Vector3D[] vertices, out TriangleIndices[] faces);
+
+            int vertexCount = faces.Length * 3;
+            outVertices = new System.Numerics.Vector3[vertexCount];
+            outNormals = new System.Numerics.Vector3[vertexCount];
+            outBarycentric = new System.Numerics.Vector3[vertexCount];
 
             int index = 0;
             foreach (var face in faces)
             {
                 // Unshared vertices for edge shader (barycentric)
-                outVertices[index] = Vector3.Normalize(vertices[face.v1]);
-                outVertices[index + 1] = Vector3.Normalize(vertices[face.v2]);
-                outVertices[index + 2] = Vector3.Normalize(vertices[face.v3]);
+                var v1 = vertices[face.v1];
+                var v2 = vertices[face.v2];
+                var v3 = vertices[face.v3];
+
+                outVertices[index] = new System.Numerics.Vector3((float)v1.X, (float)v1.Y, (float)v1.Z);
+                outVertices[index + 1] = new System.Numerics.Vector3((float)v2.X, (float)v2.Y, (float)v2.Z);
+                outVertices[index + 2] = new System.Numerics.Vector3((float)v3.X, (float)v3.Y, (float)v3.Z);
 
                 // Proper normals (since it's a unit sphere, normals equal positions)
                 outNormals[index] = outVertices[index];
@@ -124,9 +138,9 @@ namespace RoguelikeToolkit.World.Presentation
                 outNormals[index + 2] = outVertices[index + 2];
 
                 // Barycentric coordinates
-                outBarycentric[index] = new Vector3(1, 0, 0);
-                outBarycentric[index + 1] = new Vector3(0, 1, 0);
-                outBarycentric[index + 2] = new Vector3(0, 0, 1);
+                outBarycentric[index] = new System.Numerics.Vector3(1, 0, 0);
+                outBarycentric[index + 1] = new System.Numerics.Vector3(0, 1, 0);
+                outBarycentric[index + 2] = new System.Numerics.Vector3(0, 0, 1);
 
                 index += 3;
             }

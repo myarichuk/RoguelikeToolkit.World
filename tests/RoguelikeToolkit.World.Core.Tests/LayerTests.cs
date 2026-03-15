@@ -81,7 +81,7 @@ public class LayerTests
     public void TectonicPlateGeneration_RepeatedExecute_PerfSmoke_NoSignificantRegression()
     {
         // Keep this as a smoke test: large enough to exercise hot path, permissive enough for CI jitter.
-        const int size = 32;
+        const int size = 5;
         const int seedCount = 128;
 
         PrewarmTopology(size);
