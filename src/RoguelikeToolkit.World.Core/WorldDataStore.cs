@@ -12,6 +12,9 @@ namespace RoguelikeToolkit.World.Core;
 /// </summary>
 public unsafe class WorldDataStore : IDisposable
 {
+    private static readonly Dictionary<int, Vector3D[]> TilePositionCache = new();
+    private static readonly object TilePositionCacheLock = new();
+
     private MemoryMappedFile? _mmf;
     private MemoryMappedViewAccessor? _accessor;
     private byte* _ptr;
@@ -163,6 +166,26 @@ public unsafe class WorldDataStore : IDisposable
         double lon = normalizedLon * 360.0 - 180.0;
 
         return new GeoCoord(lat, lon);
+    }
+
+    public ReadOnlySpan<Vector3D> GetTileVectors()
+    {
+        lock (TilePositionCacheLock)
+        {
+            if (TilePositionCache.TryGetValue(_size, out var cached))
+            {
+                return cached;
+            }
+
+            var vectors = new Vector3D[_tileCount];
+            for (int i = 0; i < _tileCount; i++)
+            {
+                vectors[i] = Vector3D.FromGeoCoord(GetGeoCoord(i));
+            }
+
+            TilePositionCache[_size] = vectors;
+            return vectors;
+        }
     }
 
     public int GetAdjacent(int index, Span<int> neighbors)
