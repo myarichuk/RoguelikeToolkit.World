@@ -28,6 +28,8 @@
                     <TextBlock x:Name="TxtHexLon" Text="Lon: --" Foreground="White"/>
                     <TextBlock x:Name="TxtHexIndex" Text="Index: --" Foreground="White"/>
                     <TextBlock x:Name="TxtHexPlate" Text="Plate ID: --" Foreground="White"/>
+                    <TextBlock x:Name="TxtHexBiome" Text="Biome: --" Foreground="White"/>
+                    <TextBlock x:Name="TxtHexDanger" Text="Danger: --" Foreground="White"/>
                 </StackPanel>
             </Border>
         </Border>
@@ -48,6 +50,9 @@
                     <Button x:Name="BtnZoomIn" Content="Zoom In" Background="#40FFFFFF" Foreground="White" HorizontalAlignment="Stretch" HorizontalContentAlignment="Center"/>
                     <Button x:Name="BtnZoomOut" Content="Zoom Out" Background="#40FFFFFF" Foreground="White" HorizontalAlignment="Stretch" HorizontalContentAlignment="Center"/>
                 </UniformGrid>
+
+                <TextBlock Text="Hex Size (Subdivision Level):" Foreground="White" Margin="5,5,5,0"/>
+                <Slider x:Name="SldRecursionLevel" Minimum="1" Maximum="6" Value="4" TickFrequency="1" IsSnapToTickEnabled="True" Margin="5,0,5,5"/>
 
                 <TextBlock Text="Plate Count (Seeds):" Foreground="White" Margin="5,5,5,0"/>
                 <Slider x:Name="SldSeedCount" Minimum="2" Maximum="100" Value="12" TickFrequency="1" IsSnapToTickEnabled="True" Margin="5,0,5,5"/>
