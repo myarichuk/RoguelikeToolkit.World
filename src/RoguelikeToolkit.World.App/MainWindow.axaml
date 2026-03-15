@@ -27,6 +27,7 @@
                     <TextBlock x:Name="TxtHexLat" Text="Lat: --" Foreground="White"/>
                     <TextBlock x:Name="TxtHexLon" Text="Lon: --" Foreground="White"/>
                     <TextBlock x:Name="TxtHexIndex" Text="Index: --" Foreground="White"/>
+                    <TextBlock x:Name="TxtHexPlate" Text="Plate ID: --" Foreground="White"/>
                 </StackPanel>
             </Border>
         </Border>
@@ -48,8 +49,11 @@
                     <Button x:Name="BtnZoomOut" Content="Zoom Out" Background="#40FFFFFF" Foreground="White" HorizontalAlignment="Stretch" HorizontalContentAlignment="Center"/>
                 </UniformGrid>
 
+                <TextBlock Text="Plate Count (Seeds):" Foreground="White" Margin="5,5,5,0"/>
+                <Slider x:Name="SldSeedCount" Minimum="2" Maximum="100" Value="12" TickFrequency="1" IsSnapToTickEnabled="True" Margin="5,0,5,5"/>
+
                 <CheckBox x:Name="ChkTogglePlates" Content="Show Plates" IsChecked="True" Foreground="White" Margin="5"/>
-                <CheckBox x:Name="ChkToggleHexes" Content="Show Hexes" IsChecked="False" Foreground="White" Margin="5"/>
+                <CheckBox x:Name="ChkToggleHexes" Content="Show Hexes" IsChecked="True" Foreground="White" Margin="5"/>
 
                 <TextBlock Text="Left-drag: Rotate" Foreground="LightGray" FontSize="12" Margin="5,0,0,0"/>
                 <TextBlock Text="Right-drag: Pan" Foreground="LightGray" FontSize="12" Margin="5,0,0,0"/>

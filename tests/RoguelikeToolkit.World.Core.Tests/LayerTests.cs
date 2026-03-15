@@ -4,52 +4,51 @@ using System;
 
 namespace RoguelikeToolkit.World.Core.Tests;
 
-public class OverlayTests
+public class LayerTests
 {
     private struct DummyData { public int value; }
 
     [Fact]
-    public void OverlayManager_GetOverlaysAt_ZeroAllocation()
+    public void WorldMap_GetLayer_ZeroAllocation()
     {
-        var manager = new OverlayManager();
-        var overlay = new TectonicPlateOverlay(1, 1);
-        manager.Register(overlay);
+        var map = new WorldMap(1);
+        var layer = new TectonicPlateLayer(1, 1);
+        map.RegisterLayer(layer);
 
-        var coord = new GeoCoord(0, 0);
-        object[] backing = new object[4];
-        Span<object> buffer = backing;
+        // Warm up JIT
+        var _ = map.GetLayer<TectonicPlate>();
 
         long memBefore = GC.GetAllocatedBytesForCurrentThread();
-        int count = manager.GetOverlaysAt(coord, buffer);
+        var result = map.GetLayer<TectonicPlate>();
         long memAfter = GC.GetAllocatedBytesForCurrentThread();
 
-        Assert.Equal(1, count);
-        Assert.Same(overlay, buffer[0]);
+        Assert.NotNull(result);
+        Assert.Same(layer, result);
         Assert.Equal(memBefore, memAfter);
 
-        overlay.Dispose();
+        map.Dispose();
     }
 
     [Fact]
-    public void TectonicPlateOverlay_Generate_ZeroAllocation()
+    public void TectonicPlateLayer_Generate_ZeroAllocation()
     {
         using var arena = new SharpArena.Allocators.ArenaAllocator();
-        using var overlay = new TectonicPlateOverlay(5, 5, seed: 1234, arena: arena); // size 5 -> 252 tiles
+        using var layer = new TectonicPlateLayer(5, 5, seed: 1234, arena: arena); // size 5 -> 252 tiles
 
         // Let the JIT warm up the methods to ensure static init and JIT compilation
         // don't skew the results
         using var warmupArena = new SharpArena.Allocators.ArenaAllocator();
-        using var warmupOverlay = new TectonicPlateOverlay(1, 1, 1, warmupArena);
-        warmupOverlay.Generate();
+        using var warmupLayer = new TectonicPlateLayer(1, 1, 1, warmupArena);
+        warmupLayer.Generate();
 
         long memBefore = GC.GetAllocatedBytesForCurrentThread();
-        overlay.Generate();
+        layer.Generate();
         long memAfter = GC.GetAllocatedBytesForCurrentThread();
 
         Assert.Equal(memBefore, memAfter);
 
         // Check if all tiles were processed
-        var span = overlay.Store.GetSpan();
+        var span = layer.Store.GetSpan();
         for (int i = 0; i < span.Length; i++)
         {
             Assert.True(span[i].Id > 0, $"Tile {i} has uninitialized ID");
