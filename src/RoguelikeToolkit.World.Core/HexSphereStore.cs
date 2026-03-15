@@ -34,7 +34,27 @@ public unsafe class HexSphereStore<T> : IDisposable where T : unmanaged
 
         if (filePath != null)
         {
-            _mmf = MemoryMappedFile.CreateFromFile(filePath, FileMode.OpenOrCreate, null, byteLength);
+            var baseDirectory = Path.GetFullPath(Environment.CurrentDirectory);
+            var fullPath = Path.GetFullPath(Path.Combine(baseDirectory, filePath));
+
+            // Ensure the resolved path strictly resides within the current working directory.
+            // This prevents both directory traversal (e.g., ../../etc/passwd)
+            // and mapping arbitrary absolute paths (e.g., /etc/passwd or C:\Windows\System32\sam)
+
+            string baseDirectoryWithSeparator = baseDirectory;
+            if (!baseDirectoryWithSeparator.EndsWith(Path.DirectorySeparatorChar.ToString()))
+            {
+                baseDirectoryWithSeparator += Path.DirectorySeparatorChar;
+            }
+
+            // Use Ordinal instead of OrdinalIgnoreCase for case-sensitive file systems like Linux
+            if (!fullPath.StartsWith(baseDirectoryWithSeparator, StringComparison.Ordinal) &&
+                fullPath != baseDirectory)
+            {
+                throw new UnauthorizedAccessException("Path traversal is not allowed.");
+            }
+
+            _mmf = MemoryMappedFile.CreateFromFile(fullPath, FileMode.OpenOrCreate, null, byteLength);
         }
         else
         {
