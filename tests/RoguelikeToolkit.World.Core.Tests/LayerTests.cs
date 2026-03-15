@@ -1,6 +1,7 @@
 using Xunit;
 using RoguelikeToolkit.World.Core;
 using System;
+using System.Diagnostics;
 
 namespace RoguelikeToolkit.World.Core.Tests;
 
@@ -73,4 +74,55 @@ public class LayerTests
             Assert.True(span[i].Id > 0, $"Tile {i} has uninitialized ID");
         }
     }
+
+
+    [Fact]
+    public void TectonicPlateGeneration_RepeatedExecute_PerfSmoke_NoSignificantRegression()
+    {
+        // Keep this as a smoke test: large enough to exercise hot path, permissive enough for CI jitter.
+        const int size = 80;
+        const int seedCount = 128;
+
+        using var arena = new SharpArena.Allocators.ArenaAllocator();
+        using var map = new WorldMap(size);
+        using var layer = new TectonicPlateLayer(map.DataStore, seedCount, seed: 1234, arena: arena);
+
+        map.RegisterLayer(layer);
+        map.DataStore.Allocate();
+
+        var stage = new TectonicPlateGenerationStage(seedCount, 1234, arena);
+
+        // JIT warmup
+        using (var warmupMap = new WorldMap(2))
+        {
+            using var warmupLayer = new TectonicPlateLayer(warmupMap.DataStore, 2, 1234, arena);
+            warmupMap.RegisterLayer(warmupLayer);
+            warmupMap.DataStore.Allocate();
+            stage.Execute(warmupMap);
+        }
+
+        long TimeExecuteTicks()
+        {
+            var sw = Stopwatch.StartNew();
+            stage.Execute(map);
+            sw.Stop();
+            return sw.ElapsedTicks;
+        }
+
+        long first = TimeExecuteTicks();
+
+        const int repeatRuns = 5;
+        long repeatTotal = 0;
+        for (int i = 0; i < repeatRuns; i++)
+        {
+            repeatTotal += TimeExecuteTicks();
+        }
+
+        double repeatedAverage = repeatTotal / (double)repeatRuns;
+
+        Assert.True(
+            repeatedAverage <= first * 1.35,
+            $"Repeated executes regressed too much: first={first} ticks, repeated avg={repeatedAverage:F2} ticks");
+    }
+
 }

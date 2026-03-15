@@ -64,11 +64,7 @@ public class TectonicPlateGenerationStage : IWorldGeneratorStage, IDisposable
             seedDriftSpeeds.Add(NextDouble());
         }
 
-        var tilePositions = new ArenaList<Vector3D>(_arena, store.TileCount);
-        for (int i = 0; i < store.TileCount; i++)
-        {
-            tilePositions.Add(Vector3D.FromGeoCoord(store.GetGeoCoord(i)));
-        }
+        ReadOnlySpan<Vector3D> tilePositions = store.GetTileVectors();
 
         int iterations = 3;
 
