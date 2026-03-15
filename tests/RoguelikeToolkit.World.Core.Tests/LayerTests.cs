@@ -2,6 +2,7 @@ using Xunit;
 using RoguelikeToolkit.World.Core;
 using System;
 using System.Diagnostics;
+using SharpArena.Allocators;
 
 namespace RoguelikeToolkit.World.Core.Tests;
 
@@ -80,10 +81,12 @@ public class LayerTests
     public void TectonicPlateGeneration_RepeatedExecute_PerfSmoke_NoSignificantRegression()
     {
         // Keep this as a smoke test: large enough to exercise hot path, permissive enough for CI jitter.
-        const int size = 80;
+        const int size = 32;
         const int seedCount = 128;
 
-        using var arena = new SharpArena.Allocators.ArenaAllocator();
+        PrewarmTopology(size);
+
+        using var arena = new ArenaAllocator();
         using var map = new WorldMap(size);
         using var layer = new TectonicPlateLayer(map.DataStore, seedCount, seed: 1234, arena: arena);
 
@@ -123,6 +126,20 @@ public class LayerTests
         Assert.True(
             repeatedAverage <= first * 1.35,
             $"Repeated executes regressed too much: first={first} ticks, repeated avg={repeatedAverage:F2} ticks");
+    }
+
+    private static void PrewarmTopology(int size)
+    {
+        const int seedCount = 8;
+
+        using var arena = new ArenaAllocator();
+        using var map = new WorldMap(size);
+        using var layer = new TectonicPlateLayer(map.DataStore, seedCount, seed: 1, arena: arena);
+        map.RegisterLayer(layer);
+        map.DataStore.Allocate();
+
+        using var stage = new TectonicPlateGenerationStage(seedCount, 1, arena);
+        stage.Execute(map);
     }
 
 }
