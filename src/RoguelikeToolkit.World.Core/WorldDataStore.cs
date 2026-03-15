@@ -16,6 +16,7 @@ public unsafe class WorldDataStore : IDisposable
     private sealed class WorldTopology
     {
         public required GeoCoord[] Centers { get; init; }
+        public required Vector3D[] Vectors { get; init; }
         public required int[] NeighborOffsets { get; init; }
         public required int[] Neighbors { get; init; }
     }
@@ -162,6 +163,11 @@ public unsafe class WorldDataStore : IDisposable
         return _topology.Centers[index];
     }
 
+    public ReadOnlySpan<Vector3D> GetTileVectors()
+    {
+        return _topology.Vectors;
+    }
+
     public int GetAdjacent(int index, Span<int> neighbors)
     {
         if ((uint)index >= (uint)_tileCount)
@@ -193,7 +199,7 @@ public unsafe class WorldDataStore : IDisposable
     private static WorldTopology CreateTopology(int size)
     {
         int tileCount = GetTileCount(size);
-        var centers = BuildCenters(tileCount);
+        var (centers, vectors) = BuildCenters(tileCount);
         var targets = new int[tileCount];
 
         for (int i = 0; i < tileCount; i++)
@@ -221,6 +227,7 @@ public unsafe class WorldDataStore : IDisposable
         return new WorldTopology
         {
             Centers = centers,
+            Vectors = vectors,
             NeighborOffsets = offsets,
             Neighbors = neighbors
         };
@@ -293,9 +300,10 @@ public unsafe class WorldDataStore : IDisposable
         return adjacency;
     }
 
-    private static GeoCoord[] BuildCenters(int tileCount)
+    private static (GeoCoord[] Centers, Vector3D[] Vectors) BuildCenters(int tileCount)
     {
         var centers = new GeoCoord[tileCount];
+        var vectors = new Vector3D[tileCount];
         var goldenAngle = Math.PI * (3 - Math.Sqrt(5));
 
         for (int i = 0; i < tileCount; i++)
@@ -308,9 +316,10 @@ public unsafe class WorldDataStore : IDisposable
 
             var vec = new Vector3D(x, y, z).Normalize();
             centers[i] = vec.ToGeoCoord();
+            vectors[i] = vec;
         }
 
-        return centers;
+        return (centers, vectors);
     }
 
     public void Dispose()
