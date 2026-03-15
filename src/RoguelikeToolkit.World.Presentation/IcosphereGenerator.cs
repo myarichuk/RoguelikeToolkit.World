@@ -1,24 +1,9 @@
 using System;
 using System.Collections.Generic;
+using System.Numerics;
 
-namespace RoguelikeToolkit.World.App
+namespace RoguelikeToolkit.World.Presentation
 {
-    public struct Vector3
-    {
-        public float X, Y, Z;
-
-        public Vector3(float x, float y, float z) { X = x; Y = y; Z = z; }
-
-        public Vector3 Normalize()
-        {
-            float length = (float)Math.Sqrt(X * X + Y * Y + Z * Z);
-            return new Vector3(X / length, Y / length, Z / length);
-        }
-
-        public static Vector3 operator +(Vector3 a, Vector3 b) => new Vector3(a.X + b.X, a.Y + b.Y, a.Z + b.Z);
-        public static Vector3 operator *(Vector3 a, float d) => new Vector3(a.X * d, a.Y * d, a.Z * d);
-    }
-
     public struct TriangleIndices
     {
         public int v1, v2, v3;
@@ -29,7 +14,7 @@ namespace RoguelikeToolkit.World.App
     {
         private static int AddVertex(Vector3 p, List<Vector3> vertices)
         {
-            float length = (float)Math.Sqrt(p.X * p.X + p.Y * p.Y + p.Z * p.Z);
+            float length = p.Length();
             vertices.Add(new Vector3(p.X / length, p.Y / length, p.Z / length));
             return vertices.Count - 1;
         }
@@ -48,10 +33,7 @@ namespace RoguelikeToolkit.World.App
 
             Vector3 point1 = vertices[p1];
             Vector3 point2 = vertices[p2];
-            Vector3 middle = new Vector3(
-                (point1.X + point2.X) / 2.0f,
-                (point1.Y + point2.Y) / 2.0f,
-                (point1.Z + point2.Z) / 2.0f);
+            Vector3 middle = (point1 + point2) / 2.0f;
 
             int i = AddVertex(middle, vertices);
             cache.Add(key, i);
