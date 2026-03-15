@@ -21,12 +21,14 @@
 
         <!-- Hex Info Overlay -->
         <Border Padding="20" HorizontalAlignment="Left" VerticalAlignment="Top">
-            <StackPanel Spacing="5" Background="#80000000" Margin="10" Padding="10">
-                <TextBlock Text="Selected Hex" Foreground="White" FontWeight="Bold" HorizontalAlignment="Center" Margin="0,0,0,5"/>
-                <TextBlock x:Name="TxtHexLat" Text="Lat: --" Foreground="White"/>
-                <TextBlock x:Name="TxtHexLon" Text="Lon: --" Foreground="White"/>
-                <TextBlock x:Name="TxtHexIndex" Text="Index: --" Foreground="White"/>
-            </StackPanel>
+            <Border Background="#80000000" Margin="10" Padding="10">
+                <StackPanel Spacing="5">
+                    <TextBlock Text="Selected Hex" Foreground="White" FontWeight="Bold" HorizontalAlignment="Center" Margin="0,0,0,5"/>
+                    <TextBlock x:Name="TxtHexLat" Text="Lat: --" Foreground="White"/>
+                    <TextBlock x:Name="TxtHexLon" Text="Lon: --" Foreground="White"/>
+                    <TextBlock x:Name="TxtHexIndex" Text="Index: --" Foreground="White"/>
+                </StackPanel>
+            </Border>
         </Border>
 
         <!-- Overlay UI -->

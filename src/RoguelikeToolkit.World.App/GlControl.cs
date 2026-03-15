@@ -588,10 +588,23 @@ namespace RoguelikeToolkit.World.App
                 lat = Math.Asin(SelectedHexCenter.Z) * 180.0 / Math.PI;
                 lon = Math.Atan2(SelectedHexCenter.Y, SelectedHexCenter.X) * 180.0 / Math.PI;
 
-                using (var store = new HexSphereStore<int>(5))
-                {
-                    tileIndex = store.GetTileIndex(new GeoCoord(lat, lon));
-                }
+                // Use a simplified math calculation similar to HexSphereStore
+                // to avoid instantiating MemoryMappedFiles continuously in the UI thread
+                double normalizedLon = (lon + 180.0) / 360.0;
+                double normalizedLat = (lat + 90.0) / 180.0;
+                if (normalizedLon < 0) normalizedLon = 0;
+                if (normalizedLon >= 1) normalizedLon = 0.999999;
+                if (normalizedLat < 0) normalizedLat = 0;
+                if (normalizedLat >= 1) normalizedLat = 0.999999;
+
+                int size = 5;
+                int tileCount = 10 * size * size + 2;
+                int rings = size * 3;
+                int ringIndex = (int)(normalizedLat * rings);
+                int tilesInRing = tileCount / rings;
+                int tileInRing = (int)(normalizedLon * tilesInRing);
+                tileIndex = ringIndex * tilesInRing + tileInRing;
+                if (tileIndex >= tileCount) tileIndex = tileCount - 1;
 
                 RenderFrame();
                 return true;
