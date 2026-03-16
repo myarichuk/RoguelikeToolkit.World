@@ -1,4 +1,5 @@
 using System;
+using RoguelikeToolkit.World.Geometry;
 using SharpArena.Allocators;
 using SharpArena.Collections;
 

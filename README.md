@@ -50,3 +50,6 @@ public class MyBiomeGenerationStage : IWorldGeneratorStage
 The `WorldGenerationPipeline` can discover stages via reflection. By default, calling `pipeline.Discover("Plugins")` merges discovered stages with manually added stages and skips stage types that are already present. If you want a clean rebuild from discovery only, call `pipeline.DiscoverAndReplace("Plugins")` (or `pipeline.ResetStages()` first).
 
 Discovery failures are reported structurally: pass a diagnostics callback to `Discover(..., onDiagnostic)` to collect non-fatal load/activation errors, or omit the callback to fail fast with an `AggregateException`.
+
+### Update
+Old spiral topology removed; Presentation project renamed to Geometry for clean separation of projection math

@@ -17,9 +17,7 @@ namespace RoguelikeToolkit.World.App
             var btnRotDown = this.FindControl<Button>("BtnRotDown");
             var btnZoomIn = this.FindControl<Button>("BtnZoomIn");
             var btnZoomOut = this.FindControl<Button>("BtnZoomOut");
-            var chkTogglePlates = this.FindControl<CheckBox>("ChkTogglePlates");
-            var chkToggleHexes = this.FindControl<CheckBox>("ChkToggleHexes");
-            var sldSeedCount = this.FindControl<Slider>("SldSeedCount");
+
             var sldRecursionLevel = this.FindControl<Slider>("SldRecursionLevel");
             var cmbProjection = this.FindControl<ComboBox>("CmbProjection");
 
@@ -41,37 +39,11 @@ namespace RoguelikeToolkit.World.App
                 };
             }
 
-            if (sldSeedCount != null)
-            {
-                sldSeedCount.ValueChanged += (s, e) =>
-                {
-                    GlView.SetPlateCount((int)e.NewValue);
-                };
-            }
-
             if (sldRecursionLevel != null)
             {
                 sldRecursionLevel.ValueChanged += (s, e) =>
                 {
                     GlView.SetRecursionLevel((int)e.NewValue);
-                };
-            }
-
-            if (chkTogglePlates != null)
-            {
-                chkTogglePlates.IsCheckedChanged += (s, e) =>
-                {
-                    GlView.ShowPlates = chkTogglePlates.IsChecked ?? false;
-                    GlView.RenderFrame();
-                };
-            }
-
-            if (chkToggleHexes != null)
-            {
-                chkToggleHexes.IsCheckedChanged += (s, e) =>
-                {
-                    GlView.ShowHexes = chkToggleHexes.IsChecked ?? false;
-                    GlView.RenderFrame();
                 };
             }
 
@@ -90,65 +62,6 @@ namespace RoguelikeToolkit.World.App
 
             if (point.Properties.IsLeftButtonPressed) _isLeftDown = true;
             if (point.Properties.IsRightButtonPressed) _isRightDown = true;
-
-            // Attempt to pick a hex
-            if (GlView.TryPickHex(point.Position.X, point.Position.Y, out double lat, out double lon, out int tileIndex))
-            {
-                var txtLat = this.FindControl<TextBlock>("TxtHexLat");
-                var txtLon = this.FindControl<TextBlock>("TxtHexLon");
-                var txtIndex = this.FindControl<TextBlock>("TxtHexIndex");
-                var txtPlate = this.FindControl<TextBlock>("TxtHexPlate");
-                var txtBiome = this.FindControl<TextBlock>("TxtHexBiome");
-                var txtDanger = this.FindControl<TextBlock>("TxtHexDanger");
-
-                if (txtLat != null) txtLat.Text = $"Lat: {lat:F2}";
-                if (txtLon != null) txtLon.Text = $"Lon: {lon:F2}";
-                if (txtIndex != null) txtIndex.Text = $"Index: {tileIndex}";
-
-                if (txtPlate != null && tileIndex >= 0)
-                {
-                    var plate = GlView.PlateLayer?.Store.GetRef<RoguelikeToolkit.World.Core.TectonicPlate>(tileIndex);
-                    if (plate.HasValue)
-                    {
-                        txtPlate.Text = $"Plate ID: {plate.Value.Id}";
-                    }
-                    else
-                    {
-                        txtPlate.Text = $"Plate ID: --";
-                    }
-                }
-
-                if (txtBiome != null && txtDanger != null && tileIndex >= 0)
-                {
-                    var localInfo = GlView.LocalLayer?.Store.GetRef<RoguelikeToolkit.World.Core.LocalMapInfo>(tileIndex);
-                    if (localInfo.HasValue)
-                    {
-                        txtBiome.Text = $"Biome: {localInfo.Value.Biome}";
-                        txtDanger.Text = $"Danger: {localInfo.Value.DangerLevel}";
-                    }
-                    else
-                    {
-                        txtBiome.Text = $"Biome: --";
-                        txtDanger.Text = $"Danger: --";
-                    }
-                }
-            }
-            else
-            {
-                var txtLat = this.FindControl<TextBlock>("TxtHexLat");
-                var txtLon = this.FindControl<TextBlock>("TxtHexLon");
-                var txtIndex = this.FindControl<TextBlock>("TxtHexIndex");
-                var txtPlate = this.FindControl<TextBlock>("TxtHexPlate");
-                var txtBiome = this.FindControl<TextBlock>("TxtHexBiome");
-                var txtDanger = this.FindControl<TextBlock>("TxtHexDanger");
-
-                if (txtLat != null) txtLat.Text = "Lat: --";
-                if (txtLon != null) txtLon.Text = "Lon: --";
-                if (txtIndex != null) txtIndex.Text = "Index: --";
-                if (txtPlate != null) txtPlate.Text = "Plate ID: --";
-                if (txtBiome != null) txtBiome.Text = "Biome: --";
-                if (txtDanger != null) txtDanger.Text = "Danger: --";
-            }
         }
 
         private void GlViewContainer_PointerReleased(object sender, PointerReleasedEventArgs e)

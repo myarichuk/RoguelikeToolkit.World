@@ -1,4 +1,5 @@
 using System;
+using RoguelikeToolkit.World.Geometry;
 using System.Collections.Generic;
 using System.IO;
 using System.IO.MemoryMappedFiles;

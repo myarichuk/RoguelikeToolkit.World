@@ -1,6 +1,7 @@
 using Xunit;
 using RoguelikeToolkit.World.Core;
 using System;
+using RoguelikeToolkit.World.Geometry;
 
 namespace RoguelikeToolkit.World.Core.Tests;
 

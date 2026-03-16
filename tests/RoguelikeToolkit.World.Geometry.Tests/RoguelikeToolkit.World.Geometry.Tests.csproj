@@ -12,6 +12,9 @@
     <PackageReference Include="coverlet.collector" Version="6.0.0" />
   </ItemGroup>
   <ItemGroup>
-    <ProjectReference Include="..\..\src\RoguelikeToolkit.World.Presentation\RoguelikeToolkit.World.Presentation.csproj" />
+    <ProjectReference Include="..\..\src\RoguelikeToolkit.World.Core\RoguelikeToolkit.World.Core.csproj" />
+  </ItemGroup>
+  <ItemGroup>
+    <ProjectReference Include="..\..\src\RoguelikeToolkit.World.Geometry\RoguelikeToolkit.World.Geometry.csproj" />
   </ItemGroup>
 </Project>
