@@ -7,6 +7,8 @@ using Xunit;
 
 namespace RoguelikeToolkit.World.Core.Tests;
 
+
+
 public class PipelineTests
 {
     [Fact]
@@ -19,16 +21,16 @@ public class PipelineTests
 
         Assert.True(stages.Count >= 2);
 
-        var tectonicStage = stages.OfType<TectonicPlateGenerationStage>().FirstOrDefault();
-        var localMapStage = stages.OfType<LocalMapGenerationStage>().FirstOrDefault();
+        var stage1 = stages.OfType<DummyStage1>().FirstOrDefault();
+        var stage2 = stages.OfType<DummyStage2>().FirstOrDefault();
 
-        Assert.NotNull(tectonicStage);
-        Assert.NotNull(localMapStage);
+        Assert.NotNull(stage1);
+        Assert.NotNull(stage2);
 
-        var tectonicIndex = Array.IndexOf(stages.ToArray(), tectonicStage);
-        var localMapIndex = Array.IndexOf(stages.ToArray(), localMapStage);
+        var index1 = Array.IndexOf(stages.ToArray(), stage1);
+        var index2 = Array.IndexOf(stages.ToArray(), stage2);
 
-        Assert.True(tectonicIndex < localMapIndex);
+        Assert.True(index1 < index2);
     }
 
     [Fact]

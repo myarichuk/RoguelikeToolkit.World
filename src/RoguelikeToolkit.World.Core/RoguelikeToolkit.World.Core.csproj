@@ -10,5 +10,8 @@
   <ItemGroup>
     <PackageReference Include="SharpArena" Version="0.7.4" />
   </ItemGroup>
+  <ItemGroup>
+    <ProjectReference Include="..\RoguelikeToolkit.World.Geometry\RoguelikeToolkit.World.Geometry.csproj" />
+  </ItemGroup>
 
 </Project>

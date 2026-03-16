@@ -1,10 +1,10 @@
+using RoguelikeToolkit.World.Core;
 using System;
 using System.Numerics;
 using Xunit;
-using RoguelikeToolkit.World.Core;
-using RoguelikeToolkit.World.Presentation;
+using RoguelikeToolkit.World.Geometry;
 
-namespace RoguelikeToolkit.World.Presentation.Tests
+namespace RoguelikeToolkit.World.Geometry.Tests
 {
     public class IcosphereGeneratorTests
     {

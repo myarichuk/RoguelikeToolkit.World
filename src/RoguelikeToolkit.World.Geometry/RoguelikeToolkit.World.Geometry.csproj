@@ -5,6 +5,6 @@
     <AllowUnsafeBlocks>true</AllowUnsafeBlocks>
   </PropertyGroup>
   <ItemGroup>
-    <ProjectReference Include="..\RoguelikeToolkit.World.Core\RoguelikeToolkit.World.Core.csproj" />
+
   </ItemGroup>
 </Project>
