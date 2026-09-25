@@ -9,6 +9,11 @@ public struct TectonicPlate
     public int Id;
     public double Elevation;
     public double DriftSpeed;
+    // Unit drift direction (used for boundary convergence). Kept as components
+    // to keep the struct blittable for the data store.
+    public double DriftX;
+    public double DriftY;
+    public double DriftZ;
 }
 
 public class TectonicPlateLayer : IMapLayer<TectonicPlate>, IDisposable
@@ -31,7 +36,7 @@ public class TectonicPlateLayer : IMapLayer<TectonicPlate>, IDisposable
         _store = store;
         _seedCount = seedCount;
         _seed = seed;
-        _arena = arena ?? new ArenaAllocator();
+        _arena = arena ?? ArenaDefaults.Create();
     }
 
 

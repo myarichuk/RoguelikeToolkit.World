@@ -1,4 +1,5 @@
 using System;
+using System.Diagnostics;
 using System.Linq;
 using System.Runtime.InteropServices;
 using System.Numerics;
@@ -6,6 +7,7 @@ using Avalonia;
 using Avalonia.Input;
 using Avalonia.OpenGL;
 using Avalonia.OpenGL.Controls;
+using Avalonia.Threading;
 using RoguelikeToolkit.World.Core;
 using RoguelikeToolkit.World.Presentation;
 
@@ -17,6 +19,13 @@ namespace RoguelikeToolkit.World.App
         Equirectangular,
         Mercator,
         Gnomonic
+    }
+
+    public enum ColorMode
+    {
+        Plates,
+        Biome,
+        Elevation
     }
 
     public unsafe class GlControl : OpenGlControlBase
@@ -36,6 +45,16 @@ namespace RoguelikeToolkit.World.App
         public WorldMap Map => _map;
         public TectonicPlateLayer PlateLayer => _plateLayer;
         public LocalMapLayer LocalLayer => _localLayer;
+        public ElevationLayer ElevationLayer => _elevLayer;
+
+        public int WorldSeed { get; private set; } = 42;
+        public long LastGenMs { get; private set; }
+        public int TileCount => _map.DataStore.TileCount;
+        public ColorMode ColorMode { get; private set; } = ColorMode.Plates;
+        public string StatusText { get; private set; } = string.Empty;
+
+        public event EventHandler? StatusChanged;
+        public Action<string>? OnDiagnostic;
 
         private int _shaderProgram;
         private int _vao;
@@ -55,9 +74,12 @@ namespace RoguelikeToolkit.World.App
         private float[] _normals = Array.Empty<float>();
         private float[] _barycentric = Array.Empty<float>();
         private float[] _colors = Array.Empty<float>();
+        private int[] _vertexTile = Array.Empty<int>();
+        private int _meshTileCount = -1;
 
         private WorldMap _map = null!;
         private TectonicPlateLayer _plateLayer = null!;
+        private ElevationLayer _elevLayer = null!;
         private LocalMapLayer _localLayer = null!;
         private WorldGenerationPipeline _pipeline = null!;
 
@@ -176,8 +198,9 @@ namespace RoguelikeToolkit.World.App
 
         private void InitializeLayers()
         {
-            // Clean up existing map if it exists
+            // Clean up existing map and pipeline if they exist
             _map?.Dispose();
+            _pipeline?.Dispose();
 
             int size = RecursionLevel;
             _map = new WorldMap(size);
@@ -186,6 +209,9 @@ namespace RoguelikeToolkit.World.App
 
             _plateLayer = new TectonicPlateLayer(_map.DataStore, seedCount);
             _map.RegisterLayer(_plateLayer);
+
+            _elevLayer = new ElevationLayer(_map.DataStore);
+            _map.RegisterLayer(_elevLayer);
 
             _localLayer = new LocalMapLayer(_map.DataStore, 42, _plateLayer);
             _map.RegisterLayer(_localLayer);
@@ -196,13 +222,23 @@ namespace RoguelikeToolkit.World.App
             _pipeline.Discover("Plugins"); // Try to discover external plugins if any
 
             // Set params on stages before execution
+            foreach (var seeded in _pipeline.Stages.OfType<ISeededStage>())
+            {
+                seeded.Seed = WorldSeed;
+            }
+
             var tectonicStage = _pipeline.Stages.OfType<TectonicPlateGenerationStage>().FirstOrDefault();
             if (tectonicStage != null)
             {
                 tectonicStage.SeedCount = seedCount;
             }
 
+            var sw = Stopwatch.StartNew();
             _pipeline.Execute(_map);
+            sw.Stop();
+            LastGenMs = sw.ElapsedMilliseconds;
+
+            UpdateStatus();
         }
 
         public void SetRecursionLevel(int level)
@@ -210,10 +246,14 @@ namespace RoguelikeToolkit.World.App
             if (level == RecursionLevel) return;
             RecursionLevel = level;
 
-            InitializeLayers();
+            // Debounced: slider drags rebuild the whole world; wait for the user to settle.
+            Debounce(() =>
+            {
+                InitializeLayers();
 
-            _needsMeshRebuild = true;
-            RenderFrame();
+                _needsMeshRebuild = true;
+                RenderFrame();
+            });
         }
 
         public void SetPlateCount(int count)
@@ -228,53 +268,71 @@ namespace RoguelikeToolkit.World.App
                 tectonicStage.SeedCount = count;
             }
 
-            _pipeline.Execute(_map);
-
-            Random rnd = new Random(42);
-            var plateColors = new System.Collections.Generic.Dictionary<int, System.Numerics.Vector3>();
-
-            IProjection? projectionObj = ProjectionMode switch
+            // Debounced: slider drags re-run the pipeline; wait for the user to settle.
+            Debounce(() =>
             {
-                ProjectionType.Equirectangular => new EquirectangularProjection(1.0),
-                ProjectionType.Mercator => new MercatorProjection(1.0),
-                ProjectionType.Gnomonic => new GnomonicProjection(1.0),
-                _ => null
-            };
+                var sw = Stopwatch.StartNew();
+                _pipeline.Execute(_map);
+                sw.Stop();
+                LastGenMs = sw.ElapsedMilliseconds;
 
+                Recolor();
+                UpdateStatus();
+            });
+        }
+
+        public void Regenerate(int seed)
+        {
+            WorldSeed = seed;
+
+            foreach (var seeded in _pipeline.Stages.OfType<ISeededStage>())
+            {
+                seeded.Seed = seed;
+            }
+
+            var tectonicStage = _pipeline.Stages.OfType<TectonicPlateGenerationStage>().FirstOrDefault();
+            if (tectonicStage != null)
+            {
+                tectonicStage.SeedCount = _plateLayer.SeedCount;
+            }
+
+            var sw = Stopwatch.StartNew();
+            _pipeline.Execute(_map);
+            sw.Stop();
+            LastGenMs = sw.ElapsedMilliseconds;
+
+            _needsMeshRebuild = true;
+            UpdateStatus();
+            RenderFrame();
+        }
+
+        public void SetColorMode(ColorMode mode)
+        {
+            if (mode == ColorMode) return;
+            ColorMode = mode;
+            Recolor();
+            UpdateStatus();
+        }
+
+        private void Recolor()
+        {
+            // Stale mesh (e.g. recursion changed but rebuild hasn't run yet): rebuild instead.
+            var plates = _plateLayer.Store.GetSpan<TectonicPlate>();
+            if (_vertexTile.Length != _vertexCount || _meshTileCount != plates.Length)
+            {
+                _needsMeshRebuild = true;
+                RenderFrame();
+                return;
+            }
+
+            var locals = _localLayer.Store.GetSpan<LocalMapInfo>();
+            var heights = _elevLayer.Store.GetSpan<ElevationInfo>();
+
+            // Per-tile recolor with zero lookups via the stored vertex->tile map.
             for (int i = 0; i < _vertexCount; i++)
             {
-                double lat, lon;
-                if (projectionObj != null)
-                {
-                    if (float.IsNaN(_positions[i * 3]))
-                    {
-                        lat = 0; lon = 0;
-                    }
-                    else
-                    {
-                        var geo = projectionObj.Inverse(new Vector2D(_positions[i * 3], _positions[i * 3 + 1]));
-                        lat = geo.Latitude;
-                        lon = geo.Longitude;
-                    }
-                }
-                else
-                {
-                    lat = Math.Asin(_positions[i * 3 + 2]) * 180.0 / Math.PI;
-                    lon = Math.Atan2(_positions[i * 3 + 1], _positions[i * 3]) * 180.0 / Math.PI;
-                }
-
-                var coord = new GeoCoord(lat, lon);
-                var plate = _plateLayer.GetValue(coord);
-
-                if (!plateColors.TryGetValue(plate.Id, out var color))
-                {
-                    color = new System.Numerics.Vector3(
-                        (float)rnd.NextDouble(),
-                        (float)rnd.NextDouble(),
-                        (float)rnd.NextDouble());
-                    plateColors[plate.Id] = color;
-                }
-
+                int tile = _vertexTile[i];
+                var color = TileDebugColor(plates[tile].Id, locals[tile].Biome, heights[tile].Height);
                 _colors[i * 3] = color.X;
                 _colors[i * 3 + 1] = color.Y;
                 _colors[i * 3 + 2] = color.Z;
@@ -282,6 +340,44 @@ namespace RoguelikeToolkit.World.App
 
             _needsColorBufferUpdate = true;
             RenderFrame();
+        }
+
+        private System.Numerics.Vector3 TileDebugColor(int plateId, BiomeType biome, float height)
+            => ColorMode switch
+            {
+                ColorMode.Biome => BiomePalette.ColorFor(biome),
+                ColorMode.Elevation => ElevationPalette.ColorFor(height),
+                _ => PlatePalette.ColorFor(plateId),
+            };
+
+        private void UpdateStatus()
+        {
+            StatusText = $"Seed {WorldSeed} | Tiles {TileCount:N0} | Gen {LastGenMs} ms | Plates {_plateLayer.SeedCount}";
+            StatusChanged?.Invoke(this, EventArgs.Empty);
+        }
+
+        private DispatcherTimer? _debounceTimer;
+        private Action? _pendingDebounceAction;
+
+        private void Debounce(Action action)
+        {
+            _pendingDebounceAction = action;
+            if (_debounceTimer == null)
+            {
+                _debounceTimer = new DispatcherTimer { Interval = TimeSpan.FromMilliseconds(350) };
+                _debounceTimer.Tick += (s, e) =>
+                {
+                    _debounceTimer.Stop();
+                    var pending = _pendingDebounceAction;
+                    _pendingDebounceAction = null;
+                    pending?.Invoke();
+                };
+            }
+            else
+            {
+                _debounceTimer.Stop();
+            }
+            _debounceTimer.Start();
         }
 
         public void SetProjectionMode(ProjectionType mode)
@@ -336,7 +432,9 @@ namespace RoguelikeToolkit.World.App
                 gl.GetProgramiv(_shaderProgram, GlConsts.GL_INFO_LOG_LENGTH, &maxLength);
                 byte* infoLog = stackalloc byte[maxLength];
                 gl.GetProgramInfoLog(_shaderProgram, maxLength, out int length, infoLog);
-                Console.WriteLine($"Shader program link error: {Marshal.PtrToStringAnsi((IntPtr)infoLog)}");
+                var msg = $"Shader program link error: {Marshal.PtrToStringAnsi((IntPtr)infoLog)}";
+                Console.WriteLine(msg);
+                OnDiagnostic?.Invoke(msg);
             }
 
             gl.DeleteShader(vertexShader);
@@ -361,17 +459,37 @@ namespace RoguelikeToolkit.World.App
                 gl.GetShaderiv(shader, GlConsts.GL_INFO_LOG_LENGTH, &maxLength);
                 byte* infoLog = stackalloc byte[maxLength];
                 gl.GetShaderInfoLog(shader, maxLength, out int length, infoLog);
-                Console.WriteLine($"Shader compile error: {Marshal.PtrToStringAnsi((IntPtr)infoLog)}");
+                var msg = $"Shader compile error: {Marshal.PtrToStringAnsi((IntPtr)infoLog)}";
+                Console.WriteLine(msg);
+                OnDiagnostic?.Invoke(msg);
             }
         }
 
         private void SetupMesh(GlInterface gl)
         {
-            System.Numerics.Vector3[] vPos;
-            System.Numerics.Vector3[] vNorm;
-            System.Numerics.Vector3[] vBary;
+            // Release previous GL resources first (SetupMesh always runs with a current GL context).
+            if (_vao != 0)
+            {
+                int[] oldBuffers = new int[] { _vboPos, _vboNormal, _vboBary, _vboColor };
+                fixed (int* pOld = oldBuffers)
+                {
+                    gl.DeleteBuffers(4, pOld);
+                }
 
-            IcosphereGenerator.GenerateFlat(RecursionLevel, out vPos, out vNorm, out vBary);
+                int oldVao = _vao;
+                gl.DeleteVertexArrays(1, &oldVao);
+
+                _vao = 0;
+                _vboPos = 0;
+                _vboNormal = 0;
+                _vboBary = 0;
+                _vboColor = 0;
+            }
+
+            // Indexed generation: face corners ARE tile indices, so coloring needs
+            // no per-vertex store lookups and no project->inverse roundtrips.
+            IcosphereGenerator.Generate(RecursionLevel, out RoguelikeToolkit.World.Core.Vector3D[] tileVerts, out TriangleIndices[] faces);
+            int tileCount = tileVerts.Length;
 
             IProjection? projectionObj = ProjectionMode switch
             {
@@ -381,107 +499,112 @@ namespace RoguelikeToolkit.World.App
                 _ => null
             };
 
-            // Calculate projections
-            if (projectionObj != null)
-            {
-                for (int i = 0; i < vPos.Length; i += 3)
-                {
-                    var p1 = vPos[i];
-                    var p2 = vPos[i + 1];
-                    var p3 = vPos[i + 2];
+            bool flat = projectionObj != null;
 
-                    double lat1 = Math.Asin(p1.Z) * 180.0 / Math.PI;
-                    double lon1 = Math.Atan2(p1.Y, p1.X) * 180.0 / Math.PI;
-                    double lat2 = Math.Asin(p2.Z) * 180.0 / Math.PI;
-                    double lon2 = Math.Atan2(p2.Y, p2.X) * 180.0 / Math.PI;
-                    double lat3 = Math.Asin(p3.Z) * 180.0 / Math.PI;
-                    double lon3 = Math.Atan2(p3.Y, p3.X) * 180.0 / Math.PI;
+            // Per-tile caches: projected anchor position and debug color.
+            var tileX = new float[tileCount];
+            var tileY = new float[tileCount];
+            var tileZ = new float[tileCount];
+            var tileColor = new System.Numerics.Vector3[tileCount];
+
+            var plates = _plateLayer.Store.GetSpan<TectonicPlate>();
+            var locals = _localLayer.Store.GetSpan<LocalMapInfo>();
+            var heights = _elevLayer.Store.GetSpan<ElevationInfo>();
+            for (int t = 0; t < tileCount; t++)
+            {
+                var v = tileVerts[t];
+                tileX[t] = (float)v.X;
+                tileY[t] = (float)v.Y;
+                tileZ[t] = (float)v.Z;
+                tileColor[t] = TileDebugColor(plates[t].Id, locals[t].Biome, heights[t].Height);
+            }
+
+            bool[]? faceHidden = null;
+            if (flat)
+            {
+                var tileGeo = new GeoCoord[tileCount];
+                for (int t = 0; t < tileCount; t++)
+                    tileGeo[t] = tileVerts[t].ToGeoCoord();
+
+                for (int t = 0; t < tileCount; t++)
+                {
+                    var c = projectionObj!.Project(tileGeo[t]);
+                    tileX[t] = (float)c.X;
+                    tileY[t] = (float)c.Y;
+                    tileZ[t] = 0f;
+                }
+
+                faceHidden = new bool[faces.Length];
+                for (int f = 0; f < faces.Length; f++)
+                {
+                    var face = faces[f];
+                    double lon1 = tileGeo[face.v1].Longitude;
+                    double lon2 = tileGeo[face.v2].Longitude;
+                    double lon3 = tileGeo[face.v3].Longitude;
 
                     // Hide triangles spanning more than 180 deg in longitude (wrap-around dateline)
                     if (Math.Max(lon1, Math.Max(lon2, lon3)) - Math.Min(lon1, Math.Min(lon2, lon3)) > 180.0)
-                    {
-                        vPos[i] = new Vector3(float.NaN, float.NaN, float.NaN);
-                        vPos[i + 1] = new Vector3(float.NaN, float.NaN, float.NaN);
-                        vPos[i + 2] = new Vector3(float.NaN, float.NaN, float.NaN);
-                        continue;
-                    }
-
-                    var c1 = projectionObj.Project(new GeoCoord(lat1, lon1));
-                    var c2 = projectionObj.Project(new GeoCoord(lat2, lon2));
-                    var c3 = projectionObj.Project(new GeoCoord(lat3, lon3));
-
-                    vPos[i] = new Vector3((float)c1.X, (float)c1.Y, 0);
-                    vPos[i + 1] = new Vector3((float)c2.X, (float)c2.Y, 0);
-                    vPos[i + 2] = new Vector3((float)c3.X, (float)c3.Y, 0);
-
-                    vNorm[i] = new Vector3(0, 0, 1);
-                    vNorm[i + 1] = new Vector3(0, 0, 1);
-                    vNorm[i + 2] = new Vector3(0, 0, 1);
+                        faceHidden[f] = true;
                 }
             }
 
-            _vertexCount = vPos.Length;
+            _vertexCount = faces.Length * 3;
+            _meshTileCount = tileCount;
 
             _positions = new float[_vertexCount * 3];
             _normals = new float[_vertexCount * 3];
             _barycentric = new float[_vertexCount * 3];
             _colors = new float[_vertexCount * 3];
+            _vertexTile = new int[_vertexCount];
 
-            Random rnd = new Random(42);
-            var plateColors = new System.Collections.Generic.Dictionary<int, System.Numerics.Vector3>();
-
-            for (int i = 0; i < _vertexCount; i++)
+            for (int f = 0; f < faces.Length; f++)
             {
-                _positions[i * 3] = vPos[i].X;
-                _positions[i * 3 + 1] = vPos[i].Y;
-                _positions[i * 3 + 2] = vPos[i].Z;
+                var face = faces[f];
+                bool hidden = faceHidden != null && faceHidden[f];
 
-                _normals[i * 3] = vNorm[i].X;
-                _normals[i * 3 + 1] = vNorm[i].Y;
-                _normals[i * 3 + 2] = vNorm[i].Z;
-
-                _barycentric[i * 3] = vBary[i].X;
-                _barycentric[i * 3 + 1] = vBary[i].Y;
-                _barycentric[i * 3 + 2] = vBary[i].Z;
-
-                // Even in 2D projection, we still need to assign colors based on their original latitude/longitude
-                // which unfortunately we lost by projecting.
-                // We'll calculate lat/lon here depending on projection, or just store the original position temporarily.
-                double lat, lon;
-                if (projectionObj != null)
+                for (int k = 0; k < 3; k++)
                 {
-                    if (float.IsNaN(vPos[i].X))
+                    int tile = k == 0 ? face.v1 : (k == 1 ? face.v2 : face.v3);
+                    int idx = f * 3 + k;
+
+                    _vertexTile[idx] = tile;
+
+                    if (hidden)
                     {
-                        lat = 0; lon = 0;
+                        _positions[idx * 3] = float.NaN;
+                        _positions[idx * 3 + 1] = float.NaN;
+                        _positions[idx * 3 + 2] = float.NaN;
                     }
                     else
                     {
-                        var geo = projectionObj.Inverse(new Vector2D(vPos[i].X, vPos[i].Y));
-                        lat = geo.Latitude;
-                        lon = geo.Longitude;
+                        _positions[idx * 3] = tileX[tile];
+                        _positions[idx * 3 + 1] = tileY[tile];
+                        _positions[idx * 3 + 2] = tileZ[tile];
                     }
-                }
-                else
-                {
-                    lat = Math.Asin(vPos[i].Z) * 180.0 / Math.PI;
-                    lon = Math.Atan2(vPos[i].Y, vPos[i].X) * 180.0 / Math.PI;
-                }
 
-                var coord = new GeoCoord(lat, lon);
-                var plate = _plateLayer.GetValue(coord);
+                    if (flat)
+                    {
+                        _normals[idx * 3] = 0f;
+                        _normals[idx * 3 + 1] = 0f;
+                        _normals[idx * 3 + 2] = 1f;
+                    }
+                    else
+                    {
+                        _normals[idx * 3] = tileX[tile];
+                        _normals[idx * 3 + 1] = tileY[tile];
+                        _normals[idx * 3 + 2] = tileZ[tile];
+                    }
 
-                if (!plateColors.TryGetValue(plate.Id, out var color))
-                {
-                    color = new System.Numerics.Vector3(
-                        (float)rnd.NextDouble(),
-                        (float)rnd.NextDouble(),
-                        (float)rnd.NextDouble());
-                    plateColors[plate.Id] = color;
+                    // Barycentric coordinates (unshared vertices for the edge shader)
+                    _barycentric[idx * 3] = k == 0 ? 1f : 0f;
+                    _barycentric[idx * 3 + 1] = k == 1 ? 1f : 0f;
+                    _barycentric[idx * 3 + 2] = k == 2 ? 1f : 0f;
+
+                    var color = tileColor[tile];
+                    _colors[idx * 3] = color.X;
+                    _colors[idx * 3 + 1] = color.Y;
+                    _colors[idx * 3 + 2] = color.Z;
                 }
-
-                _colors[i * 3] = color.X;
-                _colors[i * 3 + 1] = color.Y;
-                _colors[i * 3 + 2] = color.Z;
             }
 
             int[] buffers = new int[4];
@@ -543,15 +666,6 @@ namespace RoguelikeToolkit.World.App
         {
             if (_needsMeshRebuild)
             {
-                int[] buffers = new int[] { _vboPos, _vboNormal, _vboBary, _vboColor };
-                fixed (int* pBuffers = buffers)
-                {
-                    gl.DeleteBuffers(4, pBuffers);
-                }
-
-                int vao = _vao;
-                gl.DeleteVertexArrays(1, &vao);
-
                 SetupMesh(gl);
                 _needsMeshRebuild = false;
                 _needsColorBufferUpdate = false;
@@ -723,23 +837,14 @@ namespace RoguelikeToolkit.World.App
                     lon = Math.Atan2(SelectedHexCenter.Y, SelectedHexCenter.X) * 180.0 / Math.PI;
                 }
 
-                double normalizedLon = (lon + 180.0) / 360.0;
-                double normalizedLat = (lat + 90.0) / 180.0;
-                if (normalizedLon < 0) normalizedLon = 0;
-                if (normalizedLon >= 1) normalizedLon = 0.999999;
-                if (normalizedLat < 0) normalizedLat = 0;
-                if (normalizedLat >= 1) normalizedLat = 0.999999;
+                // Resolve the tile through the store's canonical topology (exact nearest-center
+                // search). The previous ring-based heuristic disagreed with the store on
+                // ~160/162 tiles at size 2 and routinely displayed the wrong plate/biome.
+                tileIndex = _map.DataStore.GetTileIndex(new GeoCoord(lat, lon));
 
-                int size = RecursionLevel;
-                int tileCount = WorldDataStore.GetTileCount(size);
-                int rings = (1 << size) * 3;
-                if (rings == 0) rings = 3;
-                int ringIndex = (int)(normalizedLat * rings);
-                int tilesInRing = tileCount / rings;
-                if (tilesInRing == 0) tilesInRing = 1;
-                int tileInRing = (int)(normalizedLon * tilesInRing);
-                tileIndex = ringIndex * tilesInRing + tileInRing;
-                if (tileIndex >= tileCount) tileIndex = tileCount - 1;
+                // Snap the highlight to the true tile center.
+                var centerVec = RoguelikeToolkit.World.Core.Vector3D.FromGeoCoord(_map.DataStore.GetGeoCoord(tileIndex));
+                SelectedHexCenter = new System.Numerics.Vector3((float)centerVec.X, (float)centerVec.Y, (float)centerVec.Z);
 
                 RenderFrame();
                 return true;

@@ -22,6 +22,10 @@ namespace RoguelikeToolkit.World.App
             var sldSeedCount = this.FindControl<Slider>("SldSeedCount");
             var sldRecursionLevel = this.FindControl<Slider>("SldRecursionLevel");
             var cmbProjection = this.FindControl<ComboBox>("CmbProjection");
+            var numSeed = this.FindControl<NumericUpDown>("NumSeed");
+            var btnRegen = this.FindControl<Button>("BtnRegen");
+            var cmbColorMode = this.FindControl<ComboBox>("CmbColorMode");
+            var txtStatus = this.FindControl<TextBlock>("TxtStatus");
 
             if (btnRotLeft != null) btnRotLeft.Click += (s, e) => { if (GlView.ProjectionMode == ProjectionType.Sphere) { GlView.Yaw -= 10f; GlView.RenderFrame(); } };
             if (btnRotRight != null) btnRotRight.Click += (s, e) => { if (GlView.ProjectionMode == ProjectionType.Sphere) { GlView.Yaw += 10f; GlView.RenderFrame(); } };
@@ -75,6 +79,31 @@ namespace RoguelikeToolkit.World.App
                 };
             }
 
+            if (btnRegen != null)
+            {
+                btnRegen.Click += (s, e) =>
+                {
+                    int seed = (int)(numSeed?.Value ?? 42);
+                    GlView.Regenerate(seed);
+                };
+            }
+
+            if (cmbColorMode != null)
+            {
+                cmbColorMode.SelectionChanged += (s, e) =>
+                {
+                    if (cmbColorMode.SelectedIndex >= 0)
+                    {
+                        GlView.SetColorMode((ColorMode)cmbColorMode.SelectedIndex);
+                    }
+                };
+            }
+
+            void RefreshStatus() { if (txtStatus != null) txtStatus.Text = GlView.StatusText; }
+            GlView.StatusChanged += (s, e) => RefreshStatus();
+            GlView.OnDiagnostic = msg => { if (txtStatus != null) txtStatus.Text = msg; };
+            RefreshStatus();
+
             // Global Key Down event
             this.KeyDown += MainWindow_KeyDown;
         }
@@ -98,6 +127,7 @@ namespace RoguelikeToolkit.World.App
                 var txtLon = this.FindControl<TextBlock>("TxtHexLon");
                 var txtIndex = this.FindControl<TextBlock>("TxtHexIndex");
                 var txtPlate = this.FindControl<TextBlock>("TxtHexPlate");
+                var txtElev = this.FindControl<TextBlock>("TxtHexElev");
                 var txtBiome = this.FindControl<TextBlock>("TxtHexBiome");
                 var txtDanger = this.FindControl<TextBlock>("TxtHexDanger");
 
@@ -115,6 +145,19 @@ namespace RoguelikeToolkit.World.App
                     else
                     {
                         txtPlate.Text = $"Plate ID: --";
+                    }
+                }
+
+                if (txtElev != null && tileIndex >= 0)
+                {
+                    var elev = GlView.ElevationLayer?.Store.GetRef<RoguelikeToolkit.World.Core.ElevationInfo>(tileIndex);
+                    if (elev.HasValue)
+                    {
+                        txtElev.Text = $"Elev: {elev.Value.Height:F2}";
+                    }
+                    else
+                    {
+                        txtElev.Text = $"Elev: --";
                     }
                 }
 
@@ -139,6 +182,7 @@ namespace RoguelikeToolkit.World.App
                 var txtLon = this.FindControl<TextBlock>("TxtHexLon");
                 var txtIndex = this.FindControl<TextBlock>("TxtHexIndex");
                 var txtPlate = this.FindControl<TextBlock>("TxtHexPlate");
+                var txtElev = this.FindControl<TextBlock>("TxtHexElev");
                 var txtBiome = this.FindControl<TextBlock>("TxtHexBiome");
                 var txtDanger = this.FindControl<TextBlock>("TxtHexDanger");
 
@@ -146,6 +190,7 @@ namespace RoguelikeToolkit.World.App
                 if (txtLon != null) txtLon.Text = "Lon: --";
                 if (txtIndex != null) txtIndex.Text = "Index: --";
                 if (txtPlate != null) txtPlate.Text = "Plate ID: --";
+                if (txtElev != null) txtElev.Text = "Elev: --";
                 if (txtBiome != null) txtBiome.Text = "Biome: --";
                 if (txtDanger != null) txtDanger.Text = "Danger: --";
             }

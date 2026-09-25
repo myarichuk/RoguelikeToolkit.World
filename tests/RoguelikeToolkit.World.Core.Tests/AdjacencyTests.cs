@@ -161,6 +161,63 @@ public class AdjacencyTests
         }
     }
 
+    [Theory]
+    [InlineData(1)]
+    [InlineData(2)]
+    [InlineData(3)]
+    [InlineData(4)]
+    public void WorldDataStore_GetTileIndex_RoundTripsCenters_AndToleratesSmallOffsets(int size)
+    {
+        using var store = new WorldDataStore(size);
+
+        for (int i = 0; i < store.TileCount; i++)
+        {
+            var center = store.GetGeoCoord(i);
+            Assert.Equal(i, store.GetTileIndex(center));
+
+            // Clicks land near — not exactly on — tile centers; small offsets must resolve identically.
+            // (This is the contract GlControl.TryPickHex relies on after the ring-math fix.)
+            if (Math.Abs(center.Latitude) < 89.0)
+            {
+                var jittered = new GeoCoord(center.Latitude + 0.1, center.Longitude + 0.1);
+                Assert.Equal(i, store.GetTileIndex(jittered));
+            }
+        }
+    }
+
+    [Theory]
+    [InlineData(1, 1000)]
+    [InlineData(2, 2000)]
+    [InlineData(3, 2000)]
+    [InlineData(4, 1000)]
+    [InlineData(5, 500)]
+    [InlineData(6, 100)]
+    public void WorldDataStore_GetTileIndex_MatchesExact_ForSampledPoints(int size, int samples)
+    {
+        using var store = new WorldDataStore(size);
+        var r = Rng.Create(1234, size);
+
+        for (int s = 0; s < samples; s++)
+        {
+            double u = r.NextDouble() * 2.0 - 1.0;
+            double lat = Math.Asin(Math.Clamp(u, -1.0, 1.0)) * (180.0 / Math.PI);
+            double lon = r.NextDouble() * 360.0 - 180.0;
+            var coord = new GeoCoord(lat, lon);
+            Assert.Equal(store.GetTileIndexExact(coord), store.GetTileIndex(coord));
+        }
+
+        // Fixed edge cases: poles (meridian convergence), dateline wrap, equator.
+        var edgeCases = new GeoCoord[]
+        {
+            new(89.9, 0), new(89.9, 120), new(89.9, -120),
+            new(-89.9, 0), new(-89.9, 45), new(-89.9, -90),
+            new(0, 180), new(0, -180), new(0, 179.9),
+            new(45, 180), new(-45, -180),
+        };
+        foreach (var coord in edgeCases)
+            Assert.Equal(store.GetTileIndexExact(coord), store.GetTileIndex(coord));
+    }
+
     [Fact]
     public void WorldDataStore_Indexer_ThrowsIndexOutOfRangeException_WhenIndexIsOutOfBounds()
     {

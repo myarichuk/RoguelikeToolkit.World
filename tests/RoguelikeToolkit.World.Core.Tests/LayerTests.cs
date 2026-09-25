@@ -35,7 +35,7 @@ public class LayerTests
     [Fact]
     public void TectonicPlateLayer_Generate_ZeroAllocation()
     {
-        using var arena = new SharpArena.Allocators.ArenaAllocator();
+        using var arena = ArenaDefaults.Create();
         var map = new WorldMap(5);
         using var layer = new TectonicPlateLayer(map.DataStore, 5, seed: 1234, arena: arena); // size 5 -> 252 tiles
         map.RegisterLayer(layer);
@@ -43,7 +43,7 @@ public class LayerTests
 
         // Let the JIT warm up the methods to ensure static init and JIT compilation
         // don't skew the results
-        using var warmupArena = new SharpArena.Allocators.ArenaAllocator();
+        using var warmupArena = ArenaDefaults.Create();
         var warmupMap = new WorldMap(1);
         using var warmupLayer = new TectonicPlateLayer(warmupMap.DataStore, 1, 1, warmupArena);
         warmupMap.RegisterLayer(warmupLayer);
@@ -86,7 +86,7 @@ public class LayerTests
 
         PrewarmTopology(size);
 
-        using var arena = new ArenaAllocator();
+        using var arena = ArenaDefaults.Create();
         using var map = new WorldMap(size);
         using var layer = new TectonicPlateLayer(map.DataStore, seedCount, seed: 1234, arena: arena);
 
@@ -132,7 +132,7 @@ public class LayerTests
     {
         const int seedCount = 8;
 
-        using var arena = new ArenaAllocator();
+        using var arena = ArenaDefaults.Create();
         using var map = new WorldMap(size);
         using var layer = new TectonicPlateLayer(map.DataStore, seedCount, seed: 1, arena: arena);
         map.RegisterLayer(layer);

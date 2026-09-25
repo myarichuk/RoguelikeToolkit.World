@@ -5,7 +5,7 @@ using SharpArena.Collections;
 namespace RoguelikeToolkit.World.Core;
 
 [WorldGeneratorStage(10)]
-public class TectonicPlateGenerationStage : IWorldGeneratorStage, IDisposable
+public class TectonicPlateGenerationStage : IWorldGeneratorStage, ISeededStage, IDisposable
 {
     public int SeedCount { get; set; } = 12;
     public int Seed { get; set; } = 42;
@@ -14,14 +14,14 @@ public class TectonicPlateGenerationStage : IWorldGeneratorStage, IDisposable
 
     public TectonicPlateGenerationStage()
     {
-        _arena = new ArenaAllocator();
+        _arena = ArenaDefaults.Create();
     }
 
     public TectonicPlateGenerationStage(int seedCount, int seed = 42, ArenaAllocator? arena = null)
     {
         SeedCount = seedCount;
         Seed = seed;
-        _arena = arena ?? new ArenaAllocator();
+        _arena = arena ?? ArenaDefaults.Create();
     }
 
     public void Execute(WorldMap map)
@@ -35,33 +35,28 @@ public class TectonicPlateGenerationStage : IWorldGeneratorStage, IDisposable
             span[i] = new TectonicPlate { Id = -1 };
         }
 
-        uint state = (uint)Seed;
-        if (state == 0) state = 1;
-
-        uint NextRandom(uint max)
-        {
-            state ^= state << 13;
-            state ^= state >> 17;
-            state ^= state << 5;
-            return state % max;
-        }
-
-        double NextDouble()
-        {
-            return (double)NextRandom(1000000) / 1000000.0;
-        }
-
         var seeds = new ArenaList<Vector3D>(_arena, SeedCount);
         var seedElevations = new ArenaList<double>(_arena, SeedCount);
         var seedDriftSpeeds = new ArenaList<double>(_arena, SeedCount);
 
+        // Per-plate sub-streams: each plate's parameters depend only on (Seed, plate
+        // ordinal), never on iteration order, so output is reproducible on demand.
+        var seedDriftDirs = new ArenaList<Vector3D>(_arena, SeedCount);
         for (int i = 0; i < SeedCount; i++)
         {
-            double lat = NextDouble() * 180.0 - 90.0;
-            double lon = NextDouble() * 360.0 - 180.0;
+            var r = Rng.Create(Seed, i);
+            double lat = r.NextDouble() * 180.0 - 90.0;
+            double lon = r.NextDouble() * 360.0 - 180.0;
             seeds.Add(Vector3D.FromGeoCoord(new GeoCoord(lat, lon)));
-            seedElevations.Add(NextDouble());
-            seedDriftSpeeds.Add(NextDouble());
+            seedElevations.Add(r.NextDouble());
+            seedDriftSpeeds.Add(r.NextDouble());
+
+            // Uniform random unit vector (drawn after the legacy parameters so the
+            // first four draws — and therefore existing plate layouts — are unchanged).
+            double u = r.NextDouble() * 2.0 - 1.0;
+            double theta = r.NextDouble() * 2.0 * Math.PI;
+            double s = Math.Sqrt(Math.Max(0.0, 1.0 - u * u));
+            seedDriftDirs.Add(new Vector3D(s * Math.Cos(theta), s * Math.Sin(theta), u));
         }
 
         ReadOnlySpan<Vector3D> tilePositions = store.GetTileVectors();
@@ -86,11 +81,15 @@ public class TectonicPlateGenerationStage : IWorldGeneratorStage, IDisposable
                     }
                 }
 
+                var drift = seedDriftDirs[bestSeed];
                 span[i] = new TectonicPlate
                 {
                     Id = bestSeed + 1,
                     Elevation = seedElevations[bestSeed],
-                    DriftSpeed = seedDriftSpeeds[bestSeed]
+                    DriftSpeed = seedDriftSpeeds[bestSeed],
+                    DriftX = drift.X,
+                    DriftY = drift.Y,
+                    DriftZ = drift.Z
                 };
             }
 

@@ -12,6 +12,68 @@ public class SecurityTests : IDisposable
         public int Value;
     }
 
+    private struct OtherData
+    {
+        public long Value;
+    }
+
+    [Fact]
+    public void WorldDataStore_FileStore_ReopenWithSameLayers_PreservesData()
+    {
+        var path = "header_roundtrip_test.bin";
+        try
+        {
+            using (var store = new WorldDataStore(1, path))
+            {
+                store.RegisterLayer<DummyData>();
+                store.Allocate();
+                store.GetRef<DummyData>(3) = new DummyData { Value = 12345 };
+            }
+
+            using (var store = new WorldDataStore(1, path))
+            {
+                store.RegisterLayer<DummyData>();
+                store.Allocate();
+                Assert.Equal(12345, store.GetRef<DummyData>(3).Value);
+            }
+        }
+        finally
+        {
+            if (File.Exists(path))
+            {
+                File.Delete(path);
+            }
+        }
+    }
+
+    [Fact]
+    public void WorldDataStore_FileStore_ReopenWithDifferentLayers_ThrowsInvalidData()
+    {
+        var path = "header_mismatch_test.bin";
+        try
+        {
+            using (var store = new WorldDataStore(1, path))
+            {
+                store.RegisterLayer<DummyData>();
+                store.Allocate();
+            }
+
+            Assert.Throws<InvalidDataException>(() =>
+            {
+                using var store = new WorldDataStore(1, path);
+                store.RegisterLayer<OtherData>();
+                store.Allocate();
+            });
+        }
+        finally
+        {
+            if (File.Exists(path))
+            {
+                File.Delete(path);
+            }
+        }
+    }
+
     [Fact]
     public void WorldDataStore_Constructor_WithValidPath_CreatesSuccessfully()
     {
