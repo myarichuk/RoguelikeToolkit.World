@@ -31,6 +31,7 @@
                     <TextBlock x:Name="TxtHexElev" Text="Elev: --" Foreground="White"/>
                     <TextBlock x:Name="TxtHexBiome" Text="Biome: --" Foreground="White"/>
                     <TextBlock x:Name="TxtHexDanger" Text="Danger: --" Foreground="White"/>
+                    <TextBlock x:Name="TxtHexFeatures" Text="Features: --" Foreground="White" TextWrapping="Wrap" MaxWidth="220"/>
                 </StackPanel>
             </Border>
         </Border>
@@ -69,12 +70,16 @@
                 <TextBlock Text="World Seed:" Foreground="White" Margin="5,5,5,0"/>
                 <NumericUpDown x:Name="NumSeed" Minimum="1" Maximum="999999" Value="42" Margin="5,0,5,0"/>
                 <Button x:Name="BtnRegen" Content="Regenerate" Background="#40FFFFFF" Foreground="White" HorizontalAlignment="Stretch" HorizontalContentAlignment="Center" Margin="5,0,5,5"/>
+                <Button x:Name="BtnMapCreator" Content="Map Creator..." Background="#40FFFFFF" Foreground="White" HorizontalAlignment="Stretch" HorizontalContentAlignment="Center" Margin="5,0,5,5"/>
 
                 <TextBlock Text="Color Mode:" Foreground="White" Margin="5,5,5,0"/>
                 <ComboBox x:Name="CmbColorMode" SelectedIndex="0" HorizontalAlignment="Stretch" Margin="5,0,5,5">
                     <ComboBoxItem>Plates</ComboBoxItem>
                     <ComboBoxItem>Biome</ComboBoxItem>
                     <ComboBoxItem>Elevation</ComboBoxItem>
+                    <ComboBoxItem>Water</ComboBoxItem>
+                    <ComboBoxItem>Climate</ComboBoxItem>
+                    <ComboBoxItem>Deposits</ComboBoxItem>
                 </ComboBox>
 
                 <CheckBox x:Name="ChkTogglePlates" Content="Show Plates" IsChecked="True" Foreground="White" Margin="5"/>

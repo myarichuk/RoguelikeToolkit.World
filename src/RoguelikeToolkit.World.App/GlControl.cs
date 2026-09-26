@@ -25,7 +25,10 @@ namespace RoguelikeToolkit.World.App
     {
         Plates,
         Biome,
-        Elevation
+        Elevation,
+        Water,
+        Climate,
+        Deposits
     }
 
     public unsafe class GlControl : OpenGlControlBase
@@ -80,8 +83,20 @@ namespace RoguelikeToolkit.World.App
         private WorldMap _map = null!;
         private TectonicPlateLayer _plateLayer = null!;
         private ElevationLayer _elevLayer = null!;
+        private HydrologyLayer _hydroLayer = null!;
+        private ClimateLayer _climateLayer = null!;
         private LocalMapLayer _localLayer = null!;
         private WorldGenerationPipeline _pipeline = null!;
+
+        // Sparse catalogs + per-tile classifications, rebuilt after every
+        // pipeline run. Drives the Water/Deposits color modes and the hex panel.
+        private readonly RiverCatalog _rivers = new();
+        private readonly WaterBodyCatalog _bodies = new();
+        private readonly RangeCatalog _ranges = new();
+        private readonly DepositCatalog _deposits = new();
+        private WaterBodyKind?[] _waterKindByTile = Array.Empty<WaterBodyKind?>();
+        private bool[] _glacierByTile = Array.Empty<bool>();
+        private DepositType?[] _depositByTile = Array.Empty<DepositType?>();
 
         private const string VertexShaderSource = @"
             #version 330 core
@@ -213,6 +228,15 @@ namespace RoguelikeToolkit.World.App
             _elevLayer = new ElevationLayer(_map.DataStore);
             _map.RegisterLayer(_elevLayer);
 
+            // Full field-layer set: the discovered pipeline writes hydrology
+            // and climate too (missing layers used to crash Execute). Keep in
+            // sync with WorldBuilder's registration.
+            _hydroLayer = new HydrologyLayer(_map.DataStore);
+            _map.RegisterLayer(_hydroLayer);
+
+            _climateLayer = new ClimateLayer(_map.DataStore);
+            _map.RegisterLayer(_climateLayer);
+
             _localLayer = new LocalMapLayer(_map.DataStore, 42, _plateLayer);
             _map.RegisterLayer(_localLayer);
 
@@ -238,7 +262,58 @@ namespace RoguelikeToolkit.World.App
             sw.Stop();
             LastGenMs = sw.ElapsedMilliseconds;
 
+            RefreshWaterCatalogs();
             UpdateStatus();
+        }
+
+        /// <summary>Everything attached to one hex (river reach, water, glacier, deposits...).</summary>
+        public TileFeatureInfo GetTileFeatures(int tileIndex)
+            => TileFeatures.Query(_map.DataStore, tileIndex, _rivers, _bodies, _ranges, _deposits);
+
+        private void RefreshWaterCatalogs()
+        {
+            _rivers.Rivers.Clear();
+            _bodies.Bodies.Clear();
+            _ranges.Features.Clear();
+            _deposits.Deposits.Clear();
+            HydrologyStage.PopulateCatalogs(_map, _rivers, _bodies);
+            RangeCatalogBuilder.Populate(_map, _ranges);
+            DepositCatalogBuilder.Populate(_map, _deposits, WorldSeed);
+
+            int n = _map.DataStore.TileCount;
+            var kinds = new WaterBodyKind?[n];
+            foreach (var body in _bodies.Bodies)
+            {
+                foreach (int t in body.Tiles)
+                {
+                    if ((uint)t < (uint)n) kinds[t] = body.Kind;
+                }
+            }
+            _waterKindByTile = kinds;
+
+            var elev = _elevLayer.Store.GetSpan<ElevationInfo>();
+            var climate = _climateLayer.Store.GetSpan<ClimateInfo>();
+            var vectors = _map.DataStore.GetTileVectors();
+            var glac = new bool[n];
+            for (int t = 0; t < n; t++)
+                glac[t] = Glaciology.IsGlacierTile(vectors[t], elev[t].Height,
+                    climate[t].Temperature, climate[t].Precipitation);
+            _glacierByTile = glac;
+
+            // Richest deposit per tile wins the overlay marker.
+            var markers = new DepositType?[n];
+            var best = new float[n];
+            for (int k = 0; k < n; k++) best[k] = -1f;
+            foreach (var d in _deposits.Deposits)
+            {
+                if ((uint)d.TileIndex >= (uint)n) continue;
+                if (d.Richness > best[d.TileIndex])
+                {
+                    best[d.TileIndex] = d.Richness;
+                    markers[d.TileIndex] = d.Type;
+                }
+            }
+            _depositByTile = markers;
         }
 
         public void SetRecursionLevel(int level)
@@ -276,6 +351,7 @@ namespace RoguelikeToolkit.World.App
                 sw.Stop();
                 LastGenMs = sw.ElapsedMilliseconds;
 
+                RefreshWaterCatalogs();
                 Recolor();
                 UpdateStatus();
             });
@@ -301,6 +377,7 @@ namespace RoguelikeToolkit.World.App
             sw.Stop();
             LastGenMs = sw.ElapsedMilliseconds;
 
+            RefreshWaterCatalogs();
             _needsMeshRebuild = true;
             UpdateStatus();
             RenderFrame();
@@ -332,7 +409,7 @@ namespace RoguelikeToolkit.World.App
             for (int i = 0; i < _vertexCount; i++)
             {
                 int tile = _vertexTile[i];
-                var color = TileDebugColor(plates[tile].Id, locals[tile].Biome, heights[tile].Height);
+                var color = TileDebugColor(plates[tile].Id, locals[tile].Biome, heights[tile].Height, tile);
                 _colors[i * 3] = color.X;
                 _colors[i * 3 + 1] = color.Y;
                 _colors[i * 3 + 2] = color.Z;
@@ -342,17 +419,73 @@ namespace RoguelikeToolkit.World.App
             RenderFrame();
         }
 
-        private System.Numerics.Vector3 TileDebugColor(int plateId, BiomeType biome, float height)
-            => ColorMode switch
+        private System.Numerics.Vector3 TileDebugColor(int plateId, BiomeType biome, float height, int tile)
+        {
+            if (ColorMode == ColorMode.Water)
+                return TileWaterColor(tile, biome);
+            if (ColorMode == ColorMode.Climate)
+                return TileClimateColor(tile);
+            if (ColorMode == ColorMode.Deposits)
+                return TileDepositColor(tile, biome);
+            if (ColorMode == ColorMode.Elevation)
+                return TileElevationColor(tile, height);
+            return ColorMode switch
             {
                 ColorMode.Biome => BiomePalette.ColorFor(biome),
-                ColorMode.Elevation => ElevationPalette.ColorFor(height),
                 _ => PlatePalette.ColorFor(plateId),
             };
+        }
+
+        private System.Numerics.Vector3 TileWaterColor(int tile, BiomeType biome)
+        {
+            if ((uint)tile < (uint)_glacierByTile.Length && _glacierByTile[tile])
+                return HydroPalette.ColorForGlacier();
+            var hydro = _hydroLayer.Store.GetSpan<HydrologyInfo>();
+            if ((uint)tile < (uint)hydro.Length && hydro[tile].IsRiver == 1)
+                return HydroPalette.ColorForRiver(hydro[tile].Flow);
+            if ((uint)tile < (uint)_waterKindByTile.Length && _waterKindByTile[tile].HasValue)
+                return HydroPalette.ColorFor(_waterKindByTile[tile]!.Value);
+            return HydroPalette.DimLand(BiomePalette.ColorFor(biome));
+        }
+
+        private System.Numerics.Vector3 TileClimateColor(int tile)
+        {
+            var climate = _climateLayer.Store.GetSpan<ClimateInfo>();
+            if ((uint)tile >= (uint)climate.Length) return new System.Numerics.Vector3(0.5f, 0.5f, 0.5f);
+            return ClimatePalette.ColorFor(climate[tile].Temperature, climate[tile].Precipitation);
+        }
+
+        private System.Numerics.Vector3 TileDepositColor(int tile, BiomeType biome)
+        {
+            if ((uint)tile < (uint)_depositByTile.Length && _depositByTile[tile].HasValue)
+                return DepositPalette.ColorFor(_depositByTile[tile]!.Value);
+            return DepositPalette.DimLand(BiomePalette.ColorFor(biome));
+        }
+
+        private System.Numerics.Vector3 TileElevationColor(int tile, float height)
+        {
+            var color = ElevationPalette.ColorFor(height);
+            // Hillshade: steep ground darkens so ranges, hills, and canyon cuts
+            // read as relief instead of flat color bands.
+            var heights = _elevLayer.Store.GetSpan<ElevationInfo>();
+            if ((uint)tile >= (uint)heights.Length) return color;
+            Span<int> scratch = stackalloc int[6];
+            int adjacent = _map.DataStore.GetAdjacent(tile, scratch);
+            float drop = 0f;
+            for (int k = 0; k < adjacent; k++)
+            {
+                float d = height - heights[scratch[k]].Height;
+                if (d > drop) drop = d;
+            }
+            float shade = 1f - MathF.Min(drop * 2.2f, 0.5f);
+            return color * shade;
+        }
 
         private void UpdateStatus()
         {
-            StatusText = $"Seed {WorldSeed} | Tiles {TileCount:N0} | Gen {LastGenMs} ms | Plates {_plateLayer.SeedCount}";
+            int lakes = 0;
+            foreach (var b in _bodies.Bodies) if (b.Kind == WaterBodyKind.Lake) lakes++;
+            StatusText = $"Seed {WorldSeed} | Tiles {TileCount:N0} | Gen {LastGenMs} ms | Plates {_plateLayer.SeedCount} | Rivers {_rivers.Rivers.Count} | Lakes {lakes} | Deposits {_deposits.Deposits.Count}";
             StatusChanged?.Invoke(this, EventArgs.Empty);
         }
 
@@ -516,7 +649,7 @@ namespace RoguelikeToolkit.World.App
                 tileX[t] = (float)v.X;
                 tileY[t] = (float)v.Y;
                 tileZ[t] = (float)v.Z;
-                tileColor[t] = TileDebugColor(plates[t].Id, locals[t].Biome, heights[t].Height);
+                tileColor[t] = TileDebugColor(plates[t].Id, locals[t].Biome, heights[t].Height, t);
             }
 
             bool[]? faceHidden = null;

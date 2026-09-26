@@ -4,6 +4,20 @@ using SharpArena.Collections;
 
 namespace RoguelikeToolkit.World.Core;
 
+public enum CrustType : byte
+{
+    Continental = 0,
+    Oceanic = 1
+}
+
+public enum PlateBoundaryType : byte
+{
+    None = 0,
+    Convergent = 1,
+    Divergent = 2,
+    Transform = 3
+}
+
 public struct TectonicPlate
 {
     public int Id;
@@ -14,6 +28,19 @@ public struct TectonicPlate
     public double DriftX;
     public double DriftY;
     public double DriftZ;
+    // v2 tectonics: crust kind (oceanic subducts under continental) and the
+    // per-tile boundary classification derived from neighbor drift.
+    public CrustType Crust;
+    public PlateBoundaryType Boundary;
+    // v3 tectonics: per-tile continentality (plates carry both continents and
+    // oceans, like Earth), distance to the nearest plate boundary in neighbor
+    // rings, the nearest boundary's type, and the signed orogeny driver
+    // (positive = uplift belts, negative = trenches/rifts) already decayed by
+    // distance so elevation and deposits read it directly.
+    public float Continentality;
+    public float BoundaryDistance;
+    public PlateBoundaryType NearestBoundary;
+    public float Orogeny;
 }
 
 public class TectonicPlateLayer : IMapLayer<TectonicPlate>, IDisposable

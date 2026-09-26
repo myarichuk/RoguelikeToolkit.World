@@ -47,9 +47,12 @@ public unsafe class WorldDataStore : IDisposable
     private long _dataOffset = 0;
 
     private const uint FileMagic = 0x31445357u; // "WDS1" little-endian
-    private const int FileVersion = 1;
-    private const int HeaderSize = 512;
-    private const int MaxHeaderLayers = 8;
+    private const int FileVersion = 2;
+    // v2 header: room for 32 field layers (dense per-tile structs).
+    // Sparse feature catalogs (rivers, water bodies, ranges) live outside
+    // the memory-mapped store and are not counted here.
+    private const int HeaderSize = 1024;
+    private const int MaxHeaderLayers = 32;
     private const int HeaderLayerEntrySize = 16; // 8 name hash + 4 stride + 4 reserved
 
     public int Size => _size;
@@ -225,12 +228,16 @@ public unsafe class WorldDataStore : IDisposable
         }
     }
 
+    public bool IsLayerRegistered(Type type) => _layerOffsets.ContainsKey(type);
+
+    public bool IsLayerRegistered<T>() where T : unmanaged => _layerOffsets.ContainsKey(typeof(T));
+
     public Span<T> GetSpan<T>() where T : unmanaged
     {
         if (_ptr == null) throw new InvalidOperationException("Store not allocated. Call Allocate() first.");
         if (!_layerOffsets.TryGetValue(typeof(T), out long offset))
         {
-            throw new ArgumentException($"Layer of type {typeof(T).Name} is not registered.");
+            throw new ArgumentException($"Layer of type {typeof(T).Name} is not registered. Call RegisterLayer<{typeof(T).Name}>() before Allocate().");
         }
 
         return new Span<T>(_ptr + _dataOffset + offset, _tileCount);
@@ -244,7 +251,7 @@ public unsafe class WorldDataStore : IDisposable
         if (_ptr == null) throw new InvalidOperationException("Store not allocated. Call Allocate() first.");
         if (!_layerOffsets.TryGetValue(typeof(T), out long offset))
         {
-            throw new ArgumentException($"Layer of type {typeof(T).Name} is not registered.");
+            throw new ArgumentException($"Layer of type {typeof(T).Name} is not registered. Call RegisterLayer<{typeof(T).Name}>() before Allocate().");
         }
 
         return ref ((T*)(_ptr + _dataOffset + offset))[index];

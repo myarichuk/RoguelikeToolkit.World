@@ -24,6 +24,7 @@ namespace RoguelikeToolkit.World.App
             var cmbProjection = this.FindControl<ComboBox>("CmbProjection");
             var numSeed = this.FindControl<NumericUpDown>("NumSeed");
             var btnRegen = this.FindControl<Button>("BtnRegen");
+            var btnMapCreator = this.FindControl<Button>("BtnMapCreator");
             var cmbColorMode = this.FindControl<ComboBox>("CmbColorMode");
             var txtStatus = this.FindControl<TextBlock>("TxtStatus");
 
@@ -85,6 +86,15 @@ namespace RoguelikeToolkit.World.App
                 {
                     int seed = (int)(numSeed?.Value ?? 42);
                     GlView.Regenerate(seed);
+                };
+            }
+
+            if (btnMapCreator != null)
+            {
+                btnMapCreator.Click += (s, e) =>
+                {
+                    var creator = new MapCreatorWindow();
+                    creator.Show(this);
                 };
             }
 
@@ -175,6 +185,10 @@ namespace RoguelikeToolkit.World.App
                         txtDanger.Text = $"Danger: --";
                     }
                 }
+
+                var txtFeatures = this.FindControl<TextBlock>("TxtHexFeatures");
+                if (txtFeatures != null)
+                    txtFeatures.Text = tileIndex >= 0 ? DescribeFeatures(tileIndex) : "Features: --";
             }
             else
             {
@@ -193,7 +207,31 @@ namespace RoguelikeToolkit.World.App
                 if (txtElev != null) txtElev.Text = "Elev: --";
                 if (txtBiome != null) txtBiome.Text = "Biome: --";
                 if (txtDanger != null) txtDanger.Text = "Danger: --";
+                var txtFeatures = this.FindControl<TextBlock>("TxtHexFeatures");
+                if (txtFeatures != null) txtFeatures.Text = "Features: --";
             }
+        }
+
+        private string DescribeFeatures(int tileIndex)
+        {
+            var f = GlView.GetTileFeatures(tileIndex);
+            var parts = new System.Collections.Generic.List<string>();
+            if (f.IsRiver)
+            {
+                string flow = f.UpstreamTile >= 0 ? $"#{f.UpstreamTile}" : f.RiverSource.ToString();
+                string to = f.DownstreamTile >= 0 ? $"#{f.DownstreamTile}" : "sea/sink";
+                parts.Add(f.RiverId >= 0 ? $"River #{f.RiverId} ({flow} → {to})" : $"River ({flow} → {to})");
+            }
+            if (f.BodyKind.HasValue)
+                parts.Add(f.LakeDepth > 0f ? $"{f.BodyKind.Value} ({f.LakeDepth:F2})" : f.BodyKind.Value.ToString());
+            if (f.IsGlacier) parts.Add("Glacier");
+            if (f.InMountainRange) parts.Add("Range");
+            if (f.InValley) parts.Add("Valley");
+            if (f.InCanyon) parts.Add("Canyon");
+            if (f.InPlaya) parts.Add("Playa");
+            if (f.Deposits != null && f.Deposits.Length > 0)
+                parts.Add(string.Join("+", f.Deposits));
+            return parts.Count > 0 ? "Features: " + string.Join(" • ", parts) : "Features: --";
         }
 
         private void GlViewContainer_PointerReleased(object sender, PointerReleasedEventArgs e)

@@ -46,6 +46,17 @@ public class ErosionTests
     }
 
     [Fact]
+    public void Erosion_IsDeterministic()
+    {
+        var first = ElevationsAfterErosion(3, 42, 12, 10);
+        var second = ElevationsAfterErosion(3, 42, 12, 10);
+
+        Assert.Equal(first.Length, second.Length);
+        for (int i = 0; i < first.Length; i++)
+            Assert.Equal(first[i].Height, second[i].Height);
+    }
+
+    [Fact]
     public void Erosion_PreservesTotalMass()
     {
         var uneroded = ElevationsAfterErosion(2, 42, 12, 0);

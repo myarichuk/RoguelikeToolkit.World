@@ -10,10 +10,10 @@ public class WorldMap : IDisposable
 
     public WorldDataStore DataStore { get; }
 
-    public WorldMap(int size)
+    public WorldMap(int size, string? filePath = null)
     {
         _size = size;
-        DataStore = new WorldDataStore(size);
+        DataStore = new WorldDataStore(size, filePath);
     }
 
     public void RegisterLayer<T>(IMapLayer<T> layer) where T : unmanaged

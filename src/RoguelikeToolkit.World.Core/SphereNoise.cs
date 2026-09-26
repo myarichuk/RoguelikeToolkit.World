@@ -61,6 +61,29 @@ public static class SphereNoise
         return norm > 0 ? sum / norm : 0.0;
     }
 
+    /// <summary>
+    /// Ridged fractal: sharp crests for orogenic belts. Returns roughly [0..1]
+    /// (0.5 typical); callers center it. Same seamless 3D lattice as <see cref="Fbm"/>.
+    /// </summary>
+    public static double RidgedFbm(Vector3D p, int seed, int octaves = 4, double lacunarity = 2.1, double gain = 0.5)
+    {
+        double sum = 0.0;
+        double amp = 1.0;
+        double norm = 0.0;
+        var q = p;
+
+        for (int o = 0; o < octaves; o++)
+        {
+            double r = 1.0 - Math.Abs(Value(q, seed + o * 131));
+            sum += r * r * amp;
+            norm += amp;
+            amp *= gain;
+            q = q * lacunarity;
+        }
+
+        return norm > 0 ? sum / norm : 0.5;
+    }
+
     private static double Fade(double t) => t * t * (3.0 - 2.0 * t);
 
     private static double Lerp(double a, double b, double t) => a + (b - a) * t;

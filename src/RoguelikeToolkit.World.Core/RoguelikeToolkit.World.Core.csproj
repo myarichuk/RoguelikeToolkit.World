@@ -5,10 +5,18 @@
     <ImplicitUsings>enable</ImplicitUsings>
     <Nullable>enable</Nullable>
     <AllowUnsafeBlocks>true</AllowUnsafeBlocks>
+    <GenerateDocumentationFile>true</GenerateDocumentationFile>
+    <NoWarn>$(NoWarn);1591</NoWarn>
+    <PackageId>RoguelikeToolkit.World.Core</PackageId>
+    <Version>0.2.0</Version>
+    <Authors>RoguelikeToolkit</Authors>
+    <Description>Spherical hex world generation for RPG/roguelike games: tectonics, elevation, hydrology, climate, biomes, regions, city-site queries, and history hooks.</Description>
+    <PackageTags>roguelike;rpg;worldgen;hex;procedural</PackageTags>
+    <RepositoryUrl>https://github.com/myarichuk/RoguelikeToolkit.World</RepositoryUrl>
   </PropertyGroup>
 
   <ItemGroup>
-    <PackageReference Include="SharpArena" Version="0.7.4" />
+    <PackageReference Include="SharpArena" Version="0.10.7" />
   </ItemGroup>
 
 </Project>

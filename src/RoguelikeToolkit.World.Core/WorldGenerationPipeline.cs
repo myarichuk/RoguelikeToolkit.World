@@ -9,12 +9,21 @@ namespace RoguelikeToolkit.World.Core;
 public class WorldGenerationPipeline : IDisposable
 {
     private readonly List<IWorldGeneratorStage> _stages = new();
+    // Cached execution order + contract validation. Rebuilt only when the
+    // stage set changes, so repeated Execute calls stay allocation-free and
+    // keep the zero-GC generation guarantee for hot paths.
+    private readonly List<IWorldGeneratorStage> _orderedCache = new();
+    // Declared (stage name, written layer) pairs, rebuilt with the order
+    // cache so steady-state Execute validates without reflection.
+    private readonly List<(string Stage, Type Layer)> _writesCache = new();
+    private bool _cacheDirty = true;
 
     public IReadOnlyList<IWorldGeneratorStage> Stages => _stages;
 
     public void AddStage(IWorldGeneratorStage stage)
     {
         _stages.Add(stage);
+        _cacheDirty = true;
     }
 
     public void ResetStages()
@@ -25,6 +34,9 @@ public class WorldGenerationPipeline : IDisposable
         }
 
         _stages.Clear();
+        _orderedCache.Clear();
+        _writesCache.Clear();
+        _cacheDirty = true;
     }
 
     /// <summary>
@@ -96,6 +108,7 @@ public class WorldGenerationPipeline : IDisposable
             {
                 var instance = (IWorldGeneratorStage)Activator.CreateInstance(typeInfo.Type)!;
                 _stages.Add(instance);
+                _cacheDirty = true;
             }
             catch (Exception ex)
             {
@@ -130,9 +143,71 @@ public class WorldGenerationPipeline : IDisposable
     {
         ResetStages();
     }
+
+    /// <summary>
+    /// Validates declared stage contracts (Reads/Writes). Stages without
+    /// declarations are skipped. Throws InvalidOperationException on collision.
+    /// </summary>
+    public void ValidateContracts()
+    {
+        StageContractValidator.ThrowOnConflicts(_stages);
+    }
+
+    /// <summary>
+    /// Validates contracts and that every declared required Reads/Writes type
+    /// is registered in the map's store. ReadsOptional types are skipped: by
+    /// design they may be absent or written later. Throws
+    /// InvalidOperationException otherwise.
+    /// </summary>
+    public void ValidateContracts(WorldMap map)
+    {
+        ValidateContracts();
+        foreach (var stage in _stages)
+        {
+            var attr = stage.GetType().GetCustomAttributes(typeof(WorldGeneratorStageAttribute), false)
+                .OfType<WorldGeneratorStageAttribute>().FirstOrDefault();
+            if (attr == null) continue;
+            foreach (var t in (attr.Reads ?? Array.Empty<Type>()).Concat(attr.Writes ?? Array.Empty<Type>()).Distinct())
+            {
+                if (!map.DataStore.IsLayerRegistered(t))
+                    throw new InvalidOperationException(
+                        $"Stage '{stage.GetType().Name}' declares layer '{t.Name}' but it is not registered. Call RegisterLayer<{t.Name}>() before Allocate().");
+            }
+        }
+    }
+
     public void Execute(WorldMap map)
     {
-        foreach (var stage in _stages)
+        // Fail fast on plugin collisions before mutating anything. Ordering +
+        // validation are cached so steady-state Execute stays allocation-free.
+        if (_cacheDirty)
+        {
+            StageContractValidator.ThrowOnConflicts(_stages);
+            _orderedCache.Clear();
+            _orderedCache.AddRange(_stages.OrderBy(s =>
+                s.GetType().GetCustomAttributes(typeof(WorldGeneratorStageAttribute), false)
+                    .OfType<WorldGeneratorStageAttribute>().FirstOrDefault()?.Order ?? int.MaxValue));
+            _writesCache.Clear();
+            foreach (var stage in _orderedCache)
+            {
+                var attr = stage.GetType().GetCustomAttributes(typeof(WorldGeneratorStageAttribute), false)
+                    .OfType<WorldGeneratorStageAttribute>().FirstOrDefault();
+                if (attr?.Writes == null) continue;
+                foreach (var w in attr.Writes)
+                    _writesCache.Add((stage.GetType().Name, w));
+            }
+            _cacheDirty = false;
+        }
+        // Fail fast on missing written layers (Writes only: ReadsOptional
+        // layers are allowed to be absent). Without this the first stage
+        // touching the layer throws a bare ArgumentException from GetSpan.
+        foreach (var (stageName, layer) in _writesCache)
+        {
+            if (!map.DataStore.IsLayerRegistered(layer))
+                throw new InvalidOperationException(
+                    $"Stage '{stageName}' writes layer '{layer.Name}' but it is not registered. Call RegisterLayer<{layer.Name}>() before Allocate().");
+        }
+        foreach (var stage in _orderedCache)
         {
             stage.Execute(map);
         }

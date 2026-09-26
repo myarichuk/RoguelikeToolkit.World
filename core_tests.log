@@ -1,9 +1,0 @@
-  Determining projects to restore...
-  All projects are up-to-date for restore.
-  RoguelikeToolkit.World.Core -> /app/src/RoguelikeToolkit.World.Core/bin/Debug/net10.0/RoguelikeToolkit.World.Core.dll
-  RoguelikeToolkit.World.Core.Tests -> /app/tests/RoguelikeToolkit.World.Core.Tests/bin/Debug/net10.0/RoguelikeToolkit.World.Core.Tests.dll
-Test run for /app/tests/RoguelikeToolkit.World.Core.Tests/bin/Debug/net10.0/RoguelikeToolkit.World.Core.Tests.dll (.NETCoreApp,Version=v10.0)
-VSTest version 18.0.1 (x64)
-
-Starting test execution, please wait...
-A total of 1 test files matched the specified pattern.
