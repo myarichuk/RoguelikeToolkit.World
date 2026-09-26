@@ -276,7 +276,6 @@ public unsafe class WorldDataStore : IDisposable
 
         int bestIndex = -1;
         double bestScore = double.NegativeInfinity;
-        bool any = false;
         int latRadius = topo.LatRadiusCells;
 
         // Meridians converge toward the poles, so the same physical covering angle
@@ -312,7 +311,6 @@ public unsafe class WorldDataStore : IDisposable
                 int cell = la * topo.LonCells + lo;
                 for (int k = topo.CellOffsets[cell]; k < topo.CellOffsets[cell + 1]; k++)
                 {
-                    any = true;
                     int tile = topo.CellTiles[k];
                     var score = Vector3D.Dot(target, topo.TileVectors[tile]);
                     if (score > bestScore)
@@ -324,7 +322,11 @@ public unsafe class WorldDataStore : IDisposable
             }
         }
 
-        return any ? bestIndex : GetTileIndexExact(coord);
+        // Fall back whenever no candidate won, not just when none were visited:
+        // a NaN target (e.g. Asin of a non-unit vector) poisons every dot score,
+        // leaving bestIndex at -1 despite visited candidates. Returning -1 here
+        // used to crash GetGeoCoord callers with IndexOutOfRangeException.
+        return bestIndex >= 0 ? bestIndex : GetTileIndexExact(coord);
     }
 
     /// <summary>

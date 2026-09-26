@@ -24,7 +24,8 @@ namespace RoguelikeToolkit.World.App
             var cmbProjection = this.FindControl<ComboBox>("CmbProjection");
             var numSeed = this.FindControl<NumericUpDown>("NumSeed");
             var btnRegen = this.FindControl<Button>("BtnRegen");
-            var btnMapCreator = this.FindControl<Button>("BtnMapCreator");
+            var cmbViewMode = this.FindControl<ComboBox>("CmbViewMode");
+            var sldHeight = this.FindControl<Slider>("SldHeight");
             var cmbColorMode = this.FindControl<ComboBox>("CmbColorMode");
             var txtStatus = this.FindControl<TextBlock>("TxtStatus");
 
@@ -89,12 +90,22 @@ namespace RoguelikeToolkit.World.App
                 };
             }
 
-            if (btnMapCreator != null)
+            if (cmbViewMode != null)
             {
-                btnMapCreator.Click += (s, e) =>
+                cmbViewMode.SelectionChanged += (s, e) =>
                 {
-                    var creator = new MapCreatorWindow();
-                    creator.Show(this);
+                    if (cmbViewMode.SelectedIndex >= 0)
+                    {
+                        GlView.SetViewMode((ViewMode)cmbViewMode.SelectedIndex);
+                    }
+                };
+            }
+
+            if (sldHeight != null)
+            {
+                sldHeight.ValueChanged += (s, e) =>
+                {
+                    GlView.SetHeightScale((float)e.NewValue);
                 };
             }
 

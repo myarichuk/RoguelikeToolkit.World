@@ -31,6 +31,17 @@ namespace RoguelikeToolkit.World.App
         Deposits
     }
 
+    /// <summary>
+    /// Hex debug view (flat per-tile colors + hex edges) or Terrain 3D view
+    /// (vertices displaced by elevation, textured biome/river/lake colors,
+    /// no hex lines).
+    /// </summary>
+    public enum ViewMode
+    {
+        Hex,
+        Terrain
+    }
+
     public unsafe class GlControl : OpenGlControlBase
     {
         public ProjectionType ProjectionMode { get; set; } = ProjectionType.Sphere;
@@ -42,6 +53,8 @@ namespace RoguelikeToolkit.World.App
         public float PanY { get; set; } = 0f;
         public bool ShowPlates { get; set; } = true;
         public bool ShowHexes { get; set; } = true;
+        public ViewMode ViewMode { get; private set; } = ViewMode.Hex;
+        public float HeightScale { get; private set; } = TerrainShading.DefaultHeightScale;
         public System.Numerics.Vector3 SelectedHexCenter { get; set; } = new System.Numerics.Vector3(0, 0, 0);
         public int RecursionLevel { get; set; } = 4;
 
@@ -71,6 +84,7 @@ namespace RoguelikeToolkit.World.App
         private int _uModelMatrix;
         private int _uShowPlates;
         private int _uShowHexes;
+        private int _uTerrainMode;
         private int _uSelectedHexCenter;
 
         private float[] _positions = Array.Empty<float>();
@@ -150,6 +164,7 @@ namespace RoguelikeToolkit.World.App
 
             uniform int uShowPlates;
             uniform int uShowHexes;
+            uniform int uTerrainMode;
 
             void main()
             {
@@ -179,7 +194,14 @@ namespace RoguelikeToolkit.World.App
 
                 float edgeFactor = 1.0;
 
-                if (uShowHexes == 1) {
+                if (uTerrainMode == 1) {
+                    // Fine canopy/rock grain so jungles and ranges read as texture,
+                    // not flat fills. No hex or triangle edges in terrain view.
+                    float g = fract(sin(dot(floor(FragPos * 220.0), vec3(12.9898, 78.233, 37.719))) * 43758.5453);
+                    baseColor *= 0.94 + 0.12 * g;
+                    edgeFactor = 1.0;
+                }
+                else if (uShowHexes == 1) {
                     float b1, b2, b3;
                     if (Barycentric.x > Barycentric.y) {
                         if (Barycentric.x > Barycentric.z) { b1 = Barycentric.x; b2 = max(Barycentric.y, Barycentric.z); }
@@ -391,8 +413,37 @@ namespace RoguelikeToolkit.World.App
             UpdateStatus();
         }
 
+        public void SetViewMode(ViewMode mode)
+        {
+            if (mode == ViewMode) return;
+            ViewMode = mode;
+            _needsMeshRebuild = true;
+            UpdateStatus();
+            RenderFrame();
+        }
+
+        public void SetHeightScale(float scale)
+        {
+            float clamped = MathF.Min(0.35f, MathF.Max(0f, scale));
+            HeightScale = clamped;
+            if (ViewMode == ViewMode.Terrain)
+            {
+                _needsMeshRebuild = true;
+                RenderFrame();
+            }
+        }
+
         private void Recolor()
         {
+            // Terrain view displaces vertices by elevation, so any recolor needs
+            // positions rebuilt too (heights may have changed under it).
+            if (ViewMode == ViewMode.Terrain)
+            {
+                _needsMeshRebuild = true;
+                RenderFrame();
+                return;
+            }
+
             // Stale mesh (e.g. recursion changed but rebuild hasn't run yet): rebuild instead.
             var plates = _plateLayer.Store.GetSpan<TectonicPlate>();
             if (_vertexTile.Length != _vertexCount || _meshTileCount != plates.Length)
@@ -421,6 +472,8 @@ namespace RoguelikeToolkit.World.App
 
         private System.Numerics.Vector3 TileDebugColor(int plateId, BiomeType biome, float height, int tile)
         {
+            if (ViewMode == ViewMode.Terrain)
+                return TileTerrainColor(tile);
             if (ColorMode == ColorMode.Water)
                 return TileWaterColor(tile, biome);
             if (ColorMode == ColorMode.Climate)
@@ -481,11 +534,40 @@ namespace RoguelikeToolkit.World.App
             return color * shade;
         }
 
+        /// <summary>Textured terrain color for one tile (Terrain view).</summary>
+        private System.Numerics.Vector3 TileTerrainColor(int tile)
+        {
+            var locals = _localLayer.Store.GetSpan<LocalMapInfo>();
+            var heights = _elevLayer.Store.GetSpan<ElevationInfo>();
+            var hydro = _hydroLayer.Store.GetSpan<HydrologyInfo>();
+            var climate = _climateLayer.Store.GetSpan<ClimateInfo>();
+            if ((uint)tile >= (uint)heights.Length)
+                return new System.Numerics.Vector3(0.5f, 0.5f, 0.5f);
+            var h = hydro[tile];
+            bool glacier = (uint)tile < (uint)_glacierByTile.Length && _glacierByTile[tile];
+            WaterBodyKind? kind = (uint)tile < (uint)_waterKindByTile.Length ? _waterKindByTile[tile] : null;
+            var c = climate[tile];
+            return TerrainShading.ColorFor(locals[tile].Biome, heights[tile].Height,
+                h.IsRiver == 1, h.Flow, h.LakeDepth, kind, glacier, h.IsPlaya == 1,
+                c.Temperature, c.Precipitation, tile);
+        }
+
+        /// <summary>Displaced sphere radius for one tile (Terrain view).</summary>
+        private float TileTerrainRadius(int tile)
+        {
+            var heights = _elevLayer.Store.GetSpan<ElevationInfo>();
+            var hydro = _hydroLayer.Store.GetSpan<HydrologyInfo>();
+            if ((uint)tile >= (uint)heights.Length) return 1f;
+            var h = hydro[tile];
+            return TerrainShading.DisplacedRadius(heights[tile].Height,
+                h.IsRiver == 1, h.Flow, h.LakeDepth, HeightScale);
+        }
+
         private void UpdateStatus()
         {
             int lakes = 0;
             foreach (var b in _bodies.Bodies) if (b.Kind == WaterBodyKind.Lake) lakes++;
-            StatusText = $"Seed {WorldSeed} | Tiles {TileCount:N0} | Gen {LastGenMs} ms | Plates {_plateLayer.SeedCount} | Rivers {_rivers.Rivers.Count} | Lakes {lakes} | Deposits {_deposits.Deposits.Count}";
+            StatusText = $"Seed {WorldSeed} | Tiles {TileCount:N0} | Gen {LastGenMs} ms | Plates {_plateLayer.SeedCount} | Rivers {_rivers.Rivers.Count} | Lakes {lakes} | Deposits {_deposits.Deposits.Count} | View {ViewMode}";
             StatusChanged?.Invoke(this, EventArgs.Empty);
         }
 
@@ -577,6 +659,7 @@ namespace RoguelikeToolkit.World.App
             _uModelMatrix = gl.GetUniformLocationString(_shaderProgram, "uModelMatrix");
             _uShowPlates = gl.GetUniformLocationString(_shaderProgram, "uShowPlates");
             _uShowHexes = gl.GetUniformLocationString(_shaderProgram, "uShowHexes");
+            _uTerrainMode = gl.GetUniformLocationString(_shaderProgram, "uTerrainMode");
             _uSelectedHexCenter = gl.GetUniformLocationString(_shaderProgram, "uSelectedHexCenter");
 
             SetupMesh(gl);
@@ -681,6 +764,21 @@ namespace RoguelikeToolkit.World.App
                 }
             }
 
+            // Terrain 3D view (sphere only): push vertices out by elevation so
+            // mountains, ridges, and ocean basins read as real relief. Flat
+            // projections keep terrain colors without displacement.
+            bool terrainRelief = ViewMode == ViewMode.Terrain && !flat;
+            if (terrainRelief)
+            {
+                for (int t = 0; t < tileCount; t++)
+                {
+                    float r = TileTerrainRadius(t);
+                    tileX[t] *= r;
+                    tileY[t] *= r;
+                    tileZ[t] *= r;
+                }
+            }
+
             _vertexCount = faces.Length * 3;
             _meshTileCount = tileCount;
 
@@ -723,9 +821,14 @@ namespace RoguelikeToolkit.World.App
                     }
                     else
                     {
-                        _normals[idx * 3] = tileX[tile];
-                        _normals[idx * 3 + 1] = tileY[tile];
-                        _normals[idx * 3 + 2] = tileZ[tile];
+                        // Radial normal: exact for the unit sphere, and the right
+                        // lighting approximation for elevation-displaced terrain.
+                        float nx = tileX[tile], ny = tileY[tile], nz = tileZ[tile];
+                        float len = MathF.Sqrt(nx * nx + ny * ny + nz * nz);
+                        if (len > 1e-6f) { nx /= len; ny /= len; nz /= len; }
+                        _normals[idx * 3] = nx;
+                        _normals[idx * 3 + 1] = ny;
+                        _normals[idx * 3 + 2] = nz;
                     }
 
                     // Barycentric coordinates (unshared vertices for the edge shader)
@@ -847,8 +950,11 @@ namespace RoguelikeToolkit.World.App
             var glUniform1i = Marshal.GetDelegateForFunctionPointer<glUniform1i_t>(gl.GetProcAddress("glUniform1i"));
             var glUniform3f = Marshal.GetDelegateForFunctionPointer<glUniform3f_t>(gl.GetProcAddress("glUniform3f"));
 
+            bool terrain = ViewMode == ViewMode.Terrain;
             glUniform1i(_uShowPlates, ShowPlates ? 1 : 0);
-            glUniform1i(_uShowHexes, ShowHexes ? 1 : 0);
+            // Terrain view drops all hex/triangle edges by design.
+            glUniform1i(_uShowHexes, ShowHexes && !terrain ? 1 : 0);
+            glUniform1i(_uTerrainMode, terrain ? 1 : 0);
             glUniform3f(_uSelectedHexCenter, SelectedHexCenter.X, SelectedHexCenter.Y, SelectedHexCenter.Z);
 
             gl.BindVertexArray(_vao);
@@ -910,9 +1016,13 @@ namespace RoguelikeToolkit.World.App
             float len = (float)Math.Sqrt(rayDirX * rayDirX + rayDirY * rayDirY + rayDirZ * rayDirZ);
             rayDirX /= len; rayDirY /= len; rayDirZ /= len;
 
+            // Terrain relief rises above the unit sphere (TerrainShading clamps
+            // displacement to radius 1.38), so intersect a slightly larger sphere
+            // or clicks on tall terrain near the limb would miss the pick entirely.
+            float pickRadius = ViewMode == ViewMode.Terrain ? 1.42f : 1.0f;
             float a = rayDirX * rayDirX + rayDirY * rayDirY + rayDirZ * rayDirZ;
             float b = 2.0f * (rayDirX * rayObjNear[0] + rayDirY * rayObjNear[1] + rayDirZ * rayObjNear[2]);
-            float c = (rayObjNear[0] * rayObjNear[0] + rayObjNear[1] * rayObjNear[1] + rayObjNear[2] * rayObjNear[2]) - 1.0f;
+            float c = (rayObjNear[0] * rayObjNear[0] + rayObjNear[1] * rayObjNear[1] + rayObjNear[2] * rayObjNear[2]) - pickRadius * pickRadius;
 
             float discriminant = b * b - 4 * a * c;
 
@@ -924,6 +1034,9 @@ namespace RoguelikeToolkit.World.App
             float hitX = rayObjNear[0] + t * rayDirX;
             float hitY = rayObjNear[1] + t * rayDirY;
             float hitZ = rayObjNear[2] + t * rayDirZ;
+
+            float hitLen = (float)Math.Sqrt(hitX * hitX + hitY * hitY + hitZ * hitZ);
+            if (hitLen < 1e-6f) return false;
 
             float minDistsq = float.MaxValue;
             int nearestIdx = -1;
@@ -966,8 +1079,12 @@ namespace RoguelikeToolkit.World.App
                 }
                 else
                 {
-                    lat = Math.Asin(SelectedHexCenter.Z) * 180.0 / Math.PI;
-                    lon = Math.Atan2(SelectedHexCenter.Y, SelectedHexCenter.X) * 180.0 / Math.PI;
+                    // From the normalized pick direction, NOT the mesh vertex: terrain
+                    // displacement pushes vertices off the unit sphere, and Asin(|z| > 1)
+                    // is NaN — which used to poison GetTileIndex into returning -1 and
+                    // crash GetGeoCoord below with IndexOutOfRangeException.
+                    lat = Math.Asin(Math.Clamp(hitZ / hitLen, -1.0f, 1.0f)) * 180.0 / Math.PI;
+                    lon = Math.Atan2(hitY, hitX) * 180.0 / Math.PI;
                 }
 
                 // Resolve the tile through the store's canonical topology (exact nearest-center
@@ -975,9 +1092,14 @@ namespace RoguelikeToolkit.World.App
                 // ~160/162 tiles at size 2 and routinely displayed the wrong plate/biome.
                 tileIndex = _map.DataStore.GetTileIndex(new GeoCoord(lat, lon));
 
+                // A click handler must never throw: a failed pick clears the panel.
+                if (tileIndex < 0 || tileIndex >= _map.DataStore.TileCount) return false;
+
                 // Snap the highlight to the true tile center.
                 var centerVec = RoguelikeToolkit.World.Core.Vector3D.FromGeoCoord(_map.DataStore.GetGeoCoord(tileIndex));
                 SelectedHexCenter = new System.Numerics.Vector3((float)centerVec.X, (float)centerVec.Y, (float)centerVec.Z);
+                if (ViewMode == ViewMode.Terrain && tileIndex >= 0)
+                    SelectedHexCenter *= TileTerrainRadius(tileIndex);
 
                 RenderFrame();
                 return true;
