@@ -69,8 +69,8 @@ public class WorldGenerationPipeline : IDisposable
 
         var stageTypes = assemblies
             .SelectMany(a => {
-                try { return a.GetTypes(); }
-                catch (ReflectionTypeLoadException e) { return e.Types.Where(t => t != null)!; }
+                try { return (IEnumerable<Type>)a.GetTypes(); }
+                catch (ReflectionTypeLoadException e) { return e.Types.OfType<Type>(); }
             })
             .Where(t => typeof(IWorldGeneratorStage).IsAssignableFrom(t) && !t.IsInterface && !t.IsAbstract)
             .Select(t => new { Type = t, Attribute = t.GetCustomAttribute<WorldGeneratorStageAttribute>() })

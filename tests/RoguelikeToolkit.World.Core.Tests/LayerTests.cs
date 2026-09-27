@@ -8,7 +8,9 @@ namespace RoguelikeToolkit.World.Core.Tests;
 
 public class LayerTests
 {
+    #pragma warning disable CS0649 // Populated via WorldDataStore memory mapping, not direct assignment.
     private struct DummyData { public int value; }
+    #pragma warning restore CS0649
 
     [Fact]
     public void WorldMap_GetLayer_ZeroAllocation()

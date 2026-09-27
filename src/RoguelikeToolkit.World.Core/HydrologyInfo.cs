@@ -3,7 +3,6 @@ using System;
 namespace RoguelikeToolkit.World.Core;
 
 /// <summary>
-/// <summary>
 /// Dense per-tile hydrology field derived from elevation: discharge-weighted
 /// flow accumulation routed on the filled surface, the water-body id this tile
 /// belongs to (-1 = none, lakes included), whether a river channel passes

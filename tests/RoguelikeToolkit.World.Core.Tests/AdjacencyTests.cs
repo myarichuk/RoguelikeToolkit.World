@@ -7,7 +7,9 @@ namespace RoguelikeToolkit.World.Core.Tests;
 
 public class AdjacencyTests
 {
+    #pragma warning disable CS0649 // Populated via WorldDataStore memory mapping, not direct assignment.
     private struct DummyData { public int value; }
+    #pragma warning restore CS0649
 
     [Theory]
     [InlineData(0, 12)]
@@ -26,9 +28,10 @@ public class AdjacencyTests
 
         int pentagonCount = 0;
 
+        Span<int> neighbors = stackalloc int[6];
+        Span<int> neighborNeighbors = stackalloc int[6];
         for (int i = 0; i < store.TileCount; i++)
         {
-            Span<int> neighbors = stackalloc int[6];
             int count = store.GetAdjacent(i, neighbors);
 
             Assert.True(count == 5 || count == 6);
@@ -42,7 +45,6 @@ public class AdjacencyTests
             {
                 int neighbor = neighbors[n];
 
-                Span<int> neighborNeighbors = stackalloc int[6];
                 int neighborCount = store.GetAdjacent(neighbor, neighborNeighbors);
 
                 int sharedCount = 0;
@@ -71,9 +73,9 @@ public class AdjacencyTests
 
         int pentagonCount = 0;
         int hexagonCount = 0;
+        Span<int> neighbors = stackalloc int[6];
         for (int i = 0; i < store.TileCount; i++)
         {
-            Span<int> neighbors = stackalloc int[6];
             int count = store.GetAdjacent(i, neighbors);
 
             if (count == 5)
@@ -95,9 +97,10 @@ public class AdjacencyTests
     {
         using var store = new WorldDataStore(3);
 
+        Span<int> neighbors = stackalloc int[6];
+        Span<int> reverse = stackalloc int[6];
         for (int i = 0; i < store.TileCount; i++)
         {
-            Span<int> neighbors = stackalloc int[6];
             int count = store.GetAdjacent(i, neighbors);
             var seen = new HashSet<int>();
 
@@ -108,7 +111,6 @@ public class AdjacencyTests
                 Assert.NotEqual(i, neighbor);
                 Assert.True(seen.Add(neighbor));
 
-                Span<int> reverse = stackalloc int[6];
                 int reverseCount = store.GetAdjacent(neighbor, reverse);
                 bool found = false;
                 for (int r = 0; r < reverseCount; r++)
