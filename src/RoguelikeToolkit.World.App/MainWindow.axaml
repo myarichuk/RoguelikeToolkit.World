@@ -3,102 +3,140 @@
         xmlns:d="http://schemas.microsoft.com/expression/blend/2008"
         xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006"
         xmlns:local="clr-namespace:RoguelikeToolkit.World.App"
-        mc:Ignorable="d" d:DesignWidth="800" d:DesignHeight="600"
+        mc:Ignorable="d" d:DesignWidth="1280" d:DesignHeight="720"
         x:Class="RoguelikeToolkit.World.App.MainWindow"
         Title="RoguelikeToolkit World Visualizer"
-        Background="#1E1E1E">
+        Width="1280" Height="720"
+        MinWidth="640" MinHeight="480"
+        Background="#1E1E1E"
+        RequestedThemeVariant="Dark">
 
-    <Grid>
-        <!-- Container for hit testing -->
-        <Border Background="Transparent"
-                PointerPressed="GlViewContainer_PointerPressed"
-                PointerReleased="GlViewContainer_PointerReleased"
-                PointerMoved="GlViewContainer_PointerMoved"
-                PointerWheelChanged="GlViewContainer_PointerWheelChanged">
-            <!-- The OpenGL control for 3D rendering -->
-            <local:GlControl x:Name="GlView" />
+    <Grid RowDefinitions="Auto,*">
+        <!-- Top toolbar: always visible, styled like the overlay panels.
+             Owns the panel toggles and the primary action so everything stays
+             reachable when panels are hidden on small screens. -->
+        <Border Grid.Row="0" Background="#80000000" Padding="8,6">
+            <Grid ColumnDefinitions="Auto,Auto,*,Auto">
+                <ToggleButton x:Name="BtnToggleControls" Grid.Column="0" Content="Controls"
+                              IsChecked="True" Margin="0,0,6,0"
+                              Background="#40FFFFFF" Foreground="White"
+                              ToolTip.Tip="Show or hide the controls panel"/>
+                <ToggleButton x:Name="BtnToggleInfo" Grid.Column="1" Content="Hex Info"
+                              IsChecked="True"
+                              Background="#40FFFFFF" Foreground="White"
+                              ToolTip.Tip="Show or hide the selected-hex panel"/>
+                <TextBlock Grid.Column="2" Text="World Visualizer" Foreground="White"
+                           FontWeight="SemiBold" VerticalAlignment="Center"
+                           HorizontalAlignment="Center" Margin="8,0"/>
+                <Button x:Name="BtnQuickRegen" Grid.Column="3" Content="Regenerate"
+                        Background="#40FFFFFF" Foreground="White"
+                        ToolTip.Tip="Regenerate the world with the current seed"/>
+            </Grid>
         </Border>
 
-        <!-- Hex Info Overlay -->
-        <Border Padding="20" HorizontalAlignment="Left" VerticalAlignment="Top">
-            <Border Background="#80000000" Margin="10" Padding="10">
-                <StackPanel Spacing="5">
-                    <TextBlock Text="Selected Hex" Foreground="White" FontWeight="Bold" HorizontalAlignment="Center" Margin="0,0,0,5"/>
-                    <TextBlock x:Name="TxtHexLat" Text="Lat: --" Foreground="White"/>
-                    <TextBlock x:Name="TxtHexLon" Text="Lon: --" Foreground="White"/>
-                    <TextBlock x:Name="TxtHexIndex" Text="Index: --" Foreground="White"/>
-                    <TextBlock x:Name="TxtHexPlate" Text="Plate ID: --" Foreground="White"/>
-                    <TextBlock x:Name="TxtHexElev" Text="Elev: --" Foreground="White"/>
-                    <TextBlock x:Name="TxtHexBiome" Text="Biome: --" Foreground="White"/>
-                    <TextBlock x:Name="TxtHexDanger" Text="Danger: --" Foreground="White"/>
-                    <TextBlock x:Name="TxtHexFeatures" Text="Features: --" Foreground="White" TextWrapping="Wrap" MaxWidth="220"/>
-                </StackPanel>
+        <Grid Grid.Row="1">
+            <!-- Container for hit testing -->
+            <Border Background="Transparent"
+                    PointerPressed="GlViewContainer_PointerPressed"
+                    PointerReleased="GlViewContainer_PointerReleased"
+                    PointerMoved="GlViewContainer_PointerMoved"
+                    PointerWheelChanged="GlViewContainer_PointerWheelChanged">
+                <!-- The OpenGL control for 3D rendering -->
+                <local:GlControl x:Name="GlView" />
             </Border>
-        </Border>
 
-        <!-- Overlay UI -->
-        <Border Padding="20" HorizontalAlignment="Right" VerticalAlignment="Bottom">
-            <StackPanel Spacing="10" Background="#80000000">
-                <TextBlock Text="Controls" Foreground="White" FontWeight="Bold" HorizontalAlignment="Center" Margin="0,5,0,5"/>
+            <!-- Hex Info Overlay -->
+            <Border x:Name="InfoPanel" Padding="20" HorizontalAlignment="Left" VerticalAlignment="Top">
+                <Border Background="#80000000" Margin="10" Padding="10">
+                    <ScrollViewer MaxHeight="300"
+                                  VerticalScrollBarVisibility="Auto"
+                                  HorizontalScrollBarVisibility="Disabled">
+                        <StackPanel Spacing="5">
+                            <TextBlock Text="Selected Hex" Foreground="White" FontWeight="Bold" HorizontalAlignment="Center" Margin="0,0,0,5"/>
+                            <TextBlock x:Name="TxtHexLat" Text="Lat: --" Foreground="White"/>
+                            <TextBlock x:Name="TxtHexLon" Text="Lon: --" Foreground="White"/>
+                            <TextBlock x:Name="TxtHexIndex" Text="Index: --" Foreground="White"/>
+                            <TextBlock x:Name="TxtHexPlate" Text="Plate ID: --" Foreground="White"/>
+                            <TextBlock x:Name="TxtHexElev" Text="Elev: --" Foreground="White"/>
+                            <TextBlock x:Name="TxtHexBiome" Text="Biome: --" Foreground="White"/>
+                            <TextBlock x:Name="TxtHexDanger" Text="Danger: --" Foreground="White"/>
+                            <TextBlock x:Name="TxtHexFeatures" Text="Features: --" Foreground="White" TextWrapping="Wrap" MaxWidth="220"/>
+                        </StackPanel>
+                    </ScrollViewer>
+                </Border>
+            </Border>
 
-                <UniformGrid Columns="2" Rows="2">
-                    <Button x:Name="BtnRotLeft" Content="Left" Background="#40FFFFFF" Foreground="White" HorizontalAlignment="Stretch" HorizontalContentAlignment="Center"/>
-                    <Button x:Name="BtnRotRight" Content="Right" Background="#40FFFFFF" Foreground="White" HorizontalAlignment="Stretch" HorizontalContentAlignment="Center"/>
-                    <Button x:Name="BtnRotUp" Content="Up" Background="#40FFFFFF" Foreground="White" HorizontalAlignment="Stretch" HorizontalContentAlignment="Center"/>
-                    <Button x:Name="BtnRotDown" Content="Down" Background="#40FFFFFF" Foreground="White" HorizontalAlignment="Stretch" HorizontalContentAlignment="Center"/>
-                </UniformGrid>
+            <!-- Overlay UI: same sections and styling as before, but the panel
+                 stretches to the available height and its content scrolls, so
+                 nothing clips on short (e.g. laptop) screens. -->
+            <Border x:Name="ControlsPanel" Padding="20" HorizontalAlignment="Right" VerticalAlignment="Stretch">
+                <Grid RowDefinitions="Auto,*" Background="#80000000">
+                    <TextBlock Grid.Row="0" Text="Controls" Foreground="White" FontWeight="Bold" HorizontalAlignment="Center" Margin="0,5,0,5"/>
+                    <ScrollViewer Grid.Row="1"
+                                  VerticalScrollBarVisibility="Auto"
+                                  HorizontalScrollBarVisibility="Disabled">
+                        <StackPanel Spacing="10">
+                            <UniformGrid Columns="2" Rows="2">
+                                <Button x:Name="BtnRotLeft" Content="Left" Background="#40FFFFFF" Foreground="White" HorizontalAlignment="Stretch" HorizontalContentAlignment="Center"/>
+                                <Button x:Name="BtnRotRight" Content="Right" Background="#40FFFFFF" Foreground="White" HorizontalAlignment="Stretch" HorizontalContentAlignment="Center"/>
+                                <Button x:Name="BtnRotUp" Content="Up" Background="#40FFFFFF" Foreground="White" HorizontalAlignment="Stretch" HorizontalContentAlignment="Center"/>
+                                <Button x:Name="BtnRotDown" Content="Down" Background="#40FFFFFF" Foreground="White" HorizontalAlignment="Stretch" HorizontalContentAlignment="Center"/>
+                            </UniformGrid>
 
-                <UniformGrid Columns="2" Rows="1">
-                    <Button x:Name="BtnZoomIn" Content="Zoom In" Background="#40FFFFFF" Foreground="White" HorizontalAlignment="Stretch" HorizontalContentAlignment="Center"/>
-                    <Button x:Name="BtnZoomOut" Content="Zoom Out" Background="#40FFFFFF" Foreground="White" HorizontalAlignment="Stretch" HorizontalContentAlignment="Center"/>
-                </UniformGrid>
+                            <UniformGrid Columns="2" Rows="1">
+                                <Button x:Name="BtnZoomIn" Content="Zoom In" Background="#40FFFFFF" Foreground="White" HorizontalAlignment="Stretch" HorizontalContentAlignment="Center"/>
+                                <Button x:Name="BtnZoomOut" Content="Zoom Out" Background="#40FFFFFF" Foreground="White" HorizontalAlignment="Stretch" HorizontalContentAlignment="Center"/>
+                            </UniformGrid>
 
-                <TextBlock Text="Projection Mode:" Foreground="White" Margin="5,5,5,0"/>
-                <ComboBox x:Name="CmbProjection" SelectedIndex="0" HorizontalAlignment="Stretch" Margin="5,0,5,5">
-                    <ComboBoxItem>Sphere</ComboBoxItem>
-                    <ComboBoxItem>Equirectangular</ComboBoxItem>
-                    <ComboBoxItem>Mercator</ComboBoxItem>
-                    <ComboBoxItem>Gnomonic</ComboBoxItem>
-                </ComboBox>
+                            <TextBlock Text="Projection Mode:" Foreground="White" Margin="5,5,5,0"/>
+                            <ComboBox x:Name="CmbProjection" SelectedIndex="0" HorizontalAlignment="Stretch" Margin="5,0,5,5">
+                                <ComboBoxItem>Sphere</ComboBoxItem>
+                                <ComboBoxItem>Equirectangular</ComboBoxItem>
+                                <ComboBoxItem>Mercator</ComboBoxItem>
+                                <ComboBoxItem>Gnomonic</ComboBoxItem>
+                            </ComboBox>
 
-                <TextBlock Text="Hex Size (Subdivision Level):" Foreground="White" Margin="5,5,5,0"/>
-                <Slider x:Name="SldRecursionLevel" Minimum="1" Maximum="6" Value="4" TickFrequency="1" IsSnapToTickEnabled="True" Margin="5,0,5,5"/>
+                            <TextBlock Text="Hex Size (Subdivision Level):" Foreground="White" Margin="5,5,5,0"/>
+                            <Slider x:Name="SldRecursionLevel" Minimum="1" Maximum="6" Value="4" TickFrequency="1" IsSnapToTickEnabled="True" Margin="5,0,5,5"/>
 
-                <TextBlock Text="Plate Count (Seeds):" Foreground="White" Margin="5,5,5,0"/>
-                <Slider x:Name="SldSeedCount" Minimum="2" Maximum="100" Value="12" TickFrequency="1" IsSnapToTickEnabled="True" Margin="5,0,5,5"/>
+                            <TextBlock Text="Plate Count (Seeds):" Foreground="White" Margin="5,5,5,0"/>
+                            <Slider x:Name="SldSeedCount" Minimum="2" Maximum="100" Value="12" TickFrequency="1" IsSnapToTickEnabled="True" Margin="5,0,5,5"/>
 
-                <TextBlock Text="World Seed:" Foreground="White" Margin="5,5,5,0"/>
-                <NumericUpDown x:Name="NumSeed" Minimum="1" Maximum="999999" Value="42" Margin="5,0,5,0"/>
-                <Button x:Name="BtnRegen" Content="Regenerate" Background="#40FFFFFF" Foreground="White" HorizontalAlignment="Stretch" HorizontalContentAlignment="Center" Margin="5,0,5,5"/>
+                            <TextBlock Text="World Seed:" Foreground="White" Margin="5,5,5,0"/>
+                            <NumericUpDown x:Name="NumSeed" Minimum="1" Maximum="999999" Value="42" Margin="5,0,5,0"/>
+                            <Button x:Name="BtnRegen" Content="Regenerate" Background="#40FFFFFF" Foreground="White" HorizontalAlignment="Stretch" HorizontalContentAlignment="Center" Margin="5,0,5,5"/>
 
-                <TextBlock Text="View Mode:" Foreground="White" Margin="5,5,5,0"/>
-                <ComboBox x:Name="CmbViewMode" SelectedIndex="0" HorizontalAlignment="Stretch" Margin="5,0,5,5">
-                    <ComboBoxItem>Hex Debug</ComboBoxItem>
-                    <ComboBoxItem>Terrain 3D</ComboBoxItem>
-                </ComboBox>
+                            <TextBlock Text="View Mode:" Foreground="White" Margin="5,5,5,0"/>
+                            <ComboBox x:Name="CmbViewMode" SelectedIndex="0" HorizontalAlignment="Stretch" Margin="5,0,5,5">
+                                <ComboBoxItem>Hex Debug</ComboBoxItem>
+                                <ComboBoxItem>Terrain 3D</ComboBoxItem>
+                            </ComboBox>
 
-                <TextBlock Text="Height Exaggeration:" Foreground="White" Margin="5,5,5,0"/>
-                <Slider x:Name="SldHeight" Minimum="0" Maximum="0.35" Value="0.16" TickFrequency="0.01" Margin="5,0,5,5"/>
+                            <TextBlock Text="Height Exaggeration:" Foreground="White" Margin="5,5,5,0"/>
+                            <Slider x:Name="SldHeight" Minimum="0" Maximum="0.35" Value="0.16" TickFrequency="0.01" Margin="5,0,5,5"/>
 
-                <TextBlock Text="Color Mode:" Foreground="White" Margin="5,5,5,0"/>
-                <ComboBox x:Name="CmbColorMode" SelectedIndex="0" HorizontalAlignment="Stretch" Margin="5,0,5,5">
-                    <ComboBoxItem>Plates</ComboBoxItem>
-                    <ComboBoxItem>Biome</ComboBoxItem>
-                    <ComboBoxItem>Elevation</ComboBoxItem>
-                    <ComboBoxItem>Water</ComboBoxItem>
-                    <ComboBoxItem>Climate</ComboBoxItem>
-                    <ComboBoxItem>Deposits</ComboBoxItem>
-                </ComboBox>
+                            <TextBlock Text="Color Mode:" Foreground="White" Margin="5,5,5,0"/>
+                            <ComboBox x:Name="CmbColorMode" SelectedIndex="0" HorizontalAlignment="Stretch" Margin="5,0,5,5">
+                                <ComboBoxItem>Plates</ComboBoxItem>
+                                <ComboBoxItem>Biome</ComboBoxItem>
+                                <ComboBoxItem>Elevation</ComboBoxItem>
+                                <ComboBoxItem>Water</ComboBoxItem>
+                                <ComboBoxItem>Climate</ComboBoxItem>
+                                <ComboBoxItem>Deposits</ComboBoxItem>
+                            </ComboBox>
 
-                <CheckBox x:Name="ChkTogglePlates" Content="Show Plates" IsChecked="True" Foreground="White" Margin="5"/>
-                <CheckBox x:Name="ChkToggleHexes" Content="Show Hexes" IsChecked="True" Foreground="White" Margin="5"/>
+                            <CheckBox x:Name="ChkTogglePlates" Content="Show Plates" IsChecked="True" Foreground="White" Margin="5"/>
+                            <CheckBox x:Name="ChkToggleHexes" Content="Show Hexes" IsChecked="True" Foreground="White" Margin="5"/>
 
-                <TextBlock x:Name="TxtStatus" Text="..." Foreground="LightGray" FontSize="12" TextWrapping="Wrap" Margin="5,5,5,0"/>
+                            <TextBlock x:Name="TxtStatus" Text="..." Foreground="LightGray" FontSize="12" TextWrapping="Wrap" Margin="5,5,5,0"/>
 
-                <TextBlock Text="Left-drag: Rotate" Foreground="LightGray" FontSize="12" Margin="5,0,0,0"/>
-                <TextBlock Text="Right-drag: Pan" Foreground="LightGray" FontSize="12" Margin="5,0,0,0"/>
-                <TextBlock Text="Scroll: Zoom" Foreground="LightGray" FontSize="12" Margin="5,0,0,5"/>
-            </StackPanel>
-        </Border>
+                            <TextBlock Text="Left-drag: Rotate" Foreground="LightGray" FontSize="12" Margin="5,0,0,0"/>
+                            <TextBlock Text="Right-drag: Pan" Foreground="LightGray" FontSize="12" Margin="5,0,0,0"/>
+                            <TextBlock Text="Scroll: Zoom" Foreground="LightGray" FontSize="12" Margin="5,0,0,5"/>
+                        </StackPanel>
+                    </ScrollViewer>
+                </Grid>
+            </Border>
+        </Grid>
     </Grid>
 </Window>

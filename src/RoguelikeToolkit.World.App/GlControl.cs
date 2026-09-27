@@ -112,121 +112,8 @@ namespace RoguelikeToolkit.World.App
         private bool[] _glacierByTile = Array.Empty<bool>();
         private DepositType?[] _depositByTile = Array.Empty<DepositType?>();
 
-        private const string VertexShaderSource = @"
-            #version 330 core
-            layout (location = 0) in vec3 aPos;
-            layout (location = 1) in vec3 aNormal;
-            layout (location = 2) in vec3 aBary;
-            layout (location = 3) in vec3 aColor;
-
-            out vec3 FragPos;
-            out vec3 Normal;
-            out vec3 Barycentric;
-            out vec3 VertexColor;
-            out float vIsSelectedVertex;
-
-            uniform mat4 uMvpMatrix;
-            uniform mat4 uModelMatrix;
-            uniform vec3 uSelectedHexCenter;
-
-            void main()
-            {
-                gl_Position = uMvpMatrix * vec4(aPos, 1.0);
-                FragPos = vec3(uModelMatrix * vec4(aPos, 1.0));
-
-                // For a sphere, the normal is just the position
-                // Also, no non-uniform scaling, so we can just use the model matrix
-                Normal = mat3(uModelMatrix) * aNormal;
-
-                Barycentric = aBary;
-                VertexColor = aColor;
-
-                float dist = distance(aPos, uSelectedHexCenter);
-                if (dist < 0.001) {
-                    vIsSelectedVertex = 1.0;
-                } else {
-                    vIsSelectedVertex = 0.0;
-                }
-            }
-        ";
-
-        private const string FragmentShaderSource = @"
-            #version 330 core
-            #extension GL_OES_standard_derivatives : enable
-
-            in vec3 FragPos;
-            in vec3 Normal;
-            in vec3 Barycentric;
-            in vec3 VertexColor;
-            in float vIsSelectedVertex;
-
-            out vec4 FragColor;
-
-            uniform int uShowPlates;
-            uniform int uShowHexes;
-            uniform int uTerrainMode;
-
-            void main()
-            {
-                // Simple directional light
-                vec3 norm = normalize(Normal);
-                vec3 lightDir = normalize(vec3(1.0, 1.0, 1.0));
-
-                // Ambient + diffuse
-                float ambient = 0.2;
-                float diff = max(dot(norm, lightDir), 0.0);
-                float lightIntensity = ambient + diff * 0.8;
-
-                // Base color
-                vec3 baseColor = uShowPlates == 1 ? VertexColor : vec3(0.3, 0.3, 0.35);
-                baseColor *= lightIntensity;
-
-                // Highlight selected hex
-                float maxBary = max(max(Barycentric.x, Barycentric.y), Barycentric.z);
-                bool isFragmentInSelectedHex = (vIsSelectedVertex > 0.5 && Barycentric.x == maxBary) ||
-                                               (vIsSelectedVertex > 0.5 && Barycentric.y == maxBary) ||
-                                               (vIsSelectedVertex > 0.5 && Barycentric.z == maxBary);
-
-                if (vIsSelectedVertex >= maxBary - 0.0001)
-                {
-                    baseColor = mix(baseColor, vec3(1.0, 1.0, 0.0), 0.5); // Highlight with yellow
-                }
-
-                float edgeFactor = 1.0;
-
-                if (uTerrainMode == 1) {
-                    // Fine canopy/rock grain so jungles and ranges read as texture,
-                    // not flat fills. No hex or triangle edges in terrain view.
-                    float g = fract(sin(dot(floor(FragPos * 220.0), vec3(12.9898, 78.233, 37.719))) * 43758.5453);
-                    baseColor *= 0.94 + 0.12 * g;
-                    edgeFactor = 1.0;
-                }
-                else if (uShowHexes == 1) {
-                    float b1, b2, b3;
-                    if (Barycentric.x > Barycentric.y) {
-                        if (Barycentric.x > Barycentric.z) { b1 = Barycentric.x; b2 = max(Barycentric.y, Barycentric.z); }
-                        else { b1 = Barycentric.z; b2 = Barycentric.x; }
-                    } else {
-                        if (Barycentric.y > Barycentric.z) { b1 = Barycentric.y; b2 = max(Barycentric.x, Barycentric.z); }
-                        else { b1 = Barycentric.z; b2 = Barycentric.y; }
-                    }
-
-                    float val = b1 - b2;
-                    float d = fwidth(val);
-                    edgeFactor = smoothstep(0.0, d * 1.5, val);
-                } else {
-                    vec3 d = fwidth(Barycentric);
-                    vec3 a3 = smoothstep(vec3(0.0), d * 1.5, Barycentric);
-                    edgeFactor = min(min(a3.x, a3.y), a3.z);
-                }
-
-                vec3 edgeColor = vec3(0.6, 0.6, 0.6);
-
-                vec3 finalColor = mix(edgeColor, baseColor, edgeFactor);
-
-                FragColor = vec4(finalColor, 1.0);
-            }
-        ";
+        // GLSL sources live in Presentation.GlShaders: desktop `#version 330 core`
+        // plus a GLSL ES 1.00-compatible variant for ANGLE/GLES contexts.
 
         public GlControl()
         {
@@ -624,36 +511,29 @@ namespace RoguelikeToolkit.World.App
         {
             base.OnOpenGlInit(gl);
 
-            int vertexShader = gl.CreateShader(GlConsts.GL_VERTEX_SHADER);
-            gl.ShaderSourceString(vertexShader, VertexShaderSource);
-            gl.CompileShader(vertexShader);
-            CheckShaderCompilation(gl, vertexShader);
-
-            int fragmentShader = gl.CreateShader(GlConsts.GL_FRAGMENT_SHADER);
-            gl.ShaderSourceString(fragmentShader, FragmentShaderSource);
-            gl.CompileShader(fragmentShader);
-            CheckShaderCompilation(gl, fragmentShader);
-
-            _shaderProgram = gl.CreateProgram();
-            gl.AttachShader(_shaderProgram, vertexShader);
-            gl.AttachShader(_shaderProgram, fragmentShader);
-            gl.LinkProgram(_shaderProgram);
-
-            int linkStatus;
-            gl.GetProgramiv(_shaderProgram, GlConsts.GL_LINK_STATUS, &linkStatus);
-            if (linkStatus == 0)
+            // Windows often lands on an ANGLE-backed GLES context (ES 2.0-style),
+            // which rejects `#version 330 core` outright; macOS/Linux usually get
+            // desktop GL. Pick the variant for the actual context, then fall back
+            // to the other one if the first choice fails to build.
+            bool isGles = GlVersion.Type == GlProfileType.OpenGLES;
+            GlShaders.Selection shaders = GlShaders.Select(isGles);
+            if (!TryBuildShaderProgram(gl, shaders, out _shaderProgram))
             {
-                int maxLength;
-                gl.GetProgramiv(_shaderProgram, GlConsts.GL_INFO_LOG_LENGTH, &maxLength);
-                byte* infoLog = stackalloc byte[maxLength];
-                gl.GetProgramInfoLog(_shaderProgram, maxLength, out int length, infoLog);
-                var msg = $"Shader program link error: {Marshal.PtrToStringAnsi((IntPtr)infoLog)}";
-                Console.WriteLine(msg);
-                OnDiagnostic?.Invoke(msg);
+                shaders = GlShaders.Select(!isGles);
+                if (!TryBuildShaderProgram(gl, shaders, out _shaderProgram))
+                {
+                    // Loud failure, not a black screen: the status line shows this
+                    // (MainWindow wires OnDiagnostic to TxtStatus), and the console
+                    // keeps the per-shader compiler logs with GL identification
+                    // for bug reports.
+                    var msg = $"World view disabled: no shader variant compiled. " +
+                        $"GL '{gl.Version}' ({gl.Renderer} / {gl.Vendor}), Avalonia context {GlVersion}. " +
+                        $"See the console output or earlier status messages for the compiler logs.";
+                    Console.WriteLine(msg);
+                    OnDiagnostic?.Invoke(msg);
+                    return;
+                }
             }
-
-            gl.DeleteShader(vertexShader);
-            gl.DeleteShader(fragmentShader);
 
             _uMvpMatrix = gl.GetUniformLocationString(_shaderProgram, "uMvpMatrix");
             _uModelMatrix = gl.GetUniformLocationString(_shaderProgram, "uModelMatrix");
@@ -665,7 +545,64 @@ namespace RoguelikeToolkit.World.App
             SetupMesh(gl);
         }
 
-        private void CheckShaderCompilation(GlInterface gl, int shader)
+        private bool TryBuildShaderProgram(GlInterface gl, GlShaders.Selection shaders, out int program)
+        {
+            program = 0;
+
+            int vertexShader = gl.CreateShader(GlConsts.GL_VERTEX_SHADER);
+            gl.ShaderSourceString(vertexShader, shaders.VertexSource);
+            gl.CompileShader(vertexShader);
+            if (!CheckShaderCompilation(gl, vertexShader, shaders.Name + " vertex"))
+            {
+                gl.DeleteShader(vertexShader);
+                return false;
+            }
+
+            int fragmentShader = gl.CreateShader(GlConsts.GL_FRAGMENT_SHADER);
+            gl.ShaderSourceString(fragmentShader, shaders.FragmentSource);
+            gl.CompileShader(fragmentShader);
+            if (!CheckShaderCompilation(gl, fragmentShader, shaders.Name + " fragment"))
+            {
+                gl.DeleteShader(vertexShader);
+                gl.DeleteShader(fragmentShader);
+                return false;
+            }
+
+            program = gl.CreateProgram();
+            gl.AttachShader(program, vertexShader);
+            gl.AttachShader(program, fragmentShader);
+            if (shaders.BindAttributeLocations)
+            {
+                // GLES 1.00-style shaders have no `layout(location =)` qualifiers,
+                // so pin the mesh VBO layout before linking.
+                foreach (var (location, name) in GlShaders.Attributes)
+                    gl.BindAttribLocationString(program, location, name);
+            }
+            gl.LinkProgram(program);
+
+            gl.DeleteShader(vertexShader);
+            gl.DeleteShader(fragmentShader);
+
+            int linkStatus;
+            gl.GetProgramiv(program, GlConsts.GL_LINK_STATUS, &linkStatus);
+            if (linkStatus == 0)
+            {
+                int maxLength;
+                gl.GetProgramiv(program, GlConsts.GL_INFO_LOG_LENGTH, &maxLength);
+                byte* infoLog = stackalloc byte[maxLength];
+                gl.GetProgramInfoLog(program, maxLength, out int length, infoLog);
+                var msg = $"Shader program link error ({shaders.Name}): {Marshal.PtrToStringAnsi((IntPtr)infoLog)}";
+                Console.WriteLine(msg);
+                OnDiagnostic?.Invoke(msg);
+                gl.DeleteProgram(program);
+                program = 0;
+                return false;
+            }
+
+            return true;
+        }
+
+        private bool CheckShaderCompilation(GlInterface gl, int shader, string stage)
         {
             int success;
             gl.GetShaderiv(shader, GlConsts.GL_COMPILE_STATUS, &success);
@@ -675,10 +612,13 @@ namespace RoguelikeToolkit.World.App
                 gl.GetShaderiv(shader, GlConsts.GL_INFO_LOG_LENGTH, &maxLength);
                 byte* infoLog = stackalloc byte[maxLength];
                 gl.GetShaderInfoLog(shader, maxLength, out int length, infoLog);
-                var msg = $"Shader compile error: {Marshal.PtrToStringAnsi((IntPtr)infoLog)}";
+                var msg = $"Shader compile error ({stage}): {Marshal.PtrToStringAnsi((IntPtr)infoLog)}";
                 Console.WriteLine(msg);
                 OnDiagnostic?.Invoke(msg);
+                return false;
             }
+
+            return true;
         }
 
         private void SetupMesh(GlInterface gl)
@@ -900,6 +840,9 @@ namespace RoguelikeToolkit.World.App
 
         protected override void OnOpenGlRender(GlInterface gl, int fb)
         {
+            if (_shaderProgram == 0)
+                return; // Init already reported the build failure; don't draw with an invalid program.
+
             if (_needsMeshRebuild)
             {
                 SetupMesh(gl);
@@ -980,132 +923,38 @@ namespace RoguelikeToolkit.World.App
 
             if (_positions == null || _positions.Length == 0) return false;
 
-            float aspect = (float)(Bounds.Width / Bounds.Height);
-
-            var projection = Matrix4x4.CreatePerspectiveFieldOfView(45.0f * (float)Math.PI / 180.0f, aspect, 0.1f, 100.0f);
-            var view = Matrix4x4.CreateTranslation(-PanX, -PanY, -Distance);
-            var modelX = Matrix4x4.CreateRotationX(Pitch * (float)Math.PI / 180.0f);
-            var modelY = Matrix4x4.CreateRotationY(Yaw * (float)Math.PI / 180.0f);
-
-            var model = modelX * modelY;
-            var viewProj = view * projection;
-            var mvp = model * viewProj;
-
-            if (!Matrix4x4.Invert(mvp, out Matrix4x4 invMvp)) return false;
-
-            // NDC Coordinates
-            float ndcX = (float)((2.0 * mouseX) / Bounds.Width - 1.0);
-            float ndcY = (float)(1.0 - (2.0 * mouseY) / Bounds.Height); // Invert Y
-
-            Vector4 rayClipNear = new Vector4(ndcX, ndcY, -1.0f, 1.0f);
-            Vector4 rayClipFar = new Vector4(ndcX, ndcY, 1.0f, 1.0f);
-
-            Vector4 rayObjNearV = Vector4.Transform(rayClipNear, invMvp);
-            Vector4 rayObjFarV = Vector4.Transform(rayClipFar, invMvp);
-
-            if (rayObjNearV.W != 0.0f) { rayObjNearV.X /= rayObjNearV.W; rayObjNearV.Y /= rayObjNearV.W; rayObjNearV.Z /= rayObjNearV.W; }
-            if (rayObjFarV.W != 0.0f) { rayObjFarV.X /= rayObjFarV.W; rayObjFarV.Y /= rayObjFarV.W; rayObjFarV.Z /= rayObjFarV.W; }
-
-            float[] rayObjNear = new float[] { rayObjNearV.X, rayObjNearV.Y, rayObjNearV.Z, rayObjNearV.W };
-            float[] rayObjFar = new float[] { rayObjFarV.X, rayObjFarV.Y, rayObjFarV.Z, rayObjFarV.W };
-
-            float rayDirX = rayObjFar[0] - rayObjNear[0];
-            float rayDirY = rayObjFar[1] - rayObjNear[1];
-            float rayDirZ = rayObjFar[2] - rayObjNear[2];
-
-            float len = (float)Math.Sqrt(rayDirX * rayDirX + rayDirY * rayDirY + rayDirZ * rayDirZ);
-            rayDirX /= len; rayDirY /= len; rayDirZ /= len;
-
             // Terrain relief rises above the unit sphere (TerrainShading clamps
             // displacement to radius 1.38), so intersect a slightly larger sphere
             // or clicks on tall terrain near the limb would miss the pick entirely.
             float pickRadius = ViewMode == ViewMode.Terrain ? 1.42f : 1.0f;
-            float a = rayDirX * rayDirX + rayDirY * rayDirY + rayDirZ * rayDirZ;
-            float b = 2.0f * (rayDirX * rayObjNear[0] + rayDirY * rayObjNear[1] + rayDirZ * rayObjNear[2]);
-            float c = (rayObjNear[0] * rayObjNear[0] + rayObjNear[1] * rayObjNear[1] + rayObjNear[2] * rayObjNear[2]) - pickRadius * pickRadius;
 
-            float discriminant = b * b - 4 * a * c;
-
-            if (discriminant < 0) return false;
-
-            float t = (-b - (float)Math.Sqrt(discriminant)) / (2.0f * a);
-            if (t < 0) return false;
-
-            float hitX = rayObjNear[0] + t * rayDirX;
-            float hitY = rayObjNear[1] + t * rayDirY;
-            float hitZ = rayObjNear[2] + t * rayDirZ;
-
-            float hitLen = (float)Math.Sqrt(hitX * hitX + hitY * hitY + hitZ * hitZ);
-            if (hitLen < 1e-6f) return false;
-
-            float minDistsq = float.MaxValue;
-            int nearestIdx = -1;
-
-            for (int i = 0; i < _positions.Length / 3; i++)
+            IProjection? projectionObj = ProjectionMode switch
             {
-                float dx = _positions[i * 3] - hitX;
-                float dy = _positions[i * 3 + 1] - hitY;
-                float dz = _positions[i * 3 + 2] - hitZ;
-                float distSq = dx * dx + dy * dy + dz * dz;
+                ProjectionType.Equirectangular => new EquirectangularProjection(1.0),
+                ProjectionType.Mercator => new MercatorProjection(1.0),
+                ProjectionType.Gnomonic => new GnomonicProjection(1.0),
+                _ => null
+            };
 
-                if (distSq < minDistsq)
-                {
-                    minDistsq = distSq;
-                    nearestIdx = i;
-                }
-            }
+            // All ray math lives in Presentation.HexPicker (pure, unit-tested).
+            // mouseX/mouseY must already be in GlView.Bounds space (see pointer handlers).
+            var camera = new PickCamera(Yaw, Pitch, PanX, PanY, Distance);
+            if (!HexPicker.TryPick(mouseX, mouseY, Bounds.Width, Bounds.Height, camera,
+                    pickRadius, _positions, projectionObj,
+                    geo => _map.DataStore.GetTileIndex(geo), _map.DataStore.TileCount, out var pick))
+                return false;
 
-            if (nearestIdx != -1)
-            {
-                SelectedHexCenter = new System.Numerics.Vector3(
-                    _positions[nearestIdx * 3],
-                    _positions[nearestIdx * 3 + 1],
-                    _positions[nearestIdx * 3 + 2]
-                );
+            lat = pick.Latitude;
+            lon = pick.Longitude;
+            tileIndex = pick.TileIndex;
 
-                IProjection? projectionObj = ProjectionMode switch
-                {
-                    ProjectionType.Equirectangular => new EquirectangularProjection(1.0),
-                    ProjectionType.Mercator => new MercatorProjection(1.0),
-                    ProjectionType.Gnomonic => new GnomonicProjection(1.0),
-                    _ => null
-                };
+            // Snap the highlight to the true tile center.
+            var centerVec = RoguelikeToolkit.World.Core.Vector3D.FromGeoCoord(_map.DataStore.GetGeoCoord(tileIndex));
+            SelectedHexCenter = new System.Numerics.Vector3((float)centerVec.X, (float)centerVec.Y, (float)centerVec.Z);
+            if (ViewMode == ViewMode.Terrain && tileIndex >= 0)
+                SelectedHexCenter *= TileTerrainRadius(tileIndex);
 
-                if (projectionObj != null)
-                {
-                    var geo = projectionObj.Inverse(new Vector2D(SelectedHexCenter.X, SelectedHexCenter.Y));
-                    lat = geo.Latitude;
-                    lon = geo.Longitude;
-                }
-                else
-                {
-                    // From the normalized pick direction, NOT the mesh vertex: terrain
-                    // displacement pushes vertices off the unit sphere, and Asin(|z| > 1)
-                    // is NaN — which used to poison GetTileIndex into returning -1 and
-                    // crash GetGeoCoord below with IndexOutOfRangeException.
-                    lat = Math.Asin(Math.Clamp(hitZ / hitLen, -1.0f, 1.0f)) * 180.0 / Math.PI;
-                    lon = Math.Atan2(hitY, hitX) * 180.0 / Math.PI;
-                }
-
-                // Resolve the tile through the store's canonical topology (exact nearest-center
-                // search). The previous ring-based heuristic disagreed with the store on
-                // ~160/162 tiles at size 2 and routinely displayed the wrong plate/biome.
-                tileIndex = _map.DataStore.GetTileIndex(new GeoCoord(lat, lon));
-
-                // A click handler must never throw: a failed pick clears the panel.
-                if (tileIndex < 0 || tileIndex >= _map.DataStore.TileCount) return false;
-
-                // Snap the highlight to the true tile center.
-                var centerVec = RoguelikeToolkit.World.Core.Vector3D.FromGeoCoord(_map.DataStore.GetGeoCoord(tileIndex));
-                SelectedHexCenter = new System.Numerics.Vector3((float)centerVec.X, (float)centerVec.Y, (float)centerVec.Z);
-                if (ViewMode == ViewMode.Terrain && tileIndex >= 0)
-                    SelectedHexCenter *= TileTerrainRadius(tileIndex);
-
-                RenderFrame();
-                return true;
-            }
-
-            return false;
-        }
-    }
+            RenderFrame();
+            return true;
+        }    }
 }

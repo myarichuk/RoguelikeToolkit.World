@@ -1,4 +1,5 @@
 using Avalonia.Controls;
+using Avalonia.Controls.Primitives;
 using Avalonia.Input;
 using Avalonia.Interactivity;
 
@@ -125,9 +126,24 @@ namespace RoguelikeToolkit.World.App
             GlView.OnDiagnostic = msg => { if (txtStatus != null) txtStatus.Text = msg; };
             RefreshStatus();
 
+            WireAdaptivePanels(numSeed);
+
+            // Auto-collapse panels when the window is too narrow to show them
+            // alongside the 3D view (e.g. a small laptop screen). Layout only
+            // changes when crossing a breakpoint, so explicit user toggles
+            // are respected between resizes.
+            this.SizeChanged += (s, e) => ApplyResponsiveLayout(e.NewSize.Width);
+
             // Global Key Down event
             this.KeyDown += MainWindow_KeyDown;
         }
+
+        // Adaptive-layout breakpoint state. Tracked so auto-collapse only
+        // fires when crossing a breakpoint instead of fighting explicit toggles.
+        private bool _narrowControlsHidden;
+        private bool _narrowInfoHidden;
+        private const double ControlsBreakpointWidth = 900.0;
+        private const double InfoBreakpointWidth = 640.0;
 
         private Avalonia.Point _lastMousePosition;
         private bool _isLeftDown;
@@ -135,13 +151,13 @@ namespace RoguelikeToolkit.World.App
 
         private void GlViewContainer_PointerPressed(object sender, PointerPressedEventArgs e)
         {
-            var point = e.GetCurrentPoint(this);
+            var point = e.GetCurrentPoint(GlView);
             _lastMousePosition = point.Position;
 
             if (point.Properties.IsLeftButtonPressed) _isLeftDown = true;
             if (point.Properties.IsRightButtonPressed) _isRightDown = true;
 
-            // Attempt to pick a hex
+            // Attempt to pick a hex (point is GlView-relative: TryPickHex works in GlView.Bounds space)
             if (GlView.TryPickHex(point.Position.X, point.Position.Y, out double lat, out double lon, out int tileIndex))
             {
                 var txtLat = this.FindControl<TextBlock>("TxtHexLat");
@@ -253,7 +269,7 @@ namespace RoguelikeToolkit.World.App
 
         private void GlViewContainer_PointerMoved(object sender, PointerEventArgs e)
         {
-            var point = e.GetCurrentPoint(this);
+            var point = e.GetCurrentPoint(GlView);
 
             if (_isLeftDown)
             {
@@ -299,6 +315,45 @@ namespace RoguelikeToolkit.World.App
             if (GlView.Distance < 1.1f) GlView.Distance = 1.1f;
             if (GlView.Distance > 20.0f) GlView.Distance = 20.0f;
             GlView.RenderFrame();
+        }
+
+        private void WireAdaptivePanels(NumericUpDown? numSeed)
+        {
+            var controlsPanel = this.FindControl<Border>("ControlsPanel");
+            var infoPanel = this.FindControl<Border>("InfoPanel");
+            var toggleControls = this.FindControl<ToggleButton>("BtnToggleControls");
+            var toggleInfo = this.FindControl<ToggleButton>("BtnToggleInfo");
+
+            if (toggleControls != null && controlsPanel != null)
+                toggleControls.IsCheckedChanged += (s, e) => controlsPanel.IsVisible = toggleControls.IsChecked ?? false;
+            if (toggleInfo != null && infoPanel != null)
+                toggleInfo.IsCheckedChanged += (s, e) => infoPanel.IsVisible = toggleInfo.IsChecked ?? false;
+
+
+            // The primary action stays reachable from the toolbar when the
+            // side panel is hidden on small screens.
+            var quickRegen = this.FindControl<Button>("BtnQuickRegen");
+            if (quickRegen != null)
+                quickRegen.Click += (s, e) => GlView.Regenerate((int)(numSeed?.Value ?? 42));
+        }
+
+        private void ApplyResponsiveLayout(double width)
+        {
+            bool hideControls = width < ControlsBreakpointWidth;
+            if (hideControls != _narrowControlsHidden)
+            {
+                _narrowControlsHidden = hideControls;
+                var toggle = this.FindControl<ToggleButton>("BtnToggleControls");
+                if (toggle != null) toggle.IsChecked = !hideControls;
+            }
+
+            bool hideInfo = width < InfoBreakpointWidth;
+            if (hideInfo != _narrowInfoHidden)
+            {
+                _narrowInfoHidden = hideInfo;
+                var toggle = this.FindControl<ToggleButton>("BtnToggleInfo");
+                if (toggle != null) toggle.IsChecked = !hideInfo;
+            }
         }
 
         private void MainWindow_KeyDown(object? sender, KeyEventArgs e)
