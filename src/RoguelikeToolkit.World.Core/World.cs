@@ -198,8 +198,23 @@ public sealed class WorldBuilder
     private bool _useDefaults = true;
     private Action<TectonicPlateGenerationStage>? _tectonicsConfig;
     private Action<LocalMapGenerationStage>? _biomesConfig;
+    private Action<ClimateStage>? _climateConfig;
 
-    public WorldBuilder WithSize(int size) { _size = size; return this; }
+    /// <summary>
+    /// Largest supported planet size (backlog A2, from the Phase 2
+    /// benchmarks: size 7 builds in ~2s; size 8 extrapolates to ~20-30s and
+    /// ~3.9M-vert meshes, so it stays batch-only and unsupported).
+    /// </summary>
+    public const int MaxSupportedSize = 7;
+
+    public WorldBuilder WithSize(int size)
+    {
+        if (size < 0 || size > MaxSupportedSize)
+            throw new ArgumentOutOfRangeException(nameof(size), size,
+                $"Planet size must be 0..{MaxSupportedSize} (size 8+ is unsupported; see docs/ARCHITECTURE.md).");
+        _size = size;
+        return this;
+    }
     public WorldBuilder WithSeed(int seed) { _seed = seed; return this; }
     public WorldBuilder WithPlateCount(int seedCount) { _seedCount = seedCount; return this; }
     public WorldBuilder WithFilePath(string? path) { _filePath = path; return this; }
@@ -214,6 +229,13 @@ public sealed class WorldBuilder
     {
         var prev = _tectonicsConfig;
         _tectonicsConfig = prev == null ? configure : s => { prev(s); configure(s); };
+        return this;
+    }
+    /// <summary>Tweak the default climate stage (smoothing passes...).</summary>
+    public WorldBuilder WithClimate(Action<ClimateStage> configure)
+    {
+        var prev = _climateConfig;
+        _climateConfig = prev == null ? configure : s => { prev(s); configure(s); };
         return this;
     }
     /// <summary>Tweak the default biome stage (smoothing passes...).</summary>
@@ -243,7 +265,9 @@ public sealed class WorldBuilder
             _tectonicsConfig?.Invoke(tectonics);
             pipeline.AddStage(tectonics);
             pipeline.AddStage(new ElevationGenerationStage(_seed));
-            pipeline.AddStage(new ClimateStage(_seed));
+            var climate = new ClimateStage(_seed);
+            _climateConfig?.Invoke(climate);
+            pipeline.AddStage(climate);
             pipeline.AddStage(new ErosionGenerationStage());
             pipeline.AddStage(new HydrologyStage());
             var biomes = new LocalMapGenerationStage(_seed);

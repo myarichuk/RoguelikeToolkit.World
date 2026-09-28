@@ -27,6 +27,35 @@ Three things to notice:
 - Region and local maps are the same `IHexMap<TTile>` shape — flat-top hex grids with axial/cube addressing — so adjacency, ranges, and movement code is written once.
 - Sites are an overlay, not a layer. They live in a managed `SiteCatalog`, never in the memory-mapped field store.
 
+## Scale contract (which tier do I play on?)
+
+Tiles = 10·4^size + 2. Measured Release numbers (Phase 2 baselines, seed 42):
+
+| Size | Tiles | Gen time | Hex across | Region cell | Local tile |
+|------|-------|----------|------------|-------------|------------|
+| 3 | 642 | ~0.05 s | ~1000 km | ~126 km | ~8 km |
+| 4 (visualizer default) | 2,562 | ~0.1 s | ~500 km | ~63 km | ~4 km |
+| 5 | 10,242 | ~0.3 s | ~250 km | ~31 km | ~2 km |
+| 6 | 40,962 | ~0.8 s | ~126 km | ~16 km | ~1 km |
+| 7 (max supported) | 163,842 | ~2 s | ~63 km | ~8 km | ~0.5 km |
+| 8 (unsupported) | 655,362 | ~20–30 s est. | ~31 km | ~4 km | ~0.25 km |
+
+Tier → play use:
+
+- **Planet** — strategic (continents, kingdoms). Playable at any size.
+- **Region** (one hex grid per planet hex, ÷8) — operational (provinces).
+- **Local** (one hex grid per region cell, ÷128) — overland travel; reaches
+  1–4 km hexes at sizes 4–6.
+- **Tactical** (sub-km) — game-owned: injectors + tactical maps. Even size 8
+  planet hexes (~31 km) can't carry roguelike tactics, so planet density has
+  steeply diminishing returns past size 6–7. Don't chase planet density;
+  invest in the hierarchy.
+
+Ceiling: `WorldBuilder.WithSize` accepts 0–7 (`MaxSupportedSize`) and throws
+`ArgumentOutOfRangeException` beyond it. Size 8 is batch-only and
+unsupported. The visualizer slider runs 1–7 and warns past 6 (~2 s
+generation, ~1M mesh verts at size 7).
+
 ## Planet generation pipeline
 
 ```mermaid

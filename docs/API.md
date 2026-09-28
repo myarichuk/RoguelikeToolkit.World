@@ -133,6 +133,22 @@ Handles also tell you about themselves: `Address`, `Bounds` (center, radius in k
 
 Sizes are customizable per call (`world.GetRegion(hex, regionSize: 12)`), and the old `DeriveRegion`/`DeriveLocal` helpers still exist as `[Obsolete]` shims if you have code using them.
 
+## Per-cell coordinates: lon/lat below the planet tier
+
+Every region cell and local tile has a geographic center, computed with the same projection derivation uses (cell offset onto the tangent plane at the map center, normalized back to the sphere). Centers are pure functions of the map bounds, so they need no store access and are identical on every machine:
+
+```csharp
+RegionHandle region = world.GetRegion(hex);
+GeoCoord cellGeo = region.CellCenter(17);      // lon/lat of region cell 17
+int cell = region.CellAt(cellGeo);             // inverse: 17 (nearest center wins)
+
+LocalMapHandle local = region.GetLocal(17);
+GeoCoord tileGeo = local.TileCenter(93);       // lon/lat of local tile 93
+int tile = local.TileAt(tileGeo);              // inverse: 93
+```
+
+Round-trip accuracy is within half a cell diagonal, and results are deterministic across builds with the same seed. Because a cell center is just a `GeoCoord`, all planet-tier queries accept it directly — `world.GetTileFeatures(cellGeo)` returns the features of the planet hex containing that cell, `world.SampleBiome(tileGeo)` samples its biome, and so on.
+
 ## Why zoomed maps look like their parent
 
 This is the part the library is proudest of, so here's the honest version of how it works. Inheriting just the average ("this hex is mountains, make mountain-ish noise") gives you a map that *feels* unrelated - the ridge that ran through the north-west of the parent tile vanishes. To keep it, the child map needs to know the parent's *direction*, not just its average. That's what `ParentContext` is:

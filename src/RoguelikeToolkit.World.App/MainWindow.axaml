@@ -69,6 +69,20 @@
             <!-- Overlay UI: same sections and styling as before, but the panel
                  stretches to the available height and its content scrolls, so
                  nothing clips on short (e.g. laptop) screens. -->
+            <!-- B2 drill-down panel: flat plain-map of the selected planet hex's
+                 region grid, then of one region cell's local grid. Fills use
+                 the planet Biome palette; the info line shows B1 coordinates. -->
+            <Border x:Name="DrillPanel" Padding="20" HorizontalAlignment="Left" VerticalAlignment="Bottom" IsVisible="False">
+                <Border Background="#80000000" Margin="10" Padding="10">
+                    <StackPanel Spacing="5" Width="360">
+                        <TextBlock x:Name="TxtDrillTitle" Text="Region" Foreground="White" FontWeight="Bold" HorizontalAlignment="Center"/>
+                        <Canvas x:Name="DrillCanvas" Width="340" Height="280" Background="Transparent"/>
+                        <TextBlock x:Name="TxtDrillInfo" Text="Click a cell." Foreground="White" TextWrapping="Wrap"/>
+                        <Button x:Name="BtnDrillBack" Content="Back to planet" Background="#40FFFFFF" Foreground="White" HorizontalAlignment="Stretch" HorizontalContentAlignment="Center"/>
+                    </StackPanel>
+                </Border>
+            </Border>
+
             <Border x:Name="ControlsPanel" Padding="20" HorizontalAlignment="Right" VerticalAlignment="Stretch">
                 <Grid RowDefinitions="Auto,*" Background="#80000000">
                     <TextBlock Grid.Row="0" Text="Controls" Foreground="White" FontWeight="Bold" HorizontalAlignment="Center" Margin="0,5,0,5"/>
@@ -97,7 +111,8 @@
                             </ComboBox>
 
                             <TextBlock Text="Hex Size (Subdivision Level):" Foreground="White" Margin="5,5,5,0"/>
-                            <Slider x:Name="SldRecursionLevel" Minimum="1" Maximum="6" Value="4" TickFrequency="1" IsSnapToTickEnabled="True" Margin="5,0,5,5"/>
+                            <Slider x:Name="SldRecursionLevel" Minimum="1" Maximum="7" Value="4" TickFrequency="1" IsSnapToTickEnabled="True" Margin="5,0,5,5"/>
+                            <TextBlock x:Name="TxtSizeWarning" Text="Size 7: ~163k tiles, ~2s generation, ~1M mesh verts. Confirm before regenerate." Foreground="Orange" FontSize="12" TextWrapping="Wrap" Margin="5,0,5,0" IsVisible="False"/>
 
                             <TextBlock Text="Plate Count (Seeds):" Foreground="White" Margin="5,5,5,0"/>
                             <Slider x:Name="SldSeedCount" Minimum="2" Maximum="100" Value="12" TickFrequency="1" IsSnapToTickEnabled="True" Margin="5,0,5,5"/>
@@ -114,6 +129,9 @@
 
                             <TextBlock Text="Height Exaggeration:" Foreground="White" Margin="5,5,5,0"/>
                             <Slider x:Name="SldHeight" Minimum="0" Maximum="0.35" Value="0.16" TickFrequency="0.01" Margin="5,0,5,5"/>
+                            <TextBlock Text="Depression Exaggeration:" Foreground="White" Margin="5,5,5,0"/>
+                            <Slider x:Name="SldDepression" Minimum="0.5" Maximum="3" Value="1" TickFrequency="0.1" Margin="5,0,5,5"/>
+                            <CheckBox x:Name="ChkBathymetry" Content="Bathymetry parity" IsChecked="False" Foreground="White" Margin="5" ToolTip.Tip="Match ocean depth scale to land relief scale"/>
 
                             <TextBlock Text="Color Mode:" Foreground="White" Margin="5,5,5,0"/>
                             <ComboBox x:Name="CmbColorMode" SelectedIndex="0" HorizontalAlignment="Stretch" Margin="5,0,5,5">
@@ -128,6 +146,7 @@
                             <CheckBox x:Name="ChkTogglePlates" Content="Show Plates" IsChecked="True" Foreground="White" Margin="5"/>
                             <CheckBox x:Name="ChkToggleHexes" Content="Show Hexes" IsChecked="True" Foreground="White" Margin="5"/>
 
+                            <Button x:Name="BtnDrill" Content="Drill down to region" Background="#40FFFFFF" Foreground="White" HorizontalAlignment="Stretch" HorizontalContentAlignment="Center" Margin="5,0,5,5" ToolTip.Tip="Show the selected hex as a flat region grid"/>
                             <TextBlock x:Name="TxtStatus" Text="..." Foreground="LightGray" FontSize="12" TextWrapping="Wrap" Margin="5,5,5,0"/>
 
                             <TextBlock Text="Left-drag: Rotate" Foreground="LightGray" FontSize="12" Margin="5,0,0,0"/>

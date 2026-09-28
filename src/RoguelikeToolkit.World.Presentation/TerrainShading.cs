@@ -18,14 +18,17 @@ public static class TerrainShading
     /// <summary>
     /// Sphere radius for one tile. Land rises with height, ocean sinks gently
     /// (bathymetry), river channels carve a V, lake basins bow slightly.
-    /// Pure function of its inputs.
+    /// Pure function of its inputs. Backlog D3: depressionScale exaggerates
+    /// below-sea displacement (1 = unchanged); oceanScale sets the bathymetry
+    /// slope (pass the land scale for parity with land relief).
     /// </summary>
     public static float DisplacedRadius(
-        float height, bool isRiver, float flow, float lakeDepth, float heightScale = DefaultHeightScale)
+        float height, bool isRiver, float flow, float lakeDepth, float heightScale = DefaultHeightScale,
+        float depressionScale = 1f, float oceanScale = 0.025f)
     {
         float scale = heightScale <= 0f ? DefaultHeightScale : heightScale;
         float r = height < 0f
-            ? 1f + height * 0.025f
+            ? 1f + height * (oceanScale <= 0f ? 0.025f : oceanScale) * (depressionScale <= 0f ? 1f : depressionScale)
             : 1f + height * scale;
 
         if (lakeDepth > 0f)
@@ -119,6 +122,33 @@ public static class TerrainShading
         land = Lerp(land, new Vector3(0.90f, 0.92f, 0.95f), snowT);
 
         return Shade(land, vary);
+    }
+
+        /// <summary>
+    /// Two-sided hillshade factor for Elevation mode (backlog D2).
+    /// <paramref name="relief"/> is signed height vs the neighbor mean:
+    /// pits darken, peaks brighten, flat ground stays 1. Pure function.
+    /// </summary>
+    public static float ReliefShadeFactor(float relief, float gain = 2.2f, float maxDarken = 0.5f, float maxBrighten = 0.25f)
+    {
+        float t = relief * gain;
+        if (t < -maxDarken) t = -maxDarken;
+        else if (t > maxBrighten) t = maxBrighten;
+        return 1f + t;
+    }
+
+    /// <summary>
+    /// Depression color cue for Terrain mode (backlog D4): land sitting below
+    /// its neighbor mean takes an umber shadow blend. Umber (0.35,0.22,0.12)
+    /// is distinct from the Canyon biome color (0.62,0.34,0.18), so
+    /// overdeepenings read without the Elevation color mode. Pure function.
+    /// </summary>
+    public static Vector3 DepressionCue(Vector3 color, float relief)
+    {
+        float t = (-relief - 0.02f) * 8f;
+        if (t <= 0f) return color;
+        if (t > 0.45f) t = 0.45f;
+        return Lerp(color, new Vector3(0.35f, 0.22f, 0.12f), t);
     }
 
     private static Vector3 Shade(Vector3 c, float vary) => c * (1f + vary);

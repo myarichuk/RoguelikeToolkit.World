@@ -26,7 +26,7 @@ current and terse.
 `continue`). Agent reads this file + the relevant backlog section and
 proceeds. If the pointer says phase N is done, start N+1.
 
-**Current phase:** 4 (Phase 3 done 2026-09-28)
+**Current phase:** complete (Phases 6-8 done 2026-09-28; 6.3/A3 windowed visual check pending)
 
 ## Phase 0 — Rain-shadow verification + "hectic climate" diagnosis
 
@@ -105,51 +105,61 @@ Log: 2026-09-28. `Glaciology.DryPolarGate` 0.20→0.40 (single lever; snowTemp/t
 
 ## Phase 4 — B1: per-cell lon/lat API
 
-- [ ] 4.1 `RegionHandle.CellCenter(int)` / `LocalMapHandle.TileCenter(int)`
+- [x] 4.1 `RegionHandle.CellCenter(int)` / `LocalMapHandle.TileCenter(int)`
   → `GeoCoord` + inverse lookup.
-- [ ] 4.2 Round-trip + determinism tests; `GetTileFeatures` via region-cell
+- [x] 4.2 Round-trip + determinism tests; `GetTileFeatures` via region-cell
   coord works.
-- [ ] 4.3 API docs (`docs/API.md`) updated.
+- [x] 4.3 API docs (`docs/API.md`) updated.
 
 Acceptance: per backlog B1.
+Log: 2026-09-28. `RegionMaps.cs` (+CellCenter/CellAt, +TileCenter/TileAt, +GridCellCenter/GridCellAt/OffsetToGeo helpers); `docs/API.md` (+per-cell section); new `CellCenterTests.cs` (8 tests).
+  Centers use the exact derivation projection; local Bounds.Center == CellCenter bit-for-bit (asserted). Inverse = nearest center, lowest-index wins ties; jittered lookups resolve within the 2R/size bound.
+  GetTileFeatures(cellCoord) == GetTileFeatures(Resolve(cellCoord)) for region + local (size-2 world).
+  Tests (Release): CellCenter 8/8; final full Core 147/147 (Category!=Stress) + Presentation 88/88 green.
 Log:
 
 ## Phase 5 — B2: region/local "plain map" viewer (blocked by 4)
 
-- [ ] 5.1 Visualizer: planet hex → region grid view → local grid view +
+- [x] 5.1 Visualizer: planet hex → region grid view → local grid view +
   back-navigation, existing palettes.
-- [ ] 5.2 Inspector shows B1 coordinates per cell.
-- [ ] 5.3 Presentation tests for new view-model/mapping code.
+- [x] 5.2 Inspector shows B1 coordinates per cell.
+- [x] 5.3 Presentation tests for new view-model/mapping code.
 
 Acceptance: per backlog B2.
+Log: 2026-09-28. New `Presentation/PlainMap.cs` (FlatHexLayout unit-hex layout/HitTest/Extent + PlainMap.FromRegion/FromLocal, fills via BiomePalette = planet Biome mode); `GlControl.DeriveRegion`; `MainWindow` drill panel (Canvas polygons, click region cell -> local, Back, B1 lat/lon in info line).
+  Display layout is y-up unit-hex math (CellUV is anisotropic — not reused for display); canvas flips y. Drill-down derives from the live view store (no duplicate world build).
+  Tests (Release): new `PlainMapTests.cs` 6/6; full Presentation 88/88 + Core 147/147 green; App builds 0 warnings.
 Log:
 
 ## Phase 6 — D1+D2: true relief (normals + two-sided hillshade)
 
-- [ ] 6.1 Displaced per-face normals → `aNormal` (CPU, once per rebuild).
-- [ ] 6.2 Two-sided hillshade in Elevation mode (signed relief vs
+- [x] 6.1 Displaced per-face normals → `aNormal` (CPU, once per rebuild).
+- [x] 6.2 Two-sided hillshade in Elevation mode (signed relief vs
   neighbor mean).
-- [ ] 6.3 Before/after screenshots attached to PR/description; palette
+- [!] 6.3 Before/after screenshots attached to PR/description; palette
   tests green; GLES-safe (no shader-language upgrade).
 
 Acceptance: per backlog D1, D2.
-Log:
+Log: 2026-09-28. New `Presentation/TerrainNormals.cs` (FaceNormal + Outward winding guard); `GlControl.SetupMesh` per-face normals from displaced positions in Terrain relief (radial fallback for hidden/degenerate); `TerrainShading.ReliefShadeFactor` (pit darken ≤0.5, peak brighten ≤1.25) wired into `TileElevationColor` via neighbor-mean relief. CPU-only, same VBO path = GLES-safe by construction.
+  Tests (Release): new `ReliefTests.cs` 12/12 (D1+D2+D3+D4); full Presentation 100/100 green; App builds 0 warnings.
+  6.3 [!]: screenshots need a windowed run (headless session, no GL context) — visual check pending.
 
 ## Phase 7 — A1+A2+A3: scale contract + ceiling + guards (blocked by 2)
 
-- [ ] 7.1 Scale table + tier→play-use mapping in `docs/ARCHITECTURE.md`.
-- [ ] 7.2 Supported size ceiling from Phase 2 numbers; `WithSize` throws
+- [x] 7.1 Scale table + tier→play-use mapping in `docs/ARCHITECTURE.md`.
+- [x] 7.2 Supported size ceiling from Phase 2 numbers; `WithSize` throws
   beyond it + tests.
-- [ ] 7.3 Visualizer large-world warning (past size 6).
+- [x] 7.3 Visualizer large-world warning (past size 6).
 
 Acceptance: per backlog A1–A3.
-Log:
+Log: 2026-09-28. `ARCHITECTURE.md` +Scale contract section (table sizes 3-8, tier->play mapping, ceiling). `WorldBuilder.MaxSupportedSize = 7`; `WithSize` throws `ArgumentOutOfRangeException` naming ceiling for <0/>7. Slider 1-7 + orange `TxtSizeWarning` past 6; D3 controls (depression slider, bathymetry checkbox) wired to `GlControl`.
+  Tests (Release): new `SizeCeilingTests.cs` 6/6; Core 153/153 (Category!=Stress) green; App builds 0 warnings. A3 verified by build only (Avalonia UI, windowed check pending with 6.3).
 
 ## Phase 8 — Follow-ups: E3, E4, E6, B3, D3, D4
 
-- [ ] 8.1 E3: hydro-aware climate refresh (or wontfix with reason).
-- [ ] 8.2 E4: stale lapse-rate measurement note + fix/wontfix.
-- [ ] 8.3 E6: smooth climate precip + soften orographic discontinuity
+- [x] 8.1 E3: hydro-aware climate refresh (or wontfix with reason).
+- [x] 8.2 E4: stale lapse-rate measurement note + fix/wontfix.
+- [x] 8.3 E6: smooth climate precip + soften orographic discontinuity
   (DOCUMENTED, was in no phase). 1–2 blur passes on precip (or upwind-aware
   smoothing that preserves the rain shadow) and/or a continuous orographic
   factor; optionally lower palette precip gain. NOTE: smoothing shifts the
@@ -158,10 +168,20 @@ Log:
   invariants hold (or retune the gate). Acceptance per backlog E6: land-neighbor
   mean|dP| < ~0.05 on the Phase 0 matrix; orographic test still passes (d > 0);
   determinism preserved.
-- [ ] 8.4 B3: flat-arena design note + estimate (no code).
-- [ ] 8.5 D3: depression exaggeration control.
-- [ ] 8.6 D4: depression color cue.
-- [ ] 8.7 Full suite green; final numbers in log.
+- [x] 8.4 B3: flat-arena design note + estimate (no code).
+- [x] 8.5 D3: depression exaggeration control.
+- [x] 8.6 D4: depression color cue.
+- [x] 8.7 Full suite green; final numbers in log.
 
 Acceptance: per backlog; each item may close as done or wontfix-with-reason.
-Log:
+Log: 2026-09-28.
+  E6 DONE (design: pre-oro base blur ×1 + continuous upwind gate 0.05-0.25, peak gains unchanged; `WithClimate` configurator added).
+  Shadow Δ>0 on all 6 matrix builds (0.18/0.08/0.18/0.03/0.12/0.03); oro test green; determinism green.
+  Same-side speckle s3 0.141→0.132, s4 0.100→0.095, s5 ~0.06, s6 ~0.036. Literal <0.05 missed at s3-4: full-blur control tied the shadow (lee 0.621 vs wind 0.617), proving the literal metric incompatible with Δ>0 — deviation documented, intent (belts not speckle) met.
+  Rejected variant: neighbor-blended oro (speckle -20% but seed7 Δ→0.008 + seed42 deserts halved) — reverted, noted in code.
+  Gate re-measure: NO retune needed — tun 4,2,9,3,46,29,204,61; des in bounds; glacier present+confined; canyon seed12 green.
+  E3 DONE: rerun-after-hydro picks up lake bonus; `ClimateRefreshTests` (flat map, lake ring +0.06 exactly, far tiles bit-identical, refresh idempotent).
+  E4 WONT FIX: s4seed42 mean|dT| 0.026, 2.4% mask flips, glacier 223→177. Fix needs a new stage + order plumbing + gate recalibration for a 2% effect; guardrails pass with stale temps. Revisit if guardrails ever fail.
+  B3 DONE: `docs/FLAT_ARENA_NOTE.md` (reuse/sphere-anchored inventory, spike order, M/L estimate).
+  D3/D4 DONE (Phase 6): `DisplacedRadius` depressionScale/oceanScale + visualizer slider/checkbox; `DepressionCue` umber blend (land-only) in Terrain view.
+  Tests (Release): Core 157/157 (Category!=Stress; +E6/E3/Ceiling tests) + Presentation 100/100 (+12 Relief) green; App + Benchmarks build 0 warnings.

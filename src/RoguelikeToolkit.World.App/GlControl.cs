@@ -55,6 +55,8 @@ namespace RoguelikeToolkit.World.App
         public bool ShowHexes { get; set; } = true;
         public ViewMode ViewMode { get; private set; } = ViewMode.Hex;
         public float HeightScale { get; private set; } = TerrainShading.DefaultHeightScale;
+        public float DepressionExaggeration { get; private set; } = 1f;
+        public bool BathymetryParity { get; private set; } = false;
         public System.Numerics.Vector3 SelectedHexCenter { get; set; } = new System.Numerics.Vector3(0, 0, 0);
         public int RecursionLevel { get; set; } = 4;
 
@@ -176,6 +178,18 @@ namespace RoguelikeToolkit.World.App
         }
 
         /// <summary>Everything attached to one hex (river reach, water, glacier, deposits...).</summary>
+        /// <summary>B2 drill-down: region grid for one planet tile, derived from this view's store.</summary>
+        public RegionHandle DeriveRegion(int tileIndex, int regionSize = RegionMaps.DefaultRegionSize)
+        {
+            if ((uint)tileIndex >= (uint)_map.DataStore.TileCount) throw new IndexOutOfRangeException();
+            var parent = TerrainOrientation.Sample(_map.DataStore, tileIndex);
+            var center = _map.DataStore.GetGeoCoord(tileIndex);
+            double radiusKm = MapBounds.ForPlanetTile(_map.DataStore, tileIndex).RadiusKm;
+            uint seed = MapSeeds.DeriveRegionSeed(WorldSeed, tileIndex);
+            return RegionMaps.DeriveRegionMap(
+                MapAddress.ForRegion(WorldSeed, tileIndex, -1), parent, center, radiusKm, seed, regionSize);
+        }
+
         public TileFeatureInfo GetTileFeatures(int tileIndex)
             => TileFeatures.Query(_map.DataStore, tileIndex, _rivers, _bodies, _ranges, _deposits);
 
@@ -320,6 +334,27 @@ namespace RoguelikeToolkit.World.App
             }
         }
 
+        public void SetDepressionScale(float scale)
+        {
+            float clamped = MathF.Min(3f, MathF.Max(0.5f, scale));
+            DepressionExaggeration = clamped;
+            if (ViewMode == ViewMode.Terrain)
+            {
+                _needsMeshRebuild = true;
+                RenderFrame();
+            }
+        }
+
+        public void SetBathymetryParity(bool enabled)
+        {
+            BathymetryParity = enabled;
+            if (ViewMode == ViewMode.Terrain)
+            {
+                _needsMeshRebuild = true;
+                RenderFrame();
+            }
+        }
+
         private void Recolor()
         {
             // Terrain view displaces vertices by elevation, so any recolor needs
@@ -405,19 +440,19 @@ namespace RoguelikeToolkit.World.App
         private System.Numerics.Vector3 TileElevationColor(int tile, float height)
         {
             var color = ElevationPalette.ColorFor(height);
-            // Hillshade: steep ground darkens so ranges, hills, and canyon cuts
-            // read as relief instead of flat color bands.
+            // Two-sided hillshade (D2): signed relief vs the neighbor mean -
+            // pits darken, peaks brighten, so relief reads instead of flat bands.
             var heights = _elevLayer.Store.GetSpan<ElevationInfo>();
             if ((uint)tile >= (uint)heights.Length) return color;
             Span<int> scratch = stackalloc int[6];
             int adjacent = _map.DataStore.GetAdjacent(tile, scratch);
-            float drop = 0f;
+            float neighborSum = 0f;
             for (int k = 0; k < adjacent; k++)
             {
-                float d = height - heights[scratch[k]].Height;
-                if (d > drop) drop = d;
+                float d = heights[scratch[k]].Height;
+                neighborSum += d;
             }
-            float shade = 1f - MathF.Min(drop * 2.2f, 0.5f);
+            float shade = TerrainShading.ReliefShadeFactor(adjacent > 0 ? height - neighborSum / adjacent : 0f);
             return color * shade;
         }
 
@@ -434,12 +469,28 @@ namespace RoguelikeToolkit.World.App
             bool glacier = (uint)tile < (uint)_glacierByTile.Length && _glacierByTile[tile];
             WaterBodyKind? kind = (uint)tile < (uint)_waterKindByTile.Length ? _waterKindByTile[tile] : null;
             var c = climate[tile];
-            return TerrainShading.ColorFor(locals[tile].Biome, heights[tile].Height,
+            var terrainBase = TerrainShading.ColorFor(locals[tile].Biome, heights[tile].Height,
                 h.IsRiver == 1, h.Flow, h.LakeDepth, kind, glacier, h.IsPlaya == 1,
                 c.Temperature, c.Precipitation, tile);
+            if (heights[tile].Height >= 0f)
+                terrainBase = TerrainShading.DepressionCue(terrainBase, TileRelief(tile));
+            return terrainBase;
         }
 
         /// <summary>Displaced sphere radius for one tile (Terrain view).</summary>
+        /// <summary>Signed height relief vs the neighbor mean (D2/D4).</summary>
+        private float TileRelief(int tile)
+        {
+            var heights = _elevLayer.Store.GetSpan<ElevationInfo>();
+            if ((uint)tile >= (uint)heights.Length) return 0f;
+            Span<int> scratch = stackalloc int[6];
+            int adjacent = _map.DataStore.GetAdjacent(tile, scratch);
+            if (adjacent <= 0) return 0f;
+            float sum = 0f;
+            for (int k = 0; k < adjacent; k++) sum += heights[scratch[k]].Height;
+            return heights[tile].Height - sum / adjacent;
+        }
+
         private float TileTerrainRadius(int tile)
         {
             var heights = _elevLayer.Store.GetSpan<ElevationInfo>();
@@ -447,7 +498,7 @@ namespace RoguelikeToolkit.World.App
             if ((uint)tile >= (uint)heights.Length) return 1f;
             var h = hydro[tile];
             return TerrainShading.DisplacedRadius(heights[tile].Height,
-                h.IsRiver == 1, h.Flow, h.LakeDepth, HeightScale);
+                h.IsRiver == 1, h.Flow, h.LakeDepth, HeightScale, DepressionExaggeration, BathymetryParity ? HeightScale : 0.025f);
         }
 
         private void UpdateStatus()
@@ -761,8 +812,8 @@ namespace RoguelikeToolkit.World.App
                     }
                     else
                     {
-                        // Radial normal: exact for the unit sphere, and the right
-                        // lighting approximation for elevation-displaced terrain.
+                        // Radial normal: exact for the unit sphere; Terrain relief
+                        // overwrites these per-face below (D1); fallback for hidden faces.
                         float nx = tileX[tile], ny = tileY[tile], nz = tileZ[tile];
                         float len = MathF.Sqrt(nx * nx + ny * ny + nz * nz);
                         if (len > 1e-6f) { nx /= len; ny /= len; nz /= len; }
@@ -780,6 +831,32 @@ namespace RoguelikeToolkit.World.App
                     _colors[idx * 3] = color.X;
                     _colors[idx * 3 + 1] = color.Y;
                     _colors[idx * 3 + 2] = color.Z;
+                }
+            }
+
+            // D1: true displaced normals for Terrain relief. Per-face normals
+            // from the displaced positions (CPU, once per rebuild), oriented
+            // outward against the face centroid so winding can't invert them.
+            // Hidden (NaN) and degenerate faces keep the radial fallback above.
+            if (terrainRelief)
+            {
+                for (int f = 0; f < faces.Length; f++)
+                {
+                    if (faceHidden != null && faceHidden[f]) continue;
+                    int i0 = f * 3;
+                    var pa = new Vector3(_positions[i0 * 3], _positions[i0 * 3 + 1], _positions[i0 * 3 + 2]);
+                    var pb = new Vector3(_positions[i0 * 3 + 3], _positions[i0 * 3 + 4], _positions[i0 * 3 + 5]);
+                    var pc = new Vector3(_positions[i0 * 3 + 6], _positions[i0 * 3 + 7], _positions[i0 * 3 + 8]);
+                    var centroid = (pa + pb + pc) / 3f;
+                    float cl = centroid.Length();
+                    var radial = cl > 1e-6f ? centroid / cl : new Vector3(0f, 0f, 1f);
+                    var n = TerrainNormals.Outward(TerrainNormals.FaceNormal(pa, pb, pc, radial), centroid);
+                    for (int k = 0; k < 3; k++)
+                    {
+                        _normals[(i0 + k) * 3] = n.X;
+                        _normals[(i0 + k) * 3 + 1] = n.Y;
+                        _normals[(i0 + k) * 3 + 2] = n.Z;
+                    }
                 }
             }
 

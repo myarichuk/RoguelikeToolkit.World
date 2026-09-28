@@ -43,6 +43,14 @@ public sealed class RegionHandle : IHexMap<RegionCell>
     public int GetTileAt(int q, int r) => OffsetGrid.ToIndex(q, r, Size);
     public int GetTileAt(CubeCoord cube) => !cube.IsValid ? -1 : GetTileAt(cube.ToAxial().Q, cube.ToAxial().R);
 
+    /// <summary>Geographic center of one region cell: the CellUV offset projected onto the tangent plane at Bounds.Center and normalized back to the sphere — the same projection derivation uses.</summary>
+    public GeoCoord CellCenter(int cellIndex)
+        => RegionMaps.GridCellCenter(Bounds.Center, Bounds.RadiusKm, Size, cellIndex);
+
+    /// <summary>Index of the cell containing a coordinate (nearest center; deterministic).</summary>
+    public int CellAt(GeoCoord coord)
+        => RegionMaps.GridCellAt(Bounds.Center, Bounds.RadiusKm, Size, coord);
+
     public LocalMapHandle GetLocal(int cellIndex, int localSize = RegionMaps.DefaultLocalSize)
     {
         if ((uint)cellIndex >= (uint)Cells.Length) throw new IndexOutOfRangeException();
@@ -117,6 +125,14 @@ public sealed class LocalMapHandle : IHexMap<LocalTile>
     public int TileCount => Size * Size;
     public MapAddress RootAddress => Address;
     public LocalTile GetTile(int index) => Tiles[index];
+
+    /// <summary>Geographic center of one local tile: the CellUV offset projected onto the tangent plane at Bounds.Center and normalized back to the sphere — the same projection derivation uses.</summary>
+    public GeoCoord TileCenter(int tileIndex)
+        => RegionMaps.GridCellCenter(Bounds.Center, Bounds.RadiusKm, Size, tileIndex);
+
+    /// <summary>Index of the tile containing a coordinate (nearest center; deterministic).</summary>
+    public int TileAt(GeoCoord coord)
+        => RegionMaps.GridCellAt(Bounds.Center, Bounds.RadiusKm, Size, coord);
     public int GetAdjacent(int index, Span<int> neighbors) => RegionMaps.GetHexAdjacent(index, Size, neighbors);
     public int GetTileAt(int q, int r) => OffsetGrid.ToIndex(q, r, Size);
     public int GetTileAt(CubeCoord cube) => !cube.IsValid ? -1 : GetTileAt(cube.ToAxial().Q, cube.ToAxial().R);
@@ -465,6 +481,51 @@ public static class RegionMaps
         double cx = half;
         double cy = Sqrt3 * half;
         return ((x - cx) / half, (y - cy) / (Sqrt3 * half));
+    }
+
+    /// <summary>
+    /// Geographic center of cell <paramref name="index"/> on a size x size grid
+    /// centered at <paramref name="mapCenter"/> with bounding radius
+    /// <paramref name="radiusKm"/>: the <see cref="CellUV"/> offset projected
+    /// onto the tangent plane and normalized back to the sphere. This is the
+    /// same projection <see cref="DeriveChildContext"/> and
+    /// <see cref="DeriveLocalMapForCell"/> use, so handle coordinates agree
+    /// with the grid that generated the cells (pinned by round-trip tests).
+    /// </summary>
+    public static GeoCoord GridCellCenter(GeoCoord mapCenter, double radiusKm, int size, int index)
+    {
+        if (size <= 0) throw new ArgumentOutOfRangeException(nameof(size));
+        if ((uint)index >= (uint)(size * size)) throw new IndexOutOfRangeException();
+        var (q, r) = OffsetGrid.FromIndex(index, size);
+        var (u, v) = CellUV(q, r, size);
+        return OffsetToGeo(mapCenter, radiusKm, u, v);
+    }
+
+    /// <summary>
+    /// Index of the grid cell containing <paramref name="coord"/>: the nearest
+    /// cell center on the sphere (lowest index wins ties, so results are
+    /// deterministic). Pure function of the bounds; no store access.
+    /// </summary>
+    public static int GridCellAt(GeoCoord mapCenter, double radiusKm, int size, GeoCoord coord)
+    {
+        if (size <= 0) throw new ArgumentOutOfRangeException(nameof(size));
+        var target = Vector3D.FromGeoCoord(coord);
+        int best = 0;
+        double bestDot = double.NegativeInfinity;
+        for (int i = 0; i < size * size; i++)
+        {
+            double dot = Vector3D.Dot(target, Vector3D.FromGeoCoord(GridCellCenter(mapCenter, radiusKm, size, i)));
+            if (dot > bestDot) { bestDot = dot; best = i; }
+        }
+        return best;
+    }
+
+    internal static GeoCoord OffsetToGeo(GeoCoord center, double radiusKm, double u, double v)
+    {
+        var up = Vector3D.FromGeoCoord(center);
+        var (east, north) = EastNorth(center, up);
+        double ang = Math.Max(radiusKm / World.EarthRadiusKm, 1e-9);
+        return (up + east * (u * ang) + north * (v * ang)).Normalize().ToGeoCoord();
     }
 
     // ------------------------------------------------------------------ obsolete shims
