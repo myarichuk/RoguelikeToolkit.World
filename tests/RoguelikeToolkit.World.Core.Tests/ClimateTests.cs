@@ -63,6 +63,37 @@ public class ClimateTests
     }
 
     [Fact]
+    public void RegisteredButUnrunHydro_MatchesUnregisteredMoistureField()
+    {
+        var withoutHydro = RunClimateToPrecip(registerHydro: false);
+        var withUnrunHydro = RunClimateToPrecip(registerHydro: true);
+        Assert.Equal(withoutHydro.Length, withUnrunHydro.Length);
+        for (int i = 0; i < withoutHydro.Length; i++)
+            Assert.Equal(withoutHydro[i], withUnrunHydro[i]);
+    }
+
+    private static float[] RunClimateToPrecip(bool registerHydro)
+    {
+        using var map = new WorldMap(2);
+        var plates = new TectonicPlateLayer(map.DataStore, 12, seed: 42);
+        map.RegisterLayer(plates);
+        map.RegisterLayer<ElevationInfo>(new ElevationLayer(map.DataStore));
+        if (registerHydro)
+            map.RegisterLayer<HydrologyInfo>(new HydrologyLayer(map.DataStore));
+        map.RegisterLayer<ClimateInfo>(new ClimateLayer(map.DataStore));
+        map.DataStore.Allocate();
+
+        new TectonicPlateGenerationStage(12, 42).Execute(map);
+        new ElevationGenerationStage(42).Execute(map);
+        new ClimateStage(42).Execute(map);
+
+        var span = map.DataStore.GetSpan<ClimateInfo>();
+        var precip = new float[span.Length];
+        for (int i = 0; i < span.Length; i++) precip[i] = span[i].Precipitation;
+        return precip;
+    }
+
+    [Fact]
     public void Climate_IsDeterministicForSameSeed()
     {
         using var first = new WorldBuilder().WithSize(2).WithSeed(9).Build();

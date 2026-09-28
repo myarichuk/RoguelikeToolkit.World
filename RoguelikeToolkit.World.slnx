@@ -7,5 +7,6 @@
   <Folder Name="/tests/">
     <Project Path="tests/RoguelikeToolkit.World.Core.Tests/RoguelikeToolkit.World.Core.Tests.csproj" />
     <Project Path="tests/RoguelikeToolkit.World.Presentation.Tests/RoguelikeToolkit.World.Presentation.Tests.csproj" />
+    <Project Path="tests/RoguelikeToolkit.World.Benchmarks/RoguelikeToolkit.World.Benchmarks.csproj" />
   </Folder>
 </Solution>

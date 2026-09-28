@@ -1,6 +1,6 @@
-# API Guide — `RoguelikeToolkit.World.Core`
+# API Guide - `RoguelikeToolkit.World.Core`
 
-This is the full tour of the library's public API: what each piece does, when you'd reach for it, and copy-pasteable examples. It assumes you've skimmed the README at least once. Nothing here is corporate gospel — just how the pieces fit together and what they're good for in an actual game.
+This is the full tour of the library's public API: what each piece does, when you'd reach for it, and copy-pasteable examples. It assumes you've skimmed the README at least once. Nothing here is corporate gospel - just how the pieces fit together and what they're good for in an actual game.
 
 Contents:
 
@@ -26,7 +26,7 @@ float height = world.SampleElevation(coord);
 var (biome, danger) = world.SampleBiome(coord);
 ```
 
-`World` is the facade you'll use 95% of the time. It owns the generated `WorldMap` plus the sparse feature catalogs (rivers, water bodies, ranges, deposits). `WorldBuilder` runs the default generation pipeline — tectonics → elevation → climate → erosion → hydrology → biomes — and wires up the catalogs. `WithSize` is the icosphere subdivision level (tile count is `10 * 4^size + 2`, so size 3 is 642 tiles); `WithSeed` makes the whole thing reproducible.
+`World` is the facade you'll use 95% of the time. It owns the generated `WorldMap` plus the sparse feature catalogs (rivers, water bodies, ranges, deposits). `WorldBuilder` runs the default generation pipeline - tectonics -> elevation -> climate -> erosion -> hydrology -> biomes - and wires up the catalogs. `WithSize` is the icosphere subdivision level (tile count is `10 * 4^size + 2`, so size 3 is 642 tiles); `WithSeed` makes the whole thing reproducible.
 
 ## The planet tier: build, sample, query
 
@@ -54,7 +54,7 @@ var river = world.NearestRiver(coord);
 var copper = world.NearestDeposit(coord, DepositType.Copper);
 ```
 
-All the `Nearest*` methods run on a spatial index (`world.Index`), so they're cheap even on big worlds — no full-map scan per call. More on that in [Finding stuff fast](#finding-stuff-fast).
+All the `Nearest*` methods run on a spatial index (`world.Index`), so they're cheap even on big worlds - no full-map scan per call. More on that in [Finding stuff fast](#finding-stuff-fast).
 
 Two higher-level helpers worth knowing early:
 
@@ -64,7 +64,7 @@ var sites = world.ScoreCitySites(new CitySiteFilter { TopN = 10 });
 foreach (var s in sites)
     Console.WriteLine($"tile {s.TileIndex}: score {s.Score:F2} ({s.Reasons})");
 
-// "Everything on this one hex" — biome, river reach with upstream/downstream
+// "Everything on this one hex" - biome, river reach with upstream/downstream
 // neighbors, water body, ranges, glacier cover, deposits, placed sites.
 TileFeatureInfo info = world.GetTileFeatures(coord);
 ```
@@ -86,7 +86,7 @@ PlanetHex hex = world.Resolve(coord);   // GeoCoord -> planet tile
 int tile = hex.TileIndex;
 
 // Compound addresses for the lower tiers (WorldSeed travels with them,
-// so an address is meaningful on its own — handy for save files).
+// so an address is meaningful on its own - handy for save files).
 MapAddress regionAddr = MapAddress.ForRegion(world.Seed, tile, regionCellIndex: 17);
 MapAddress localAddr = MapAddress.ForLocal(world.Seed, tile, 17, localTileIndex: 93);
 ```
@@ -99,7 +99,7 @@ uint cellSeed = MapSeeds.DeriveRegionCellSeed(world.Seed, tile, 17);
 uint localSeed = MapSeeds.DeriveLocalSeed(world.Seed, tile, 17);
 ```
 
-You rarely call these directly — `GetRegion`/`GetLocal` do it for you — but they're public so save/load code and tools can re-derive anything from an address.
+You rarely call these directly - `GetRegion`/`GetLocal` do it for you - but they're public so save/load code and tools can re-derive anything from an address.
 
 ## Zooming in: regions and local maps
 
@@ -135,7 +135,7 @@ Sizes are customizable per call (`world.GetRegion(hex, regionSize: 12)`), and th
 
 ## Why zoomed maps look like their parent
 
-This is the part the library is proudest of, so here's the honest version of how it works. Inheriting just the average ("this hex is mountains, make mountain-ish noise") gives you a map that *feels* unrelated — the ridge that ran through the north-west of the parent tile vanishes. To keep it, the child map needs to know the parent's *direction*, not just its average. That's what `ParentContext` is:
+This is the part the library is proudest of, so here's the honest version of how it works. Inheriting just the average ("this hex is mountains, make mountain-ish noise") gives you a map that *feels* unrelated - the ridge that ran through the north-west of the parent tile vanishes. To keep it, the child map needs to know the parent's *direction*, not just its average. That's what `ParentContext` is:
 
 ```csharp
 ParentContext parent = TerrainOrientation.Sample(world.Map.DataStore, tile);
@@ -158,7 +158,7 @@ int exit = parent.FlowExitTile;                // where it leaves (-1 = sink)
 
 Derivation then combines four ingredients (in `RegionMaps.DeriveRegionMap` / `DeriveLocalMap`):
 
-1. **Base surface** interpolated from the parent neighborhood — a plane through the parent mean carrying the parent slope. This is what makes the NW ridge still run NW.
+1. **Base surface** interpolated from the parent neighborhood - a plane through the parent mean carrying the parent slope. This is what makes the NW ridge still run NW.
 2. **Detail** from ridged noise sampled through an *anisotropic domain warp* around the parent strike: coordinates across the strike are compressed (tighter ridge spacing), coordinates along it elongated (smooth crests). Region tier follows the strike tightly; local tier more loosely.
 3. **Edge pinning**: outer cells blend toward parent-interpolated boundary values, so neighboring child maps stitch instead of cliffing at shared borders.
 4. **River threading**: when the parent tile is a river or carries high flow, a channel is carved from the entry side to the exit side (tapered at both ends); otherwise local drainage follows the inherited aspect.
@@ -176,11 +176,11 @@ var custom = RegionMaps.DeriveLocalMap(address, parent, center, radiusKm, seed,
     size: 16, options: opts);
 ```
 
-`RegionDetailOptions.RegionDefault` vs `LocalDefault` is just "tight strike coupling" vs "loose strike coupling" with slightly different amplitude — start from those and tweak.
+`RegionDetailOptions.RegionDefault` vs `LocalDefault` is just "tight strike coupling" vs "loose strike coupling" with slightly different amplitude - start from those and tweak.
 
 ## Sites: ruins, cities, mines, landmarks
 
-Once you have a region or local map, you'll want stuff *on* it. That's what site injectors do. An injector is one placement pass over a materialized map — it looks at the terrain (with its boundaries), looks at what earlier injectors already placed, and returns sites:
+Once you have a region or local map, you'll want stuff *on* it. That's what site injectors do. An injector is one placement pass over a materialized map - it looks at the terrain (with its boundaries), looks at what earlier injectors already placed, and returns sites:
 
 ```csharp
 RegionHandle region = world.GetRegion(hex);
@@ -201,12 +201,12 @@ A few things worth knowing about how they run:
 
 - Injectors execute ascending by `Order`; two injectors with the same `Order` throw `InvalidOperationException` (fail fast beats silent last-write-wins).
 - Each injector gets its own RNG sub-stream derived from (injector id, address), so adding a new injector later doesn't reshuffle the sites the old ones placed.
-- Later injectors see earlier ones' output via `context.ExistingSites` — "ruins avoid living cities" is expressible, not a special case.
+- Later injectors see earlier ones' output via `context.ExistingSites` - "ruins avoid living cities" is expressible, not a special case.
 - `PlacedSite` carries `Kind`, `CellIndex`, `FootprintRadius`, `NameSeed` (an opaque draw for your own name generator), free-form `Tags`, and `DangerDelta`/`HabitabilityDelta` that feed back into queries.
 - Works on local maps too: `local.WithInjectors(...)`. Injectors declare which tier(s) they apply to via `SiteTier` (`Region`, `Local`, `Both`).
 - `SettlementInjector` takes knobs (`maxSites`, `order`, `tier`) and is the per-map sibling of the planet-scale `ScoreCitySites`.
 
-Writing your own is straightforward — here's a haunted-barrows injector in full:
+Writing your own is straightforward - here's a haunted-barrows injector in full:
 
 ```csharp
 public sealed class BarrowInjector : ISiteInjector
@@ -246,13 +246,13 @@ public sealed class BarrowInjector : ISiteInjector
 }
 ```
 
-Note `context.Rng` is a public *field*, not a property — `Rng` is a mutating struct, and a property getter would hand you a copy and silently eat your draws. That's deliberate, not a style lapse.
+Note `context.Rng` is a public *field*, not a property - `Rng` is a mutating struct, and a property getter would hand you a copy and silently eat your draws. That's deliberate, not a style lapse.
 
-The context also gives you everything the injector needs to be smart: `Address`, `Parent` (the parent context), `Bounds` (center, radius, edge cells — so you know where the map ends), tier-appropriate accessors (`GetElevation`, `GetBiome`, `IsWater`, `IsRiverChannel`, `GetDanger`, `GetMoisture`), and `GetAdjacent` for neighborhood checks.
+The context also gives you everything the injector needs to be smart: `Address`, `Parent` (the parent context), `Bounds` (center, radius, edge cells - so you know where the map ends), tier-appropriate accessors (`GetElevation`, `GetBiome`, `IsWater`, `IsRiverChannel`, `GetDanger`, `GetMoisture`), and `GetAdjacent` for neighborhood checks.
 
 ## Finding stuff fast
 
-`World.Index` is a bucketed nearest-feature index over planet tile centers (same lat/lon bucketing idea as the store's own coordinate lookup). Queries order cells by center alignment and stop early with an exact bound — results always agree with an exhaustive scan, they just get there without one. The `NearestWater`/`NearestRiver`/`NearestDeposit` methods on `World` all delegate to it.
+`World.Index` is a bucketed nearest-feature index over planet tile centers (same lat/lon bucketing idea as the store's own coordinate lookup). Queries order cells by center alignment and stop early with an exact bound - results always agree with an exhaustive scan, they just get there without one. The `NearestWater`/`NearestRiver`/`NearestDeposit` methods on `World` all delegate to it.
 
 One enum covers every feature kind, so you don't need five method families:
 
@@ -281,7 +281,7 @@ Console.WriteLine($"biome {info.Biome}, river {info.IsRiver}, sites: {info.Sites
 
 ## Persistence: overrides and location bindings
 
-Generation is a pure function — same seed, same map, forever. But games change things: the party burns down a forest, your campaign tool turns a tile into a named location with a tavern. The library handles this the same way it handles history: it doesn't store anything itself, it *consumes* a game-owned store at query time. Null store means pure geography (zero migration cost); plug one in and queries apply your deltas.
+Generation is a pure function - same seed, same map, forever. But games change things: the party burns down a forest, your campaign tool turns a tile into a named location with a tavern. The library handles this the same way it handles history: it doesn't store anything itself, it *consumes* a game-owned store at query time. Null store means pure geography (zero migration cost); plug one in and queries apply your deltas.
 
 ```csharp
 var materialized = new MaterializationStore();   // in-memory; implement the
@@ -302,15 +302,15 @@ string? id = materialized.GetBoundLocationId(MapAddress.ForLocal(world.Seed, til
 var (biome, danger) = world.SampleBiome(coord, opts);   // Plains, danger bumped
 ```
 
-Overrides are *replacement*, not additive: a set field wins over the generated value. `TileOverride` currently covers `Biome` and `DangerLevel` — the two things games mutate most. `SampleBiome`, `ScoreCitySites`, and `GetTileFeatures` all honor the store when you pass it via `QueryOptions`.
+Overrides are *replacement*, not additive: a set field wins over the generated value. `TileOverride` currently covers `Biome` and `DangerLevel` - the two things games mutate most. `SampleBiome`, `ScoreCitySites`, and `GetTileFeatures` all honor the store when you pass it via `QueryOptions`.
 
-If you're wiring this to a campaign manager: store the `MapAddress` + seed in the location's metadata and you've got a stable re-derivation key — regenerate the tile from the address any time, apply the override, done. No snapshots of generated data needed.
+If you're wiring this to a campaign manager: store the `MapAddress` + seed in the location's metadata and you've got a stable re-derivation key - regenerate the tile from the address any time, apply the override, done. No snapshots of generated data needed.
 
 ## Custom generation stages and history
 
-Two extension points predate the hierarchy work and still work the same way — the README covers both in detail:
+Two extension points predate the hierarchy work and still work the same way - the README covers both in detail:
 
 - **`IWorldGeneratorStage` + `[WorldGeneratorStage(Order = N)]`**: planet-tier generation passes (tectonics is order 10, elevation 15, climate 16, erosion 17, hydrology 18, biomes 20). Declare `Reads`/`Writes` layer contracts so collisions fail fast, and `pipeline.ValidateContracts()` will check them.
-- **`IHistoricalContext` via `QueryOptions.History`**: the library never simulates history — your game does, and the library blends it into danger/habitability at query time. Same ownership split as materialization: game owns the data, library consumes it.
+- **`IHistoricalContext` via `QueryOptions.History`**: the library never simulates history - your game does, and the library blends it into danger/habitability at query time. Same ownership split as materialization: game owns the data, library consumes it.
 
-That's the whole API. If something's unclear or a doc example doesn't compile against the code, that's a bug in the docs — file it like one.
+That's the whole API. If something's unclear or a doc example doesn't compile against the code, that's a bug in the docs - file it like one.

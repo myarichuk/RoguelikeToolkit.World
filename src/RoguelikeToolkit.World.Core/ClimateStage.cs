@@ -8,8 +8,12 @@ namespace RoguelikeToolkit.World.Core;
 /// effects (windward wet / leeward rain shadow) and water proximity; wind as a
 /// zonal prevailing field (trades / westerlies / polar easterlies).
 /// Runs after elevation (15) and before erosion (17) so rainfall can seed
-/// runoff. The hydrology read is optional: when hydrology has not run yet the
-/// water-proximity bonus is skipped.
+/// runoff. Ordering circularity: hydrology (18) needs climate rainfall, while
+/// climate would like lake proximity from hydrology — so climate runs first
+/// and treats a registered-but-unrun hydro layer (all Flow/Surface zero) as
+/// absent, falling back to ocean-elevation adjacency. Lakes therefore do not
+/// feed moisture on the first pass; rerunning this stage after hydrology picks
+/// up lake adjacency where a host explicitly orders a second pass.
 /// </summary>
 [WorldGeneratorStage(16, Reads = new[] { typeof(ElevationInfo) }, ReadsOptional = new[] { typeof(HydrologyInfo) }, Writes = new[] { typeof(ClimateInfo) })]
 public class ClimateStage : IWorldGeneratorStage, ISeededStage
@@ -25,8 +29,20 @@ public class ClimateStage : IWorldGeneratorStage, ISeededStage
     {
         var store = map.DataStore;
         var elev = store.GetSpan<ElevationInfo>();
-        var hydro = store.IsLayerRegistered<HydrologyInfo>() ? store.GetSpan<HydrologyInfo>() : default;
         bool hasHydro = store.IsLayerRegistered<HydrologyInfo>();
+        var hydro = hasHydro ? store.GetSpan<HydrologyInfo>() : default;
+        if (hasHydro)
+        {
+            // Registered-but-unrun hydro reads all zeros (notably WaterBodyId 0,
+            // which would fake "near water" everywhere). One O(n) scan treats an
+            // un-run layer as absent so the elevation fallback applies instead.
+            bool ran = false;
+            for (int s = 0; s < store.TileCount; s++)
+            {
+                if (hydro[s].Flow != 0f || hydro[s].Surface != 0f) { ran = true; break; }
+            }
+            if (!ran) hasHydro = false;
+        }
         var climate = store.GetSpan<ClimateInfo>();
         var vectors = store.GetTileVectors();
 

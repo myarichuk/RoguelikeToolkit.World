@@ -1,5 +1,6 @@
 bin/
 obj/
+BenchmarkDotNet.Artifacts/
 test_output.txt
 test_output.log
 .DS_Store
