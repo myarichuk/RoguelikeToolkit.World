@@ -32,7 +32,8 @@ public static class CitySiteScorer
         RiverCatalog rivers,
         WaterBodyCatalog waters,
         CitySiteFilter filter,
-        QueryOptions? options = null)
+        QueryOptions? options = null,
+        int worldSeed = 0)
     {
         var elev = store.IsLayerRegistered<ElevationInfo>() ? store.GetSpan<ElevationInfo>() : default;
         var locals = store.IsLayerRegistered<LocalMapInfo>() ? store.GetSpan<LocalMapInfo>() : default;
@@ -63,6 +64,13 @@ public static class CitySiteScorer
             {
                 dangerDelta = mod.DangerDelta;
                 habDelta = mod.HabitabilityDelta;
+            }
+            if (options?.Materialized != null
+                && options.Materialized.TryGetOverride(MapAddress.ForPlanet(worldSeed, i), out var tileOverride)
+                && tileOverride != null)
+            {
+                if (tileOverride.Biome.HasValue) biome = tileOverride.Biome.Value;
+                if (tileOverride.DangerLevel.HasValue) danger = (byte)Math.Clamp(tileOverride.DangerLevel.Value, 0, 255);
             }
             int effDanger = (int)danger + (int)MathF.Round(dangerDelta);
             if (effDanger > filter.MaxDanger) continue;
