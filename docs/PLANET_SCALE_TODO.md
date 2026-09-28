@@ -26,7 +26,7 @@ current and terse.
 `continue`). Agent reads this file + the relevant backlog section and
 proceeds. If the pointer says phase N is done, start N+1.
 
-**Current phase:** 3 (Phase 2 done 2026-09-28)
+**Current phase:** 4 (Phase 3 done 2026-09-28)
 
 ## Phase 0 — Rain-shadow verification + "hectic climate" diagnosis
 
@@ -85,16 +85,23 @@ Log: 2026-09-28. New `tests/RoguelikeToolkit.World.Benchmarks` (BDN 0.15.8, Memo
 
 ## Phase 3 — E2+E5: tundra rebalance + guardrails (blocked by 1, 2)
 
-- [ ] 3.1 Retune dry gate / snowTemp / tundra threshold against measured
+- [x] 3.1 Retune dry gate / snowTemp / tundra threshold against measured
   precip distribution.
-- [ ] 3.2 Biome-histogram invariants over seed matrix (Tundra > 0 always;
+- [x] 3.2 Biome-histogram invariants over seed matrix (Tundra > 0 always;
   Glacier confined; Desert within 0.5–2x or justified).
-- [ ] 3.3 Disambiguate ice/snow/rock + Tundra/Glacier hues; document
+- [x] 3.3 Disambiguate ice/snow/rock + Tundra/Glacier hues; document
   glacier-before-mountain precedence in code.
-- [ ] 3.4 Full suite green.
+- [x] 3.4 Full suite green.
 
 Acceptance: per backlog E2, E5.
-Log:
+Log: 2026-09-28. `Glaciology.DryPolarGate` 0.20→0.40 (single lever; snowTemp/tundra-gate untouched).
+  Pre (s3-s6 x 42/7): tun 0,0,1,0,5,3,7,4; cold-land pMean ~0.55, gate 0.20 below reachable range.
+  Gate 0.35 left s3seed42 at 0 (its cool-dry tiles sit at p .365-.372; drier ones carry E4-clamped temp 0 → deep-freeze floor).
+  Post: tun 2,2,10,3,46,28,206,59; gla −4–8% but >0 everywhere (wet-cold); des ratios 1.0 (s4seed7 1.02 via erosion knock-on).
+  E5: BiomePalette Tundra → khaki-olive (0.62,0.60,0.45, dist .67 from ice); Terrain ice → deep blue (0.55,0.85,0.95);
+  precedence comment in biome chain; distance guardrails in both palette test files.
+  FLAG: E6 smoothing is in no phase — this retune is against the unsmoothed distribution; revisit after E6 is scheduled.
+  Tests (Release): `dotnet test` Core 140/140 + Presentation 82/82 green (incl. 3 histogram + 2 palette tests).
 
 ## Phase 4 — B1: per-cell lon/lat API
 
@@ -138,14 +145,23 @@ Log:
 Acceptance: per backlog A1–A3.
 Log:
 
-## Phase 8 — Follow-ups: E3, E4, B3, D3, D4
+## Phase 8 — Follow-ups: E3, E4, E6, B3, D3, D4
 
 - [ ] 8.1 E3: hydro-aware climate refresh (or wontfix with reason).
 - [ ] 8.2 E4: stale lapse-rate measurement note + fix/wontfix.
-- [ ] 8.3 B3: flat-arena design note + estimate (no code).
-- [ ] 8.4 D3: depression exaggeration control.
-- [ ] 8.5 D4: depression color cue.
-- [ ] 8.6 Full suite green; final numbers in log.
+- [ ] 8.3 E6: smooth climate precip + soften orographic discontinuity
+  (DOCUMENTED, was in no phase). 1–2 blur passes on precip (or upwind-aware
+  smoothing that preserves the rain shadow) and/or a continuous orographic
+  factor; optionally lower palette precip gain. NOTE: smoothing shifts the
+  precip distribution `Glaciology.DryPolarGate` was calibrated against in
+  Phase 3 — after E6, re-measure the biome matrix and confirm the histogram
+  invariants hold (or retune the gate). Acceptance per backlog E6: land-neighbor
+  mean|dP| < ~0.05 on the Phase 0 matrix; orographic test still passes (d > 0);
+  determinism preserved.
+- [ ] 8.4 B3: flat-arena design note + estimate (no code).
+- [ ] 8.5 D3: depression exaggeration control.
+- [ ] 8.6 D4: depression color cue.
+- [ ] 8.7 Full suite green; final numbers in log.
 
 Acceptance: per backlog; each item may close as done or wontfix-with-reason.
 Log:

@@ -24,4 +24,14 @@ public class BiomePaletteTests
         var c = BiomePalette.ColorFor(BiomeType.Ocean);
         Assert.True(c.Z > c.X, "Ocean should be blue-dominant");
     }
+
+    [Fact]
+    public void ColorFor_TundraDistinctFromGlacier()
+    {
+        // Backlog E5: tundra (cold khaki land) must not read as near-white ice.
+        var tundra = BiomePalette.ColorFor(BiomeType.Tundra);
+        var glacier = BiomePalette.ColorFor(BiomeType.Glacier);
+        Assert.True(System.Numerics.Vector3.Distance(tundra, glacier) > 0.25,
+            $"Tundra {tundra} too close to Glacier {glacier}");
+    }
 }

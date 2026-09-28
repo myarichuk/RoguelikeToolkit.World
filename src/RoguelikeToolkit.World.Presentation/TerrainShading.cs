@@ -63,7 +63,7 @@ public static class TerrainShading
         float canopy = (Hash01(tileIndex * 31 + 7) - 0.5f) * 0.22f;
 
         if (isGlacier)
-            return Shade(new Vector3(0.80f, 0.89f, 0.95f), vary);
+            return Shade(new Vector3(0.55f, 0.85f, 0.95f), vary);
 
         if (isRiver && height >= SeaLevel && lakeDepth <= 0f)
         {
@@ -96,7 +96,7 @@ public static class TerrainShading
             BiomeType.Swamp => new Vector3(0.30f, 0.36f, 0.20f),
             BiomeType.Mountain => new Vector3(0.45f, 0.42f, 0.38f),
             BiomeType.Tundra => new Vector3(0.58f, 0.62f, 0.55f),
-            BiomeType.Glacier => new Vector3(0.80f, 0.89f, 0.95f),
+            BiomeType.Glacier => new Vector3(0.55f, 0.85f, 0.95f),
             BiomeType.Canyon => new Vector3(0.62f, 0.34f, 0.18f),
             BiomeType.Ocean => new Vector3(0.82f, 0.74f, 0.55f),
             _ => Lerp(new Vector3(0.62f, 0.62f, 0.35f), new Vector3(0.40f, 0.60f, 0.27f),
@@ -114,6 +114,8 @@ public static class TerrainShading
         float snowline = 0.35f + MathF.Min(1f, MathF.Max(0f, temperature)) * 0.45f;
         float snowT = MathF.Min(1f, MathF.Max(0f, (height - snowline) / 0.08f));
         if (height > 0.80f) snowT = 1f;
+        // Snow stays near-white; glacier ice is deeper blue (0.55,0.85,0.95) and
+        // rock warm gray (0.45,0.42,0.38), so the three read apart (backlog E5).
         land = Lerp(land, new Vector3(0.90f, 0.92f, 0.95f), snowT);
 
         return Shade(land, vary);

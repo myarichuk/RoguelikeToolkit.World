@@ -77,6 +77,10 @@ public class LocalMapGenerationStage : IWorldGeneratorStage, ISeededStage
                 biome = BiomeType.Ocean;
                 danger = height < -0.6 ? (byte)2 : (byte)0;
             }
+            // Precedence: glacier outranks mountain. A high, wet, cold tile is
+            // ice (Glacier), not rock (Mountain); dry cold peaks fall through
+            // to Mountain below. Tundra then claims what is cold but neither
+            // ice nor rock.
             else if (glacier)
             {
                 biome = BiomeType.Glacier;

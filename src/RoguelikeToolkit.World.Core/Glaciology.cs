@@ -33,6 +33,17 @@ public static class Glaciology
     private const double MaskNoiseAmp = 0.12;
 
     /// <summary>
+    /// Dry-polar gate: cold land drier than this stays tundra instead of
+    /// glaciating (no accumulation, no ice sheet). Set at the dry tail of the
+    /// measured cold-land precip distribution (cold-land mean ~= 0.55, gate at
+    /// ~= land P20 over the Phase 3 seed matrix, sizes 3-6 x seeds 42/7):
+    /// 0.35 left s3seed42 at zero tundra because its only cool-dry tiles sit
+    /// at p 0.365-0.372 (the drier cold tiles there carry stale E4-clamped
+    /// temp 0.000 and stay ice via the deep-freeze floor).
+    /// </summary>
+    public const double DryPolarGate = 0.40;
+
+    /// <summary>
     /// True for land tiles at or above the local snowline. The snowline
     /// descends from the equator toward the poles; noise raggeds the margin.
     /// Ocean tiles are never glaciers (sea ice is not modeled).
@@ -63,7 +74,7 @@ public static class Glaciology
         double margin = SphereNoise.Fbm(position * 5.0, ClimateNoiseSalt) * 0.04;
         if (temperature > snowTemp + margin) return false;
         // Dry frozen deserts: without accumulation there is no ice sheet.
-        if (precipitation < 0.20 && temperature > 0.03 + margin && Math.Abs(geo.Latitude) < 82.0)
+        if (precipitation < DryPolarGate && temperature > 0.03 + margin && Math.Abs(geo.Latitude) < 82.0)
             return false;
         return true;
     }

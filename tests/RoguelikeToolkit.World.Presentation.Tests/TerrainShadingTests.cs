@@ -90,6 +90,18 @@ public class TerrainShadingTests
     }
 
     [Fact]
+    public void ColorFor_GlacierIceDistinctFromSnow()
+    {
+        // Backlog E5: deep-blue ice must read apart from near-white snow.
+        var ice = TerrainShading.ColorFor(BiomeType.Tundra, 0.4f, false, 0f, 0f,
+            null, true, false, 0.05f, 0.3f, 51);
+        var snow = TerrainShading.ColorFor(BiomeType.Mountain, 0.9f, false, 0f, 0f,
+            null, false, false, 0.4f, 0.4f, 41);
+        Assert.True(System.Numerics.Vector3.Distance(ice, snow) > 0.2,
+            $"Ice {ice} too close to snow {snow}");
+    }
+
+    [Fact]
     public void ColorFor_LakeIsBlue()
     {
         var lake = TerrainShading.ColorFor(BiomeType.Plains, 0.2f, false, 0f, 0.5f,
