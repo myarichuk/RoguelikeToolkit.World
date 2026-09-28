@@ -55,6 +55,11 @@ public struct TileFeatureInfo
     public bool InPlaya;
     public bool IsGlacier;
     public DepositType[] Deposits;
+
+    /// <summary>Address of the queried tile (planet tier by default).</summary>
+    public MapAddress Address;
+    /// <summary>Injector-placed sites on this tile; empty when no site catalog was passed.</summary>
+    public PlacedSite[] Sites;
 }
 
 /// <summary>
@@ -70,7 +75,10 @@ public static class TileFeatures
         RiverCatalog? rivers = null,
         WaterBodyCatalog? bodies = null,
         RangeCatalog? ranges = null,
-        DepositCatalog? deposits = null)
+        DepositCatalog? deposits = null,
+        SiteCatalog? sites = null,
+        MapAddress? address = null,
+        TileOverride? tileOverride = null)
     {
         if ((uint)tileIndex >= (uint)store.TileCount) throw new IndexOutOfRangeException();
         var info = new TileFeatureInfo
@@ -81,7 +89,9 @@ public static class TileFeatures
             UpstreamTile = -1,
             DownstreamTile = -1,
             RiverId = -1,
-            Deposits = Array.Empty<DepositType>()
+            Deposits = Array.Empty<DepositType>(),
+            Address = address ?? MapAddress.ForPlanet(0, tileIndex),
+            Sites = Array.Empty<PlacedSite>()
         };
 
         if (store.IsLayerRegistered<LocalMapInfo>())
@@ -169,6 +179,27 @@ public static class TileFeatures
                 info.Deposits = new DepositType[found.Count];
                 for (int k = 0; k < found.Count; k++) info.Deposits[k] = found[k].Type;
             }
+        }
+
+        if (sites != null)
+        {
+            var onTile = sites.AtCell(tileIndex);
+            if (onTile.Count > 0)
+            {
+                info.Sites = new PlacedSite[onTile.Count];
+                for (int k = 0; k < onTile.Count; k++) info.Sites[k] = onTile[k];
+            }
+        }
+
+        if (tileOverride != null)
+        {
+            if (tileOverride.Biome.HasValue)
+            {
+                info.HasBiome = true;
+                info.Biome = tileOverride.Biome.Value;
+            }
+            if (tileOverride.DangerLevel.HasValue)
+                info.DangerLevel = (byte)Math.Clamp(tileOverride.DangerLevel.Value, 0, 255);
         }
 
         return info;

@@ -118,7 +118,7 @@ public class WorldApiTests
 
         // Boost a mid-ranked candidate so the history delta decides the order.
         int target = baseline[Math.Min(3, baseline.Count - 1)].TileIndex;
-        double before = baseline.Find(s => s.TileIndex == target).Score;
+        double before = baseline.Find(s => s.TileIndex == target)!.Score;
 
         var boosted = world.ScoreCitySites(new CitySiteFilter { TopN = 50 },
             new QueryOptions { History = new BoostTileHistory(target) });

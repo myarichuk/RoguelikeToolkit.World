@@ -12,10 +12,12 @@ public class SecurityTests : IDisposable
         public int Value;
     }
 
+    #pragma warning disable CS0649 // Populated via WorldDataStore memory mapping, not direct assignment.
     private struct OtherData
     {
         public long Value;
     }
+    #pragma warning restore CS0649
 
     [Fact]
     public void WorldDataStore_FileStore_ReopenWithSameLayers_PreservesData()

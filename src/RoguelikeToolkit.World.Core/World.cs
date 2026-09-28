@@ -30,11 +30,19 @@ public sealed class World : IDisposable
     public WaterBodyCatalog WaterBodies { get; } = new();
     public RangeCatalog Ranges { get; } = new();
     public DepositCatalog Deposits { get; } = new();
+    /// <summary>Bucketed nearest-feature index, built after the catalogs are populated.</summary>
+    public SpatialIndex Index { get; private set; } = null!;
 
     internal World(WorldMap map, int seed)
     {
         Map = map;
         Seed = seed;
+    }
+
+    /// <summary>(Re)builds the spatial index from the current store and catalogs.</summary>
+    internal void RebuildIndex(SiteCatalog? sites = null)
+    {
+        Index = new SpatialIndex(Map.DataStore, Rivers, WaterBodies, Ranges, Deposits, sites);
     }
 
     public float SampleElevation(GeoCoord coord)
@@ -47,10 +55,18 @@ public sealed class World : IDisposable
     {
         int i = Map.DataStore.GetTileIndex(coord);
         var info = Map.DataStore.GetRef<LocalMapInfo>(i);
+        var biome = info.Biome;
         int danger = info.DangerLevel;
         if (options?.History != null && options.History.TryGetTileModifier(i, out var mod))
             danger += (int)MathF.Round(mod.DangerDelta);
-        return (info.Biome, Math.Max(0, danger));
+        if (options?.Materialized != null
+            && options.Materialized.TryGetOverride(MapAddress.ForPlanet(Seed, i), out var tileOverride)
+            && tileOverride != null)
+        {
+            if (tileOverride.Biome.HasValue) biome = tileOverride.Biome.Value;
+            if (tileOverride.DangerLevel.HasValue) danger = tileOverride.DangerLevel.Value;
+        }
+        return (biome, Math.Max(0, danger));
     }
 
     public static double DistanceKm(GeoCoord a, GeoCoord b)
@@ -93,24 +109,7 @@ public sealed class World : IDisposable
 
     /// <summary>Nearest open water (sea or ponded lake).</summary>
     public (int TileIndex, double DistanceKm)? NearestWater(GeoCoord from)
-    {
-        var store = Map.DataStore;
-        if (!store.IsLayerRegistered<ElevationInfo>()) return null;
-        var elev = store.GetSpan<ElevationInfo>();
-        bool hasHydro = store.IsLayerRegistered<HydrologyInfo>();
-        var hydro = hasHydro ? store.GetSpan<HydrologyInfo>() : default;
-        int best = -1;
-        double bestD = double.MaxValue;
-        for (int i = 0; i < store.TileCount; i++)
-        {
-            bool water = elev[i].Height < ElevationGenerationStage.SeaLevel
-                || (hasHydro && hydro[i].LakeDepth > 0f);
-            if (!water) continue;
-            double d = DistanceKm(from, store.GetGeoCoord(i));
-            if (d < bestD) { bestD = d; best = i; }
-        }
-        return best < 0 ? null : (best, bestD);
-    }
+        => Index.NearestFeature(from, FeatureKind.WaterBody);
 
     /// <summary>Deposits on one tile (usually zero or one).</summary>
     public List<Deposit> GetDeposits(int worldTileIndex)
@@ -119,56 +118,67 @@ public sealed class World : IDisposable
     /// <summary>Nearest deposit of any (or the given) type.</summary>
     public (Deposit Deposit, double DistanceKm)? NearestDeposit(GeoCoord from, DepositType? type = null)
     {
-        var store = Map.DataStore;
-        Deposit? best = null;
-        double bestD = double.MaxValue;
-        foreach (var d in Deposits.Deposits)
+        var hit = Index.NearestDeposit(from, type);
+        if (hit == null) return null;
+        foreach (var d in Deposits.AtTile(hit.Value.TileIndex))
         {
             if (type.HasValue && d.Type != type.Value) continue;
-            double dist = DistanceKm(from, store.GetGeoCoord(d.TileIndex));
-            if (dist < bestD) { bestD = dist; best = d; }
+            return (d, hit.Value.DistanceKm);
         }
-        return best == null ? null : (best, bestD);
+        return null;
     }
 
     /// <summary>Nearest river tile, or null when no rivers were generated.</summary>
     public (int TileIndex, double DistanceKm)? NearestRiver(GeoCoord from)
-    {
-        if (Rivers.Rivers.Count == 0) return null;
-        var store = Map.DataStore;
-        int best = -1;
-        double bestD = double.MaxValue;
-        foreach (var r in Rivers.Rivers)
-        {
-            foreach (var t in r.Path)
-            {
-                double d = DistanceKm(from, store.GetGeoCoord(t));
-                if (d < bestD) { bestD = d; best = t; }
-            }
-        }
-        return best < 0 ? null : (best, bestD);
-    }
+        => Index.NearestFeature(from, FeatureKind.River);
+
+    /// <summary>Address of the planet hex containing this coordinate.</summary>
+    public PlanetHex Resolve(GeoCoord coord)
+        => new(Seed, Map.DataStore.GetTileIndex(coord));
 
     public RegionHandle GetRegion(int worldTileIndex, int regionSize = RegionMaps.DefaultRegionSize)
+        => GetRegion(new PlanetHex(Seed, worldTileIndex), regionSize);
+
+    public RegionHandle GetRegion(PlanetHex hex, int regionSize = RegionMaps.DefaultRegionSize)
     {
+        if (hex.WorldSeed != Seed) throw new ArgumentException("Planet hex belongs to a different world.", nameof(hex));
         var store = Map.DataStore;
-        if ((uint)worldTileIndex >= (uint)store.TileCount) throw new IndexOutOfRangeException();
-        float h = store.IsLayerRegistered<ElevationInfo>() ? store.GetSpan<ElevationInfo>()[worldTileIndex].Height : 0f;
-        BiomeType b = store.IsLayerRegistered<LocalMapInfo>() ? store.GetSpan<LocalMapInfo>()[worldTileIndex].Biome : BiomeType.Plains;
-        float m = store.IsLayerRegistered<ClimateInfo>() ? store.GetSpan<ClimateInfo>()[worldTileIndex].Precipitation : 0.5f;
-        return RegionMaps.DeriveRegion(Seed, worldTileIndex, h, b, m, regionSize);
+        if ((uint)hex.TileIndex >= (uint)store.TileCount) throw new IndexOutOfRangeException();
+        var parent = TerrainOrientation.Sample(store, hex.TileIndex);
+        var center = store.GetGeoCoord(hex.TileIndex);
+        double radiusKm = MapBounds.ForPlanetTile(store, hex.TileIndex).RadiusKm;
+        uint seed = MapSeeds.DeriveRegionSeed(Seed, hex.TileIndex);
+        return RegionMaps.DeriveRegionMap(
+            MapAddress.ForRegion(Seed, hex.TileIndex, -1), parent, center, radiusKm, seed, regionSize);
+    }
+
+    /// <summary>Local map for one region cell of a planet hex (default region size).</summary>
+    public LocalMapHandle GetLocal(PlanetHex hex, int regionCellIndex, int localSize = RegionMaps.DefaultLocalSize)
+        => GetRegion(hex).GetLocal(regionCellIndex, localSize);
+
+    /// <summary>Local map for one region cell (default region size).</summary>
+    public LocalMapHandle GetLocal(RegionRef region, int localSize = RegionMaps.DefaultLocalSize)
+    {
+        if (region.WorldSeed != Seed) throw new ArgumentException("Region belongs to a different world.", nameof(region));
+        return GetRegion(new PlanetHex(Seed, region.WorldTileIndex)).GetLocal(region.RegionCellIndex, localSize);
     }
 
     public List<CitySiteScore> ScoreCitySites(CitySiteFilter? filter = null, QueryOptions? options = null)
-        => CitySiteScorer.Score(Map.DataStore, Rivers, WaterBodies, filter ?? new CitySiteFilter(), options);
+        => CitySiteScorer.Score(Map.DataStore, Rivers, WaterBodies, filter ?? new CitySiteFilter(), options, Seed);
 
     /// <summary>Everything attached to one hex (biome, river reach, water, ranges, glacier, deposits).</summary>
-    public TileFeatureInfo GetTileFeatures(int worldTileIndex)
-        => TileFeatures.Query(Map.DataStore, worldTileIndex, Rivers, WaterBodies, Ranges, Deposits);
+    public TileFeatureInfo GetTileFeatures(int worldTileIndex, QueryOptions? options = null, SiteCatalog? sites = null)
+    {
+        var address = MapAddress.ForPlanet(Seed, worldTileIndex);
+        TileOverride? tileOverride = null;
+        if (options?.Materialized?.TryGetOverride(address, out var found) == true)
+            tileOverride = found;
+        return TileFeatures.Query(Map.DataStore, worldTileIndex, Rivers, WaterBodies, Ranges, Deposits, sites, address, tileOverride);
+    }
 
     /// <summary>Everything attached to the hex containing this coordinate.</summary>
-    public TileFeatureInfo GetTileFeatures(GeoCoord coord)
-        => GetTileFeatures(Map.DataStore.GetTileIndex(coord));
+    public TileFeatureInfo GetTileFeatures(GeoCoord coord, QueryOptions? options = null, SiteCatalog? sites = null)
+        => GetTileFeatures(Map.DataStore.GetTileIndex(coord), options, sites);
 
     public string RiverToWkt(int riverId) => GeoWkt.RiverToWkt(Rivers.Rivers[riverId], Map.DataStore);
     public string WaterBodyToWkt(int bodyId) => GeoWkt.WaterBodyToWkt(WaterBodies.Bodies[bodyId], Map.DataStore);
@@ -248,6 +258,7 @@ public sealed class WorldBuilder
         HydrologyStage.PopulateCatalogs(map, world.Rivers, world.WaterBodies);
         RangeCatalogBuilder.Populate(map, world.Ranges);
         DepositCatalogBuilder.Populate(map, world.Deposits, _seed);
+        world.RebuildIndex();
         return world;
     }
 }
