@@ -2,6 +2,11 @@
 
 A .NET 10 solution containing a core class library (`RoguelikeToolkit.World.Core`) for generating and querying spherical hex maps using icosahedral subdivision, and a cross-platform Avalonia 11 UI visualizer (`RoguelikeToolkit.World.App`).
 
+## Docs
+
+- [API Guide](docs/API.md) — the full public API with examples: sampling, zooming in, injectors, queries, persistence.
+- [Architecture](docs/ARCHITECTURE.md) — how the pieces fit together, with diagrams.
+
 ## Core Library Architecture
 
 The `RoguelikeToolkit.World.Core` library relies on two primary pillars to achieve zero-allocation, high-performance execution:
