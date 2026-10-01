@@ -17,7 +17,12 @@ public static class OffsetGrid
     public static int ToIndex(int q, int r, int size)
         => (uint)q >= (uint)size || (uint)r >= (uint)size ? -1 : r * size + q;
 
-    public static (int Q, int R) FromIndex(int index, int size) => (index % size, index / size);
+    public static (int Q, int R) FromIndex(int index, int size)
+    {
+        if (size <= 0) throw new ArgumentOutOfRangeException(nameof(size));
+        if (index < 0 || index >= size * size) throw new IndexOutOfRangeException();
+        return (index % size, index / size);
+    }
 }
 
 /// <summary>

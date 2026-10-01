@@ -132,7 +132,8 @@ public class ErosionGenerationStage : IWorldGeneratorStage
             GlacialPass(store, elev, neighbors, hasClimate, climate);
         }
 
-        // Fluvial pass: stream-power incision ordered down the filled surface.
+        // Fluvial pass: stream-power incision ordered down the filled surface. Skipped with Iterations == 0 (pristine).
+        if (Iterations > 0)
         for (int h = 0; h < HydraulicIterations; h++)
         {
             FluvialPass(store, elev, neighbors, hasClimate, climate);

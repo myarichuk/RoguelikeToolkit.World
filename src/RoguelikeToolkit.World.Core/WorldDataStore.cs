@@ -62,6 +62,9 @@ public unsafe class WorldDataStore : IDisposable
     {
         // size acts as the recursion level
         // V = 10 * 4^recursionLevel + 2
+        if (size < 0 || size > WorldBuilder.MaxSupportedSize)
+            throw new ArgumentOutOfRangeException(nameof(size), size,
+                $"Planet size must be 0..{WorldBuilder.MaxSupportedSize} (size 8+ is unsupported; see docs/ARCHITECTURE.md).");
         return 10 * (1 << (2 * size)) + 2;
     }
 

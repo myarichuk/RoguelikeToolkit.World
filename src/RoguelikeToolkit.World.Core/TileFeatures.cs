@@ -131,13 +131,21 @@ public static class TileFeatures
             if (info.IsRiver && heights != null)
             {
                 Span<int> scratch = stackalloc int[6];
-                info.UpstreamTile = FindUpstream(store, hydro, heights, tileIndex, scratch);
+                float[] surface = heights;
+                if (hydro.Length > 0)
+                {
+                    surface = new float[store.TileCount];
+                    for (int rr = 0; rr < surface.Length; rr++) surface[rr] = hydro[rr].Surface;
+                }
+                var receiver = new int[store.TileCount];
+                Hydrography.ComputeReceivers(store, surface, receiver);
+                info.UpstreamTile = FindUpstream(store, hydro, tileIndex, receiver, scratch);
                 if (info.UpstreamTile >= 0)
                     info.UpstreamCoord = store.GetGeoCoord(info.UpstreamTile);
-                info.DownstreamTile = Hydrography.LowestNeighbor(store, heights, tileIndex, scratch);
+                info.DownstreamTile = receiver[tileIndex];
                 if (info.DownstreamTile >= 0)
                     info.DownstreamCoord = store.GetGeoCoord(info.DownstreamTile);
-                info.RiverSource = ClassifySource(store, hydro, heights, tileIndex, hasClimate, climate);
+                info.RiverSource = ClassifySource(store, hydro, heights, tileIndex, receiver, hasClimate, climate);
             }
         }
 
@@ -205,9 +213,10 @@ public static class TileFeatures
         return info;
     }
 
-    // Highest-flow higher river neighbor (deterministic tie-break by index).
+    // Highest-flow river neighbor draining into this tile (reverse-receiver lookup,
+    // flat-safe via ComputeReceivers; deterministic tie-break by index.
     // -1 marks a head: no river water flows in from anywhere.
-    private static int FindUpstream(WorldDataStore store, Span<HydrologyInfo> hydro, float[] heights, int tile, Span<int> scratch)
+    private static int FindUpstream(WorldDataStore store, Span<HydrologyInfo> hydro, int tile, ReadOnlySpan<int> receiver, Span<int> scratch)
     {
         int adjacent = store.GetAdjacent(tile, scratch);
         int best = -1;
@@ -215,7 +224,7 @@ public static class TileFeatures
         for (int k = 0; k < adjacent; k++)
         {
             int j = scratch[k];
-            if (hydro[j].IsRiver != 1 || heights[j] <= heights[tile]) continue;
+            if (hydro[j].IsRiver != 1 || receiver[j] != tile) continue;
             if (hydro[j].Flow > bestFlow || (hydro[j].Flow == bestFlow && j < best))
             {
                 bestFlow = hydro[j].Flow;
@@ -228,14 +237,14 @@ public static class TileFeatures
     // Walk upstream to the head, then classify it: glacier heads are
     // meltwater-fed, everything else is rain/groundwater (spring).
     private static RiverWaterSource ClassifySource(
-        WorldDataStore store, Span<HydrologyInfo> hydro, float[] heights, int tile, bool hasClimate, Span<ClimateInfo> climate)
+        WorldDataStore store, Span<HydrologyInfo> hydro, float[] heights, int tile, ReadOnlySpan<int> receiver, bool hasClimate, Span<ClimateInfo> climate)
     {
         Span<int> scratch = stackalloc int[6];
         var vectors = store.GetTileVectors();
         int cur = tile;
         for (int steps = 0; steps <= store.TileCount; steps++)
         {
-            int up = FindUpstream(store, hydro, heights, cur, scratch);
+            int up = FindUpstream(store, hydro, cur, receiver, scratch);
             if (up < 0)
             {
                 bool glacier = hasClimate

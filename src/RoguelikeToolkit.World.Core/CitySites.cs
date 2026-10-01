@@ -46,6 +46,18 @@ public static class CitySiteScorer
         foreach (var r in rivers.Rivers)
             foreach (var t in r.Path) riverTiles.Add(t);
 
+        var waterTiles = new HashSet<int>(riverTiles);
+        for (int w = 0; w < store.TileCount; w++)
+        {
+            if (hasHydro && hydro[w].WaterBodyId >= 0) waterTiles.Add(w);
+            else if (hasElev && elev[w].Height < 0f) waterTiles.Add(w);
+        }
+        var tileVectors = store.GetTileVectors();
+        double radiusKm = filter.FreshWaterRadiusKm;
+        bool useRadius = !double.IsNaN(radiusKm) && radiusKm > 0 && radiusKm < Math.PI * World.EarthRadiusKm;
+        double cosThreshold = useRadius ? Math.Cos(radiusKm / World.EarthRadiusKm) : double.NaN;
+        bool radiusCoversGlobe = !double.IsNaN(radiusKm) && radiusKm >= Math.PI * World.EarthRadiusKm;
+
         var result = new List<CitySiteScore>();
         Span<int> neighbors = stackalloc int[6];
 
@@ -55,7 +67,7 @@ public static class CitySiteScorer
             if (h < filter.MinElevation || h > filter.MaxElevation) continue;
 
             BiomeType biome = hasLocals ? locals[i].Biome : BiomeType.Plains;
-            if (filter.AllowedBiomes != null && !filter.AllowedBiomes.Contains(biome)) continue;
+            if (filter.AllowedBiomes != null && filter.AllowedBiomes.Count > 0 && !filter.AllowedBiomes.Contains(biome)) continue;
             if (biome == BiomeType.Ocean || biome == BiomeType.Glacier) continue;
 
             byte danger = hasLocals ? locals[i].DangerLevel : (byte)0;
@@ -75,17 +87,28 @@ public static class CitySiteScorer
             int effDanger = (int)danger + (int)MathF.Round(dangerDelta);
             if (effDanger > filter.MaxDanger) continue;
 
-            // Fresh water: river on tile/neighbor, lake nearby, or moist climate fallback.
-            bool water = riverTiles.Contains(i);
-            if (!water && hasHydro && hydro[i].WaterBodyId >= 0) water = true;
+            // Fresh water: water on tile/neighbor, else any water within FreshWaterRadiusKm.
+            bool water = waterTiles.Contains(i);
+            // Tile-level hydro/sea membership is already in waterTiles.
             if (!water)
             {
                 int adj = store.GetAdjacent(i, neighbors);
                 for (int k = 0; k < adj && !water; k++)
                 {
-                    if (riverTiles.Contains(neighbors[k])) water = true;
-                    else if (hasHydro && hydro[neighbors[k]].WaterBodyId >= 0) water = true;
-                    else if (hasElev && elev[neighbors[k]].Height < 0f) water = true;
+                    if (waterTiles.Contains(neighbors[k])) water = true;
+                }
+            }
+            if (!water && waterTiles.Count > 0)
+            {
+                if (radiusCoversGlobe) water = true;
+                else if (useRadius)
+                {
+                    var candidate = tileVectors[i];
+                    foreach (int wt in waterTiles)
+                    {
+                        if (wt == i) continue;
+                        if (Vector3D.Dot(candidate, tileVectors[wt]) >= cosThreshold) { water = true; break; }
+                    }
                 }
             }
             if (filter.RequireFreshWater && !water) continue;
@@ -113,7 +136,8 @@ public static class CitySiteScorer
         }
 
         result.Sort((a, b) => b.Score.CompareTo(a.Score));
-        if (result.Count > filter.TopN) result.RemoveRange(filter.TopN, result.Count - filter.TopN);
+        int topN = Math.Max(0, filter.TopN);
+        if (result.Count > topN) result.RemoveRange(topN, result.Count - topN);
         return result;
     }
 }

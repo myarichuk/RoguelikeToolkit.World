@@ -27,6 +27,17 @@ public static class TerrainOrientation
         var locals = hasLocal ? store.GetSpan<LocalMapInfo>() : default;
         var hydro = hasHydro ? store.GetSpan<HydrologyInfo>() : default;
         var plates = hasPlates ? store.GetSpan<TectonicPlate>() : default;
+        if (hasHydro)
+        {
+            // Registered-but-unrun hydro reads all zeros: treat as absent so
+            // entry/exit fall back to elevation (mirrors ClimateStage).
+            bool hydroRan = false;
+            for (int s = 0; s < store.TileCount; s++)
+            {
+                if (hydro[s].Flow != 0f || hydro[s].Surface != 0f) { hydroRan = true; break; }
+            }
+            if (!hydroRan) hasHydro = false;
+        }
 
         Span<int> neighbors = stackalloc int[6];
         int count = store.GetAdjacent(tileIndex, neighbors);

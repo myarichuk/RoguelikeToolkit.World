@@ -7,7 +7,8 @@ public class LocalMapLayer : IMapLayer<LocalMapInfo>, IDisposable
 {
     private readonly WorldDataStore _store;
     private readonly int _seed;
-    private readonly TectonicPlateLayer _tectonicLayer;
+    // No per-layer state: biome derivation reads the store directly.
+    // The tectonic-layer constructor argument is accepted for source compatibility only.
 
     public WorldDataStore Store => _store;
 
@@ -15,7 +16,7 @@ public class LocalMapLayer : IMapLayer<LocalMapInfo>, IDisposable
     {
         _store = store;
         _seed = seed;
-        _tectonicLayer = tectonicLayer;
+        _ = tectonicLayer;
     }
 
 

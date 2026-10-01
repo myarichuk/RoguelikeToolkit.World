@@ -74,6 +74,7 @@ public class HydrologyStage : IWorldGeneratorStage
         foreach (var lake in lakes.Lakes)
         {
             if (lake.IsOpen && lake.Outlet >= 0) evapSink[lake.Outlet] = lake.EvapTotal;
+            else if (!lake.IsOpen && lake.Tiles.Count > 0) evapSink[lake.Tiles[0]] += lake.EvapTotal;
         }
         // Transmission loss: every land tile keeps its water deficit
         // (evaporation minus rainfall) out of the channel, so arid tiles
@@ -225,6 +226,10 @@ public class HydrologyStage : IWorldGeneratorStage
         // no upstream river neighbor: higher on the routing surface, or level
         // with it but carrying less water (flat-channel rule, so fill plateaus
         // and lake outlets don't spawn a head per tile).
+        // Flat-resolved receivers, shared by head detection and tracing below.
+        var drainTo = new int[n];
+        Hydrography.ComputeReceivers(store, surface, drainTo);
+
         var riverTiles = new List<int>();
         for (int i = 0; i < n; i++)
             if (hydro[i].IsRiver == 1) riverTiles.Add(i);
@@ -236,10 +241,12 @@ public class HydrologyStage : IWorldGeneratorStage
         {
             int adj = store.GetAdjacent(t, scratch);
             bool hasUpstreamRiver = false;
+            bool hasInboundLink = false;
             for (int k = 0; k < adj; k++)
             {
                 int nb = scratch[k];
                 if (!riverSet.Contains(nb)) continue;
+                if (drainTo[nb] == t) hasInboundLink = true;
                 if (surface[nb] > surface[t] + 1e-6f) { hasUpstreamRiver = true; break; }
                 if (Math.Abs(surface[nb] - surface[t]) <= 1e-6f && hydro[nb].Flow < hydro[t].Flow)
                 {
@@ -247,7 +254,11 @@ public class HydrologyStage : IWorldGeneratorStage
                     break;
                 }
             }
-            if (!hasUpstreamRiver) heads.Add(t);
+            // A head starts a new reach: no upstream river neighbor by surface,
+            // or no river neighbor draining into it (receiver divergence, e.g.
+            // a reach broken mid-course by transmission loss). The latter keeps
+            // every IsRiver tile on exactly one cataloged reach.
+            if (!hasUpstreamRiver || !hasInboundLink) heads.Add(t);
         }
         // Longest-first: sort heads by flow descending for stable ids.
         var flows = new float[n];
@@ -261,9 +272,9 @@ public class HydrologyStage : IWorldGeneratorStage
         bool IsRiver(int t) => isRiverTile[t];
 
         // Receivers recomputed deterministically from the stored surface, so
-        // tracing follows the same flat-resolved channels the flow did.
+        // tracing follows the same flat-resolved channels (copied from drainTo).
         var receiver = new int[n];
-        Hydrography.ComputeReceivers(store, surface, receiver);
+        drainTo.CopyTo(receiver, 0); // Same routing head detection used; computed once above.
 
         int riverId = 0;
         var tileOwner = new Dictionary<int, int>();
@@ -280,7 +291,7 @@ public class HydrologyStage : IWorldGeneratorStage
             {
                 if (tileOwner.ContainsKey(full[k])) { end = k; break; }
             }
-            if (end < 2) continue;
+            if (end < 2) continue; // Cataloged rivers are multi-tile reaches (valid LINESTRING, Path.Count >= 2); lone trickles stay IsRiver flags only.
             var river = new River(riverId++);
             for (int k = 0; k < end; k++)
             {

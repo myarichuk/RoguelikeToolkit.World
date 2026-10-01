@@ -152,15 +152,15 @@ public sealed class World : IDisposable
             MapAddress.ForRegion(Seed, hex.TileIndex, -1), parent, center, radiusKm, seed, regionSize);
     }
 
-    /// <summary>Local map for one region cell of a planet hex (default region size).</summary>
-    public LocalMapHandle GetLocal(PlanetHex hex, int regionCellIndex, int localSize = RegionMaps.DefaultLocalSize)
-        => GetRegion(hex).GetLocal(regionCellIndex, localSize);
+    /// <summary>Local map for one region cell of a planet hex. Pass the region size the cell belongs to.</summary>
+    public LocalMapHandle GetLocal(PlanetHex hex, int regionCellIndex, int localSize = RegionMaps.DefaultLocalSize, int regionSize = RegionMaps.DefaultRegionSize)
+        => GetRegion(hex, regionSize).GetLocal(regionCellIndex, localSize);
 
-    /// <summary>Local map for one region cell (default region size).</summary>
-    public LocalMapHandle GetLocal(RegionRef region, int localSize = RegionMaps.DefaultLocalSize)
+    /// <summary>Local map for one region cell. Pass the region size the cell belongs to.</summary>
+    public LocalMapHandle GetLocal(RegionRef region, int localSize = RegionMaps.DefaultLocalSize, int regionSize = RegionMaps.DefaultRegionSize)
     {
         if (region.WorldSeed != Seed) throw new ArgumentException("Region belongs to a different world.", nameof(region));
-        return GetRegion(new PlanetHex(Seed, region.WorldTileIndex)).GetLocal(region.RegionCellIndex, localSize);
+        return GetRegion(new PlanetHex(Seed, region.WorldTileIndex), regionSize).GetLocal(region.RegionCellIndex, localSize);
     }
 
     public List<CitySiteScore> ScoreCitySites(CitySiteFilter? filter = null, QueryOptions? options = null)
@@ -180,9 +180,24 @@ public sealed class World : IDisposable
     public TileFeatureInfo GetTileFeatures(GeoCoord coord, QueryOptions? options = null, SiteCatalog? sites = null)
         => GetTileFeatures(Map.DataStore.GetTileIndex(coord), options, sites);
 
-    public string RiverToWkt(int riverId) => GeoWkt.RiverToWkt(Rivers.Rivers[riverId], Map.DataStore);
-    public string WaterBodyToWkt(int bodyId) => GeoWkt.WaterBodyToWkt(WaterBodies.Bodies[bodyId], Map.DataStore);
-    public string DepositToWkt(int depositId) => GeoWkt.DepositToWkt(Deposits.Deposits[depositId], Map.DataStore);
+    public string RiverToWkt(int riverId)
+    {
+        if ((uint)riverId >= (uint)Rivers.Rivers.Count)
+            throw new ArgumentOutOfRangeException(nameof(riverId), riverId, $"Unknown river id {riverId}.");
+        return GeoWkt.RiverToWkt(Rivers.Rivers[riverId], Map.DataStore);
+    }
+    public string WaterBodyToWkt(int bodyId)
+    {
+        if ((uint)bodyId >= (uint)WaterBodies.Bodies.Count)
+            throw new ArgumentOutOfRangeException(nameof(bodyId), bodyId, $"Unknown water-body id {bodyId}.");
+        return GeoWkt.WaterBodyToWkt(WaterBodies.Bodies[bodyId], Map.DataStore);
+    }
+    public string DepositToWkt(int depositId)
+    {
+        if ((uint)depositId >= (uint)Deposits.Deposits.Count)
+            throw new ArgumentOutOfRangeException(nameof(depositId), depositId, $"Unknown deposit id {depositId}.");
+        return GeoWkt.DepositToWkt(Deposits.Deposits[depositId], Map.DataStore);
+    }
 
     public void Dispose() => Map.Dispose();
 }
@@ -199,6 +214,7 @@ public sealed class WorldBuilder
     private Action<TectonicPlateGenerationStage>? _tectonicsConfig;
     private Action<LocalMapGenerationStage>? _biomesConfig;
     private Action<ClimateStage>? _climateConfig;
+    private Action<HydrologyStage>? _hydrologyConfig;
 
     /// <summary>
     /// Largest supported planet size (backlog A2, from the Phase 2
@@ -238,6 +254,13 @@ public sealed class WorldBuilder
         _climateConfig = prev == null ? configure : s => { prev(s); configure(s); };
         return this;
     }
+    /// <summary>Tweak the default hydrology stage (river threshold, max rivers...).</summary>
+    public WorldBuilder WithHydrology(Action<HydrologyStage> configure)
+    {
+        var prev = _hydrologyConfig;
+        _hydrologyConfig = prev == null ? configure : s => { prev(s); configure(s); };
+        return this;
+    }
     /// <summary>Tweak the default biome stage (smoothing passes...).</summary>
     public WorldBuilder WithBiomes(Action<LocalMapGenerationStage> configure)
     {
@@ -250,15 +273,17 @@ public sealed class WorldBuilder
     {
         var map = new WorldMap(_size, _filePath);
         // Field layers (dense, in-store). Feature catalogs attach to World, not the store.
-        map.RegisterLayer<TectonicPlate>(new TectonicPlateLayer(map.DataStore, _seedCount, _seed));
+        var platesLayer = new TectonicPlateLayer(map.DataStore, _seedCount, _seed);
+        map.RegisterLayer<TectonicPlate>(platesLayer);
         map.RegisterLayer<ElevationInfo>(new ElevationLayer(map.DataStore));
         map.RegisterLayer<HydrologyInfo>(new HydrologyLayer(map.DataStore));
         map.RegisterLayer<ClimateInfo>(new ClimateLayer(map.DataStore));
         map.RegisterLayer<LocalMapInfo>(new LocalMapLayer(map.DataStore, _seed,
-            new TectonicPlateLayer(map.DataStore, _seedCount, _seed)));
+            platesLayer));
         map.DataStore.Allocate();
 
         var pipeline = new WorldGenerationPipeline();
+        HydrologyStage? hydrologyStage = null;
         if (_useDefaults)
         {
             var tectonics = new TectonicPlateGenerationStage(_seedCount, _seed);
@@ -269,7 +294,9 @@ public sealed class WorldBuilder
             _climateConfig?.Invoke(climate);
             pipeline.AddStage(climate);
             pipeline.AddStage(new ErosionGenerationStage());
-            pipeline.AddStage(new HydrologyStage());
+            hydrologyStage = new HydrologyStage();
+            _hydrologyConfig?.Invoke(hydrologyStage);
+            pipeline.AddStage(hydrologyStage!);
             var biomes = new LocalMapGenerationStage(_seed);
             _biomesConfig?.Invoke(biomes);
             pipeline.AddStage(biomes);
@@ -279,7 +306,7 @@ public sealed class WorldBuilder
         pipeline.Execute(map);
 
         var world = new World(map, _seed);
-        HydrologyStage.PopulateCatalogs(map, world.Rivers, world.WaterBodies);
+        HydrologyStage.PopulateCatalogs(map, world.Rivers, world.WaterBodies, hydrologyStage?.MaxRivers ?? new HydrologyStage().MaxRivers);
         RangeCatalogBuilder.Populate(map, world.Ranges);
         DepositCatalogBuilder.Populate(map, world.Deposits, _seed);
         world.RebuildIndex();

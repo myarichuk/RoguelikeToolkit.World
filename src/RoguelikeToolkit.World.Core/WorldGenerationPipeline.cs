@@ -16,6 +16,9 @@ public class WorldGenerationPipeline : IDisposable
     // Declared (stage name, written layer) pairs, rebuilt with the order
     // cache so steady-state Execute validates without reflection.
     private readonly List<(string Stage, Type Layer)> _writesCache = new();
+    // Declared required Reads per stage, rebuilt with the order cache so
+    // steady-state Execute validates without reflection (zero-GC guarantee).
+    private readonly List<(string Stage, Type Layer)> _readsCache = new();
     private bool _cacheDirty = true;
 
     public IReadOnlyList<IWorldGeneratorStage> Stages => _stages;
@@ -34,6 +37,7 @@ public class WorldGenerationPipeline : IDisposable
         }
 
         _stages.Clear();
+        _readsCache.Clear();
         _orderedCache.Clear();
         _writesCache.Clear();
         _cacheDirty = true;
@@ -184,6 +188,7 @@ public class WorldGenerationPipeline : IDisposable
         {
             StageContractValidator.ThrowOnConflicts(_stages);
             _orderedCache.Clear();
+            _readsCache.Clear();
             _orderedCache.AddRange(_stages.OrderBy(s =>
                 s.GetType().GetCustomAttributes(typeof(WorldGeneratorStageAttribute), false)
                     .OfType<WorldGeneratorStageAttribute>().FirstOrDefault()?.Order ?? int.MaxValue));
@@ -192,15 +197,24 @@ public class WorldGenerationPipeline : IDisposable
             {
                 var attr = stage.GetType().GetCustomAttributes(typeof(WorldGeneratorStageAttribute), false)
                     .OfType<WorldGeneratorStageAttribute>().FirstOrDefault();
+                if (attr?.Reads != null)
+                    foreach (var r in attr.Reads)
+                        _readsCache.Add((stage.GetType().Name, r));
                 if (attr?.Writes == null) continue;
                 foreach (var w in attr.Writes)
                     _writesCache.Add((stage.GetType().Name, w));
             }
             _cacheDirty = false;
         }
-        // Fail fast on missing written layers (Writes only: ReadsOptional
-        // layers are allowed to be absent). Without this the first stage
+        // Fail fast on missing declared layers (Writes plus required Reads; ReadsOptional
+        // layers stay allowed-absent). Without this the first stage
         // touching the layer throws a bare ArgumentException from GetSpan.
+        foreach (var (readStage, readLayer) in _readsCache)
+        {
+            if (!map.DataStore.IsLayerRegistered(readLayer))
+                throw new InvalidOperationException(
+                    $"Stage '{readStage}' reads layer '{readLayer.Name}' but it is not registered. Call RegisterLayer<{readLayer.Name}>() before Allocate().");
+        }
         foreach (var (stageName, layer) in _writesCache)
         {
             if (!map.DataStore.IsLayerRegistered(layer))

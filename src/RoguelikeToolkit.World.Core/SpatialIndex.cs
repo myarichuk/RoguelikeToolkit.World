@@ -70,6 +70,15 @@ public sealed class SpatialIndex
                 foreach (int t in r.Path)
                     if (t >= 0 && t < n) riverTiles.Add(t);
 
+        // Plus sub-resolution trickles: lone IsRiver tiles never form a catalog
+        // reach (Path.Count >= 2 contract) but must still resolve via
+        // NearestFeature instead of vanishing from the index.
+        if (store.IsLayerRegistered<HydrologyInfo>())
+        {
+            var hydro = store.GetSpan<HydrologyInfo>();
+            for (int i = 0; i < n; i++)
+                if (hydro[i].IsRiver == 1) riverTiles.Add(i);
+        }
         var waterTiles = new HashSet<int>();
         for (int i = 0; i < n; i++)
             if (isWater(i)) waterTiles.Add(i);
