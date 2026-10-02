@@ -10,7 +10,15 @@ public class ElevationGenerationStage : IWorldGeneratorStage, ISeededStage
     public int Seed { get; set; } = 42;
     public double NoiseAmplitude { get; set; } = 0.55;
     public double NoiseFrequency { get; set; } = 3.0;
-    public double BoundaryUplift { get; set; } = 0.85;
+
+    /// <summary>
+    /// Height gained per unit of orogeny driver. Deliberately above 1: belts
+    /// are narrow now (widths ~1 ring), so cores must rise steeply to keep
+    /// relief-driven climate (rain shadows, glacial tarns) working. The
+    /// uplift still fades within ~2 rings, so this sharpens ranges instead of
+    /// widening them.
+    /// </summary>
+    public double BoundaryUplift { get; set; } = 1.15;
 
     /// <summary>Rolling-hill amplitude on land (abyssal texture is ~40% of this).</summary>
     public double HillAmplitude { get; set; } = 0.085;

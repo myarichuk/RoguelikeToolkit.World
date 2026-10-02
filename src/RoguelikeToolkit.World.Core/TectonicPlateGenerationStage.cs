@@ -16,8 +16,13 @@ public class TectonicPlateGenerationStage : IWorldGeneratorStage, ISeededStage, 
     /// <summary>Convergence above this (in drift-velocity units) is convergent.</summary>
     public double ConvergenceThreshold { get; set; } = 0.08;
 
-    /// <summary>BFS cap for the boundary-distance field, in neighbor rings.</summary>
-    public int MaxBoundaryDistance { get; set; } = 8;
+    /// <summary>
+    /// BFS cap for the boundary-distance field, in neighbor rings. Kept small
+    /// on purpose: a plate at the default 12-plate density is only ~4 rings in
+    /// radius, so a wider cap lets every boundary's uplift apron meet in the
+    /// plate interior and paints whole plates as mountain belts.
+    /// </summary>
+    public int MaxBoundaryDistance { get; set; } = 4;
 
     /// <summary>
     /// Plate area strategy. Defaults to noisy flood-fill growth (organic
@@ -40,6 +45,15 @@ public class TectonicPlateGenerationStage : IWorldGeneratorStage, ISeededStage, 
     /// Along-strike modulation depth: the driver scales by [1-S, 1+S].
     /// </summary>
     public double SegmentationStrength { get; set; } = 0.65;
+
+    /// <summary>
+    /// Strike-gap floor: when the along-strike noise field falls below this
+    /// (in [0,1] field units), the convergent driver is set to exactly zero
+    /// instead of merely weakening. Without true zeros a modulated wall is
+    /// still a wall — one connected mountain blurb along the whole boundary.
+    /// Gaps break it into discrete ranges with passes between them.
+    /// </summary>
+    public double SegmentGapFloor { get; set; } = 0.25;
 
     private readonly ArenaAllocator _arena;
 
@@ -160,15 +174,20 @@ public class TectonicPlateGenerationStage : IWorldGeneratorStage, ISeededStage, 
     }
 
     /// <summary>
-    /// Along-strike modulation in [1-S, 1+S]: breaks a uniform convergent
-    /// wall into peaks and saddles. Pure function of position and seed.
+    /// Along-strike modulation: the [0,1] noise field below
+    /// <see cref="SegmentGapFloor"/> maps to exactly 0 (a pass with no
+    /// uplift), the remainder rescales to [1-S, 1+S] (peaks and saddles).
+    /// Pure function of position and seed.
     /// </summary>
     internal double SegmentFactor(Vector3D pos)
     {
         if (!SegmentOrogeny) return 1.0;
         double strength = Math.Clamp(SegmentationStrength, 0.0, 1.0);
+        double floor = Math.Clamp(SegmentGapFloor, 0.0, 0.9);
         double x = SphereNoise.Fbm(pos * SegmentationFrequency, Seed + 4242) * 0.5 + 0.5;
-        return 1.0 + strength * (2.0 * x - 1.0);
+        if (x < floor) return 0.0;
+        double t = (x - floor) / (1.0 - floor);
+        return (1.0 - strength) + t * 2.0 * strength;
     }
 
     private void ClassifyBoundaries(
@@ -240,19 +259,21 @@ public class TectonicPlateGenerationStage : IWorldGeneratorStage, ISeededStage, 
 
     /// <summary>
     /// Orogenic belt width in neighbor rings: continent-continent collision builds
-    /// the widest plateaus, trenches and transforms stay narrow.
+    /// the widest plateaus, trenches and transforms stay narrow. Widths stay near
+    /// ~1 ring so the exp(-d/w) apron fades within 2 rings of the boundary line —
+    /// wider values paint whole plate interiors as uplift (mountain blurbs).
     /// </summary>
     internal static double BeltWidth(PlateBoundaryType boundary, float driver, CrustType mine, CrustType across)
     {
         return boundary switch
         {
-            PlateBoundaryType.Convergent when driver < 0 => 0.8, // trench: narrow, deep
-            PlateBoundaryType.Convergent when mine == CrustType.Continental && across == CrustType.Continental => 2.8,
-            PlateBoundaryType.Convergent when mine == CrustType.Continental => 1.9, // Andean arc
-            PlateBoundaryType.Convergent => 1.5, // island arc
-            PlateBoundaryType.Divergent when driver < 0 => 1.3, // rift valley
-            PlateBoundaryType.Divergent => 1.1, // mid-ocean ridge
-            PlateBoundaryType.Transform => 0.8,
+            PlateBoundaryType.Convergent when driver < 0 => 0.6, // trench: narrow, deep
+            PlateBoundaryType.Convergent when mine == CrustType.Continental && across == CrustType.Continental => 1.2,
+            PlateBoundaryType.Convergent when mine == CrustType.Continental => 1.0, // Andean arc
+            PlateBoundaryType.Convergent => 0.8, // island arc
+            PlateBoundaryType.Divergent when driver < 0 => 0.9, // rift valley
+            PlateBoundaryType.Divergent => 0.7, // mid-ocean ridge
+            PlateBoundaryType.Transform => 0.6,
             _ => 1.0,
         };
     }
