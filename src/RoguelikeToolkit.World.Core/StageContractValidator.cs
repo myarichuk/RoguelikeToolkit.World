@@ -5,8 +5,8 @@ using System.Linq;
 namespace RoguelikeToolkit.World.Core;
 
 /// <summary>
-/// Validates declared field-layer contracts (<see cref="WorldGeneratorStageAttribute.Reads"/> /
-/// <see cref="WorldGeneratorStageAttribute.Writes"/>; <see cref="WorldGeneratorStageAttribute.ReadsOptional"/>
+/// Validates declared field-layer contracts (attribute or
+/// <see cref="IDeclaredStage"/>; <c>ReadsOptional</c>
 /// is skipped). Stages without declarations are skipped,
 /// so legacy/custom stages without contracts keep working.
 /// Rule: two stages may write the same field layer only as an ordered
@@ -21,19 +21,18 @@ public static class StageContractValidator
     {
         var conflicts = new List<Conflict>();
         var ordered = stages
-            .Select(s => (Stage: s, Attr: s.GetType().GetCustomAttributes(typeof(WorldGeneratorStageAttribute), false)
-                .OfType<WorldGeneratorStageAttribute>().FirstOrDefault()))
-            .Where(x => x.Attr != null)
-            .OrderBy(x => x.Attr!.Order)
+            .Where(StageMetadata.HasDeclaration)
+            .Select(s => (Stage: s, Order: StageMetadata.GetOrder(s)))
+            .OrderBy(x => x.Order)
             .ToList();
 
         var writersByType = new Dictionary<Type, List<string>>();
 
-        foreach (var (stage, attr) in ordered)
+        foreach (var (stage, order) in ordered)
         {
-            string name = stage.GetType().Name;
-            var reads = new HashSet<Type>(attr!.Reads ?? Array.Empty<Type>());
-            var writes = attr.Writes ?? Array.Empty<Type>();
+            string name = StageMetadata.DisplayName(stage);
+            var reads = new HashSet<Type>(StageMetadata.GetReads(stage));
+            var writes = StageMetadata.GetWrites(stage);
 
             foreach (var w in writes)
             {
@@ -58,25 +57,25 @@ public static class StageContractValidator
         // Ordering check: a stage reading T should have an earlier writer of T.
         // Only applies when at least one stage writes T; pure inputs (topology) need no writer.
         var firstWriterOrder = new Dictionary<Type, int>();
-        foreach (var (stage, attr) in ordered)
+        foreach (var (stage, order) in ordered)
         {
-            foreach (var w in attr!.Writes ?? Array.Empty<Type>())
+            foreach (var w in StageMetadata.GetWrites(stage))
             {
                 if (!firstWriterOrder.ContainsKey(w))
-                    firstWriterOrder[w] = attr.Order;
+                    firstWriterOrder[w] = order;
             }
         }
 
-        foreach (var (stage, attr) in ordered)
+        foreach (var (stage, order) in ordered)
         {
             // Required reads only: ReadsOptional layers may be absent or
             // written later; stages using them degrade gracefully.
-            foreach (var r in attr!.Reads ?? Array.Empty<Type>())
+            foreach (var r in StageMetadata.GetReads(stage))
             {
-                if (firstWriterOrder.TryGetValue(r, out int firstWrite) && attr.Order < firstWrite)
+                if (firstWriterOrder.TryGetValue(r, out int firstWrite) && order < firstWrite)
                 {
                     conflicts.Add(new Conflict(
-                        $"Stage '{stage.GetType().Name}' (Order {attr.Order}) reads '{r.Name}' " +
+                        $"Stage '{StageMetadata.DisplayName(stage)}' (Order {order}) reads '{r.Name}' " +
                         $"but the first writer runs at Order {firstWrite}. Fix Order values."));
                 }
             }

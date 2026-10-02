@@ -6,6 +6,7 @@ A .NET 10 solution containing a core class library (`RoguelikeToolkit.World.Core
 
 - [API Guide](docs/API.md) — the full public API with examples: sampling, zooming in, injectors, queries, persistence.
 - [Architecture](docs/ARCHITECTURE.md) — how the pieces fit together, with diagrams.
+- [Plugins](docs/PLUGINS.md) — extend generation with full-trust compiled C# stages or untrusted Jint script stages.
 
 ## Core Library Architecture
 

@@ -1,0 +1,17 @@
+<Project Sdk="Microsoft.NET.Sdk">
+
+  <PropertyGroup>
+    <TargetFramework>net10.0</TargetFramework>
+    <ImplicitUsings>enable</ImplicitUsings>
+    <Nullable>enable</Nullable>
+    <IsPackable>false</IsPackable>
+  </PropertyGroup>
+
+  <!-- Local development: project reference. Published plugins reference the
+       NuGet package instead (see DesertPlugin.cs below):
+       <PackageReference Include="RoguelikeToolkit.World.Core" Version="0.2.0" /> -->
+  <ItemGroup>
+    <ProjectReference Include="..\..\src\RoguelikeToolkit.World.Core\RoguelikeToolkit.World.Core.csproj" />
+  </ItemGroup>
+
+</Project>

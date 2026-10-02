@@ -9,6 +9,7 @@ namespace RoguelikeToolkit.World.Core;
 public class WorldGenerationPipeline : IDisposable
 {
     private readonly List<IWorldGeneratorStage> _stages = new();
+    private readonly List<PluginLoadContext> _pluginContexts = new();
     // Cached execution order + contract validation. Rebuilt only when the
     // stage set changes, so repeated Execute calls stay allocation-free and
     // keep the zero-GC generation guarantee for hot paths.
@@ -40,12 +41,22 @@ public class WorldGenerationPipeline : IDisposable
         _readsCache.Clear();
         _orderedCache.Clear();
         _writesCache.Clear();
+        foreach (var ctx in _pluginContexts)
+        {
+            try { ctx.Unload(); } catch { /* cooperative unload is best-effort */ }
+        }
+        _pluginContexts.Clear();
         _cacheDirty = true;
     }
 
     /// <summary>
-    /// Discovers and loads IWorldGeneratorStage implementations with WorldGeneratorStageAttribute
-    /// from the current assembly and any .dll files in the specified directory.
+    /// Discovers and loads IWorldGeneratorStage implementations with
+    /// <see cref="WorldGeneratorStageAttribute"/> (or <see cref="IDeclaredStage"/>
+    /// for runtime stages) from the current assembly and any .dll files in the
+    /// specified directory. Compiled C# plugins are full-trust: only load DLLs
+    /// you trust. Each plugin file loads into its own collectible
+    /// <see cref="PluginLoadContext"/> (shared Core contracts, plugin-local
+    /// dependencies) and unloads on <see cref="ResetStages"/>.
     /// By default, discovered stages are merged with existing stages and matching stage types are skipped.
     /// Throws InvalidOperationException if duplicate Order values are found.
     /// Throws AggregateException when assembly/stage load failures occur and no diagnostics callback is provided.
@@ -58,11 +69,25 @@ public class WorldGenerationPipeline : IDisposable
         if (!string.IsNullOrWhiteSpace(pluginDirectory) && Directory.Exists(pluginDirectory))
         {
             var dllFiles = Directory.GetFiles(pluginDirectory, "*.dll", SearchOption.AllDirectories);
+            Array.Sort(dllFiles, StringComparer.Ordinal);
             foreach (var file in dllFiles)
             {
+                // Skip the Core assembly itself when the plugin dir is the app dir.
                 try
                 {
-                    assemblies.Add(Assembly.LoadFrom(file));
+                    if (string.Equals(
+                        Path.GetFullPath(file),
+                        Path.GetFullPath(Assembly.GetExecutingAssembly().Location),
+                        StringComparison.OrdinalIgnoreCase))
+                        continue;
+                }
+                catch { /* path compare is best-effort; fall through to load */ }
+
+                try
+                {
+                    var ctx = new PluginLoadContext(file);
+                    assemblies.Add(ctx.LoadPluginAssembly(file));
+                    _pluginContexts.Add(ctx);
                 }
                 catch (Exception ex)
                 {
@@ -81,15 +106,25 @@ public class WorldGenerationPipeline : IDisposable
             .Where(t => t.Attribute != null)
             .ToList();
 
-        var knownStageTypes = _stages.Select(stage => stage.GetType())
+        // Duplicate-order check: attribute types use distinct-type semantics
+        // (re-discovering an already-added type is a merge-skip, not a
+        // duplicate), plus any already-added runtime stages (IDeclaredStage,
+        // e.g. Jint) participate by instance order.
+        var knownTypeOrders = _stages.Select(stage => stage.GetType())
             .Concat(stageTypes.Select(stage => stage.Type))
             .Distinct()
-            .Select(type => new { Type = type, Attribute = type.GetCustomAttribute<WorldGeneratorStageAttribute>() })
-            .Where(type => type.Attribute != null)
+            .Select(type => type.GetCustomAttribute<WorldGeneratorStageAttribute>())
+            .Where(attr => attr != null)
+            .Select(attr => attr!.Order)
+            .ToList();
+        var declaredInstanceOrders = _stages
+            .OfType<IDeclaredStage>()
+            .Where(s => StageMetadata.HasDeclaration((IWorldGeneratorStage)s))
+            .Select(s => s.Order)
             .ToList();
 
-        var duplicateOrders = knownStageTypes
-            .GroupBy(t => t.Attribute!.Order)
+        var duplicateOrders = knownTypeOrders.Concat(declaredInstanceOrders)
+            .GroupBy(o => o)
             .Where(g => g.Count() > 1)
             .Select(g => g.Key)
             .ToList();
@@ -168,14 +203,12 @@ public class WorldGenerationPipeline : IDisposable
         ValidateContracts();
         foreach (var stage in _stages)
         {
-            var attr = stage.GetType().GetCustomAttributes(typeof(WorldGeneratorStageAttribute), false)
-                .OfType<WorldGeneratorStageAttribute>().FirstOrDefault();
-            if (attr == null) continue;
-            foreach (var t in (attr.Reads ?? Array.Empty<Type>()).Concat(attr.Writes ?? Array.Empty<Type>()).Distinct())
+            if (!StageMetadata.HasDeclaration(stage)) continue;
+            foreach (var t in StageMetadata.GetReads(stage).Concat(StageMetadata.GetWrites(stage)).Distinct())
             {
                 if (!map.DataStore.IsLayerRegistered(t))
                     throw new InvalidOperationException(
-                        $"Stage '{stage.GetType().Name}' declares layer '{t.Name}' but it is not registered. Call RegisterLayer<{t.Name}>() before Allocate().");
+                        $"Stage '{StageMetadata.DisplayName(stage)}' declares layer '{t.Name}' but it is not registered. Call RegisterLayer<{t.Name}>() before Allocate().");
             }
         }
     }
@@ -189,20 +222,14 @@ public class WorldGenerationPipeline : IDisposable
             StageContractValidator.ThrowOnConflicts(_stages);
             _orderedCache.Clear();
             _readsCache.Clear();
-            _orderedCache.AddRange(_stages.OrderBy(s =>
-                s.GetType().GetCustomAttributes(typeof(WorldGeneratorStageAttribute), false)
-                    .OfType<WorldGeneratorStageAttribute>().FirstOrDefault()?.Order ?? int.MaxValue));
+            _orderedCache.AddRange(_stages.OrderBy(StageMetadata.GetOrder));
             _writesCache.Clear();
             foreach (var stage in _orderedCache)
             {
-                var attr = stage.GetType().GetCustomAttributes(typeof(WorldGeneratorStageAttribute), false)
-                    .OfType<WorldGeneratorStageAttribute>().FirstOrDefault();
-                if (attr?.Reads != null)
-                    foreach (var r in attr.Reads)
-                        _readsCache.Add((stage.GetType().Name, r));
-                if (attr?.Writes == null) continue;
-                foreach (var w in attr.Writes)
-                    _writesCache.Add((stage.GetType().Name, w));
+                foreach (var r in StageMetadata.GetReads(stage))
+                    _readsCache.Add((StageMetadata.DisplayName(stage), r));
+                foreach (var w in StageMetadata.GetWrites(stage))
+                    _writesCache.Add((StageMetadata.DisplayName(stage), w));
             }
             _cacheDirty = false;
         }

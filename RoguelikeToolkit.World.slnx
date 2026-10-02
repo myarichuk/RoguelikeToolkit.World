@@ -1,12 +1,17 @@
 <Solution>
   <Folder Name="/src/">
     <Project Path="src/RoguelikeToolkit.World.Core/RoguelikeToolkit.World.Core.csproj" />
+    <Project Path="src/RoguelikeToolkit.World.Scripting.Jint/RoguelikeToolkit.World.Scripting.Jint.csproj" />
     <Project Path="src/RoguelikeToolkit.World.App/RoguelikeToolkit.World.App.csproj" />
     <Project Path="src/RoguelikeToolkit.World.Presentation/RoguelikeToolkit.World.Presentation.csproj" />
   </Folder>
   <Folder Name="/tests/">
     <Project Path="tests/RoguelikeToolkit.World.Core.Tests/RoguelikeToolkit.World.Core.Tests.csproj" />
+    <Project Path="tests/RoguelikeToolkit.World.Scripting.Jint.Tests/RoguelikeToolkit.World.Scripting.Jint.Tests.csproj" />
     <Project Path="tests/RoguelikeToolkit.World.Presentation.Tests/RoguelikeToolkit.World.Presentation.Tests.csproj" />
     <Project Path="tests/RoguelikeToolkit.World.Benchmarks/RoguelikeToolkit.World.Benchmarks.csproj" />
+  </Folder>
+  <Folder Name="/samples/">
+    <Project Path="samples/DesertPlugin/DesertPlugin.csproj" />
   </Folder>
 </Solution>
