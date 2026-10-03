@@ -25,7 +25,7 @@ public readonly record struct MapBounds(GeoCoord Center, double RadiusKm, int[] 
         {
             edge[k] = neighbors[k];
             double dot = Math.Clamp(Vector3D.Dot(up, vectors[neighbors[k]]), -1.0, 1.0);
-            maxAngle = Math.Max(maxAngle, Math.Acos(dot));
+            maxAngle = Math.Max(maxAngle, DetMath.Acos(dot));
         }
 
         return new MapBounds(center, maxAngle * 0.5 * World.EarthRadiusKm, edge);

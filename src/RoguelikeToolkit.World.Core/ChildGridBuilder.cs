@@ -57,8 +57,8 @@ internal static class ChildGridBuilder
         FillTerrain(grid, parent, frame, seed, options, noiseSeed);
 
         // River threading (parent river or high parent flow) else aspect drainage.
-        double downhillX = Math.Sin(parent.AspectRadians);
-        double downhillY = Math.Cos(parent.AspectRadians);
+        double downhillX = DetMath.Sin(parent.AspectRadians);
+        double downhillY = DetMath.Cos(parent.AspectRadians);
         if (parent.IsRiver || parent.Flow >= options.RiverFlowThreshold)
             ThreadRiver(grid, options, downhillX, downhillY);
 
@@ -138,7 +138,7 @@ internal static class ChildGridBuilder
         {
             int cell = path[k];
             double profile = path.Count > 1
-                ? Math.Pow(Math.Sin(Math.PI * (k + 0.5) / path.Count), 0.75)
+                ? DetMath.Pow(DetMath.Sin(Math.PI * (k + 0.5) / path.Count), 0.75)
                 : 1.0;
             float depth = (float)(options.RiverCarveDepth * profile);
             grid.Heights[cell] -= depth;

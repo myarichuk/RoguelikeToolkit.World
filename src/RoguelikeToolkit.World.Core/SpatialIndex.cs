@@ -270,7 +270,7 @@ public sealed class SpatialIndex
     }
 
     private static double DotToKm(double dot)
-        => Math.Acos(Math.Clamp(dot, -1.0, 1.0)) * World.EarthRadiusKm;
+        => DetMath.Acos(Math.Clamp(dot, -1.0, 1.0)) * World.EarthRadiusKm;
 
     private static int CellOf(GeoCoord coord)
     {

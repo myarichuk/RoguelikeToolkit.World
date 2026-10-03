@@ -295,8 +295,8 @@ public class ErosionGenerationStage : IWorldGeneratorStage
 
             // Stream power E = K·Q^m·S^n, capped so fluvial work never inverts
             // the channel profile (water cannot incise below its outlet).
-            double streamPower = HydraulicRate * Math.Pow(Math.Max(1.0, flow[i]), StreamPowerM)
-                * Math.Pow(slope, StreamPowerN) / Math.Max(0.4, hardness);
+            double streamPower = HydraulicRate * DetMath.Pow(Math.Max(1.0, flow[i]), StreamPowerM)
+                * DetMath.Pow(slope, StreamPowerN) / Math.Max(0.4, hardness);
             if (canyon) streamPower *= CanyonBoost;
             float move = (float)Math.Min(streamPower, slope * 0.45);
             if (move <= 0) continue;

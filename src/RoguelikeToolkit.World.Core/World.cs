@@ -74,7 +74,7 @@ public sealed class World : IDisposable
         var va = Vector3D.FromGeoCoord(a);
         var vb = Vector3D.FromGeoCoord(b);
         double dot = Math.Clamp(Vector3D.Dot(va, vb), -1.0, 1.0);
-        return Math.Acos(dot) * EarthRadiusKm;
+        return DetMath.Acos(dot) * EarthRadiusKm;
     }
 
     /// <summary>All tiles within radiusKm of center, sorted by distance.</summary>

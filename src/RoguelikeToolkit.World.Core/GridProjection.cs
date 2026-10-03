@@ -75,7 +75,7 @@ internal static class GridProjection
     public static (Vector3D East, Vector3D North) EastNorth(GeoCoord center, Vector3D up)
     {
         double lonR = center.Longitude * GeoCoord.Deg2Rad;
-        var east = new Vector3D(-Math.Sin(lonR), Math.Cos(lonR), 0);
+        var east = new Vector3D(-DetMath.Sin(lonR), DetMath.Cos(lonR), 0);
         if (east.Length < 1e-9) east = new Vector3D(1, 0, 0);
         east = east.Normalize();
         var north = Vector3D.Cross(up, east).Normalize();

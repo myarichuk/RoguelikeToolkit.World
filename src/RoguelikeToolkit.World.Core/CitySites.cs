@@ -58,7 +58,7 @@ public static class CitySiteScorer
         SpatialIndex? waterIndex = null;
         double radiusKm = filter.FreshWaterRadiusKm;
         bool useRadius = !double.IsNaN(radiusKm) && radiusKm > 0 && radiusKm < Math.PI * World.EarthRadiusKm;
-        double cosThreshold = useRadius ? Math.Cos(radiusKm / World.EarthRadiusKm) : double.NaN;
+        double cosThreshold = useRadius ? DetMath.Cos(radiusKm / World.EarthRadiusKm) : double.NaN;
         bool radiusCoversGlobe = !double.IsNaN(radiusKm) && radiusKm >= Math.PI * World.EarthRadiusKm;
 
         var result = new List<CitySiteScore>();

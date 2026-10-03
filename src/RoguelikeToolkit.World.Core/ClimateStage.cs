@@ -78,7 +78,7 @@ public class ClimateStage : IWorldGeneratorStage, ISeededStage
             // Zonal prevailing wind: trades (tropics, east->west), westerlies
             // (mid latitudes), polar easterlies. Tangent east vector at position.
             double lonR = geo.LongitudeRad;
-            var east = new Vector3D(-Math.Sin(lonR), Math.Cos(lonR), 0).Normalize();
+            var east = new Vector3D(-DetMath.Sin(lonR), DetMath.Cos(lonR), 0).Normalize();
             double absLat = Math.Abs(geo.Latitude);
             double dir = absLat < 30.0 ? -1.0 : (absLat < 60.0 ? 1.0 : -1.0);
             var wind = east * dir;

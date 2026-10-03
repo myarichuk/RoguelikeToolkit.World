@@ -52,7 +52,7 @@ internal static class ChildContextDeriver
         if (gradient.Length > 1e-9)
         {
             var downhill = gradient * -1;
-            aspect = Math.Atan2(Vector3D.Dot(downhill, eastC), Vector3D.Dot(downhill, northC));
+            aspect = DetMath.Atan2(Vector3D.Dot(downhill, eastC), Vector3D.Dot(downhill, northC));
         }
 
         // Highest ring neighbor feeds the cell, lowest drains it (only if below it).
