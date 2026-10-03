@@ -42,6 +42,9 @@ public class ErosionGenerationStage : IWorldGeneratorStage
     /// <summary>Incision multiplier inside canyon reaches (narrow, deep cut).</summary>
     public double CanyonBoost { get; set; } = 2.0;
 
+    /// <summary>Must match <see cref="HydrologyStage.RiverThresholdScale"/> so canyons and rivers agree (WorldBuilder wires it).</summary>
+    public float RiverThresholdScale { get; set; } = 1f;
+
     public ErosionGenerationStage()
     {
     }
@@ -261,7 +264,7 @@ public class ErosionGenerationStage : IWorldGeneratorStage
         var flow = new float[n];
         Hydrography.AccumulateFlow(store, filled, receiver, runoff, flow, default, loss, depth);
 
-        float riverThreshold = Math.Max(6f, n / 200f);
+        float riverThreshold = Hydrography.RiverThreshold(n, RiverThresholdScale);
         bool hasPlates = store.IsLayerRegistered<TectonicPlate>();
         var plates = hasPlates ? store.GetSpan<TectonicPlate>() : default;
 
@@ -329,14 +332,6 @@ public class ErosionGenerationStage : IWorldGeneratorStage
 
     private static int[] DescendingOrder(float[] surface)
     {
-        int n = surface.Length;
-        var order = new int[n];
-        for (int i = 0; i < n; i++) order[i] = i;
-        Array.Sort(order, (a, b) =>
-        {
-            int c = surface[b].CompareTo(surface[a]);
-            return c != 0 ? c : a.CompareTo(b);
-        });
-        return order;
+        return TileOrdering.DescendingByValue(surface);
     }
 }

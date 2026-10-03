@@ -93,7 +93,7 @@ public class HydrologyStage : IWorldGeneratorStage
         var flow = new float[n];
         Hydrography.AccumulateFlow(store, lakes.Surface, receiver, runoff, flow, evapSink, loss, depth);
 
-        float threshold = Math.Max(6f, n / 200f) * RiverThresholdScale;
+        float threshold = Hydrography.RiverThreshold(n, RiverThresholdScale);
 
         // Water bodies: connected components of sub-sea-level tiles, then lakes.
         var bodyId = new int[n];
@@ -187,7 +187,11 @@ public class HydrologyStage : IWorldGeneratorStage
         // (landlocked seas like the Caspian).
         if (bodies.Bodies.Count > 0)
         {
-            bodies.Bodies.Sort((a, b) => b.Tiles.Count.CompareTo(a.Tiles.Count));
+            bodies.Bodies.Sort((a, b) =>
+            {
+                int c = b.Tiles.Count.CompareTo(a.Tiles.Count);
+                return c != 0 ? c : a.Id.CompareTo(b.Id);
+            });
             int oceanId = -1;
             int bestMarine = -1;
             foreach (var body in bodies.Bodies)
@@ -263,7 +267,11 @@ public class HydrologyStage : IWorldGeneratorStage
         // Longest-first: sort heads by flow descending for stable ids.
         var flows = new float[n];
         for (int i = 0; i < n; i++) flows[i] = hydro[i].Flow;
-        heads.Sort((a, b) => flows[b].CompareTo(flows[a]));
+        heads.Sort((a, b) =>
+        {
+            int c = flows[b].CompareTo(flows[a]);
+            return c != 0 ? c : a.CompareTo(b);
+        });
 
         var isRiverTile = new bool[n];
         for (int i = 0; i < n; i++) isRiverTile[i] = hydro[i].IsRiver == 1;
@@ -336,7 +344,7 @@ public class HydrologyStage : IWorldGeneratorStage
 /// <summary>Builds mountain-range and valley features from elevation + rivers.</summary>
 public static class RangeCatalogBuilder
 {
-    public static void Populate(WorldMap map, RangeCatalog catalog, float mountainThreshold = 0.5f)
+    public static void Populate(WorldMap map, RangeCatalog catalog, float mountainThreshold = 0.5f, float riverThresholdScale = 1f)
     {
         var store = map.DataStore;
         if (!store.IsLayerRegistered<ElevationInfo>()) return;
@@ -380,7 +388,7 @@ public static class RangeCatalogBuilder
         var climate = hasClimate ? store.GetSpan<ClimateInfo>() : default;
         if (hasHydro && hasClimate)
         {
-            float riverThreshold = Math.Max(6f, n / 200f);
+            float riverThreshold = Hydrography.RiverThreshold(n, riverThresholdScale);
             var beds = new float[n];
             for (int i = 0; i < n; i++) beds[i] = elev[i].Height;
             var canyonSeed = new bool[n];

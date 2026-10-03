@@ -221,26 +221,23 @@ public class AdjacencyTests
     }
 
     [Fact]
-    public void WorldDataStore_GetTileIndex_NeverReturnsOutOfRange_ForDegenerateInput()
+    public void WorldDataStore_GetTileIndex_RejectsNonFiniteCoordinates()
     {
-        // Regression: Terrain 3D picking derived lat/lon from an elevation-displaced
-        // (non-unit) vertex, so Asin(|z| > 1) produced NaN. GetTileIndex returned -1
-        // (candidates visited, but every NaN score lost), and GetGeoCoord(-1) threw
-        // IndexOutOfRangeException, aborting the app on click.
+        // NaN used to silently resolve to tile 0. Callers (HexPicker) must treat
+        // non-finite input as a miss; the store refuses to guess.
         using var store = new WorldDataStore(2);
 
         var degenerate = new[]
         {
             new GeoCoord(double.NaN, 0),
             new GeoCoord(0, double.NaN),
-            new GeoCoord(double.NaN, double.NaN),
+            new GeoCoord(double.PositiveInfinity, 0),
+            new GeoCoord(0, double.NegativeInfinity),
         };
         foreach (var coord in degenerate)
         {
-            int index = store.GetTileIndex(coord);
-            Assert.InRange(index, 0, store.TileCount - 1);
-            // The full pick chain must hold: resolve then read back without throwing.
-            _ = store.GetGeoCoord(index);
+            Assert.Throws<ArgumentOutOfRangeException>(() => store.GetTileIndex(coord));
+            Assert.Throws<ArgumentOutOfRangeException>(() => store.GetTileIndexExact(coord));
         }
     }
 

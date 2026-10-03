@@ -110,33 +110,59 @@ public sealed class JintWorldStage : IWorldGeneratorStage, IDeclaredStage, IStag
         int seed = Seed;
         int tileCount = store.TileCount;
 
-        double ReadContinentality(int i) => GetLayerValue(
-            store, typeof(TectonicPlate), i, _reads, _readsOptional, stageName,
-            () => store.GetRef<TectonicPlate>(i).Continentality);
-        double ReadOrogeny(int i) => GetLayerValue(
-            store, typeof(TectonicPlate), i, _reads, _readsOptional, stageName,
-            () => store.GetRef<TectonicPlate>(i).Orogeny);
-        double ReadHeight(int i) => GetLayerValue(
-            store, typeof(ElevationInfo), i, _reads, _readsOptional, stageName,
-            () => store.GetRef<ElevationInfo>(i).Height);
-        double ReadTemp(int i) => GetLayerValue(
-            store, typeof(ClimateInfo), i, _reads, _readsOptional, stageName,
-            () => store.GetRef<ClimateInfo>(i).Temperature);
-        double ReadPrecip(int i) => GetLayerValue(
-            store, typeof(ClimateInfo), i, _reads, _readsOptional, stageName,
-            () => store.GetRef<ClimateInfo>(i).Precipitation);
-        double ReadFlow(int i) => GetLayerValue(
-            store, typeof(HydrologyInfo), i, _reads, _readsOptional, stageName,
-            () => store.GetRef<HydrologyInfo>(i).Flow);
-        double ReadSurface(int i) => GetLayerValue(
-            store, typeof(HydrologyInfo), i, _reads, _readsOptional, stageName,
-            () => store.GetRef<HydrologyInfo>(i).Surface);
-        double ReadBiome(int i) => GetLayerValue(
-            store, typeof(LocalMapInfo), i, _reads, _readsOptional, stageName,
-            () => (double)store.GetRef<LocalMapInfo>(i).Biome);
-        double ReadDanger(int i) => GetLayerValue(
-            store, typeof(LocalMapInfo), i, _reads, _readsOptional, stageName,
-            () => store.GetRef<LocalMapInfo>(i).DangerLevel);
+        // Layer registration is fixed for the whole Execute: resolve each layer's
+        // read access once instead of per call (no closure, no set lookups per read).
+        var modeTectonicPlate = ResolveRead(store, typeof(TectonicPlate), _reads, _readsOptional);
+        var modeElevationInfo = ResolveRead(store, typeof(ElevationInfo), _reads, _readsOptional);
+        var modeClimateInfo = ResolveRead(store, typeof(ClimateInfo), _reads, _readsOptional);
+        var modeHydrologyInfo = ResolveRead(store, typeof(HydrologyInfo), _reads, _readsOptional);
+        var modeLocalMapInfo = ResolveRead(store, typeof(LocalMapInfo), _reads, _readsOptional);
+
+        double ReadContinentality(int i)
+        {
+            int t = CheckIndex(i, tileCount);
+            return modeTectonicPlate == ReadMode.Direct ? store.GetRef<TectonicPlate>(t).Continentality : ReadFallback(modeTectonicPlate, typeof(TectonicPlate), stageName);
+        }
+        double ReadOrogeny(int i)
+        {
+            int t = CheckIndex(i, tileCount);
+            return modeTectonicPlate == ReadMode.Direct ? store.GetRef<TectonicPlate>(t).Orogeny : ReadFallback(modeTectonicPlate, typeof(TectonicPlate), stageName);
+        }
+        double ReadHeight(int i)
+        {
+            int t = CheckIndex(i, tileCount);
+            return modeElevationInfo == ReadMode.Direct ? store.GetRef<ElevationInfo>(t).Height : ReadFallback(modeElevationInfo, typeof(ElevationInfo), stageName);
+        }
+        double ReadTemp(int i)
+        {
+            int t = CheckIndex(i, tileCount);
+            return modeClimateInfo == ReadMode.Direct ? store.GetRef<ClimateInfo>(t).Temperature : ReadFallback(modeClimateInfo, typeof(ClimateInfo), stageName);
+        }
+        double ReadPrecip(int i)
+        {
+            int t = CheckIndex(i, tileCount);
+            return modeClimateInfo == ReadMode.Direct ? store.GetRef<ClimateInfo>(t).Precipitation : ReadFallback(modeClimateInfo, typeof(ClimateInfo), stageName);
+        }
+        double ReadFlow(int i)
+        {
+            int t = CheckIndex(i, tileCount);
+            return modeHydrologyInfo == ReadMode.Direct ? store.GetRef<HydrologyInfo>(t).Flow : ReadFallback(modeHydrologyInfo, typeof(HydrologyInfo), stageName);
+        }
+        double ReadSurface(int i)
+        {
+            int t = CheckIndex(i, tileCount);
+            return modeHydrologyInfo == ReadMode.Direct ? store.GetRef<HydrologyInfo>(t).Surface : ReadFallback(modeHydrologyInfo, typeof(HydrologyInfo), stageName);
+        }
+        double ReadBiome(int i)
+        {
+            int t = CheckIndex(i, tileCount);
+            return modeLocalMapInfo == ReadMode.Direct ? (double)store.GetRef<LocalMapInfo>(t).Biome : ReadFallback(modeLocalMapInfo, typeof(LocalMapInfo), stageName);
+        }
+        double ReadDanger(int i)
+        {
+            int t = CheckIndex(i, tileCount);
+            return modeLocalMapInfo == ReadMode.Direct ? store.GetRef<LocalMapInfo>(t).DangerLevel : ReadFallback(modeLocalMapInfo, typeof(LocalMapInfo), stageName);
+        }
 
         void WriteHeight(int i, double v)
         {
@@ -227,22 +253,26 @@ public sealed class JintWorldStage : IWorldGeneratorStage, IDeclaredStage, IStag
         }
     }
 
-    private static double GetLayerValue(
-        WorldDataStore store, Type layer, int index,
-        HashSet<Type> reads, HashSet<Type> readsOptional,
-        string stageName, Func<double> read)
+    private enum ReadMode { Direct, Zero, NotRegistered, Undeclared }
+
+    private static ReadMode ResolveRead(
+        WorldDataStore store, Type layer, HashSet<Type> reads, HashSet<Type> readsOptional)
     {
-        int i = CheckIndex(index, store.TileCount);
-        if (store.IsLayerRegistered(layer))
-            return read();
-        if (readsOptional.Contains(layer))
-            return 0.0;
-        if (reads.Contains(layer))
-            throw new InvalidOperationException(
-                $"Jint stage '{stageName}' reads layer '{layer.Name}' but it is not registered. Call RegisterLayer<{layer.Name}>() before Allocate().");
-        throw new InvalidOperationException(
-            $"Jint stage '{stageName}' reads layer '{layer.Name}' without declaring it in Reads/ReadsOptional.");
+        if (store.IsLayerRegistered(layer)) return ReadMode.Direct;
+        if (readsOptional.Contains(layer)) return ReadMode.Zero;
+        return reads.Contains(layer) ? ReadMode.NotRegistered : ReadMode.Undeclared;
     }
+
+    // Errors stay lazy: a script that never touches the layer never fails on it.
+    private static double ReadFallback(ReadMode mode, Type layer, string stageName)
+        => mode switch
+        {
+            ReadMode.Zero => 0.0,
+            ReadMode.NotRegistered => throw new InvalidOperationException(
+                $"Jint stage '{stageName}' reads layer '{layer.Name}' but it is not registered. Call RegisterLayer<{layer.Name}>() before Allocate()."),
+            _ => throw new InvalidOperationException(
+                $"Jint stage '{stageName}' reads layer '{layer.Name}' without declaring it in Reads/ReadsOptional."),
+        };
 
     private static void RequireWrite(Type layer, string stageName, HashSet<Type> writes)
     {

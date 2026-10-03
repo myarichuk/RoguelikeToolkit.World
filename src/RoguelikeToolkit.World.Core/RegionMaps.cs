@@ -510,6 +510,49 @@ public static class RegionMaps
     {
         if (size <= 0) throw new ArgumentOutOfRangeException(nameof(size));
         var target = Vector3D.FromGeoCoord(coord);
+
+        // Fast path: invert the gnomonic projection analytically to get the
+        // fractional (q, r), then take the exact nearest of a small window
+        // around it. The window is exact for realistic region spans; wide maps
+        // (strong projection distortion), far-off/back-hemisphere targets and
+        // tiny grids take the exhaustive scan.
+        double ang = Math.Max(radiusKm / World.EarthRadiusKm, 1e-9);
+        if (size > 3 && ang < 0.35)
+        {
+            var up = Vector3D.FromGeoCoord(mapCenter);
+            var (east, north) = EastNorth(mapCenter, up);
+            double depth = Vector3D.Dot(target, up);
+            if (depth > 0.5)
+            {
+                double u = Vector3D.Dot(target, east) / depth / ang;
+                double v = Vector3D.Dot(target, north) / depth / ang;
+                double half = 0.75 * (size - 1);
+                double qf = (u * half + half) / 1.5;
+                double rf = half * (v + 1.0) - qf * 0.5;
+                if (qf > -2 && qf < size + 1 && rf > -2 && rf < size + 1)
+                {
+                    int q0 = (int)Math.Floor(qf), r0 = (int)Math.Floor(rf);
+                    int best = -1;
+                    double bestDot = double.NegativeInfinity;
+                    // Row-major ascending so ties resolve to the lowest index, as in the full scan.
+                    for (int r = Math.Max(0, r0 - 2); r <= Math.Min(size - 1, r0 + 3); r++)
+                        for (int q = Math.Max(0, q0 - 2); q <= Math.Min(size - 1, q0 + 3); q++)
+                        {
+                            int i = r * size + q;
+                            double dot = Vector3D.Dot(target, Vector3D.FromGeoCoord(GridCellCenter(mapCenter, radiusKm, size, i)));
+                            if (dot > bestDot) { bestDot = dot; best = i; }
+                        }
+                    if (best >= 0) return best;
+                }
+            }
+        }
+        return GridCellAtExact(mapCenter, radiusKm, size, coord);
+    }
+
+    /// <summary>Exhaustive nearest-center scan; the verification path for <see cref="GridCellAt"/>.</summary>
+    public static int GridCellAtExact(GeoCoord mapCenter, double radiusKm, int size, GeoCoord coord)
+    {
+        var target = Vector3D.FromGeoCoord(coord);
         int best = 0;
         double bestDot = double.NegativeInfinity;
         for (int i = 0; i < size * size; i++)
@@ -771,13 +814,7 @@ public static class RegionMaps
         int n = heights.Length;
         var flow = new float[n];
         for (int i = 0; i < n; i++) flow[i] = 1f;
-        var order = new int[n];
-        for (int i = 0; i < n; i++) order[i] = i;
-        Array.Sort(order, (a, b) =>
-        {
-            int c = heights[b].CompareTo(heights[a]);
-            return c != 0 ? c : a.CompareTo(b);
-        });
+        var order = TileOrdering.DescendingByValue(heights);
         Span<int> nb = stackalloc int[6];
         foreach (int i in order)
         {
@@ -820,14 +857,5 @@ public static class RegionMaps
     }
 
     private static (BiomeType Biome, byte Danger) LocalBiome(float height, float temperature, float moisture)
-    {
-        if (height < SeaLevel) return (BiomeType.Ocean, height < -0.6f ? (byte)2 : (byte)0);
-        if (height > 0.5f) return (BiomeType.Mountain, 3);
-        if (temperature < 0.18f) return (BiomeType.Tundra, 1);
-        if (moisture < 0.32f && temperature > 0.55f) return (BiomeType.Desert, 2);
-        if (temperature > 0.72f && moisture > 0.55f) return (BiomeType.Jungle, 2);
-        if (moisture > 0.65f && temperature > 0.35f) return (BiomeType.Swamp, 2);
-        if (moisture > 0.42f) return (BiomeType.Forest, 1);
-        return (BiomeType.Plains, 0);
-    }
+        => BiomeClassifier.Classify(height, temperature, moisture);
 }

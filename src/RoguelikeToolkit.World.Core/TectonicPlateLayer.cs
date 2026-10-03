@@ -43,38 +43,18 @@ public struct TectonicPlate
     public float Orogeny;
 }
 
-public class TectonicPlateLayer : IMapLayer<TectonicPlate>, IDisposable
+public class TectonicPlateLayer : StoreLayer<TectonicPlate>
 {
-    private readonly WorldDataStore _store;
-    private int _seedCount;
-    private readonly int _seed;
-    private readonly ArenaAllocator _arena;
+    /// <summary>Plate count the host intends to generate with (read by hosts such as the visualizer).</summary>
+    public int SeedCount { get; set; }
 
-    public WorldDataStore Store => _store;
+    public int Seed { get; }
 
-    public int SeedCount
-    {
-        get => _seedCount;
-        set => _seedCount = value;
-    }
-
+    /// <param name="arena">Ignored; kept for source compatibility. The layer allocates nothing: plate scratch lives in <see cref="TectonicPlateGenerationStage"/>.</param>
     public TectonicPlateLayer(WorldDataStore store, int seedCount, int seed = 42, ArenaAllocator? arena = null)
+        : base(store)
     {
-        _store = store;
-        _seedCount = seedCount;
-        _seed = seed;
-        _arena = arena ?? ArenaDefaults.Create();
-    }
-
-
-    public TectonicPlate GetValue(GeoCoord coord)
-    {
-        int index = _store.GetTileIndex(coord);
-        return _store.GetRef<TectonicPlate>(index);
-    }
-
-    public void Dispose()
-    {
-        // Don't dispose WorldDataStore here since it's centrally managed
+        SeedCount = seedCount;
+        Seed = seed;
     }
 }

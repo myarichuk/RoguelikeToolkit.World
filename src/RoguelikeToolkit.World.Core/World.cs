@@ -186,11 +186,14 @@ public sealed class World : IDisposable
             throw new ArgumentOutOfRangeException(nameof(riverId), riverId, $"Unknown river id {riverId}.");
         return GeoWkt.RiverToWkt(Rivers.Rivers[riverId], Map.DataStore);
     }
+    /// <summary>WKT polygon of the water body with this <see cref="WaterBody.Id"/> (the id carried by <see cref="River.TerminalBody"/> and <see cref="HydrologyInfo.WaterBodyId"/>).</summary>
     public string WaterBodyToWkt(int bodyId)
     {
-        if ((uint)bodyId >= (uint)WaterBodies.Bodies.Count)
-            throw new ArgumentOutOfRangeException(nameof(bodyId), bodyId, $"Unknown water-body id {bodyId}.");
-        return GeoWkt.WaterBodyToWkt(WaterBodies.Bodies[bodyId], Map.DataStore);
+        foreach (var body in WaterBodies.Bodies)
+        {
+            if (body.Id == bodyId) return GeoWkt.WaterBodyToWkt(body, Map.DataStore);
+        }
+        throw new ArgumentOutOfRangeException(nameof(bodyId), bodyId, $"Unknown water-body id {bodyId}.");
     }
     public string DepositToWkt(int depositId)
     {
@@ -284,6 +287,7 @@ public sealed class WorldBuilder
 
         var pipeline = new WorldGenerationPipeline();
         HydrologyStage? hydrologyStage = null;
+        float riverScale = 1f;
         if (_useDefaults)
         {
             var tectonics = new TectonicPlateGenerationStage(_seedCount, _seed);
@@ -293,11 +297,12 @@ public sealed class WorldBuilder
             var climate = new ClimateStage(_seed);
             _climateConfig?.Invoke(climate);
             pipeline.AddStage(climate);
-            pipeline.AddStage(new ErosionGenerationStage());
             hydrologyStage = new HydrologyStage();
             _hydrologyConfig?.Invoke(hydrologyStage);
-            pipeline.AddStage(hydrologyStage!);
-            var biomes = new LocalMapGenerationStage(_seed);
+            riverScale = hydrologyStage.RiverThresholdScale;
+            pipeline.AddStage(new ErosionGenerationStage { RiverThresholdScale = riverScale });
+            pipeline.AddStage(hydrologyStage);
+            var biomes = new LocalMapGenerationStage(_seed) { RiverThresholdScale = riverScale };
             _biomesConfig?.Invoke(biomes);
             pipeline.AddStage(biomes);
         }
@@ -307,7 +312,7 @@ public sealed class WorldBuilder
 
         var world = new World(map, _seed);
         HydrologyStage.PopulateCatalogs(map, world.Rivers, world.WaterBodies, hydrologyStage?.MaxRivers ?? new HydrologyStage().MaxRivers);
-        RangeCatalogBuilder.Populate(map, world.Ranges);
+        RangeCatalogBuilder.Populate(map, world.Ranges, riverThresholdScale: riverScale);
         DepositCatalogBuilder.Populate(map, world.Deposits, _seed);
         world.RebuildIndex();
         return world;

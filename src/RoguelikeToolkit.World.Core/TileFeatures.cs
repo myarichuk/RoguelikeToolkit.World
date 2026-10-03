@@ -1,4 +1,5 @@
 using System;
+using System.Collections.Generic;
 
 namespace RoguelikeToolkit.World.Core;
 
@@ -105,14 +106,11 @@ public static class TileFeatures
         bool hasClimate = store.IsLayerRegistered<ClimateInfo>();
         var climate = hasClimate ? store.GetSpan<ClimateInfo>() : default;
 
-        float[]? heights = null;
         if (store.IsLayerRegistered<ElevationInfo>())
         {
             var elev = store.GetSpan<ElevationInfo>();
             info.HasElevation = true;
             info.Elevation = elev[tileIndex].Height;
-            heights = new float[store.TileCount];
-            for (int i = 0; i < heights.Length; i++) heights[i] = elev[i].Height;
             info.IsGlacier = hasClimate
                 ? Glaciology.IsGlacierTile(store.GetTileVectors()[tileIndex], info.Elevation,
                     climate[tileIndex].Temperature, climate[tileIndex].Precipitation)
@@ -128,24 +126,19 @@ public static class TileFeatures
             info.WaterBodyId = hydro[tileIndex].WaterBodyId;
             info.LakeDepth = hydro[tileIndex].LakeDepth;
 
-            if (info.IsRiver && heights != null)
+            if (info.IsRiver && info.HasElevation)
             {
+                // Local routing: only the tiles around the query are resolved,
+                // never the whole planet (was ~10 ms per river tile at size 7).
                 Span<int> scratch = stackalloc int[6];
-                float[] surface = heights;
-                if (hydro.Length > 0)
-                {
-                    surface = new float[store.TileCount];
-                    for (int rr = 0; rr < surface.Length; rr++) surface[rr] = hydro[rr].Surface;
-                }
-                var receiver = new int[store.TileCount];
-                Hydrography.ComputeReceivers(store, surface, receiver);
-                info.UpstreamTile = FindUpstream(store, hydro, tileIndex, receiver, scratch);
+                var receivers = new LocalReceivers(store);
+                info.UpstreamTile = FindUpstream(store, hydro, tileIndex, receivers, scratch);
                 if (info.UpstreamTile >= 0)
                     info.UpstreamCoord = store.GetGeoCoord(info.UpstreamTile);
-                info.DownstreamTile = receiver[tileIndex];
+                info.DownstreamTile = receivers.Of(tileIndex);
                 if (info.DownstreamTile >= 0)
                     info.DownstreamCoord = store.GetGeoCoord(info.DownstreamTile);
-                info.RiverSource = ClassifySource(store, hydro, heights, tileIndex, receiver, hasClimate, climate);
+                info.RiverSource = ClassifySource(store, hydro, tileIndex, receivers, hasClimate, climate);
             }
         }
 
@@ -216,7 +209,7 @@ public static class TileFeatures
     // Highest-flow river neighbor draining into this tile (reverse-receiver lookup,
     // flat-safe via ComputeReceivers; deterministic tie-break by index.
     // -1 marks a head: no river water flows in from anywhere.
-    private static int FindUpstream(WorldDataStore store, Span<HydrologyInfo> hydro, int tile, ReadOnlySpan<int> receiver, Span<int> scratch)
+    private static int FindUpstream(WorldDataStore store, Span<HydrologyInfo> hydro, int tile, LocalReceivers receivers, Span<int> scratch)
     {
         int adjacent = store.GetAdjacent(tile, scratch);
         int best = -1;
@@ -224,7 +217,7 @@ public static class TileFeatures
         for (int k = 0; k < adjacent; k++)
         {
             int j = scratch[k];
-            if (hydro[j].IsRiver != 1 || receiver[j] != tile) continue;
+            if (hydro[j].IsRiver != 1 || receivers.Of(j) != tile) continue;
             if (hydro[j].Flow > bestFlow || (hydro[j].Flow == bestFlow && j < best))
             {
                 bestFlow = hydro[j].Flow;
@@ -237,23 +230,41 @@ public static class TileFeatures
     // Walk upstream to the head, then classify it: glacier heads are
     // meltwater-fed, everything else is rain/groundwater (spring).
     private static RiverWaterSource ClassifySource(
-        WorldDataStore store, Span<HydrologyInfo> hydro, float[] heights, int tile, ReadOnlySpan<int> receiver, bool hasClimate, Span<ClimateInfo> climate)
+        WorldDataStore store, Span<HydrologyInfo> hydro, int tile, LocalReceivers receivers, bool hasClimate, Span<ClimateInfo> climate)
     {
         Span<int> scratch = stackalloc int[6];
         var vectors = store.GetTileVectors();
+        var elev = store.GetSpan<ElevationInfo>();
         int cur = tile;
         for (int steps = 0; steps <= store.TileCount; steps++)
         {
-            int up = FindUpstream(store, hydro, cur, receiver, scratch);
+            int up = FindUpstream(store, hydro, cur, receivers, scratch);
             if (up < 0)
             {
                 bool glacier = hasClimate
-                    ? Glaciology.IsGlacierTile(vectors[cur], heights[cur], climate[cur].Temperature, climate[cur].Precipitation)
-                    : Glaciology.IsGlacierTile(vectors[cur], heights[cur]);
+                    ? Glaciology.IsGlacierTile(vectors[cur], elev[cur].Height, climate[cur].Temperature, climate[cur].Precipitation)
+                    : Glaciology.IsGlacierTile(vectors[cur], elev[cur].Height);
                 return glacier ? RiverWaterSource.GlacierMelt : RiverWaterSource.Spring;
             }
             cur = up;
         }
         return RiverWaterSource.Spring;
+    }
+
+    // Memoized per-query receiver lookups over the hydrology routing surface.
+    private sealed class LocalReceivers
+    {
+        private readonly WorldDataStore _store;
+        private readonly Dictionary<int, int> _memo = new();
+
+        public LocalReceivers(WorldDataStore store) => _store = store;
+
+        public int Of(int tile)
+        {
+            if (_memo.TryGetValue(tile, out int r)) return r;
+            r = Hydrography.ReceiverAt(_store, i => _store.GetRef<HydrologyInfo>(i).Surface, tile);
+            _memo[tile] = r;
+            return r;
+        }
     }
 }

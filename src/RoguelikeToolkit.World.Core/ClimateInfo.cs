@@ -16,24 +16,7 @@ public struct ClimateInfo
     public float WindZ;
 }
 
-public class ClimateLayer : IMapLayer<ClimateInfo>, IDisposable
+public class ClimateLayer : StoreLayer<ClimateInfo>
 {
-    private readonly WorldDataStore _store;
-
-    public WorldDataStore Store => _store;
-
-    public ClimateLayer(WorldDataStore store)
-    {
-        _store = store;
-    }
-
-    public ClimateInfo GetValue(GeoCoord coord)
-    {
-        int index = _store.GetTileIndex(coord);
-        return _store.GetRef<ClimateInfo>(index);
-    }
-
-    public void Dispose()
-    {
-    }
+    public ClimateLayer(WorldDataStore store) : base(store) { }
 }

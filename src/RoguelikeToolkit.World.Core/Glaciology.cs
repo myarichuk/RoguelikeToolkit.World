@@ -69,12 +69,13 @@ public static class Glaciology
     public static bool IsGlacierTile(Vector3D position, float height, float temperature, float precipitation)
     {
         if (height < ElevationGenerationStage.SeaLevel) return false;
-        var geo = position.ToGeoCoord();
         double snowTemp = 0.15 + 0.11 * precipitation;
         double margin = SphereNoise.Fbm(position * 5.0, ClimateNoiseSalt) * 0.04;
         if (temperature > snowTemp + margin) return false;
         // Dry frozen deserts: without accumulation there is no ice sheet.
-        if (precipitation < DryPolarGate && temperature > 0.03 + margin && Math.Abs(geo.Latitude) < 82.0)
+        // (Latitude is only needed here, after the cheap early-out above.)
+        if (precipitation < DryPolarGate && temperature > 0.03 + margin
+            && Math.Abs(position.ToGeoCoord().Latitude) < 82.0)
             return false;
         return true;
     }

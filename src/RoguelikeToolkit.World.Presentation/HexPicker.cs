@@ -93,33 +93,36 @@ public static class HexPicker
         float hitLen = (float)Math.Sqrt(hitX * hitX + hitY * hitY + hitZ * hitZ);
         if (hitLen < 1e-6f) return false;
 
-        float minDistsq = float.MaxValue;
-        int nearestIdx = -1;
-
-        for (int i = 0; i < positions.Length / 3; i++)
-        {
-            float dx = positions[i * 3] - hitX;
-            float dy = positions[i * 3 + 1] - hitY;
-            float dz = positions[i * 3 + 2] - hitZ;
-            float distSq = dx * dx + dy * dy + dz * dz;
-
-            if (distSq < minDistsq)
-            {
-                minDistsq = distSq;
-                nearestIdx = i;
-            }
-        }
-
-        if (nearestIdx == -1) return false;
-
-        float selX = positions[nearestIdx * 3];
-        float selY = positions[nearestIdx * 3 + 1];
-        float selZ = positions[nearestIdx * 3 + 2];
-
         double lat;
         double lon;
         if (projection != null)
         {
+            // Only the flat projections need the nearest mesh vertex (its
+            // projected XY is what gets inverted); 3D picks use the hit direction
+            // and skip this O(n) scan.
+            float minDistsq = float.MaxValue;
+            int nearestIdx = -1;
+
+            for (int i = 0; i < positions.Length / 3; i++)
+            {
+                float dx = positions[i * 3] - hitX;
+                float dy = positions[i * 3 + 1] - hitY;
+                float dz = positions[i * 3 + 2] - hitZ;
+                float distSq = dx * dx + dy * dy + dz * dz;
+
+                if (distSq < minDistsq)
+                {
+                    minDistsq = distSq;
+                    nearestIdx = i;
+                }
+            }
+
+            if (nearestIdx == -1) return false;
+
+            float selX = positions[nearestIdx * 3];
+            float selY = positions[nearestIdx * 3 + 1];
+            float selZ = positions[nearestIdx * 3 + 2];
+
             var geo = projection.Inverse(new Vector2D(selX, selY));
             lat = geo.Latitude;
             lon = geo.Longitude;
@@ -133,6 +136,9 @@ public static class HexPicker
             lat = Math.Asin(Math.Clamp(hitZ / hitLen, -1.0f, 1.0f)) * 180.0 / Math.PI;
             lon = Math.Atan2(hitY, hitX) * 180.0 / Math.PI;
         }
+
+        // Projection inverses return NaN off-map; a click there is a miss, not tile 0.
+        if (!double.IsFinite(lat) || !double.IsFinite(lon)) return false;
 
         // Resolve the tile through the store's canonical topology (exact nearest-center
         // search). The previous ring-based heuristic disagreed with the store on
