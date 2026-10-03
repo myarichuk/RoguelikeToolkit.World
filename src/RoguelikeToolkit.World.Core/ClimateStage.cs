@@ -3,8 +3,8 @@ using System;
 namespace RoguelikeToolkit.World.Core;
 
 /// <summary>
-/// First-class climate layer. Temperature from latitude + lapse rate +
-/// continentality; precipitation from seamless noise modulated by orographic
+/// First-class climate layer. Temperature from latitude and the elevation
+/// lapse rate only (no continentality or ocean-heat term); precipitation from seamless noise modulated by orographic
 /// effects (windward wet / leeward rain shadow) and water proximity; wind as a
 /// zonal prevailing field (trades / westerlies / polar easterlies).
 /// Precipitation is box-blurred (PrecipSmoothingPasses, default 1, backlog

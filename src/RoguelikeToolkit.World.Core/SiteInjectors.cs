@@ -294,11 +294,12 @@ public static class SiteInjectorPipeline
             h ^= c;
             h *= 16777619u;
         }
-        int mixed = unchecked(address.WorldSeed * 7919
-            + address.WorldTileIndex * 104729
-            + (address.RegionCellIndex + 1) * 1299709
-            + (address.LocalTileIndex + 1) * 15485863);
-        return Rng.Create(mixed, unchecked((int)h));
+        // Fold the address in one Derive step per component (no linear pre-mix that
+        // distinct (tile, cell, local) triples could cancel).
+        return Rng.Create(address.WorldSeed, unchecked((int)h))
+            .Derive(address.WorldTileIndex)
+            .Derive(address.RegionCellIndex + 1)
+            .Derive(address.LocalTileIndex + 1);
     }
 }
 

@@ -47,7 +47,13 @@ public struct Rng
     public uint NextUInt() => (uint)(NextULong() >> 32);
 
     /// <summary>
-    /// Unbiased (multiply-high) range reduction; avoids the modulo bias of % max.
+    /// Maps a 32-bit draw onto [0, max) by multiply-high (Lemire's method without
+    /// the rejection step). Cheap and branch-free, and free of the low-bit skew
+    /// of <c>% max</c>, but not exactly uniform: with 2^32 inputs and <c>max</c>
+    /// outputs some outputs receive one more input than others, a relative bias
+    /// of at most <c>max / 2^32</c> (below 1e-6 for any <c>max</c> under 4096).
+    /// Fine for gameplay placement; use <see cref="NextDouble"/> or a rejection
+    /// loop where exact uniformity matters.
     /// </summary>
     public uint NextUInt(uint max) => max == 0 ? 0 : (uint)((NextULong() >> 32) * (ulong)max >> 32);
 
