@@ -93,22 +93,72 @@ public sealed class SiteInjectionContext
         if (tier == SiteTier.Region && region == null) throw new ArgumentException("Region tier needs a region handle.", nameof(region));
         if (tier == SiteTier.Local && local == null) throw new ArgumentException("Local tier needs a local handle.", nameof(local));
         if (tier == SiteTier.Both) throw new ArgumentException("Context materializes one tier.", nameof(tier));
+        _surface = tier == SiteTier.Region ? new RegionSurface(region!) : new LocalSurface(local!);
     }
 
-    public int CellCount => Tier == SiteTier.Region ? Region!.Cells.Length : Local!.Tiles.Length;
+    private readonly ITierSurface _surface;
 
-    public float GetElevation(int cell) => Tier == SiteTier.Region ? Region!.Cells[cell].Elevation : Local!.Tiles[cell].Height;
-    public BiomeType GetBiome(int cell) => Tier == SiteTier.Region ? Region!.Cells[cell].Biome : Local!.Tiles[cell].Biome;
-    public bool IsWater(int cell) => Tier == SiteTier.Region ? Region!.Cells[cell].Elevation < 0f : Local!.Tiles[cell].IsWater;
-    public bool IsRiverChannel(int cell) => Tier == SiteTier.Region
-        ? Region!.Cells[cell].IsRiver
-        : Local!.Tiles[cell].WaterDepth >= RegionMaps.LocalRiverMark;
-    public byte GetDanger(int cell) => Tier == SiteTier.Region ? (byte)0 : Local!.Tiles[cell].Danger;
-    public float GetMoisture(int cell) => Tier == SiteTier.Region ? Region!.Cells[cell].Moisture : Local!.Tiles[cell].Precipitation;
+    public int CellCount => _surface.CellCount;
+    public float GetElevation(int cell) => _surface.GetElevation(cell);
+    public BiomeType GetBiome(int cell) => _surface.GetBiome(cell);
+    public bool IsWater(int cell) => _surface.IsWater(cell);
+    public bool IsRiverChannel(int cell) => _surface.IsRiverChannel(cell);
+    public byte GetDanger(int cell) => _surface.GetDanger(cell);
+    public float GetMoisture(int cell) => _surface.GetMoisture(cell);
+    public int GetAdjacent(int cell, Span<int> neighbors) => _surface.GetAdjacent(cell, neighbors);
 
-    public int GetAdjacent(int cell, Span<int> neighbors) => Tier == SiteTier.Region
-        ? Region!.GetAdjacent(cell, neighbors)
-        : Local!.GetAdjacent(cell, neighbors);
+    /// <summary>
+    /// Land (non-water) cells from highest to lowest elevation; equal
+    /// elevations resolve to the lowest cell index.
+    /// </summary>
+    public int[] LandCellsByElevationDescending()
+    {
+        int n = CellCount;
+        var elevations = new float[n];
+        for (int i = 0; i < n; i++) elevations[i] = GetElevation(i);
+        var order = TileOrdering.DescendingByValue(elevations);
+        var land = new List<int>(n);
+        foreach (int i in order)
+            if (!IsWater(i)) land.Add(i);
+        return land.ToArray();
+    }
+}
+
+/// <summary>Read-only per-cell view of one materialized tier map; removes the region/local branch from every accessor.</summary>
+internal interface ITierSurface
+{
+    int CellCount { get; }
+    float GetElevation(int cell);
+    BiomeType GetBiome(int cell);
+    bool IsWater(int cell);
+    bool IsRiverChannel(int cell);
+    byte GetDanger(int cell);
+    float GetMoisture(int cell);
+    int GetAdjacent(int cell, Span<int> neighbors);
+}
+
+internal sealed class RegionSurface(RegionHandle region) : ITierSurface
+{
+    public int CellCount => region.Cells.Length;
+    public float GetElevation(int cell) => region.Cells[cell].Elevation;
+    public BiomeType GetBiome(int cell) => region.Cells[cell].Biome;
+    public bool IsWater(int cell) => region.Cells[cell].Elevation < 0f;
+    public bool IsRiverChannel(int cell) => region.Cells[cell].IsRiver;
+    public byte GetDanger(int cell) => 0;
+    public float GetMoisture(int cell) => region.Cells[cell].Moisture;
+    public int GetAdjacent(int cell, Span<int> neighbors) => region.GetAdjacent(cell, neighbors);
+}
+
+internal sealed class LocalSurface(LocalMapHandle local) : ITierSurface
+{
+    public int CellCount => local.Tiles.Length;
+    public float GetElevation(int cell) => local.Tiles[cell].Height;
+    public BiomeType GetBiome(int cell) => local.Tiles[cell].Biome;
+    public bool IsWater(int cell) => local.Tiles[cell].IsWater;
+    public bool IsRiverChannel(int cell) => local.Tiles[cell].WaterDepth >= RegionMaps.LocalRiverMark;
+    public byte GetDanger(int cell) => local.Tiles[cell].Danger;
+    public float GetMoisture(int cell) => local.Tiles[cell].Precipitation;
+    public int GetAdjacent(int cell, Span<int> neighbors) => local.GetAdjacent(cell, neighbors);
 }
 
 /// <summary>One site-placement pass over a materialized region/local map.</summary>
@@ -178,32 +228,31 @@ public static class SiteInjectorPipeline
     public static SiteCatalog MaterializeRegion(RegionHandle region, IEnumerable<ISiteInjector> injectors)
     {
         ArgumentNullException.ThrowIfNull(region);
-        var sorted = SortChecked(injectors);
-        var catalog = new SiteCatalog();
-        foreach (var injector in sorted)
-        {
-            if (injector.Tier != SiteTier.Both && injector.Tier != SiteTier.Region) continue;
-            var context = new SiteInjectionContext(
+        return Materialize(region.Address, SiteTier.Region, injectors, (existing, rng) =>
+            new SiteInjectionContext(
                 region.Address, SiteTier.Region, region.Parent, region.Bounds,
-                region, null, catalog.Sites.ToArray(),
-                DeriveInjectorRng(region.Address, injector.Id));
-            AddProduced(catalog, injector, context);
-        }
-        return catalog;
+                region, null, existing, rng));
     }
 
     public static SiteCatalog MaterializeLocal(LocalMapHandle local, IEnumerable<ISiteInjector> injectors)
     {
         ArgumentNullException.ThrowIfNull(local);
+        return Materialize(local.Address, SiteTier.Local, injectors, (existing, rng) =>
+            new SiteInjectionContext(
+                local.Address, SiteTier.Local, local.Parent, local.Bounds,
+                null, local, existing, rng));
+    }
+
+    private static SiteCatalog Materialize(
+        MapAddress address, SiteTier tier, IEnumerable<ISiteInjector> injectors,
+        Func<IReadOnlyList<PlacedSite>, Rng, SiteInjectionContext> makeContext)
+    {
         var sorted = SortChecked(injectors);
         var catalog = new SiteCatalog();
         foreach (var injector in sorted)
         {
-            if (injector.Tier != SiteTier.Both && injector.Tier != SiteTier.Local) continue;
-            var context = new SiteInjectionContext(
-                local.Address, SiteTier.Local, local.Parent, local.Bounds,
-                null, local, catalog.Sites.ToArray(),
-                DeriveInjectorRng(local.Address, injector.Id));
+            if (injector.Tier != SiteTier.Both && injector.Tier != tier) continue;
+            var context = makeContext(catalog.Sites.ToArray(), DeriveInjectorRng(address, injector.Id));
             AddProduced(catalog, injector, context);
         }
         return catalog;
@@ -254,6 +303,29 @@ public static class SiteInjectorPipeline
 }
 
 /// <summary>
+/// Shared shell of the built-in injectors: identity, ordering, tier, and a
+/// non-negative site budget. Subclasses only supply the placement rule.
+/// </summary>
+public abstract class SiteInjectorBase : ISiteInjector
+{
+    public string Id { get; }
+    public int Order { get; }
+    public SiteTier Tier { get; }
+    public int MaxSites { get; }
+
+    protected SiteInjectorBase(string? id, string defaultId, int order, SiteTier tier, int maxSites)
+    {
+        if (maxSites < 0) throw new ArgumentOutOfRangeException(nameof(maxSites));
+        MaxSites = maxSites;
+        Order = order;
+        Tier = tier;
+        Id = string.IsNullOrEmpty(id) ? defaultId : id;
+    }
+
+    public abstract IReadOnlyList<PlacedSite> Inject(SiteInjectionContext context);
+}
+
+/// <summary>
 /// Settles cities on the best-scoring cells, mirroring
 /// <see cref="CitySiteScorer"/> weights (fresh-water +1, fertile +0.5,
 /// harsh -0.5, high -0.3, danger -0.2 each, plus habitability deltas).
@@ -261,27 +333,24 @@ public static class SiteInjectorPipeline
 /// just lower. Existing-site deltas on a cell feed effective danger the same
 /// way history modifiers feed the planet scorer.
 /// </summary>
-public sealed class SettlementInjector : ISiteInjector
+public sealed class SettlementInjector : SiteInjectorBase
 {
-    public string Id { get; }
-    public int Order { get; }
-    public SiteTier Tier { get; }
-    public int MaxSites { get; }
-
     public SettlementInjector(int maxSites = 3, int order = 0, SiteTier tier = SiteTier.Both, string? id = null)
-    {
-        if (maxSites < 0) throw new ArgumentOutOfRangeException(nameof(maxSites));
-        MaxSites = maxSites;
-        Order = order;
-        Tier = tier;
-        Id = string.IsNullOrEmpty(id) ? "settlement" : id;
-    }
+        : base(id, "settlement", order, tier, maxSites) { }
 
-    public IReadOnlyList<PlacedSite> Inject(SiteInjectionContext context)
+    public override IReadOnlyList<PlacedSite> Inject(SiteInjectionContext context)
     {
         ArgumentNullException.ThrowIfNull(context);
         var scored = new List<(int Cell, double Score)>();
         Span<int> neighbors = stackalloc int[6];
+
+        // Existing-site deltas per cell, summed in site order (one pass, not cells x sites).
+        var deltas = new Dictionary<int, (float Danger, float Hab)>();
+        foreach (var s in context.ExistingSites)
+        {
+            deltas.TryGetValue(s.CellIndex, out var d);
+            deltas[s.CellIndex] = (d.Danger + s.DangerDelta, d.Hab + s.HabitabilityDelta);
+        }
         for (int i = 0; i < context.CellCount; i++)
         {
             if (context.IsWater(i)) continue;
@@ -296,13 +365,8 @@ public sealed class SettlementInjector : ISiteInjector
                     water = context.IsWater(neighbors[k]) || context.IsRiverChannel(neighbors[k]);
             }
 
-            float dangerDelta = 0f, habDelta = 0f;
-            foreach (var s in context.ExistingSites)
-            {
-                if (s.CellIndex != i) continue;
-                dangerDelta += s.DangerDelta;
-                habDelta += s.HabitabilityDelta;
-            }
+            deltas.TryGetValue(i, out var delta);
+            var (dangerDelta, habDelta) = delta;
             int effDanger = context.GetDanger(i) + (int)MathF.Round(dangerDelta);
 
             double score = SettlementScoring.Score(water, biome, context.GetElevation(i), effDanger, habDelta);
@@ -333,23 +397,12 @@ public sealed class SettlementInjector : ISiteInjector
 }
 
 /// <summary>Scatters ruins on random land cells via the injector's own stream.</summary>
-public sealed class RuinInjector : ISiteInjector
+public sealed class RuinInjector : SiteInjectorBase
 {
-    public string Id { get; }
-    public int Order { get; }
-    public SiteTier Tier { get; }
-    public int MaxSites { get; }
-
     public RuinInjector(int maxSites = 2, int order = 10, SiteTier tier = SiteTier.Both, string? id = null)
-    {
-        if (maxSites < 0) throw new ArgumentOutOfRangeException(nameof(maxSites));
-        MaxSites = maxSites;
-        Order = order;
-        Tier = tier;
-        Id = string.IsNullOrEmpty(id) ? "ruin" : id;
-    }
+        : base(id, "ruin", order, tier, maxSites) { }
 
-    public IReadOnlyList<PlacedSite> Inject(SiteInjectionContext context)
+    public override IReadOnlyList<PlacedSite> Inject(SiteInjectionContext context)
     {
         ArgumentNullException.ThrowIfNull(context);
         var candidates = new List<int>();
@@ -386,43 +439,26 @@ public sealed class RuinInjector : ISiteInjector
 /// Places mines for planet deposits on the parent world tile, favoring high
 /// ground. Empty when the <see cref="DepositCatalog"/> holds nothing there.
 /// </summary>
-public sealed class MineInjector : ISiteInjector
+public sealed class MineInjector : SiteInjectorBase
 {
-    public string Id { get; }
-    public int Order { get; }
-    public SiteTier Tier { get; }
-    public int MaxSites { get; }
     public DepositCatalog Deposits { get; }
 
     public MineInjector(DepositCatalog deposits, int maxSites = 2, int order = 20, SiteTier tier = SiteTier.Both, string? id = null)
+        : base(id, "mine", order, tier, maxSites)
     {
         Deposits = deposits ?? throw new ArgumentNullException(nameof(deposits));
-        if (maxSites < 0) throw new ArgumentOutOfRangeException(nameof(maxSites));
-        MaxSites = maxSites;
-        Order = order;
-        Tier = tier;
-        Id = string.IsNullOrEmpty(id) ? "mine" : id;
     }
 
-    public IReadOnlyList<PlacedSite> Inject(SiteInjectionContext context)
+    public override IReadOnlyList<PlacedSite> Inject(SiteInjectionContext context)
     {
         ArgumentNullException.ThrowIfNull(context);
         var ores = new List<Deposit>(Deposits.AtTile(context.Address.WorldTileIndex));
         if (ores.Count == 0) return Array.Empty<PlacedSite>();
         ores.Sort((a, b) => a.Id.CompareTo(b.Id));
 
-        var cells = new List<int>();
-        for (int i = 0; i < context.CellCount; i++)
-        {
-            if (!context.IsWater(i)) cells.Add(i);
-        }
-        cells.Sort((a, b) =>
-        {
-            int c = context.GetElevation(b).CompareTo(context.GetElevation(a));
-            return c != 0 ? c : a.CompareTo(b);
-        });
+        var cells = context.LandCellsByElevationDescending();
 
-        int take = Math.Min(Math.Min(MaxSites, ores.Count), cells.Count);
+        int take = Math.Min(Math.Min(MaxSites, ores.Count), cells.Length);
         var result = new List<PlacedSite>(take);
         for (int k = 0; k < take; k++)
         {
@@ -442,36 +478,16 @@ public sealed class MineInjector : ISiteInjector
 }
 
 /// <summary>Marks the highest land cell as a landmark.</summary>
-public sealed class LandmarkInjector : ISiteInjector
+public sealed class LandmarkInjector : SiteInjectorBase
 {
-    public string Id { get; }
-    public int Order { get; }
-    public SiteTier Tier { get; }
-    public int MaxSites { get; }
-
     public LandmarkInjector(int maxSites = 1, int order = 30, SiteTier tier = SiteTier.Both, string? id = null)
-    {
-        if (maxSites < 0) throw new ArgumentOutOfRangeException(nameof(maxSites));
-        MaxSites = maxSites;
-        Order = order;
-        Tier = tier;
-        Id = string.IsNullOrEmpty(id) ? "landmark" : id;
-    }
+        : base(id, "landmark", order, tier, maxSites) { }
 
-    public IReadOnlyList<PlacedSite> Inject(SiteInjectionContext context)
+    public override IReadOnlyList<PlacedSite> Inject(SiteInjectionContext context)
     {
         ArgumentNullException.ThrowIfNull(context);
-        var cells = new List<int>();
-        for (int i = 0; i < context.CellCount; i++)
-        {
-            if (!context.IsWater(i)) cells.Add(i);
-        }
-        cells.Sort((a, b) =>
-        {
-            int c = context.GetElevation(b).CompareTo(context.GetElevation(a));
-            return c != 0 ? c : a.CompareTo(b);
-        });
-        int take = Math.Min(MaxSites, cells.Count);
+        var cells = context.LandCellsByElevationDescending();
+        int take = Math.Min(MaxSites, cells.Length);
         var result = new List<PlacedSite>(take);
         for (int k = 0; k < take; k++)
         {
