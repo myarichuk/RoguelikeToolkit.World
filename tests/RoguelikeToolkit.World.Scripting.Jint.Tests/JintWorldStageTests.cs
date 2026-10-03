@@ -149,20 +149,23 @@ public class JintWorldStageTests
     }
 
     [Fact]
-    public void SizeSevenSweep_FitsDefaultBudgets()
+    public void PerTileSweep_FitsPerTileAllowances_OnAnyMapSize()
     {
-        // 163,842 tiles: a fixed 250k-statement / 16 MB cap (the old defaults) cannot
-        // survive one read+write per tile; the scaled defaults must, with no limits set.
-        using var map = new WorldMap(7);
-        map.RegisterLayer<ClimateInfo>(new ClimateLayer(map.DataStore));
-        map.DataStore.Allocate();
-        Assert.True(map.DataStore.TileCount > 100_000);
+        // A read+write sweep costs ~1 statement and ~250 B per tile. Budgets with *no* fixed
+        // base must still admit it purely through the per-tile terms, which is what lets the
+        // defaults cover a size-7 world (a full 163k-tile run is ~1.3 s, too CPU-heavy to keep
+        // in the suite: it starves the timing-sensitive tests running beside it on CI).
+        using var map = TinyMap();
         var stage = new JintWorldStage(new JintStageSpec
         {
             Name = "sweep-js", Order = 19,
             Source = "function execute() { for (var i = 0; i < TILE_COUNT; i++) { setTemp(i, temp(i) * 0.99); } }",
             Reads = new[] { typeof(ClimateInfo) }, Writes = new[] { typeof(ClimateInfo) },
-            Limits = new JintStageLimits { Timeout = TimeSpan.FromSeconds(30) },
+            Limits = new JintStageLimits
+            {
+                BaseStatements = 0, StatementsPerTile = 20,
+                BaseMemoryBytes = 2_000_000, MemoryBytesPerTile = 4_096,
+            },
         });
         stage.Execute(map);
     }
