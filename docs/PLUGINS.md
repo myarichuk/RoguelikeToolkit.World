@@ -122,8 +122,11 @@ elevation (15) → climate (16) → erosion (17) → hydrology (18) → biomes (
        Limits = new JintStageLimits
        {
            Timeout = TimeSpan.FromSeconds(5),
-           MaxStatements = 250_000,
-           MemoryLimitBytes = 16_000_000,
+           // MaxStatements = null (default) scales with the map:
+           // BaseStatements (250k) + StatementsPerTile (200) x tiles. Set an
+           // explicit number only for a fixed hard cap.
+           // MemoryLimitBytes = null (default) scales too: 16 MB + 2 KB per tile
+           // of cumulative allocation. Pin a number for a fixed hard cap.
        },
    }));
    ```
@@ -131,7 +134,8 @@ elevation (15) → climate (16) → erosion (17) → hydrology (18) → biomes (
    `samples/JintScripts/highland-danger.js` (danger rebalance, order 21).
 4. Sandbox notes: fresh Jint `Engine` per `Execute` with `Strict`,
    string-compilation disabled, recursion capped, and statement/memory/timeout
-   budgets; host delegates are the entire API surface. Budget breaches and JS
+   budgets (the statement budget scales with tile count unless pinned; raise
+   `Timeout` too for very large worlds); host delegates are the entire API surface. Budget breaches and JS
    errors surface as `InvalidOperationException` naming the stage. Scripts that
    need full store access or native speed should be compiled C# stages instead.
 

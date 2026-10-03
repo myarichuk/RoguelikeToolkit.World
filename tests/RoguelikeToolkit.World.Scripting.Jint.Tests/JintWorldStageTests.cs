@@ -116,6 +116,58 @@ public class JintWorldStageTests
     }
 
     [Fact]
+    public void StatementBudget_ScalesWithTileCount_UnlessPinned()
+    {
+        var scaled = new JintStageLimits { BaseStatements = 1_000, StatementsPerTile = 50 };
+        Assert.Equal(1_000 + 50 * 163_842, scaled.EffectiveMaxStatements(163_842));
+        Assert.Equal(int.MaxValue, new JintStageLimits { BaseStatements = int.MaxValue, StatementsPerTile = 50 }.EffectiveMaxStatements(1_000_000));
+        Assert.Equal(7, new JintStageLimits { MaxStatements = 7 }.EffectiveMaxStatements(163_842));
+        Assert.Equal(16_000_000 + 2_048L * 163_842, new JintStageLimits().EffectiveMemoryLimitBytes(163_842));
+        Assert.Equal(1_000_000L, new JintStageLimits { MemoryLimitBytes = 1_000_000 }.EffectiveMemoryLimitBytes(163_842));
+        // The default must admit a per-tile pass over a size-7 world.
+        Assert.True(new JintStageLimits().EffectiveMaxStatements(163_842) >= 163_842 * 50);
+    }
+
+    [Fact]
+    public void PerTileLoop_FitsScaledBudget_ButNotAnEqualFixedCap()
+    {
+        const string source = "function execute() { for (var i = 0; i < TILE_COUNT; i++) { setTemp(i, temp(i)); } }";
+        JintWorldStage Make(JintStageLimits limits) => new(new JintStageSpec
+        {
+            Name = "loop-js", Order = 19, Source = source,
+            Reads = new[] { typeof(ClimateInfo) }, Writes = new[] { typeof(ClimateInfo) },
+            Limits = limits,
+        });
+
+        using var map = TinyMap();
+        int tiles = map.DataStore.TileCount;
+
+        // A pinned cap below one statement per tile trips; the per-tile term is what admits the loop.
+        Make(new JintStageLimits { BaseStatements = 100, StatementsPerTile = 20 }).Execute(map);
+        Assert.Throws<InvalidOperationException>(() =>
+            Make(new JintStageLimits { MaxStatements = tiles / 2 }).Execute(map));
+    }
+
+    [Fact]
+    public void SizeSevenSweep_FitsDefaultBudgets()
+    {
+        // 163,842 tiles: a fixed 250k-statement / 16 MB cap (the old defaults) cannot
+        // survive one read+write per tile; the scaled defaults must, with no limits set.
+        using var map = new WorldMap(7);
+        map.RegisterLayer<ClimateInfo>(new ClimateLayer(map.DataStore));
+        map.DataStore.Allocate();
+        Assert.True(map.DataStore.TileCount > 100_000);
+        var stage = new JintWorldStage(new JintStageSpec
+        {
+            Name = "sweep-js", Order = 19,
+            Source = "function execute() { for (var i = 0; i < TILE_COUNT; i++) { setTemp(i, temp(i) * 0.99); } }",
+            Reads = new[] { typeof(ClimateInfo) }, Writes = new[] { typeof(ClimateInfo) },
+            Limits = new JintStageLimits { Timeout = TimeSpan.FromSeconds(30) },
+        });
+        stage.Execute(map);
+    }
+
+    [Fact]
     public void NoClrAccess()
     {
         using var map = TinyMap();
