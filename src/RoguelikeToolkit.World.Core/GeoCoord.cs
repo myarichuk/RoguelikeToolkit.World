@@ -42,18 +42,18 @@ public readonly record struct Vector3D(double X, double Y, double Z)
     public GeoCoord ToGeoCoord()
     {
         var n = Normalize();
-        return GeoCoord.FromRadians(Math.Asin(n.Z), Math.Atan2(n.Y, n.X));
+        return GeoCoord.FromRadians(DetMath.Asin(n.Z), DetMath.Atan2(n.Y, n.X));
     }
 
     public static Vector3D FromGeoCoord(GeoCoord geo)
     {
         var lat = geo.LatitudeRad;
         var lon = geo.LongitudeRad;
-        var cosLat = Math.Cos(lat);
+        var cosLat = DetMath.Cos(lat);
         return new Vector3D(
-            cosLat * Math.Cos(lon),
-            cosLat * Math.Sin(lon),
-            Math.Sin(lat)
+            cosLat * DetMath.Cos(lon),
+            cosLat * DetMath.Sin(lon),
+            DetMath.Sin(lat)
         );
     }
 }

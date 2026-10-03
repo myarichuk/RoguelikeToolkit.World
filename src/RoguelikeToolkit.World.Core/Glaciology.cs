@@ -54,7 +54,7 @@ public static class Glaciology
     {
         if (height < ElevationGenerationStage.SeaLevel) return false;
         var geo = position.ToGeoCoord();
-        double t = Math.Pow(Math.Abs(geo.Latitude) / 90.0, 1.25);
+        double t = DetMath.Pow(Math.Abs(geo.Latitude) / 90.0, 1.25);
         double snowline = SnowlineEquator + (SnowlinePole - SnowlineEquator) * t;
         double noise = SphereNoise.Fbm(position * 5.0, MaskNoiseSalt);
         return height >= snowline + noise * MaskNoiseAmp;

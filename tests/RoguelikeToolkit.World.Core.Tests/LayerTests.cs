@@ -6,6 +6,8 @@ using SharpArena.Allocators;
 
 namespace RoguelikeToolkit.World.Core.Tests;
 
+// Wall-clock ratio test inside: never overlap with other CPU-heavy classes in the same collection.
+[Collection("CpuTiming")]
 public class LayerTests
 {
     #pragma warning disable CS0649 // Populated via WorldDataStore memory mapping, not direct assignment.
@@ -117,17 +119,22 @@ public class LayerTests
         long first = TimeExecuteTicks();
 
         const int repeatRuns = 5;
-        long repeatTotal = 0;
+        var repeats = new long[repeatRuns];
         for (int i = 0; i < repeatRuns; i++)
         {
-            repeatTotal += TimeExecuteTicks();
+            repeats[i] = TimeExecuteTicks();
         }
 
-        double repeatedAverage = repeatTotal / (double)repeatRuns;
+        // Median, not mean: xUnit runs other CPU-heavy classes in parallel, and one
+        // contended run must not read as a regression (this failed ~8% of full-suite
+        // runs on main with the mean). A systematic slowdown moves the median; a
+        // scheduling spike does not.
+        Array.Sort(repeats);
+        double repeatedMedian = repeats[repeatRuns / 2];
 
         Assert.True(
-            repeatedAverage <= first * 1.35,
-            $"Repeated executes regressed too much: first={first} ticks, repeated avg={repeatedAverage:F2} ticks");
+            repeatedMedian <= first * 1.35,
+            $"Repeated executes regressed too much: first={first} ticks, repeated median={repeatedMedian:F2} ticks");
     }
 
     private static void PrewarmTopology(int size)

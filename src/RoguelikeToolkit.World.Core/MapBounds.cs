@@ -6,6 +6,24 @@ namespace RoguelikeToolkit.World.Core;
 /// </summary>
 public readonly record struct MapBounds(GeoCoord Center, double RadiusKm, int[] EdgeTiles)
 {
+    // The synthesized record equality would compare EdgeTiles by reference, so two
+    // bounds describing the same ring would be unequal. Compare by content.
+    public bool Equals(MapBounds other)
+        => Center.Equals(other.Center)
+        && RadiusKm.Equals(other.RadiusKm)
+        && (ReferenceEquals(EdgeTiles, other.EdgeTiles)
+            || (EdgeTiles != null && other.EdgeTiles != null && EdgeTiles.AsSpan().SequenceEqual(other.EdgeTiles)));
+
+    public override int GetHashCode()
+    {
+        var hash = new HashCode();
+        hash.Add(Center);
+        hash.Add(RadiusKm);
+        if (EdgeTiles != null)
+            foreach (int tile in EdgeTiles) hash.Add(tile);
+        return hash.ToHashCode();
+    }
+
     /// <summary>Bounds of the hex tile itself: neighbors form its edge ring.</summary>
     public static MapBounds ForPlanetTile(WorldDataStore store, int tileIndex)
     {
@@ -25,7 +43,7 @@ public readonly record struct MapBounds(GeoCoord Center, double RadiusKm, int[] 
         {
             edge[k] = neighbors[k];
             double dot = Math.Clamp(Vector3D.Dot(up, vectors[neighbors[k]]), -1.0, 1.0);
-            maxAngle = Math.Max(maxAngle, Math.Acos(dot));
+            maxAngle = Math.Max(maxAngle, DetMath.Acos(dot));
         }
 
         return new MapBounds(center, maxAngle * 0.5 * World.EarthRadiusKm, edge);

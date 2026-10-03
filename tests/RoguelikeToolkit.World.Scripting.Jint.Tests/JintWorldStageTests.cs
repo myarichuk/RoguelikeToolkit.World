@@ -116,6 +116,61 @@ public class JintWorldStageTests
     }
 
     [Fact]
+    public void StatementBudget_ScalesWithTileCount_UnlessPinned()
+    {
+        var scaled = new JintStageLimits { BaseStatements = 1_000, StatementsPerTile = 50 };
+        Assert.Equal(1_000 + 50 * 163_842, scaled.EffectiveMaxStatements(163_842));
+        Assert.Equal(int.MaxValue, new JintStageLimits { BaseStatements = int.MaxValue, StatementsPerTile = 50 }.EffectiveMaxStatements(1_000_000));
+        Assert.Equal(7, new JintStageLimits { MaxStatements = 7 }.EffectiveMaxStatements(163_842));
+        Assert.Equal(16_000_000 + 2_048L * 163_842, new JintStageLimits().EffectiveMemoryLimitBytes(163_842));
+        Assert.Equal(1_000_000L, new JintStageLimits { MemoryLimitBytes = 1_000_000 }.EffectiveMemoryLimitBytes(163_842));
+        // The default must admit a per-tile pass over a size-7 world.
+        Assert.True(new JintStageLimits().EffectiveMaxStatements(163_842) >= 163_842 * 50);
+    }
+
+    [Fact]
+    public void PerTileLoop_FitsScaledBudget_ButNotAnEqualFixedCap()
+    {
+        const string source = "function execute() { for (var i = 0; i < TILE_COUNT; i++) { setTemp(i, temp(i)); } }";
+        JintWorldStage Make(JintStageLimits limits) => new(new JintStageSpec
+        {
+            Name = "loop-js", Order = 19, Source = source,
+            Reads = new[] { typeof(ClimateInfo) }, Writes = new[] { typeof(ClimateInfo) },
+            Limits = limits,
+        });
+
+        using var map = TinyMap();
+        int tiles = map.DataStore.TileCount;
+
+        // A pinned cap below one statement per tile trips; the per-tile term is what admits the loop.
+        Make(new JintStageLimits { BaseStatements = 100, StatementsPerTile = 20 }).Execute(map);
+        Assert.Throws<InvalidOperationException>(() =>
+            Make(new JintStageLimits { MaxStatements = tiles / 2 }).Execute(map));
+    }
+
+    [Fact]
+    public void PerTileSweep_FitsPerTileAllowances_OnAnyMapSize()
+    {
+        // A read+write sweep costs ~1 statement and ~250 B per tile. Budgets with *no* fixed
+        // base must still admit it purely through the per-tile terms, which is what lets the
+        // defaults cover a size-7 world (a full 163k-tile run is ~1.3 s, too CPU-heavy to keep
+        // in the suite: it starves the timing-sensitive tests running beside it on CI).
+        using var map = TinyMap();
+        var stage = new JintWorldStage(new JintStageSpec
+        {
+            Name = "sweep-js", Order = 19,
+            Source = "function execute() { for (var i = 0; i < TILE_COUNT; i++) { setTemp(i, temp(i) * 0.99); } }",
+            Reads = new[] { typeof(ClimateInfo) }, Writes = new[] { typeof(ClimateInfo) },
+            Limits = new JintStageLimits
+            {
+                BaseStatements = 0, StatementsPerTile = 20,
+                BaseMemoryBytes = 2_000_000, MemoryBytesPerTile = 4_096,
+            },
+        });
+        stage.Execute(map);
+    }
+
+    [Fact]
     public void NoClrAccess()
     {
         using var map = TinyMap();

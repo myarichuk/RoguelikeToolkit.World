@@ -56,22 +56,25 @@ public static class MapSeeds
     public const int LocalSalt = 0x4D415033;
     public const int LocalTileSalt = 0x4D415034;
 
+    // Each tier is its own stream keyed by (worldSeed, tier salt); the address
+    // components are folded in one Derive step at a time. Every step passes
+    // through the SplitMix finalizer, so (tile, cell) pairs cannot cancel each
+    // other the way a linear a*K1 + b*K2 pre-mix can (which also collided
+    // (worldSeed ^ salt) across tiers of different worlds).
+
     /// <summary>Seed of the region map rooted at a planet hex.</summary>
     public static uint DeriveRegionSeed(int worldSeed, int worldTileIndex)
-        => Rng.Create(worldSeed ^ RegionSalt, worldTileIndex).NextUInt();
+        => Rng.Create(worldSeed, RegionSalt).Derive(worldTileIndex).NextUInt();
 
     /// <summary>Seed of one region cell (parent stream for a local map).</summary>
     public static uint DeriveRegionCellSeed(int worldSeed, int worldTileIndex, int regionCellIndex)
-        => Rng.Create(worldSeed ^ RegionCellSalt, Mix(worldTileIndex, regionCellIndex)).NextUInt();
+        => Rng.Create(worldSeed, RegionCellSalt).Derive(worldTileIndex).Derive(regionCellIndex).NextUInt();
 
     /// <summary>Seed of the local map rooted at a region cell.</summary>
     public static uint DeriveLocalSeed(int worldSeed, int worldTileIndex, int regionCellIndex)
-        => Rng.Create(worldSeed ^ LocalSalt, Mix(worldTileIndex, regionCellIndex)).NextUInt();
+        => Rng.Create(worldSeed, LocalSalt).Derive(worldTileIndex).Derive(regionCellIndex).NextUInt();
 
     /// <summary>Seed of one local tile (leaf detail stream).</summary>
     public static uint DeriveLocalTileSeed(int worldSeed, int worldTileIndex, int regionCellIndex, int localTileIndex)
-        => Rng.Create(worldSeed ^ LocalTileSalt, Mix(Mix(worldTileIndex, regionCellIndex), localTileIndex)).NextUInt();
-
-    private static int Mix(int a, int b)
-        => unchecked(a * 7919 + b * 104729);
+        => Rng.Create(worldSeed, LocalTileSalt).Derive(worldTileIndex).Derive(regionCellIndex).Derive(localTileIndex).NextUInt();
 }

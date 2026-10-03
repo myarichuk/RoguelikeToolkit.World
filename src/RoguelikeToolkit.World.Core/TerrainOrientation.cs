@@ -48,7 +48,7 @@ public static class TerrainOrientation
         // Local east/north frame (matches ClimateStage's zonal convention).
         var geo = up.ToGeoCoord();
         double lonR = geo.LongitudeRad;
-        var east = new Vector3D(-Math.Sin(lonR), Math.Cos(lonR), 0);
+        var east = new Vector3D(-DetMath.Sin(lonR), DetMath.Cos(lonR), 0);
         if (east.Length < Epsilon) east = new Vector3D(1, 0, 0);
         east = east.Normalize();
         var north = Vector3D.Cross(up, east).Normalize();
@@ -133,7 +133,7 @@ public static class TerrainOrientation
         if (gradient.Length > Epsilon)
         {
             var downhill = gradient * -1;
-            aspect = Math.Atan2(Vector3D.Dot(downhill, east), Vector3D.Dot(downhill, north));
+            aspect = DetMath.Atan2(Vector3D.Dot(downhill, east), Vector3D.Dot(downhill, north));
         }
 
         // Strike: contour direction (tangent-perpendicular of the gradient),

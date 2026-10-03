@@ -15,8 +15,41 @@ namespace RoguelikeToolkit.World.Scripting.Jint;
 public sealed class JintStageLimits
 {
     public TimeSpan Timeout { get; init; } = TimeSpan.FromSeconds(5);
-    public int MaxStatements { get; init; } = 250_000;
-    public long MemoryLimitBytes { get; init; } = 16_000_000;
+    /// <summary>
+    /// Hard statement cap. Leave <c>null</c> (the default) to scale with the map:
+    /// <see cref="BaseStatements"/> + <see cref="StatementsPerTile"/> x tile count,
+    /// so a script that does bounded work per tile fits a size-7 world as well as
+    /// a size-3 one, while a runaway loop still dies at a finite, known count.
+    /// An explicit value is used exactly as given.
+    /// </summary>
+    public int? MaxStatements { get; init; }
+    /// <summary>Fixed part of the scaled budget (setup, helpers, per-run constants).</summary>
+    public int BaseStatements { get; init; } = 250_000;
+    /// <summary>Statements allowed per tile in the scaled budget.</summary>
+    public int StatementsPerTile { get; init; } = 200;
+
+    /// <summary>The statement budget for a map with this many tiles.</summary>
+    public int EffectiveMaxStatements(int tileCount)
+    {
+        if (MaxStatements is int explicitCap) return explicitCap;
+        long scaled = (long)BaseStatements + (long)StatementsPerTile * tileCount;
+        return (int)Math.Min(scaled, int.MaxValue);
+    }
+    /// <summary>
+    /// Hard allocation cap. Jint charges <em>cumulative</em> bytes allocated by the
+    /// script (boxed numbers on every host call included), not live memory, so a
+    /// fixed cap fails on big worlds exactly like a fixed statement cap. Leave
+    /// <c>null</c> to scale: <see cref="BaseMemoryBytes"/> +
+    /// <see cref="MemoryBytesPerTile"/> x tile count. An explicit value is exact.
+    /// </summary>
+    public long? MemoryLimitBytes { get; init; }
+    public long BaseMemoryBytes { get; init; } = 16_000_000;
+    /// <summary>Allocation allowance per tile (a trivial read/write loop uses ~240 B/tile).</summary>
+    public long MemoryBytesPerTile { get; init; } = 2_048;
+
+    /// <summary>The allocation budget for a map with this many tiles.</summary>
+    public long EffectiveMemoryLimitBytes(int tileCount)
+        => MemoryLimitBytes ?? BaseMemoryBytes + MemoryBytesPerTile * tileCount;
     public int MaxRecursion { get; init; } = 256;
 }
 
@@ -89,8 +122,8 @@ public sealed class JintWorldStage : IWorldGeneratorStage, IDeclaredStage, IStag
         var limits = _spec.Limits ?? new JintStageLimits();
         using var cts = new CancellationTokenSource(limits.Timeout + TimeSpan.FromSeconds(2));
         var token = cts.Token;
-        int maxStatements = limits.MaxStatements;
-        long memoryBytes = limits.MemoryLimitBytes;
+        int maxStatements = limits.EffectiveMaxStatements(store.TileCount);
+        long memoryBytes = limits.EffectiveMemoryLimitBytes(store.TileCount);
         TimeSpan timeout = limits.Timeout;
         int maxRecursion = limits.MaxRecursion;
 

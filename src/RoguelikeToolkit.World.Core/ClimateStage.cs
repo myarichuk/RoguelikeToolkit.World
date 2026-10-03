@@ -3,8 +3,8 @@ using System;
 namespace RoguelikeToolkit.World.Core;
 
 /// <summary>
-/// First-class climate layer. Temperature from latitude + lapse rate +
-/// continentality; precipitation from seamless noise modulated by orographic
+/// First-class climate layer. Temperature from latitude and the elevation
+/// lapse rate only (no continentality or ocean-heat term); precipitation from seamless noise modulated by orographic
 /// effects (windward wet / leeward rain shadow) and water proximity; wind as a
 /// zonal prevailing field (trades / westerlies / polar easterlies).
 /// Precipitation is box-blurred (PrecipSmoothingPasses, default 1, backlog
@@ -78,7 +78,7 @@ public class ClimateStage : IWorldGeneratorStage, ISeededStage
             // Zonal prevailing wind: trades (tropics, east->west), westerlies
             // (mid latitudes), polar easterlies. Tangent east vector at position.
             double lonR = geo.LongitudeRad;
-            var east = new Vector3D(-Math.Sin(lonR), Math.Cos(lonR), 0).Normalize();
+            var east = new Vector3D(-DetMath.Sin(lonR), DetMath.Cos(lonR), 0).Normalize();
             double absLat = Math.Abs(geo.Latitude);
             double dir = absLat < 30.0 ? -1.0 : (absLat < 60.0 ? 1.0 : -1.0);
             var wind = east * dir;

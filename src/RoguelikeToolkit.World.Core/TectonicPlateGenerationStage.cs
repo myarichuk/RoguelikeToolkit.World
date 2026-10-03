@@ -112,7 +112,7 @@ public class TectonicPlateGenerationStage : IWorldGeneratorStage, ISeededStage, 
             double u = r.NextDouble() * 2.0 - 1.0;
             double theta = r.NextDouble() * 2.0 * Math.PI;
             double s = Math.Sqrt(Math.Max(0.0, 1.0 - u * u));
-            seedDriftDirs.Add(new Vector3D(s * Math.Cos(theta), s * Math.Sin(theta), u));
+            seedDriftDirs.Add(new Vector3D(s * DetMath.Cos(theta), s * DetMath.Sin(theta), u));
         }
 
         ReadOnlySpan<Vector3D> tilePositions = store.GetTileVectors();
@@ -341,7 +341,7 @@ public class TectonicPlateGenerationStage : IWorldGeneratorStage, ISeededStage, 
                 span[i].Orogeny = 0f;
                 continue;
             }
-            double decay = Math.Exp(-dist[i] / Math.Max(0.25, (double)srcWidth[i]));
+            double decay = DetMath.Exp(-dist[i] / Math.Max(0.25, (double)srcWidth[i]));
             span[i].BoundaryDistance = dist[i];
             span[i].NearestBoundary = (PlateBoundaryType)srcType[i];
             span[i].Orogeny = (float)(srcDriver[i] * decay);

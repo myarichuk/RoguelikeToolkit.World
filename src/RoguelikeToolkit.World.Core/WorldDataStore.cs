@@ -309,7 +309,7 @@ public unsafe class WorldDataStore : IDisposable
         else
         {
             double edgeLat = Math.Max(Math.Abs((topRow + 1) * rowH - 90.0), Math.Abs(botRow * rowH - 90.0));
-            double cosEdge = Math.Abs(Math.Cos(edgeLat * GeoCoord.Deg2Rad));
+            double cosEdge = Math.Abs(DetMath.Cos(edgeLat * GeoCoord.Deg2Rad));
             lonRadius = (int)Math.Ceiling(topo.CoverDeg / (topo.LonCellDeg * cosEdge)) + 1;
             if (lonRadius >= topo.LonCells) lonRadius = topo.LonCells;
         }
@@ -486,7 +486,7 @@ public unsafe class WorldDataStore : IDisposable
         {
             for (int k = offsets[i]; k < offsets[i + 1]; k++)
             {
-                double ang = Math.Acos(Math.Clamp(Vector3D.Dot(vertices[i], vertices[neighbors[k]]), -1.0, 1.0));
+                double ang = DetMath.Acos(Math.Clamp(Vector3D.Dot(vertices[i], vertices[neighbors[k]]), -1.0, 1.0));
                 if (ang < minSpacing) minSpacing = ang;
                 if (ang > maxSpacing) maxSpacing = ang;
             }
