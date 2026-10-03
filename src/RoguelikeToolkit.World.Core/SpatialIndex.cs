@@ -246,15 +246,17 @@ public sealed class SpatialIndex
         for (int c = 0; c < cellCount; c++)
         {
             order[c] = c;
-            dots[c] = Vector3D.Dot(target, _cellCenters[c]);
+            dots[c] = -Vector3D.Dot(target, _cellCenters[c]); // negated: ascending key sort == nearest first
         }
-        Array.Sort(order, (a, b) => dots[b].CompareTo(dots[a]));
+        Array.Sort(dots, order);
 
         int best = -1;
         double bestDot = double.NegativeInfinity;
-        foreach (int c in order)
+        for (int p = 0; p < order.Length; p++)
         {
-            if (best >= 0 && dots[c] + Slack <= bestDot) break;
+            int c = order[p];
+            // dots was sorted alongside order: position p holds this cell's negated alignment.
+            if (best >= 0 && -dots[p] + Slack <= bestDot) break;
             for (int k = _cellOffsets[c]; k < _cellOffsets[c + 1]; k++)
             {
                 int t = _cellTiles[k];

@@ -20,6 +20,14 @@ public static class BiomeClassifier
     public const double ForestMinMoisture = 0.42;
     public const double DeepOceanHeight = -0.6;
 
+    /// <summary>Base danger of the moisture-threshold biomes; <see cref="Classify"/> returns the same values.</summary>
+    public static byte MoistureBiomeDanger(BiomeType biome) => biome switch
+    {
+        BiomeType.Jungle or BiomeType.Swamp => 2,
+        BiomeType.Forest => 1,
+        _ => 0,
+    };
+
     /// <summary>Biome and base danger for a tile, before glacier/canyon overrides and jitter.</summary>
     public static (BiomeType Biome, byte Danger) Classify(double height, double temperature, double moisture)
     {

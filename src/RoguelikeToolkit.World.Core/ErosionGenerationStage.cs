@@ -332,14 +332,6 @@ public class ErosionGenerationStage : IWorldGeneratorStage
 
     private static int[] DescendingOrder(float[] surface)
     {
-        int n = surface.Length;
-        var order = new int[n];
-        for (int i = 0; i < n; i++) order[i] = i;
-        Array.Sort(order, (a, b) =>
-        {
-            int c = surface[b].CompareTo(surface[a]);
-            return c != 0 ? c : a.CompareTo(b);
-        });
-        return order;
+        return TileOrdering.DescendingByValue(surface);
     }
 }

@@ -89,14 +89,25 @@ public class WorldGenerationPipeline : IDisposable
                 }
                 catch { /* path compare is best-effort; fall through to load */ }
 
+                // Only assemblies that reference the Core contracts can contain
+                // stages. Plugin folders also hold dependency DLLs (and sometimes
+                // the host's own); loading those as plugins pins them in a
+                // context for nothing and surfaces their load failures as noise.
+                if (!PluginLoadContext.MayContainStages(file))
+                    continue;
+
+                PluginLoadContext? ctx = null;
                 try
                 {
-                    var ctx = new PluginLoadContext(file);
+                    ctx = new PluginLoadContext(file);
                     assemblies.Add(ctx.LoadPluginAssembly(file));
                     _pluginContexts.Add(ctx);
                 }
                 catch (Exception ex)
                 {
+                    // A context that never made it into _pluginContexts would
+                    // otherwise stay alive (and keep the DLL locked) forever.
+                    try { ctx?.Unload(); } catch { /* best-effort */ }
                     diagnostics.Add(new StageDiscoveryDiagnostic($"Failed to load plugin assembly '{file}'.", ex));
                 }
             }
@@ -105,7 +116,14 @@ public class WorldGenerationPipeline : IDisposable
         var stageTypes = assemblies
             .SelectMany(a => {
                 try { return (IEnumerable<Type>)a.GetTypes(); }
-                catch (ReflectionTypeLoadException e) { return e.Types.OfType<Type>(); }
+                catch (ReflectionTypeLoadException e)
+                {
+                    // Keep the types that did load, but never swallow why the rest did not.
+                    var detail = string.Join("; ", e.LoaderExceptions.Where(x => x != null).Select(x => x!.Message).Distinct());
+                    diagnostics.Add(new StageDiscoveryDiagnostic(
+                        $"Some types in assembly '{a.GetName().Name}' failed to load: {detail}", e));
+                    return e.Types.OfType<Type>();
+                }
             })
             .Where(t => typeof(IWorldGeneratorStage).IsAssignableFrom(t) && !t.IsInterface && !t.IsAbstract)
             .Select(t => new { Type = t, Attribute = t.GetCustomAttribute<WorldGeneratorStageAttribute>() })

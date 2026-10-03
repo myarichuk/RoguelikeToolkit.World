@@ -277,6 +277,7 @@ public unsafe class WorldDataStore : IDisposable
     /// </summary>
     public int GetTileIndex(GeoCoord coord)
     {
+        ThrowIfNotFinite(coord);
         var target = Vector3D.FromGeoCoord(coord);
         var topo = _topology;
 
@@ -345,11 +346,17 @@ public unsafe class WorldDataStore : IDisposable
             }
         }
 
-        // Fall back whenever no candidate won, not just when none were visited:
-        // a NaN target (e.g. Asin of a non-unit vector) poisons every dot score,
-        // leaving bestIndex at -1 despite visited candidates. Returning -1 here
-        // used to crash GetGeoCoord callers with IndexOutOfRangeException.
+        // Non-finite input is rejected up front, so a miss here can only mean an
+        // empty neighborhood (tiny topologies): fall back to the exhaustive scan.
         return bestIndex >= 0 ? bestIndex : GetTileIndexExact(coord);
+    }
+
+    // NaN/Infinity used to resolve silently to tile 0 (every dot score lost),
+    // handing callers a plausible-looking but wrong tile.
+    private static void ThrowIfNotFinite(GeoCoord coord)
+    {
+        if (!double.IsFinite(coord.Latitude) || !double.IsFinite(coord.Longitude))
+            throw new ArgumentOutOfRangeException(nameof(coord), coord, "Latitude and longitude must be finite.");
     }
 
     /// <summary>
@@ -357,6 +364,7 @@ public unsafe class WorldDataStore : IDisposable
     /// </summary>
     public int GetTileIndexExact(GeoCoord coord)
     {
+        ThrowIfNotFinite(coord);
         var target = Vector3D.FromGeoCoord(coord);
         int bestIndex = 0;
         double bestScore = double.NegativeInfinity;

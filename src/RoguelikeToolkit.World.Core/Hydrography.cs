@@ -50,13 +50,7 @@ public static class Hydrography
         // Copy heights first: Span cannot be captured by the sort lambda.
         var snapshot = new float[n];
         for (int i = 0; i < n; i++) snapshot[i] = elev[i].Height;
-        var order = new int[n];
-        for (int i = 0; i < n; i++) order[i] = i;
-        Array.Sort(order, (a, b) =>
-        {
-            int c = snapshot[b].CompareTo(snapshot[a]);
-            return c != 0 ? c : a.CompareTo(b);
-        });
+        var order = TileOrdering.DescendingByValue(snapshot);
 
         Span<int> scratch = stackalloc int[6];
         var heights = new float[n];
@@ -325,19 +319,23 @@ public static class Hydrography
         var snapshot = new float[n];
         for (int i = 0; i < n; i++) snapshot[i] = surface[i];
         var depth = drainDepth.IsEmpty ? null : drainDepth.ToArray();
-        var order = new int[n];
-        for (int i = 0; i < n; i++) order[i] = i;
-        Array.Sort(order, (a, b) =>
+        int[] order;
+        if (depth == null)
         {
-            int c = snapshot[b].CompareTo(snapshot[a]);
-            if (c != 0) return c;
-            if (depth != null)
+            order = TileOrdering.DescendingByValue(snapshot);
+        }
+        else
+        {
+            order = new int[n];
+            for (int i = 0; i < n; i++) order[i] = i;
+            Array.Sort(order, (a, b) =>
             {
-                c = depth[b].CompareTo(depth[a]);
+                int c = snapshot[b].CompareTo(snapshot[a]);
                 if (c != 0) return c;
-            }
-            return a.CompareTo(b);
-        });
+                c = depth[b].CompareTo(depth[a]);
+                return c != 0 ? c : a.CompareTo(b);
+            });
+        }
 
         bool hasSink = !evapSink.IsEmpty;
         bool hasLoss = !channelLoss.IsEmpty;

@@ -113,7 +113,7 @@ public class LocalMapGenerationStage : IWorldGeneratorStage, ISeededStage
     /// different set member; each pass reads from a snapshot so the result is
     /// independent of tile iteration order.
     /// </summary>
-    internal static void SmoothMoistureBiomes(WorldDataStore store, Span<LocalMapInfo> span, int passes)
+    public static void SmoothMoistureBiomes(WorldDataStore store, Span<LocalMapInfo> span, int passes)
     {
         var current = new BiomeType[span.Length];
         for (int i = 0; i < span.Length; i++) current[i] = span[i].Biome;
@@ -154,6 +154,12 @@ public class LocalMapGenerationStage : IWorldGeneratorStage, ISeededStage
             {
                 if (flipTo[i] < 0) continue;
                 var info = span[i];
+                // Danger = biome base + per-tile jitter. Re-base it so a flipped
+                // tile does not keep the old biome's danger.
+                int rebased = info.DangerLevel
+                    - BiomeClassifier.MoistureBiomeDanger(info.Biome)
+                    + BiomeClassifier.MoistureBiomeDanger((BiomeType)flipTo[i]);
+                info.DangerLevel = (byte)Math.Clamp(rebased, 0, 5);
                 info.Biome = (BiomeType)flipTo[i];
                 span[i] = info;
                 current[i] = info.Biome;
