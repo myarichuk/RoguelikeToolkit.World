@@ -18,8 +18,10 @@ public class WorldMap : IDisposable
 
     public void RegisterLayer<T>(IMapLayer<T> layer) where T : unmanaged
     {
-        _layers[typeof(T)] = layer;
+        // Store first: it throws after Allocate(), and the map must not keep a
+        // layer the store does not have.
         DataStore.RegisterLayer<T>();
+        _layers[typeof(T)] = layer;
     }
 
     public IMapLayer<T>? GetLayer<T>() where T : unmanaged

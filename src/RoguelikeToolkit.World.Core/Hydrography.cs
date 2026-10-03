@@ -11,6 +11,15 @@ namespace RoguelikeToolkit.World.Core;
 /// </summary>
 public static class Hydrography
 {
+    /// <summary>
+    /// Discharge at which a tile counts as a river (and the base for canyon
+    /// cutting). The single definition shared by erosion, hydrology, biomes and
+    /// range extraction; <paramref name="scale"/> is
+    /// <see cref="HydrologyStage.RiverThresholdScale"/>.
+    /// </summary>
+    public static float RiverThreshold(int tileCount, float scale = 1f)
+        => Math.Max(6f, tileCount / 200f) * scale;
+
     public static int LowestNeighbor(WorldDataStore store, ReadOnlySpan<float> heights, int tile, Span<int> scratch)
     {
         int adjacent = store.GetAdjacent(tile, scratch);
@@ -201,6 +210,68 @@ public static class Hydrography
     }
 
     /// <summary>
+    /// Receiver of a single tile, identical to <c>ComputeReceivers(...)[tile]</c>
+    /// but computed locally: strict descents are O(1); a tile on a flat only
+    /// explores its own equal-surface plateau (the same reverse BFS, seeded by
+    /// the plateau's draining rim tiles in index order). Use for single-tile
+    /// queries instead of routing the whole planet.
+    /// </summary>
+    public static int ReceiverAt(WorldDataStore store, Func<int, float> surface, int tile)
+    {
+        Span<int> nbs = stackalloc int[6];
+        int Lowest(int t, Span<int> scratch)
+        {
+            int adj = store.GetAdjacent(t, scratch);
+            int lowest = -1;
+            float best = surface(t);
+            for (int k = 0; k < adj; k++)
+            {
+                float h = surface(scratch[k]);
+                if (h < best) { best = h; lowest = scratch[k]; }
+            }
+            return lowest;
+        }
+
+        int direct = Lowest(tile, nbs);
+        if (direct >= 0) return direct;
+
+        // Plateau = connected receiverless tiles at exactly this surface level;
+        // seeds = routed tiles at the same level touching it.
+        float level = surface(tile);
+        var plateau = new List<int> { tile };
+        var inPlateau = new HashSet<int> { tile };
+        var seeds = new SortedSet<int>();
+        Span<int> inner = stackalloc int[6];
+        for (int head = 0; head < plateau.Count; head++)
+        {
+            int adj = store.GetAdjacent(plateau[head], nbs);
+            for (int k = 0; k < adj; k++)
+            {
+                int nb = nbs[k];
+                if (surface(nb) != level || inPlateau.Contains(nb) || seeds.Contains(nb)) continue;
+                if (Lowest(nb, inner) >= 0) seeds.Add(nb);
+                else { inPlateau.Add(nb); plateau.Add(nb); }
+            }
+        }
+
+        var claimed = new Dictionary<int, int>();
+        var queue = new Queue<int>(seeds);
+        while (queue.Count > 0)
+        {
+            int cur = queue.Dequeue();
+            int adj = store.GetAdjacent(cur, nbs);
+            for (int k = 0; k < adj; k++)
+            {
+                int nb = nbs[k];
+                if (!inPlateau.Contains(nb) || claimed.ContainsKey(nb)) continue;
+                claimed[nb] = cur;
+                queue.Enqueue(nb);
+            }
+        }
+        return claimed.TryGetValue(tile, out int r) ? r : -1;
+    }
+
+    /// <summary>
     /// Trace a river reach along resolved receivers (flat-safe, unlike raw
     /// steepest descent which stalls on fill plateaus). The path runs from the
     /// head through river tiles and includes one terminal tile: the sea/lake
@@ -378,8 +449,9 @@ public static class LakeSolver
             regions.Add(region);
         }
 
+        var bed = heights.ToArray(); // once, not per region (was a full-planet LOH copy each)
         foreach (var region in regions)
-            ResolveRegion(store, heights, filled, flowFilled, receiverFilled, runoff, evap, region, solution, scratch);
+            ResolveRegion(store, heights, bed, filled, flowFilled, receiverFilled, runoff, evap, region, solution, scratch);
 
         return solution;
     }
@@ -387,6 +459,7 @@ public static class LakeSolver
     private static void ResolveRegion(
         WorldDataStore store,
         ReadOnlySpan<float> heights,
+        float[] bed,
         ReadOnlySpan<float> filled,
         ReadOnlySpan<float> flowFilled,
         ReadOnlySpan<int> receiverFilled,
@@ -425,8 +498,6 @@ public static class LakeSolver
         double external = Math.Max(0.0, incoming - internalPass);
 
         // Grow the ponded set while supply beats evaporation (lowest tiles first).
-        // (Copy to an array: spans cannot be captured by the sort lambda.)
-        var bed = heights.ToArray();
         region.Sort((a, b) =>
         {
             int c = bed[a].CompareTo(bed[b]);

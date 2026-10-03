@@ -53,6 +53,9 @@ public static class CitySiteScorer
             else if (hasElev && elev[w].Height < 0f) waterTiles.Add(w);
         }
         var tileVectors = store.GetTileVectors();
+        // Exact bucketed "any water within radius" instead of scanning every water
+        // tile (mostly ocean) per candidate: that was O(land x water).
+        SpatialIndex? waterIndex = null;
         double radiusKm = filter.FreshWaterRadiusKm;
         bool useRadius = !double.IsNaN(radiusKm) && radiusKm > 0 && radiusKm < Math.PI * World.EarthRadiusKm;
         double cosThreshold = useRadius ? Math.Cos(radiusKm / World.EarthRadiusKm) : double.NaN;
@@ -103,24 +106,14 @@ public static class CitySiteScorer
                 if (radiusCoversGlobe) water = true;
                 else if (useRadius)
                 {
-                    var candidate = tileVectors[i];
-                    foreach (int wt in waterTiles)
-                    {
-                        if (wt == i) continue;
-                        if (Vector3D.Dot(candidate, tileVectors[wt]) >= cosThreshold) { water = true; break; }
-                    }
+                    waterIndex ??= new SpatialIndex(store, isWater: waterTiles.Contains, isGlacier: _ => false);
+                    water = waterIndex.AnyWithin(tileVectors[i], FeatureKind.WaterBody, cosThreshold, exceptTile: i);
                 }
             }
             if (filter.RequireFreshWater && !water) continue;
 
-            double score = 1.0;
             var reasons = new List<string>();
-            if (water) { score += 1.0; reasons.Add("water"); }
-            if (biome is BiomeType.Plains or BiomeType.Forest) { score += 0.5; reasons.Add("fertile"); }
-            if (biome is BiomeType.Tundra or BiomeType.Desert or BiomeType.Mountain or BiomeType.Canyon) { score -= 0.5; reasons.Add("harsh"); }
-            if (h > 0.35f) { score -= 0.3; reasons.Add("high"); }
-            score -= effDanger * 0.2;
-            score += habDelta;
+            double score = SettlementScoring.Score(water, biome, h, effDanger, habDelta, reasons);
             if (habDelta != 0) reasons.Add("history");
             if (dangerDelta != 0) reasons.Add("past-events");
 
@@ -135,7 +128,13 @@ public static class CitySiteScorer
             });
         }
 
-        result.Sort((a, b) => b.Score.CompareTo(a.Score));
+        // Scores are discrete and heavily tied; List.Sort is unstable, so break
+        // ties by tile index to keep TopN deterministic.
+        result.Sort((a, b) =>
+        {
+            int c = b.Score.CompareTo(a.Score);
+            return c != 0 ? c : a.TileIndex.CompareTo(b.TileIndex);
+        });
         int topN = Math.Max(0, filter.TopN);
         if (result.Count > topN) result.RemoveRange(topN, result.Count - topN);
         return result;

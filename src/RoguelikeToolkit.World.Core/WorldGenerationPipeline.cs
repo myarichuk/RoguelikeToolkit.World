@@ -20,6 +20,11 @@ public class WorldGenerationPipeline : IDisposable
     // Declared required Reads per stage, rebuilt with the order cache so
     // steady-state Execute validates without reflection (zero-GC guarantee).
     private readonly List<(string Stage, Type Layer)> _readsCache = new();
+    // Layers cleared before any stage runs: each declared layer's first writer
+    // that does not read it. Re-running the pipeline on a used map therefore
+    // never lets a stage observe the previous run's output (e.g. climate seeing
+    // stale hydrology), and results depend only on seed and configuration.
+    private readonly List<Type> _clearCache = new();
     private bool _cacheDirty = true;
 
     public IReadOnlyList<IWorldGeneratorStage> Stages => _stages;
@@ -41,6 +46,7 @@ public class WorldGenerationPipeline : IDisposable
         _readsCache.Clear();
         _orderedCache.Clear();
         _writesCache.Clear();
+        _clearCache.Clear();
         foreach (var ctx in _pluginContexts)
         {
             try { ctx.Unload(); } catch { /* cooperative unload is best-effort */ }
@@ -224,8 +230,16 @@ public class WorldGenerationPipeline : IDisposable
             _readsCache.Clear();
             _orderedCache.AddRange(_stages.OrderBy(StageMetadata.GetOrder));
             _writesCache.Clear();
+            _clearCache.Clear();
+            var written = new HashSet<Type>();
             foreach (var stage in _orderedCache)
             {
+                var stageReads = StageMetadata.GetReads(stage);
+                foreach (var w in StageMetadata.GetWrites(stage))
+                {
+                    if (written.Add(w) && Array.IndexOf(stageReads, w) < 0)
+                        _clearCache.Add(w);
+                }
                 foreach (var r in StageMetadata.GetReads(stage))
                     _readsCache.Add((StageMetadata.DisplayName(stage), r));
                 foreach (var w in StageMetadata.GetWrites(stage))
@@ -248,6 +262,8 @@ public class WorldGenerationPipeline : IDisposable
                 throw new InvalidOperationException(
                     $"Stage '{stageName}' writes layer '{layer.Name}' but it is not registered. Call RegisterLayer<{layer.Name}>() before Allocate().");
         }
+        foreach (var layer in _clearCache)
+            map.DataStore.ClearLayer(layer);
         foreach (var stage in _orderedCache)
         {
             stage.Execute(map);

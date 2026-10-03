@@ -305,13 +305,7 @@ public sealed class SettlementInjector : ISiteInjector
             }
             int effDanger = context.GetDanger(i) + (int)MathF.Round(dangerDelta);
 
-            double score = 1.0;
-            if (water) score += 1.0;
-            if (biome is BiomeType.Plains or BiomeType.Forest) score += 0.5;
-            if (biome is BiomeType.Tundra or BiomeType.Desert or BiomeType.Mountain or BiomeType.Canyon) score -= 0.5;
-            if (context.GetElevation(i) > 0.35f) score -= 0.3;
-            score -= effDanger * 0.2;
-            score += habDelta;
+            double score = SettlementScoring.Score(water, biome, context.GetElevation(i), effDanger, habDelta);
             scored.Add((i, score));
         }
         scored.Sort((a, b) =>

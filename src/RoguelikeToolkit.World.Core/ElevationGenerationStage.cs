@@ -7,6 +7,10 @@ public class ElevationGenerationStage : IWorldGeneratorStage, ISeededStage
 {
     public const double SeaLevel = 0.0;
 
+    // Hotspot dome is exp(-a^2 / (2 * 0.055^2)); it falls below the 0.01 floor at
+    // a = 0.055 * sqrt(2 ln 100) ~= 0.1669 rad. Skip Acos/Exp for tiles beyond it.
+    private static readonly double HotspotCutoffDot = Math.Cos(0.055 * Math.Sqrt(2.0 * Math.Log(100.0))) - 1e-9;
+
     public int Seed { get; set; } = 42;
     public double NoiseAmplitude { get; set; } = 0.55;
     public double NoiseFrequency { get; set; } = 3.0;
@@ -90,6 +94,7 @@ public class ElevationGenerationStage : IWorldGeneratorStage, ISeededStage
             for (int h = 0; h < hotspots.Length; h++)
             {
                 double dot = Math.Clamp(Vector3D.Dot(v, hotspots[h]), -1.0, 1.0);
+                if (dot < HotspotCutoffDot) continue; // swell < 0.01 beyond this angle
                 double ang = Math.Acos(dot);
                 double swell = Math.Exp(-(ang * ang) / (2.0 * 0.055 * 0.055));
                 if (swell > 0.01) height += swell * HotspotAmplitude;

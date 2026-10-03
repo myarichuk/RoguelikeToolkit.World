@@ -820,14 +820,5 @@ public static class RegionMaps
     }
 
     private static (BiomeType Biome, byte Danger) LocalBiome(float height, float temperature, float moisture)
-    {
-        if (height < SeaLevel) return (BiomeType.Ocean, height < -0.6f ? (byte)2 : (byte)0);
-        if (height > 0.5f) return (BiomeType.Mountain, 3);
-        if (temperature < 0.18f) return (BiomeType.Tundra, 1);
-        if (moisture < 0.32f && temperature > 0.55f) return (BiomeType.Desert, 2);
-        if (temperature > 0.72f && moisture > 0.55f) return (BiomeType.Jungle, 2);
-        if (moisture > 0.65f && temperature > 0.35f) return (BiomeType.Swamp, 2);
-        if (moisture > 0.42f) return (BiomeType.Forest, 1);
-        return (BiomeType.Plains, 0);
-    }
+        => BiomeClassifier.Classify(height, temperature, moisture);
 }

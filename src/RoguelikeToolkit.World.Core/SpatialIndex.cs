@@ -174,6 +174,29 @@ public sealed class SpatialIndex
         return NearestInMask(from, _masksByKind[kind]);
     }
 
+    /// <summary>
+    /// True when any tile carrying <paramref name="kind"/> (other than
+    /// <paramref name="exceptTile"/>) lies within the angle whose cosine is
+    /// <paramref name="cosThreshold"/> of <paramref name="from"/>. Exact: cells
+    /// that provably cannot hold a qualifying tile (same slack bound as
+    /// <see cref="NearestInMask"/>) are skipped; no sort, no allocation.
+    /// </summary>
+    public bool AnyWithin(Vector3D from, FeatureKind kind, double cosThreshold, int exceptTile = -1)
+    {
+        if (!_masksByKind.TryGetValue(kind, out var mask)) return false;
+        for (int c = 0; c < _cellCenters.Length; c++)
+        {
+            if (Vector3D.Dot(from, _cellCenters[c]) + Slack < cosThreshold) continue;
+            for (int k = _cellOffsets[c]; k < _cellOffsets[c + 1]; k++)
+            {
+                int t = _cellTiles[k];
+                if (t == exceptTile || !mask[t]) continue;
+                if (Vector3D.Dot(from, _vectors[t]) >= cosThreshold) return true;
+            }
+        }
+        return false;
+    }
+
     /// <summary>Nearest tile carrying <paramref name="kind"/> to a map address (via its planet tile).</summary>
     public (int TileIndex, double DistanceKm)? NearestFeature(MapAddress address, FeatureKind kind)
         => NearestFeature(_store.GetGeoCoord(address.WorldTileIndex), kind);

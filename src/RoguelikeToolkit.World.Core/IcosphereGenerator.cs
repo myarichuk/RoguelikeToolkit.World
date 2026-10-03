@@ -11,6 +11,8 @@ namespace RoguelikeToolkit.World.Core
 
     public static class IcosphereGenerator
     {
+        private const long EdgeKeyStride = 1_000_003L; // prime > max vertex count (size 7 = 163,842)
+
         private static int AddVertex(Vector3D p, List<Vector3D> vertices)
         {
             vertices.Add(p.Normalize());
@@ -22,7 +24,11 @@ namespace RoguelikeToolkit.World.Core
             bool firstIsSmaller = p1 < p2;
             long smallerIndex = firstIsSmaller ? p1 : p2;
             long greaterIndex = firstIsSmaller ? p2 : p1;
-            long key = (smallerIndex << 32) + greaterIndex;
+            // Key must not be (small << 32) + big: Int64.GetHashCode() is lo ^ hi, so
+            // that packing hashes to small ^ big and collides massively (size 7 took
+            // ~5s). Multiplying by a prime larger than any vertex count keeps the key
+            // unique and well distributed.
+            long key = smallerIndex * EdgeKeyStride + greaterIndex;
 
             if (cache.TryGetValue(key, out int ret))
             {

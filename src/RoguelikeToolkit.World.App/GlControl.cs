@@ -106,10 +106,11 @@ namespace RoguelikeToolkit.World.App
 
         // Sparse catalogs + per-tile classifications, rebuilt after every
         // pipeline run. Drives the Water/Deposits color modes and the hex panel.
-        private readonly RiverCatalog _rivers = new();
-        private readonly WaterBodyCatalog _bodies = new();
-        private readonly RangeCatalog _ranges = new();
-        private readonly DepositCatalog _deposits = new();
+        private RiverCatalog _rivers = new();
+        private WaterBodyCatalog _bodies = new();
+        private RangeCatalog _ranges = new();
+        private DepositCatalog _deposits = new();
+        private int _requestedPlateCount = 12;
         private WaterBodyKind?[] _waterKindByTile = Array.Empty<WaterBodyKind?>();
         private bool[] _glacierByTile = Array.Empty<bool>();
         private DepositType?[] _depositByTile = Array.Empty<DepositType?>();
@@ -119,62 +120,208 @@ namespace RoguelikeToolkit.World.App
 
         public GlControl()
         {
-            InitializeLayers();
+            // First world is built synchronously: the control needs a map to exist.
+            // Every later (re)generation runs off the UI thread (RequestGeneration).
+            Adopt(Generate(RecursionLevel, _requestedPlateCount, WorldSeed));
         }
 
-        private void InitializeLayers()
+        /// <summary>
+        /// A fully generated world plus everything derived from it for display.
+        /// Built on a worker thread with no access to control state, then swapped
+        /// in on the UI thread, so the visible world is never mutated mid-render.
+        /// </summary>
+        private sealed class GeneratedWorld : IDisposable
         {
-            // Clean up existing map and pipeline if they exist
-            _map?.Dispose();
-            _pipeline?.Dispose();
+            public WorldMap Map = null!;
+            public WorldGenerationPipeline Pipeline = null!;
+            public TectonicPlateLayer PlateLayer = null!;
+            public ElevationLayer ElevLayer = null!;
+            public HydrologyLayer HydroLayer = null!;
+            public ClimateLayer ClimateLayer = null!;
+            public LocalMapLayer LocalLayer = null!;
+            public RiverCatalog Rivers = new();
+            public WaterBodyCatalog Bodies = new();
+            public RangeCatalog Ranges = new();
+            public DepositCatalog Deposits = new();
+            public WaterBodyKind?[] WaterKindByTile = Array.Empty<WaterBodyKind?>();
+            public bool[] GlacierByTile = Array.Empty<bool>();
+            public DepositType?[] DepositByTile = Array.Empty<DepositType?>();
+            public long GenMs;
 
-            int size = RecursionLevel;
-            _map = new WorldMap(size);
-
-            int seedCount = _plateLayer?.SeedCount ?? 12;
-
-            _plateLayer = new TectonicPlateLayer(_map.DataStore, seedCount);
-            _map.RegisterLayer(_plateLayer);
-
-            _elevLayer = new ElevationLayer(_map.DataStore);
-            _map.RegisterLayer(_elevLayer);
-
-            // Full field-layer set: the discovered pipeline writes hydrology
-            // and climate too (missing layers used to crash Execute). Keep in
-            // sync with WorldBuilder's registration.
-            _hydroLayer = new HydrologyLayer(_map.DataStore);
-            _map.RegisterLayer(_hydroLayer);
-
-            _climateLayer = new ClimateLayer(_map.DataStore);
-            _map.RegisterLayer(_climateLayer);
-
-            _localLayer = new LocalMapLayer(_map.DataStore, 42, _plateLayer);
-            _map.RegisterLayer(_localLayer);
-
-            _map.DataStore.Allocate();
-
-            _pipeline = new WorldGenerationPipeline();
-            _pipeline.Discover("Plugins"); // Try to discover external plugins if any
-
-            // Set params on stages before execution
-            foreach (var seeded in _pipeline.Stages.OfType<ISeededStage>())
+            public void Dispose()
             {
-                seeded.Seed = WorldSeed;
+                Map?.Dispose();
+                Pipeline?.Dispose();
             }
+        }
 
-            var tectonicStage = _pipeline.Stages.OfType<TectonicPlateGenerationStage>().FirstOrDefault();
-            if (tectonicStage != null)
-            {
-                tectonicStage.SeedCount = seedCount;
-            }
-
+        private static GeneratedWorld Generate(int size, int seedCount, int seed)
+        {
+            var g = new GeneratedWorld();
             var sw = Stopwatch.StartNew();
-            _pipeline.Execute(_map);
-            sw.Stop();
-            LastGenMs = sw.ElapsedMilliseconds;
+            try
+            {
+                g.Map = new WorldMap(size);
 
-            RefreshWaterCatalogs();
+                g.PlateLayer = new TectonicPlateLayer(g.Map.DataStore, seedCount, seed);
+                g.Map.RegisterLayer(g.PlateLayer);
+                g.ElevLayer = new ElevationLayer(g.Map.DataStore);
+                g.Map.RegisterLayer(g.ElevLayer);
+                // Full field-layer set: the discovered pipeline writes hydrology
+                // and climate too (missing layers used to crash Execute). Keep in
+                // sync with WorldBuilder's registration.
+                g.HydroLayer = new HydrologyLayer(g.Map.DataStore);
+                g.Map.RegisterLayer(g.HydroLayer);
+                g.ClimateLayer = new ClimateLayer(g.Map.DataStore);
+                g.Map.RegisterLayer(g.ClimateLayer);
+                g.LocalLayer = new LocalMapLayer(g.Map.DataStore, seed, g.PlateLayer);
+                g.Map.RegisterLayer(g.LocalLayer);
+                g.Map.DataStore.Allocate();
+
+                g.Pipeline = new WorldGenerationPipeline();
+                g.Pipeline.Discover("Plugins"); // Try to discover external plugins if any
+
+                // Set params on stages before execution
+                foreach (var seeded in g.Pipeline.Stages.OfType<ISeededStage>())
+                    seeded.Seed = seed;
+                var tectonicStage = g.Pipeline.Stages.OfType<TectonicPlateGenerationStage>().FirstOrDefault();
+                if (tectonicStage != null)
+                    tectonicStage.SeedCount = seedCount;
+
+                g.Pipeline.Execute(g.Map);
+                g.GenMs = sw.ElapsedMilliseconds;
+
+                BuildOverlays(g, seed);
+                return g;
+            }
+            catch
+            {
+                g.Dispose();
+                throw;
+            }
+        }
+
+        private static void BuildOverlays(GeneratedWorld g, int seed)
+        {
+            var map = g.Map;
+            HydrologyStage.PopulateCatalogs(map, g.Rivers, g.Bodies);
+            RangeCatalogBuilder.Populate(map, g.Ranges);
+            DepositCatalogBuilder.Populate(map, g.Deposits, seed);
+
+            int n = map.DataStore.TileCount;
+            var kinds = new WaterBodyKind?[n];
+            foreach (var body in g.Bodies.Bodies)
+            {
+                foreach (int t in body.Tiles)
+                {
+                    if ((uint)t < (uint)n) kinds[t] = body.Kind;
+                }
+            }
+            g.WaterKindByTile = kinds;
+
+            var elev = map.DataStore.GetSpan<ElevationInfo>();
+            var climate = map.DataStore.GetSpan<ClimateInfo>();
+            var vectors = map.DataStore.GetTileVectors();
+            var glac = new bool[n];
+            for (int t = 0; t < n; t++)
+                glac[t] = Glaciology.IsGlacierTile(vectors[t], elev[t].Height,
+                    climate[t].Temperature, climate[t].Precipitation);
+            g.GlacierByTile = glac;
+
+            // Richest deposit per tile wins the overlay marker.
+            var markers = new DepositType?[n];
+            var best = new float[n];
+            for (int k = 0; k < n; k++) best[k] = -1f;
+            foreach (var d in g.Deposits.Deposits)
+            {
+                if ((uint)d.TileIndex >= (uint)n) continue;
+                if (d.Richness > best[d.TileIndex])
+                {
+                    best[d.TileIndex] = d.Richness;
+                    markers[d.TileIndex] = d.Type;
+                }
+            }
+            g.DepositByTile = markers;
+        }
+
+        /// <summary>UI thread only: make a generated world the visible one and release the old one.</summary>
+        private void Adopt(GeneratedWorld g)
+        {
+            var oldMap = _map;
+            var oldPipeline = _pipeline;
+
+            _map = g.Map;
+            _pipeline = g.Pipeline;
+            _plateLayer = g.PlateLayer;
+            _elevLayer = g.ElevLayer;
+            _hydroLayer = g.HydroLayer;
+            _climateLayer = g.ClimateLayer;
+            _localLayer = g.LocalLayer;
+            _rivers = g.Rivers;
+            _bodies = g.Bodies;
+            _ranges = g.Ranges;
+            _deposits = g.Deposits;
+            _waterKindByTile = g.WaterKindByTile;
+            _glacierByTile = g.GlacierByTile;
+            _depositByTile = g.DepositByTile;
+            LastGenMs = g.GenMs;
+
+            oldMap?.Dispose();
+            oldPipeline?.Dispose();
             UpdateStatus();
+        }
+
+        private bool _generating;
+        private bool _generationQueued;
+
+        /// <summary>
+        /// Generates a world for the current size / plate count / seed on a worker
+        /// thread and swaps it in when done. Requests that arrive meanwhile
+        /// coalesce: the stale result is discarded and the latest parameters win.
+        /// </summary>
+        private void RequestGeneration()
+        {
+            if (_generating)
+            {
+                _generationQueued = true;
+                return;
+            }
+
+            _generating = true;
+            int size = RecursionLevel, plates = _requestedPlateCount, seed = WorldSeed;
+            StatusText = $"Generating seed {seed}, size {size}...";
+            StatusChanged?.Invoke(this, EventArgs.Empty);
+
+            System.Threading.Tasks.Task.Run(() => Generate(size, plates, seed)).ContinueWith(t =>
+                Dispatcher.UIThread.Post(() => OnGenerated(t)));
+        }
+
+        private void OnGenerated(System.Threading.Tasks.Task<GeneratedWorld> task)
+        {
+            _generating = false;
+
+            if (task.IsFaulted)
+            {
+                OnDiagnostic?.Invoke($"World generation failed: {task.Exception?.GetBaseException().Message}");
+                StatusText = "Generation failed (see diagnostics)";
+                StatusChanged?.Invoke(this, EventArgs.Empty);
+            }
+            else if (_generationQueued)
+            {
+                task.Result.Dispose(); // superseded by a newer request
+            }
+            else
+            {
+                Adopt(task.Result);
+                _needsMeshRebuild = true;
+                RenderFrame();
+            }
+
+            if (_generationQueued)
+            {
+                _generationQueued = false;
+                RequestGeneration();
+            }
         }
 
         /// <summary>Everything attached to one hex (river reach, water, glacier, deposits...).</summary>
@@ -193,117 +340,28 @@ namespace RoguelikeToolkit.World.App
         public TileFeatureInfo GetTileFeatures(int tileIndex)
             => TileFeatures.Query(_map.DataStore, tileIndex, _rivers, _bodies, _ranges, _deposits);
 
-        private void RefreshWaterCatalogs()
-        {
-            _rivers.Rivers.Clear();
-            _bodies.Bodies.Clear();
-            _ranges.Features.Clear();
-            _deposits.Deposits.Clear();
-            HydrologyStage.PopulateCatalogs(_map, _rivers, _bodies);
-            RangeCatalogBuilder.Populate(_map, _ranges);
-            DepositCatalogBuilder.Populate(_map, _deposits, WorldSeed);
-
-            int n = _map.DataStore.TileCount;
-            var kinds = new WaterBodyKind?[n];
-            foreach (var body in _bodies.Bodies)
-            {
-                foreach (int t in body.Tiles)
-                {
-                    if ((uint)t < (uint)n) kinds[t] = body.Kind;
-                }
-            }
-            _waterKindByTile = kinds;
-
-            var elev = _elevLayer.Store.GetSpan<ElevationInfo>();
-            var climate = _climateLayer.Store.GetSpan<ClimateInfo>();
-            var vectors = _map.DataStore.GetTileVectors();
-            var glac = new bool[n];
-            for (int t = 0; t < n; t++)
-                glac[t] = Glaciology.IsGlacierTile(vectors[t], elev[t].Height,
-                    climate[t].Temperature, climate[t].Precipitation);
-            _glacierByTile = glac;
-
-            // Richest deposit per tile wins the overlay marker.
-            var markers = new DepositType?[n];
-            var best = new float[n];
-            for (int k = 0; k < n; k++) best[k] = -1f;
-            foreach (var d in _deposits.Deposits)
-            {
-                if ((uint)d.TileIndex >= (uint)n) continue;
-                if (d.Richness > best[d.TileIndex])
-                {
-                    best[d.TileIndex] = d.Richness;
-                    markers[d.TileIndex] = d.Type;
-                }
-            }
-            _depositByTile = markers;
-        }
-
         public void SetRecursionLevel(int level)
         {
             if (level == RecursionLevel) return;
             RecursionLevel = level;
 
             // Debounced: slider drags rebuild the whole world; wait for the user to settle.
-            Debounce(() =>
-            {
-                InitializeLayers();
-
-                _needsMeshRebuild = true;
-                RenderFrame();
-            });
+            Debounce(RequestGeneration);
         }
 
         public void SetPlateCount(int count)
         {
-            if (_plateLayer == null || count == _plateLayer.SeedCount) return;
+            if (count == _requestedPlateCount) return;
+            _requestedPlateCount = count;
 
-            _plateLayer.SeedCount = count;
-
-            var tectonicStage = _pipeline.Stages.OfType<TectonicPlateGenerationStage>().FirstOrDefault();
-            if (tectonicStage != null)
-            {
-                tectonicStage.SeedCount = count;
-            }
-
-            // Debounced: slider drags re-run the pipeline; wait for the user to settle.
-            Debounce(() =>
-            {
-                var sw = Stopwatch.StartNew();
-                _pipeline.Execute(_map);
-                sw.Stop();
-                LastGenMs = sw.ElapsedMilliseconds;
-
-                RefreshWaterCatalogs();
-                Recolor();
-                UpdateStatus();
-            });
+            // Debounced: slider drags regenerate; wait for the user to settle.
+            Debounce(RequestGeneration);
         }
 
         public void Regenerate(int seed)
         {
             WorldSeed = seed;
-
-            foreach (var seeded in _pipeline.Stages.OfType<ISeededStage>())
-            {
-                seeded.Seed = seed;
-            }
-
-            var tectonicStage = _pipeline.Stages.OfType<TectonicPlateGenerationStage>().FirstOrDefault();
-            if (tectonicStage != null)
-            {
-                tectonicStage.SeedCount = _plateLayer.SeedCount;
-            }
-
-            var sw = Stopwatch.StartNew();
-            _pipeline.Execute(_map);
-            sw.Stop();
-            LastGenMs = sw.ElapsedMilliseconds;
-
-            RefreshWaterCatalogs();
-            _needsMeshRebuild = true;
-            UpdateStatus();
-            RenderFrame();
+            RequestGeneration();
         }
 
         public void SetColorMode(ColorMode mode)
@@ -523,7 +581,8 @@ namespace RoguelikeToolkit.World.App
                     _debounceTimer.Stop();
                     var pending = _pendingDebounceAction;
                     _pendingDebounceAction = null;
-                    pending?.Invoke();
+                    try { pending?.Invoke(); }
+                    catch (Exception ex) { OnDiagnostic?.Invoke($"Deferred action failed: {ex.Message}"); }
                 };
             }
             else
@@ -592,6 +651,10 @@ namespace RoguelikeToolkit.World.App
             _uShowHexes = gl.GetUniformLocationString(_shaderProgram, "uShowHexes");
             _uTerrainMode = gl.GetUniformLocationString(_shaderProgram, "uTerrainMode");
             _uSelectedHexCenter = gl.GetUniformLocationString(_shaderProgram, "uSelectedHexCenter");
+
+            // Resolved once per context, not per frame.
+            _glUniform1i = Marshal.GetDelegateForFunctionPointer<glUniform1i_t>(gl.GetProcAddress("glUniform1i"));
+            _glUniform3f = Marshal.GetDelegateForFunctionPointer<glUniform3f_t>(gl.GetProcAddress("glUniform3f"));
 
             SetupMesh(gl);
         }
@@ -695,7 +758,7 @@ namespace RoguelikeToolkit.World.App
 
             // Indexed generation: face corners ARE tile indices, so coloring needs
             // no per-vertex store lookups and no project->inverse roundtrips.
-            IcosphereGenerator.Generate(RecursionLevel, out RoguelikeToolkit.World.Core.Vector3D[] tileVerts, out TriangleIndices[] faces);
+            IcosphereGenerator.Generate(_map.DataStore.Size, out RoguelikeToolkit.World.Core.Vector3D[] tileVerts, out TriangleIndices[] faces);
             int tileCount = tileVerts.Length;
 
             IProjection? projectionObj = ProjectionMode switch
@@ -914,6 +977,31 @@ namespace RoguelikeToolkit.World.App
 
         delegate void glUniform1i_t(int location, int v0);
         delegate void glUniform3f_t(int location, float v0, float v1, float v2);
+        private glUniform1i_t? _glUniform1i;
+        private glUniform3f_t? _glUniform3f;
+
+        protected override void OnOpenGlDeinit(GlInterface gl)
+        {
+            if (_vao != 0)
+            {
+                int[] buffers = { _vboPos, _vboNormal, _vboBary, _vboColor };
+                fixed (int* pBuffers = buffers)
+                {
+                    gl.DeleteBuffers(4, pBuffers);
+                }
+                int vao = _vao;
+                gl.DeleteVertexArrays(1, &vao);
+                _vao = _vboPos = _vboNormal = _vboBary = _vboColor = 0;
+            }
+            if (_shaderProgram != 0)
+            {
+                gl.DeleteProgram(_shaderProgram);
+                _shaderProgram = 0;
+            }
+            _glUniform1i = null;
+            _glUniform3f = null;
+            base.OnOpenGlDeinit(gl);
+        }
 
         protected override void OnOpenGlRender(GlInterface gl, int fb)
         {
@@ -967,8 +1055,8 @@ namespace RoguelikeToolkit.World.App
             gl.UniformMatrix4fv(_uMvpMatrix, 1, false, mvpPtr);
             gl.UniformMatrix4fv(_uModelMatrix, 1, false, modelPtr);
 
-            var glUniform1i = Marshal.GetDelegateForFunctionPointer<glUniform1i_t>(gl.GetProcAddress("glUniform1i"));
-            var glUniform3f = Marshal.GetDelegateForFunctionPointer<glUniform3f_t>(gl.GetProcAddress("glUniform3f"));
+            var glUniform1i = _glUniform1i!;
+            var glUniform3f = _glUniform3f!;
 
             bool terrain = ViewMode == ViewMode.Terrain;
             glUniform1i(_uShowPlates, ShowPlates ? 1 : 0);

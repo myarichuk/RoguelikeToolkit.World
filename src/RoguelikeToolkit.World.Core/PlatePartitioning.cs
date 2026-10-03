@@ -187,9 +187,14 @@ public sealed class NoisyFloodFillPlatePartitioner : IPlatePartitioner
             int plate = owner[cur];
 
             int adjacent = store.GetAdjacent(cur, neighbors);
+            // Every step costs at least 1/speed (wobble >= 0), so a neighbor already
+            // settled cheaper than that bound can neither improve nor tie: skip the
+            // noise evaluation entirely.
+            double minStep = 1.0 / Math.Max(0.05, _speeds[plate]);
             for (int k = 0; k < adjacent; k++)
             {
                 int nb = neighbors[k];
+                if (curDist + minStep > dist[nb] + 1e-12) continue;
                 double step = EntryCost(positions[nb], plate, _speeds[plate], seed, roughness, freq);
                 double nd = curDist + step;
                 double od = dist[nb];

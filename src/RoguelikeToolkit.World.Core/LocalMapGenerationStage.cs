@@ -18,6 +18,9 @@ public class LocalMapGenerationStage : IWorldGeneratorStage, ISeededStage
     /// <summary>Majority-vote cleanup passes over the moisture biome set.</summary>
     public int SmoothingPasses { get; set; } = 2;
 
+    /// <summary>Must match <see cref="HydrologyStage.RiverThresholdScale"/> so canyon biomes agree with rivers (WorldBuilder wires it).</summary>
+    public float RiverThresholdScale { get; set; } = 1f;
+
     public LocalMapGenerationStage()
     {
     }
@@ -45,14 +48,12 @@ public class LocalMapGenerationStage : IWorldGeneratorStage, ISeededStage
 
         var beds = new float[store.TileCount];
         for (int i = 0; i < beds.Length; i++) beds[i] = elev[i].Height;
-        float riverThreshold = Math.Max(6f, store.TileCount / 200f);
+        float riverThreshold = Hydrography.RiverThreshold(store.TileCount, RiverThresholdScale);
         Span<int> neighbors = stackalloc int[6];
 
         for (int i = 0; i < span.Length; i++)
         {
             double height = elev[i].Height;
-            var geo = vectors[i].ToGeoCoord();
-
             double temperature, moisture;
             if (hasClimate)
             {
@@ -61,70 +62,30 @@ public class LocalMapGenerationStage : IWorldGeneratorStage, ISeededStage
             }
             else
             {
-                temperature = 1.0 - Math.Abs(geo.Latitude) / 90.0;
+                temperature = 1.0 - Math.Abs(vectors[i].ToGeoCoord().Latitude) / 90.0;
                 temperature -= Math.Max(0.0, height) * 0.35;
                 moisture = SphereNoise.Fbm(vectors[i] * 2.0 + moistureOffset, Seed + 1000) * 0.5 + 0.5;
             }
 
-            bool glacier = hasClimate
-                ? Glaciology.IsGlacierTile(vectors[i], elev[i].Height, (float)temperature, (float)moisture)
-                : Glaciology.IsGlacierTile(vectors[i], elev[i].Height);
-
-            BiomeType biome;
-            byte danger;
-            if (height < ElevationGenerationStage.SeaLevel)
+            // Ocean/land decision ladder is shared with local maps; glacier and
+            // canyon override land only. Glacier outranks mountain: a high, wet,
+            // cold tile is ice, not rock; dry cold peaks stay Mountain.
+            var (biome, danger) = BiomeClassifier.Classify(height, temperature, moisture);
+            if (biome != BiomeType.Ocean)
             {
-                biome = BiomeType.Ocean;
-                danger = height < -0.6 ? (byte)2 : (byte)0;
-            }
-            // Precedence: glacier outranks mountain. A high, wet, cold tile is
-            // ice (Glacier), not rock (Mountain); dry cold peaks fall through
-            // to Mountain below. Tundra then claims what is cold but neither
-            // ice nor rock.
-            else if (glacier)
-            {
-                biome = BiomeType.Glacier;
-                danger = 2;
-            }
-            else if (IsCanyonTile(store, elev, hydro, hasHydro, moisture, i, riverThreshold, beds, neighbors))
-            {
-                biome = BiomeType.Canyon;
-                danger = 3;
-            }
-            else if (height > 0.5)
-            {
-                biome = BiomeType.Mountain;
-                danger = 3;
-            }
-            else if (temperature < 0.18)
-            {
-                biome = BiomeType.Tundra;
-                danger = 1;
-            }
-            else if (moisture < 0.32 && temperature > 0.55)
-            {
-                biome = BiomeType.Desert;
-                danger = 2;
-            }
-            else if (temperature > 0.72 && moisture > 0.55)
-            {
-                biome = BiomeType.Jungle;
-                danger = 2;
-            }
-            else if (moisture > 0.65 && temperature > 0.35)
-            {
-                biome = BiomeType.Swamp;
-                danger = 2;
-            }
-            else if (moisture > 0.42)
-            {
-                biome = BiomeType.Forest;
-                danger = 1;
-            }
-            else
-            {
-                biome = BiomeType.Plains;
-                danger = 0;
+                bool glacier = hasClimate
+                    ? Glaciology.IsGlacierTile(vectors[i], elev[i].Height, (float)temperature, (float)moisture)
+                    : Glaciology.IsGlacierTile(vectors[i], elev[i].Height);
+                if (glacier)
+                {
+                    biome = BiomeType.Glacier;
+                    danger = 2;
+                }
+                else if (IsCanyonTile(store, elev, hydro, hasHydro, moisture, i, riverThreshold, beds, neighbors))
+                {
+                    biome = BiomeType.Canyon;
+                    danger = 3;
+                }
             }
 
             // Small deterministic per-tile jitter so neighboring same-biome tiles vary.

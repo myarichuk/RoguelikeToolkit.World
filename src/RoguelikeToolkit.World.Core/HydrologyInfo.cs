@@ -22,24 +22,7 @@ public struct HydrologyInfo
     public byte IsPlaya;
 }
 
-public class HydrologyLayer : IMapLayer<HydrologyInfo>, IDisposable
+public class HydrologyLayer : StoreLayer<HydrologyInfo>
 {
-    private readonly WorldDataStore _store;
-
-    public WorldDataStore Store => _store;
-
-    public HydrologyLayer(WorldDataStore store)
-    {
-        _store = store;
-    }
-
-    public HydrologyInfo GetValue(GeoCoord coord)
-    {
-        int index = _store.GetTileIndex(coord);
-        return _store.GetRef<HydrologyInfo>(index);
-    }
-
-    public void Dispose()
-    {
-    }
+    public HydrologyLayer(WorldDataStore store) : base(store) { }
 }

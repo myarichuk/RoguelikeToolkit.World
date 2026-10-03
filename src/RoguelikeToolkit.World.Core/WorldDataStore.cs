@@ -231,6 +231,16 @@ public unsafe class WorldDataStore : IDisposable
         }
     }
 
+    /// <summary>Zeroes one registered layer (all tiles).</summary>
+    public void ClearLayer(Type type)
+    {
+        if (_ptr == null) throw new InvalidOperationException("Store not allocated. Call Allocate() first.");
+        if (!_layerOffsets.TryGetValue(type, out long offset))
+            throw new ArgumentException($"Layer of type {type.Name} is not registered.");
+        long bytes = (long)_layerStrides[type] * _tileCount;
+        new Span<byte>(_ptr + _dataOffset + offset, checked((int)bytes)).Clear();
+    }
+
     public bool IsLayerRegistered(Type type) => _layerOffsets.ContainsKey(type);
 
     public bool IsLayerRegistered<T>() where T : unmanaged => _layerOffsets.ContainsKey(typeof(T));
@@ -303,11 +313,21 @@ public unsafe class WorldDataStore : IDisposable
             if (lonRadius >= topo.LonCells) lonRadius = topo.LonCells;
         }
 
+        // When the window wraps the whole circle, scan each column exactly once
+        // (otherwise polar rows were visited twice).
+        int lonStart = -lonRadius, lonEnd = lonRadius;
+        if (2 * lonRadius + 1 >= topo.LonCells)
+        {
+            lonStart = 0;
+            lonEnd = topo.LonCells - 1;
+            lonC = 0;
+        }
+
         for (int dLa = -latRadius; dLa <= latRadius; dLa++)
         {
             int la = latC + dLa;
             if (la < 0 || la >= topo.LatCells) continue;
-            for (int dLo = -lonRadius; dLo <= lonRadius; dLo++)
+            for (int dLo = lonStart; dLo <= lonEnd; dLo++)
             {
                 int lo = (lonC + dLo) % topo.LonCells;
                 if (lo < 0) lo += topo.LonCells;
