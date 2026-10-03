@@ -4,6 +4,8 @@ using Xunit;
 
 namespace RoguelikeToolkit.World.Core.Tests;
 
+// Millions of libm comparisons: serialized with LayerTests, whose perf smoke test is timing-sensitive.
+[Collection("CpuTiming")]
 public class DetMathTests
 {
     private static double UlpError(double actual, double expected)
