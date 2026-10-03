@@ -223,7 +223,7 @@ public class HexPickTests
                     double dPicked = Vector3D.Dot(hv, new Vector3D(vPicked.X, vPicked.Y, vPicked.Z));
                     double dExact = Vector3D.Dot(hv, new Vector3D(vExact.X, vExact.Y, vExact.Z));
                     if (Math.Abs(dPicked - dExact) < 1e-12) ties++;
-                    else Assert.True(false, $"state={name} click=({x},{y}) hit=({hitGeo.Latitude:F4},{hitGeo.Longitude:F4}) bucket={pick.TileIndex} exact={exact}");
+                    else Assert.Fail($"state={name} click=({x},{y}) hit=({hitGeo.Latitude:F4},{hitGeo.Longitude:F4}) bucket={pick.TileIndex} exact={exact}");
                 }
                 checkedPicks++;
             }

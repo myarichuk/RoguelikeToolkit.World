@@ -1,0 +1,51 @@
+Key: smallfolk
+LineageDefault: Bilineal
+Provenance: original pastoral diminutives for halflings
+PatronymicSon: son
+PatronymicDaughter: daughter
+Banned: [hobbit, baggins, took]
+GivenStems:
+  - {Form: Tob, Gloss: kind}
+  - {Form: Pip, Gloss: seed}
+  - {Form: Mil, Gloss: mill}
+  - {Form: Pos, Gloss: posy}
+  - {Form: Ham, Gloss: home}
+  - {Form: Dod, Gloss: round}
+  - {Form: Mer, Gloss: merry}
+  - {Form: Sam, Gloss: plain}
+  - {Form: Bramble, Gloss: bramble-picker}
+  - {Form: Clover, Gloss: clover-field}
+  - {Form: Daisy, Gloss: daisy-chain}
+  - {Form: Turnip, Gloss: turnip-digger}
+  - {Form: Honey, Gloss: honey-keeper}
+  - {Form: Barley, Gloss: barley-malt}
+  - {Form: Thistle, Gloss: thistle-down}
+  - {Form: Wren, Gloss: wren-friend}
+  - {Form: Pebble, Gloss: pebble-skipping}
+  - {Form: Sorrel, Gloss: sorrel-grazer}
+SecondStems:
+  - {Form: y, Gloss: diminutive}
+  - {Form: ie, Gloss: diminutive}
+  - {Form: kin, Gloss: little kin}
+  - {Form: blossom, Gloss: blossoming}
+  - {Form: foot, Gloss: light-footed}
+  - {Form: belly, Gloss: full-bellied}
+  - {Form: burrow, Gloss: burrow-born}
+  - {Form: field, Gloss: field-wise}
+  - {Form: honey, Gloss: honey-sweet}
+  - {Form: brave, Gloss: brave}
+FamilyAffixes:
+  - {Form: Underbough, Gloss: family under the boughs}
+  - {Form: Goodbarrow, Gloss: family of the good barrow}
+  - {Form: Ploughwick, Gloss: family of the plough village}
+  - {Form: Burrowfield, Gloss: family of the burrow field}
+Clans: []
+Epithets: []
+Descriptors:
+  - {Form: Green, Gloss: green, Tags: [valley, forest]}
+  - {Form: Barley, Gloss: barley-rich, Tags: [valley]}
+  - {Form: Mill, Gloss: mill-turned, Tags: [river]}
+Nouns:
+  - {Form: burrow, Gloss: burrow home, Tags: [village]}
+  - {Form: wick, Gloss: hamlet, Tags: [village]}
+  - {Form: field, Gloss: open field, Tags: [valley]}

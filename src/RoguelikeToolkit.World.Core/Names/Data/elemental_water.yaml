@@ -1,0 +1,56 @@
+Key: elemental_water
+LineageDefault: Bilineal
+Provenance: original tide/stream roots; courts of living water
+PatronymicSon: drop
+PatronymicDaughter: droplet
+Banned: []
+GivenStems:
+  - {Form: Brook, Gloss: brook}
+  - {Form: Rain, Gloss: rain}
+  - {Form: Mist, Gloss: mist}
+  - {Form: Tide, Gloss: tide}
+  - {Form: Wave, Gloss: wave}
+  - {Form: Foam, Gloss: foam}
+  - {Form: Pool, Gloss: still pool}
+  - {Form: Stream, Gloss: stream}
+  - {Form: Dew, Gloss: dew}
+  - {Form: Current, Gloss: current}
+  - {Form: Ripple, Gloss: ripple}
+  - {Form: Surge, Gloss: surge}
+  - {Form: Eddy, Gloss: eddy}
+  - {Form: Lagoon, Gloss: lagoon}
+  - {Form: Cascade, Gloss: cascade}
+  - {Form: Brine, Gloss: brine}
+  - {Form: Murk, Gloss: murk}
+  - {Form: Flow, Gloss: flow}
+  - {Form: Undertow, Gloss: undertow}
+  - {Form: Drizzle, Gloss: drizzle}
+SecondStems:
+  - {Form: tide, Gloss: tidal}
+  - {Form: stream, Gloss: streaming}
+  - {Form: mist, Gloss: misted}
+  - {Form: wave, Gloss: waving}
+  - {Form: foam, Gloss: foaming}
+  - {Form: rain, Gloss: raining}
+  - {Form: pool, Gloss: pool-born}
+  - {Form: surge, Gloss: surging}
+  - {Form: flow, Gloss: flowing}
+  - {Form: dew, Gloss: dew-fresh}
+FamilyAffixes:
+  - {Form: Tide court, Gloss: sworn to the tide court}
+  - {Form: Mist court, Gloss: sworn to the mist court}
+Clans:
+  - {Form: Tide court, Gloss: court of tides}
+  - {Form: Mist court, Gloss: court of mists}
+  - {Form: Deep court, Gloss: court of the deep}
+Epithets:
+  - {Form: Tideherald, Gloss: herald of tides}
+  - {Form: Raincaller, Gloss: caller of rain}
+Descriptors:
+  - {Form: Misty, Gloss: misty, Tags: [water, lake]}
+  - {Form: Flowing, Gloss: flowing, Tags: [river, water]}
+  - {Form: Sunken, Gloss: sunken, Tags: [lake, valley]}
+Nouns:
+  - {Form: spring, Gloss: ever-spring, Tags: [river, water]}
+  - {Form: falls, Gloss: falls, Tags: [river, mountain]}
+  - {Form: pool, Gloss: deep pool, Tags: [lake, water]}

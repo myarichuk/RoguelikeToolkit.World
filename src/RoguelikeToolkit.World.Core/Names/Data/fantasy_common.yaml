@@ -1,0 +1,70 @@
+Key: fantasy_common
+LineageDefault: Bilineal
+Provenance: original fantasy descriptors in the Darkwood/Duskwood shape
+PatronymicSon: son
+PatronymicDaughter: daughter
+FamilySuffix: true
+Banned: [drow, menzoberranzan, drizzt, gimli, gloin, moria, mithril, galadriel, legolas, hobbit, quenya, sindarin, khuzdul, faerun, lantan]
+GivenStems:
+  - {Form: Ald, Gloss: old}
+  - {Form: Bran, Gloss: raven}
+  - {Form: Cor, Gloss: crow}
+  - {Form: Dun, Gloss: dusky}
+  - {Form: Fen, Gloss: marsh}
+  - {Form: Gar, Gloss: spear}
+  - {Form: Hal, Gloss: hall}
+  - {Form: Mar, Gloss: boundary}
+  - {Form: Stan, Gloss: stone}
+  - {Form: Wil, Gloss: willow}
+  - {Form: Thorn, Gloss: thorn}
+  - {Form: Ash, Gloss: ash tree}
+  - {Form: Eagle, Gloss: eagle}
+  - {Form: Hawk, Gloss: hawk}
+  - {Form: Storm, Gloss: storm}
+  - {Form: Ember, Gloss: ember}
+  - {Form: Brook, Gloss: brook}
+  - {Form: Wolf, Gloss: wolf}
+SecondStems:
+  - {Form: ric, Gloss: ruler}
+  - {Form: win, Gloss: friend}
+  - {Form: ward, Gloss: guard}
+  - {Form: helm, Gloss: helmet}
+  - {Form: blood, Gloss: blood-sworn}
+  - {Form: eagle, Gloss: eagle-eyed}
+  - {Form: stone, Gloss: stone-hard}
+  - {Form: river, Gloss: river-born}
+  - {Form: night, Gloss: night-wise}
+  - {Form: brave, Gloss: brave}
+FamilyAffixes:
+  - {Form: bury, Gloss: fortified place}
+  - {Form: ford, Gloss: river crossing}
+  - {Form: ham, Gloss: homestead}
+  - {Form: ley, Gloss: clearing}
+Clans: []
+Epithets:
+  - {Form: Longfellow, Gloss: tall traveler}
+  - {Form: Swiftbrook, Gloss: fast stream}
+Descriptors:
+  - {Form: Clear, Gloss: clear, Tags: [water, lake, river]}
+  - {Form: Still, Gloss: calm, Tags: [water, lake]}
+  - {Form: Swift, Gloss: fast, Tags: [river]}
+  - {Form: Dark, Gloss: shadowed, Tags: [forest, dark, danger]}
+  - {Form: Dusk, Gloss: twilight, Tags: [forest, dark]}
+  - {Form: Thorn, Gloss: thorny, Tags: [forest]}
+  - {Form: Wolf, Gloss: wolf-haunted, Tags: [forest, danger]}
+  - {Form: Raven, Gloss: raven-haunted, Tags: [hill, danger]}
+  - {Form: Ember, Gloss: ember-red, Tags: [hill, danger]}
+  - {Form: Stone, Gloss: stony, Tags: [hill, mountain, deposit]}
+  - {Form: Frost, Gloss: frosty, Tags: [mountain, high]}
+  - {Form: Hollow, Gloss: sunken, Tags: [valley]}
+Nouns:
+  - {Form: wood, Gloss: forest, Tags: [forest]}
+  - {Form: water, Gloss: water, Tags: [water, river, lake]}
+  - {Form: ford, Gloss: crossing, Tags: [river]}
+  - {Form: brook, Gloss: stream, Tags: [river]}
+  - {Form: mere, Gloss: lake, Tags: [lake]}
+  - {Form: hill, Gloss: hill, Tags: [hill]}
+  - {Form: dale, Gloss: valley, Tags: [valley]}
+  - {Form: burg, Gloss: fortified town, Tags: [town, city]}
+  - {Form: ham, Gloss: homestead, Tags: [village]}
+  - {Form: holm, Gloss: river island, Tags: [river]}

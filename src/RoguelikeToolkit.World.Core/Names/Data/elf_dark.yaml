@@ -1,0 +1,52 @@
+Key: elf_dark
+LineageDefault: Matrilineal
+Provenance: original night/cave roots; generic dark-elven archetype, morally neutral
+PatronymicSon: oth
+PatronymicDaughter: eth
+Banned: [drow, drizzt, menzoberranzan, lolth]
+GivenStems:
+  - {Form: Vel, Gloss: veil}
+  - {Form: Nix, Gloss: night}
+  - {Form: Um, Gloss: shadow-calm}
+  - {Form: Mor, Gloss: deep-dark}
+  - {Form: Xal, Gloss: crystal-deep}
+  - {Form: Zyr, Gloss: memory}
+  - {Form: Il, Gloss: lamplight}
+  - {Form: Ssar, Gloss: cavern echo}
+  - {Form: Dru, Gloss: deep-craft}
+  - {Form: Ol, Gloss: elder dream}
+  - {Form: Thess, Gloss: thorn-veil}
+  - {Form: Mira, Gloss: still mirror}
+  - {Form: Eb, Gloss: ebon-calm}
+  - {Form: Nox, Gloss: night-tide}
+  - {Form: Vir, Gloss: glass-spire}
+  - {Form: Ul, Gloss: owl-wise}
+  - {Form: Wra, Gloss: wraith-quiet}
+  - {Form: Qis, Gloss: quiet crystal}
+SecondStems:
+  - {Form: eth, Gloss: child of night}
+  - {Form: ara, Gloss: keeper}
+  - {Form: oss, Gloss: echo}
+  - {Form: veiled, Gloss: veiled}
+  - {Form: deep, Gloss: deep-born}
+  - {Form: blood, Gloss: blood-sworn}
+  - {Form: eagle, Gloss: eagle-eyed}
+  - {Form: night, Gloss: night-wise}
+  - {Form: shade, Gloss: shaded}
+  - {Form: whisper, Gloss: whispering}
+FamilyAffixes:
+  - {Form: Nightveil, Gloss: house of the night veil}
+  - {Form: Deepmirror, Gloss: house of the deep mirror}
+Clans:
+  - {Form: Nightveil, Gloss: house of the night veil}
+  - {Form: Deepmirror, Gloss: house of the deep mirror}
+  - {Form: Cavernchoir, Gloss: house of the cavern choir}
+Epithets: []
+Descriptors:
+  - {Form: Night, Gloss: nighted, Tags: [dark, danger]}
+  - {Form: Deep, Gloss: deep, Tags: [mountain, valley, dark]}
+  - {Form: Pale, Gloss: lamplit, Tags: [dark, deposit]}
+Nouns:
+  - {Form: hollow, Gloss: cavern hall, Tags: [town, city, mountain]}
+  - {Form: veil, Gloss: shrouded vale, Tags: [valley]}
+  - {Form: deep, Gloss: the deep, Tags: [mountain]}

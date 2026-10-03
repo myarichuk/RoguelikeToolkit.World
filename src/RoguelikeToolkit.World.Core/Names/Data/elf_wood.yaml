@@ -1,0 +1,51 @@
+Key: elf_wood
+LineageDefault: Bilineal
+Provenance: original leaf/brook roots; generic wood-elven music
+PatronymicSon: on
+PatronymicDaughter: en
+Banned: [legolas, thranduil, sindarin]
+GivenStems:
+  - {Form: Fer, Gloss: beech}
+  - {Form: Lin, Gloss: pool}
+  - {Form: Trel, Gloss: oak}
+  - {Form: Wil, Gloss: willow}
+  - {Form: Ash, Gloss: ash tree}
+  - {Form: Brook, Gloss: stream}
+  - {Form: Leaf, Gloss: leaf}
+  - {Form: Row, Gloss: rowan}
+  - {Form: Hern, Gloss: heron}
+  - {Form: Birk, Gloss: birch}
+  - {Form: Alder, Gloss: alder}
+  - {Form: Wren, Gloss: wren}
+  - {Form: Otter, Gloss: otter-slide}
+  - {Form: Hart, Gloss: stag}
+  - {Form: Briar, Gloss: briar}
+  - {Form: Rain, Gloss: rain-soft}
+  - {Form: Fog, Gloss: fog-walker}
+  - {Form: Eagle, Gloss: eagle}
+SecondStems:
+  - {Form: bow, Gloss: archer}
+  - {Form: runner, Gloss: runner}
+  - {Form: singer, Gloss: singer}
+  - {Form: tracker, Gloss: tracker}
+  - {Form: warden, Gloss: warden}
+  - {Form: blood, Gloss: blood-sworn}
+  - {Form: eagle, Gloss: eagle-eyed}
+  - {Form: river, Gloss: river-born}
+  - {Form: night, Gloss: night-wise}
+  - {Form: brave, Gloss: brave}
+FamilyAffixes:
+  - {Form: Oakheart, Gloss: house of the oak heart}
+  - {Form: Brookwise, Gloss: house of brook wisdom}
+Clans:
+  - {Form: Oakheart, Gloss: house of the oak heart}
+  - {Form: Brookwise, Gloss: house of brook wisdom}
+Epithets: []
+Descriptors:
+  - {Form: Moss, Gloss: mossy, Tags: [forest]}
+  - {Form: Brook, Gloss: brook-fed, Tags: [river, forest]}
+  - {Form: Green, Gloss: green, Tags: [forest, valley]}
+Nouns:
+  - {Form: grove, Gloss: grove, Tags: [forest, village]}
+  - {Form: shaw, Gloss: copse, Tags: [forest]}
+  - {Form: combe, Gloss: hollow, Tags: [valley]}

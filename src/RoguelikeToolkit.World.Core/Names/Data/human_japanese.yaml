@@ -1,0 +1,53 @@
+Key: human_japanese
+LineageDefault: Patrilineal
+Provenance: family-first order; constrained nature compounds
+PatronymicSon: no suke
+PatronymicDaughter: no hime
+Banned: []
+GivenStems:
+  - {Form: Yama, Gloss: mountain}
+  - {Form: Kawa, Gloss: river}
+  - {Form: Mori, Gloss: forest}
+  - {Form: Hana, Gloss: flower}
+  - {Form: Sora, Gloss: sky}
+  - {Form: Ren, Gloss: lotus}
+  - {Form: Aki, Gloss: autumn}
+  - {Form: Haru, Gloss: spring}
+  - {Form: Taka, Gloss: hawk}
+  - {Form: Kame, Gloss: tortoise}
+  - {Form: Tsuru, Gloss: crane}
+  - {Form: Ryu, Gloss: dragon}
+  - {Form: Tora, Gloss: tiger}
+  - {Form: Umi, Gloss: sea}
+  - {Form: Yuki, Gloss: snow}
+  - {Form: Sakura, Gloss: cherry blossom}
+  - {Form: Fuji, Gloss: wisteria}
+  - {Form: Kaze, Gloss: wind}
+SecondStems:
+  - {Form: ko, Gloss: child}
+  - {Form: ro, Gloss: son}
+  - {Form: mi, Gloss: beauty}
+  - {Form: taka, Gloss: hawk-noble}
+  - {Form: ryu, Gloss: dragon-spirited}
+  - {Form: maru, Gloss: circle-completeness}
+  - {Form: nosuke, Gloss: protector-aid}
+  - {Form: hime, Gloss: princess}
+  - {Form: yuki, Gloss: snow-pure}
+  - {Form: kaze, Gloss: wind-swift}
+FamilyAffixes:
+  - {Form: Tanaka, Gloss: ricefield middle family}
+  - {Form: Yamada, Gloss: mountain field family}
+  - {Form: Kawachi, Gloss: river land family}
+Clans:
+  - {Form: Tanaka, Gloss: ricefield middle family}
+  - {Form: Yamada, Gloss: mountain field family}
+Epithets: []
+Descriptors:
+  - {Form: Shin, Gloss: new, Tags: [village, town]}
+  - {Form: O, Gloss: great, Tags: [mountain, city]}
+  - {Form: Kiyo, Gloss: clear, Tags: [water, river]}
+Nouns:
+  - {Form: mura, Gloss: village, Tags: [village]}
+  - {Form: machi, Gloss: town, Tags: [town]}
+  - {Form: yama, Gloss: mountain, Tags: [mountain]}
+  - {Form: kawa, Gloss: river, Tags: [river]}

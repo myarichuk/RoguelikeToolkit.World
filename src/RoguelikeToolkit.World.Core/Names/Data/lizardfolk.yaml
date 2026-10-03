@@ -1,0 +1,58 @@
+Key: lizardfolk
+LineageDefault: Matrilineal
+Provenance: original swamp/sun/scale roots; clutch-mother lineage
+PatronymicSon: seth
+PatronymicDaughter: setha
+Banned: []
+GivenStems:
+  - {Form: Ssass, Gloss: hiss-kin}
+  - {Form: Vess, Gloss: marsh water}
+  - {Form: Skess, Gloss: scale}
+  - {Form: Thoss, Gloss: sun-bask}
+  - {Form: Razz, Gloss: reed}
+  - {Form: Kess, Gloss: claw}
+  - {Form: Sliss, Gloss: mud-slide}
+  - {Form: Tiss, Gloss: tongue-flick}
+  - {Form: Hass, Gloss: heat-stone}
+  - {Form: Oss, Gloss: egg-clutch}
+  - {Form: Zass, Gloss: swamp mist}
+  - {Form: Kriss, Gloss: croc-smile}
+  - {Form: Nass, Gloss: nest-mud}
+  - {Form: Sess, Gloss: slow current}
+  - {Form: Viss, Gloss: vigil}
+  - {Form: Dross, Gloss: drift-log}
+  - {Form: Quess, Gloss: still pool}
+  - {Form: Yss, Gloss: coil}
+  - {Form: Bress, Gloss: brackish}
+  - {Form: Jiss, Gloss: jaw-snap}
+SecondStems:
+  - {Form: scale, Gloss: scaled}
+  - {Form: tail, Gloss: tailed}
+  - {Form: jaw, Gloss: jawed}
+  - {Form: hiss, Gloss: hissing}
+  - {Form: mire, Gloss: mired}
+  - {Form: sun, Gloss: sun-warmed}
+  - {Form: coil, Gloss: coiled}
+  - {Form: fang, Gloss: fanged}
+  - {Form: bog, Gloss: bog-born}
+  - {Form: watcher, Gloss: watcher}
+FamilyAffixes:
+  - {Form: Stillpool, Gloss: clutch of the still pool}
+  - {Form: Sunscale, Gloss: clutch of the sunlit scales}
+Clans:
+  - {Form: Stillpool, Gloss: clutch of the still pool}
+  - {Form: Sunscale, Gloss: clutch of the sunlit scales}
+  - {Form: Reedcoil, Gloss: clutch of the reed coil}
+  - {Form: Mudnest, Gloss: clutch of the mud nest}
+Epithets:
+  - {Form: Mossback, Gloss: moss-backed elder}
+  - {Form: Stillwater, Gloss: who waits like still water}
+Descriptors:
+  - {Form: Sunbaked, Gloss: sunbaked, Tags: [high]}
+  - {Form: Reedy, Gloss: reedy, Tags: [river, water]}
+  - {Form: Mired, Gloss: mired, Tags: [valley, water]}
+  - {Form: Hissing, Gloss: hiss-haunted, Tags: [forest, danger]}
+Nouns:
+  - {Form: wallow, Gloss: wallow hollow, Tags: [village, valley]}
+  - {Form: bask, Gloss: basking flat, Tags: [hill, high]}
+  - {Form: mere, Gloss: swamp lake, Tags: [lake, water]}

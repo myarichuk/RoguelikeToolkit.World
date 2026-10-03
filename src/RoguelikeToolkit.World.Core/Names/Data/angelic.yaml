@@ -1,0 +1,56 @@
+Key: angelic
+LineageDefault: Bilineal
+Provenance: original radiance/wind/dawn roots; generic fantasy, no religious lore
+PatronymicSon: ael
+PatronymicDaughter: aela
+Banned: [michael, gabriel, raphael, uriel, seraph, cherub, metatron]
+GivenStems:
+  - {Form: Ala, Gloss: dawn-glint}
+  - {Form: Eli, Gloss: clear song}
+  - {Form: Sera, Gloss: bright wind}
+  - {Form: Lumi, Gloss: light-bearer}
+  - {Form: Aeri, Gloss: high air}
+  - {Form: Sola, Gloss: sun-calm}
+  - {Form: Vesper, Gloss: evening star}
+  - {Form: Ori, Gloss: rising}
+  - {Form: Nima, Gloss: halo-mist}
+  - {Form: Caeli, Gloss: sky-blue}
+  - {Form: Fela, Gloss: feather-fall}
+  - {Form: Iri, Gloss: rainbow-gleam}
+  - {Form: Pala, Gloss: pale radiance}
+  - {Form: Anni, Gloss: grace-year}
+  - {Form: Thea, Gloss: beholding}
+  - {Form: Meri, Gloss: still shining}
+  - {Form: Ovia, Gloss: shepherd-light}
+  - {Form: Rava, Gloss: dawn chorus}
+  - {Form: Sela, Gloss: rock of light}
+  - {Form: Una, Gloss: oneness}
+SecondStems:
+  - {Form: light, Gloss: lit}
+  - {Form: wing, Gloss: winged}
+  - {Form: song, Gloss: singing}
+  - {Form: dawn, Gloss: dawn-touched}
+  - {Form: gleam, Gloss: gleaming}
+  - {Form: halo, Gloss: haloed}
+  - {Form: calm, Gloss: calming}
+  - {Form: star, Gloss: starred}
+  - {Form: wind, Gloss: wind-swift}
+  - {Form: veil, Gloss: veiled in light}
+FamilyAffixes:
+  - {Form: Dawnchoir, Gloss: choir of the dawn}
+  - {Form: Stillradiance, Gloss: order of still radiance}
+Clans:
+  - {Form: Dawnchoir, Gloss: choir of the dawn}
+  - {Form: Stillradiance, Gloss: order of still radiance}
+  - {Form: Highveil, Gloss: order of the high veil}
+Epithets:
+  - {Form: Lightward, Gloss: warden of light}
+  - {Form: Dawnkeeper, Gloss: keeper of the dawn}
+Descriptors:
+  - {Form: Radiant, Gloss: radiant, Tags: [high, mountain]}
+  - {Form: Still, Gloss: still and clear, Tags: [water, lake]}
+  - {Form: Dawning, Gloss: dawn-touched, Tags: [high, valley]}
+Nouns:
+  - {Form: spire, Gloss: light spire, Tags: [town, city, mountain]}
+  - {Form: beacon, Gloss: beacon hill, Tags: [hill]}
+  - {Form: glade, Gloss: shining glade, Tags: [forest, valley]}

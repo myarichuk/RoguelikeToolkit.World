@@ -16,19 +16,19 @@
              Owns the panel toggles and the primary action so everything stays
              reachable when panels are hidden on small screens. -->
         <Border Grid.Row="0" Background="#80000000" Padding="8,6">
-            <Grid ColumnDefinitions="Auto,Auto,*,Auto">
+            <Grid ColumnDefinitions="Auto,Auto,Auto,*,Auto">
                 <ToggleButton x:Name="BtnToggleControls" Grid.Column="0" Content="Controls"
                               IsChecked="True" Margin="0,0,6,0"
                               Background="#40FFFFFF" Foreground="White"
                               ToolTip.Tip="Show or hide the controls panel"/>
                 <ToggleButton x:Name="BtnToggleInfo" Grid.Column="1" Content="Hex Info"
-                              IsChecked="True"
+                              IsChecked="True" Margin="0,0,6,0"
                               Background="#40FFFFFF" Foreground="White"
                               ToolTip.Tip="Show or hide the selected-hex panel"/>
-                <TextBlock Grid.Column="2" Text="World Visualizer" Foreground="White"
+                <TextBlock Grid.Column="3" Text="World Visualizer" Foreground="White"
                            FontWeight="SemiBold" VerticalAlignment="Center"
                            HorizontalAlignment="Center" Margin="8,0"/>
-                <Button x:Name="BtnQuickRegen" Grid.Column="3" Content="Regenerate"
+                <Button x:Name="BtnQuickRegen" Grid.Column="4" Content="Regenerate"
                         Background="#40FFFFFF" Foreground="White"
                         ToolTip.Tip="Regenerate the world with the current seed"/>
             </Grid>

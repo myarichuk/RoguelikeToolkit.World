@@ -1,0 +1,53 @@
+Key: human_welsh
+LineageDefault: Patrilineal
+Provenance: real Welsh roots; ap/ab son-of and ferch daughter-of patterns
+PatronymicSon: map
+PatronymicDaughter: ferch
+PatronymicPrefix: true
+Banned: []
+GivenStems:
+  - {Form: Bran, Gloss: raven}
+  - {Form: Rhiannon, Gloss: great queen}
+  - {Form: Owain, Gloss: young warrior}
+  - {Form: Gwen, Gloss: fair, blessed}
+  - {Form: Dylan, Gloss: son of the wave}
+  - {Form: Rhys, Gloss: ardour}
+  - {Form: Eira, Gloss: snow}
+  - {Form: Taliesin, Gloss: shining brow}
+  - {Form: Carys, Gloss: love}
+  - {Form: Anwen, Gloss: very fair}
+  - {Form: Iolo, Gloss: worthy}
+  - {Form: Emyr, Gloss: honour}
+  - {Form: Bryn, Gloss: hill}
+  - {Form: Myfanwy, Gloss: my fine one}
+  - {Form: Madoc, Gloss: fortunate}
+  - {Form: Sian, Gloss: god is gracious}
+  - {Form: Gethin, Gloss: dark-skinned}
+  - {Form: Hafren, Gloss: river-journey}
+  - {Form: Cai, Gloss: rejoicer}
+  - {Form: Eagle, Gloss: eagle}
+SecondStems:
+  - {Form: wyn, Gloss: fair, blessed (masc)}
+  - {Form: wen, Gloss: fair, blessed (fem)}
+  - {Form: goch, Gloss: red-haired}
+  - {Form: fawr, Gloss: great}
+  - {Form: fach, Gloss: little}
+  - {Form: dylan, Gloss: of the wave}
+  - {Form: eagle, Gloss: eagle-eyed}
+  - {Form: bryn, Gloss: of the hill}
+  - {Form: deryn, Gloss: bird-swift}
+  - {Form: mor, Gloss: of the sea}
+# No family list: the map/ferch patronymic IS the Welsh surname ("Cai map Iolo").
+FamilyAffixes: []
+Clans: []
+Epithets: []
+Descriptors:
+  - {Form: Aber, Gloss: river mouth, Tags: [river]}
+  - {Form: Pen, Gloss: head, top, Tags: [hill, mountain]}
+  - {Form: Nant, Gloss: stream, valley, Tags: [river, valley]}
+Nouns:
+  - {Form: caer, Gloss: fort, Tags: [town, city]}
+  - {Form: llan, Gloss: parish, church dwelling, Tags: [village, town]}
+  - {Form: cwm, Gloss: valley, Tags: [valley]}
+  - {Form: pont, Gloss: bridge, Tags: [river]}
+  - {Form: dol, Gloss: meadow, Tags: [valley]}

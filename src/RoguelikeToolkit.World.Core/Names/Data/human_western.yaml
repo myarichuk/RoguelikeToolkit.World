@@ -1,0 +1,56 @@
+Key: human_western
+LineageDefault: Patrilineal
+Provenance: Germanic two-stem dithematic names; Ober Unter Alt Neu prefixes
+PatronymicSon: sen
+PatronymicDaughter: dochter
+FamilySuffix: true
+Banned: []
+GivenStems:
+  - {Form: Bern, Gloss: bear}
+  - {Form: Hard, Gloss: brave}
+  - {Form: Wil, Gloss: will}
+  - {Form: Fred, Gloss: peace}
+  - {Form: Ger, Gloss: spear}
+  - {Form: Hild, Gloss: battle}
+  - {Form: Ric, Gloss: ruler}
+  - {Form: Adel, Gloss: noble}
+  - {Form: Bjorn, Gloss: bear}
+  - {Form: Astrid, Gloss: divine beauty}
+  - {Form: Leof, Gloss: beloved}
+  - {Form: Ead, Gloss: prosperity}
+  - {Form: Sig, Gloss: victory}
+  - {Form: Brun, Gloss: brown-shield}
+  - {Form: Ot, Gloss: wealth}
+  - {Form: Arn, Gloss: eagle}
+  - {Form: Wolf, Gloss: wolf}
+  - {Form: Eber, Gloss: boar}
+SecondStems:
+  - {Form: hard, Gloss: hardy}
+  - {Form: win, Gloss: friend}
+  - {Form: gard, Gloss: guard}
+  - {Form: helm, Gloss: helmet}
+  - {Form: brand, Gloss: sword-fire}
+  - {Form: stan, Gloss: stone}
+  - {Form: wulf, Gloss: wolf}
+  - {Form: arn, Gloss: eagle}
+  - {Form: beorn, Gloss: bear-warrior}
+  - {Form: red, Gloss: counsel}
+FamilyAffixes:
+  - {Form: er, Gloss: from the place of}
+  - {Form: sen, Gloss: son of}
+Clans: []
+Epithets: []
+Descriptors:
+  - {Form: Ober, Gloss: upper, Tags: [hill, high]}
+  - {Form: Unter, Gloss: lower, Tags: [valley, river]}
+  - {Form: Alt, Gloss: old, Tags: [town, city]}
+  - {Form: Neu, Gloss: new, Tags: [village, town]}
+  - {Form: Gross, Gloss: great, Tags: [city]}
+  - {Form: Klein, Gloss: little, Tags: [village]}
+Nouns:
+  - {Form: dorf, Gloss: village, Tags: [village]}
+  - {Form: burg, Gloss: fortified town, Tags: [town, city]}
+  - {Form: bach, Gloss: brook, Tags: [river]}
+  - {Form: berg, Gloss: mountain, Tags: [mountain, hill]}
+  - {Form: feld, Gloss: field, Tags: [valley]}
+  - {Form: wald, Gloss: forest, Tags: [forest, dark]}

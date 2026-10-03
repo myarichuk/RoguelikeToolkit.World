@@ -1,0 +1,58 @@
+Key: dragonfolk
+LineageDefault: Patrilineal
+Provenance: original ember/wing roots; proud flight lineages with title-epithets
+PatronymicSon: dax
+PatronymicDaughter: daxa
+Banned: []
+GivenStems:
+  - {Form: Vhar, Gloss: ember-heart}
+  - {Form: Sor, Gloss: gleam-scale}
+  - {Form: Keth, Gloss: flame-keeper}
+  - {Form: Azz, Gloss: ancient}
+  - {Form: Pyrr, Gloss: pyre-tender}
+  - {Form: Orr, Gloss: gold-hoard}
+  - {Form: Vex, Gloss: storm-wing}
+  - {Form: Thrax, Gloss: thunder-throat}
+  - {Form: Cind, Gloss: cinder}
+  - {Form: Slag, Gloss: furnace-born}
+  - {Form: Krux, Gloss: claw-oath}
+  - {Form: Vurm, Gloss: wyrm-kin}
+  - {Form: Tal, Gloss: talon}
+  - {Form: Rook, Gloss: roost-guard}
+  - {Form: Brood, Gloss: brood-keeper}
+  - {Form: Shard, Gloss: shard-scale}
+  - {Form: Kind, Gloss: kindler}
+  - {Form: Zeph, Gloss: ash-wind}
+  - {Form: Magm, Gloss: deep-fire}
+  - {Form: Qorr, Gloss: mountain-crown}
+SecondStems:
+  - {Form: wing, Gloss: winged}
+  - {Form: scale, Gloss: scaled}
+  - {Form: flame, Gloss: flame-tongued}
+  - {Form: talon, Gloss: taloned}
+  - {Form: roost, Gloss: roost-born}
+  - {Form: shard, Gloss: shard-mailed}
+  - {Form: breath, Gloss: deep-breath}
+  - {Form: crest, Gloss: crested}
+  - {Form: hoard, Gloss: hoard-keeper}
+  - {Form: wyrm, Gloss: wyrm-blooded}
+FamilyAffixes:
+  - {Form: Cinderroost, Gloss: flight of the cinder roost}
+  - {Form: Emberwing, Gloss: flight of the ember wing}
+Clans:
+  - {Form: Cinderroost, Gloss: flight of the cinder roost}
+  - {Form: Emberwing, Gloss: flight of the ember wing}
+  - {Form: Stormcrest, Gloss: flight of the storm crest}
+Epithets:
+  - {Form: Flamecaller, Gloss: who calls flame}
+  - {Form: Cinderbreath, Gloss: of the cinder breath}
+  - {Form: Stormwing, Gloss: of the storm wing}
+  - {Form: Scalebane, Gloss: bane of false scales}
+Descriptors:
+  - {Form: Ember, Gloss: ember-red, Tags: [mountain, danger]}
+  - {Form: Scaled, Gloss: scale-ridged, Tags: [mountain, hill]}
+  - {Form: Smoking, Gloss: smoking, Tags: [mountain, danger, deposit]}
+Nouns:
+  - {Form: roost, Gloss: high roost, Tags: [mountain, town]}
+  - {Form: aerie, Gloss: peak aerie, Tags: [mountain, high]}
+  - {Form: clutch, Gloss: brood hollow, Tags: [valley, village]}

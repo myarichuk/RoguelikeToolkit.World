@@ -1,0 +1,57 @@
+Key: catfolk
+LineageDefault: Matrilineal
+Provenance: original roaming-hunter roots in a tabaxi-like spirit; no milk/mice cliches
+PatronymicSon: tom
+PatronymicDaughter: queenie
+Banned: [tabaxi, milk, mice, mouse]
+GivenStems:
+  - {Form: Marr, Gloss: night-purr}
+  - {Form: Taji, Gloss: stripe}
+  - {Form: Whisk, Gloss: whisker}
+  - {Form: Prowl, Gloss: prowler}
+  - {Form: Roam, Gloss: roamer}
+  - {Form: Claw, Gloss: claw-sheath}
+  - {Form: Lith, Gloss: lithe}
+  - {Form: Cloud, Gloss: cloud-walker}
+  - {Form: Dusk, Gloss: dusk-hunter}
+  - {Form: Pounce, Gloss: pouncer}
+  - {Form: Slink, Gloss: slinker}
+  - {Form: Riff, Gloss: neck-ruff}
+  - {Form: Tale, Gloss: tale-keeper}
+  - {Form: Drift, Gloss: drifter}
+  - {Form: Yowl, Gloss: yowler}
+  - {Form: Hush, Gloss: silent-step}
+  - {Form: Quest, Gloss: curiosity-seeker}
+  - {Form: Canop, Gloss: canopy-leaper}
+  - {Form: Veln, Gloss: velvet-paw}
+  - {Form: Twisk, Gloss: ear-twitch}
+SecondStems:
+  - {Form: pelt, Gloss: peltry}
+  - {Form: paw, Gloss: pawed}
+  - {Form: tail, Gloss: tailed}
+  - {Form: whisker, Gloss: whiskered}
+  - {Form: stripe, Gloss: striped}
+  - {Form: purr, Gloss: purring}
+  - {Form: claw, Gloss: clawed}
+  - {Form: hunter, Gloss: hunter}
+  - {Form: wander, Gloss: wanderer}
+  - {Form: tale, Gloss: tale-bearer}
+FamilyAffixes:
+  - {Form: Farprowl, Gloss: band of the far prowl}
+  - {Form: Cloudleap, Gloss: band of the cloud leap}
+Clans:
+  - {Form: Farprowl, Gloss: band of the far prowl}
+  - {Form: Cloudleap, Gloss: band of the cloud leap}
+  - {Form: Silentstep, Gloss: band of the silent step}
+Epithets:
+  - {Form: Fartreader, Gloss: who treads far lands}
+  - {Form: Taleteller, Gloss: who tells the road tales}
+Descriptors:
+  - {Form: Moonlit, Gloss: moonlit, Tags: [dark, high]}
+  - {Form: Dappled, Gloss: dappled, Tags: [forest]}
+  - {Form: Prowling, Gloss: prowl-haunted, Tags: [forest, danger]}
+  - {Form: Wandering, Gloss: much-wandered, Tags: [valley]}
+Nouns:
+  - {Form: perch, Gloss: high perch, Tags: [hill, village]}
+  - {Form: den, Gloss: warm den, Tags: [village, valley]}
+  - {Form: shade, Gloss: cool shade, Tags: [forest]}

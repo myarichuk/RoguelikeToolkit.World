@@ -1,0 +1,58 @@
+Key: human_russian
+LineageDefault: Patrilineal
+Provenance: real Russian first/patronymic/surname patterns; native Cyrillic with Latin transliteration
+PatronymicSon: ович
+PatronymicDaughter: овна
+PatronymicSonLatin: ovich
+PatronymicDaughterLatin: ovna
+FamilySuffix: true
+Banned: []
+GivenStems:
+  - {Form: Владимир, Latin: Vladimir, Gloss: ruler of peace}
+  - {Form: Ольга, Latin: Olga, Gloss: holy}
+  - {Form: Иван, Latin: Ivan, Gloss: god is gracious}
+  - {Form: Наталья, Latin: Natalya, Gloss: birthday}
+  - {Form: Пётр, Latin: Pyotr, Gloss: rock}
+  - {Form: Мария, Latin: Maria, Gloss: beloved}
+  - {Form: Ярослав, Latin: Yaroslav, Gloss: fierce glory}
+  - {Form: Светлана, Latin: Svetlana, Gloss: light}
+  - {Form: Дмитрий, Latin: Dmitri, Gloss: earth-lover}
+  - {Form: Екатерина, Latin: Ekaterina, Gloss: pure}
+  - {Form: Александр, Latin: Aleksandr, Gloss: defender}
+  - {Form: Анастасия, Latin: Anastasia, Gloss: resurrection}
+  - {Form: Сергей, Latin: Sergei, Gloss: protector}
+  - {Form: Татьяна, Latin: Tatyana, Gloss: fairy queen}
+  - {Form: Николай, Latin: Nikolai, Gloss: victory of the people}
+  - {Form: Ирина, Latin: Irina, Gloss: peace}
+  - {Form: Орёл, Latin: Oryol, Gloss: eagle}
+  - {Form: Волк, Latin: Volk, Gloss: wolf}
+  - {Form: Медведь, Latin: Medved, Gloss: bear}
+  - {Form: Сокол, Latin: Sokol, Gloss: falcon}
+SecondStems: []
+FamilyAffixes:
+  - {Form: ов, Latin: ov, Gloss: son of (masc)}
+  - {Form: ова, Latin: ova, Gloss: daughter of (fem)}
+  - {Form: ев, Latin: ev, Gloss: son of (masc)}
+  - {Form: ева, Latin: eva, Gloss: daughter of (fem)}
+  - {Form: ин, Latin: in, Gloss: son of (masc)}
+  - {Form: ина, Latin: ina, Gloss: daughter of (fem)}
+  - {Form: ский, Latin: ski, Gloss: from the place of (masc)}
+  - {Form: ская, Latin: ska, Gloss: from the place of (fem)}
+Clans: []
+Epithets: []
+Descriptors:
+  - {Form: Бел, Latin: Bel, Gloss: white, Tags: [mountain, high]}
+  - {Form: Нов, Latin: Nov, Gloss: new, Tags: [village, town]}
+  - {Form: Стар, Latin: Star, Gloss: old, Tags: [town, city]}
+  - {Form: Крас, Latin: Kras, Gloss: red, beautiful, Tags: [city]}
+  - {Form: Тих, Latin: Tikh, Gloss: quiet, Tags: [river, lake]}
+  - {Form: Широк, Latin: Shirok, Gloss: wide, Tags: [valley, river]}
+Nouns:
+  - {Form: град, Latin: grad, Gloss: fortified town, Tags: [town, city]}
+  - {Form: село, Latin: selo, Gloss: village, Tags: [village]}
+  - {Form: река, Latin: reka, Gloss: river, Tags: [river, water]}
+  - {Form: озеро, Latin: ozero, Gloss: lake, Tags: [lake, water]}
+  - {Form: гора, Latin: gora, Gloss: mountain, Tags: [mountain]}
+  - {Form: холм, Latin: kholm, Gloss: hill, Tags: [hill]}
+  - {Form: лес, Latin: les, Gloss: forest, Tags: [forest, dark]}
+  - {Form: дол, Latin: dol, Gloss: valley, Tags: [valley]}

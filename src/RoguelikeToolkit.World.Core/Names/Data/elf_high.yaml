@@ -1,0 +1,52 @@
+Key: elf_high
+LineageDefault: Bilineal
+Provenance: original vowel-final roots; generic iel/wen-shaped endings only
+PatronymicSon: ion
+PatronymicDaughter: iel
+Banned: [galadriel, elrond, quenya, sindarin, legolas]
+GivenStems:
+  - {Form: Ala, Gloss: starlight}
+  - {Form: Celi, Gloss: high light}
+  - {Form: Eli, Gloss: song}
+  - {Form: Lora, Gloss: dawn}
+  - {Form: Miri, Gloss: jewel}
+  - {Form: Nara, Gloss: flame of dawn}
+  - {Form: Sila, Gloss: moon-gleam}
+  - {Form: Vala, Gloss: high power}
+  - {Form: Ana, Gloss: gift}
+  - {Form: Elen, Gloss: star-host}
+  - {Form: Ilma, Gloss: sky-mantle}
+  - {Form: Olo, Gloss: dream}
+  - {Form: Rama, Gloss: wing}
+  - {Form: Tinta, Gloss: spark}
+  - {Form: Ura, Gloss: heart-fire}
+  - {Form: Wana, Gloss: green-growing}
+  - {Form: Yava, Gloss: fruit-bearer}
+  - {Form: Nessa, Gloss: young spirit}
+SecondStems:
+  - {Form: iel, Gloss: daughter-star}
+  - {Form: wen, Gloss: maiden}
+  - {Form: dor, Gloss: tower}
+  - {Form: lor, Gloss: haven}
+  - {Form: eaglesee, Gloss: eagle-eyed}
+  - {Form: starbrow, Gloss: star-browed}
+  - {Form: lightfoot, Gloss: light-footed}
+  - {Form: songweaver, Gloss: song-weaver}
+  - {Form: bloodsworn, Gloss: blood-sworn}
+  - {Form: dawnwing, Gloss: dawn-winged}
+FamilyAffixes:
+  - {Form: Starhaven, Gloss: house of the star haven}
+  - {Form: Dawnspire, Gloss: house of the dawn spire}
+Clans:
+  - {Form: Starhaven, Gloss: house of the star haven}
+  - {Form: Dawnspire, Gloss: house of the dawn spire}
+  - {Form: Moonveil, Gloss: house of the moon veil}
+Epithets: []
+Descriptors:
+  - {Form: Star, Gloss: starry, Tags: [high]}
+  - {Form: Dawn, Gloss: dawn-lit, Tags: [high, valley]}
+  - {Form: Silver, Gloss: silvery, Tags: [water, lake]}
+Nouns:
+  - {Form: spire, Gloss: tower, Tags: [town, city, mountain]}
+  - {Form: haven, Gloss: refuge, Tags: [village, valley]}
+  - {Form: glade, Gloss: clearing, Tags: [forest]}

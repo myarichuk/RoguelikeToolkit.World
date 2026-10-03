@@ -1,0 +1,55 @@
+Key: orcish
+LineageDefault: Patrilineal
+Patronymic: false
+Provenance: original guttural deed roots; epithet instead of surname, warband as clan
+PatronymicSon: grog
+PatronymicDaughter: gra
+Banned: []
+GivenStems:
+  - {Form: Ghor, Gloss: scar}
+  - {Form: Maz, Gloss: fist}
+  - {Form: Rug, Gloss: ridge}
+  - {Form: Shrak, Gloss: tusk}
+  - {Form: Urz, Gloss: blood-oath}
+  - {Form: Brak, Gloss: break}
+  - {Form: Durg, Gloss: endurance}
+  - {Form: Mok, Gloss: mud}
+  - {Form: Blood, Gloss: blood-oath}
+  - {Form: Eagle, Gloss: eagle-killer}
+  - {Form: Hawk, Gloss: hawk-eyed}
+  - {Form: Wolf, Gloss: wolf-rider}
+  - {Form: Boar, Gloss: boar-tusker}
+  - {Form: Bear, Gloss: bear-slayer}
+  - {Form: Storm, Gloss: storm-born}
+  - {Form: Crag, Gloss: crag-born}
+  - {Form: Fang, Gloss: fang-first}
+  - {Form: Gore, Gloss: gore-joy}
+SecondStems:
+  - {Form: ash, Gloss: ash-born}
+  - {Form: gash, Gloss: gashed}
+  - {Form: thump, Gloss: heavy}
+  - {Form: blood, Gloss: blood-sworn}
+  - {Form: eagle, Gloss: eagle-eyed}
+  - {Form: wolf, Gloss: wolf-kin}
+  - {Form: maw, Gloss: mawed}
+  - {Form: rend, Gloss: rending}
+  - {Form: scar, Gloss: scarred}
+  - {Form: rage, Gloss: raging}
+FamilyAffixes: []
+Clans:
+  - {Form: Broken Tusk, Gloss: warband of the broken tusk}
+  - {Form: Ashmaw, Gloss: warband of the ash maw}
+  - {Form: Redridge, Gloss: warband of the red ridge}
+Epithets:
+  - {Form: Skullbreaker, Gloss: who breaks skulls}
+  - {Form: Mudtread, Gloss: who treads mud}
+  - {Form: Scarjaw, Gloss: of the scarred jaw}
+  - {Form: Bonemaul, Gloss: who mauls bone}
+Descriptors:
+  - {Form: Blood, Gloss: blood-red, Tags: [danger, hill]}
+  - {Form: Ash, Gloss: ashen, Tags: [mountain, danger]}
+  - {Form: Skull, Gloss: skull-marked, Tags: [danger]}
+Nouns:
+  - {Form: camp, Gloss: war camp, Tags: [hill, valley]}
+  - {Form: maw, Gloss: ravine, Tags: [mountain, valley]}
+  - {Form: pit, Gloss: pit hold, Tags: [deposit]}

@@ -1,0 +1,62 @@
+Key: human_hebrew
+LineageDefault: Patrilineal
+Provenance: real Hebrew roots; theophoric compounds plus ben/bat nasab; native script with Latin transliteration
+PatronymicSon: בן
+PatronymicDaughter: בת
+PatronymicSonLatin: ben
+PatronymicDaughterLatin: bat
+PatronymicPrefix: true
+Banned: []
+GivenStems:
+  - {Form: דוד, Latin: David, Gloss: beloved}
+  - {Form: שרה, Latin: Sarah, Gloss: princess}
+  - {Form: דני, Latin: Dani, Gloss: God is my judge}
+  - {Form: גברי, Latin: Gavri, Gloss: God is my strength}
+  - {Form: יו, Latin: Yo, Gloss: the Lord}
+  - {Form: עלי, Latin: Eli, Gloss: ascent}
+  - {Form: נועה, Latin: Noa, Gloss: motion}
+  - {Form: אבי, Latin: Avi, Gloss: my father}
+  - {Form: טל, Latin: Tal, Gloss: dew}
+  - {Form: אור, Latin: Or, Gloss: light}
+  - {Form: גל, Latin: Gal, Gloss: wave}
+  - {Form: יעל, Latin: Yael, Gloss: ibex}
+  - {Form: מיכל, Latin: Michal, Gloss: brook}
+  - {Form: מתת, Latin: Matit, Gloss: gift}
+  - {Form: עזר, Latin: Azar, Gloss: help}
+  - {Form: יהו, Latin: Yeho, Gloss: the Lord}
+  - {Form: זכר, Latin: Zekh, Gloss: remembrance}
+  - {Form: הלל, Latin: Hil, Gloss: praise}
+  - {Form: נתע, Latin: Neta, Gloss: seedling}
+  - {Form: עיט, Latin: Ayit, Gloss: eagle}
+SecondStems:
+  - {Form: אל, Latin: el, Gloss: God}
+  - {Form: יה, Latin: yah, Gloss: the Lord}
+  - {Form: יהו, Latin: yahu, Gloss: the Lord}
+  - {Form: נתן, Latin: natan, Gloss: he gave}
+  - {Form: אריה, Latin: aryah, Gloss: lion of God}
+FamilyAffixes:
+  - {Form: כהן, Latin: Cohen, Gloss: priestly family}
+  - {Form: לוי, Latin: Levi, Gloss: Levite family}
+  - {Form: מזרחי, Latin: Mizrahi, Gloss: eastern family}
+  - {Form: פרץ, Latin: Peretz, Gloss: Perez family}
+  - {Form: ביטון, Latin: Biton, Gloss: Biton family}
+  - {Form: גבאי, Latin: Gabay, Gloss: sexton family}
+Clans: []
+Epithets: []
+Descriptors:
+  - {Form: חדש, Latin: Chadash, Gloss: new, Tags: [village, town]}
+  - {Form: עתיק, Latin: Atik, Gloss: old, Tags: [town, city]}
+  - {Form: גדול, Latin: Gadol, Gloss: great, Tags: [city]}
+  - {Form: קטן, Latin: Katan, Gloss: little, Tags: [village]}
+  - {Form: רם, Latin: Ram, Gloss: high, Tags: [mountain, high]}
+  - {Form: ירוק, Latin: Yarok, Gloss: green, Tags: [valley, forest]}
+Nouns:
+  - {Form: כפר, Latin: Kfar, Gloss: village, Tags: [village]}
+  - {Form: עיר, Latin: Ir, Gloss: city, Tags: [city, town]}
+  - {Form: נהר, Latin: Nahar, Gloss: river, Tags: [river, water]}
+  - {Form: ים, Latin: Yam, Gloss: sea, Tags: [lake, water]}
+  - {Form: הר, Latin: Har, Gloss: mountain, Tags: [mountain]}
+  - {Form: גבעה, Latin: Giveh, Gloss: hill, Tags: [hill]}
+  - {Form: עמק, Latin: Emek, Gloss: valley, Tags: [valley]}
+  - {Form: יער, Latin: Yaar, Gloss: forest, Tags: [forest, dark]}
+  - {Form: עין, Latin: Ein, Gloss: spring, Tags: [water, river]}

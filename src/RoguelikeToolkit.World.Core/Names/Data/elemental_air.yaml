@@ -1,0 +1,56 @@
+Key: elemental_air
+LineageDefault: Bilineal
+Provenance: original gale/cloud roots; courts of living air
+PatronymicSon: gust
+PatronymicDaughter: gustess
+Banned: []
+GivenStems:
+  - {Form: Gale, Gloss: gale}
+  - {Form: Zephyr, Gloss: west wind}
+  - {Form: Gust, Gloss: gust}
+  - {Form: Wisp, Gloss: wisp}
+  - {Form: Cloud, Gloss: cloud}
+  - {Form: Breeze, Gloss: breeze}
+  - {Form: Tempest, Gloss: tempest}
+  - {Form: Whirl, Gloss: whirlwind}
+  - {Form: Draft, Gloss: updraft}
+  - {Form: Sky, Gloss: open sky}
+  - {Form: Breath, Gloss: breath}
+  - {Form: Whisper, Gloss: whisper}
+  - {Form: Howl, Gloss: howling}
+  - {Form: Kite, Gloss: kite-soarer}
+  - {Form: Storm, Gloss: storm}
+  - {Form: Sough, Gloss: sighing wind}
+  - {Form: Cirrus, Gloss: high cloud}
+  - {Form: Sirocco, Gloss: hot wind}
+  - {Form: Mistral, Gloss: cold wind}
+  - {Form: Monsoon, Gloss: season wind}
+SecondStems:
+  - {Form: wind, Gloss: wind-swift}
+  - {Form: gale, Gloss: gale-born}
+  - {Form: cloud, Gloss: cloud-walker}
+  - {Form: whisper, Gloss: whispering}
+  - {Form: soar, Gloss: soaring}
+  - {Form: tempest, Gloss: tempest-tossed}
+  - {Form: breath, Gloss: breathed}
+  - {Form: wisp, Gloss: wisp-light}
+  - {Form: storm, Gloss: storm-eyed}
+  - {Form: sky, Gloss: sky-touched}
+FamilyAffixes:
+  - {Form: Gale court, Gloss: sworn to the gale court}
+  - {Form: Cloud court, Gloss: sworn to the cloud court}
+Clans:
+  - {Form: Gale court, Gloss: court of gales}
+  - {Form: Cloud court, Gloss: court of clouds}
+  - {Form: Storm court, Gloss: court of storms}
+Epithets:
+  - {Form: Windherald, Gloss: herald of winds}
+  - {Form: Stormcaller, Gloss: caller of storms}
+Descriptors:
+  - {Form: Windy, Gloss: windswept, Tags: [high, hill]}
+  - {Form: Howling, Gloss: howl-haunted, Tags: [mountain, danger]}
+  - {Form: Cloudcapped, Gloss: cloud-capped, Tags: [mountain, high]}
+Nouns:
+  - {Form: peak, Gloss: sky peak, Tags: [mountain, high]}
+  - {Form: spire, Gloss: wind spire, Tags: [mountain, town]}
+  - {Form: eyrie, Gloss: high eyrie, Tags: [high, hill]}

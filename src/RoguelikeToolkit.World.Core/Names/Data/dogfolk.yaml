@@ -1,0 +1,56 @@
+Key: dogfolk
+LineageDefault: Patrilineal
+Provenance: original loyal-pack roots; hearty pack lineages
+PatronymicSon: pup
+PatronymicDaughter: pupa
+Banned: []
+GivenStems:
+  - {Form: Bark, Gloss: bark-ward}
+  - {Form: Wag, Gloss: tail-wag}
+  - {Form: Sniff, Gloss: scent-finder}
+  - {Form: Howl, Gloss: howler}
+  - {Form: Fetch, Gloss: fetcher}
+  - {Form: Burrow, Gloss: den-digger}
+  - {Form: Loyal, Gloss: loyal}
+  - {Form: Fang, Gloss: fang-bearer}
+  - {Form: Paw, Gloss: broad-paw}
+  - {Form: Snout, Gloss: keen-snout}
+  - {Form: Trail, Gloss: trail-wise}
+  - {Form: Guard, Gloss: guard-heart}
+  - {Form: Bone, Gloss: bone-keeper}
+  - {Form: Hound, Gloss: hound-true}
+  - {Form: Pack, Gloss: pack-born}
+  - {Form: Track, Gloss: tracker}
+  - {Form: Wool, Gloss: shaggy}
+  - {Form: Slob, Gloss: slobbery-joy}
+  - {Form: Nose, Gloss: true-nose}
+  - {Form: Flop, Gloss: flop-ear}
+SecondStems:
+  - {Form: bark, Gloss: barking}
+  - {Form: fang, Gloss: fanged}
+  - {Form: paw, Gloss: pawed}
+  - {Form: guard, Gloss: guardian}
+  - {Form: trail, Gloss: trail-wise}
+  - {Form: howl, Gloss: howling}
+  - {Form: snout, Gloss: snouted}
+  - {Form: pack, Gloss: pack-sworn}
+  - {Form: wag, Gloss: wagging}
+  - {Form: den, Gloss: den-born}
+FamilyAffixes:
+  - {Form: Longtrail, Gloss: pack of the long trail}
+  - {Form: Bonekeep, Gloss: pack of the bone keep}
+Clans:
+  - {Form: Longtrail, Gloss: pack of the long trail}
+  - {Form: Bonekeep, Gloss: pack of the bone keep}
+  - {Form: Howling, Gloss: the howling pack}
+Epithets:
+  - {Form: Truenose, Gloss: of the true nose}
+  - {Form: Longchase, Gloss: of the long chase}
+Descriptors:
+  - {Form: Loyal, Gloss: loyal, Tags: [valley]}
+  - {Form: Howling, Gloss: howl-haunted, Tags: [hill, danger]}
+  - {Form: Muddy, Gloss: muddy-pawed, Tags: [river, valley]}
+Nouns:
+  - {Form: kennel, Gloss: pack den, Tags: [village]}
+  - {Form: run, Gloss: hunting run, Tags: [valley, forest]}
+  - {Form: howl, Gloss: howling hill, Tags: [hill]}

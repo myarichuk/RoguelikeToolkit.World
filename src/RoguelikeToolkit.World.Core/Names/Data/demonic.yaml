@@ -1,0 +1,58 @@
+Key: demonic
+LineageDefault: Patrilineal
+Patronymic: false
+Provenance: original void/ash/thorn roots; generic fantasy, no religious lore
+PatronymicSon: ghul
+PatronymicDaughter: ghula
+Banned: [lucifer, satan, diablo, baal, mephisto, asmodeus]
+GivenStems:
+  - {Form: Vex, Gloss: torment}
+  - {Form: Karr, Gloss: rend}
+  - {Form: Zoth, Gloss: void-maw}
+  - {Form: Graa, Gloss: grave-ash}
+  - {Form: Skorn, Gloss: scorn}
+  - {Form: Rath, Gloss: wrath-cinder}
+  - {Form: Morg, Gloss: rot-deep}
+  - {Form: Xath, Gloss: eater}
+  - {Form: Bruul, Gloss: brute-forge}
+  - {Form: Nax, Gloss: gnaw}
+  - {Form: Vorg, Gloss: gorge}
+  - {Form: Thoss, Gloss: pit-shadow}
+  - {Form: Krall, Gloss: claw-law}
+  - {Form: Essk, Gloss: cinder-hiss}
+  - {Form: Uhr, Gloss: hollow hunger}
+  - {Form: Jakk, Gloss: chain-jangle}
+  - {Form: Obl, Gloss: oblivion-dreg}
+  - {Form: Ruun, Gloss: ruin}
+  - {Form: Gall, Gloss: gall-bile}
+  - {Form: Wrekk, Gloss: wrecker}
+SecondStems:
+  - {Form: maw, Gloss: mawed}
+  - {Form: thorn, Gloss: thorned}
+  - {Form: cinder, Gloss: cinder-born}
+  - {Form: void, Gloss: void-touched}
+  - {Form: chain, Gloss: chained}
+  - {Form: rend, Gloss: rending}
+  - {Form: gall, Gloss: galled}
+  - {Form: pit, Gloss: pit-born}
+  - {Form: wrath, Gloss: wrathful}
+  - {Form: gloom, Gloss: gloomed}
+FamilyAffixes:
+  - {Form: Pitbrood, Gloss: brood of the pit}
+  - {Form: Ashenhost, Gloss: host of ash}
+Clans:
+  - {Form: Pitbrood, Gloss: brood of the pit}
+  - {Form: Ashenhost, Gloss: host of ash}
+  - {Form: Thornmaul, Gloss: host of the thorn maul}
+Epithets:
+  - {Form: Chainrender, Gloss: who rends chains}
+  - {Form: Pitcaller, Gloss: who calls the pit}
+  - {Form: Ashreaver, Gloss: who reaves ash}
+Descriptors:
+  - {Form: Blighted, Gloss: blighted, Tags: [danger, valley]}
+  - {Form: Howling, Gloss: howl-haunted, Tags: [danger, hill]}
+  - {Form: Cinder, Gloss: cinder-black, Tags: [mountain, danger]}
+Nouns:
+  - {Form: pit, Gloss: pit hold, Tags: [deposit, hill]}
+  - {Form: wound, Gloss: scarred hollow, Tags: [valley]}
+  - {Form: maw, Gloss: ravine, Tags: [mountain, valley]}

@@ -1,0 +1,59 @@
+Key: dwarven
+LineageDefault: Patrilineal
+Provenance: original stone/forge roots; Norse-structured patronymics only, no Edda names
+PatronymicSon: son
+PatronymicDaughter: dottir
+FamilySuffix: true
+Banned: [gimli, gloin, thorin, balin, moria, khuzdul]
+GivenStems:
+  - {Form: Thrun, Gloss: stone}
+  - {Form: Bor, Gloss: rock}
+  - {Form: Kaz, Gloss: hall}
+  - {Form: Durn, Gloss: deep}
+  - {Form: Grum, Gloss: anvil}
+  - {Form: Har, Gloss: hammer}
+  - {Form: Skarn, Gloss: ore}
+  - {Form: Oth, Gloss: oath}
+  - {Form: Bral, Gloss: ale}
+  - {Form: Kor, Gloss: furnace}
+  - {Form: Stal, Gloss: steel}
+  - {Form: Vorn, Gloss: oath-iron}
+  - {Form: Dag, Gloss: day-delver}
+  - {Form: Mor, Gloss: dark-deep}
+  - {Form: Ruk, Gloss: rubble}
+  - {Form: Geld, Gloss: gold-vein}
+  - {Form: Flinn, Gloss: flint}
+  - {Form: Orr, Gloss: ore-father}
+  - {Form: Blod, Gloss: blood-oath}
+  - {Form: Arn, Gloss: eagle-carved}
+SecondStems:
+  - {Form: gar, Gloss: spear}
+  - {Form: grim, Gloss: stern}
+  - {Form: dal, Gloss: valley-delver}
+  - {Form: nor, Gloss: north-keeper}
+  - {Form: bek, Gloss: brook-guard}
+  - {Form: blood, Gloss: blood-sworn}
+  - {Form: eagle, Gloss: eagle-eyed}
+  - {Form: stone, Gloss: stone-hard}
+  - {Form: iron, Gloss: iron-bound}
+  - {Form: forge, Gloss: forge-born}
+FamilyAffixes:
+  - {Form: del, Gloss: clan}
+  - {Form: bar, Gloss: house}
+Clans:
+  - {Form: Stonebrow, Gloss: clan of the stone brow}
+  - {Form: Ironkeel, Gloss: clan of the iron keel}
+  - {Form: Oathbraid, Gloss: clan of the braided oath}
+  - {Form: Furnacefall, Gloss: clan of the furnace fall}
+  - {Form: Deepdelve, Gloss: clan of the deep delve}
+Epithets: []
+Descriptors:
+  - {Form: Grim, Gloss: stern, Tags: [hill, danger]}
+  - {Form: Iron, Gloss: iron-rich, Tags: [deposit, hill]}
+  - {Form: Deep, Gloss: deep, Tags: [mountain, valley]}
+  - {Form: Stone, Gloss: stony, Tags: [mountain, hill, deposit]}
+Nouns:
+  - {Form: hold, Gloss: stronghold, Tags: [town, city]}
+  - {Form: delve, Gloss: mine, Tags: [deposit, hill]}
+  - {Form: bar, Gloss: hall, Tags: [town, village]}
+  - {Form: peak, Gloss: peak, Tags: [mountain]}

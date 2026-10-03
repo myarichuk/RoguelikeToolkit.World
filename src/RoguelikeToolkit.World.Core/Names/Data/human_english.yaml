@@ -1,0 +1,66 @@
+Key: human_english
+LineageDefault: Patrilineal
+Provenance: real Old English dithematic roots (ASCII transliteration); -son patronymics
+PatronymicSon: son
+PatronymicDaughter: daughter
+FamilySuffix: true
+Banned: []
+GivenStems:
+  - {Form: Aelf, Gloss: elf}
+  - {Form: Ead, Gloss: prosperity}
+  - {Form: God, Gloss: god}
+  - {Form: Leof, Gloss: beloved}
+  - {Form: Os, Gloss: god}
+  - {Form: Sig, Gloss: victory}
+  - {Form: Wulf, Gloss: wolf}
+  - {Form: Earn, Gloss: eagle}
+  - {Form: Eor, Gloss: boar}
+  - {Form: Hild, Gloss: battle}
+  - {Form: Wyn, Gloss: joy}
+  - {Form: Mild, Gloss: mild}
+  - {Form: Dun, Gloss: hill}
+  - {Form: Stan, Gloss: stone}
+  - {Form: Beor, Gloss: bear}
+  - {Form: Ceol, Gloss: ship}
+  - {Form: Frith, Gloss: peace}
+  - {Form: Heard, Gloss: hardy}
+  - {Form: Wil, Gloss: will}
+  - {Form: Eald, Gloss: old}
+SecondStems:
+  - {Form: red, Gloss: counsel}
+  - {Form: win, Gloss: friend}
+  - {Form: ric, Gloss: ruler}
+  - {Form: ward, Gloss: guard}
+  - {Form: stan, Gloss: stone}
+  - {Form: wulf, Gloss: wolf}
+  - {Form: gyth, Gloss: war}
+  - {Form: bryht, Gloss: bright}
+  - {Form: mond, Gloss: protection}
+  - {Form: gar, Gloss: spear}
+FamilyAffixes:
+  - {Form: ham, Gloss: homestead}
+  - {Form: ton, Gloss: town enclosure}
+  - {Form: ley, Gloss: clearing}
+  - {Form: ford, Gloss: ford}
+  - {Form: bury, Gloss: fortified place}
+  - {Form: ing, Gloss: kin of}
+Clans: []
+Epithets: []
+Descriptors:
+  - {Form: Eald, Gloss: old, Tags: [town, city]}
+  - {Form: Neow, Gloss: new, Tags: [village, town]}
+  - {Form: Mic, Gloss: great, Tags: [city]}
+  - {Form: Lyt, Gloss: little, Tags: [village]}
+  - {Form: Lang, Gloss: long, Tags: [hill, valley]}
+  - {Form: Blac, Gloss: dark, Tags: [forest, dark]}
+  - {Form: Whit, Gloss: white, Tags: [mountain, high]}
+Nouns:
+  - {Form: ham, Gloss: homestead, Tags: [village]}
+  - {Form: tun, Gloss: town, Tags: [town, city]}
+  - {Form: ford, Gloss: ford, Tags: [river]}
+  - {Form: brug, Gloss: bridge, Tags: [river]}
+  - {Form: feld, Gloss: field, Tags: [valley]}
+  - {Form: dun, Gloss: hill, Tags: [hill]}
+  - {Form: wald, Gloss: woodland, Tags: [forest, dark]}
+  - {Form: burn, Gloss: stream, Tags: [river, water]}
+  - {Form: mere, Gloss: lake, Tags: [lake, water]}

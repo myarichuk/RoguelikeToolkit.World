@@ -1,0 +1,28 @@
+Language: ru
+DisplayName: Русский
+RightToLeft: false
+Strings:
+  Title: Тестер генератора имён
+  TabPeople: Люди
+  TabPlaces: Места
+  Feminine: Женский
+  WatermarkInspired: "прообраз: кровь, орёл"
+  WatermarkPlaceInspired: "прообраз"
+  Generate: Сгенерировать
+  Water: Вода
+  Forest: Лес
+  Dark: Тьма
+  High: Высота
+  Valley: Долина
+  Deposit: Залежи
+  Danger: Опасность
+  Reload: Перезагрузить YAML
+  Language: Язык
+  Native: Родной
+  Latin: Латиница
+  Hebrew: Иврит
+  Cyrillic: Кириллица
+  LineageDefault: "(по умолчанию)"
+  Data: "данные: "
+  DataError: "ошибка данных, используются встроенные: "
+  ReloadFailed: "ошибка перезагрузки: "

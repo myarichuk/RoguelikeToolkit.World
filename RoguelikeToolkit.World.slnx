@@ -3,6 +3,7 @@
     <Project Path="src/RoguelikeToolkit.World.Core/RoguelikeToolkit.World.Core.csproj" />
     <Project Path="src/RoguelikeToolkit.World.Scripting.Jint/RoguelikeToolkit.World.Scripting.Jint.csproj" />
     <Project Path="src/RoguelikeToolkit.World.App/RoguelikeToolkit.World.App.csproj" />
+    <Project Path="src/RoguelikeToolkit.World.NameTester/RoguelikeToolkit.World.NameTester.csproj" />
     <Project Path="src/RoguelikeToolkit.World.Presentation/RoguelikeToolkit.World.Presentation.csproj" />
   </Folder>
   <Folder Name="/tests/">

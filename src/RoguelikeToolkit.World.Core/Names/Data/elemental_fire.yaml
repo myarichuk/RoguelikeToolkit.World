@@ -1,0 +1,56 @@
+Key: elemental_fire
+LineageDefault: Bilineal
+Provenance: original flame/cinder roots; courts of living flame
+PatronymicSon: spark
+PatronymicDaughter: sparkess
+Banned: []
+GivenStems:
+  - {Form: Cinder, Gloss: cinder}
+  - {Form: Pyre, Gloss: pyre}
+  - {Form: Ash, Gloss: ash}
+  - {Form: Ember, Gloss: ember}
+  - {Form: Flame, Gloss: flame}
+  - {Form: Coal, Gloss: coal}
+  - {Form: Spark, Gloss: spark}
+  - {Form: Blaze, Gloss: blaze}
+  - {Form: Soot, Gloss: soot}
+  - {Form: Kindle, Gloss: kindler}
+  - {Form: Brand, Gloss: firebrand}
+  - {Form: Scorch, Gloss: scorcher}
+  - {Form: Hearth, Gloss: hearth-keeper}
+  - {Form: Char, Gloss: char}
+  - {Form: Smoke, Gloss: smoke}
+  - {Form: Flicker, Gloss: flicker}
+  - {Form: Wildfire, Gloss: wildfire}
+  - {Form: Forge, Gloss: forge-born}
+  - {Form: Sear, Gloss: searing}
+  - {Form: Glow, Gloss: glow}
+SecondStems:
+  - {Form: flame, Gloss: flaming}
+  - {Form: cinder, Gloss: cinder-born}
+  - {Form: ash, Gloss: ashen}
+  - {Form: spark, Gloss: sparking}
+  - {Form: blaze, Gloss: blazing}
+  - {Form: smoke, Gloss: smoking}
+  - {Form: brand, Gloss: branded}
+  - {Form: kindler, Gloss: kindling}
+  - {Form: sear, Gloss: searing}
+  - {Form: glow, Gloss: glowing}
+FamilyAffixes:
+  - {Form: Ember court, Gloss: sworn to the ember court}
+  - {Form: Pyre court, Gloss: sworn to the pyre court}
+Clans:
+  - {Form: Ember court, Gloss: court of embers}
+  - {Form: Pyre court, Gloss: court of the pyre}
+  - {Form: Cinder court, Gloss: court of cinders}
+Epithets:
+  - {Form: Flameherald, Gloss: herald of flame}
+  - {Form: Ashbringer, Gloss: bringer of ash}
+Descriptors:
+  - {Form: Burning, Gloss: burning, Tags: [danger, mountain]}
+  - {Form: Smoldering, Gloss: smoldering, Tags: [mountain, deposit]}
+  - {Form: Charred, Gloss: charred, Tags: [hill, danger]}
+Nouns:
+  - {Form: pyre, Gloss: ever-pyre, Tags: [mountain, hill]}
+  - {Form: vent, Gloss: fire vent, Tags: [mountain, deposit]}
+  - {Form: hearth, Gloss: great hearth, Tags: [town, village]}

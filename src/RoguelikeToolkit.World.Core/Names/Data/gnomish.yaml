@@ -1,0 +1,56 @@
+Key: gnomish
+LineageDefault: Bilineal
+Provenance: original craft/deed roots; whimsical verb+tool compounds
+PatronymicSon: son
+PatronymicDaughter: daughter
+Banned: []
+GivenStems:
+  - {Form: Sprock, Gloss: spark}
+  - {Form: Nib, Gloss: nib}
+  - {Form: Pob, Gloss: pebble}
+  - {Form: Tink, Gloss: tinker}
+  - {Form: Wob, Gloss: wobble}
+  - {Form: Zib, Gloss: zip}
+  - {Form: Fizz, Gloss: fizz}
+  - {Form: Cog, Gloss: cog}
+  - {Form: Gear, Gloss: gear}
+  - {Form: Spring, Gloss: spring-coil}
+  - {Form: Widget, Gloss: widget}
+  - {Form: Gadget, Gloss: gadget}
+  - {Form: Piston, Gloss: piston}
+  - {Form: Fuse, Gloss: fuse}
+  - {Form: Ratchet, Gloss: ratchet}
+  - {Form: Solder, Gloss: solder}
+  - {Form: Gyro, Gloss: gyroscope}
+  - {Form: Valve, Gloss: valve}
+SecondStems:
+  - {Form: le, Gloss: diminutive}
+  - {Form: wick, Gloss: workshop child}
+  - {Form: bolt, Gloss: bolt-keeper}
+  - {Form: gear, Gloss: gear-turner}
+  - {Form: spark, Gloss: spark-tender}
+  - {Form: whirr, Gloss: whirring}
+  - {Form: clank, Gloss: clanking}
+  - {Form: steam, Gloss: steam-born}
+  - {Form: copper, Gloss: copper-bright}
+  - {Form: tin, Gloss: tin-sharp}
+FamilyAffixes:
+  - {Form: Copperpot, Gloss: workshop of the copper pot}
+  - {Form: Geargrind, Gloss: workshop of the ground gear}
+  - {Form: Tinwhistle, Gloss: workshop of the tin whistle}
+Clans:
+  - {Form: Copperpot, Gloss: workshop of the copper pot}
+  - {Form: Geargrind, Gloss: workshop of the ground gear}
+Epithets:
+  - {Form: Fizzlespanner, Gloss: who fizzles the spanner}
+  - {Form: Cogwhir, Gloss: who whirs the cogs}
+  - {Form: Boltbraid, Gloss: who braids bolts}
+  - {Form: Tinderwick, Gloss: who tends the tinder}
+Descriptors:
+  - {Form: Copper, Gloss: copper-bright, Tags: [deposit]}
+  - {Form: Cog, Gloss: cog-turned, Tags: [town, village]}
+  - {Form: Burble, Gloss: bubbling, Tags: [river, water]}
+Nouns:
+  - {Form: workshop, Gloss: workshop, Tags: [town, village]}
+  - {Form: warren, Gloss: warren home, Tags: [hill, village]}
+  - {Form: tinkery, Gloss: tinker shed, Tags: [town]}

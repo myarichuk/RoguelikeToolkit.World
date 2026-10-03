@@ -1,0 +1,52 @@
+Key: human_chinese
+LineageDefault: Patrilineal
+Provenance: family-first order; constrained meaning compounds, no free adjective stacking
+PatronymicSon: zi
+PatronymicDaughter: nu
+Banned: []
+GivenStems:
+  - {Form: Shan, Gloss: mountain}
+  - {Form: Lin, Gloss: forest}
+  - {Form: Mei, Gloss: plum}
+  - {Form: Wei, Gloss: greatness}
+  - {Form: Jing, Gloss: quiet}
+  - {Form: Tao, Gloss: peach}
+  - {Form: Yun, Gloss: cloud}
+  - {Form: Bo, Gloss: wave}
+  - {Form: Long, Gloss: dragon}
+  - {Form: Feng, Gloss: phoenix-wind}
+  - {Form: Hu, Gloss: tiger}
+  - {Form: Ying, Gloss: eagle-falcon}
+  - {Form: Xue, Gloss: snow}
+  - {Form: Lan, Gloss: orchid}
+  - {Form: Zhu, Gloss: bamboo}
+  - {Form: Hai, Gloss: sea}
+  - {Form: Tian, Gloss: sky}
+  - {Form: Lei, Gloss: thunder}
+SecondStems:
+  - {Form: an, Gloss: peace}
+  - {Form: ming, Gloss: brightness}
+  - {Form: long, Gloss: dragon-spirited}
+  - {Form: feng, Gloss: wind-swift}
+  - {Form: hu, Gloss: tiger-bold}
+  - {Form: xue, Gloss: snow-pure}
+  - {Form: hai, Gloss: sea-deep}
+  - {Form: tian, Gloss: sky-high}
+  - {Form: lei, Gloss: thunder-loud}
+  - {Form: hua, Gloss: flowery}
+FamilyAffixes:
+  - {Form: Li, Gloss: plum family}
+  - {Form: Wang, Gloss: king family}
+  - {Form: Chen, Gloss: dawn family}
+Clans:
+  - {Form: Li, Gloss: plum family}
+  - {Form: Wang, Gloss: king family}
+Epithets: []
+Descriptors:
+  - {Form: Qing, Gloss: clear-green, Tags: [water, forest]}
+  - {Form: Lao, Gloss: old, Tags: [town]}
+  - {Form: Xin, Gloss: new, Tags: [village]}
+Nouns:
+  - {Form: cun, Gloss: village, Tags: [village]}
+  - {Form: cheng, Gloss: walled city, Tags: [city, town]}
+  - {Form: jiang, Gloss: river, Tags: [river]}

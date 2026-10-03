@@ -1,0 +1,56 @@
+Key: elemental_earth
+LineageDefault: Bilineal
+Provenance: original stone/root roots; courts of living stone
+PatronymicSon: pebble
+PatronymicDaughter: pebbless
+Banned: []
+GivenStems:
+  - {Form: Stone, Gloss: stone}
+  - {Form: Pebble, Gloss: pebble}
+  - {Form: Boulder, Gloss: boulder}
+  - {Form: Clay, Gloss: clay}
+  - {Form: Crag, Gloss: crag}
+  - {Form: Loam, Gloss: loam}
+  - {Form: Gravel, Gloss: gravel}
+  - {Form: Ridge, Gloss: ridge}
+  - {Form: Bedrock, Gloss: bedrock}
+  - {Form: Geode, Gloss: geode}
+  - {Form: Root, Gloss: deep root}
+  - {Form: Dust, Gloss: dust}
+  - {Form: Sand, Gloss: sand}
+  - {Form: Flint, Gloss: flint}
+  - {Form: Granite, Gloss: granite}
+  - {Form: Slate, Gloss: slate}
+  - {Form: Mesa, Gloss: mesa}
+  - {Form: Quake, Gloss: quake}
+  - {Form: Moss, Gloss: moss}
+  - {Form: Stalact, Gloss: stalactite}
+SecondStems:
+  - {Form: stone, Gloss: stony}
+  - {Form: rock, Gloss: rocky}
+  - {Form: clay, Gloss: clay-born}
+  - {Form: root, Gloss: rooted}
+  - {Form: ridge, Gloss: ridged}
+  - {Form: dust, Gloss: dusty}
+  - {Form: sand, Gloss: sandy}
+  - {Form: moss, Gloss: mossy}
+  - {Form: flint, Gloss: flint-hard}
+  - {Form: quake, Gloss: quaking}
+FamilyAffixes:
+  - {Form: Stone court, Gloss: sworn to the stone court}
+  - {Form: Root court, Gloss: sworn to the root court}
+Clans:
+  - {Form: Stone court, Gloss: court of stone}
+  - {Form: Root court, Gloss: court of roots}
+  - {Form: Deep court, Gloss: court of the deep}
+Epithets:
+  - {Form: Stoneherald, Gloss: herald of stone}
+  - {Form: Rootweaver, Gloss: weaver of roots}
+Descriptors:
+  - {Form: Stony, Gloss: stony, Tags: [hill, mountain]}
+  - {Form: Rooted, Gloss: deep-rooted, Tags: [forest, valley]}
+  - {Form: Shifting, Gloss: shifting, Tags: [hill, danger]}
+Nouns:
+  - {Form: tor, Gloss: rock tor, Tags: [hill, mountain]}
+  - {Form: barrow, Gloss: earth barrow, Tags: [hill, valley]}
+  - {Form: grotto, Gloss: stone grotto, Tags: [mountain, valley]}

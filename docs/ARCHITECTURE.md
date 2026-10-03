@@ -148,7 +148,7 @@ flowchart LR
 - Ordered passes, duplicate `Order` throws. Boring and predictable on purpose.
 - Each injector's RNG is derived from (injector id, address) — adding a new injector never reshuffles earlier placements. Removing one doesn't either.
 - Injectors see the map *with its boundaries* (`Bounds`: center, radius, edge-ring cells) plus the parent context, so placement can reason about "near the map edge" or "on the wet side".
-- `NameSeed` is deliberately opaque: the library doesn't do fantasy names. It gives you a stable random draw; your name generator does the rest.
+- `NameSeed` is deliberately opaque: site injectors don't do fantasy names. They give you a stable random draw; `FantasyNameGenerator` (see `src/.../Names/`) does the rest.
 
 ## Queries and persistence
 

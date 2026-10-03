@@ -1,0 +1,28 @@
+Language: en
+DisplayName: English
+RightToLeft: false
+Strings:
+  Title: Name Generator Tester
+  TabPeople: People
+  TabPlaces: Places
+  Feminine: Feminine
+  WatermarkInspired: "inspired by: blood, eagle"
+  WatermarkPlaceInspired: "inspired by"
+  Generate: Generate
+  Water: Water
+  Forest: Forest
+  Dark: Dark
+  High: High
+  Valley: Valley
+  Deposit: Deposit
+  Danger: Danger
+  Reload: Reload YAML
+  Language: Language
+  Native: Native
+  Latin: Latin
+  Hebrew: Hebrew
+  Cyrillic: Cyrillic
+  LineageDefault: "(default)"
+  Data: "data: "
+  DataError: "data error, using built-in: "
+  ReloadFailed: "reload failed: "

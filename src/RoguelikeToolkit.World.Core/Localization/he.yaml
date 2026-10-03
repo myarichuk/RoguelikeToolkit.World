@@ -1,0 +1,28 @@
+Language: he
+DisplayName: עברית
+RightToLeft: true
+Strings:
+  Title: בודק מחולל השמות
+  TabPeople: אנשים
+  TabPlaces: מקומות
+  Feminine: נקבה
+  WatermarkInspired: "השראה: דם, עיט"
+  WatermarkPlaceInspired: "השראה"
+  Generate: צור
+  Water: מים
+  Forest: יער
+  Dark: אפל
+  High: גבוה
+  Valley: עמק
+  Deposit: מרבץ
+  Danger: סכנה
+  Reload: טען YAML מחדש
+  Language: שפה
+  Native: מקורי
+  Latin: לטינית
+  Hebrew: עברית
+  Cyrillic: קירילית
+  LineageDefault: "(ברירת מחדל)"
+  Data: "נתונים: "
+  DataError: "שגיאת נתונים, משתמש במובנה: "
+  ReloadFailed: "הטעינה מחדש נכשלה: "

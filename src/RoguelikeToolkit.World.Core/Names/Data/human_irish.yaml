@@ -1,0 +1,53 @@
+Key: human_irish
+LineageDefault: Patrilineal
+Provenance: real Gaeilge roots; O descendant-of, Mac/Nic son/daughter patterns
+PatronymicSon: mac
+PatronymicDaughter: nic
+PatronymicPrefix: true
+Banned: []
+GivenStems:
+  - {Form: Cian, Gloss: ancient}
+  - {Form: Niamh, Gloss: bright, radiant}
+  - {Form: Oisin, Gloss: little deer}
+  - {Form: Saoirse, Gloss: freedom}
+  - {Form: Ciaran, Gloss: little dark one}
+  - {Form: Maeve, Gloss: intoxicating}
+  - {Form: Fionn, Gloss: fair, white}
+  - {Form: Siobhan, Gloss: god is gracious}
+  - {Form: Aisling, Gloss: dream, vision}
+  - {Form: Caoimhe, Gloss: gentle, beautiful}
+  - {Form: Tadhg, Gloss: poet}
+  - {Form: Nuala, Gloss: fair shoulder}
+  - {Form: Orla, Gloss: golden princess}
+  - {Form: Eoin, Gloss: god is gracious}
+  - {Form: Aoife, Gloss: beautiful}
+  - {Form: Conall, Gloss: strong wolf}
+  - {Form: Brendan, Gloss: prince}
+  - {Form: Deirdre, Gloss: sorrowful}
+  - {Form: Iolar, Gloss: eagle}
+  - {Form: Faolchu, Gloss: wolf}
+SecondStems:
+  - {Form: beg, Gloss: little}
+  - {Form: mor, Gloss: great}
+  - {Form: finn, Gloss: fair}
+  - {Form: duff, Gloss: dark}
+  - {Form: iolar, Gloss: eagle-eyed}
+  - {Form: faol, Gloss: wolf-kin}
+  - {Form: ron, Gloss: seal}
+  - {Form: brac, Gloss: speckled}
+  - {Form: glas, Gloss: green-grey}
+  - {Form: keogh, Gloss: gentle}
+# No family list: the mac/nic patronymic IS the Irish surname ("Cian mac Tadhg").
+FamilyAffixes: []
+Clans: []
+Epithets: []
+Descriptors:
+  - {Form: Bally, Gloss: town-place, Tags: [village, town]}
+  - {Form: Knock, Gloss: hill, Tags: [hill]}
+  - {Form: Lough, Gloss: lake, Tags: [lake, water]}
+Nouns:
+  - {Form: dun, Gloss: fort, Tags: [town, city, hill]}
+  - {Form: inis, Gloss: island, Tags: [lake, river]}
+  - {Form: cill, Gloss: church, Tags: [village]}
+  - {Form: ath, Gloss: ford, Tags: [river]}
+  - {Form: gleann, Gloss: valley, Tags: [valley]}
