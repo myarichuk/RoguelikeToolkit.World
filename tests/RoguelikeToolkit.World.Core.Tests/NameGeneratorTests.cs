@@ -73,7 +73,8 @@ public sealed class NameGeneratorTests
             var gloss = FantasyNameGenerator.GeneratePlace(
                 PlaceKinds.Village, ctx, FantasyRaces.Human, Cultures.FantasyCommon, seed).Gloss.ToLowerInvariant();
             if (gloss.Contains("water") || gloss.Contains("river") || gloss.Contains("stream")
-                || gloss.Contains("clear") || gloss.Contains("calm") || gloss.Contains("fast") || gloss.Contains("crossing"))
+                || gloss.Contains("clear") || gloss.Contains("calm") || gloss.Contains("fast") || gloss.Contains("crossing")
+                || gloss.Contains("silver") || gloss.Contains("mist") || gloss.Contains("willow") || gloss.Contains("low-lying"))
                 hits++;
         }
         Assert.True(hits >= n / 3, $"Water context rarely reflected: {hits}/{n}.");
@@ -229,12 +230,12 @@ public sealed class NameGeneratorTests
     [Fact]
     public void PrefixPatronymics_LeadWithMarker()
     {
-        // Welsh map/ferch, Irish mac/nic, Arabic ibn/bint, Hebrew ben/bat are
+        // Welsh ap/ferch, Irish mac/nic, Arabic ibn/bint, Hebrew ben/bat are
         // words before the parent name, never fused suffixes ("Branmap").
         foreach (int seed in Enumerable.Range(1, 10))
         {
             var welsh = FantasyNameGenerator.GeneratePerson(FantasyRaces.Human, Cultures.Welsh, seed);
-            Assert.StartsWith("map ", welsh.Parts.Single(p => p.Role == NamePartRoles.Patronymic).Form, StringComparison.Ordinal);
+            Assert.StartsWith("ap ", welsh.Parts.Single(p => p.Role == NamePartRoles.Patronymic).Form, StringComparison.Ordinal);
             var welshFem = FantasyNameGenerator.GeneratePerson(FantasyRaces.Human, Cultures.Welsh, seed, feminine: true);
             Assert.StartsWith("ferch ", welshFem.Parts.Single(p => p.Role == NamePartRoles.Patronymic).Form, StringComparison.Ordinal);
             var irish = FantasyNameGenerator.GeneratePerson(FantasyRaces.Human, Cultures.Irish, seed);
@@ -253,11 +254,11 @@ public sealed class NameGeneratorTests
     [Fact]
     public void ArabicParticles_JoinWithSpace()
     {
-        // "Karim al-Din", never "Karimal-Din".
+        // "Karim ad-Din", never "Karimad-Din" (the article, assimilated or not, is a word of its own).
         foreach (int seed in Enumerable.Range(1, 20))
         {
             var name = FantasyNameGenerator.GeneratePerson(FantasyRaces.Human, Cultures.Arabic, seed);
-            Assert.DoesNotMatch(new Regex("[A-Za-z]al-"), name.Text);
+            Assert.DoesNotMatch(new Regex("[A-Za-z](al|a(th|dh|sh|[tdrzsn]))-"), name.Text);
         }
     }
 

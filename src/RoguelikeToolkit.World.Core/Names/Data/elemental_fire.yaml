@@ -14,7 +14,7 @@ GivenStems:
   - {Form: Ember, Gloss: ember}
   - {Form: Flame, Gloss: flame}
   - {Form: Coal, Gloss: coal}
-  - {Form: Spark, Gloss: spark}
+  - {Form: Flare, Gloss: flare}
   - {Form: Blaze, Gloss: blaze}
   - {Form: Soot, Gloss: soot}
   - {Form: Kindle, Gloss: kindler}
@@ -32,7 +32,7 @@ SecondStems:
   - {Form: flame, Gloss: flaming}
   - {Form: cinder, Gloss: cinder-born}
   - {Form: ash, Gloss: ashen}
-  - {Form: spark, Gloss: sparking}
+  - {Form: flare, Gloss: flaring}
   - {Form: blaze, Gloss: blazing}
   - {Form: smoke, Gloss: smoking}
   - {Form: brand, Gloss: branded}

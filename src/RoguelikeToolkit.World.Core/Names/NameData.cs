@@ -15,13 +15,20 @@ public sealed class MorphemeYaml
     public string Gloss { get; set; } = string.Empty;
     /// <summary>
     /// Free tags used for place fit (river, forest, ...) plus reserved markers:
-    /// <c>masc</c>/<c>fem</c> (gendered given names and surname forms),
-    /// <c>solo</c> (never takes a second stem), <c>nopatron</c> (not usable as a parent name).
+    /// <c>masc</c>/<c>fem</c> (gendered given names and surname forms; <c>fem</c> on a place noun
+    /// triggers <see cref="CultureData.PlaceMutation"/>),
+    /// <c>solo</c> (never takes a second stem), <c>bound</c> (half a name: always takes a second stem),
+    /// <c>nopatron</c> (not usable as a parent name).
     /// </summary>
     public List<string> Tags { get; set; } = new();
     /// <summary>Stem to fuse suffixes onto (Russian "Пётр" -> "Петр" + "ович"). Blank uses Form.</summary>
     public string Base { get; set; } = string.Empty;
     public string BaseLatin { get; set; } = string.Empty;
+    /// <summary>
+    /// A descriptor's form after a feminine place noun, before any mutation, where it differs
+    /// (Welsh gwyn -> gwen, melyn -> melen). Only read by tables with <see cref="CultureData.PlaceMutation"/>.
+    /// </summary>
+    public string FemForm { get; set; } = string.Empty;
 }
 
 public sealed class CultureData
@@ -43,6 +50,13 @@ public sealed class CultureData
     public string PlaceOrder { get; set; } = "DescriptorFirst";
     /// <summary>"Fuse" (one word: Clearford), "Space" (two words) or "Hyphen".</summary>
     public string PlaceJoin { get; set; } = "Fuse";
+    /// <summary>
+    /// Initial mutation of a descriptor that follows a feminine (<c>fem</c>-tagged) place noun.
+    /// "Soft" is Welsh soft mutation: Pont + du is "Pontddu", Moel + mawr is "Moelfawr",
+    /// Caer + gwyn (feminine gwen) is "Caerwen"; a masculine noun leaves it alone ("Llyndu").
+    /// Blank (default) mutates nothing.
+    /// </summary>
+    public string PlaceMutation { get; set; } = string.Empty;
     /// <summary>
     /// When true (default) the shared fantasy_common place vocabulary tops up this
     /// table's descriptors/nouns. Language-faithful tables set false so a Hebrew
@@ -174,14 +188,52 @@ public sealed class NameDataStore
     public CultureData ResolveCulture(string culture, IEnumerable<string>? extraAvailable = null)
         => Get(culture, "culture", extraAvailable);
 
-    public static string DefaultDirectory =>
-        Path.Combine(Environment.GetFolderPath(Environment.SpecialFolder.ApplicationData),
-            "RoguelikeToolkit.World", "Names");
+    /// <summary>
+    /// Per-user data folder. ApplicationData can be empty (containers, service accounts), and
+    /// combining onto "" would silently put the tables under whatever the working directory is,
+    /// so fall back through the other per-user folders to the application folder.
+    /// </summary>
+    public static string DefaultDirectory
+    {
+        get
+        {
+            var root = new[]
+                {
+                    Environment.SpecialFolder.ApplicationData,
+                    Environment.SpecialFolder.LocalApplicationData,
+                    Environment.SpecialFolder.UserProfile,
+                }
+                .Select(Environment.GetFolderPath)
+                .FirstOrDefault(p => !string.IsNullOrWhiteSpace(p) && Path.IsPathRooted(p))
+                ?? AppContext.BaseDirectory;
+            return Path.Combine(root, "RoguelikeToolkit.World", "Names");
+        }
+    }
 
     public static NameDataStore Load(string? overrideDir = null)
     {
+        var store = LoadCore(overrideDir, out var problems);
+        if (problems.Count > 0) throw new NameDataException(problems);
+        return store;
+    }
+
+    /// <summary>
+    /// Like <see cref="Load"/>, but never throws for bad tables: every file that validates is
+    /// used, a broken on-disk file leaves the shipped table of the same key in place, and the
+    /// problems are reported instead. For editors and tools, where one typo should not discard
+    /// every other edit.
+    /// </summary>
+    public static NameDataStore LoadLenient(string? overrideDir, out IReadOnlyList<string> problems)
+    {
+        var store = LoadCore(overrideDir, out var list);
+        problems = list;
+        return store;
+    }
+
+    private static NameDataStore LoadCore(string? overrideDir, out List<string> problems)
+    {
         var store = new NameDataStore();
-        var problems = new List<string>();
+        problems = new List<string>();
         var des = new DeserializerBuilder()
             .WithNamingConvention(NullNamingConvention.Instance)
             .IgnoreUnmatchedProperties()
@@ -218,8 +270,6 @@ public sealed class NameDataStore
                 LoadOne(store, problems, des, rel, content, fromDisk: true, embeddedKeys, diskKeys);
             }
         }
-
-        if (problems.Count > 0) throw new NameDataException(problems);
         return store;
     }
 
@@ -305,6 +355,13 @@ public sealed class NameDataStore
             !data.PlaceJoin.Equals("Space", StringComparison.OrdinalIgnoreCase) &&
             !data.PlaceJoin.Equals("Hyphen", StringComparison.OrdinalIgnoreCase))
             problems.Add($"{rel}: unknown PlaceJoin '{data.PlaceJoin}' (want Fuse, Space or Hyphen).");
+        if (!string.IsNullOrWhiteSpace(data.PlaceMutation))
+        {
+            if (!data.PlaceMutation.Equals("Soft", StringComparison.OrdinalIgnoreCase))
+                problems.Add($"{rel}: unknown PlaceMutation '{data.PlaceMutation}' (want Soft, or leave it blank).");
+            else if (!data.PlaceOrder.Equals("NounFirst", StringComparison.OrdinalIgnoreCase))
+                problems.Add($"{rel}: PlaceMutation needs PlaceOrder NounFirst (it mutates the descriptor after the noun).");
+        }
         if (data.GivenStems.Count == 0)
             problems.Add($"{rel}: GivenStems is empty (every table needs at least one given stem).");
         if (data.Patronymic &&
@@ -347,7 +404,6 @@ public sealed class NameDataStore
         return dirs.Any() ? string.Join("/", dirs) + "/" + file : file;
     }
 
-    /// <summary>Copies embedded YAML to <paramref name="dir"/> when files are missing. Never overwrites user edits.</summary>
     /// <summary>
     /// Copies embedded YAML to <paramref name="dir"/>, keeping it current without clobbering edits.
     /// A manifest (<c>.shipped.json</c>) records the hash of each file as last shipped:

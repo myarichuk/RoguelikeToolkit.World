@@ -53,3 +53,7 @@ Strings:
   DataError: "data error, using built-in: "
   ReloadFailed: "reload failed: "
   Reloaded: "YAML reloaded: {0} styles"
+  Mixed: "Mixed"
+  Audit: "Audit"
+  AuditTip: "Roll {0} names with these settings and report variety and any that read as mistakes"
+  AuditResult: "Audit: {0} rolls, {1} distinct ({2:P0}), {3} flagged; most repeated: {4} x{5}"

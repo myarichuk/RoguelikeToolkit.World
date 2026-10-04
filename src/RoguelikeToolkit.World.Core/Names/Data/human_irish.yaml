@@ -46,20 +46,48 @@ GivenStems:
   - {Form: Sinead, Gloss: God is gracious, Tags: [fem]}
   - {Form: Muireann, Gloss: sea-white, Tags: [fem]}
   - {Form: Una, Gloss: lamb, Tags: [fem]}
+  - {Form: Aodh, Gloss: fire, Tags: [masc]}
+  - {Form: Colm, Gloss: dove, Tags: [masc]}
+  - {Form: Fergus, Gloss: man of strength, Tags: [masc]}
+  - {Form: Ruairi, Gloss: red king, Tags: [masc]}
+  - {Form: Eamon, Gloss: wealthy protector, Tags: [masc]}
+  - {Form: Padraig, Gloss: noble, Tags: [masc]}
+  - {Form: Cillian, Gloss: little church, Tags: [masc]}
+  - {Form: Odhran, Gloss: pale green, Tags: [masc]}
+  - {Form: Tiernan, Gloss: little lord, Tags: [masc]}
+  - {Form: Eimear, Gloss: swift, Tags: [fem]}
+  - {Form: Grainne, Gloss: grain, Tags: [fem]}
+  - {Form: Clodagh, Gloss: river, Tags: [fem]}
+  - {Form: Ailbhe, Gloss: white, Tags: [fem]}
+  - {Form: Eithne, Gloss: kernel, Tags: [fem]}
+  - {Form: Fiadh, Gloss: wild, Tags: [fem]}
+  - {Form: Sadhbh, Gloss: sweet, Tags: [fem]}
+  - {Form: Blathnaid, Gloss: little flower, Tags: [fem]}
 SecondStems: []
 FamilyAffixes: []
 Clans: []
 Epithets: []
 Descriptors:
-  - {Form: mor, Gloss: great, Tags: [city, town, mountain]}
-  - {Form: beg, Gloss: little, Tags: [village]}
+  - {Form: mor, Gloss: great}
+  - {Form: beg, Gloss: little}
   - {Form: glas, Gloss: grey-green, Tags: [valley, river, forest]}
-  - {Form: dubh, Gloss: black, Tags: [forest, dark, danger, lake]}
-  - {Form: ban, Gloss: white, Tags: [mountain, high]}
-  - {Form: fionn, Gloss: fair, Tags: [valley, lake, village]}
-  - {Form: ruadh, Gloss: red, Tags: [hill, danger]}
+  - {Form: dubh, Gloss: black}
+  - {Form: ban, Gloss: white}
+  - {Form: fionn, Gloss: fair}
+  - {Form: ruadh, Gloss: red}
   - {Form: garbh, Gloss: rough, Tags: [mountain, hill, danger]}
-  - {Form: cam, Gloss: crooked, Tags: [river]}
+  - {Form: cam, Gloss: crooked, Tags: [river, valley, hill]}
+  - {Form: boy, Gloss: yellow}
+  - {Form: lea, Gloss: grey}
+  - {Form: reagh, Gloss: brindled}
+  - {Form: nua, Gloss: new, Tags: [village, town, hold]}
+  - {Form: keel, Gloss: narrow, Tags: [river, valley, lake]}
+  - {Form: dorragh, Gloss: dark, Tags: [dark, forest, danger]}
+  - {Form: darragh, Gloss: oak, Tags: [forest, village, hill]}
+  - {Form: brack, Gloss: speckled}
+  - {Form: fad, Gloss: long, Tags: [valley, river, lake]}
+  - {Form: illar, Gloss: eagle, Tags: [mountain, high, hill]}
+  - {Form: cullen, Gloss: holly, Tags: [forest, hill, valley]}
 Nouns:
   - {Form: Bally, Gloss: townland, Tags: [village, town]}
   - {Form: Knock, Gloss: hill, Tags: [hill]}
@@ -73,3 +101,22 @@ Nouns:
   - {Form: Drum, Gloss: ridge, Tags: [hill]}
   - {Form: Carrick, Gloss: rock, Tags: [hill, camp, deposit]}
   - {Form: Derry, Gloss: oak grove, Tags: [forest]}
+  - {Form: Ard, Gloss: height, Tags: [hill, mountain]}
+  - {Form: Ben, Gloss: peak, Tags: [mountain]}
+  - {Form: Mullagh, Gloss: summit, Tags: [mountain, hill]}
+  - {Form: Tully, Gloss: hillock, Tags: [hill]}
+  - {Form: Lis, Gloss: ringfort, Tags: [hold, village]}
+  - {Form: Rath, Gloss: ringfort, Tags: [hold, camp, village]}
+  - {Form: Cashel, Gloss: stone fort, Tags: [hold, city, town]}
+  - {Form: Clon, Gloss: meadow, Tags: [valley, village]}
+  - {Form: Agha, Gloss: field, Tags: [valley, village]}
+  - {Form: Kyle, Gloss: wood, Tags: [forest]}
+  - {Form: Ros, Gloss: wooded headland, Tags: [forest, lake]}
+  - {Form: Owen, Gloss: river, Tags: [river]}
+  - {Form: Bun, Gloss: river mouth, Tags: [river, village]}
+  - {Form: Tubber, Gloss: well, Tags: [village, lake]}
+  - {Form: Port, Gloss: landing place, Tags: [town, city, camp]}
+  - {Form: Coole, Gloss: nook wood, Tags: [forest, valley]}
+  - {Form: Lag, Gloss: hollow, Tags: [valley]}
+  - {Form: Coom, Gloss: corrie, Tags: [valley, mountain]}
+  - {Form: Garry, Gloss: garden, Tags: [forest, village]}

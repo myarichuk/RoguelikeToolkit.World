@@ -25,6 +25,14 @@ GivenStems:
   - {Form: Wren, Gloss: wren-friend}
   - {Form: Pebble, Gloss: pebble-skipping}
   - {Form: Sorrel, Gloss: sorrel-grazer}
+  - {Form: Tansy, Gloss: tansy-sprig}
+  - {Form: Hazel, Gloss: hazelnut}
+  - {Form: Bracken, Gloss: bracken-bed}
+  - {Form: Fennel, Gloss: fennel-seed}
+  - {Form: Rowan, Gloss: rowan-berry}
+  - {Form: Cob, Gloss: cob-nut}
+  - {Form: Wat, Gloss: stout}
+  - {Form: Nib, Gloss: little bit}
 SecondStems:
   - {Form: y, Gloss: diminutive}
   - {Form: ie, Gloss: diminutive}
@@ -41,6 +49,12 @@ FamilyAffixes:
   - {Form: Goodbarrow, Gloss: family of the good barrow}
   - {Form: Ploughwick, Gloss: family of the plough village}
   - {Form: Burrowfield, Gloss: family of the burrow field}
+  - {Form: Kettlewhistle, Gloss: family of the singing kettle}
+  - {Form: Mossbank, Gloss: family of the mossy bank}
+  - {Form: Appledore, Gloss: family of the apple door}
+  - {Form: Puddlefoot, Gloss: family of the puddle-splashers}
+  - {Form: Fernhollow, Gloss: family of the fern hollow}
+  - {Form: Tumbledown, Gloss: family of the tumbled hill}
 Clans: []
 Epithets: []
 Descriptors:

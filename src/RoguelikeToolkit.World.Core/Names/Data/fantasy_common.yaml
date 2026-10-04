@@ -9,35 +9,40 @@ PatronymicDaughter: daughter
 FamilySuffix: true
 Banned: [drow, menzoberranzan, drizzt, gimli, gloin, moria, mithril, galadriel, legolas, hobbit, quenya, sindarin, khuzdul, faerun, lantan]
 GivenStems:
-  - {Form: Ald, Gloss: old}
+  - {Form: Ald, Gloss: old, Tags: [bound]}
   - {Form: Bran, Gloss: raven}
-  - {Form: Cor, Gloss: crow}
-  - {Form: Dun, Gloss: dusky}
+  - {Form: Cor, Gloss: crow, Tags: [bound]}
+  - {Form: Dun, Gloss: dusky, Tags: [bound]}
   - {Form: Fen, Gloss: marsh}
-  - {Form: Gar, Gloss: spear}
+  - {Form: Gar, Gloss: spear, Tags: [bound]}
   - {Form: Hal, Gloss: hall}
-  - {Form: Mar, Gloss: boundary}
+  - {Form: Mar, Gloss: boundary, Tags: [bound]}
   - {Form: Stan, Gloss: stone}
-  - {Form: Wil, Gloss: willow}
+  - {Form: Wil, Gloss: willow, Tags: [bound]}
   - {Form: Thorn, Gloss: thorn}
   - {Form: Ash, Gloss: ash tree}
-  - {Form: Eagle, Gloss: eagle}
+  - {Form: Eagle, Gloss: eagle, Tags: [bound]}
   - {Form: Hawk, Gloss: hawk}
   - {Form: Storm, Gloss: storm}
   - {Form: Ember, Gloss: ember}
   - {Form: Brook, Gloss: brook}
   - {Form: Wolf, Gloss: wolf}
 SecondStems:
-  - {Form: ric, Gloss: ruler}
+  - {Form: ric, Gloss: ruler, Tags: [masc]}
   - {Form: win, Gloss: friend}
-  - {Form: ward, Gloss: guard}
-  - {Form: helm, Gloss: helmet}
+  - {Form: ward, Gloss: guard, Tags: [masc]}
+  - {Form: helm, Gloss: helmet, Tags: [masc]}
   - {Form: blood, Gloss: blood-sworn}
   - {Form: eye, Gloss: sharp-sighted}
   - {Form: heart, Gloss: stout-hearted}
-  - {Form: wyn, Gloss: joy}
+  - {Form: wyn, Gloss: joy, Tags: [fem]}
   - {Form: night, Gloss: night-wise}
   - {Form: brave, Gloss: brave}
+  - {Form: mund, Gloss: protector, Tags: [masc]}
+  - {Form: wen, Gloss: fair, Tags: [fem]}
+  - {Form: hild, Gloss: battle, Tags: [fem]}
+  - {Form: rith, Gloss: grace, Tags: [fem]}
+  - {Form: lind, Gloss: gentle, Tags: [fem]}
 FamilyAffixes:
   - {Form: bury, Gloss: fortified place}
   - {Form: ford, Gloss: river crossing}
@@ -60,6 +65,28 @@ Descriptors:
   - {Form: Stone, Gloss: stony, Tags: [hill, mountain, deposit]}
   - {Form: Frost, Gloss: frosty, Tags: [mountain, high]}
   - {Form: Hollow, Gloss: sunken, Tags: [valley]}
+  - {Form: Old, Gloss: old}
+  - {Form: North, Gloss: northern}
+  - {Form: South, Gloss: southern}
+  - {Form: East, Gloss: eastern}
+  - {Form: West, Gloss: western}
+  - {Form: Red, Gloss: red}
+  - {Form: White, Gloss: white}
+  - {Form: Black, Gloss: black}
+  - {Form: Green, Gloss: green}
+  - {Form: Grey, Gloss: grey}
+  - {Form: Long, Gloss: long}
+  - {Form: High, Gloss: high, Tags: [high, mountain, hill, hold]}
+  - {Form: Low, Gloss: low-lying, Tags: [valley, river, village]}
+  - {Form: Silver, Gloss: silvery, Tags: [water, river, lake, deposit]}
+  - {Form: Gold, Gloss: golden, Tags: [deposit, city, valley]}
+  - {Form: Iron, Gloss: iron-rich, Tags: [deposit, mountain, hill, hold]}
+  - {Form: Mist, Gloss: misty, Tags: [water, lake, valley, high]}
+  - {Form: Willow, Gloss: willow-lined, Tags: [river, lake, village]}
+  - {Form: Oak, Gloss: oak-grown, Tags: [forest, village, hill]}
+  - {Form: Elder, Gloss: elder-grown, Tags: [forest, valley]}
+  - {Form: Wind, Gloss: windswept, Tags: [high, hill, mountain, camp]}
+  - {Form: Grim, Gloss: grim, Tags: [danger, dark, hold, camp]}
 Nouns:
   - {Form: wood, Gloss: forest, Tags: [forest]}
   - {Form: water, Gloss: water, Tags: [water, river, lake]}
@@ -71,3 +98,35 @@ Nouns:
   - {Form: burg, Gloss: fortified town, Tags: [town, city]}
   - {Form: ham, Gloss: homestead, Tags: [village]}
   - {Form: holm, Gloss: river island, Tags: [river]}
+  - {Form: peak, Gloss: peak, Tags: [mountain, high]}
+  - {Form: crag, Gloss: crag, Tags: [mountain, hill]}
+  - {Form: fell, Gloss: fell, Tags: [mountain, hill, high]}
+  - {Form: horn, Gloss: horn peak, Tags: [mountain]}
+  - {Form: tor, Gloss: rocky hill, Tags: [hill]}
+  - {Form: down, Gloss: downland, Tags: [hill]}
+  - {Form: barrow, Gloss: barrow hill, Tags: [hill, danger]}
+  - {Form: pool, Gloss: pool, Tags: [lake]}
+  - {Form: tarn, Gloss: mountain lake, Tags: [lake, high]}
+  - {Form: run, Gloss: stream, Tags: [river]}
+  - {Form: vale, Gloss: vale, Tags: [valley]}
+  - {Form: combe, Gloss: deep valley, Tags: [valley]}
+  - {Form: glen, Gloss: glen, Tags: [valley, forest]}
+  - {Form: holt, Gloss: wood, Tags: [forest]}
+  - {Form: shaw, Gloss: thicket, Tags: [forest]}
+  - {Form: hurst, Gloss: wooded hill, Tags: [forest, hill]}
+  - {Form: wick, Gloss: hamlet, Tags: [village]}
+  - {Form: thorpe, Gloss: farmstead, Tags: [village]}
+  - {Form: stead, Gloss: steading, Tags: [village]}
+  - {Form: cote, Gloss: cottages, Tags: [village]}
+  - {Form: ton, Gloss: town, Tags: [town, village]}
+  - {Form: bridge, Gloss: bridge town, Tags: [town, river]}
+  - {Form: market, Gloss: market town, Tags: [town]}
+  - {Form: port, Gloss: harbour town, Tags: [town, city, water]}
+  - {Form: gate, Gloss: city gate, Tags: [city, hold]}
+  - {Form: haven, Gloss: harbour, Tags: [city, town, water]}
+  - {Form: keep, Gloss: keep, Tags: [hold]}
+  - {Form: guard, Gloss: guard-fort, Tags: [hold, camp]}
+  - {Form: wall, Gloss: walled hold, Tags: [hold]}
+  - {Form: camp, Gloss: camp, Tags: [camp]}
+  - {Form: rest, Gloss: resting place, Tags: [camp]}
+  - {Form: watch, Gloss: watch post, Tags: [camp, hold, hill]}
