@@ -153,7 +153,7 @@ public static class NameThemes
     /// <summary>Tags with a structural meaning; never offered or matched as themes.</summary>
     internal static readonly HashSet<string> ReservedTags = new(StringComparer.OrdinalIgnoreCase)
     {
-        "masc", "fem", "solo", "nopatron",
+        "masc", "fem", "solo", "bound", "nopatron",
         "village", "town", "city", "hold", "camp", "danger", "deposit", "high",
     };
 
@@ -219,9 +219,13 @@ public static class NameThemes
         List<MorphemeYaml> Usable(List<MorphemeYaml> l) => feminine is null
             ? l
             : l.Where(m => !m.Tags.Contains(feminine.Value ? "masc" : "fem", StringComparer.OrdinalIgnoreCase)).ToList();
+        // A stem that repeats the fused patronymic marker ("Spark" beside "-spark") is never picked.
+        List<MorphemeYaml> Stems(List<MorphemeYaml> l) => Usable(l).Where(m => feminine is null
+            ? !(FantasyNameGenerator.BlockedByMarker(table, m, false) && FantasyNameGenerator.BlockedByMarker(table, m, true))
+            : !FantasyNameGenerator.BlockedByMarker(table, m, feminine.Value)).ToList();
         // Only offer a theme from a slot the table can actually emit (an epithet list with EpithetChance 0 is dead data).
-        var lists = new List<List<MorphemeYaml>> { Usable(table.GivenStems) };
-        if (table.CompoundChance > 0) lists.Add(Usable(table.SecondStems));
+        var lists = new List<List<MorphemeYaml>> { Stems(table.GivenStems) };
+        if (table.CompoundChance > 0) lists.Add(Stems(table.SecondStems));
         if (borrowsHumanFamily) { if (table.EpithetChance > 0) lists.Add(table.Epithets); return Collect(lists, includeTags: false); }
         if (table.ClanChance != 0) lists.Add(table.Clans);
         if (table.EpithetChance > 0) lists.Add(table.Epithets);

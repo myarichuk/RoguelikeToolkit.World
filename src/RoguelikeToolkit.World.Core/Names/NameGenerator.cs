@@ -170,14 +170,8 @@ public static class FantasyNameGenerator
         var store = overrideDir is null ? Shared : NameDataStore.Load(overrideDir);
         var table = store.Get(TableKey(race, culture, store));
         var tokens = NameThemes.Tokenize(inspiredBy);
-        GeneratedName fallback = BuildPerson(store, race, culture, seed, lineage, feminine, salt, tokens, script);
-        if (!HitsBanned(store, table, fallback.Text, script)) return fallback;
-        for (int attempt = 1; attempt < 5; attempt++)
-        {
-            var name = BuildPerson(store, race, culture, seed, lineage, feminine, salt + attempt * 100003, tokens, script);
-            if (!HitsBanned(store, table, name.Text, script)) return name;
-        }
-        return fallback;
+        return FirstGood(store, table, script,
+            attempt => BuildPerson(store, race, culture, seed, lineage, feminine, salt + attempt * 100003, tokens, script));
     }
 
     public static GeneratedName GeneratePlace(
@@ -188,14 +182,29 @@ public static class FantasyNameGenerator
         var store = overrideDir is null ? Shared : NameDataStore.Load(overrideDir);
         var table = store.Get(TableKey(race, culture, store));
         var tokens = NameThemes.Tokenize(inspiredBy);
-        GeneratedName fallback = BuildPlace(store, kind, ctx, race, culture, seed, salt, tokens, script);
-        if (!HitsBanned(store, table, fallback.Text, script)) return fallback;
-        for (int attempt = 1; attempt < 5; attempt++)
+        return FirstGood(store, table, script,
+            attempt => BuildPlace(store, kind, ctx, race, culture, seed, salt + attempt * 100003, tokens, script));
+    }
+
+    /// <summary>
+    /// Rerolls (deterministically, by salt) until a name is free of banned words and reads cleanly
+    /// per <see cref="NameLint"/>. Most stutters are prevented while picking; this catches the rest,
+    /// which only appear once fragments are fused and rendered ("Twisk"+"whisker" in Cyrillic is
+    /// "Твисквискер"). If nothing passes, a ban-free name beats a clean banned one. Picks are
+    /// script-independent; only these rare rerolls (like a ban that bites in one script) differ.
+    /// </summary>
+    private static GeneratedName FirstGood(NameDataStore store, CultureData table, NameScript script, Func<int, GeneratedName> build)
+    {
+        GeneratedName? first = null, firstAllowed = null;
+        for (int attempt = 0; attempt < 8; attempt++)
         {
-            var name = BuildPlace(store, kind, ctx, race, culture, seed, salt + attempt * 100003, tokens, script);
-            if (!HitsBanned(store, table, name.Text, script)) return name;
+            var name = build(attempt);
+            first ??= name;
+            if (HitsBanned(store, table, name.Text, script)) continue;
+            firstAllowed ??= name;
+            if (NameLint.Check(name).Count == 0) return name;
         }
-        return fallback;
+        return firstAllowed ?? first!;
     }
 
     // ---- gender ---------------------------------------------------------------
@@ -236,16 +245,38 @@ public static class FantasyNameGenerator
         var effLineage = NormalizeLineage(string.IsNullOrWhiteSpace(lineage) ? table.LineageDefault : lineage);
         var parts = new List<NamePart>();
 
+        // Fused patronymic markers count as words already in the name: a "spark" second stem
+        // next to a "-spark" patronymic reads "Glowspark Forgespark".
+        var used = new RootSet();
+        if (table.Patronymic && !table.PatronymicPrefix)
+            used.AddMarker(table, feminine);
+
         // Given name: stem (+ second stem for compound cultures), biased by inspirations.
+        // A bare "Gust" beside a "-gust" patronymic is the same stutter, so the markers filter stems too.
         var givenPool = ForGender(table.GivenStems, feminine);
+        var freshGiven = givenPool.Where(m => !used.Clashes(m)).ToList();
+        if (freshGiven.Count > 0) givenPool = freshGiven;
         var stem = PickBiased(ref rng, givenPool, tokens) ?? new MorphemeYaml { Form = "Ash", Gloss = "ash tree" };
         MorphemeYaml? second = null;
-        if (table.SecondStems.Count > 0 && !HasTag(stem, "solo") && rng.NextUInt(100) < (uint)table.CompoundChance)
+        if (table.SecondStems.Count > 0 && !HasTag(stem, "solo"))
         {
-            // Strict, unlike given stems: a feminine name must never take a masculine ending ("Layla al-Din").
-            var secondPool = table.SecondStems.Where(m => GenderOf(m) != (feminine ? 1 : -1)).ToList();
-            second = PickSecond(ref rng, secondPool, tokens, stem);
+            // A "bound" stem is only half a name ("Ald", "Medved"): it always takes a second element.
+            bool roll = rng.NextUInt(100) < (uint)table.CompoundChance;
+            if (roll || HasTag(stem, "bound"))
+            {
+                // Strict, unlike given stems: a feminine name must never take a masculine ending ("Layla al-Din").
+                var secondPool = table.SecondStems.Where(m => GenderOf(m) != (feminine ? 1 : -1) && !used.Clashes(m)).ToList();
+                second = PickSecond(ref rng, secondPool, tokens, stem);
+            }
         }
+        if (second is null && HasTag(stem, "bound"))
+        {
+            // No ending fits (every draw clashed, or none suits this gender): use a stem that can stand alone.
+            var free = givenPool.Where(m => !HasTag(m, "bound")).ToList();
+            if (free.Count > 0) stem = PickBiased(ref rng, free, tokens)!;
+        }
+        used.Add(stem);
+        if (second is not null) used.Add(second);
         var stemShown = Cap(Display(stem, script));
         string given;
         if (second is null)
@@ -261,7 +292,7 @@ public static class FantasyNameGenerator
                 ? stemShown + " " + secondShown
                 : Fuse(stemShown, secondShown, dedupe: true);
         }
-        var givenGloss = second is null ? stem.Gloss : $"{stem.Gloss}-{second.Gloss}";
+        var givenGloss = second is null ? stem.Gloss : JoinGloss(stem.Gloss, second.Gloss);
         parts.Add(new NamePart { Form = given, Gloss = givenGloss, Role = NamePartRoles.Given });
 
         // Parent for the patronymic/matronymic slot: the right gender for the line,
@@ -271,15 +302,18 @@ public static class FantasyNameGenerator
         if (table.Patronymic)
         {
             var marker = Marker(table, feminine, script);
+            // Never the child's own stem or anything sharing a root with the name so far, which
+            // includes a fused marker: "Gust"+"gustess" is a stutter, not a lineage.
             var parentPool = table.GivenStems.Where(m => !HasTag(m, "nopatron")
                     && GenderOf(m) != (matri ? 1 : -1)
-                    && !m.Form.Equals(stem.Form, StringComparison.OrdinalIgnoreCase)
-                    // "Gust"+"gust": a parent that already ends in the marker reads as a stutter.
-                    && (table.PatronymicPrefix || !m.Form.EndsWith(marker, StringComparison.OrdinalIgnoreCase))).ToList();
+                    && !used.Clashes(m)).ToList();
+            if (parentPool.Count == 0)
+                parentPool = table.GivenStems.Where(m => !m.Form.Equals(stem.Form, StringComparison.OrdinalIgnoreCase)).ToList();
             if (parentPool.Count == 0) parentPool = table.GivenStems;
             var parent = PickBiased(ref rng, parentPool, tokens) ?? stem;
             parentForm = parent.Form;
-            var gloss = $"{(feminine ? "daughter of " : "son of ")}{parent.Gloss}";
+            used.Add(parent);
+            var gloss = $"{(feminine ? "daughter of " : "son of ")}{StripOf(parent.Gloss)}";
             var role = matri ? NamePartRoles.Matronymic : NamePartRoles.Patronymic;
             if (table.PatronymicPrefix)
             {
@@ -305,14 +339,14 @@ public static class FantasyNameGenerator
         bool human = race.Equals(FantasyRaces.Human, StringComparison.OrdinalIgnoreCase);
         if (race.Equals(FantasyRaces.HalfElf, StringComparison.OrdinalIgnoreCase))
         {
-            AddHumanFamily(ref rng, store, culture, parts, script, feminine);
+            AddHumanFamily(ref rng, store, culture, parts, script, feminine, used);
         }
         else if (race.Equals(FantasyRaces.HalfOrc, StringComparison.OrdinalIgnoreCase))
         {
             if (rng.NextUInt(100) < 50 && table.Epithets.Count > 0)
-                AddPickBiased(ref rng, parts, table.Epithets, NamePartRoles.Epithet, tokens, script);
+                AddPickBiased(ref rng, parts, table.Epithets, NamePartRoles.Epithet, tokens, script, used);
             else
-                AddHumanFamily(ref rng, store, culture, parts, script, feminine);
+                AddHumanFamily(ref rng, store, culture, parts, script, feminine, used);
         }
         else
         {
@@ -320,44 +354,60 @@ public static class FantasyNameGenerator
             bool clanned = table.Clans.Count > 0 && rng.NextUInt(100) < clanChance;
             if (clanned)
             {
-                var clan = PickBiased(ref rng, table.Clans, tokens)!;
-                parts.Add(new NamePart
+                // Optional slot: when every clan repeats a word already in the name, leave it out.
+                var clan = PickAvoiding(ref rng, table.Clans, tokens, used);
+                if (clan is not null)
                 {
-                    Form = Display(clan, script), Gloss = clan.Gloss,
-                    Role = human ? NamePartRoles.Family : NamePartRoles.Clan,
-                });
+                    used.Add(clan);
+                    parts.Add(new NamePart
+                    {
+                        Form = Display(clan, script), Gloss = clan.Gloss,
+                        Role = human ? NamePartRoles.Family : NamePartRoles.Clan,
+                    });
+                }
             }
             else if (table.FamilyAffixes.Count > 0 && rng.NextUInt(100) < (uint)table.FamilyChance)
             {
-                var fam = PickFiltered(ref rng, table.FamilyAffixes, feminine, tokens)!;
                 if (table.FamilySuffix)
                 {
+                    var affixes = ForGender(table.FamilyAffixes, feminine);
+                    var freshAffixes = affixes.Where(m => !used.Clashes(m)).ToList();
+                    var fam = PickBiased(ref rng, freshAffixes.Count > 0 ? freshAffixes : affixes, tokens)!;
                     // True suffixes fuse onto a *different* stem ("Ald"+"bury", "Mil"+"ov"):
-                    // a surname built from the person's own given name reads as a stutter,
+                    // a surname built from a root already in the name reads as a stutter,
                     // and one built from a feminine given name ("Olgaova") is simply wrong.
-                    var famPool = table.GivenStems.Where(m => GenderOf(m) != -1
-                        && !m.Form.Equals(stem.Form, StringComparison.OrdinalIgnoreCase)
-                        && (parentForm is null || !m.Form.Equals(parentForm, StringComparison.OrdinalIgnoreCase))).ToList();
+                    var famPool = table.GivenStems.Where(m => GenderOf(m) != -1 && !used.Clashes(m)
+                        && !SharesRoot(m.Form, fam.Form)).ToList();
+                    if (famPool.Count == 0)
+                        famPool = table.GivenStems.Where(m => GenderOf(m) != -1
+                            && !m.Form.Equals(stem.Form, StringComparison.OrdinalIgnoreCase)
+                            && (parentForm is null || !m.Form.Equals(parentForm, StringComparison.OrdinalIgnoreCase))).ToList();
                     var fb = PickBiased(ref rng, famPool.Count > 0 ? famPool : table.GivenStems, tokens) ?? stem;
+                    used.Add(fb);
                     parts.Add(new NamePart
                     {
                         Form = Fuse(Cap(DisplayBase(fb, script)), Display(fam, script), dedupe: true),
-                        Gloss = $"{fb.Gloss}, {fam.Gloss}",
+                        Gloss = AffixGloss(fb.Gloss, fam.Gloss),
                         Role = NamePartRoles.Family,
                     });
                 }
                 else
                 {
                     // House / family / court names stand alone ("Starhaven", "Li").
-                    parts.Add(new NamePart
+                    var fam = PickAvoiding(ref rng, ForGender(table.FamilyAffixes, feminine), tokens, used);
+                    if (fam is not null)
                     {
-                        Form = Display(fam, script), Gloss = fam.Gloss,
-                        Role = human ? NamePartRoles.Family : NamePartRoles.Clan,
-                    });
+                        used.Add(fam);
+                        parts.Add(new NamePart
+                        {
+                            Form = Display(fam, script), Gloss = fam.Gloss,
+                            Role = human ? NamePartRoles.Family : NamePartRoles.Clan,
+                        });
+                    }
                 }
             }
             if (table.Epithets.Count > 0 && rng.NextUInt(100) < (uint)table.EpithetChance)
-                AddPickBiased(ref rng, parts, table.Epithets, NamePartRoles.Epithet, tokens, script);
+                AddPickBiased(ref rng, parts, table.Epithets, NamePartRoles.Epithet, tokens, script, used);
         }
 
         string text = JoinPerson(table, parts);
@@ -375,12 +425,14 @@ public static class FantasyNameGenerator
     }
 
     private static void AddHumanFamily(
-        ref Rng rng, NameDataStore store, string culture, List<NamePart> parts, NameScript script, bool feminine)
+        ref Rng rng, NameDataStore store, string culture, List<NamePart> parts, NameScript script, bool feminine,
+        RootSet used)
     {
         var humanTable = store.ResolveCulture(
             string.IsNullOrWhiteSpace(culture) ? Cultures.FantasyCommon : culture, Cultures.All);
         var common = store.Get(Cultures.FantasyCommon);
-        var fam = Pick(ref rng, humanTable.Clans.Concat(humanTable.FamilyAffixes).Where(m => GenderOf(m) != (feminine ? 1 : -1)).ToList())
+        var fam = Pick(ref rng, humanTable.Clans.Concat(humanTable.FamilyAffixes)
+                      .Where(m => GenderOf(m) != (feminine ? 1 : -1) && !used.Clashes(m)).ToList())
             ?? Pick(ref rng, common.FamilyAffixes);
         if (fam is null) return;
         // Suffix-only tables ("bury", "ov") have no standalone surname, so borrow a stem to carry them.
@@ -388,9 +440,11 @@ public static class FantasyNameGenerator
         string gloss = fam.Gloss;
         if (humanTable.FamilySuffix && humanTable.FamilyAffixes.Contains(fam) && humanTable.GivenStems.Count > 0)
         {
-            var b = Pick(ref rng, humanTable.GivenStems.Where(m => GenderOf(m) != -1).ToList()) ?? humanTable.GivenStems[0];
+            var carriers = humanTable.GivenStems.Where(m => GenderOf(m) != -1).ToList();
+            var fresh = carriers.Where(m => !used.Clashes(m)).ToList();
+            var b = Pick(ref rng, fresh.Count > 0 ? fresh : carriers) ?? humanTable.GivenStems[0];
             form = Fuse(Cap(DisplayBase(b, script)), form, dedupe: true);
-            gloss = $"{b.Gloss}, {fam.Gloss}";
+            gloss = AffixGloss(b.Gloss, fam.Gloss);
         }
         parts.Add(new NamePart { Form = form, Gloss = gloss + " (human side)", Role = NamePartRoles.Family });
     }
@@ -408,8 +462,8 @@ public static class FantasyNameGenerator
             var cand = PickBiased(ref rng, list, tokens);
             if (cand is null) return null;
             last = cand;
-            if (cand.Form.Equals(stem.Form, StringComparison.OrdinalIgnoreCase)) continue;
-            if (stem.Form.EndsWith(cand.Form, StringComparison.OrdinalIgnoreCase)) continue;
+            // "Kindle"+"kindler", "Storm"+"storm": the same root twice is a stutter.
+            if (SharesRoot(cand.Form, stem.Form) || SharesRoot(cand.Latin, stem.Latin)) continue;
             if (NameThemes.Words(cand.Gloss).Any(stemWords.Contains)) continue;
             return cand;
         }
@@ -418,18 +472,144 @@ public static class FantasyNameGenerator
     }
 
     /// <summary>
-    /// Joins two name fragments. With <paramref name="dedupe"/> a doubled boundary letter
-    /// is dropped ("Thorn"+"nic" -> "Thornic"); runs of three or more of any letter are always cut to two.
+    /// Joins two name fragments. With <paramref name="dedupe"/> a doubled boundary *vowel*
+    /// is dropped ("Eli"+"iel" -> "Eliel"); a doubled consonant is kept, because dropping it
+    /// changes the word ("Shan"+"ning" is "Shanning", not "Shaning"; "Fred"+"dochter" is not
+    /// "Fredochter"). Runs of three or more of any letter are always cut to two.
     /// </summary>
     internal static string Fuse(string a, string b, bool dedupe)
     {
         if (string.IsNullOrEmpty(b)) return a;
         if (string.IsNullOrEmpty(a)) return b;
-        if (dedupe && b.Length > 1 && char.IsLetter(a[^1]) &&
+        if (dedupe && b.Length > 1 && IsVowel(a[^1]) &&
             char.ToLowerInvariant(a[^1]) == char.ToLowerInvariant(b[0]))
             b = b.Substring(1);
         return Transliterator.NormalizeInnerFinals(CollapseRuns(a + b));
     }
+
+    private static bool IsVowel(char c) => "aeiouyаеёиоуыэюя".IndexOf(char.ToLowerInvariant(c)) >= 0;
+
+    // ---- repetition guards ------------------------------------------------------
+
+    /// <summary>
+    /// Do two fragments share a root? Any word of one (3+ letters) inside a word of the other,
+    /// or a common prefix of 4+ letters: "Ash"/"Ashbringer", "Gust"/"gustess", "Howling"/"howl".
+    /// Short particles ("al", "of", "mac") never count, so "al-Din" and "al-Misri" coexist.
+    /// </summary>
+    internal static bool SharesRoot(string? a, string? b)
+    {
+        foreach (var x in RootWords(a))
+            foreach (var y in RootWords(b))
+            {
+                var (s, l) = x.Length <= y.Length ? (x, y) : (y, x);
+                if (l.Contains(s, StringComparison.OrdinalIgnoreCase)) return true;
+                int p = 0;
+                while (p < s.Length && char.ToLowerInvariant(s[p]) == char.ToLowerInvariant(l[p])) p++;
+                if (p >= 4) return true;
+            }
+        return false;
+    }
+
+    private static IEnumerable<string> RootWords(string? s)
+        => string.IsNullOrWhiteSpace(s)
+            ? Array.Empty<string>()
+            : s.Split(new[] { ' ', '-', '\'' }, StringSplitOptions.RemoveEmptyEntries).Where(w => w.Length >= 3);
+
+    /// <summary>
+    /// Roots already in a name, in every spelling that can surface: the authored form, its Latin
+    /// and fusable base ("Пётр" fuses as "Петр", so "Петрович" and "Петров" collide), and its
+    /// Hebrew and Cyrillic renderings, where distinct forms can merge ("Peng" and "Feng" are both
+    /// "פנג"). Every script is checked whatever the requested one, so a name makes the same picks
+    /// in every script: the same character, rendered differently.
+    /// </summary>
+    private sealed class RootSet
+    {
+        private readonly List<string> _roots = new();
+        private readonly List<string> _markers = new();
+
+        public void Add(MorphemeYaml m)
+        {
+            _roots.AddRange(Spellings(m));
+            if (!string.IsNullOrWhiteSpace(m.Base))
+                _roots.AddRange(Spellings(new MorphemeYaml { Form = m.Base, Latin = m.BaseLatin }));
+        }
+
+        /// <summary>
+        /// A fused patronymic marker is a word of the name too ("-spark", "-gust"). Markers are
+        /// suffixes rather than roots, so they only clash when equal or when a 4+ letter one is
+        /// contained: "Gust"/"gustess" does, a short "ael" inside "Caeli" does not.
+        /// </summary>
+        public void AddMarker(CultureData table, bool feminine)
+        {
+            var native = feminine ? table.PatronymicDaughter : table.PatronymicSon;
+            var latin = feminine ? table.PatronymicDaughterLatin : table.PatronymicSonLatin;
+            foreach (var script in AllScripts)
+            {
+                var s = Transliterator.RenderToken(native, latin, script);
+                if (!string.IsNullOrWhiteSpace(s)) _markers.Add(s.Trim());
+            }
+        }
+
+        public bool Clashes(MorphemeYaml m)
+        {
+            foreach (var s in Spellings(m))
+            {
+                foreach (var r in _roots)
+                    if (SharesRoot(s, r)) return true;
+                foreach (var k in _markers)
+                    if (s.Equals(k, StringComparison.OrdinalIgnoreCase) ||
+                        (k.Length >= 4 && s.Contains(k, StringComparison.OrdinalIgnoreCase)) ||
+                        (s.Length >= 4 && k.Contains(s, StringComparison.OrdinalIgnoreCase))) return true;
+            }
+            return false;
+        }
+    }
+
+    /// <summary>
+    /// Is <paramref name="m"/> ruled out as a given or parent stem because it repeats the table's
+    /// fused patronymic marker for this gender ("Spark" beside "-spark")? Themes use this to stay honest.
+    /// </summary>
+    internal static bool BlockedByMarker(CultureData table, MorphemeYaml m, bool feminine)
+    {
+        if (!table.Patronymic || table.PatronymicPrefix) return false;
+        var roots = new RootSet();
+        roots.AddMarker(table, feminine);
+        return roots.Clashes(m);
+    }
+
+    private static readonly NameScript[] AllScripts = Enum.GetValues<NameScript>();
+
+    private static IEnumerable<string> Spellings(MorphemeYaml m)
+    {
+        foreach (var script in AllScripts)
+            yield return Display(m, script);
+    }
+
+    /// <summary>Biased pick among entries that repeat nothing in the name; null when every entry would.</summary>
+    private static MorphemeYaml? PickAvoiding(ref Rng rng, List<MorphemeYaml> list, HashSet<string> tokens, RootSet used)
+    {
+        var fresh = list.Where(m => !used.Clashes(m)).ToList();
+        return fresh.Count == 0 ? null : PickBiased(ref rng, fresh, tokens);
+    }
+
+    // ---- glosses ------------------------------------------------------------------
+
+    /// <summary>"eagle"+"wolf" -> "eagle-wolf"; multi-word glosses get a clear seam ("sky-blue / veiled in light").</summary>
+    private static string JoinGloss(string a, string b)
+        => a.Contains(' ') || a.Contains('-') || b.Contains(' ') || b.Contains('-') ? $"{a} / {b}" : $"{a}-{b}";
+
+    /// <summary>"son of" + "of Rome" must read "son of Rome", not "son of of Rome".</summary>
+    private static string StripOf(string gloss)
+        => gloss.StartsWith("of ", StringComparison.OrdinalIgnoreCase) ? gloss.Substring(3) : gloss;
+
+    /// <summary>
+    /// Gloss of stem + surname affix: relational affixes read before the stem ("of the house of eagle",
+    /// "man of boar"), place-word affixes after it ("wolf homestead", "elf clearing").
+    /// </summary>
+    private static string AffixGloss(string stemGloss, string affixGloss)
+        => affixGloss.TrimEnd().EndsWith(" of", StringComparison.OrdinalIgnoreCase)
+            ? $"{affixGloss.TrimEnd()} {StripOf(stemGloss)}"
+            : $"{stemGloss} {affixGloss}";
 
     private static string CollapseRuns(string s)
     {
@@ -465,17 +645,25 @@ public static class FantasyNameGenerator
         if (descs.Count == 0) descs = common.Descriptors.ToList();
         if (nouns.Count == 0) nouns = common.Nouns.ToList();
 
-        // Nouns must fit the kind of place (a river is not a "-hold"); fall back to the
-        // whole list only when nothing in the table can name that kind of place.
+        // Nouns must fit the kind of place (a river is not a "-hold"). A table with no word
+        // for this kind borrows a neighbouring kind (a mountain can be a "-hill", a camp a
+        // "-hold") before it falls back to the whole list; shipped tables cover every kind.
         var fitNouns = nouns.Where(n => kindTags.Any(k => HasTag(n, k))).ToList();
+        if (fitNouns.Count == 0) fitNouns = nouns.Where(n => RelatedKinds(kind).Any(k => HasTag(n, k))).ToList();
         if (fitNouns.Count == 0) fitNouns = nouns;
+
+        // Topped-up tables keep their own voice: a gnome town is a "-tinkery" far more often
+        // than a generic "-burg", even though fantasy_common has more words.
+        bool topUp = table.PlaceFallback && !ReferenceEquals(table, common);
+        var own = topUp ? new HashSet<MorphemeYaml>(table.Descriptors.Concat(table.Nouns), ReferenceEqualityComparer.Instance) : null;
+        int Own(MorphemeYaml m) => own is not null && own.Contains(m) ? 3 : 1;
 
         int DescWeight(MorphemeYaml d)
         {
             // Untagged descriptors are generic ("Great"); tagged ones must fit the kind or terrain.
             int overlap = d.Tags.Count(t => tags.Contains(t));
             int w = d.Tags.Count == 0 ? 1 : overlap > 0 ? 1 + 2 * overlap : 0;
-            return w + 5 * CountMatches(d, tokens);
+            return w == 0 ? 5 * CountMatches(d, tokens) : w * Own(d) + 5 * CountMatches(d, tokens);
         }
         int NounWeight(MorphemeYaml n)
         {
@@ -483,18 +671,19 @@ public static class FantasyNameGenerator
             for (int i = 0; i < kindTags.Length; i++)
                 if (HasTag(n, kindTags[i])) w += i == 0 ? 3 : 1;
             w += n.Tags.Count(t => tags.Contains(t) && !kindTags.Contains(t, StringComparer.OrdinalIgnoreCase));
-            return w + 5 * CountMatches(n, tokens);
+            return w * Own(n) + 5 * CountMatches(n, tokens);
         }
 
         MorphemeYaml? desc = null, noun = null;
-        for (int i = 0; i < 6; i++)
+        for (int i = 0; i < 8; i++)
         {
             desc = WeightedPick(ref rng, descs, DescWeight);
             noun = WeightedPick(ref rng, fitNouns, NounWeight);
             if (desc is null || noun is null) break;
-            // "Stonestone" / "Fordford": same word or same meaning twice.
-            if (desc.Form.Equals(noun.Form, StringComparison.OrdinalIgnoreCase)) continue;
-            if (NameThemes.Words(desc.Gloss).Intersect(NameThemes.Words(noun.Gloss)).Any()) continue;
+            // "Stonestone", "Howlinghowl" (howl-haunted + howling hill): one idea twice.
+            if (Spellings(desc).Any(d => Spellings(noun).Any(n => SharesRoot(d, n)))) continue;
+            var nounWords = NameThemes.Words(noun.Gloss).ToList();
+            if (NameThemes.Words(desc.Gloss).Any(w => nounWords.Any(n => NameThemes.WordMatches(w, n)))) continue;
             break;
         }
         desc ??= new MorphemeYaml { Form = "Ash", Gloss = "ash tree" };
@@ -560,12 +749,32 @@ public static class FantasyNameGenerator
         _ => new[] { "village" },
     };
 
+    /// <summary>Fallback kinds for a table with no noun for <paramref name="kind"/>, nearest first.</summary>
+    private static string[] RelatedKinds(string kind) => kind.ToLowerInvariant() switch
+    {
+        PlaceKinds.River => new[] { "water", "lake" },
+        PlaceKinds.Lake => new[] { "water" },
+        PlaceKinds.Mountain => new[] { "hill", "high" },
+        PlaceKinds.Hill => new[] { "mountain" },
+        PlaceKinds.Valley => new[] { "village" },
+        PlaceKinds.Forest => new[] { "dark" },
+        PlaceKinds.Town => new[] { "city", "village" },
+        PlaceKinds.City => new[] { "hold" },
+        PlaceKinds.Hold => new[] { "city", "camp" },
+        PlaceKinds.Camp => new[] { "hold", "village" },
+        _ => new[] { "town" },
+    };
+
     // ---- picking --------------------------------------------------------------
 
-    private static void AddPickBiased(ref Rng rng, List<NamePart> parts, List<MorphemeYaml> list, string role, HashSet<string> tokens, NameScript script)
+    /// <summary>Adds an optional slot (epithet), skipped when every candidate repeats a root already in the name.</summary>
+    private static void AddPickBiased(ref Rng rng, List<NamePart> parts, List<MorphemeYaml> list, string role,
+        HashSet<string> tokens, NameScript script, RootSet used)
     {
-        var m = PickBiased(ref rng, list, tokens);
-        if (m is not null) parts.Add(new NamePart { Form = Cap(Display(m, script)), Gloss = m.Gloss, Role = role });
+        var m = PickAvoiding(ref rng, list, tokens, used);
+        if (m is null) return;
+        used.Add(m);
+        parts.Add(new NamePart { Form = Cap(Display(m, script)), Gloss = m.Gloss, Role = role });
     }
 
     private static MorphemeYaml? Pick(ref Rng rng, List<MorphemeYaml> list)
@@ -586,10 +795,6 @@ public static class FantasyNameGenerator
     /// <summary>Requested inspiration tokens confirmed by the emitted parts (honest metadata).</summary>
     private static string[] MatchedTokens(List<NamePart> parts, HashSet<string> tokens)
         => tokens.Where(t => parts.Any(p => NameThemes.Matches(p, t))).OrderBy(t => t, StringComparer.Ordinal).ToArray();
-
-    /// <summary>Gender-appropriate pick (Ivanov/Ivanova); an unmarked list is a plain biased pick.</summary>
-    private static MorphemeYaml? PickFiltered(ref Rng rng, List<MorphemeYaml> list, bool feminine, HashSet<string> tokens)
-        => list.Count == 0 ? null : PickBiased(ref rng, ForGender(list, feminine), tokens);
 
     /// <summary>Weighted pick; weights of 0 are excluded unless every weight is 0 (then the pick is uniform).</summary>
     private static MorphemeYaml? WeightedPick(ref Rng rng, List<MorphemeYaml> list, Func<MorphemeYaml, int> weight)

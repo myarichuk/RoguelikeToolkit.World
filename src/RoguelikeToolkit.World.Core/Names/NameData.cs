@@ -16,7 +16,8 @@ public sealed class MorphemeYaml
     /// <summary>
     /// Free tags used for place fit (river, forest, ...) plus reserved markers:
     /// <c>masc</c>/<c>fem</c> (gendered given names and surname forms),
-    /// <c>solo</c> (never takes a second stem), <c>nopatron</c> (not usable as a parent name).
+    /// <c>solo</c> (never takes a second stem), <c>bound</c> (half a name: always takes a second stem),
+    /// <c>nopatron</c> (not usable as a parent name).
     /// </summary>
     public List<string> Tags { get; set; } = new();
     /// <summary>Stem to fuse suffixes onto (Russian "Пётр" -> "Петр" + "ович"). Blank uses Form.</summary>

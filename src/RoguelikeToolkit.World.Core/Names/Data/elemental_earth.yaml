@@ -9,7 +9,7 @@ PatronymicDaughter: pebbless
 Banned: []
 GivenStems:
   - {Form: Stone, Gloss: stone}
-  - {Form: Pebble, Gloss: pebble}
+  - {Form: Cobble, Gloss: cobblestone}
   - {Form: Boulder, Gloss: boulder}
   - {Form: Clay, Gloss: clay}
   - {Form: Crag, Gloss: crag}
