@@ -20,7 +20,7 @@ Size 7 is 163,842 hexes at roughly 116 bytes each, about 19 MB. Size 8 would be 
 - `GetRef<T>` / `GetSpan<T>` resolve the layer through a dense per-type id (array index), not a `Type` dictionary lookup. Measured at size 4: 1000 `GetRef` calls dropped from 4.8 µs to 0.9 µs, the same as a hoisted span.
 - Still best practice in hot loops: fetch the span once.
 - `World.QueryRadius` compares dot products against `cos(radius / R)` and only calls `Acos` for hits (about 100x faster per query at size 4).
-- Known waste, deferred: `TectonicPlate` is roughly 60+ bytes per hex (estimated from its fields, not measured) though only about a dozen plates exist. Its per-hex fields (continentality, orogeny, boundary data) stay per hex, the per-plate ones (drift, crust, base elevation) could move to a plate table. It touches the Jint API and the visualizer, and saves about 8 MB at size 7, so it is not yet worth it.
+- Plate-wide data lives in a table, not on every hex: `TectonicPlate` is 16 bytes per hex (was 72). Drift and base elevation are stored once per plate in a `PlateInfo` row (`store.RegisterTable<PlateInfo>()`, read with `GetTable<PlateInfo>()`), and a hex reaches its row through the 1-based `Id`. At size 7 that is 2.6 MB instead of 11.8 MB. The table reserves at least 256 rows (10 KB) so a stage can use a different plate count than the layer; more than that fails with a clear error.
 
 ## Tier 2 — features
 
@@ -103,7 +103,6 @@ Numbers are from short BenchmarkDotNet runs on one machine; re-run `tests/Roguel
 
 ## Not done yet
 
-- Storage file format v3 (compact `TectonicPlate`, no per-hex `Seed`). Breaking, no users, so cheap to do; deferred with the plate table.
 - Change journal and incremental snapshots for entities.
 - Aggregate (non-individual) simulation for NPCs far from the player: the substrate supports it (an "aggregate" is just another column set), but the policy belongs to the game.
 - A pooled/cached region tier (above).

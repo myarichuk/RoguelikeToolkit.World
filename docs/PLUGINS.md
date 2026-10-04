@@ -104,6 +104,7 @@ elevation (15) → climate (16) → erosion (17) → hydrology (18) → biomes (
    | `flow(i)`, `surface(i)` | `HydrologyInfo` (read-only in v1) |
    | `biome(i)` / `setBiome(i, id)`, `danger(i)` / `setDanger(i, n)` | `LocalMapInfo` fields |
    | `rand01(tile, salt)` | deterministic `[0,1)` from `(seed, tile, salt)` |
+   | `tileSeed(tile)` | the per-tile seed (same as `World.TileSeed`); not stored per hex |
 
    Reads require the layer in `Reads` (or degrade to `0` when listed in
    `ReadsOptional` and unregistered); setters require the layer in `Writes`

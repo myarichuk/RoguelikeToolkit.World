@@ -45,6 +45,12 @@ public sealed class World : IDisposable
         Index = new SpatialIndex(Map.DataStore, Rivers, WaterBodies, Ranges, Deposits, sites);
     }
 
+    /// <summary>
+    /// Deterministic seed for a planet tile, derived from the world seed and the tile index.
+    /// Not stored per tile; recomputing it is cheaper than the 4 bytes per hex it would cost.
+    /// </summary>
+    public uint TileSeed(int tileIndex) => Rng.DeriveTileSeed(Seed, tileIndex);
+
     public float SampleElevation(GeoCoord coord)
     {
         int i = Map.DataStore.GetTileIndex(coord);

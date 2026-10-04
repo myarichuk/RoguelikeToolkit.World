@@ -92,11 +92,10 @@ public class LocalMapGenerationStage : IWorldGeneratorStage, ISeededStage
             var r = Rng.Create(Seed + 7, i);
             danger = (byte)Math.Min(5, danger + (int)r.NextUInt(2));
 
-            // Per-tile derived seeds: pure function of (Seed, tileIndex), independent of
-            // iteration order, matching the on-demand generation doctrine.
+            // The per-tile seed is not stored: it is a pure function of (world seed,
+            // tile index). See World.TileSeed / Rng.DeriveTileSeed.
             span[i] = new LocalMapInfo
             {
-                Seed = Rng.DeriveTileSeed(Seed, i),
                 Biome = biome,
                 DangerLevel = danger
             };

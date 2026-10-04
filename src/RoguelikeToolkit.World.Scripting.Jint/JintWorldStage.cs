@@ -265,6 +265,7 @@ public sealed class JintWorldStage : IWorldGeneratorStage, IDeclaredStage, IStag
         engine.SetValue("setPrecip", new Action<int, double>(WritePrecip));
         engine.SetValue("setBiome", new Action<int, double>(WriteBiome));
         engine.SetValue("setDanger", new Action<int, double>(WriteDanger));
+        engine.SetValue("tileSeed", new Func<int, double>(i => Rng.DeriveTileSeed(seed, CheckIndex(i, tileCount))));
         engine.SetValue("rand01", new Func<int, int, double>(Rand01));
 
         try

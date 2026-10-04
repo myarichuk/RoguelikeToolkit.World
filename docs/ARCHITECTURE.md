@@ -65,7 +65,7 @@ flowchart LR
         E["ElevationInfo<br/>height"]
         C["ClimateInfo<br/>temp, precip, wind"]
         H["HydrologyInfo<br/>flow, rivers,<br/>lakes, routing"]
-        B["LocalMapInfo<br/>biome, danger, seed"]
+        B["LocalMapInfo<br/>biome, danger"]
     end
     subgraph cats["Managed catalogs (on World)"]
         RC["RiverCatalog"]

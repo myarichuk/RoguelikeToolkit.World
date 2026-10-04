@@ -142,7 +142,8 @@ public static class TerrainOrientation
         Vector3D strike = contour;
         if (hasPlates)
         {
-            var drift = new Vector3D(plates[tileIndex].DriftX, plates[tileIndex].DriftY, plates[tileIndex].DriftZ);
+            var plate = store.GetTable<PlateInfo>()[plates[tileIndex].Id - 1];
+            var drift = new Vector3D(plate.DriftX, plate.DriftY, plate.DriftZ);
             var tangent = drift - up * Vector3D.Dot(drift, up);
             if (tangent.Length > 1e-6)
             {
