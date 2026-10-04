@@ -1,4 +1,7 @@
 Key: elemental_earth
+DisplayName: "Elemental · Earth"
+ClanChance: 100
+EpithetChance: 25
 LineageDefault: Bilineal
 Provenance: original stone/root roots; courts of living stone
 PatronymicSon: pebble
@@ -36,13 +39,11 @@ SecondStems:
   - {Form: moss, Gloss: mossy}
   - {Form: flint, Gloss: flint-hard}
   - {Form: quake, Gloss: quaking}
-FamilyAffixes:
-  - {Form: Stone court, Gloss: sworn to the stone court}
-  - {Form: Root court, Gloss: sworn to the root court}
+FamilyAffixes: []
 Clans:
-  - {Form: Stone court, Gloss: court of stone}
-  - {Form: Root court, Gloss: court of roots}
-  - {Form: Deep court, Gloss: court of the deep}
+  - {Form: Stone Court, Gloss: court of stone}
+  - {Form: Root Court, Gloss: court of roots}
+  - {Form: Deep Court, Gloss: court of the deep}
 Epithets:
   - {Form: Stoneherald, Gloss: herald of stone}
   - {Form: Rootweaver, Gloss: weaver of roots}

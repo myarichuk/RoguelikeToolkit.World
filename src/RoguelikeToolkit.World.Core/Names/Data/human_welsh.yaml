@@ -1,53 +1,70 @@
 Key: human_welsh
+DisplayName: "Human · Welsh"
 LineageDefault: Patrilineal
-Provenance: real Welsh roots; ap/ab son-of and ferch daughter-of patterns
+Provenance: real Welsh given names; map/ferch patronymic is the surname; noun-first place names (Caergwyn)
+CompoundChance: 0
 PatronymicSon: map
 PatronymicDaughter: ferch
 PatronymicPrefix: true
+PlaceOrder: NounFirst
+PlaceJoin: Fuse
+PlaceFallback: false
 Banned: []
 GivenStems:
-  - {Form: Bran, Gloss: raven}
-  - {Form: Rhiannon, Gloss: great queen}
-  - {Form: Owain, Gloss: young warrior}
-  - {Form: Gwen, Gloss: fair, blessed}
-  - {Form: Dylan, Gloss: son of the wave}
-  - {Form: Rhys, Gloss: ardour}
-  - {Form: Eira, Gloss: snow}
-  - {Form: Taliesin, Gloss: shining brow}
-  - {Form: Carys, Gloss: love}
-  - {Form: Anwen, Gloss: very fair}
-  - {Form: Iolo, Gloss: worthy}
-  - {Form: Emyr, Gloss: honour}
-  - {Form: Bryn, Gloss: hill}
-  - {Form: Myfanwy, Gloss: my fine one}
-  - {Form: Madoc, Gloss: fortunate}
-  - {Form: Sian, Gloss: god is gracious}
-  - {Form: Gethin, Gloss: dark-skinned}
-  - {Form: Hafren, Gloss: river-journey}
-  - {Form: Cai, Gloss: rejoicer}
-  - {Form: Eagle, Gloss: eagle}
-SecondStems:
-  - {Form: wyn, Gloss: fair, blessed (masc)}
-  - {Form: wen, Gloss: fair, blessed (fem)}
-  - {Form: goch, Gloss: red-haired}
-  - {Form: fawr, Gloss: great}
-  - {Form: fach, Gloss: little}
-  - {Form: dylan, Gloss: of the wave}
-  - {Form: eagle, Gloss: eagle-eyed}
-  - {Form: bryn, Gloss: of the hill}
-  - {Form: deryn, Gloss: bird-swift}
-  - {Form: mor, Gloss: of the sea}
-# No family list: the map/ferch patronymic IS the Welsh surname ("Cai map Iolo").
+  - {Form: Bran, Gloss: raven, Tags: [masc]}
+  - {Form: Owain, Gloss: young warrior, Tags: [masc]}
+  - {Form: Dylan, Gloss: son of the wave, Tags: [masc]}
+  - {Form: Rhys, Gloss: ardour, Tags: [masc]}
+  - {Form: Taliesin, Gloss: shining brow, Tags: [masc]}
+  - {Form: Iolo, Gloss: worthy lord, Tags: [masc]}
+  - {Form: Emyr, Gloss: honour, Tags: [masc]}
+  - {Form: Bryn, Gloss: hill, Tags: [masc]}
+  - {Form: Madoc, Gloss: fortunate, Tags: [masc]}
+  - {Form: Gethin, Gloss: dark-skinned, Tags: [masc]}
+  - {Form: Cai, Gloss: rejoicer, Tags: [masc]}
+  - {Form: Gareth, Gloss: gentle, Tags: [masc]}
+  - {Form: Idris, Gloss: ardent lord, Tags: [masc]}
+  - {Form: Eryr, Gloss: eagle, Tags: [masc]}
+  - {Form: Rhiannon, Gloss: great queen, Tags: [fem]}
+  - {Form: Gwen, Gloss: white and blessed, Tags: [fem]}
+  - {Form: Eira, Gloss: snow, Tags: [fem]}
+  - {Form: Carys, Gloss: love, Tags: [fem]}
+  - {Form: Anwen, Gloss: very fair, Tags: [fem]}
+  - {Form: Myfanwy, Gloss: my fine one, Tags: [fem]}
+  - {Form: Sian, Gloss: God is gracious, Tags: [fem]}
+  - {Form: Gwenllian, Gloss: flaxen-haired, Tags: [fem]}
+  - {Form: Angharad, Gloss: much loved, Tags: [fem]}
+  - {Form: Nia, Gloss: radiance, Tags: [fem]}
+  - {Form: Elin, Gloss: torch, Tags: [fem]}
+  - {Form: Ffion, Gloss: foxglove, Tags: [fem]}
+  - {Form: Hafren, Gloss: river journey, Tags: [fem]}
+SecondStems: []
 FamilyAffixes: []
 Clans: []
 Epithets: []
 Descriptors:
-  - {Form: Aber, Gloss: river mouth, Tags: [river]}
-  - {Form: Pen, Gloss: head, top, Tags: [hill, mountain]}
-  - {Form: Nant, Gloss: stream, valley, Tags: [river, valley]}
+  - {Form: gwyn, Gloss: white, Tags: [mountain, high, village]}
+  - {Form: coch, Gloss: red, Tags: [hill, danger]}
+  - {Form: du, Gloss: black, Tags: [forest, dark, danger, lake]}
+  - {Form: mawr, Gloss: great, Tags: [city, town, mountain]}
+  - {Form: bach, Gloss: little, Tags: [village]}
+  - {Form: glas, Gloss: blue-green, Tags: [water, valley, lake]}
+  - {Form: hir, Gloss: long, Tags: [valley, river]}
+  - {Form: newydd, Gloss: new, Tags: [village, town]}
+  - {Form: aur, Gloss: golden, Tags: [deposit, city]}
+  - {Form: haearn, Gloss: iron, Tags: [deposit, mountain]}
 Nouns:
-  - {Form: caer, Gloss: fort, Tags: [town, city]}
-  - {Form: llan, Gloss: parish, church dwelling, Tags: [village, town]}
-  - {Form: cwm, Gloss: valley, Tags: [valley]}
-  - {Form: pont, Gloss: bridge, Tags: [river]}
-  - {Form: dol, Gloss: meadow, Tags: [valley]}
+  - {Form: Aber, Gloss: river mouth, Tags: [river, village]}
+  - {Form: Pen, Gloss: headland, Tags: [hill, mountain, village]}
+  - {Form: Nant, Gloss: brook, Tags: [river, valley]}
+  - {Form: Caer, Gloss: fort, Tags: [hold, town, city]}
+  - {Form: Llan, Gloss: church enclosure, Tags: [village, town]}
+  - {Form: Cwm, Gloss: hollow, Tags: [valley]}
+  - {Form: Pont, Gloss: bridge, Tags: [river, village]}
+  - {Form: Dol, Gloss: meadow, Tags: [valley, village]}
+  - {Form: Bryn, Gloss: knoll, Tags: [hill]}
+  - {Form: Glyn, Gloss: glen, Tags: [valley]}
+  - {Form: Llyn, Gloss: lake, Tags: [lake, water]}
+  - {Form: Coed, Gloss: wood, Tags: [forest, dark]}
+  - {Form: Mynydd, Gloss: mountain, Tags: [mountain]}
+  - {Form: Craig, Gloss: crag, Tags: [hill, camp]}

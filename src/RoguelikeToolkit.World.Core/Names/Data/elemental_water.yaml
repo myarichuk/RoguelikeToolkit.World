@@ -1,4 +1,7 @@
 Key: elemental_water
+DisplayName: "Elemental · Water"
+ClanChance: 100
+EpithetChance: 25
 LineageDefault: Bilineal
 Provenance: original tide/stream roots; courts of living water
 PatronymicSon: drop
@@ -36,13 +39,11 @@ SecondStems:
   - {Form: surge, Gloss: surging}
   - {Form: flow, Gloss: flowing}
   - {Form: dew, Gloss: dew-fresh}
-FamilyAffixes:
-  - {Form: Tide court, Gloss: sworn to the tide court}
-  - {Form: Mist court, Gloss: sworn to the mist court}
+FamilyAffixes: []
 Clans:
-  - {Form: Tide court, Gloss: court of tides}
-  - {Form: Mist court, Gloss: court of mists}
-  - {Form: Deep court, Gloss: court of the deep}
+  - {Form: Tide Court, Gloss: court of tides}
+  - {Form: Mist Court, Gloss: court of mists}
+  - {Form: Deep Court, Gloss: court of the deep}
 Epithets:
   - {Form: Tideherald, Gloss: herald of tides}
   - {Form: Raincaller, Gloss: caller of rain}

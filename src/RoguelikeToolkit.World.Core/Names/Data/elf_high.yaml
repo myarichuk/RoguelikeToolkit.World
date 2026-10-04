@@ -1,4 +1,6 @@
 Key: elf_high
+DisplayName: "Elf · High"
+ClanChance: 100
 LineageDefault: Bilineal
 Provenance: original vowel-final roots; generic iel/wen-shaped endings only
 PatronymicSon: ion
@@ -34,9 +36,7 @@ SecondStems:
   - {Form: songweaver, Gloss: song-weaver}
   - {Form: bloodsworn, Gloss: blood-sworn}
   - {Form: dawnwing, Gloss: dawn-winged}
-FamilyAffixes:
-  - {Form: Starhaven, Gloss: house of the star haven}
-  - {Form: Dawnspire, Gloss: house of the dawn spire}
+FamilyAffixes: []
 Clans:
   - {Form: Starhaven, Gloss: house of the star haven}
   - {Form: Dawnspire, Gloss: house of the dawn spire}

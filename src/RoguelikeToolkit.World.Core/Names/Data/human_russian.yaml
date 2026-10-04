@@ -1,58 +1,115 @@
 Key: human_russian
+DisplayName: "Human · Russian"
 LineageDefault: Patrilineal
-Provenance: real Russian first/patronymic/surname patterns; native Cyrillic with Latin transliteration
+Provenance: real Russian first name + patronymic + gendered surname; native Cyrillic with Latin transliteration; compound place names (Belogorsk)
+CompoundChance: 0
 PatronymicSon: ович
 PatronymicDaughter: овна
 PatronymicSonLatin: ovich
 PatronymicDaughterLatin: ovna
-FamilySuffix: true
+PlaceFallback: false
 Banned: []
+# Base/BaseLatin: the stem the patronymic marker fuses onto (Пётр -> Петр + ович).
+# nopatron: names whose patronymic is irregular (Сергеевич) and so is left out rather than misspelled.
 GivenStems:
-  - {Form: Владимир, Latin: Vladimir, Gloss: ruler of peace}
-  - {Form: Ольга, Latin: Olga, Gloss: holy}
-  - {Form: Иван, Latin: Ivan, Gloss: god is gracious}
-  - {Form: Наталья, Latin: Natalya, Gloss: birthday}
-  - {Form: Пётр, Latin: Pyotr, Gloss: rock}
-  - {Form: Мария, Latin: Maria, Gloss: beloved}
-  - {Form: Ярослав, Latin: Yaroslav, Gloss: fierce glory}
-  - {Form: Светлана, Latin: Svetlana, Gloss: light}
-  - {Form: Дмитрий, Latin: Dmitri, Gloss: earth-lover}
-  - {Form: Екатерина, Latin: Ekaterina, Gloss: pure}
-  - {Form: Александр, Latin: Aleksandr, Gloss: defender}
-  - {Form: Анастасия, Latin: Anastasia, Gloss: resurrection}
-  - {Form: Сергей, Latin: Sergei, Gloss: protector}
-  - {Form: Татьяна, Latin: Tatyana, Gloss: fairy queen}
-  - {Form: Николай, Latin: Nikolai, Gloss: victory of the people}
-  - {Form: Ирина, Latin: Irina, Gloss: peace}
-  - {Form: Орёл, Latin: Oryol, Gloss: eagle}
-  - {Form: Волк, Latin: Volk, Gloss: wolf}
-  - {Form: Медведь, Latin: Medved, Gloss: bear}
-  - {Form: Сокол, Latin: Sokol, Gloss: falcon}
+  - {Form: Владимир, Latin: Vladimir, Gloss: ruler of peace, Tags: [masc]}
+  - {Form: Иван, Latin: Ivan, Gloss: God is gracious, Tags: [masc]}
+  - {Form: Пётр, Latin: Pyotr, Gloss: rock, Tags: [masc], Base: Петр, BaseLatin: Petr}
+  - {Form: Александр, Latin: Aleksandr, Gloss: defender of men, Tags: [masc]}
+  - {Form: Ярослав, Latin: Yaroslav, Gloss: fierce glory, Tags: [masc]}
+  - {Form: Борис, Latin: Boris, Gloss: fighter, Tags: [masc]}
+  - {Form: Олег, Latin: Oleg, Gloss: holy, Tags: [masc]}
+  - {Form: Павел, Latin: Pavel, Gloss: small, Tags: [masc], Base: Павл, BaseLatin: Pavl}
+  - {Form: Максим, Latin: Maksim, Gloss: greatest, Tags: [masc]}
+  - {Form: Виктор, Latin: Viktor, Gloss: victor, Tags: [masc]}
+  - {Form: Михаил, Latin: Mikhail, Gloss: who is like God, Tags: [masc], Base: Михайл, BaseLatin: Mikhail}
+  - {Form: Фёдор, Latin: Fyodor, Gloss: gift of God, Tags: [masc]}
+  - {Form: Глеб, Latin: Gleb, Gloss: heir, Tags: [masc]}
+  - {Form: Лев, Latin: Lev, Gloss: lion, Tags: [masc], Base: Льв, BaseLatin: Lv}
+  - {Form: Роман, Latin: Roman, Gloss: of Rome, Tags: [masc]}
+  - {Form: Константин, Latin: Konstantin, Gloss: steadfast, Tags: [masc]}
+  - {Form: Кирилл, Latin: Kirill, Gloss: lordly, Tags: [masc]}
+  - {Form: Степан, Latin: Stepan, Gloss: crown, Tags: [masc]}
+  - {Form: Дмитрий, Latin: Dmitri, Gloss: follower of Demeter, Tags: [masc, nopatron]}
+  - {Form: Сергей, Latin: Sergei, Gloss: attendant, Tags: [masc, nopatron]}
+  - {Form: Николай, Latin: Nikolai, Gloss: victory of the people, Tags: [masc, nopatron]}
+  - {Form: Игорь, Latin: Igor, Gloss: warrior, Tags: [masc, nopatron]}
+  - {Form: Юрий, Latin: Yuri, Gloss: farmer, Tags: [masc, nopatron]}
+  - {Form: Василий, Latin: Vasily, Gloss: kingly, Tags: [masc, nopatron]}
+  - {Form: Алексей, Latin: Aleksei, Gloss: defender, Tags: [masc, nopatron]}
+  - {Form: Ольга, Latin: Olga, Gloss: holy, Tags: [fem]}
+  - {Form: Наталья, Latin: Natalya, Gloss: born at Christmas, Tags: [fem]}
+  - {Form: Мария, Latin: Maria, Gloss: beloved, Tags: [fem]}
+  - {Form: Светлана, Latin: Svetlana, Gloss: light, Tags: [fem]}
+  - {Form: Екатерина, Latin: Ekaterina, Gloss: pure, Tags: [fem]}
+  - {Form: Анастасия, Latin: Anastasia, Gloss: resurrection, Tags: [fem]}
+  - {Form: Татьяна, Latin: Tatyana, Gloss: of Tatius, Tags: [fem]}
+  - {Form: Ирина, Latin: Irina, Gloss: peace, Tags: [fem]}
+  - {Form: Елена, Latin: Elena, Gloss: shining light, Tags: [fem]}
+  - {Form: Анна, Latin: Anna, Gloss: grace, Tags: [fem]}
+  - {Form: Галина, Latin: Galina, Gloss: calm, Tags: [fem]}
+  - {Form: Вера, Latin: Vera, Gloss: faith, Tags: [fem]}
+  - {Form: Надежда, Latin: Nadezhda, Gloss: hope, Tags: [fem]}
+  - {Form: Людмила, Latin: Lyudmila, Gloss: dear to the people, Tags: [fem]}
+  - {Form: София, Latin: Sofia, Gloss: wisdom, Tags: [fem]}
+  - {Form: Зоя, Latin: Zoya, Gloss: life, Tags: [fem]}
+  - {Form: Оксана, Latin: Oksana, Gloss: hospitality, Tags: [fem]}
 SecondStems: []
+# Authored masculine/feminine surname pairs (Волков/Волкова); the person's gender picks the form.
 FamilyAffixes:
-  - {Form: ов, Latin: ov, Gloss: son of (masc)}
-  - {Form: ова, Latin: ova, Gloss: daughter of (fem)}
-  - {Form: ев, Latin: ev, Gloss: son of (masc)}
-  - {Form: ева, Latin: eva, Gloss: daughter of (fem)}
-  - {Form: ин, Latin: in, Gloss: son of (masc)}
-  - {Form: ина, Latin: ina, Gloss: daughter of (fem)}
-  - {Form: ский, Latin: ski, Gloss: from the place of (masc)}
-  - {Form: ская, Latin: ska, Gloss: from the place of (fem)}
+  - {Form: Иванов, Latin: Ivanov, Gloss: of Ivan, Tags: [masc]}
+  - {Form: Иванова, Latin: Ivanova, Gloss: of Ivan, Tags: [fem]}
+  - {Form: Петров, Latin: Petrov, Gloss: of Pyotr, Tags: [masc]}
+  - {Form: Петрова, Latin: Petrova, Gloss: of Pyotr, Tags: [fem]}
+  - {Form: Смирнов, Latin: Smirnov, Gloss: the quiet one, Tags: [masc]}
+  - {Form: Смирнова, Latin: Smirnova, Gloss: the quiet one, Tags: [fem]}
+  - {Form: Кузнецов, Latin: Kuznetsov, Gloss: of the smith, Tags: [masc]}
+  - {Form: Кузнецова, Latin: Kuznetsova, Gloss: of the smith, Tags: [fem]}
+  - {Form: Волков, Latin: Volkov, Gloss: of the wolf, Tags: [masc]}
+  - {Form: Волкова, Latin: Volkova, Gloss: of the wolf, Tags: [fem]}
+  - {Form: Орлов, Latin: Orlov, Gloss: of the eagle, Tags: [masc]}
+  - {Form: Орлова, Latin: Orlova, Gloss: of the eagle, Tags: [fem]}
+  - {Form: Медведев, Latin: Medvedev, Gloss: of the bear, Tags: [masc]}
+  - {Form: Медведева, Latin: Medvedeva, Gloss: of the bear, Tags: [fem]}
+  - {Form: Соколов, Latin: Sokolov, Gloss: of the falcon, Tags: [masc]}
+  - {Form: Соколова, Latin: Sokolova, Gloss: of the falcon, Tags: [fem]}
+  - {Form: Лебедев, Latin: Lebedev, Gloss: of the swan, Tags: [masc]}
+  - {Form: Лебедева, Latin: Lebedeva, Gloss: of the swan, Tags: [fem]}
+  - {Form: Морозов, Latin: Morozov, Gloss: of the frost, Tags: [masc]}
+  - {Form: Морозова, Latin: Morozova, Gloss: of the frost, Tags: [fem]}
+  - {Form: Соловьёв, Latin: Solovyov, Gloss: of the nightingale, Tags: [masc]}
+  - {Form: Соловьёва, Latin: Solovyova, Gloss: of the nightingale, Tags: [fem]}
+  - {Form: Белов, Latin: Belov, Gloss: the fair one, Tags: [masc]}
+  - {Form: Белова, Latin: Belova, Gloss: the fair one, Tags: [fem]}
+  - {Form: Воронов, Latin: Voronov, Gloss: of the raven, Tags: [masc]}
+  - {Form: Воронова, Latin: Voronova, Gloss: of the raven, Tags: [fem]}
+  - {Form: Зайцев, Latin: Zaytsev, Gloss: of the hare, Tags: [masc]}
+  - {Form: Зайцева, Latin: Zaytseva, Gloss: of the hare, Tags: [fem]}
+  - {Form: Новиков, Latin: Novikov, Gloss: the newcomer, Tags: [masc]}
+  - {Form: Новикова, Latin: Novikova, Gloss: the newcomer, Tags: [fem]}
+  - {Form: Ковалёв, Latin: Kovalyov, Gloss: of the blacksmith, Tags: [masc]}
+  - {Form: Ковалёва, Latin: Kovalyova, Gloss: of the blacksmith, Tags: [fem]}
 Clans: []
 Epithets: []
 Descriptors:
-  - {Form: Бел, Latin: Bel, Gloss: white, Tags: [mountain, high]}
-  - {Form: Нов, Latin: Nov, Gloss: new, Tags: [village, town]}
-  - {Form: Стар, Latin: Star, Gloss: old, Tags: [town, city]}
-  - {Form: Крас, Latin: Kras, Gloss: red, beautiful, Tags: [city]}
-  - {Form: Тих, Latin: Tikh, Gloss: quiet, Tags: [river, lake]}
-  - {Form: Широк, Latin: Shirok, Gloss: wide, Tags: [valley, river]}
+  - {Form: Бело, Latin: Belo, Gloss: white, Tags: [mountain, high, lake]}
+  - {Form: Ново, Latin: Novo, Gloss: new, Tags: [village, town]}
+  - {Form: Старо, Latin: Staro, Gloss: old, Tags: [town, city]}
+  - {Form: Красно, Latin: Krasno, Gloss: beautiful, Tags: [city, hill]}
+  - {Form: Тихо, Latin: Tikho, Gloss: quiet, Tags: [river, lake, water, village]}
+  - {Form: Широко, Latin: Shiroko, Gloss: wide, Tags: [valley, river]}
+  - {Form: Черно, Latin: Cherno, Gloss: black, Tags: [forest, dark, danger]}
+  - {Form: Зелено, Latin: Zeleno, Gloss: green, Tags: [forest, valley]}
+  - {Form: Злато, Latin: Zlato, Gloss: golden, Tags: [deposit, city]}
+  - {Form: Железо, Latin: Zhelezo, Gloss: iron, Tags: [deposit, mountain]}
 Nouns:
-  - {Form: град, Latin: grad, Gloss: fortified town, Tags: [town, city]}
+  - {Form: град, Latin: grad, Gloss: fortified town, Tags: [town, city, hold]}
   - {Form: село, Latin: selo, Gloss: village, Tags: [village]}
-  - {Form: река, Latin: reka, Gloss: river, Tags: [river, water]}
+  - {Form: речье, Latin: rechye, Gloss: river land, Tags: [river, water]}
   - {Form: озеро, Latin: ozero, Gloss: lake, Tags: [lake, water]}
-  - {Form: гора, Latin: gora, Gloss: mountain, Tags: [mountain]}
-  - {Form: холм, Latin: kholm, Gloss: hill, Tags: [hill]}
-  - {Form: лес, Latin: les, Gloss: forest, Tags: [forest, dark]}
-  - {Form: дол, Latin: dol, Gloss: valley, Tags: [valley]}
+  - {Form: горск, Latin: gorsk, Gloss: mountain town, Tags: [mountain, town]}
+  - {Form: холмье, Latin: kholmye, Gloss: hill country, Tags: [hill]}
+  - {Form: лесье, Latin: lesye, Gloss: woodland, Tags: [forest, dark]}
+  - {Form: долье, Latin: dolye, Gloss: dale, Tags: [valley]}
+  - {Form: поле, Latin: pole, Gloss: open field, Tags: [valley, village]}
+  - {Form: острог, Latin: ostrog, Gloss: stockade, Tags: [hold, camp]}

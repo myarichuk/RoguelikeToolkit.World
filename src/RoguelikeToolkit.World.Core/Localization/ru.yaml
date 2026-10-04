@@ -2,27 +2,54 @@ Language: ru
 DisplayName: Русский
 RightToLeft: false
 Strings:
-  Title: Тестер генератора имён
-  TabPeople: Люди
-  TabPlaces: Места
-  Feminine: Женский
-  WatermarkInspired: "прообраз: кровь, орёл"
-  WatermarkPlaceInspired: "прообраз"
-  Generate: Сгенерировать
-  Water: Вода
-  Forest: Лес
-  Dark: Тьма
-  High: Высота
-  Valley: Долина
-  Deposit: Залежи
-  Danger: Опасность
-  Reload: Перезагрузить YAML
-  Language: Язык
-  Native: Родной
-  Latin: Латиница
-  Hebrew: Иврит
-  Cyrillic: Кириллица
-  LineageDefault: "(по умолчанию)"
+  Title: "Мастерская имён"
+  ModePeople: "Люди"
+  ModePlaces: "Места"
+  Style: "Стиль"
+  StyleTip: "Народ или культура, из которой берутся имена"
+  Gender: "Пол"
+  Masculine: "Мужской"
+  Feminine: "Женский"
+  Lineage: "Родословная"
+  LineageDefault: "(по культуре)"
+  PlaceKind: "Тип места"
+  Terrain: "Окрестности"
+  Water: "Вода"
+  Forest: "Лес"
+  Dark: "Тьма"
+  High: "Высота"
+  Valley: "Долина"
+  Deposit: "Залежи"
+  Danger: "Опасность"
+  Inspiration: "Вдохновение"
+  InspirationAny: "(что угодно)"
+  InspirationTip: "Склонить имена к теме из словаря этого стиля"
+  Script: "Письмо"
+  Native: "Родное"
+  Latin: "Латиница"
+  Hebrew: "Иврит"
+  Cyrillic: "Кириллица"
+  Seed: "Зерно"
+  Random: "Случайно"
+  LockSeed: "Зафиксировать зерно"
+  LockSeedTip: "Сохранять зерно при новой генерации, чтобы менять другие настройки на том же броске"
+  Count: "Сколько"
+  Generate: "Сгенерировать"
+  Language: "Язык"
+  Reload: "Перезагрузить YAML"
+  OpenFolder: "Открыть папку данных"
+  Copy: "Копировать"
+  Star: "В избранное"
+  Shortlist: "Избранное"
+  ShortlistEmpty: "Отмечайте понравившиеся имена звёздочкой - они соберутся здесь."
+  CopyAll: "Копировать всё"
+  Clear: "Очистить"
+  ResultsEmpty: "Выберите стиль и нажмите «Сгенерировать»."
+  Remove: "Убрать"
+  Copied: "Скопировано: "
+  Generated: "Создано имён: {0} (зерно {1})"
+  NoResults: "Ничего не вышло - попробуйте другой стиль или тему."
   Data: "данные: "
   DataError: "ошибка данных, используются встроенные: "
   ReloadFailed: "ошибка перезагрузки: "
+  Reloaded: "YAML перезагружен: стилей {0}"

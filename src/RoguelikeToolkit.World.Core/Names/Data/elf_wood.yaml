@@ -1,4 +1,6 @@
 Key: elf_wood
+DisplayName: "Elf · Wood"
+ClanChance: 100
 LineageDefault: Bilineal
 Provenance: original leaf/brook roots; generic wood-elven music
 PatronymicSon: on
@@ -34,9 +36,7 @@ SecondStems:
   - {Form: river, Gloss: river-born}
   - {Form: night, Gloss: night-wise}
   - {Form: brave, Gloss: brave}
-FamilyAffixes:
-  - {Form: Oakheart, Gloss: house of the oak heart}
-  - {Form: Brookwise, Gloss: house of brook wisdom}
+FamilyAffixes: []
 Clans:
   - {Form: Oakheart, Gloss: house of the oak heart}
   - {Form: Brookwise, Gloss: house of brook wisdom}

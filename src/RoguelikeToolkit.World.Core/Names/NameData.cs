@@ -13,12 +13,42 @@ public sealed class MorphemeYaml
     /// </summary>
     public string Latin { get; set; } = string.Empty;
     public string Gloss { get; set; } = string.Empty;
+    /// <summary>
+    /// Free tags used for place fit (river, forest, ...) plus reserved markers:
+    /// <c>masc</c>/<c>fem</c> (gendered given names and surname forms),
+    /// <c>solo</c> (never takes a second stem), <c>nopatron</c> (not usable as a parent name).
+    /// </summary>
     public List<string> Tags { get; set; } = new();
+    /// <summary>Stem to fuse suffixes onto (Russian "Пётр" -> "Петр" + "ович"). Blank uses Form.</summary>
+    public string Base { get; set; } = string.Empty;
+    public string BaseLatin { get; set; } = string.Empty;
 }
 
 public sealed class CultureData
 {
     public string Key { get; set; } = string.Empty;
+    /// <summary>Human-readable label for pickers ("Human · Hebrew"). Blank falls back to a title-cased Key.</summary>
+    public string DisplayName { get; set; } = string.Empty;
+    /// <summary>Chance (0-100) that a given name gets a second stem. Tables of whole real names set 0.</summary>
+    public int CompoundChance { get; set; } = 65;
+    /// <summary>Chance (0-100) of a clan/warband slot (when Clans exist). -1 = default (45 human, 80 otherwise).</summary>
+    public int ClanChance { get; set; } = -1;
+    /// <summary>Chance (0-100) of an epithet slot (when Epithets exist).</summary>
+    public int EpithetChance { get; set; } = 0;
+    /// <summary>Chance (0-100) of a family/house name once the clan slot did not fire.</summary>
+    public int FamilyChance { get; set; } = 100;
+    /// <summary>Family name comes first in the written name (Chinese, Japanese).</summary>
+    public bool FamilyFirst { get; set; } = false;
+    /// <summary>"DescriptorFirst" (Clear+ford) or "NounFirst" (Kfar Zahav, Caer+goch).</summary>
+    public string PlaceOrder { get; set; } = "DescriptorFirst";
+    /// <summary>"Fuse" (one word: Clearford), "Space" (two words) or "Hyphen".</summary>
+    public string PlaceJoin { get; set; } = "Fuse";
+    /// <summary>
+    /// When true (default) the shared fantasy_common place vocabulary tops up this
+    /// table's descriptors/nouns. Language-faithful tables set false so a Hebrew
+    /// or Japanese place never comes out as "Clearwood".
+    /// </summary>
+    public bool PlaceFallback { get; set; } = true;
     /// <summary>Extra race names that resolve to this table (YAML-only extension).</summary>
     public List<string> Aliases { get; set; } = new();
     /// <summary>Whether person names get a patronymic/matronymic slot. Orcs, gnomes etc. set false.</summary>
@@ -262,6 +292,19 @@ public sealed class NameDataStore
             !data.LineageDefault.Equals("matrilineal", StringComparison.OrdinalIgnoreCase) &&
             !data.LineageDefault.Equals("bilineal", StringComparison.OrdinalIgnoreCase))
             problems.Add($"{rel}: unknown LineageDefault '{data.LineageDefault}' (want Patrilineal, Matrilineal or Bilineal).");
+        foreach (var (field, v, lo) in new[]
+                 {
+                     ("CompoundChance", data.CompoundChance, 0), ("ClanChance", data.ClanChance, -1),
+                     ("EpithetChance", data.EpithetChance, 0), ("FamilyChance", data.FamilyChance, 0),
+                 })
+            if (v < lo || v > 100) problems.Add($"{rel}: {field} {v} is out of range ({lo}-100).");
+        if (!data.PlaceOrder.Equals("DescriptorFirst", StringComparison.OrdinalIgnoreCase) &&
+            !data.PlaceOrder.Equals("NounFirst", StringComparison.OrdinalIgnoreCase))
+            problems.Add($"{rel}: unknown PlaceOrder '{data.PlaceOrder}' (want DescriptorFirst or NounFirst).");
+        if (!data.PlaceJoin.Equals("Fuse", StringComparison.OrdinalIgnoreCase) &&
+            !data.PlaceJoin.Equals("Space", StringComparison.OrdinalIgnoreCase) &&
+            !data.PlaceJoin.Equals("Hyphen", StringComparison.OrdinalIgnoreCase))
+            problems.Add($"{rel}: unknown PlaceJoin '{data.PlaceJoin}' (want Fuse, Space or Hyphen).");
         if (data.GivenStems.Count == 0)
             problems.Add($"{rel}: GivenStems is empty (every table needs at least one given stem).");
         if (data.Patronymic &&
@@ -305,24 +348,82 @@ public sealed class NameDataStore
     }
 
     /// <summary>Copies embedded YAML to <paramref name="dir"/> when files are missing. Never overwrites user edits.</summary>
+    /// <summary>
+    /// Copies embedded YAML to <paramref name="dir"/>, keeping it current without clobbering edits.
+    /// A manifest (<c>.shipped.json</c>) records the hash of each file as last shipped:
+    /// missing files are written; files still identical to what was last shipped are refreshed
+    /// when the library ships a newer version; files the user changed are never touched.
+    /// A copy from before the manifest existed cannot be told apart from an edit, so it is
+    /// refreshed too but the old content is kept next to it as <c>name.yaml.old</c>.
+    /// </summary>
     public static string EnsureExtracted(string? dir = null)
     {
         dir ??= DefaultDirectory;
         var asm = typeof(NameDataStore).Assembly;
         string prefix = asm.GetName().Name + ".Names.Data.";
+        string manifestPath = Path.Combine(dir, ".shipped.json");
+        var manifest = new Dictionary<string, string>(StringComparer.OrdinalIgnoreCase);
+        try
+        {
+            if (File.Exists(manifestPath))
+                manifest = System.Text.Json.JsonSerializer.Deserialize<Dictionary<string, string>>(
+                               File.ReadAllText(manifestPath))
+                           ?? manifest;
+            manifest = new Dictionary<string, string>(manifest, StringComparer.OrdinalIgnoreCase);
+        }
+        catch (Exception)
+        {
+            // A corrupt manifest just means we treat every file as legacy (backed up, then refreshed).
+        }
+
         foreach (var name in asm.GetManifestResourceNames()
                      .Where(n => n.StartsWith(prefix, StringComparison.Ordinal)
                               && n.EndsWith(".yaml", StringComparison.OrdinalIgnoreCase)))
         {
             var rel = ResourceToRelative(name.Substring(prefix.Length));
             var target = Path.Combine(dir, rel);
-            if (File.Exists(target)) continue;
+            byte[] shipped;
+            using (var s = asm.GetManifestResourceStream(name))
+            {
+                if (s is null) continue;
+                using var ms = new MemoryStream();
+                s.CopyTo(ms);
+                shipped = ms.ToArray();
+            }
+            string shippedHash = Convert.ToHexString(System.Security.Cryptography.SHA256.HashData(shipped));
             Directory.CreateDirectory(Path.GetDirectoryName(target)!);
-            using var s = asm.GetManifestResourceStream(name);
-            if (s is null) continue;
-            using var out_ = File.Create(target);
-            s.CopyTo(out_);
+            if (!File.Exists(target))
+            {
+                File.WriteAllBytes(target, shipped);
+                manifest[rel] = shippedHash;
+                continue;
+            }
+            string onDisk = Convert.ToHexString(System.Security.Cryptography.SHA256.HashData(File.ReadAllBytes(target)));
+            if (onDisk == shippedHash)
+            {
+                manifest[rel] = shippedHash;
+            }
+            else if (manifest.TryGetValue(rel, out var lastShipped))
+            {
+                if (lastShipped == onDisk)
+                {
+                    // Untouched since the last extraction: safe to upgrade.
+                    File.WriteAllBytes(target, shipped);
+                    manifest[rel] = shippedHash;
+                }
+                // else: the user edited it; their copy wins.
+            }
+            else
+            {
+                // Pre-manifest copy: stale-or-edited is unknowable, so upgrade but keep the old one.
+                File.Copy(target, target + ".old", overwrite: true);
+                File.WriteAllBytes(target, shipped);
+                manifest[rel] = shippedHash;
+            }
         }
+
+        File.WriteAllText(manifestPath, System.Text.Json.JsonSerializer.Serialize(manifest,
+            new System.Text.Json.JsonSerializerOptions { WriteIndented = true }));
         return dir;
     }
 }

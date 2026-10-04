@@ -1,52 +1,87 @@
 Key: human_chinese
+DisplayName: "Human · Chinese"
 LineageDefault: Patrilineal
-Provenance: family-first order; constrained meaning compounds, no free adjective stacking
+Provenance: family-first order; one- or two-syllable given names from auspicious meanings; pinyin place compounds (Qingjiang)
+Patronymic: false
+CompoundChance: 55
+FamilyFirst: true
+PlaceFallback: false
 PatronymicSon: zi
 PatronymicDaughter: nu
 Banned: []
 GivenStems:
+  - {Form: Wei, Gloss: greatness, Tags: [masc]}
+  - {Form: Bo, Gloss: wave, Tags: [masc]}
+  - {Form: Long, Gloss: dragon, Tags: [masc]}
+  - {Form: Hu, Gloss: tiger, Tags: [masc]}
+  - {Form: Ying, Gloss: eagle, Tags: [masc]}
+  - {Form: Hai, Gloss: sea, Tags: [masc]}
+  - {Form: Lei, Gloss: thunder, Tags: [masc]}
+  - {Form: Jun, Gloss: handsome, Tags: [masc]}
+  - {Form: Mei, Gloss: plum blossom, Tags: [fem]}
+  - {Form: Jing, Gloss: quiet, Tags: [fem]}
+  - {Form: Xue, Gloss: snow, Tags: [fem]}
+  - {Form: Lan, Gloss: orchid, Tags: [fem]}
+  - {Form: Yu, Gloss: jade, Tags: [fem]}
+  - {Form: Fang, Gloss: fragrance, Tags: [fem]}
   - {Form: Shan, Gloss: mountain}
   - {Form: Lin, Gloss: forest}
-  - {Form: Mei, Gloss: plum}
-  - {Form: Wei, Gloss: greatness}
-  - {Form: Jing, Gloss: quiet}
   - {Form: Tao, Gloss: peach}
   - {Form: Yun, Gloss: cloud}
-  - {Form: Bo, Gloss: wave}
-  - {Form: Long, Gloss: dragon}
-  - {Form: Feng, Gloss: phoenix-wind}
-  - {Form: Hu, Gloss: tiger}
-  - {Form: Ying, Gloss: eagle-falcon}
-  - {Form: Xue, Gloss: snow}
-  - {Form: Lan, Gloss: orchid}
+  - {Form: Feng, Gloss: wind}
   - {Form: Zhu, Gloss: bamboo}
-  - {Form: Hai, Gloss: sea}
   - {Form: Tian, Gloss: sky}
-  - {Form: Lei, Gloss: thunder}
 SecondStems:
+  - {Form: ming, Gloss: bright}
+  - {Form: hua, Gloss: splendor}
+  - {Form: qing, Gloss: clear}
+  - {Form: ning, Gloss: serene}
+  - {Form: rui, Gloss: auspicious}
   - {Form: an, Gloss: peace}
-  - {Form: ming, Gloss: brightness}
-  - {Form: long, Gloss: dragon-spirited}
-  - {Form: feng, Gloss: wind-swift}
-  - {Form: hu, Gloss: tiger-bold}
-  - {Form: xue, Gloss: snow-pure}
-  - {Form: hai, Gloss: sea-deep}
-  - {Form: tian, Gloss: sky-high}
-  - {Form: lei, Gloss: thunder-loud}
-  - {Form: hua, Gloss: flowery}
+  - {Form: hao, Gloss: vast, Tags: [masc]}
+  - {Form: zhi, Gloss: ambition, Tags: [masc]}
+  - {Form: kai, Gloss: triumph, Tags: [masc]}
+  - {Form: xiu, Gloss: elegant, Tags: [fem]}
+  - {Form: yan, Gloss: graceful, Tags: [fem]}
 FamilyAffixes:
-  - {Form: Li, Gloss: plum family}
-  - {Form: Wang, Gloss: king family}
-  - {Form: Chen, Gloss: dawn family}
-Clans:
-  - {Form: Li, Gloss: plum family}
-  - {Form: Wang, Gloss: king family}
+  - {Form: Li, Gloss: plum}
+  - {Form: Wang, Gloss: king}
+  - {Form: Chen, Gloss: to display}
+  - {Form: Zhang, Gloss: bow-drawer}
+  - {Form: Yang, Gloss: poplar}
+  - {Form: Zhao, Gloss: Zhao state}
+  - {Form: Huang, Gloss: yellow}
+  - {Form: Zhou, Gloss: circuit}
+  - {Form: Sun, Gloss: grandson}
+  - {Form: Ma, Gloss: horse}
+  - {Form: Zhu, Gloss: vermilion}
+  - {Form: Guo, Gloss: outer wall}
+  - {Form: Gao, Gloss: tall}
+  - {Form: Tang, Gloss: Tang dynasty}
+  - {Form: Han, Gloss: Han state}
+  - {Form: Feng, Gloss: abundant}
+Clans: []
 Epithets: []
 Descriptors:
-  - {Form: Qing, Gloss: clear-green, Tags: [water, forest]}
-  - {Form: Lao, Gloss: old, Tags: [town]}
-  - {Form: Xin, Gloss: new, Tags: [village]}
+  - {Form: Qing, Gloss: clear green, Tags: [water, forest, river]}
+  - {Form: Lao, Gloss: old, Tags: [town, city]}
+  - {Form: Xin, Gloss: new, Tags: [village, town]}
+  - {Form: Da, Gloss: great, Tags: [city, town, mountain]}
+  - {Form: Xiao, Gloss: little, Tags: [village]}
+  - {Form: Bai, Gloss: white, Tags: [mountain, high, river]}
+  - {Form: Hei, Gloss: black, Tags: [forest, dark, danger]}
+  - {Form: Hong, Gloss: red, Tags: [hill, danger]}
+  - {Form: Jin, Gloss: gold, Tags: [deposit, city]}
+  - {Form: Yin, Gloss: silver, Tags: [deposit, lake]}
+  - {Form: Long, Gloss: dragon, Tags: [mountain, river, danger]}
 Nouns:
-  - {Form: cun, Gloss: village, Tags: [village]}
-  - {Form: cheng, Gloss: walled city, Tags: [city, town]}
-  - {Form: jiang, Gloss: river, Tags: [river]}
+  - {Form: cun, Gloss: hamlet, Tags: [village]}
+  - {Form: zhen, Gloss: market town, Tags: [town]}
+  - {Form: cheng, Gloss: walled city, Tags: [city, town, hold]}
+  - {Form: jiang, Gloss: river, Tags: [river, water]}
+  - {Form: hu, Gloss: lake, Tags: [lake, water]}
+  - {Form: shan, Gloss: mountain, Tags: [mountain]}
+  - {Form: ling, Gloss: ridge, Tags: [hill, mountain]}
+  - {Form: gu, Gloss: gorge, Tags: [valley]}
+  - {Form: lin, Gloss: woods, Tags: [forest, dark]}
+  - {Form: guan, Gloss: mountain pass, Tags: [hold, camp, hill]}

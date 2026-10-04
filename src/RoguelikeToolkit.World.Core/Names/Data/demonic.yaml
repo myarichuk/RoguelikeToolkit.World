@@ -1,4 +1,7 @@
 Key: demonic
+DisplayName: "Demon"
+ClanChance: 100
+EpithetChance: 40
 LineageDefault: Patrilineal
 Patronymic: false
 Provenance: original void/ash/thorn roots; generic fantasy, no religious lore
@@ -37,9 +40,7 @@ SecondStems:
   - {Form: pit, Gloss: pit-born}
   - {Form: wrath, Gloss: wrathful}
   - {Form: gloom, Gloss: gloomed}
-FamilyAffixes:
-  - {Form: Pitbrood, Gloss: brood of the pit}
-  - {Form: Ashenhost, Gloss: host of ash}
+FamilyAffixes: []
 Clans:
   - {Form: Pitbrood, Gloss: brood of the pit}
   - {Form: Ashenhost, Gloss: host of ash}

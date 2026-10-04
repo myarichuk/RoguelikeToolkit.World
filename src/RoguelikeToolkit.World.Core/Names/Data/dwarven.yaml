@@ -1,4 +1,5 @@
 Key: dwarven
+DisplayName: "Dwarf"
 LineageDefault: Patrilineal
 Provenance: original stone/forge roots; Norse-structured patronymics only, no Edda names
 PatronymicSon: son
@@ -53,7 +54,7 @@ Descriptors:
   - {Form: Deep, Gloss: deep, Tags: [mountain, valley]}
   - {Form: Stone, Gloss: stony, Tags: [mountain, hill, deposit]}
 Nouns:
-  - {Form: hold, Gloss: stronghold, Tags: [town, city]}
+  - {Form: hold, Gloss: stronghold, Tags: [hold, town, city]}
   - {Form: delve, Gloss: mine, Tags: [deposit, hill]}
-  - {Form: bar, Gloss: hall, Tags: [town, village]}
+  - {Form: bar, Gloss: hall, Tags: [hold, town, village]}
   - {Form: peak, Gloss: peak, Tags: [mountain]}

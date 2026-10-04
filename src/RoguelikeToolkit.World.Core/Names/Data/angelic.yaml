@@ -1,4 +1,7 @@
 Key: angelic
+DisplayName: "Angel"
+ClanChance: 100
+EpithetChance: 25
 LineageDefault: Bilineal
 Provenance: original radiance/wind/dawn roots; generic fantasy, no religious lore
 PatronymicSon: ael
@@ -36,9 +39,7 @@ SecondStems:
   - {Form: star, Gloss: starred}
   - {Form: wind, Gloss: wind-swift}
   - {Form: veil, Gloss: veiled in light}
-FamilyAffixes:
-  - {Form: Dawnchoir, Gloss: choir of the dawn}
-  - {Form: Stillradiance, Gloss: order of still radiance}
+FamilyAffixes: []
 Clans:
   - {Form: Dawnchoir, Gloss: choir of the dawn}
   - {Form: Stillradiance, Gloss: order of still radiance}

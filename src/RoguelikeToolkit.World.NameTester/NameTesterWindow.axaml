@@ -1,57 +1,214 @@
 <Window xmlns="https://github.com/avaloniaui"
         xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+        xmlns:local="clr-namespace:RoguelikeToolkit.World.NameTester"
         x:Class="RoguelikeToolkit.World.NameTester.NameTesterWindow"
-        Title="Name Generator Tester"
-        Width="960" Height="700"
-        MinWidth="640" MinHeight="480"
-        Background="#1E1E1E"
+        x:DataType="local:NameTesterWindow"
+        Title="Name Workshop"
+        Width="1180" Height="740"
+        MinWidth="900" MinHeight="560"
+        Background="#16181D"
         RequestedThemeVariant="Dark">
-    <Grid RowDefinitions="*,Auto">
-        <TabControl Grid.Row="0" Margin="8">
-            <TabItem x:Name="TabPeople" Header="People">
-                <Grid RowDefinitions="Auto,*">
-                    <WrapPanel Grid.Row="0" Orientation="Horizontal" Margin="0,0,0,8">
-                        <ComboBox x:Name="CmbRace" MinWidth="150" ToolTip.Tip="Ancestry key (extend via YAML)"/>
-                        <ComboBox x:Name="CmbCulture" MinWidth="150" ToolTip.Tip="Culture table key"/>
-                        <ComboBox x:Name="CmbLineage" MinWidth="130" ToolTip.Tip="Lineage rule"/>
-                        <CheckBox x:Name="ChkFeminine" Content="Feminine"/>
-                        <ComboBox x:Name="CmbScript" MinWidth="110" ToolTip.Tip="Script: native or Latin transliteration"/>
-                        <NumericUpDown x:Name="NumSeed" MinWidth="110" Minimum="0" Maximum="999999" Value="42" ToolTip.Tip="Seed"/>
-                        <NumericUpDown x:Name="NumCount" MinWidth="80" Minimum="1" Maximum="50" Value="10" ToolTip.Tip="How many"/>
-                        <TextBox x:Name="TxtInspired" MinWidth="180" Watermark="inspired by: blood, eagle" ToolTip.Tip="Comma-separated themes"/>
-                        <Button x:Name="BtnGenPeople" Content="Generate"/>
-                    </WrapPanel>
-                    <ListBox Grid.Row="1" x:Name="LstPeople" FontFamily="Consolas,Menlo,monospace" FontSize="12"/>
+
+    <Window.Styles>
+        <Style Selector="TextBlock.section">
+            <Setter Property="FontSize" Value="11"/>
+            <Setter Property="FontWeight" Value="SemiBold"/>
+            <Setter Property="Foreground" Value="#8B93A7"/>
+            <Setter Property="Margin" Value="0,0,0,4"/>
+        </Style>
+        <Style Selector="ComboBox, NumericUpDown, TextBox">
+            <Setter Property="HorizontalAlignment" Value="Stretch"/>
+        </Style>
+        <Style Selector="Border.panel">
+            <Setter Property="Background" Value="#1D2027"/>
+            <Setter Property="CornerRadius" Value="10"/>
+            <Setter Property="Padding" Value="14"/>
+        </Style>
+        <Style Selector="Border.card">
+            <Setter Property="Background" Value="#242832"/>
+            <Setter Property="CornerRadius" Value="8"/>
+            <Setter Property="Padding" Value="12,9"/>
+            <Setter Property="Margin" Value="0,0,0,6"/>
+        </Style>
+        <Style Selector="ListBoxItem">
+            <Setter Property="Padding" Value="0"/>
+            <Setter Property="Margin" Value="0"/>
+        </Style>
+        <Style Selector="Button.icon">
+            <Setter Property="Padding" Value="8,4"/>
+            <Setter Property="Background" Value="Transparent"/>
+            <Setter Property="MinWidth" Value="34"/>
+        </Style>
+        <Style Selector="ToggleButton.mode">
+            <Setter Property="Padding" Value="18,7"/>
+            <Setter Property="CornerRadius" Value="8"/>
+            <Setter Property="FontWeight" Value="SemiBold"/>
+        </Style>
+    </Window.Styles>
+
+    <Grid RowDefinitions="Auto,*,Auto" Margin="14">
+
+        <!-- Header -->
+        <Grid Grid.Row="0" ColumnDefinitions="Auto,Auto,*,Auto,Auto,Auto" Margin="0,0,0,12">
+            <TextBlock x:Name="TxtTitle" Grid.Column="0" Text="Name Workshop" FontSize="20" FontWeight="Bold"
+                       VerticalAlignment="Center" Margin="0,0,24,0"/>
+            <StackPanel Grid.Column="1" Orientation="Horizontal" Spacing="6">
+                <ToggleButton x:Name="BtnModePeople" Classes="mode" Content="People" IsChecked="True"/>
+                <ToggleButton x:Name="BtnModePlaces" Classes="mode" Content="Places"/>
+            </StackPanel>
+            <TextBlock x:Name="TxtLanguage" Grid.Column="3" Classes="section" VerticalAlignment="Center" Margin="0,0,8,0" Text="Language"/>
+            <ComboBox x:Name="CmbUiLanguage" Grid.Column="4" MinWidth="120" Margin="0,0,10,0"/>
+            <Button x:Name="BtnReload" Grid.Column="5" Content="Reload YAML"/>
+        </Grid>
+
+        <!-- Body -->
+        <Grid Grid.Row="1" ColumnDefinitions="310,*,280" ColumnSpacing="12">
+
+            <!-- Controls -->
+            <Border Grid.Column="0" Classes="panel">
+                <Grid RowDefinitions="*,Auto">
+                    <ScrollViewer Grid.Row="0" VerticalScrollBarVisibility="Auto">
+                        <StackPanel Spacing="14" Margin="0,0,10,0">
+                            <StackPanel>
+                                <TextBlock x:Name="LblStyle" Classes="section" Text="STYLE"/>
+                                <ComboBox x:Name="CmbStyle" MaxDropDownHeight="420"/>
+                            </StackPanel>
+
+                            <StackPanel x:Name="PeopleOptions" Spacing="14">
+                                <StackPanel>
+                                    <TextBlock x:Name="LblGender" Classes="section" Text="GENDER"/>
+                                    <ComboBox x:Name="CmbGender"/>
+                                </StackPanel>
+                                <StackPanel>
+                                    <TextBlock x:Name="LblLineage" Classes="section" Text="LINEAGE"/>
+                                    <ComboBox x:Name="CmbLineage"/>
+                                </StackPanel>
+                            </StackPanel>
+
+                            <StackPanel x:Name="PlaceOptions" Spacing="14" IsVisible="False">
+                                <StackPanel>
+                                    <TextBlock x:Name="LblKind" Classes="section" Text="KIND OF PLACE"/>
+                                    <ComboBox x:Name="CmbKind"/>
+                                </StackPanel>
+                                <StackPanel>
+                                    <TextBlock x:Name="LblTerrain" Classes="section" Text="SURROUNDINGS"/>
+                                    <WrapPanel>
+                                        <CheckBox x:Name="ChkWater" Content="Water" Margin="0,0,10,0"/>
+                                        <CheckBox x:Name="ChkForest" Content="Forest" Margin="0,0,10,0"/>
+                                        <CheckBox x:Name="ChkDark" Content="Dark" Margin="0,0,10,0"/>
+                                        <CheckBox x:Name="ChkHigh" Content="High" Margin="0,0,10,0"/>
+                                        <CheckBox x:Name="ChkValley" Content="Valley" Margin="0,0,10,0"/>
+                                        <CheckBox x:Name="ChkDeposit" Content="Deposit" Margin="0,0,10,0"/>
+                                        <CheckBox x:Name="ChkDanger" Content="Danger"/>
+                                    </WrapPanel>
+                                </StackPanel>
+                            </StackPanel>
+
+                            <StackPanel>
+                                <TextBlock x:Name="LblInspiration" Classes="section" Text="INSPIRED BY"/>
+                                <ComboBox x:Name="CmbInspiration" MaxDropDownHeight="360"/>
+                            </StackPanel>
+
+                            <StackPanel>
+                                <TextBlock x:Name="LblScript" Classes="section" Text="SCRIPT"/>
+                                <ComboBox x:Name="CmbScript"/>
+                            </StackPanel>
+
+                            <Grid ColumnDefinitions="*,12,*">
+                                <StackPanel Grid.Column="0">
+                                    <TextBlock x:Name="LblCount" Classes="section" Text="HOW MANY"/>
+                                    <NumericUpDown x:Name="NumCount" Minimum="1" Maximum="50" Value="12" FormatString="0"/>
+                                </StackPanel>
+                                <StackPanel Grid.Column="2">
+                                    <TextBlock x:Name="LblSeed" Classes="section" Text="SEED"/>
+                                    <NumericUpDown x:Name="NumSeed" Minimum="0" Maximum="999999" Value="42" FormatString="0"/>
+                                </StackPanel>
+                            </Grid>
+                            <Grid ColumnDefinitions="*,Auto">
+                                <CheckBox x:Name="ChkLockSeed" Grid.Column="0" Content="Lock seed"/>
+                                <Button x:Name="BtnRandomSeed" Grid.Column="1" Content="Random" Classes="icon"/>
+                            </Grid>
+                        </StackPanel>
+                    </ScrollViewer>
+                    <Button x:Name="BtnGenerate" Grid.Row="1" Classes="accent" Content="Generate names"
+                            HorizontalAlignment="Stretch" HorizontalContentAlignment="Center"
+                            Margin="0,12,0,0" Padding="0,10" FontWeight="SemiBold" IsDefault="True"/>
                 </Grid>
-            </TabItem>
-            <TabItem x:Name="TabPlaces" Header="Places">
-                <Grid RowDefinitions="Auto,*">
-                    <WrapPanel Grid.Row="0" Orientation="Horizontal" Margin="0,0,0,8">
-                        <ComboBox x:Name="CmbKind" MinWidth="130"/>
-                        <ComboBox x:Name="CmbPlaceRace" MinWidth="150" ToolTip.Tip="Ancestry key (extend via YAML)"/>
-                        <ComboBox x:Name="CmbPlaceCulture" MinWidth="150" ToolTip.Tip="Culture table key"/>
-                        <ComboBox x:Name="CmbPlaceScript" MinWidth="110" ToolTip.Tip="Script: native or Latin transliteration"/>
-                        <CheckBox x:Name="ChkWater" Content="Water"/>
-                        <CheckBox x:Name="ChkForest" Content="Forest"/>
-                        <CheckBox x:Name="ChkDark" Content="Dark"/>
-                        <CheckBox x:Name="ChkHigh" Content="High"/>
-                        <CheckBox x:Name="ChkValley" Content="Valley"/>
-                        <CheckBox x:Name="ChkDeposit" Content="Deposit"/>
-                        <CheckBox x:Name="ChkDanger" Content="Danger"/>
-                        <NumericUpDown x:Name="NumPlaceSeed" MinWidth="110" Minimum="0" Maximum="999999" Value="42"/>
-                        <NumericUpDown x:Name="NumPlaceCount" MinWidth="80" Minimum="1" Maximum="50" Value="10"/>
-                        <TextBox x:Name="TxtPlaceInspired" MinWidth="160" Watermark="inspired by"/>
-                        <Button x:Name="BtnGenPlaces" Content="Generate"/>
-                    </WrapPanel>
-                    <ListBox Grid.Row="1" x:Name="LstPlaces" FontFamily="Consolas,Menlo,monospace" FontSize="12"/>
+            </Border>
+
+            <!-- Results -->
+            <Border Grid.Column="1" Classes="panel">
+                <Grid>
+                    <TextBlock x:Name="TxtResultsEmpty" Text="Pick a style and press Generate."
+                               Foreground="#8B93A7" HorizontalAlignment="Center" VerticalAlignment="Center"/>
+                    <ListBox x:Name="LstResults" Background="Transparent" SelectionMode="Single">
+                        <ListBox.ItemTemplate>
+                            <DataTemplate x:DataType="local:NameRow">
+                                <Border Classes="card" DoubleTapped="OnRowDoubleTapped">
+                                    <Grid ColumnDefinitions="*,Auto">
+                                        <StackPanel Grid.Column="0" Spacing="2">
+                                            <TextBlock Text="{Binding Text}" FontSize="22" FontWeight="SemiBold"
+                                                       TextWrapping="Wrap"/>
+                                            <TextBlock Text="{Binding Gloss}" Foreground="#B7BED0" FontSize="13"
+                                                       TextWrapping="Wrap"/>
+                                            <TextBlock Text="{Binding Meta}" Foreground="#6F778A" FontSize="11"
+                                                       TextWrapping="Wrap"/>
+                                        </StackPanel>
+                                        <StackPanel Grid.Column="1" Orientation="Horizontal" VerticalAlignment="Top" Spacing="2">
+                                            <Button Classes="icon" Content="Copy" ToolTip.Tip="Copy" Click="OnCopyRow"/>
+                                            <Button Classes="icon" Content="★" FontSize="16" ToolTip.Tip="Add to shortlist" Click="OnStarRow"/>
+                                        </StackPanel>
+                                    </Grid>
+                                </Border>
+                            </DataTemplate>
+                        </ListBox.ItemTemplate>
+                    </ListBox>
                 </Grid>
-            </TabItem>
-        </TabControl>
-        <StackPanel Grid.Row="1" Orientation="Horizontal" Spacing="8" Margin="10,0,10,10">
-            <TextBlock x:Name="TxtDataDir" VerticalAlignment="Center" Foreground="Gray" FontSize="11" Text="data: "/>
-            <Button x:Name="BtnReload" Content="Reload YAML" ToolTip.Tip="Re-extract missing files, reload overrides from disk"/>
-            <TextBlock x:Name="TxtLanguage" VerticalAlignment="Center" Foreground="Gray" FontSize="11" Text="Language"/>
-            <ComboBox x:Name="CmbUiLanguage" MinWidth="130"/>
-        </StackPanel>
+            </Border>
+
+            <!-- Shortlist -->
+            <Border Grid.Column="2" Classes="panel">
+                <Grid RowDefinitions="Auto,*,Auto">
+                    <TextBlock x:Name="LblShortlist" Grid.Row="0" Classes="section" Text="SHORTLIST"/>
+                    <Grid Grid.Row="1">
+                        <TextBlock x:Name="TxtShortlistEmpty" Text="Star names you like and they collect here."
+                                   Foreground="#8B93A7" TextWrapping="Wrap" TextAlignment="Center"
+                                   HorizontalAlignment="Center" VerticalAlignment="Center" Margin="8"/>
+                        <ListBox x:Name="LstShortlist" Background="Transparent">
+                            <ListBox.ItemTemplate>
+                                <DataTemplate x:DataType="local:NameRow">
+                                    <Border Classes="card" DoubleTapped="OnRowDoubleTapped">
+                                        <Grid ColumnDefinitions="*,Auto">
+                                            <StackPanel Grid.Column="0">
+                                                <TextBlock Text="{Binding Text}" FontSize="16" FontWeight="SemiBold" TextWrapping="Wrap"/>
+                                                <TextBlock Text="{Binding Gloss}" Foreground="#B7BED0" FontSize="11" TextWrapping="Wrap"/>
+                                            </StackPanel>
+                                            <Button Grid.Column="1" Classes="icon" Content="✕" VerticalAlignment="Top"
+                                                    ToolTip.Tip="Remove" Click="OnRemoveShort"/>
+                                        </Grid>
+                                    </Border>
+                                </DataTemplate>
+                            </ListBox.ItemTemplate>
+                        </ListBox>
+                    </Grid>
+                    <StackPanel Grid.Row="2" Orientation="Horizontal" Spacing="8" Margin="0,10,0,0">
+                        <Button x:Name="BtnCopyAll" Content="Copy all"/>
+                        <Button x:Name="BtnClearShort" Content="Clear"/>
+                    </StackPanel>
+                </Grid>
+            </Border>
+        </Grid>
+
+        <!-- Status bar -->
+        <Grid Grid.Row="2" ColumnDefinitions="*,Auto" Margin="2,10,2,0">
+            <StackPanel Grid.Column="0" Orientation="Horizontal" Spacing="14">
+                <TextBlock x:Name="TxtStatus" Foreground="#8B93A7" FontSize="12" VerticalAlignment="Center"/>
+            </StackPanel>
+            <StackPanel Grid.Column="1" Orientation="Horizontal" Spacing="8">
+                <TextBlock x:Name="TxtDataDir" Foreground="#6F778A" FontSize="11" VerticalAlignment="Center"
+                           TextTrimming="CharacterEllipsis" MaxWidth="520"/>
+                <Button x:Name="BtnOpenFolder" Classes="icon" Content="Open data folder" FontSize="11"/>
+            </StackPanel>
+        </Grid>
     </Grid>
 </Window>

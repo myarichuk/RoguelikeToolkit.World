@@ -1,8 +1,11 @@
 Key: human_english
+DisplayName: "Human · English (Old English)"
+PlaceFallback: false
+Patronymic: false
 LineageDefault: Patrilineal
 Provenance: real Old English dithematic roots (ASCII transliteration); -son patronymics
 PatronymicSon: son
-PatronymicDaughter: daughter
+PatronymicDaughter: dohtor
 FamilySuffix: true
 Banned: []
 GivenStems:
@@ -29,14 +32,17 @@ GivenStems:
 SecondStems:
   - {Form: red, Gloss: counsel}
   - {Form: win, Gloss: friend}
-  - {Form: ric, Gloss: ruler}
-  - {Form: ward, Gloss: guard}
+  - {Form: ric, Gloss: ruler, Tags: [masc]}
+  - {Form: ward, Gloss: guard, Tags: [masc]}
   - {Form: stan, Gloss: stone}
   - {Form: wulf, Gloss: wolf}
-  - {Form: gyth, Gloss: war}
+  - {Form: gyth, Gloss: battle, Tags: [fem]}
   - {Form: bryht, Gloss: bright}
-  - {Form: mond, Gloss: protection}
-  - {Form: gar, Gloss: spear}
+  - {Form: mund, Gloss: protection, Tags: [masc]}
+  - {Form: gar, Gloss: spear, Tags: [masc]}
+  - {Form: burh, Gloss: fortress, Tags: [fem]}
+  - {Form: flaed, Gloss: beauty, Tags: [fem]}
+  - {Form: wynn, Gloss: joy, Tags: [fem]}
 FamilyAffixes:
   - {Form: ham, Gloss: homestead}
   - {Form: ton, Gloss: town enclosure}
@@ -49,8 +55,8 @@ Epithets: []
 Descriptors:
   - {Form: Eald, Gloss: old, Tags: [town, city]}
   - {Form: Neow, Gloss: new, Tags: [village, town]}
-  - {Form: Mic, Gloss: great, Tags: [city]}
-  - {Form: Lyt, Gloss: little, Tags: [village]}
+  - {Form: Micel, Gloss: great, Tags: [city]}
+  - {Form: Lytel, Gloss: little, Tags: [village]}
   - {Form: Lang, Gloss: long, Tags: [hill, valley]}
   - {Form: Blac, Gloss: dark, Tags: [forest, dark]}
   - {Form: Whit, Gloss: white, Tags: [mountain, high]}

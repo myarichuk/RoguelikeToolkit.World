@@ -1,4 +1,7 @@
 Key: catfolk
+DisplayName: "Catfolk"
+ClanChance: 100
+EpithetChance: 25
 LineageDefault: Matrilineal
 Provenance: original roaming-hunter roots in a tabaxi-like spirit; no milk/mice cliches
 PatronymicSon: tom
@@ -36,9 +39,7 @@ SecondStems:
   - {Form: hunter, Gloss: hunter}
   - {Form: wander, Gloss: wanderer}
   - {Form: tale, Gloss: tale-bearer}
-FamilyAffixes:
-  - {Form: Farprowl, Gloss: band of the far prowl}
-  - {Form: Cloudleap, Gloss: band of the cloud leap}
+FamilyAffixes: []
 Clans:
   - {Form: Farprowl, Gloss: band of the far prowl}
   - {Form: Cloudleap, Gloss: band of the cloud leap}

@@ -1,53 +1,111 @@
 Key: human_japanese
+DisplayName: "Human · Japanese"
 LineageDefault: Patrilineal
-Provenance: family-first order; constrained nature compounds
-PatronymicSon: no suke
-PatronymicDaughter: no hime
+Provenance: family-first order; real given names and surnames (romanized); compound place names (Shirakawa)
+Patronymic: false
+CompoundChance: 0
+FamilyFirst: true
+PlaceFallback: false
+PatronymicSon: no
+PatronymicDaughter: no
 Banned: []
 GivenStems:
-  - {Form: Yama, Gloss: mountain}
-  - {Form: Kawa, Gloss: river}
-  - {Form: Mori, Gloss: forest}
-  - {Form: Hana, Gloss: flower}
+  - {Form: Haruto, Gloss: sun soaring, Tags: [masc]}
+  - {Form: Ren, Gloss: lotus, Tags: [masc]}
+  - {Form: Takeshi, Gloss: warrior, Tags: [masc]}
+  - {Form: Hiroshi, Gloss: generous, Tags: [masc]}
+  - {Form: Kenji, Gloss: wise second son, Tags: [masc]}
+  - {Form: Daiki, Gloss: great radiance, Tags: [masc]}
+  - {Form: Akira, Gloss: bright, Tags: [masc]}
+  - {Form: Satoshi, Gloss: clear-minded, Tags: [masc]}
+  - {Form: Kaito, Gloss: ocean soaring, Tags: [masc]}
+  - {Form: Taro, Gloss: eldest son, Tags: [masc]}
+  - {Form: Jiro, Gloss: second son, Tags: [masc]}
+  - {Form: Shin, Gloss: truth, Tags: [masc]}
+  - {Form: Hayato, Gloss: falcon person, Tags: [masc]}
+  - {Form: Isamu, Gloss: courage, Tags: [masc]}
+  - {Form: Takumi, Gloss: artisan, Tags: [masc]}
+  - {Form: Ryu, Gloss: dragon, Tags: [masc]}
+  - {Form: Tora, Gloss: tiger, Tags: [masc]}
+  - {Form: Taka, Gloss: hawk, Tags: [masc]}
+  - {Form: Kame, Gloss: tortoise, Tags: [masc]}
+  - {Form: Hana, Gloss: flower, Tags: [fem]}
+  - {Form: Sakura, Gloss: cherry blossom, Tags: [fem]}
+  - {Form: Yui, Gloss: bond, Tags: [fem]}
+  - {Form: Aoi, Gloss: hollyhock, Tags: [fem]}
+  - {Form: Rin, Gloss: dignified, Tags: [fem]}
+  - {Form: Akari, Gloss: light, Tags: [fem]}
+  - {Form: Haruka, Gloss: distant, Tags: [fem]}
+  - {Form: Mei, Gloss: sprout, Tags: [fem]}
+  - {Form: Kaori, Gloss: fragrance, Tags: [fem]}
+  - {Form: Emi, Gloss: blessed beauty, Tags: [fem]}
+  - {Form: Natsumi, Gloss: summer beauty, Tags: [fem]}
+  - {Form: Sayuri, Gloss: small lily, Tags: [fem]}
+  - {Form: Kasumi, Gloss: mist, Tags: [fem]}
+  - {Form: Tsuru, Gloss: crane, Tags: [fem]}
+  - {Form: Kiku, Gloss: chrysanthemum, Tags: [fem]}
+  - {Form: Chiyo, Gloss: thousand ages, Tags: [fem]}
+  - {Form: Ayame, Gloss: iris, Tags: [fem]}
+  - {Form: Mizuki, Gloss: beautiful moon, Tags: [fem]}
   - {Form: Sora, Gloss: sky}
-  - {Form: Ren, Gloss: lotus}
-  - {Form: Aki, Gloss: autumn}
   - {Form: Haru, Gloss: spring}
-  - {Form: Taka, Gloss: hawk}
-  - {Form: Kame, Gloss: tortoise}
-  - {Form: Tsuru, Gloss: crane}
-  - {Form: Ryu, Gloss: dragon}
-  - {Form: Tora, Gloss: tiger}
-  - {Form: Umi, Gloss: sea}
+  - {Form: Hinata, Gloss: sunny place}
   - {Form: Yuki, Gloss: snow}
-  - {Form: Sakura, Gloss: cherry blossom}
-  - {Form: Fuji, Gloss: wisteria}
-  - {Form: Kaze, Gloss: wind}
-SecondStems:
-  - {Form: ko, Gloss: child}
-  - {Form: ro, Gloss: son}
-  - {Form: mi, Gloss: beauty}
-  - {Form: taka, Gloss: hawk-noble}
-  - {Form: ryu, Gloss: dragon-spirited}
-  - {Form: maru, Gloss: circle-completeness}
-  - {Form: nosuke, Gloss: protector-aid}
-  - {Form: hime, Gloss: princess}
-  - {Form: yuki, Gloss: snow-pure}
-  - {Form: kaze, Gloss: wind-swift}
+SecondStems: []
 FamilyAffixes:
-  - {Form: Tanaka, Gloss: ricefield middle family}
-  - {Form: Yamada, Gloss: mountain field family}
-  - {Form: Kawachi, Gloss: river land family}
-Clans:
-  - {Form: Tanaka, Gloss: ricefield middle family}
-  - {Form: Yamada, Gloss: mountain field family}
+  - {Form: Tanaka, Gloss: middle of the rice field}
+  - {Form: Yamada, Gloss: mountain rice field}
+  - {Form: Sato, Gloss: helper of the wisteria}
+  - {Form: Suzuki, Gloss: bell tree}
+  - {Form: Takahashi, Gloss: tall bridge}
+  - {Form: Watanabe, Gloss: ferry crossing}
+  - {Form: Ito, Gloss: that wisteria}
+  - {Form: Nakamura, Gloss: middle village}
+  - {Form: Kobayashi, Gloss: small forest}
+  - {Form: Kato, Gloss: added wisteria}
+  - {Form: Yoshida, Gloss: lucky rice field}
+  - {Form: Yamamoto, Gloss: mountain base}
+  - {Form: Matsumoto, Gloss: pine base}
+  - {Form: Inoue, Gloss: above the well}
+  - {Form: Kimura, Gloss: tree village}
+  - {Form: Hayashi, Gloss: grove}
+  - {Form: Shimizu, Gloss: clear water}
+  - {Form: Mori, Gloss: forest}
+  - {Form: Ikeda, Gloss: pond rice field}
+  - {Form: Hashimoto, Gloss: bridge base}
+  - {Form: Ishikawa, Gloss: stone river}
+  - {Form: Ogawa, Gloss: small river}
+  - {Form: Okada, Gloss: hill rice field}
+  - {Form: Fujita, Gloss: wisteria rice field}
+  - {Form: Takeda, Gloss: bamboo rice field}
+  - {Form: Kawachi, Gloss: river land}
+Clans: []
 Epithets: []
 Descriptors:
   - {Form: Shin, Gloss: new, Tags: [village, town]}
   - {Form: O, Gloss: great, Tags: [mountain, city]}
-  - {Form: Kiyo, Gloss: clear, Tags: [water, river]}
+  - {Form: Kiyo, Gloss: clear, Tags: [water, river, lake]}
+  - {Form: Kita, Gloss: north, Tags: [high, mountain, town]}
+  - {Form: Aka, Gloss: red, Tags: [hill, danger]}
+  - {Form: Shira, Gloss: white, Tags: [mountain, high, river]}
+  - {Form: Kuro, Gloss: black, Tags: [forest, dark, danger]}
+  - {Form: Ao, Gloss: azure, Tags: [lake, forest, valley]}
+  - {Form: Naka, Gloss: middle, Tags: [village, town]}
+  - {Form: Matsu, Gloss: pine, Tags: [forest, hill]}
+  - {Form: Take, Gloss: bamboo, Tags: [forest, valley]}
+  - {Form: Ishi, Gloss: stone, Tags: [deposit, hill, mountain]}
+  - {Form: Kane, Gloss: metal, Tags: [deposit, mountain]}
+  - {Form: Tsuki, Gloss: moon, Tags: [lake, water]}
+  - {Form: Hoshi, Gloss: star, Tags: [high, mountain]}
 Nouns:
   - {Form: mura, Gloss: village, Tags: [village]}
   - {Form: machi, Gloss: town, Tags: [town]}
+  - {Form: kyo, Gloss: capital, Tags: [city]}
   - {Form: yama, Gloss: mountain, Tags: [mountain]}
   - {Form: kawa, Gloss: river, Tags: [river]}
+  - {Form: ike, Gloss: pond, Tags: [lake, water]}
+  - {Form: mori, Gloss: woods, Tags: [forest, dark]}
+  - {Form: oka, Gloss: hillock, Tags: [hill]}
+  - {Form: tani, Gloss: ravine, Tags: [valley]}
+  - {Form: shiro, Gloss: castle, Tags: [hold, town, city]}
+  - {Form: toride, Gloss: outpost, Tags: [camp, hold]}

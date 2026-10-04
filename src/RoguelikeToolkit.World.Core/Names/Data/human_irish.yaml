@@ -1,53 +1,75 @@
 Key: human_irish
+DisplayName: "Human · Irish"
 LineageDefault: Patrilineal
-Provenance: real Gaeilge roots; O descendant-of, Mac/Nic son/daughter patterns
+Provenance: real Gaeilge given names; mac/nic patronymic is the surname; noun-first place names (Ballymor)
+CompoundChance: 0
 PatronymicSon: mac
 PatronymicDaughter: nic
 PatronymicPrefix: true
+PlaceOrder: NounFirst
+PlaceJoin: Fuse
+PlaceFallback: false
 Banned: []
 GivenStems:
-  - {Form: Cian, Gloss: ancient}
-  - {Form: Niamh, Gloss: bright, radiant}
-  - {Form: Oisin, Gloss: little deer}
-  - {Form: Saoirse, Gloss: freedom}
-  - {Form: Ciaran, Gloss: little dark one}
-  - {Form: Maeve, Gloss: intoxicating}
-  - {Form: Fionn, Gloss: fair, white}
-  - {Form: Siobhan, Gloss: god is gracious}
-  - {Form: Aisling, Gloss: dream, vision}
-  - {Form: Caoimhe, Gloss: gentle, beautiful}
-  - {Form: Tadhg, Gloss: poet}
-  - {Form: Nuala, Gloss: fair shoulder}
-  - {Form: Orla, Gloss: golden princess}
-  - {Form: Eoin, Gloss: god is gracious}
-  - {Form: Aoife, Gloss: beautiful}
-  - {Form: Conall, Gloss: strong wolf}
-  - {Form: Brendan, Gloss: prince}
-  - {Form: Deirdre, Gloss: sorrowful}
-  - {Form: Iolar, Gloss: eagle}
-  - {Form: Faolchu, Gloss: wolf}
-SecondStems:
-  - {Form: beg, Gloss: little}
-  - {Form: mor, Gloss: great}
-  - {Form: finn, Gloss: fair}
-  - {Form: duff, Gloss: dark}
-  - {Form: iolar, Gloss: eagle-eyed}
-  - {Form: faol, Gloss: wolf-kin}
-  - {Form: ron, Gloss: seal}
-  - {Form: brac, Gloss: speckled}
-  - {Form: glas, Gloss: green-grey}
-  - {Form: keogh, Gloss: gentle}
-# No family list: the mac/nic patronymic IS the Irish surname ("Cian mac Tadhg").
+  - {Form: Cian, Gloss: ancient, Tags: [masc]}
+  - {Form: Oisin, Gloss: little deer, Tags: [masc]}
+  - {Form: Ciaran, Gloss: little dark one, Tags: [masc]}
+  - {Form: Fionn, Gloss: fair, Tags: [masc]}
+  - {Form: Tadhg, Gloss: poet, Tags: [masc]}
+  - {Form: Eoin, Gloss: God is gracious, Tags: [masc]}
+  - {Form: Conall, Gloss: strong wolf, Tags: [masc]}
+  - {Form: Brendan, Gloss: prince, Tags: [masc]}
+  - {Form: Niall, Gloss: champion, Tags: [masc]}
+  - {Form: Cormac, Gloss: charioteer, Tags: [masc]}
+  - {Form: Declan, Gloss: full of goodness, Tags: [masc]}
+  - {Form: Donal, Gloss: world ruler, Tags: [masc]}
+  - {Form: Ronan, Gloss: little seal, Tags: [masc]}
+  - {Form: Diarmuid, Gloss: free from envy, Tags: [masc]}
+  - {Form: Lorcan, Gloss: little fierce one, Tags: [masc]}
+  - {Form: Cathal, Gloss: battle ruler, Tags: [masc]}
+  - {Form: Faolan, Gloss: little wolf, Tags: [masc]}
+  - {Form: Iolar, Gloss: eagle, Tags: [masc]}
+  - {Form: Bran, Gloss: raven, Tags: [masc]}
+  - {Form: Niamh, Gloss: radiant, Tags: [fem]}
+  - {Form: Saoirse, Gloss: freedom, Tags: [fem]}
+  - {Form: Maeve, Gloss: intoxicating, Tags: [fem]}
+  - {Form: Siobhan, Gloss: God is gracious, Tags: [fem]}
+  - {Form: Aisling, Gloss: dream, Tags: [fem]}
+  - {Form: Caoimhe, Gloss: gentle beauty, Tags: [fem]}
+  - {Form: Nuala, Gloss: fair shoulder, Tags: [fem]}
+  - {Form: Orla, Gloss: golden princess, Tags: [fem]}
+  - {Form: Aoife, Gloss: radiant beauty, Tags: [fem]}
+  - {Form: Deirdre, Gloss: sorrowful, Tags: [fem]}
+  - {Form: Brigid, Gloss: exalted, Tags: [fem]}
+  - {Form: Ciara, Gloss: dark-haired, Tags: [fem]}
+  - {Form: Roisin, Gloss: little rose, Tags: [fem]}
+  - {Form: Sinead, Gloss: God is gracious, Tags: [fem]}
+  - {Form: Muireann, Gloss: sea-white, Tags: [fem]}
+  - {Form: Una, Gloss: lamb, Tags: [fem]}
+SecondStems: []
 FamilyAffixes: []
 Clans: []
 Epithets: []
 Descriptors:
-  - {Form: Bally, Gloss: town-place, Tags: [village, town]}
+  - {Form: mor, Gloss: great, Tags: [city, town, mountain]}
+  - {Form: beg, Gloss: little, Tags: [village]}
+  - {Form: glas, Gloss: grey-green, Tags: [valley, river, forest]}
+  - {Form: dubh, Gloss: black, Tags: [forest, dark, danger, lake]}
+  - {Form: ban, Gloss: white, Tags: [mountain, high]}
+  - {Form: fionn, Gloss: fair, Tags: [valley, lake, village]}
+  - {Form: ruadh, Gloss: red, Tags: [hill, danger]}
+  - {Form: garbh, Gloss: rough, Tags: [mountain, hill, danger]}
+  - {Form: cam, Gloss: crooked, Tags: [river]}
+Nouns:
+  - {Form: Bally, Gloss: townland, Tags: [village, town]}
   - {Form: Knock, Gloss: hill, Tags: [hill]}
   - {Form: Lough, Gloss: lake, Tags: [lake, water]}
-Nouns:
-  - {Form: dun, Gloss: fort, Tags: [town, city, hill]}
-  - {Form: inis, Gloss: island, Tags: [lake, river]}
-  - {Form: cill, Gloss: church, Tags: [village]}
-  - {Form: ath, Gloss: ford, Tags: [river]}
-  - {Form: gleann, Gloss: valley, Tags: [valley]}
+  - {Form: Dun, Gloss: fort, Tags: [hold, town, city]}
+  - {Form: Inis, Gloss: island, Tags: [lake, river]}
+  - {Form: Kil, Gloss: church, Tags: [village]}
+  - {Form: Ath, Gloss: ford, Tags: [river]}
+  - {Form: Glen, Gloss: valley, Tags: [valley]}
+  - {Form: Slieve, Gloss: mountain, Tags: [mountain]}
+  - {Form: Drum, Gloss: ridge, Tags: [hill]}
+  - {Form: Carrick, Gloss: rock, Tags: [hill, camp, deposit]}
+  - {Form: Derry, Gloss: oak grove, Tags: [forest]}

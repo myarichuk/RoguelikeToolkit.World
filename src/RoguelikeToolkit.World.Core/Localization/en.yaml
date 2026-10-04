@@ -2,27 +2,54 @@ Language: en
 DisplayName: English
 RightToLeft: false
 Strings:
-  Title: Name Generator Tester
-  TabPeople: People
-  TabPlaces: Places
-  Feminine: Feminine
-  WatermarkInspired: "inspired by: blood, eagle"
-  WatermarkPlaceInspired: "inspired by"
-  Generate: Generate
-  Water: Water
-  Forest: Forest
-  Dark: Dark
-  High: High
-  Valley: Valley
-  Deposit: Deposit
-  Danger: Danger
-  Reload: Reload YAML
-  Language: Language
-  Native: Native
-  Latin: Latin
-  Hebrew: Hebrew
-  Cyrillic: Cyrillic
-  LineageDefault: "(default)"
+  Title: "Name Workshop"
+  ModePeople: "People"
+  ModePlaces: "Places"
+  Style: "Style"
+  StyleTip: "Folk or culture the names are drawn from"
+  Gender: "Gender"
+  Masculine: "Masculine"
+  Feminine: "Feminine"
+  Lineage: "Lineage"
+  LineageDefault: "(culture default)"
+  PlaceKind: "Kind of place"
+  Terrain: "Surroundings"
+  Water: "Water"
+  Forest: "Forest"
+  Dark: "Dark"
+  High: "High"
+  Valley: "Valley"
+  Deposit: "Deposit"
+  Danger: "Danger"
+  Inspiration: "Inspired by"
+  InspirationAny: "(anything)"
+  InspirationTip: "Bias the names toward a theme found in this style's word lists"
+  Script: "Script"
+  Native: "Native"
+  Latin: "Latin"
+  Hebrew: "Hebrew"
+  Cyrillic: "Cyrillic"
+  Seed: "Seed"
+  Random: "Random"
+  LockSeed: "Lock seed"
+  LockSeedTip: "Keep the same seed when generating again, so you can tweak other options on the same roll"
+  Count: "How many"
+  Generate: "Generate names"
+  Language: "Language"
+  Reload: "Reload YAML"
+  OpenFolder: "Open data folder"
+  Copy: "Copy"
+  Star: "Add to shortlist"
+  Shortlist: "Shortlist"
+  ShortlistEmpty: "Star names you like and they collect here."
+  CopyAll: "Copy all"
+  Clear: "Clear"
+  ResultsEmpty: "Pick a style and press Generate."
+  Remove: "Remove"
+  Copied: "Copied: "
+  Generated: "Generated {0} names (seed {1})"
+  NoResults: "Nothing came out - try another style or theme."
   Data: "data: "
   DataError: "data error, using built-in: "
   ReloadFailed: "reload failed: "
+  Reloaded: "YAML reloaded: {0} styles"

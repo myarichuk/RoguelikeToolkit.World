@@ -1,4 +1,7 @@
 Key: dogfolk
+DisplayName: "Dogfolk"
+ClanChance: 100
+EpithetChance: 25
 LineageDefault: Patrilineal
 Provenance: original loyal-pack roots; hearty pack lineages
 PatronymicSon: pup
@@ -36,9 +39,7 @@ SecondStems:
   - {Form: pack, Gloss: pack-sworn}
   - {Form: wag, Gloss: wagging}
   - {Form: den, Gloss: den-born}
-FamilyAffixes:
-  - {Form: Longtrail, Gloss: pack of the long trail}
-  - {Form: Bonekeep, Gloss: pack of the bone keep}
+FamilyAffixes: []
 Clans:
   - {Form: Longtrail, Gloss: pack of the long trail}
   - {Form: Bonekeep, Gloss: pack of the bone keep}

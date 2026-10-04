@@ -1,4 +1,7 @@
 Key: dragonfolk
+DisplayName: "Dragonfolk"
+ClanChance: 100
+EpithetChance: 40
 LineageDefault: Patrilineal
 Provenance: original ember/wing roots; proud flight lineages with title-epithets
 PatronymicSon: dax
@@ -36,9 +39,7 @@ SecondStems:
   - {Form: crest, Gloss: crested}
   - {Form: hoard, Gloss: hoard-keeper}
   - {Form: wyrm, Gloss: wyrm-blooded}
-FamilyAffixes:
-  - {Form: Cinderroost, Gloss: flight of the cinder roost}
-  - {Form: Emberwing, Gloss: flight of the ember wing}
+FamilyAffixes: []
 Clans:
   - {Form: Cinderroost, Gloss: flight of the cinder roost}
   - {Form: Emberwing, Gloss: flight of the ember wing}

@@ -1,4 +1,7 @@
 Key: elemental_air
+DisplayName: "Elemental · Air"
+ClanChance: 100
+EpithetChance: 25
 LineageDefault: Bilineal
 Provenance: original gale/cloud roots; courts of living air
 PatronymicSon: gust
@@ -36,13 +39,11 @@ SecondStems:
   - {Form: wisp, Gloss: wisp-light}
   - {Form: storm, Gloss: storm-eyed}
   - {Form: sky, Gloss: sky-touched}
-FamilyAffixes:
-  - {Form: Gale court, Gloss: sworn to the gale court}
-  - {Form: Cloud court, Gloss: sworn to the cloud court}
+FamilyAffixes: []
 Clans:
-  - {Form: Gale court, Gloss: court of gales}
-  - {Form: Cloud court, Gloss: court of clouds}
-  - {Form: Storm court, Gloss: court of storms}
+  - {Form: Gale Court, Gloss: court of gales}
+  - {Form: Cloud Court, Gloss: court of clouds}
+  - {Form: Storm Court, Gloss: court of storms}
 Epithets:
   - {Form: Windherald, Gloss: herald of winds}
   - {Form: Stormcaller, Gloss: caller of storms}

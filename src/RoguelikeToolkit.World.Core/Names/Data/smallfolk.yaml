@@ -1,4 +1,6 @@
 Key: smallfolk
+DisplayName: "Halfling"
+Patronymic: false
 LineageDefault: Bilineal
 Provenance: original pastoral diminutives for halflings
 PatronymicSon: son
