@@ -348,6 +348,32 @@ public sealed class NameQualityTests
     }
 
     [Fact]
+    public void LoadLenient_KeepsGoodEdits_AndTheShippedTableForABrokenFile()
+    {
+        var dir = Path.Combine(Path.GetTempPath(), "names-lenient-" + Guid.NewGuid().ToString("N"));
+        Directory.CreateDirectory(dir);
+        try
+        {
+            File.WriteAllText(Path.Combine(dir, "orcish.yaml"), "Key: orcish\nCompoundChance: 900\nGivenStems: []\n");
+            File.WriteAllText(Path.Combine(dir, "troll.yaml"),
+                "Key: troll\nGivenStems:\n  - {Form: Grumm, Gloss: boulder}\n");
+            Assert.Throws<NameDataException>(() => NameDataStore.Load(dir));
+            var store = NameDataStore.LoadLenient(dir, out var problems);
+            Assert.Contains(problems, p => p.Contains("orcish.yaml"));
+            Assert.NotEmpty(store.Get("orcish").GivenStems);          // shipped table survives
+            Assert.Equal("Grumm", store.Get("troll").GivenStems[0].Form);  // good edit applies
+        }
+        finally
+        {
+            Directory.Delete(dir, recursive: true);
+        }
+    }
+
+    [Fact]
+    public void DefaultDirectory_IsAlwaysAbsolute()
+        => Assert.True(Path.IsPathRooted(NameDataStore.DefaultDirectory), NameDataStore.DefaultDirectory);
+
+    [Fact]
     public void EnsureExtracted_UpgradesUntouchedFiles_ButNeverUserEdits()
     {
         var dir = Path.Combine(Path.GetTempPath(), "names-extract-" + Guid.NewGuid().ToString("N"));

@@ -130,9 +130,12 @@
                             </Grid>
                         </StackPanel>
                     </ScrollViewer>
-                    <Button x:Name="BtnGenerate" Grid.Row="1" Classes="accent" Content="Generate names"
-                            HorizontalAlignment="Stretch" HorizontalContentAlignment="Center"
-                            Margin="0,12,0,0" Padding="0,10" FontWeight="SemiBold" IsDefault="True"/>
+                    <Grid Grid.Row="1" ColumnDefinitions="*,8,Auto" Margin="0,12,0,0">
+                        <Button x:Name="BtnGenerate" Grid.Column="0" Classes="accent" Content="Generate names"
+                                HorizontalAlignment="Stretch" HorizontalContentAlignment="Center"
+                                Padding="0,10" FontWeight="SemiBold" IsDefault="True"/>
+                        <Button x:Name="BtnAudit" Grid.Column="2" Content="Audit" Padding="14,10"/>
+                    </Grid>
                 </Grid>
             </Border>
 
@@ -153,6 +156,8 @@
                                                        TextWrapping="Wrap"/>
                                             <TextBlock Text="{Binding Meta}" Foreground="#6F778A" FontSize="11"
                                                        TextWrapping="Wrap"/>
+                                            <TextBlock Text="{Binding Warning}" Foreground="#E0A458" FontSize="11"
+                                                       TextWrapping="Wrap" IsVisible="{Binding HasWarning}"/>
                                         </StackPanel>
                                         <StackPanel Grid.Column="1" Orientation="Horizontal" VerticalAlignment="Top" Spacing="2">
                                             <Button Classes="icon" Content="Copy" ToolTip.Tip="Copy" Click="OnCopyRow"/>

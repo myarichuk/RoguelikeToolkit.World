@@ -175,14 +175,52 @@ public sealed class NameDataStore
     public CultureData ResolveCulture(string culture, IEnumerable<string>? extraAvailable = null)
         => Get(culture, "culture", extraAvailable);
 
-    public static string DefaultDirectory =>
-        Path.Combine(Environment.GetFolderPath(Environment.SpecialFolder.ApplicationData),
-            "RoguelikeToolkit.World", "Names");
+    /// <summary>
+    /// Per-user data folder. ApplicationData can be empty (containers, service accounts), and
+    /// combining onto "" would silently put the tables under whatever the working directory is,
+    /// so fall back through the other per-user folders to the application folder.
+    /// </summary>
+    public static string DefaultDirectory
+    {
+        get
+        {
+            var root = new[]
+                {
+                    Environment.SpecialFolder.ApplicationData,
+                    Environment.SpecialFolder.LocalApplicationData,
+                    Environment.SpecialFolder.UserProfile,
+                }
+                .Select(Environment.GetFolderPath)
+                .FirstOrDefault(p => !string.IsNullOrWhiteSpace(p) && Path.IsPathRooted(p))
+                ?? AppContext.BaseDirectory;
+            return Path.Combine(root, "RoguelikeToolkit.World", "Names");
+        }
+    }
 
     public static NameDataStore Load(string? overrideDir = null)
     {
+        var store = LoadCore(overrideDir, out var problems);
+        if (problems.Count > 0) throw new NameDataException(problems);
+        return store;
+    }
+
+    /// <summary>
+    /// Like <see cref="Load"/>, but never throws for bad tables: every file that validates is
+    /// used, a broken on-disk file leaves the shipped table of the same key in place, and the
+    /// problems are reported instead. For editors and tools, where one typo should not discard
+    /// every other edit.
+    /// </summary>
+    public static NameDataStore LoadLenient(string? overrideDir, out IReadOnlyList<string> problems)
+    {
+        var store = LoadCore(overrideDir, out var list);
+        problems = list;
+        return store;
+    }
+
+    private static NameDataStore LoadCore(string? overrideDir, out List<string> problems)
+    {
         var store = new NameDataStore();
-        var problems = new List<string>();
+        problems = new List<string>();
         var des = new DeserializerBuilder()
             .WithNamingConvention(NullNamingConvention.Instance)
             .IgnoreUnmatchedProperties()
@@ -219,8 +257,6 @@ public sealed class NameDataStore
                 LoadOne(store, problems, des, rel, content, fromDisk: true, embeddedKeys, diskKeys);
             }
         }
-
-        if (problems.Count > 0) throw new NameDataException(problems);
         return store;
     }
 
@@ -348,7 +384,6 @@ public sealed class NameDataStore
         return dirs.Any() ? string.Join("/", dirs) + "/" + file : file;
     }
 
-    /// <summary>Copies embedded YAML to <paramref name="dir"/> when files are missing. Never overwrites user edits.</summary>
     /// <summary>
     /// Copies embedded YAML to <paramref name="dir"/>, keeping it current without clobbering edits.
     /// A manifest (<c>.shipped.json</c>) records the hash of each file as last shipped:
