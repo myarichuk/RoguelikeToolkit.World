@@ -83,20 +83,25 @@ Clans: []
 Epithets: []
 Descriptors:
   - {Form: Shin, Gloss: new, Tags: [village, town]}
-  - {Form: O, Gloss: great, Tags: [mountain, city]}
+  - {Form: O, Gloss: great, Tags: [mountain, city, lake, river]}
   - {Form: Kiyo, Gloss: clear, Tags: [water, river, lake]}
-  - {Form: Kita, Gloss: north, Tags: [high, mountain, town]}
-  - {Form: Aka, Gloss: red, Tags: [hill, danger]}
-  - {Form: Shira, Gloss: white, Tags: [mountain, high, river]}
-  - {Form: Kuro, Gloss: black, Tags: [forest, dark, danger]}
+  - {Form: Kita, Gloss: north}
+  - {Form: Aka, Gloss: red}
+  - {Form: Shira, Gloss: white}
+  - {Form: Kuro, Gloss: black}
   - {Form: Ao, Gloss: azure, Tags: [lake, forest, valley]}
-  - {Form: Naka, Gloss: middle, Tags: [village, town]}
+  - {Form: Naka, Gloss: middle}
   - {Form: Matsu, Gloss: pine, Tags: [forest, hill]}
   - {Form: Take, Gloss: bamboo, Tags: [forest, valley]}
   - {Form: Ishi, Gloss: stone, Tags: [deposit, hill, mountain]}
   - {Form: Kane, Gloss: metal, Tags: [deposit, mountain]}
   - {Form: Tsuki, Gloss: moon, Tags: [lake, water]}
   - {Form: Hoshi, Gloss: star, Tags: [high, mountain]}
+  - {Form: Higashi, Gloss: east}
+  - {Form: Nishi, Gloss: west}
+  - {Form: Minami, Gloss: south}
+  - {Form: Furu, Gloss: old, Tags: [village, town, hold]}
+  - {Form: Ko, Gloss: little, Tags: [village, lake, hill, river]}
 Nouns:
   - {Form: mura, Gloss: village, Tags: [village]}
   - {Form: machi, Gloss: town, Tags: [town]}
@@ -109,3 +114,16 @@ Nouns:
   - {Form: tani, Gloss: ravine, Tags: [valley]}
   - {Form: shiro, Gloss: castle, Tags: [hold, town, city]}
   - {Form: toride, Gloss: outpost, Tags: [camp, hold]}
+  - {Form: sato, Gloss: home village, Tags: [village]}
+  - {Form: hara, Gloss: field, Tags: [valley, village]}
+  - {Form: juku, Gloss: post town, Tags: [town]}
+  - {Form: miyako, Gloss: capital, Tags: [city]}
+  - {Form: mine, Gloss: peak, Tags: [mountain]}
+  - {Form: dake, Gloss: high peak, Tags: [mountain, high]}
+  - {Form: saka, Gloss: slope, Tags: [hill]}
+  - {Form: numa, Gloss: marsh pond, Tags: [lake]}
+  - {Form: shima, Gloss: island, Tags: [lake, river]}
+  - {Form: sawa, Gloss: mountain stream, Tags: [river, valley]}
+  - {Form: hayashi, Gloss: grove, Tags: [forest]}
+  - {Form: jin, Gloss: war camp, Tags: [camp]}
+  - {Form: seki, Gloss: barrier, Tags: [hold, camp]}

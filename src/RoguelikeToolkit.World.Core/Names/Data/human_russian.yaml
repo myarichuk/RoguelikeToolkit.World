@@ -92,16 +92,21 @@ FamilyAffixes:
 Clans: []
 Epithets: []
 Descriptors:
-  - {Form: Бело, Latin: Belo, Gloss: white, Tags: [mountain, high, lake]}
-  - {Form: Ново, Latin: Novo, Gloss: new, Tags: [village, town]}
-  - {Form: Старо, Latin: Staro, Gloss: old, Tags: [town, city]}
-  - {Form: Красно, Latin: Krasno, Gloss: beautiful, Tags: [city, hill]}
+  - {Form: Бело, Latin: Belo, Gloss: white}
+  - {Form: Ново, Latin: Novo, Gloss: new, Tags: [village, town, city]}
+  - {Form: Старо, Latin: Staro, Gloss: old, Tags: [village, town, city, hold]}
+  - {Form: Красно, Latin: Krasno, Gloss: beautiful}
   - {Form: Тихо, Latin: Tikho, Gloss: quiet, Tags: [river, lake, water, village]}
   - {Form: Широко, Latin: Shiroko, Gloss: wide, Tags: [valley, river]}
-  - {Form: Черно, Latin: Cherno, Gloss: black, Tags: [forest, dark, danger]}
-  - {Form: Зелено, Latin: Zeleno, Gloss: green, Tags: [forest, valley]}
+  - {Form: Черно, Latin: Cherno, Gloss: black}
+  - {Form: Зелено, Latin: Zeleno, Gloss: green, Tags: [forest, valley, village, hill]}
   - {Form: Злато, Latin: Zlato, Gloss: golden, Tags: [deposit, city]}
   - {Form: Железо, Latin: Zhelezo, Gloss: iron, Tags: [deposit, mountain]}
+  - {Form: Северо, Latin: Severo, Gloss: north}
+  - {Form: Южно, Latin: Yuzhno, Gloss: south}
+  - {Form: Верхне, Latin: Verkhne, Gloss: upper, Tags: [high, river, village, hill]}
+  - {Form: Нижне, Latin: Nizhne, Gloss: lower, Tags: [valley, river, village, town]}
+  - {Form: Каменно, Latin: Kamenno, Gloss: stony, Tags: [hill, mountain, hold, deposit]}
 Nouns:
   - {Form: град, Latin: grad, Gloss: fortified town, Tags: [town, city, hold]}
   - {Form: село, Latin: selo, Gloss: village, Tags: [village]}
@@ -113,3 +118,12 @@ Nouns:
   - {Form: долье, Latin: dolye, Gloss: dale, Tags: [valley]}
   - {Form: поле, Latin: pole, Gloss: open field, Tags: [valley, village]}
   - {Form: острог, Latin: ostrog, Gloss: stockade, Tags: [hold, camp]}
+  - {Form: ярск, Latin: yarsk, Gloss: steep-bank town, Tags: [town, city, river]}
+  - {Form: дар, Latin: dar, Gloss: gift town, Tags: [city, town]}
+  - {Form: поль, Latin: pol, Gloss: city, Tags: [city]}
+  - {Form: селье, Latin: selye, Gloss: settlement, Tags: [village]}
+  - {Form: горье, Latin: gorye, Gloss: highland, Tags: [mountain, hill]}
+  - {Form: борье, Latin: borye, Gloss: pine woods, Tags: [forest]}
+  - {Form: ручье, Latin: ruchye, Gloss: brook land, Tags: [river]}
+  - {Form: морье, Latin: morye, Gloss: inland sea shore, Tags: [lake]}
+  - {Form: стан, Latin: stan, Gloss: camp, Tags: [camp]}

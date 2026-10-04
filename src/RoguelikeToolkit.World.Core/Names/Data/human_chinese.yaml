@@ -65,15 +65,23 @@ Epithets: []
 Descriptors:
   - {Form: Qing, Gloss: clear green, Tags: [water, forest, river]}
   - {Form: Lao, Gloss: old, Tags: [town, city]}
-  - {Form: Xin, Gloss: new, Tags: [village, town]}
-  - {Form: Da, Gloss: great, Tags: [city, town, mountain]}
-  - {Form: Xiao, Gloss: little, Tags: [village]}
-  - {Form: Bai, Gloss: white, Tags: [mountain, high, river]}
-  - {Form: Hei, Gloss: black, Tags: [forest, dark, danger]}
-  - {Form: Hong, Gloss: red, Tags: [hill, danger]}
+  - {Form: Xin, Gloss: new, Tags: [village, town, city]}
+  - {Form: Da, Gloss: great}
+  - {Form: Xiao, Gloss: little, Tags: [village, lake, river, hill]}
+  - {Form: Bai, Gloss: white}
+  - {Form: Hei, Gloss: black}
+  - {Form: Hong, Gloss: red}
   - {Form: Jin, Gloss: gold, Tags: [deposit, city]}
   - {Form: Yin, Gloss: silver, Tags: [deposit, lake]}
   - {Form: Long, Gloss: dragon, Tags: [mountain, river, danger]}
+  - {Form: Dong, Gloss: east}
+  - {Form: Xi, Gloss: west}
+  - {Form: Nan, Gloss: south}
+  - {Form: Bei, Gloss: north}
+  - {Form: Shang, Gloss: upper, Tags: [high, river, village, mountain]}
+  - {Form: Xia, Gloss: lower, Tags: [valley, river, village]}
+  - {Form: Zhu, Gloss: bamboo, Tags: [forest, village, hill]}
+  - {Form: Song, Gloss: pine, Tags: [forest, mountain, hill]}
 Nouns:
   - {Form: cun, Gloss: hamlet, Tags: [village]}
   - {Form: zhen, Gloss: market town, Tags: [town]}
@@ -85,3 +93,14 @@ Nouns:
   - {Form: gu, Gloss: gorge, Tags: [valley]}
   - {Form: lin, Gloss: woods, Tags: [forest, dark]}
   - {Form: guan, Gloss: mountain pass, Tags: [hold, camp, hill]}
+  - {Form: zhuang, Gloss: village, Tags: [village]}
+  - {Form: jing, Gloss: capital, Tags: [city]}
+  - {Form: zhou, Gloss: prefecture, Tags: [city, town]}
+  - {Form: he, Gloss: river, Tags: [river]}
+  - {Form: tan, Gloss: deep pool, Tags: [lake]}
+  - {Form: feng, Gloss: peak, Tags: [mountain]}
+  - {Form: gang, Gloss: ridge mound, Tags: [hill]}
+  - {Form: chuan, Gloss: river plain, Tags: [valley, river]}
+  - {Form: yuan, Gloss: garden, Tags: [forest, village]}
+  - {Form: bao, Gloss: fort, Tags: [hold, camp, village]}
+  - {Form: ying, Gloss: camp, Tags: [camp]}

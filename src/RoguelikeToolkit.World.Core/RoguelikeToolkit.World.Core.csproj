@@ -21,6 +21,10 @@
   </ItemGroup>
 
   <ItemGroup>
+    <InternalsVisibleTo Include="RoguelikeToolkit.World.Core.Tests" />
+  </ItemGroup>
+
+  <ItemGroup>
     <EmbeddedResource Include="Names\Data\*.yaml" />
     <EmbeddedResource Include="Localization\*.yaml" />
   </ItemGroup>

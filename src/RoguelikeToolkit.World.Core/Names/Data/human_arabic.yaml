@@ -76,8 +76,8 @@ Clans:
   - {Form: Banu Qamar, Gloss: tribe of the moon}
 Epithets: []
 Descriptors:
-  - {Form: al-Nur, Gloss: the light, Tags: [town, city, high]}
-  - {Form: al-Qamar, Gloss: the moon, Tags: [lake, water, valley]}
+  - {Form: al-Nur, Gloss: the light}
+  - {Form: al-Qamar, Gloss: the moon, Tags: [lake, water, valley, river, village]}
   - {Form: al-Shams, Gloss: the sun, Tags: [city, hill]}
   - {Form: al-Saqr, Gloss: the falcon, Tags: [mountain, hill, high]}
   - {Form: al-Dhib, Gloss: the wolf, Tags: [danger, forest, hill]}
@@ -87,11 +87,21 @@ Descriptors:
   - {Form: al-Ward, Gloss: the rose, Tags: [village, valley]}
   - {Form: al-Zaytun, Gloss: the olive, Tags: [hill, valley, village]}
   - {Form: al-Layl, Gloss: the night, Tags: [dark, danger]}
-  - {Form: al-Salam, Gloss: the peace, Tags: [village, town, city]}
+  - {Form: al-Salam, Gloss: the peace}
   - {Form: al-Amal, Gloss: the hope, Tags: [village, town]}
+  - {Form: al-Kabir, Gloss: the great}
+  - {Form: al-Abyad, Gloss: the white}
+  - {Form: al-Aswad, Gloss: the black}
+  - {Form: al-Ahmar, Gloss: the red}
+  - {Form: al-Saghir, Gloss: the little, Tags: [village, river, hill, lake]}
+  - {Form: al-Akhdar, Gloss: the green, Tags: [forest, valley, village, mountain]}
+  - {Form: al-Azraq, Gloss: the blue, Tags: [lake, water, river]}
+  - {Form: al-Fidda, Gloss: the silver, Tags: [lake, deposit, river]}
+  - {Form: al-Arz, Gloss: the cedars, Tags: [forest, mountain]}
+  - {Form: al-Nakhil, Gloss: the palms, Tags: [forest, valley, village, water]}
 Nouns:
-  - {Form: Medina, Gloss: city, Tags: [city, town]}
-  - {Form: Qarya, Gloss: village, Tags: [village]}
+  - {Form: Madinat, Gloss: city, Tags: [city, town]}
+  - {Form: Qaryat, Gloss: village, Tags: [village]}
   - {Form: Nahr, Gloss: river, Tags: [river, water]}
   - {Form: Bir, Gloss: well, Tags: [village, water]}
   - {Form: Wadi, Gloss: dry valley, Tags: [valley, river]}
@@ -100,6 +110,14 @@ Nouns:
   - {Form: Jabal, Gloss: mountain, Tags: [mountain, hill]}
   - {Form: Ain, Gloss: spring, Tags: [village, water, river]}
   - {Form: Bahr, Gloss: sea, Tags: [lake, water]}
-  - {Form: Ghaba, Gloss: forest, Tags: [forest, dark]}
-  - {Form: Waha, Gloss: oasis, Tags: [village, water, valley]}
+  - {Form: Ghabat, Gloss: forest, Tags: [forest, dark]}
+  - {Form: Wahat, Gloss: oasis, Tags: [village, water, valley]}
   - {Form: Tall, Gloss: mound, Tags: [hill, camp]}
+  - {Form: Buhayrat, Gloss: lake, Tags: [lake]}
+  - {Form: Birkat, Gloss: pool, Tags: [lake, village]}
+  - {Form: Bustan, Gloss: orchard, Tags: [forest, village, valley]}
+  - {Form: Ras, Gloss: headland, Tags: [mountain, hill]}
+  - {Form: Qalat, Gloss: citadel, Tags: [hold, city]}
+  - {Form: Ribat, Gloss: frontier fort, Tags: [camp, hold]}
+  - {Form: Suq, Gloss: market, Tags: [town]}
+  - {Form: Sahl, Gloss: plain, Tags: [valley, village]}

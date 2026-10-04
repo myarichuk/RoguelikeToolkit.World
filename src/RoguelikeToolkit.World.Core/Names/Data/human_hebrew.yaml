@@ -114,25 +114,32 @@ Clans: []
 Epithets: []
 Descriptors:
   - {Form: זהב, Latin: Zahav, Gloss: gold, Tags: [deposit, mountain, hill, city]}
-  - {Form: שלום, Latin: Shalom, Gloss: peace, Tags: [village, town, city]}
-  - {Form: אור, Latin: Or, Gloss: light, Tags: [town, city, high]}
+  - {Form: שלום, Latin: Shalom, Gloss: peace}
+  - {Form: אור, Latin: Or, Gloss: light}
   - {Form: זית, Latin: Zayit, Gloss: olive, Tags: [hill, valley, village]}
   - {Form: ארז, Latin: Erez, Gloss: cedar, Tags: [forest, mountain, high]}
-  - {Form: שושן, Latin: Shoshan, Gloss: lily, Tags: [valley, water]}
+  - {Form: שושן, Latin: Shoshan, Gloss: lily, Tags: [valley, water, river]}
   - {Form: ברזל, Latin: Barzel, Gloss: iron, Tags: [deposit, mountain]}
   - {Form: אבן, Latin: Even, Gloss: stone, Tags: [hill, mountain, deposit]}
   - {Form: אש, Latin: Esh, Gloss: fire, Tags: [danger, hill]}
-  - {Form: כוכב, Latin: Kochav, Gloss: star, Tags: [high, town]}
+  - {Form: כוכב, Latin: Kochav, Gloss: star}
   - {Form: ירח, Latin: Yareach, Gloss: moon, Tags: [lake, water]}
   - {Form: דבש, Latin: Dvash, Gloss: honey, Tags: [valley, village]}
-  - {Form: תמר, Latin: Tamar, Gloss: palm, Tags: [water, valley]}
+  - {Form: תמר, Latin: Tamar, Gloss: palm, Tags: [water, valley, river, village]}
   - {Form: גיל, Latin: Gil, Gloss: joy, Tags: [valley, village]}
-  - {Form: צפון, Latin: Tzafon, Gloss: north, Tags: [high, mountain]}
+  - {Form: צפון, Latin: Tzafon, Gloss: north}
   - {Form: גפן, Latin: Gefen, Gloss: vine, Tags: [valley, village]}
   - {Form: שקד, Latin: Shaked, Gloss: almond, Tags: [village, hill]}
   - {Form: אורן, Latin: Oren, Gloss: pine, Tags: [forest, mountain]}
   - {Form: צל, Latin: Tzel, Gloss: shadow, Tags: [forest, dark, danger]}
   - {Form: אפלה, Latin: Afela, Gloss: darkness, Tags: [dark, danger, valley]}
+  - {Form: תכלת, Latin: Tchelet, Gloss: sky blue, Tags: [lake, water, river, high]}
+  - {Form: כסף, Latin: Kesef, Gloss: silver, Tags: [lake, water, deposit]}
+  - {Form: אלון, Latin: Alon, Gloss: oak, Tags: [forest, hill, village]}
+  - {Form: ברוש, Latin: Brosh, Gloss: cypress, Tags: [forest, hill]}
+  - {Form: ענבר, Latin: Inbar, Gloss: amber, Tags: [lake, valley]}
+  - {Form: ערבה, Latin: Arava, Gloss: willow, Tags: [river, lake, valley]}
+  - {Form: שקט, Latin: Sheket, Gloss: quiet, Tags: [river, lake, village]}
 Nouns:
   - {Form: כפר, Latin: Kfar, Gloss: village, Tags: [village]}
   - {Form: נווה, Latin: Neve, Gloss: oasis home, Tags: [village]}
@@ -153,3 +160,10 @@ Nouns:
   - {Form: תל, Latin: Tel, Gloss: mound, Tags: [hill, hold, town]}
   - {Form: שדה, Latin: Sde, Gloss: field, Tags: [village, valley]}
   - {Form: מצד, Latin: Metzad, Gloss: fortress, Tags: [hold, camp]}
+  - {Form: אגם, Latin: Agam, Gloss: lake, Tags: [lake]}
+  - {Form: בריכת, Latin: Breichat, Gloss: pool, Tags: [lake]}
+  - {Form: חורשת, Latin: Horshat, Gloss: grove, Tags: [forest]}
+  - {Form: גן, Latin: Gan, Gloss: garden, Tags: [village, valley]}
+  - {Form: מעיין, Latin: Maayan, Gloss: spring, Tags: [river, village]}
+  - {Form: מצפה, Latin: Mitzpe, Gloss: lookout, Tags: [camp, hold, hill]}
+  - {Form: נוף, Latin: Nof, Gloss: view, Tags: [hill, town]}

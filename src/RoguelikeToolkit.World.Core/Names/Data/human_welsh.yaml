@@ -1,9 +1,9 @@
 Key: human_welsh
 DisplayName: "Human · Welsh"
 LineageDefault: Patrilineal
-Provenance: real Welsh given names; map/ferch patronymic is the surname; noun-first place names (Caergwyn)
+Provenance: real Welsh given names; ap/ferch patronymic is the surname; noun-first place names (Caergwyn)
 CompoundChance: 0
-PatronymicSon: map
+PatronymicSon: ap
 PatronymicDaughter: ferch
 PatronymicPrefix: true
 PlaceOrder: NounFirst
@@ -38,21 +38,50 @@ GivenStems:
   - {Form: Elin, Gloss: torch, Tags: [fem]}
   - {Form: Ffion, Gloss: foxglove, Tags: [fem]}
   - {Form: Hafren, Gloss: river journey, Tags: [fem]}
+  - {Form: Gruffudd, Gloss: strong lord, Tags: [masc]}
+  - {Form: Llywelyn, Gloss: leader, Tags: [masc]}
+  - {Form: Dafydd, Gloss: beloved, Tags: [masc]}
+  - {Form: Ieuan, Gloss: God is gracious, Tags: [masc]}
+  - {Form: Hywel, Gloss: eminent, Tags: [masc]}
+  - {Form: Rhodri, Gloss: wheel ruler, Tags: [masc]}
+  - {Form: Morgan, Gloss: sea-born, Tags: [masc]}
+  - {Form: Caradog, Gloss: amiable, Tags: [masc]}
+  - {Form: Geraint, Gloss: old, Tags: [masc]}
+  - {Form: Aled, Gloss: offspring, Tags: [masc]}
+  - {Form: Cadfael, Gloss: battle prince, Tags: [masc]}
+  - {Form: Pryderi, Gloss: care, Tags: [masc]}
+  - {Form: Branwen, Gloss: white raven, Tags: [fem]}
+  - {Form: Bronwen, Gloss: white breast, Tags: [fem]}
+  - {Form: Olwen, Gloss: white footprint, Tags: [fem]}
+  - {Form: Seren, Gloss: star, Tags: [fem]}
+  - {Form: Lowri, Gloss: laurel, Tags: [fem]}
+  - {Form: Mererid, Gloss: pearl, Tags: [fem]}
+  - {Form: Enid, Gloss: soul, Tags: [fem]}
+  - {Form: Glenys, Gloss: pure, Tags: [fem]}
+  - {Form: Delyth, Gloss: pretty, Tags: [fem]}
+  - {Form: Morwenna, Gloss: maiden, Tags: [fem]}
+  - {Form: Tirion, Gloss: gentle, Tags: [fem]}
+  - {Form: Heledd, Gloss: princess, Tags: [fem]}
 SecondStems: []
 FamilyAffixes: []
 Clans: []
 Epithets: []
 Descriptors:
-  - {Form: gwyn, Gloss: white, Tags: [mountain, high, village]}
-  - {Form: coch, Gloss: red, Tags: [hill, danger]}
-  - {Form: du, Gloss: black, Tags: [forest, dark, danger, lake]}
-  - {Form: mawr, Gloss: great, Tags: [city, town, mountain]}
-  - {Form: bach, Gloss: little, Tags: [village]}
+  - {Form: gwyn, Gloss: white}
+  - {Form: coch, Gloss: red}
+  - {Form: du, Gloss: black}
+  - {Form: mawr, Gloss: great}
+  - {Form: bach, Gloss: little}
   - {Form: glas, Gloss: blue-green, Tags: [water, valley, lake]}
   - {Form: hir, Gloss: long, Tags: [valley, river]}
-  - {Form: newydd, Gloss: new, Tags: [village, town]}
+  - {Form: newydd, Gloss: new, Tags: [village, town, city, hold]}
   - {Form: aur, Gloss: golden, Tags: [deposit, city]}
   - {Form: haearn, Gloss: iron, Tags: [deposit, mountain]}
+  - {Form: llwyd, Gloss: grey}
+  - {Form: melyn, Gloss: yellow}
+  - {Form: teg, Gloss: fair}
+  - {Form: isaf, Gloss: lowest, Tags: [valley, village, river]}
+  - {Form: uchaf, Gloss: highest, Tags: [hill, mountain, high, village]}
 Nouns:
   - {Form: Aber, Gloss: river mouth, Tags: [river, village]}
   - {Form: Pen, Gloss: headland, Tags: [hill, mountain, village]}
@@ -68,3 +97,16 @@ Nouns:
   - {Form: Coed, Gloss: wood, Tags: [forest, dark]}
   - {Form: Mynydd, Gloss: mountain, Tags: [mountain]}
   - {Form: Craig, Gloss: crag, Tags: [hill, camp]}
+  - {Form: Tre, Gloss: homestead, Tags: [village, town]}
+  - {Form: Pentre, Gloss: village, Tags: [village]}
+  - {Form: Dinas, Gloss: city fort, Tags: [city, hold]}
+  - {Form: Castell, Gloss: castle, Tags: [hold, town]}
+  - {Form: Din, Gloss: hillfort, Tags: [hold, camp]}
+  - {Form: Carn, Gloss: cairn, Tags: [hill, mountain, camp]}
+  - {Form: Moel, Gloss: bare hill, Tags: [hill, mountain]}
+  - {Form: Afon, Gloss: river, Tags: [river]}
+  - {Form: Rhyd, Gloss: ford, Tags: [river, village]}
+  - {Form: Pwll, Gloss: pool, Tags: [lake, water]}
+  - {Form: Maes, Gloss: field, Tags: [valley, village]}
+  - {Form: Gelli, Gloss: grove, Tags: [forest]}
+  - {Form: Llwyn, Gloss: thicket, Tags: [forest, village]}

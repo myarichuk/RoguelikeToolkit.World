@@ -1,24 +1,24 @@
 Key: human_eastern
 DisplayName: "Human · Eastern European (fantasy)"
 LineageDefault: Patrilineal
-Provenance: Slavic-shaped dithematic names with original roots; ov/ova ski/ska surnames; stem+grad place names
+Provenance: Slavic-shaped dithematic names (linking vowel in the stem, plain base for -ovich/-ov); ov/ova ski/ska surnames; linked stem+grad place names
 FamilySuffix: true
 PatronymicSon: ovich
 PatronymicDaughter: ovna
 PlaceFallback: false
 Banned: []
 GivenStems:
-  - {Form: Mil, Gloss: gracious}
-  - {Form: Bog, Gloss: god-given}
-  - {Form: Vlad, Gloss: ruler}
-  - {Form: Stan, Gloss: steadfast}
-  - {Form: Yar, Gloss: fierce}
-  - {Form: Drag, Gloss: dear}
-  - {Form: Dobro, Gloss: goodness}
-  - {Form: Zvon, Gloss: bell chime}
-  - {Form: Medved, Gloss: bear}
-  - {Form: Orel, Gloss: eagle}
-  - {Form: Volko, Gloss: wolf}
+  - {Form: Milo, Base: Mil, Gloss: gracious, Tags: [bound]}
+  - {Form: Bogo, Base: Bog, Gloss: god-given, Tags: [bound]}
+  - {Form: Vladi, Base: Vlad, Gloss: ruler, Tags: [bound]}
+  - {Form: Stani, Base: Stan, Gloss: steadfast, Tags: [bound]}
+  - {Form: Yaro, Base: Yar, Gloss: fierce, Tags: [bound]}
+  - {Form: Drago, Base: Drag, Gloss: dear, Tags: [bound]}
+  - {Form: Dobro, Base: Dobr, Gloss: goodness, Tags: [bound]}
+  - {Form: Zvoni, Base: Zvon, Gloss: bell chime, Tags: [bound]}
+  - {Form: Medved, Gloss: bear, Tags: [bound]}
+  - {Form: Orel, Gloss: eagle, Tags: [bound]}
+  - {Form: Volko, Base: Volk, Gloss: wolf, Tags: [bound]}
   - {Form: Casimir, Gloss: peace commander, Tags: [masc, solo]}
   - {Form: Lech, Gloss: cunning, Tags: [masc, solo]}
   - {Form: Radomir, Gloss: joyful peace, Tags: [masc, solo]}
@@ -29,14 +29,19 @@ GivenStems:
   - {Form: Svetla, Gloss: light, Tags: [fem, solo]}
   - {Form: Dunja, Gloss: quince, Tags: [fem, solo]}
 SecondStems:
-  - {Form: mir, Gloss: peace}
-  - {Form: slav, Gloss: glory}
-  - {Form: dob, Gloss: good}
-  - {Form: rad, Gloss: glad}
-  - {Form: bor, Gloss: fighter}
-  - {Form: volk, Gloss: wolf}
-  - {Form: zor, Gloss: dawn}
-  - {Form: kvit, Gloss: bloom}
+  - {Form: mir, Gloss: peace, Tags: [masc]}
+  - {Form: slav, Gloss: glory, Tags: [masc]}
+  - {Form: dan, Gloss: given, Tags: [masc]}
+  - {Form: rad, Gloss: glad, Tags: [masc]}
+  - {Form: bor, Gloss: fighter, Tags: [masc]}
+  - {Form: volk, Gloss: wolf, Tags: [masc]}
+  - {Form: zor, Gloss: dawn, Tags: [masc]}
+  - {Form: kvita, Gloss: bloom, Tags: [fem]}
+  - {Form: mila, Gloss: dear, Tags: [fem]}
+  - {Form: slava, Gloss: glory, Tags: [fem]}
+  - {Form: mira, Gloss: peace, Tags: [fem]}
+  - {Form: rada, Gloss: glad, Tags: [fem]}
+  - {Form: zora, Gloss: dawn, Tags: [fem]}
 FamilyAffixes:
   - {Form: ov, Gloss: of the house of, Tags: [masc]}
   - {Form: ova, Gloss: of the house of, Tags: [fem]}
@@ -45,16 +50,36 @@ FamilyAffixes:
 Clans: []
 Epithets: []
 Descriptors:
-  - {Form: Bel, Gloss: white, Tags: [mountain, high, lake]}
-  - {Form: Cher, Gloss: black, Tags: [forest, dark, danger]}
-  - {Form: Nov, Gloss: new, Tags: [village, town]}
-  - {Form: Star, Gloss: old, Tags: [town, city]}
-  - {Form: Zlat, Gloss: golden, Tags: [deposit, city]}
-  - {Form: Krasn, Gloss: fair, Tags: [city, hill, valley]}
-  - {Form: Tikh, Gloss: quiet, Tags: [river, lake, village]}
+  - {Form: Belo, Gloss: white}
+  - {Form: Cherno, Gloss: black}
+  - {Form: Krasno, Gloss: fair}
+  - {Form: Novo, Gloss: new, Tags: [village, town, city]}
+  - {Form: Staro, Gloss: old, Tags: [village, town, city, hold]}
+  - {Form: Zlato, Gloss: golden, Tags: [deposit, city, river]}
+  - {Form: Tikho, Gloss: quiet, Tags: [river, lake, village, valley]}
+  - {Form: Veliko, Gloss: great, Tags: [town, city, lake, mountain]}
+  - {Form: Malo, Gloss: little, Tags: [village, hill, lake]}
+  - {Form: Zeleno, Gloss: green, Tags: [forest, valley, hill, village]}
+  - {Form: Sine, Gloss: blue, Tags: [lake, river, mountain]}
+  - {Form: Kameno, Gloss: stony, Tags: [hill, mountain, deposit, hold]}
+  - {Form: Dubo, Gloss: oak, Tags: [forest, village, hill]}
+  - {Form: Mokro, Gloss: wet, Tags: [river, lake, valley]}
 Nouns:
   - {Form: grad, Gloss: fortified town, Tags: [town, city, hold]}
-  - {Form: vesi, Gloss: village, Tags: [village]}
+  - {Form: ves, Gloss: village, Tags: [village]}
+  - {Form: selo, Gloss: settlement, Tags: [village]}
+  - {Form: mesto, Gloss: town, Tags: [town]}
+  - {Form: gorod, Gloss: city, Tags: [city, town]}
+  - {Form: vrh, Gloss: peak, Tags: [mountain, high]}
+  - {Form: brdo, Gloss: hill, Tags: [hill]}
+  - {Form: potok, Gloss: brook, Tags: [river]}
+  - {Form: brod, Gloss: ford, Tags: [river, town]}
+  - {Form: blato, Gloss: marsh lake, Tags: [lake, water]}
+  - {Form: gaj, Gloss: grove, Tags: [forest, village]}
+  - {Form: bor, Gloss: pine forest, Tags: [forest]}
+  - {Form: dolina, Gloss: valley, Tags: [valley]}
+  - {Form: stan, Gloss: camp, Tags: [camp]}
+  - {Form: straza, Gloss: watch post, Tags: [camp, hold]}
   - {Form: polje, Gloss: open plain, Tags: [valley, village]}
   - {Form: gora, Gloss: mountain, Tags: [mountain, hill]}
   - {Form: reka, Gloss: river, Tags: [river, water]}

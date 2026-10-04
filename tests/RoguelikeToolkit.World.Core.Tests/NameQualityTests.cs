@@ -128,24 +128,121 @@ public sealed class NameQualityTests
     [Fact]
     public void NoStutters_AcrossEveryStyleAndScript()
     {
+        // NameLint is the shared definition of "reads as a mistake" (also shown in the name tester):
+        // triple letters, doubled chunks, a word twice, a root repeated across parts, stray spaces.
+        var failures = new List<string>();
         foreach (var script in new[] { NameScript.Native, NameScript.Latin, NameScript.Hebrew, NameScript.Cyrillic })
             foreach (var s in FantasyNameGenerator.Styles())
                 for (int seed = 1; seed <= 60; seed++)
                 {
-                    var texts = new List<string>
+                    var kind = Kinds[seed % Kinds.Length];
+                    var names = new[]
                     {
-                        FantasyNameGenerator.GeneratePerson(s.Race, s.Culture, seed, feminine: seed % 2 == 0, script: script).Text,
-                        FantasyNameGenerator.GeneratePlace(Kinds[seed % Kinds.Length], new PlaceContext { NearWater = seed % 3 == 0 }, s.Race, s.Culture, seed, script: script).Text,
+                        FantasyNameGenerator.GeneratePerson(s.Race, s.Culture, seed, feminine: false, script: script),
+                        FantasyNameGenerator.GeneratePerson(s.Race, s.Culture, seed, feminine: true, script: script),
+                        FantasyNameGenerator.GeneratePlace(kind, new PlaceContext { NearWater = seed % 3 == 0, Highland = seed % 5 == 0 },
+                            s.Race, s.Culture, seed, script: script),
                     };
-                    foreach (var t in texts)
-                    {
-                        Assert.DoesNotMatch(@"(\p{L})\1\1", t);          // no letter three times in a row
-                        var words = t.Split(' ', StringSplitOptions.RemoveEmptyEntries);
-                        for (int i = 1; i < words.Length; i++)
-                            Assert.False(words[i].Equals(words[i - 1], StringComparison.OrdinalIgnoreCase), $"{s.Label}/{script}: '{t}'");
-                        Assert.DoesNotContain("  ", t);
-                        Assert.Equal(t.Trim(), t);
-                    }
+                    foreach (var n in names)
+                        foreach (var problem in NameLint.Check(n))
+                            failures.Add($"{s.Label}/{script}: '{n.Text}' ({problem})");
+                }
+        Assert.True(failures.Count == 0, string.Join("\n", failures.Take(20)));
+    }
+
+    [Fact]
+    public void NameLint_FlagsTheClassicMistakes()
+    {
+        static GeneratedName N(params (string Form, string Role)[] parts) => new()
+        {
+            Text = string.Join(" ", parts.Select(p => p.Form)),
+            Parts = parts.Select(p => new NamePart { Form = p.Form, Gloss = "x", Role = p.Role }).ToArray(),
+        };
+        Assert.NotEmpty(NameLint.Check(N(("Ash", NamePartRoles.Given), ("Ashbringer", NamePartRoles.Epithet))));
+        Assert.NotEmpty(NameLint.Check(N(("Zaid", NamePartRoles.Given), ("ibn Saqr", NamePartRoles.Patronymic), ("Banu Saqr", NamePartRoles.Family))));
+        Assert.NotEmpty(NameLint.Check(N(("Wisp", NamePartRoles.Given), ("Gustgustess", NamePartRoles.Patronymic))));
+        Assert.NotEmpty(NameLint.Check(N(("Thrrrun", NamePartRoles.Given))));
+        // Particles are not roots: "mac" in "Cormac", "al" in two "al-" names.
+        Assert.Empty(NameLint.Check(N(("Cormac", NamePartRoles.Given), ("mac Bran", NamePartRoles.Patronymic))));
+        Assert.Empty(NameLint.Check(N(("Karim al-Din", NamePartRoles.Given), ("ibn Hassan", NamePartRoles.Patronymic), ("al-Misri", NamePartRoles.Family))));
+    }
+
+    [Fact]
+    public void Picks_AreTheSameInEveryScript()
+    {
+        // One character, four renderings: switching script must not change who they are.
+        int differ = 0, total = 0;
+        foreach (var s in FantasyNameGenerator.Styles())
+            for (int seed = 1; seed <= 30; seed++)
+            {
+                var native = FantasyNameGenerator.GeneratePerson(s.Race, s.Culture, seed);
+                foreach (var script in new[] { NameScript.Latin, NameScript.Hebrew, NameScript.Cyrillic })
+                {
+                    total++;
+                    var other = FantasyNameGenerator.GeneratePerson(s.Race, s.Culture, seed, script: script);
+                    if (!native.Parts.Select(p => p.Gloss).SequenceEqual(other.Parts.Select(p => p.Gloss))) differ++;
+                }
+            }
+        // Only the post-fusion lint reroll (and banned words) may differ by script, and rarely.
+        Assert.True(differ * 100 <= total, $"{differ}/{total} names change their picks with the script.");
+    }
+
+    [Fact]
+    public void Fuse_DropsOnlyDoubledBoundaryVowels()
+    {
+        Assert.Equal("Shanning", FantasyNameGenerator.Fuse("Shan", "ning", dedupe: true));
+        Assert.Equal("Freddochter", FantasyNameGenerator.Fuse("Fred", "dochter", dedupe: true));
+        Assert.Equal("Eliel", FantasyNameGenerator.Fuse("Eli", "iel", dedupe: true));
+        Assert.Equal("Dobrovich", FantasyNameGenerator.Fuse("Dobro", "ovich", dedupe: true));
+        Assert.Equal("Thornnic", FantasyNameGenerator.Fuse("Thorn", "nic", dedupe: true));
+    }
+
+    [Fact]
+    public void CompoundTables_FeminineNamesTakeFeminineEndings_AndBoundStemsNeverStandAlone()
+    {
+        var store = FantasyNameGenerator.Shared;
+        foreach (var culture in new[] { Cultures.EasternEuropean, Cultures.WesternEuropean, Cultures.English, Cultures.FantasyCommon })
+        {
+            var table = store.Get(culture);
+            var bound = table.GivenStems.Where(m => m.Tags.Contains("bound")).Select(m => m.Form).ToHashSet(StringComparer.OrdinalIgnoreCase);
+            var mascEndings = table.SecondStems.Where(m => m.Tags.Contains("masc")).Select(m => m.Form).ToList();
+            Assert.NotEmpty(bound);
+            Assert.Contains(table.SecondStems, m => m.Tags.Contains("fem"));
+            for (int seed = 1; seed <= 150; seed++)
+            {
+                foreach (var feminine in new[] { false, true })
+                {
+                    var given = FantasyNameGenerator.GeneratePerson(FantasyRaces.Human, culture, seed, feminine: feminine).Parts[0];
+                    Assert.DoesNotContain(given.Form, bound);
+                    if (feminine)
+                        Assert.DoesNotContain(mascEndings, e => given.Form.EndsWith(e, StringComparison.OrdinalIgnoreCase)
+                            && !table.SecondStems.Any(f => f.Tags.Contains("fem") && given.Form.EndsWith(f.Form, StringComparison.OrdinalIgnoreCase)));
+                }
+            }
+        }
+    }
+
+    [Fact]
+    public void EveryShippedStem_IsReachable()
+    {
+        // A given or second stem that repeats its own table's fused marker in both genders
+        // ("Spark" next to "-spark"/"-sparkess") can never be picked: dead data.
+        foreach (var (key, table) in FantasyNameGenerator.Shared.Tables)
+            foreach (var m in table.GivenStems.Concat(table.SecondStems))
+                Assert.False(FantasyNameGenerator.BlockedByMarker(table, m, false) && FantasyNameGenerator.BlockedByMarker(table, m, true),
+                    $"{key}: '{m.Form}' repeats the patronymic marker and is never used.");
+    }
+
+    [Fact]
+    public void Glosses_ReadAsEnglish()
+    {
+        foreach (var s in FantasyNameGenerator.Styles())
+            for (int seed = 1; seed <= 60; seed++)
+                foreach (var feminine in new[] { false, true })
+                {
+                    var g = FantasyNameGenerator.GeneratePerson(s.Race, s.Culture, seed, feminine: feminine).Gloss;
+                    Assert.DoesNotContain(" of of ", g);
+                    Assert.DoesNotContain(", of the", g);     // "eagle, of the house of" -> "of the house of eagle"
                 }
     }
 
@@ -189,14 +286,65 @@ public sealed class NameQualityTests
     [Fact]
     public void PlaceNouns_FitTheKindOfPlace()
     {
-        // A river is never a "-hold" and a hold never a "-brook".
-        for (int seed = 1; seed <= 60; seed++)
+        // A river is never a "-hold" and a mountain never a "-water": every geography word
+        // must carry the kind's tag. Shipped tables cover every kind, so the related-kind and
+        // any-noun fallbacks never fire for them.
+        var store = FantasyNameGenerator.Shared;
+        var common = store.Get(Cultures.FantasyCommon);
+        foreach (var s in FantasyNameGenerator.Styles())
         {
-            var river = FantasyNameGenerator.GeneratePlace("river", new PlaceContext(), FantasyRaces.Dwarf, Cultures.FantasyCommon, seed);
-            Assert.DoesNotContain(river.Parts, p => p.Role == NamePartRoles.Geography && p.Form is "Hold" or "Delve" or "Bar");
-            var hold = FantasyNameGenerator.GeneratePlace("hold", new PlaceContext(), FantasyRaces.Dwarf, Cultures.FantasyCommon, seed);
-            Assert.Contains(hold.Parts, p => p.Role == NamePartRoles.Geography && p.Form is "Hold" or "Bar" or "Burg" or "Burgs");
+            var table = store.Get(s.TableKey);
+            var nouns = table.PlaceFallback ? table.Nouns.Concat(common.Nouns).ToList() : table.Nouns;
+            foreach (var kind in Kinds)
+            {
+                var fit = nouns.Where(n => KindTags(kind).Any(k => n.Tags.Contains(k)))
+                    .Select(n => n.Form.ToLowerInvariant()).ToHashSet();
+                Assert.True(fit.Count > 0, $"{s.Label}: no noun for '{kind}'.");
+                for (int seed = 1; seed <= 30; seed++)
+                {
+                    var p = FantasyNameGenerator.GeneratePlace(kind, new PlaceContext(), s.Race, s.Culture, seed);
+                    var geo = p.Parts.Single(x => x.Role == NamePartRoles.Geography).Form.ToLowerInvariant();
+                    Assert.True(fit.Contains(geo), $"{s.Label}: '{p.Text}' uses '{geo}' for a {kind}.");
+                }
+            }
         }
+    }
+
+    /// <summary>Mirrors the generator: a city may use town words, a hold town words, a camp hill words.</summary>
+    private static string[] KindTags(string kind) => kind switch
+    {
+        "city" => new[] { "city", "town" },
+        "hold" => new[] { "hold", "town" },
+        "camp" => new[] { "camp", "hill" },
+        _ => new[] { kind },
+    };
+
+    [Fact]
+    public void PlaceNames_HaveVarietyForEveryKind()
+    {
+        // With no context a world still needs many distinct names per kind; a table that can
+        // only say "Novgrad" or "Stargrad" for every town is not usable.
+        foreach (var s in FantasyNameGenerator.Styles())
+            foreach (var kind in Kinds)
+            {
+                int distinct = Enumerable.Range(1, 80)
+                    .Select(seed => FantasyNameGenerator.GeneratePlace(kind, new PlaceContext(), s.Race, s.Culture, seed).Text)
+                    .Distinct().Count();
+                Assert.True(distinct >= 10, $"{s.Label}: only {distinct} distinct {kind} names in 80 rolls.");
+            }
+    }
+
+    [Fact]
+    public void PersonNames_HaveVariety()
+    {
+        foreach (var s in FantasyNameGenerator.Styles())
+            foreach (var feminine in new[] { false, true })
+            {
+                int distinct = Enumerable.Range(1, 200)
+                    .Select(seed => FantasyNameGenerator.GeneratePerson(s.Race, s.Culture, seed, feminine: feminine).Text)
+                    .Distinct().Count();
+                Assert.True(distinct >= 150, $"{s.Label} (feminine={feminine}): only {distinct} distinct names in 200 rolls.");
+            }
     }
 
     [Fact]
