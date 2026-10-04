@@ -91,4 +91,49 @@ public class EntityBenchmarks
         _store.Save(ms);
         return ms.Length;
     }
+
+    [Benchmark(Description = "Delta save 300k (1 chunk touched)")]
+    public long SaveDelta()
+    {
+        if (!_store.CanSaveDelta) _store.Save(Stream.Null);
+        _person.At(5).Age++;
+        using var ms = new MemoryStream();
+        _store.SaveDelta(ms);
+        return ms.Length;
+    }
+
+    private readonly struct RingAdj : IAdjacency
+    {
+        public int GetAdjacent(int cell, Span<int> n)
+        {
+            n[0] = (cell + 1) % Tiles; n[1] = (cell + Tiles - 1) % Tiles; n[2] = (cell + 313) % Tiles;
+            n[3] = (cell + Tiles - 313) % Tiles; n[4] = (cell + 314) % Tiles; n[5] = (cell + Tiles - 314) % Tiles;
+            return 6;
+        }
+    }
+
+    private readonly struct Demo : IPopulationPolicy
+    {
+        public double BirthRate(int cell, int group, uint count) => 0.002;
+        public double DeathRate(int cell, int group, uint count) => 0.0015;
+        public double MigrationRate(int cell, int group, uint count) => 0.01;
+        public double Attraction(int cell, int group) => 1 + (cell & 3);
+    }
+
+    private PopulationGrid? _pop;
+
+    [Benchmark(Description = "Aggregate tick: 163k tiles x 8 groups (~650k people)")]
+    public long AggregateTick()
+    {
+        if (_pop is null)
+        {
+            _pop = new PopulationGrid(Tiles, 8);
+            var rng = new Random(3);
+            for (int c = 0; c < Tiles; c++)
+                if (rng.Next(3) == 0)    // two thirds of the planet is empty
+                    for (int g = 0; g < 8; g++) _pop.Give(c, g, (uint)rng.Next(0, 4));
+        }
+        _pop.Step(new Demo(), new RingAdj(), 1);
+        return _pop.Total();
+    }
 }

@@ -83,7 +83,19 @@ foreach (int slot in index.InCell(tile)) { ... }          // plus world.Map.Data
 
 ### Persistence
 
-`Save(Stream)` / `Load(Stream)` write raw little-endian columns (generations, free list, then each column preceded by its type hash and stride). Loading validates the column set first and leaves the store untouched on mismatch. Suggested pattern: periodic snapshots plus a game-owned journal of changes. The library does not provide the journal yet.
+`Save(Stream)` / `Load(Stream)` write raw little-endian columns (generations, free list, then each column preceded by its type hash and stride). Loading validates the column set first and leaves the store untouched on mismatch. `Save` starts a delta chain. `SaveDelta(Stream)` then writes only what changed since the previous save or delta, and `LoadDelta(Stream)` applies the next one:
+
+```csharp
+store.Save(full);            // occasionally: a checkpoint
+store.SaveDelta(d1);         // frequently: only touched chunks
+store.SaveDelta(d2);
+
+restored.Load(full);         // restore: full snapshot, then each delta in order
+restored.LoadDelta(d1);
+restored.LoadDelta(d2);
+```
+
+Writes go through spans and refs, so changes are found by hashing each chunk (64-bit) rather than by hooks: you never mark anything dirty. A delta holds the whole free list plus every generation and column chunk whose bytes differ (new chunks always count), so a single edit costs about one 1024-slot chunk per column it touches. A delta applies only to the chain it came from and only in order; a stray, skipped or stale delta throws `InvalidDataException` and leaves the store unchanged. A new full `Save` starts a new chain, so older deltas stop applying. Compact by saving a fresh full snapshot and discarding the old chain. Snapshot format is v3 (adds the chain id and step), so older v2 snapshots are rejected.
 
 ### Measured (300k entities on a 163,842-hex planet, Release)
 
@@ -92,17 +104,33 @@ foreach (int slot in index.InCell(tile)) { ... }          // plus world.Map.Data
 | Create 300k entities | ~2.5 ms | chunk arrays only (~7 MB, once) |
 | Spawn one on demand (steady state) | ~11 ns | 0 |
 | Rebuild the whole tile index | ~1.7 ms | 0 |
+| Delta save (one chunk touched) | ~1.5 ms | ~20 KB |
 | Scan every NPC (age +1) | ~0.4 ms | 0 |
 | Entities in a hex and its 6 neighbours | ~7 ns | 0 |
 
 Numbers are from short BenchmarkDotNet runs on one machine; re-run `tests/RoguelikeToolkit.World.Benchmarks` (`EntityBenchmarks`, `QueryBenchmarks`) for your own.
 
-## Tier 3 — derived maps (not done yet)
+## Tier 3 — derived maps (measured, no cache)
 
-`GetRegion` and `GetLocal` allocate a new grid on each call (about 7 KB and 22 KB at default sizes). At exploration speed that is fine, but a byte-budgeted LRU cache with pooled arrays and disposable handles would remove the garbage for a game that revisits the same areas. Not built; measure first.
+`GetRegion` and `GetLocal` allocate a new grid on each call. Measured (Release, size-4 world, short job):
+
+| Call | Time | Allocated |
+|---|---|---|
+| `GetRegion` | ~6 us | 6.6 KB |
+| `GetLocal` | ~23 us | 21.9 KB |
+
+Even redrawing a 3x3 block of local maps every frame costs about 0.2 ms and about 200 KB of gen0 garbage, which is cheaper than a cache lookup plus eviction bookkeeping. **Decision: no LRU or pooling.** Revisit only if a game derives hundreds of maps per frame; re-run `QueryBenchmarks` (`DeriveRegionMap`, `DeriveLocalMap`) to check.
+
+## Aggregate population
+
+NPCs far from the player are not entities. `PopulationGrid` keeps a head count per (cell, group), where a group is whatever the game buckets by (species, faction, profession), stored cell-major so a tick is one linear sweep. `Step(policy, adjacency, seed)` applies the game's `IPopulationPolicy` (birth, death and migration rates, plus how attractive a cell is as a destination) and advances `Tick`.
+
+- **Deterministic and order-free.** Each cell draws from its own sub-stream of (seed, tick, cell) and the step writes into a second buffer, so a cell never sees a half-updated tick. Save/Load keeps the tick, so a resumed run matches an uninterrupted one.
+- **Migration conserves people exactly**; births and deaths are the expected value stochastically rounded (right mean, no demographic noise of their own). Migrants split over neighbours by attraction, and with nowhere attractive to go they stay.
+- **Budgeting.** A full planet tick (163k tiles x 8 groups) takes about 11 ms with zero allocation. Pass a `cells` subset to step only part of the world (everything outside the loaded area, or a round-robin slice per frame).
+- **Crossing the boundary.** When the player arrives, `Take` people out of the cell and spawn entities under deterministic `EntityKeyMap` keys; when they leave, `Give` the survivors back. That keeps head counts conserved, and which components an individual gets is the game's call. Keep the load radius smaller than the unload radius so a player at the edge does not cause churn.
+- **Not delta-saved.** The grid is dense (a few MB per planet), so it has only a full `Save`/`Load`.
 
 ## Not done yet
 
-- Change journal and incremental snapshots for entities.
-- Aggregate (non-individual) simulation for NPCs far from the player: the substrate supports it (an "aggregate" is just another column set), but the policy belongs to the game.
-- A pooled/cached region tier (above).
+- Individual identity across the boundary: a person who is taken out and given back returns to the head count, not to a named record. A game that needs persistent named NPCs should keep those as entities permanently and exclude them from the grid.
