@@ -3,6 +3,7 @@ using System.Collections.Generic;
 using System.IO;
 using System.IO.MemoryMappedFiles;
 using System.Linq;
+using System.Threading;
 
 namespace RoguelikeToolkit.World.Core;
 
@@ -40,6 +41,19 @@ public unsafe class WorldDataStore : IDisposable
     private readonly int _size;
     private readonly string? _filePath;
     private readonly WorldTopology _topology;
+
+    /// <summary>
+    /// Process-wide dense id per layer type, so typed accessors index an array
+    /// instead of hashing a <see cref="Type"/> on every call.
+    /// </summary>
+    private static class LayerSlot<T> where T : unmanaged
+    {
+        public static readonly int Id = Interlocked.Increment(ref _nextId) - 1;
+    }
+    private static int _nextId;
+
+    // Offset per LayerSlot id; -1 = not registered in this store.
+    private long[] _offsetById = Array.Empty<long>();
 
     private readonly Dictionary<Type, long> _layerOffsets = new();
     private readonly Dictionary<Type, int> _layerStrides = new();
@@ -90,6 +104,14 @@ public unsafe class WorldDataStore : IDisposable
             throw new InvalidOperationException("Cannot register layers after Allocate() has been called.");
         }
 
+        int id = LayerSlot<T>.Id;
+        if (id >= _offsetById.Length)
+        {
+            int old = _offsetById.Length;
+            Array.Resize(ref _offsetById, Math.Max(id + 1, Math.Max(8, old * 2)));
+            Array.Fill(_offsetById, -1L, old, _offsetById.Length - old);
+        }
+        _offsetById[id] = _currentTotalBytes;
         _layerOffsets[type] = _currentTotalBytes;
         _layerStrides[type] = sizeof(T);
         _currentTotalBytes += (long)_tileCount * sizeof(T);
@@ -243,31 +265,31 @@ public unsafe class WorldDataStore : IDisposable
 
     public bool IsLayerRegistered(Type type) => _layerOffsets.ContainsKey(type);
 
-    public bool IsLayerRegistered<T>() where T : unmanaged => _layerOffsets.ContainsKey(typeof(T));
+    public bool IsLayerRegistered<T>() where T : unmanaged
+    {
+        int id = LayerSlot<T>.Id;
+        return (uint)id < (uint)_offsetById.Length && _offsetById[id] >= 0;
+    }
 
-    public Span<T> GetSpan<T>() where T : unmanaged
+    private long OffsetOf<T>() where T : unmanaged
     {
         if (_ptr == null) throw new InvalidOperationException("Store not allocated. Call Allocate() first.");
-        if (!_layerOffsets.TryGetValue(typeof(T), out long offset))
-        {
+        var offsets = _offsetById;
+        int id = LayerSlot<T>.Id;
+        if ((uint)id >= (uint)offsets.Length || offsets[id] < 0)
             throw new ArgumentException($"Layer of type {typeof(T).Name} is not registered. Call RegisterLayer<{typeof(T).Name}>() before Allocate().");
-        }
-
-        return new Span<T>(_ptr + _dataOffset + offset, _tileCount);
+        return offsets[id];
     }
+
+    public Span<T> GetSpan<T>() where T : unmanaged
+        => new Span<T>(_ptr + _dataOffset + OffsetOf<T>(), _tileCount);
 
     public ref T GetRef<T>(int index) where T : unmanaged
     {
         if ((uint)index >= (uint)_tileCount)
             throw new IndexOutOfRangeException();
 
-        if (_ptr == null) throw new InvalidOperationException("Store not allocated. Call Allocate() first.");
-        if (!_layerOffsets.TryGetValue(typeof(T), out long offset))
-        {
-            throw new ArgumentException($"Layer of type {typeof(T).Name} is not registered. Call RegisterLayer<{typeof(T).Name}>() before Allocate().");
-        }
-
-        return ref ((T*)(_ptr + _dataOffset + offset))[index];
+        return ref ((T*)(_ptr + _dataOffset + OffsetOf<T>()))[index];
     }
 
     /// <summary>
@@ -391,6 +413,9 @@ public unsafe class WorldDataStore : IDisposable
         return _topology.Centers[index];
     }
 
+
+    /// <summary>The shared topology array itself (no copy); treat as read-only.</summary>
+    internal Vector3D[] TileVectorArray => _topology.TileVectors;
 
     public ReadOnlySpan<Vector3D> GetTileVectors()
     {

@@ -59,16 +59,16 @@ public sealed class SpatialIndex
         ArgumentNullException.ThrowIfNull(store);
         _store = store;
         int n = store.TileCount;
-        _vectors = store.GetTileVectors().ToArray();
+        _vectors = store.TileVectorArray;
 
         isWater ??= DefaultIsWater(store);
         isGlacier ??= DefaultIsGlacier(store);
 
-        var riverTiles = new HashSet<int>();
+        var riverMask = new bool[n];
         if (rivers != null)
             foreach (var r in rivers.Rivers)
                 foreach (int t in r.Path)
-                    if (t >= 0 && t < n) riverTiles.Add(t);
+                    if (t >= 0 && t < n) riverMask[t] = true;
 
         // Plus sub-resolution trickles: lone IsRiver tiles never form a catalog
         // reach (Path.Count >= 2 contract) but must still resolve via
@@ -77,64 +77,59 @@ public sealed class SpatialIndex
         {
             var hydro = store.GetSpan<HydrologyInfo>();
             for (int i = 0; i < n; i++)
-                if (hydro[i].IsRiver == 1) riverTiles.Add(i);
+                if (hydro[i].IsRiver == 1) riverMask[i] = true;
         }
-        var waterTiles = new HashSet<int>();
+        var waterMask = new bool[n];
         for (int i = 0; i < n; i++)
-            if (isWater(i)) waterTiles.Add(i);
+            if (isWater(i)) waterMask[i] = true;
         if (bodies != null)
             foreach (var b in bodies.Bodies)
                 foreach (int t in b.Tiles)
-                    if (t >= 0 && t < n) waterTiles.Add(t);
+                    if (t >= 0 && t < n) waterMask[t] = true;
 
-        var rangeTiles = new HashSet<int>();
+        var rangeMask = new bool[n];
         if (ranges != null)
             foreach (var f in ranges.Features)
                 foreach (int t in f.Tiles)
-                    if (t >= 0 && t < n) rangeTiles.Add(t);
+                    if (t >= 0 && t < n) rangeMask[t] = true;
 
-        var glacierTiles = new HashSet<int>();
+        var glacierMask = new bool[n];
         for (int i = 0; i < n; i++)
-            if (isGlacier(i)) glacierTiles.Add(i);
+            if (isGlacier(i)) glacierMask[i] = true;
 
         _depositMask = new bool[n];
         _depositTypeOfTile = new DepositType[n];
-        var depositTiles = new HashSet<int>();
         if (deposits != null)
         {
             foreach (var d in deposits.Deposits)
             {
                 if ((uint)d.TileIndex >= (uint)n) continue;
-                depositTiles.Add(d.TileIndex);
                 _depositMask[d.TileIndex] = true;
                 _depositTypeOfTile[d.TileIndex] = d.Type;
+                _hasDeposits = true;
             }
-            _hasDeposits = depositTiles.Count > 0;
         }
 
-        var siteTiles = new HashSet<int>();
+        var siteMask = new bool[n];
         if (sites != null)
         {
             foreach (var s in sites.Sites)
             {
                 if (s == null || (uint)s.CellIndex >= (uint)n) continue;
-                siteTiles.Add(s.CellIndex);
+                siteMask[s.CellIndex] = true;
                 _sites.Add((s.Kind, s.CellIndex, s));
             }
         }
 
-        _tilesByKind[FeatureKind.River] = ToSorted(riverTiles);
-        _tilesByKind[FeatureKind.WaterBody] = ToSorted(waterTiles);
-        _tilesByKind[FeatureKind.Range] = ToSorted(rangeTiles);
-        _tilesByKind[FeatureKind.Glacier] = ToSorted(glacierTiles);
-        _tilesByKind[FeatureKind.Deposit] = ToSorted(depositTiles);
-        _tilesByKind[FeatureKind.Site] = ToSorted(siteTiles);
-        foreach (var (kind, tiles) in _tilesByKind)
-        {
-            var mask = new bool[n];
-            foreach (int t in tiles) mask[t] = true;
-            _masksByKind[kind] = mask;
-        }
+        // Ascending tile lists fall out of one scan per mask (no sort, no hash sets).
+        _masksByKind[FeatureKind.River] = riverMask;
+        _masksByKind[FeatureKind.WaterBody] = waterMask;
+        _masksByKind[FeatureKind.Range] = rangeMask;
+        _masksByKind[FeatureKind.Glacier] = glacierMask;
+        _masksByKind[FeatureKind.Deposit] = _depositMask;
+        _masksByKind[FeatureKind.Site] = siteMask;
+        foreach (var (kind, mask) in _masksByKind)
+            _tilesByKind[kind] = TilesOfMask(mask);
 
         // Bucket every tile center into the lat/lon grid.
         _cellCenters = new Vector3D[LatCells * LonCells];
@@ -206,7 +201,7 @@ public sealed class SpatialIndex
     {
         if (!_hasDeposits) return null;
         if (type == null) return NearestInMask(from, _depositMask);
-        return NearestInMask(from, _depositMask, t => _depositTypeOfTile[t] == type.Value);
+        return NearestInMask(from, _depositMask, type.Value);
     }
 
     /// <summary>Nearest deposit tile to a map address (via its planet tile).</summary>
@@ -237,18 +232,18 @@ public sealed class SpatialIndex
     // when no remaining cell center can beat the best tile (slack covers the
     // worst tile-to-center angle inside a cell).
     private (int TileIndex, double DistanceKm)? NearestInMask(
-        GeoCoord from, bool[] mask, Func<int, bool>? extra = null)
+        GeoCoord from, bool[] mask, DepositType? depositType = null)
     {
         var target = Vector3D.FromGeoCoord(from);
         int cellCount = _cellCenters.Length;
-        var order = new int[cellCount];
-        var dots = new double[cellCount];
+        Span<int> order = stackalloc int[cellCount];
+        Span<double> dots = stackalloc double[cellCount];
         for (int c = 0; c < cellCount; c++)
         {
             order[c] = c;
             dots[c] = -Vector3D.Dot(target, _cellCenters[c]); // negated: ascending key sort == nearest first
         }
-        Array.Sort(dots, order);
+        MemoryExtensions.Sort(dots, order);
 
         int best = -1;
         double bestDot = double.NegativeInfinity;
@@ -261,7 +256,7 @@ public sealed class SpatialIndex
             {
                 int t = _cellTiles[k];
                 if (!mask[t]) continue;
-                if (extra != null && !extra(t)) continue;
+                if (depositType.HasValue && _depositTypeOfTile[t] != depositType.Value) continue;
                 double dot = Vector3D.Dot(target, _vectors[t]);
                 if (dot > bestDot) { bestDot = dot; best = t; }
             }
@@ -282,12 +277,14 @@ public sealed class SpatialIndex
         return lat * LonCells + lon;
     }
 
-    private static int[] ToSorted(HashSet<int> set)
+    private static int[] TilesOfMask(bool[] mask)
     {
-        var arr = new int[set.Count];
-        set.CopyTo(arr);
-        Array.Sort(arr);
-        return arr;
+        int count = 0;
+        foreach (bool b in mask) if (b) count++;
+        var tiles = new int[count];
+        int w = 0;
+        for (int i = 0; i < mask.Length; i++) if (mask[i]) tiles[w++] = i;
+        return tiles;
     }
 
     private static Func<int, bool> DefaultIsWater(WorldDataStore store)
