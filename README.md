@@ -6,6 +6,9 @@ A .NET 10 solution containing a core class library (`RoguelikeToolkit.World.Core
 
 - [API Guide](docs/API.md) — the full public API with examples: sampling, zooming in, injectors, queries, persistence.
 - [Architecture](docs/ARCHITECTURE.md) — how the pieces fit together, with diagrams.
+- [Names](docs/NAMES.md) — the data-driven name generator: YAML schema, styles, themes, scripts.
+- [Assessment](docs/ASSESSMENT.md) — how useful the library is for procedural RPGs/roguelikes, the gaps, and a plan for procedural history.
+- [docs/STORAGE.md](docs/STORAGE.md) — storage design for planet-scale terrain and 100k+ NPCs
 - [Plugins](docs/PLUGINS.md) — extend generation with full-trust compiled C# stages or untrusted Jint script stages.
 
 ## Core Library Architecture
@@ -110,12 +113,12 @@ build from the finished tectonics + climate + hydrology.
 ## Layers: fields vs features
 
 - **Field layers** (dense, blittable, in `WorldDataStore`): `TectonicPlate`
-  (`Crust` + `Boundary`, per-tile continentality, boundary distance, and a
-  signed orogeny driver), `ElevationInfo`, `HydrologyInfo` (discharge,
+  (16 bytes per tile: `Crust` + `Boundary`, continentality, boundary rings, a
+  signed orogeny driver, and a plate `Id` into the per-plate `PlateInfo` table), `ElevationInfo`, `HydrologyInfo` (discharge,
   water-body id, river flag, routing surface, lake depth, playa flag),
   `ClimateInfo` (temperature, precipitation, wind), `LocalMapInfo` (biome,
-  danger, seed). File-backed stores use the v2 header (up to 32 field
-  layers); old v1 files are rejected with `InvalidDataException` by design.
+  danger, seed). File-backed stores use the v3 header (up to 32 field
+  layers and tables); old v1/v2 files are rejected with `InvalidDataException` by design.
 - **Feature catalogs** (sparse, managed, on `World`): `RiverCatalog` (rivers
   with sea/lake/sink terminals and mouth discharge), `WaterBodyCatalog`
   (ocean/seas plus open and endorheic lakes, with boundary loops),

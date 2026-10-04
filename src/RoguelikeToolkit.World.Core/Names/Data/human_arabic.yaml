@@ -1,54 +1,105 @@
 Key: human_arabic
+DisplayName: "Human · Arabic"
 LineageDefault: Patrilineal
-Provenance: ism plus nasab ibn/bint plus nisba chain
+Provenance: ism plus nasab ibn/bint plus optional laqab and nisba; place names noun-first (Qasr al-Bahr)
+CompoundChance: 30
+FamilyChance: 60
+ClanChance: 20
 PatronymicSon: ibn
 PatronymicDaughter: bint
 PatronymicPrefix: true
+PlaceOrder: NounFirst
+PlaceJoin: Space
+PlaceFallback: false
 Banned: []
 GivenStems:
-  - {Form: Karim, Gloss: generous}
-  - {Form: Layla, Gloss: night}
+  - {Form: Karim, Gloss: generous, Tags: [masc]}
+  - {Form: Samir, Gloss: evening companion, Tags: [masc]}
+  - {Form: Zaid, Gloss: abundance, Tags: [masc]}
+  - {Form: Rashid, Gloss: rightly guided, Tags: [masc]}
+  - {Form: Farid, Gloss: unique, Tags: [masc]}
+  - {Form: Jalal, Gloss: majesty, Tags: [masc]}
+  - {Form: Nasser, Gloss: victor, Tags: [masc]}
+  - {Form: Saqr, Gloss: falcon, Tags: [masc]}
+  - {Form: Dhib, Gloss: wolf, Tags: [masc]}
+  - {Form: Nasr, Gloss: eagle, Tags: [masc]}
+  - {Form: Jamal, Gloss: beauty, Tags: [masc]}
+  - {Form: Omar, Gloss: flourishing, Tags: [masc]}
+  - {Form: Khalid, Gloss: eternal, Tags: [masc]}
+  - {Form: Tariq, Gloss: night visitor, Tags: [masc]}
+  - {Form: Idris, Gloss: studious, Tags: [masc]}
+  - {Form: Malik, Gloss: king, Tags: [masc]}
+  - {Form: Hassan, Gloss: handsome, Tags: [masc]}
+  - {Form: Yusuf, Gloss: God increases, Tags: [masc]}
+  - {Form: Layla, Gloss: night, Tags: [fem]}
+  - {Form: Amira, Gloss: princess, Tags: [fem]}
+  - {Form: Salma, Gloss: safe, Tags: [fem]}
+  - {Form: Hadiya, Gloss: gift, Tags: [fem]}
+  - {Form: Karima, Gloss: noble lady, Tags: [fem]}
+  - {Form: Thuraya, Gloss: the Pleiades, Tags: [fem]}
+  - {Form: Yasmin, Gloss: jasmine, Tags: [fem]}
+  - {Form: Zahra, Gloss: radiant, Tags: [fem]}
+  - {Form: Fatima, Gloss: weaner, Tags: [fem]}
+  - {Form: Aisha, Gloss: alive, Tags: [fem]}
+  - {Form: Rania, Gloss: gazing queen, Tags: [fem]}
+  - {Form: Huda, Gloss: guidance, Tags: [fem]}
+  - {Form: Amal, Gloss: hope, Tags: [fem]}
+  - {Form: Safiya, Gloss: pure, Tags: [fem]}
   - {Form: Noor, Gloss: light}
-  - {Form: Samir, Gloss: companion}
-  - {Form: Zaid, Gloss: abundance}
-  - {Form: Amira, Gloss: princess}
-  - {Form: Rashid, Gloss: guided}
-  - {Form: Salma, Gloss: safe}
-  - {Form: Farid, Gloss: unique}
-  - {Form: Hadiya, Gloss: gift}
-  - {Form: Jalal, Gloss: majesty}
-  - {Form: Karima, Gloss: noble lady}
-  - {Form: Nasser, Gloss: victor}
   - {Form: Qamar, Gloss: moon}
-  - {Form: Saqr, Gloss: falcon}
-  - {Form: Thuraya, Gloss: star-cluster}
-  - {Form: Yasmin, Gloss: jasmine}
-  - {Form: Dib, Gloss: wolf}
-  - {Form: Nasr, Gloss: eagle-vulture}
-  - {Form: Jamal, Gloss: camel-beauty}
 SecondStems:
-  - {Form: al-Din, Gloss: of the faith}
-  - {Form: al-Nur, Gloss: of the light}
-  - {Form: al-Bahr, Gloss: of the sea}
-  - {Form: al-Jabal, Gloss: of the mountain}
-  - {Form: al-Saqr, Gloss: of the falcon}
-  - {Form: al-Dib, Gloss: of the wolf}
-  - {Form: al-Qamar, Gloss: of the moon}
-  - {Form: al-Hikma, Gloss: of wisdom}
-  - {Form: al-Shams, Gloss: of the sun}
-  - {Form: al-Layl, Gloss: of the night}
+  - {Form: al-Din, Gloss: of the faith, Tags: [masc]}
+  - {Form: al-Nur, Gloss: of the light, Tags: [masc]}
+  - {Form: al-Bahr, Gloss: of the sea, Tags: [masc]}
+  - {Form: al-Jabal, Gloss: of the mountain, Tags: [masc]}
+  - {Form: al-Hikma, Gloss: of wisdom, Tags: [masc]}
+  - {Form: al-Shams, Gloss: of the sun, Tags: [masc]}
+  - {Form: al-Layl, Gloss: of the night, Tags: [masc]}
+  - {Form: al-Dawla, Gloss: of the realm, Tags: [masc]}
 FamilyAffixes:
   - {Form: al-Sahra, Gloss: of the desert}
   - {Form: al-Nahr, Gloss: of the river}
+  - {Form: al-Misri, Gloss: of Egypt}
+  - {Form: al-Halabi, Gloss: of Aleppo}
+  - {Form: al-Baghdadi, Gloss: of Baghdad}
+  - {Form: al-Dimashqi, Gloss: of Damascus}
+  - {Form: al-Qurtubi, Gloss: of Cordoba}
+  - {Form: al-Haddad, Gloss: the blacksmith}
+  - {Form: al-Najjar, Gloss: the carpenter}
+  - {Form: al-Attar, Gloss: the perfumer}
+  - {Form: al-Tabib, Gloss: the physician}
+  - {Form: al-Khayyat, Gloss: the tailor}
 Clans:
   - {Form: Banu Sahra, Gloss: tribe of the desert}
   - {Form: Banu Nahr, Gloss: tribe of the river}
+  - {Form: Banu Saqr, Gloss: tribe of the falcon}
+  - {Form: Banu Qamar, Gloss: tribe of the moon}
 Epithets: []
 Descriptors:
-  - {Form: Bir, Gloss: well, Tags: [water, village]}
-  - {Form: Wadi, Gloss: valley wash, Tags: [valley, river]}
-  - {Form: Qasr, Gloss: palace fort, Tags: [town, city]}
+  - {Form: al-Nur, Gloss: the light, Tags: [town, city, high]}
+  - {Form: al-Qamar, Gloss: the moon, Tags: [lake, water, valley]}
+  - {Form: al-Shams, Gloss: the sun, Tags: [city, hill]}
+  - {Form: al-Saqr, Gloss: the falcon, Tags: [mountain, hill, high]}
+  - {Form: al-Dhib, Gloss: the wolf, Tags: [danger, forest, hill]}
+  - {Form: al-Nasr, Gloss: the eagle, Tags: [mountain, high]}
+  - {Form: al-Hadid, Gloss: the iron, Tags: [deposit, mountain]}
+  - {Form: al-Dhahab, Gloss: the gold, Tags: [deposit, city]}
+  - {Form: al-Ward, Gloss: the rose, Tags: [village, valley]}
+  - {Form: al-Zaytun, Gloss: the olive, Tags: [hill, valley, village]}
+  - {Form: al-Layl, Gloss: the night, Tags: [dark, danger]}
+  - {Form: al-Salam, Gloss: the peace, Tags: [village, town, city]}
+  - {Form: al-Amal, Gloss: the hope, Tags: [village, town]}
 Nouns:
-  - {Form: medina, Gloss: city, Tags: [city, town]}
-  - {Form: qarya, Gloss: village, Tags: [village]}
-  - {Form: nahr, Gloss: river, Tags: [river]}
+  - {Form: Medina, Gloss: city, Tags: [city, town]}
+  - {Form: Qarya, Gloss: village, Tags: [village]}
+  - {Form: Nahr, Gloss: river, Tags: [river, water]}
+  - {Form: Bir, Gloss: well, Tags: [village, water]}
+  - {Form: Wadi, Gloss: dry valley, Tags: [valley, river]}
+  - {Form: Qasr, Gloss: castle, Tags: [hold, town]}
+  - {Form: Hisn, Gloss: fortress, Tags: [hold, camp, city]}
+  - {Form: Jabal, Gloss: mountain, Tags: [mountain, hill]}
+  - {Form: Ain, Gloss: spring, Tags: [village, water, river]}
+  - {Form: Bahr, Gloss: sea, Tags: [lake, water]}
+  - {Form: Ghaba, Gloss: forest, Tags: [forest, dark]}
+  - {Form: Waha, Gloss: oasis, Tags: [village, water, valley]}
+  - {Form: Tall, Gloss: mound, Tags: [hill, camp]}

@@ -1,4 +1,6 @@
 Key: elf_dark
+DisplayName: "Elf · Dark"
+ClanChance: 100
 LineageDefault: Matrilineal
 Provenance: original night/cave roots; generic dark-elven archetype, morally neutral
 PatronymicSon: oth
@@ -34,9 +36,7 @@ SecondStems:
   - {Form: night, Gloss: night-wise}
   - {Form: shade, Gloss: shaded}
   - {Form: whisper, Gloss: whispering}
-FamilyAffixes:
-  - {Form: Nightveil, Gloss: house of the night veil}
-  - {Form: Deepmirror, Gloss: house of the deep mirror}
+FamilyAffixes: []
 Clans:
   - {Form: Nightveil, Gloss: house of the night veil}
   - {Form: Deepmirror, Gloss: house of the deep mirror}

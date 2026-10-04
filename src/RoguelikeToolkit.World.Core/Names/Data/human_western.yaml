@@ -1,9 +1,11 @@
 Key: human_western
+DisplayName: "Human · Western European (fantasy)"
 LineageDefault: Patrilineal
-Provenance: Germanic two-stem dithematic names; Ober Unter Alt Neu prefixes
+Provenance: Germanic dithematic names; sen/dochter patronymics; Ober Unter Alt Neu place prefixes
+FamilySuffix: true
 PatronymicSon: sen
 PatronymicDaughter: dochter
-FamilySuffix: true
+PlaceFallback: false
 Banned: []
 GivenStems:
   - {Form: Bern, Gloss: bear}
@@ -14,43 +16,52 @@ GivenStems:
   - {Form: Hild, Gloss: battle}
   - {Form: Ric, Gloss: ruler}
   - {Form: Adel, Gloss: noble}
-  - {Form: Bjorn, Gloss: bear}
-  - {Form: Astrid, Gloss: divine beauty}
   - {Form: Leof, Gloss: beloved}
-  - {Form: Ead, Gloss: prosperity}
   - {Form: Sig, Gloss: victory}
-  - {Form: Brun, Gloss: brown-shield}
+  - {Form: Brun, Gloss: brown shield}
   - {Form: Ot, Gloss: wealth}
   - {Form: Arn, Gloss: eagle}
   - {Form: Wolf, Gloss: wolf}
   - {Form: Eber, Gloss: boar}
+  - {Form: Bjorn, Gloss: bear-warrior, Tags: [masc, solo]}
+  - {Form: Astrid, Gloss: divine beauty, Tags: [fem, solo]}
 SecondStems:
   - {Form: hard, Gloss: hardy}
   - {Form: win, Gloss: friend}
-  - {Form: gard, Gloss: guard}
+  - {Form: gard, Gloss: guardian}
   - {Form: helm, Gloss: helmet}
-  - {Form: brand, Gloss: sword-fire}
+  - {Form: brand, Gloss: sword}
   - {Form: stan, Gloss: stone}
   - {Form: wulf, Gloss: wolf}
-  - {Form: arn, Gloss: eagle}
-  - {Form: beorn, Gloss: bear-warrior}
+  - {Form: mund, Gloss: protector}
   - {Form: red, Gloss: counsel}
+  - {Form: hild, Gloss: battle, Tags: [fem]}
+  - {Form: trud, Gloss: strength, Tags: [fem]}
+  - {Form: burga, Gloss: fortress, Tags: [fem]}
 FamilyAffixes:
   - {Form: er, Gloss: from the place of}
-  - {Form: sen, Gloss: son of}
+  - {Form: mann, Gloss: man of}
+  - {Form: berg, Gloss: of the mountain}
 Clans: []
 Epithets: []
 Descriptors:
-  - {Form: Ober, Gloss: upper, Tags: [hill, high]}
+  - {Form: Ober, Gloss: upper, Tags: [hill, high, mountain]}
   - {Form: Unter, Gloss: lower, Tags: [valley, river]}
   - {Form: Alt, Gloss: old, Tags: [town, city]}
   - {Form: Neu, Gloss: new, Tags: [village, town]}
   - {Form: Gross, Gloss: great, Tags: [city]}
   - {Form: Klein, Gloss: little, Tags: [village]}
+  - {Form: Schwarz, Gloss: black, Tags: [forest, dark, danger]}
+  - {Form: Weiss, Gloss: white, Tags: [mountain, high]}
+  - {Form: Gold, Gloss: golden, Tags: [deposit, city]}
+  - {Form: Eisen, Gloss: iron, Tags: [deposit, mountain]}
 Nouns:
   - {Form: dorf, Gloss: village, Tags: [village]}
-  - {Form: burg, Gloss: fortified town, Tags: [town, city]}
-  - {Form: bach, Gloss: brook, Tags: [river]}
+  - {Form: burg, Gloss: fortified town, Tags: [town, city, hold]}
+  - {Form: bach, Gloss: brook, Tags: [river, water]}
+  - {Form: see, Gloss: lake, Tags: [lake, water]}
   - {Form: berg, Gloss: mountain, Tags: [mountain, hill]}
-  - {Form: feld, Gloss: field, Tags: [valley]}
+  - {Form: tal, Gloss: valley, Tags: [valley]}
+  - {Form: feld, Gloss: field, Tags: [valley, village]}
   - {Form: wald, Gloss: forest, Tags: [forest, dark]}
+  - {Form: stein, Gloss: rock fort, Tags: [hold, camp]}

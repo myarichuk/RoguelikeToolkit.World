@@ -1,4 +1,7 @@
 Key: orcish
+DisplayName: "Orc"
+ClanChance: 100
+EpithetChance: 60
 LineageDefault: Patrilineal
 Patronymic: false
 Provenance: original guttural deed roots; epithet instead of surname, warband as clan
@@ -50,6 +53,6 @@ Descriptors:
   - {Form: Ash, Gloss: ashen, Tags: [mountain, danger]}
   - {Form: Skull, Gloss: skull-marked, Tags: [danger]}
 Nouns:
-  - {Form: camp, Gloss: war camp, Tags: [hill, valley]}
+  - {Form: camp, Gloss: war camp, Tags: [camp, hill, valley]}
   - {Form: maw, Gloss: ravine, Tags: [mountain, valley]}
-  - {Form: pit, Gloss: pit hold, Tags: [deposit]}
+  - {Form: pit, Gloss: pit hold, Tags: [hold, deposit]}

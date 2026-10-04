@@ -1,9 +1,11 @@
 Key: human_eastern
+DisplayName: "Human · Eastern European (fantasy)"
 LineageDefault: Patrilineal
-Provenance: Slavic-shaped patterns with original roots; gendered ov/ova ski/ska
+Provenance: Slavic-shaped dithematic names with original roots; ov/ova ski/ska surnames; stem+grad place names
+FamilySuffix: true
 PatronymicSon: ovich
 PatronymicDaughter: ovna
-FamilySuffix: true
+PlaceFallback: false
 Banned: []
 GivenStems:
   - {Form: Mil, Gloss: gracious}
@@ -11,44 +13,52 @@ GivenStems:
   - {Form: Vlad, Gloss: ruler}
   - {Form: Stan, Gloss: steadfast}
   - {Form: Yar, Gloss: fierce}
-  - {Form: Zora, Gloss: dawn}
-  - {Form: Vesna, Gloss: spring}
   - {Form: Drag, Gloss: dear}
-  - {Form: Casimir, Gloss: peace-commander}
-  - {Form: Lech, Gloss: cunning}
-  - {Form: Wanda, Gloss: wanderer}
   - {Form: Dobro, Gloss: goodness}
-  - {Form: Radomir, Gloss: joyful peace}
-  - {Form: Svetla, Gloss: light}
-  - {Form: Goran, Gloss: mountain-man}
-  - {Form: Dunja, Gloss: quince}
-  - {Form: Zvon, Gloss: bell-chime}
+  - {Form: Zvon, Gloss: bell chime}
   - {Form: Medved, Gloss: bear}
   - {Form: Orel, Gloss: eagle}
   - {Form: Volko, Gloss: wolf}
+  - {Form: Casimir, Gloss: peace commander, Tags: [masc, solo]}
+  - {Form: Lech, Gloss: cunning, Tags: [masc, solo]}
+  - {Form: Radomir, Gloss: joyful peace, Tags: [masc, solo]}
+  - {Form: Goran, Gloss: mountain man, Tags: [masc, solo]}
+  - {Form: Zora, Gloss: dawn, Tags: [fem, solo]}
+  - {Form: Vesna, Gloss: spring, Tags: [fem, solo]}
+  - {Form: Wanda, Gloss: wanderer, Tags: [fem, solo]}
+  - {Form: Svetla, Gloss: light, Tags: [fem, solo]}
+  - {Form: Dunja, Gloss: quince, Tags: [fem, solo]}
 SecondStems:
   - {Form: mir, Gloss: peace}
   - {Form: slav, Gloss: glory}
   - {Form: dob, Gloss: good}
   - {Form: rad, Gloss: glad}
-  - {Form: mil, Gloss: gracious}
   - {Form: bor, Gloss: fighter}
   - {Form: volk, Gloss: wolf}
-  - {Form: med, Gloss: bear}
   - {Form: zor, Gloss: dawn}
   - {Form: kvit, Gloss: bloom}
 FamilyAffixes:
-  - {Form: ov, Gloss: son of (masc)}
-  - {Form: ova, Gloss: daughter of (fem)}
-  - {Form: ski, Gloss: from the place of (masc)}
-  - {Form: ska, Gloss: from the place of (fem)}
+  - {Form: ov, Gloss: of the house of, Tags: [masc]}
+  - {Form: ova, Gloss: of the house of, Tags: [fem]}
+  - {Form: ski, Gloss: from the place of, Tags: [masc]}
+  - {Form: ska, Gloss: from the place of, Tags: [fem]}
 Clans: []
 Epithets: []
 Descriptors:
-  - {Form: White, Gloss: white, Tags: [mountain, high]}
-  - {Form: Black, Gloss: black, Tags: [forest, dark]}
-  - {Form: New, Gloss: new, Tags: [village, town]}
+  - {Form: Bel, Gloss: white, Tags: [mountain, high, lake]}
+  - {Form: Cher, Gloss: black, Tags: [forest, dark, danger]}
+  - {Form: Nov, Gloss: new, Tags: [village, town]}
+  - {Form: Star, Gloss: old, Tags: [town, city]}
+  - {Form: Zlat, Gloss: golden, Tags: [deposit, city]}
+  - {Form: Krasn, Gloss: fair, Tags: [city, hill, valley]}
+  - {Form: Tikh, Gloss: quiet, Tags: [river, lake, village]}
 Nouns:
-  - {Form: grad, Gloss: fortified town, Tags: [town, city]}
+  - {Form: grad, Gloss: fortified town, Tags: [town, city, hold]}
   - {Form: vesi, Gloss: village, Tags: [village]}
-  - {Form: polje, Gloss: field plain, Tags: [valley]}
+  - {Form: polje, Gloss: open plain, Tags: [valley, village]}
+  - {Form: gora, Gloss: mountain, Tags: [mountain, hill]}
+  - {Form: reka, Gloss: river, Tags: [river, water]}
+  - {Form: jezero, Gloss: lake, Tags: [lake, water]}
+  - {Form: les, Gloss: forest, Tags: [forest, dark]}
+  - {Form: dol, Gloss: dale, Tags: [valley]}
+  - {Form: hrad, Gloss: stronghold, Tags: [hold, camp]}

@@ -1,4 +1,8 @@
 Key: gnomish
+DisplayName: "Gnome"
+ClanChance: 100
+EpithetChance: 40
+Patronymic: false
 LineageDefault: Bilineal
 Provenance: original craft/deed roots; whimsical verb+tool compounds
 PatronymicSon: son
@@ -34,13 +38,11 @@ SecondStems:
   - {Form: steam, Gloss: steam-born}
   - {Form: copper, Gloss: copper-bright}
   - {Form: tin, Gloss: tin-sharp}
-FamilyAffixes:
-  - {Form: Copperpot, Gloss: workshop of the copper pot}
-  - {Form: Geargrind, Gloss: workshop of the ground gear}
-  - {Form: Tinwhistle, Gloss: workshop of the tin whistle}
+FamilyAffixes: []
 Clans:
   - {Form: Copperpot, Gloss: workshop of the copper pot}
   - {Form: Geargrind, Gloss: workshop of the ground gear}
+  - {Form: Tinwhistle, Gloss: workshop of the tin whistle}
 Epithets:
   - {Form: Fizzlespanner, Gloss: who fizzles the spanner}
   - {Form: Cogwhir, Gloss: who whirs the cogs}

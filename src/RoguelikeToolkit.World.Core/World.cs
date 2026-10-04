@@ -45,6 +45,12 @@ public sealed class World : IDisposable
         Index = new SpatialIndex(Map.DataStore, Rivers, WaterBodies, Ranges, Deposits, sites);
     }
 
+    /// <summary>
+    /// Deterministic seed for a planet tile, derived from the world seed and the tile index.
+    /// Not stored per tile; recomputing it is cheaper than the 4 bytes per hex it would cost.
+    /// </summary>
+    public uint TileSeed(int tileIndex) => Rng.DeriveTileSeed(Seed, tileIndex);
+
     public float SampleElevation(GeoCoord coord)
     {
         int i = Map.DataStore.GetTileIndex(coord);
@@ -86,22 +92,26 @@ public sealed class World : IDisposable
         var elev = hasElev ? store.GetSpan<ElevationInfo>() : default;
         var locals = hasLocals ? store.GetSpan<LocalMapInfo>() : default;
 
+        // Compare dot products against cos(radius/R); only hits pay for Acos.
+        var vectors = store.GetTileVectors();
+        var target = Vector3D.FromGeoCoord(center);
+        double angle = radiusKm / EarthRadiusKm;
+        double minDot = angle >= Math.PI ? -2.0 : DetMath.Cos(angle);
         var result = new List<TileHit>();
-        for (int i = 0; i < store.TileCount; i++)
+        for (int i = 0; i < vectors.Length; i++)
         {
-            var c = store.GetGeoCoord(i);
-            double d = DistanceKm(center, c);
-            if (d <= radiusKm)
+            double dot = Vector3D.Dot(target, vectors[i]);
+            if (dot < minDot) continue;
+            double d = DetMath.Acos(Math.Clamp(dot, -1.0, 1.0)) * EarthRadiusKm;
+            if (d > radiusKm) continue;
+            result.Add(new TileHit
             {
-                result.Add(new TileHit
-                {
-                    TileIndex = i,
-                    Coord = c,
-                    Elevation = hasElev ? elev[i].Height : 0f,
-                    Biome = hasLocals ? locals[i].Biome : BiomeType.Plains,
-                    DistanceKm = d
-                });
-            }
+                TileIndex = i,
+                Coord = store.GetGeoCoord(i),
+                Elevation = hasElev ? elev[i].Height : 0f,
+                Biome = hasLocals ? locals[i].Biome : BiomeType.Plains,
+                DistanceKm = d
+            });
         }
         result.Sort((a, b) => a.DistanceKm.CompareTo(b.DistanceKm));
         return result;

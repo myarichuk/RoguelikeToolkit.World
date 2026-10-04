@@ -85,11 +85,14 @@ public class TectonicPlateGenerationStage : IWorldGeneratorStage, ISeededStage, 
         _arena.Reset();
         var store = map.DataStore;
         var span = store.GetSpan<TectonicPlate>();
-
-        for (int i = 0; i < span.Length; i++)
-        {
-            span[i] = new TectonicPlate { Id = -1 };
-        }
+        if (!store.IsTableRegistered<PlateInfo>() || store.GetTable<PlateInfo>().Length < SeedCount)
+            throw new InvalidOperationException(
+                $"The store has no plate table for {SeedCount} plates. Create the TectonicPlateLayer (reserves max(seedCount, 256) rows) before Allocate().");
+        if (SeedCount is < 1 or > TectonicPlate.MaxPlates)
+            throw new InvalidOperationException($"SeedCount must be 1..{TectonicPlate.MaxPlates}.");
+        var table = store.GetTable<PlateInfo>();
+        table.Clear();
+        span.Clear();
 
         var seeds = new ArenaList<Vector3D>(_arena, SeedCount);
         var seedElevations = new ArenaList<double>(_arena, SeedCount);
@@ -97,7 +100,6 @@ public class TectonicPlateGenerationStage : IWorldGeneratorStage, ISeededStage, 
 
         // Per-plate sub-streams: each plate's parameters depend only on (Seed, plate
         // ordinal), never on iteration order, so output is reproducible on demand.
-        var seedDriftDirs = new ArenaList<Vector3D>(_arena, SeedCount);
         for (int i = 0; i < SeedCount; i++)
         {
             var r = Rng.Create(Seed, i);
@@ -112,7 +114,15 @@ public class TectonicPlateGenerationStage : IWorldGeneratorStage, ISeededStage, 
             double u = r.NextDouble() * 2.0 - 1.0;
             double theta = r.NextDouble() * 2.0 * Math.PI;
             double s = Math.Sqrt(Math.Max(0.0, 1.0 - u * u));
-            seedDriftDirs.Add(new Vector3D(s * DetMath.Cos(theta), s * DetMath.Sin(theta), u));
+            var dir = new Vector3D(s * DetMath.Cos(theta), s * DetMath.Sin(theta), u);
+            table[i] = new PlateInfo
+            {
+                Elevation = seedElevations[i],
+                DriftSpeed = seedDriftSpeeds[i],
+                DriftX = dir.X,
+                DriftY = dir.Y,
+                DriftZ = dir.Z,
+            };
         }
 
         ReadOnlySpan<Vector3D> tilePositions = store.GetTileVectors();
@@ -133,23 +143,17 @@ public class TectonicPlateGenerationStage : IWorldGeneratorStage, ISeededStage, 
         for (int i = 0; i < store.TileCount; i++)
         {
             int bestSeed = Math.Clamp(plateIds[i], 0, SeedCount - 1);
-            var drift = seedDriftDirs[bestSeed];
             // Mixed plates: a plate-scale offset plus broad seamless swells, so
             // each plate carries both continental and oceanic tiles like Earth.
             double continentality = (seedElevations[bestSeed] - 0.45) * 1.2
                 + SphereNoise.Fbm(tilePositions[i] * 1.6, Seed + 77) * 0.55;
             span[i] = new TectonicPlate
             {
-                Id = bestSeed + 1,
-                Elevation = seedElevations[bestSeed],
-                DriftSpeed = seedDriftSpeeds[bestSeed],
-                DriftX = drift.X,
-                DriftY = drift.Y,
-                DriftZ = drift.Z,
+                Id = (ushort)(bestSeed + 1),
                 Crust = continentality > CrustThreshold ? CrustType.Continental : CrustType.Oceanic,
                 Boundary = PlateBoundaryType.None,
                 Continentality = (float)continentality,
-                BoundaryDistance = float.MaxValue,
+                BoundaryRings = byte.MaxValue,
                 NearestBoundary = PlateBoundaryType.None,
                 Orogeny = 0f
             };
@@ -169,8 +173,8 @@ public class TectonicPlateGenerationStage : IWorldGeneratorStage, ISeededStage, 
             span[i].Crust = c > CrustThreshold ? CrustType.Continental : CrustType.Oceanic;
         }
 
-        ClassifyBoundaries(store, span, tilePositions, ConvergenceThreshold);
-        PropagateOrogeny(store, span, _arena, MaxBoundaryDistance);
+        ClassifyBoundaries(store, span, table, tilePositions, ConvergenceThreshold);
+        PropagateOrogeny(store, span, table, _arena, MaxBoundaryDistance);
     }
 
     /// <summary>
@@ -191,12 +195,13 @@ public class TectonicPlateGenerationStage : IWorldGeneratorStage, ISeededStage, 
     }
 
     private void ClassifyBoundaries(
-        WorldDataStore store, Span<TectonicPlate> span, ReadOnlySpan<Vector3D> positions, double threshold)
+        WorldDataStore store, Span<TectonicPlate> span, ReadOnlySpan<PlateInfo> table, ReadOnlySpan<Vector3D> positions, double threshold)
     {
         Span<int> neighbors = stackalloc int[6];
         for (int i = 0; i < store.TileCount; i++)
         {
             var plate = span[i];
+            var mine = table[plate.Id - 1];
             int adjacent = store.GetAdjacent(i, neighbors);
             bool hasForeign = false;
             double maxConvergence = double.NegativeInfinity;
@@ -209,10 +214,11 @@ public class TectonicPlateGenerationStage : IWorldGeneratorStage, ISeededStage, 
                 var other = span[j];
                 if (other.Id == plate.Id) continue;
                 hasForeign = true;
+                var theirs = table[other.Id - 1];
                 var dir = (positions[j] - positions[i]).Normalize();
-                double relX = other.DriftX * other.DriftSpeed - plate.DriftX * plate.DriftSpeed;
-                double relY = other.DriftY * other.DriftSpeed - plate.DriftY * plate.DriftSpeed;
-                double relZ = other.DriftZ * other.DriftSpeed - plate.DriftZ * plate.DriftSpeed;
+                double relX = theirs.DriftX * theirs.DriftSpeed - mine.DriftX * mine.DriftSpeed;
+                double relY = theirs.DriftY * theirs.DriftSpeed - mine.DriftY * mine.DriftSpeed;
+                double relZ = theirs.DriftZ * theirs.DriftSpeed - mine.DriftZ * mine.DriftSpeed;
                 double convergence = -(relX * dir.X + relY * dir.Y + relZ * dir.Z);
                 if (convergence > maxConvergence) { maxConvergence = convergence; acrossCrust = other.Crust; }
                 if (convergence < minConvergence) minConvergence = convergence;
@@ -285,7 +291,7 @@ public class TectonicPlateGenerationStage : IWorldGeneratorStage, ISeededStage, 
     /// allocation-free (all scratch lives in the stage arena).
     /// </summary>
     private static void PropagateOrogeny(
-        WorldDataStore store, Span<TectonicPlate> span, ArenaAllocator arena, int maxDistance)
+        WorldDataStore store, Span<TectonicPlate> span, ReadOnlySpan<PlateInfo> table, ArenaAllocator arena, int maxDistance)
     {
         int n = store.TileCount;
         var dist = new ArenaList<int>(arena, n);
@@ -309,7 +315,7 @@ public class TectonicPlateGenerationStage : IWorldGeneratorStage, ISeededStage, 
             dist[i] = 0;
             srcDriver[i] = span[i].Orogeny;
             srcType[i] = (byte)span[i].Boundary;
-            srcWidth[i] = (float)SourceWidth(store, span, i, neighbors);
+            srcWidth[i] = (float)SourceWidth(store, span, table, i, neighbors);
             queue.Add(i);
         }
 
@@ -336,21 +342,22 @@ public class TectonicPlateGenerationStage : IWorldGeneratorStage, ISeededStage, 
         {
             if (dist[i] < 0)
             {
-                span[i].BoundaryDistance = float.MaxValue;
+                span[i].BoundaryRings = byte.MaxValue;
                 span[i].NearestBoundary = PlateBoundaryType.None;
                 span[i].Orogeny = 0f;
                 continue;
             }
             double decay = DetMath.Exp(-dist[i] / Math.Max(0.25, (double)srcWidth[i]));
-            span[i].BoundaryDistance = dist[i];
+            span[i].BoundaryRings = (byte)dist[i];
             span[i].NearestBoundary = (PlateBoundaryType)srcType[i];
             span[i].Orogeny = (float)(srcDriver[i] * decay);
         }
     }
 
-    private static double SourceWidth(WorldDataStore store, Span<TectonicPlate> span, int i, Span<int> neighbors)
+    private static double SourceWidth(WorldDataStore store, Span<TectonicPlate> span, ReadOnlySpan<PlateInfo> table, int i, Span<int> neighbors)
     {
         var plate = span[i];
+        var mine = table[plate.Id - 1];
         if (plate.Boundary != PlateBoundaryType.Convergent)
             return BeltWidth(plate.Boundary, plate.Orogeny, plate.Crust, plate.Crust);
         // Convergent width needs the across-strike crust; reuse the winning pair
@@ -363,12 +370,13 @@ public class TectonicPlateGenerationStage : IWorldGeneratorStage, ISeededStage, 
             int j = neighbors[k];
             var other = span[j];
             if (other.Id == plate.Id) continue;
+            var theirs = table[other.Id - 1];
             // Recompute convergence cheaply from stored drift (positions cancel out
             // of the argmax only if directions align; use the true projection).
             var dir = (store.GetTileVectors()[j] - store.GetTileVectors()[i]).Normalize();
-            double relX = other.DriftX * other.DriftSpeed - plate.DriftX * plate.DriftSpeed;
-            double relY = other.DriftY * other.DriftSpeed - plate.DriftY * plate.DriftSpeed;
-            double relZ = other.DriftZ * other.DriftSpeed - plate.DriftZ * plate.DriftSpeed;
+            double relX = theirs.DriftX * theirs.DriftSpeed - mine.DriftX * mine.DriftSpeed;
+            double relY = theirs.DriftY * theirs.DriftSpeed - mine.DriftY * mine.DriftSpeed;
+            double relZ = theirs.DriftZ * theirs.DriftSpeed - mine.DriftZ * mine.DriftSpeed;
             double convergence = -(relX * dir.X + relY * dir.Y + relZ * dir.Z);
             if (convergence > best) { best = convergence; across = other.Crust; }
         }

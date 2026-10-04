@@ -5,7 +5,7 @@ namespace RoguelikeToolkit.World.Core.Tests;
 
 public class DeterminismTests
 {
-    private static (TectonicPlate[] Plates, ElevationInfo[] Elev, LocalMapInfo[] Locals) Generate(int size, int seed, int seedCount)
+    private static (TectonicPlate[] Plates, PlateInfo[] PlateTable, ElevationInfo[] Elev, LocalMapInfo[] Locals) Generate(int size, int seed, int seedCount)
     {
         using var map = new WorldMap(size);
         using var tectonicLayer = new TectonicPlateLayer(map.DataStore, seedCount);
@@ -24,6 +24,7 @@ public class DeterminismTests
         pipeline.Execute(map);
 
         return (map.DataStore.GetSpan<TectonicPlate>().ToArray(),
+                map.DataStore.GetTable<PlateInfo>().ToArray(),
                 map.DataStore.GetSpan<ElevationInfo>().ToArray(),
                 map.DataStore.GetSpan<LocalMapInfo>().ToArray());
     }
@@ -35,14 +36,18 @@ public class DeterminismTests
         var second = Generate(2, 42, 12);
 
         Assert.Equal(first.Plates.Length, second.Plates.Length);
+        for (int p = 0; p < 12; p++)
+        {
+            Assert.Equal(first.PlateTable[p].Elevation, second.PlateTable[p].Elevation);
+            Assert.Equal(first.PlateTable[p].DriftSpeed, second.PlateTable[p].DriftSpeed);
+            Assert.Equal(first.PlateTable[p].DriftX, second.PlateTable[p].DriftX);
+        }
         for (int i = 0; i < first.Plates.Length; i++)
         {
             Assert.Equal(first.Plates[i].Id, second.Plates[i].Id);
-            Assert.Equal(first.Plates[i].Elevation, second.Plates[i].Elevation);
-            Assert.Equal(first.Plates[i].DriftSpeed, second.Plates[i].DriftSpeed);
-            Assert.Equal(first.Plates[i].DriftX, second.Plates[i].DriftX);
+            Assert.Equal(first.Plates[i].Orogeny, second.Plates[i].Orogeny);
+            Assert.Equal(first.Plates[i].Continentality, second.Plates[i].Continentality);
             Assert.Equal(first.Elev[i].Height, second.Elev[i].Height);
-            Assert.Equal(first.Locals[i].Seed, second.Locals[i].Seed);
             Assert.Equal(first.Locals[i].Biome, second.Locals[i].Biome);
             Assert.Equal(first.Locals[i].DangerLevel, second.Locals[i].DangerLevel);
         }
@@ -58,7 +63,7 @@ public class DeterminismTests
         for (int i = 0; i < first.Plates.Length; i++)
         {
             if (first.Plates[i].Id != second.Plates[i].Id ||
-                first.Locals[i].Seed != second.Locals[i].Seed)
+                Rng.DeriveTileSeed(42, i) != Rng.DeriveTileSeed(43, i))
                 differing++;
         }
 

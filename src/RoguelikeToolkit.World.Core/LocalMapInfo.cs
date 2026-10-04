@@ -18,7 +18,6 @@ public enum BiomeType : byte
 
 public struct LocalMapInfo
 {
-    public uint Seed;
     public BiomeType Biome;
     public byte DangerLevel;
 }

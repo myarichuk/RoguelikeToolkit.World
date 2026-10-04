@@ -1,4 +1,7 @@
 Key: fantasy_common
+DisplayName: "Human · Fantasy common"
+Patronymic: false
+EpithetChance: 20
 LineageDefault: Bilineal
 Provenance: original fantasy descriptors in the Darkwood/Duskwood shape
 PatronymicSon: son
@@ -30,9 +33,9 @@ SecondStems:
   - {Form: ward, Gloss: guard}
   - {Form: helm, Gloss: helmet}
   - {Form: blood, Gloss: blood-sworn}
-  - {Form: eagle, Gloss: eagle-eyed}
-  - {Form: stone, Gloss: stone-hard}
-  - {Form: river, Gloss: river-born}
+  - {Form: eye, Gloss: sharp-sighted}
+  - {Form: heart, Gloss: stout-hearted}
+  - {Form: wyn, Gloss: joy}
   - {Form: night, Gloss: night-wise}
   - {Form: brave, Gloss: brave}
 FamilyAffixes:

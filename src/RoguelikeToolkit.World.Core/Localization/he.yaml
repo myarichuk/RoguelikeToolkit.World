@@ -2,27 +2,54 @@ Language: he
 DisplayName: עברית
 RightToLeft: true
 Strings:
-  Title: בודק מחולל השמות
-  TabPeople: אנשים
-  TabPlaces: מקומות
-  Feminine: נקבה
-  WatermarkInspired: "השראה: דם, עיט"
-  WatermarkPlaceInspired: "השראה"
-  Generate: צור
-  Water: מים
-  Forest: יער
-  Dark: אפל
-  High: גבוה
-  Valley: עמק
-  Deposit: מרבץ
-  Danger: סכנה
-  Reload: טען YAML מחדש
-  Language: שפה
-  Native: מקורי
-  Latin: לטינית
-  Hebrew: עברית
-  Cyrillic: קירילית
-  LineageDefault: "(ברירת מחדל)"
+  Title: "סדנת שמות"
+  ModePeople: "אנשים"
+  ModePlaces: "מקומות"
+  Style: "סגנון"
+  StyleTip: "העם או התרבות שמהם נגזרים השמות"
+  Gender: "מין"
+  Masculine: "זכר"
+  Feminine: "נקבה"
+  Lineage: "שושלת"
+  LineageDefault: "(ברירת מחדל של התרבות)"
+  PlaceKind: "סוג מקום"
+  Terrain: "סביבה"
+  Water: "מים"
+  Forest: "יער"
+  Dark: "אפל"
+  High: "גבוה"
+  Valley: "עמק"
+  Deposit: "מרבץ"
+  Danger: "סכנה"
+  Inspiration: "בהשראת"
+  InspirationAny: "(הכול)"
+  InspirationTip: "הטיית השמות לנושא מתוך אוצר המילים של הסגנון"
+  Script: "כתב"
+  Native: "מקורי"
+  Latin: "לטינית"
+  Hebrew: "עברית"
+  Cyrillic: "קירילית"
+  Seed: "זרע"
+  Random: "אקראי"
+  LockSeed: "נעל זרע"
+  LockSeedTip: "שמור על אותו זרע ביצירה חוזרת כדי לשנות הגדרות אחרות על אותה הטלה"
+  Count: "כמה"
+  Generate: "צור שמות"
+  Language: "שפה"
+  Reload: "טען YAML מחדש"
+  OpenFolder: "פתח תיקיית נתונים"
+  Copy: "העתק"
+  Star: "הוסף לרשימה"
+  Shortlist: "רשימה קצרה"
+  ShortlistEmpty: "סמנו שמות שאהבתם בכוכב והם יצטברו כאן."
+  CopyAll: "העתק הכול"
+  Clear: "נקה"
+  ResultsEmpty: "בחרו סגנון ולחצו על צור שמות."
+  Remove: "הסר"
+  Copied: "הועתק: "
+  Generated: "נוצרו {0} שמות (זרע {1})"
+  NoResults: "לא יצא כלום - נסו סגנון או נושא אחר."
   Data: "נתונים: "
   DataError: "שגיאת נתונים, משתמש במובנה: "
   ReloadFailed: "הטעינה מחדש נכשלה: "
+  Reloaded: "YAML נטען מחדש: {0} סגנונות"

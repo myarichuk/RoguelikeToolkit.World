@@ -1,11 +1,15 @@
+using System.Text;
+
 namespace RoguelikeToolkit.World.Core.Names;
 
 /// <summary>
 /// Pragmatic Latin-to-Hebrew and Latin-to-Cyrillic transliteration for name
-/// rendering (a DM tool, not a linguistics paper). Rules are deterministic and
-/// digraph-aware ("sh" -&gt; "ш"/"ש", "th" -&gt; "т"/"ת"), vowels use matres,
-/// word-final נ/ם/ף get their sofit forms. Output is recognizable rather than
-/// perfect: "Ben" becomes בן/бен, "Vladimir" becomes ולאדימיר/владимир.
+/// rendering (a DM tool, not a linguistics paper). Works word by word, so
+/// "al-Sahra" or "ben David" are treated as separate words; digraph-aware
+/// ("sh" -&gt; "ш"/"ש"); follows how modern Hebrew spells foreign names
+/// (short a/e are unwritten mid-word, o/u/i take matres, word-final a becomes ה,
+/// final נ/מ/ף/ץ take sofit forms). Output is recognizable rather than perfect:
+/// "Ben" becomes בן/бен, "Thrungar" becomes תרונגר/трунгар.
 /// Hand-authored <see cref="MorphemeYaml.Latin"/> fields always win over this;
 /// text already in the target script passes through untouched.
 /// </summary>
@@ -13,29 +17,28 @@ public static class Transliterator
 {
     private static readonly Dictionary<string, string> HebrewPairs = new(StringComparer.Ordinal)
     {
-        ["sh"] = "ש", ["ch"] = "צ", ["th"] = "ת", ["ph"] = "פ", ["kh"] = "ח",
-        ["gh"] = "ג", ["ck"] = "ק", ["qu"] = "קו",
+        ["sh"] = "ש", ["ch"] = "צ׳", ["th"] = "ת", ["ph"] = "פ", ["kh"] = "ח",
+        ["gh"] = "ג", ["ck"] = "ק", ["qu"] = "קו", ["ts"] = "צ", ["tz"] = "צ", ["zh"] = "ז׳",
         ["ee"] = "י", ["oo"] = "ו", ["ou"] = "או", ["ow"] = "או",
         ["ai"] = "אי", ["ei"] = "אי", ["ay"] = "אי", ["ey"] = "אי",
-        ["au"] = "או", ["aw"] = "או", ["ea"] = "אי", ["ie"] = "י",
+        ["au"] = "או", ["aw"] = "או", ["ea"] = "י", ["ie"] = "י", ["ae"] = "אי",
     };
 
-    private static readonly Dictionary<char, string> HebrewSingles = new()
+    private static readonly Dictionary<char, string> HebrewConsonants = new()
     {
-        ['a'] = "א", ['b'] = "ב", ['c'] = "כ", ['d'] = "ד", ['f'] = "פ",
-        ['g'] = "ג", ['h'] = "ה", ['i'] = "י", ['j'] = "ג", ['k'] = "ק",
-        ['l'] = "ל", ['m'] = "מ", ['n'] = "נ", ['o'] = "ו", ['p'] = "פ",
-        ['q'] = "ק", ['r'] = "ר", ['s'] = "ס", ['t'] = "ט", ['u'] = "ו",
-        ['v'] = "ו", ['w'] = "ו", ['x'] = "קס", ['y'] = "י", ['z'] = "ז",
+        ['b'] = "ב", ['c'] = "ק", ['d'] = "ד", ['f'] = "פ", ['g'] = "ג", ['h'] = "ה",
+        ['j'] = "ג׳", ['k'] = "ק", ['l'] = "ל", ['m'] = "מ", ['n'] = "נ", ['p'] = "פ",
+        ['q'] = "ק", ['r'] = "ר", ['s'] = "ס", ['t'] = "ט", ['v'] = "ו", ['w'] = "ו",
+        ['x'] = "קס", ['z'] = "ז",
     };
 
     private static readonly Dictionary<string, string> CyrillicPairs = new(StringComparer.Ordinal)
     {
-        ["zh"] = "ж", ["sh"] = "ш", ["ch"] = "ч", ["th"] = "т", ["ph"] = "ф",
-        ["kh"] = "х", ["shch"] = "щ", ["qu"] = "кв", ["ck"] = "к", ["gh"] = "г",
+        ["zh"] = "ж", ["sh"] = "ш", ["ch"] = "ч", ["th"] = "т", ["ph"] = "ф", ["ts"] = "ц", ["tz"] = "ц",
+        ["kh"] = "х", ["qu"] = "кв", ["ck"] = "к", ["gh"] = "г", ["wh"] = "в",
         ["ee"] = "и", ["oo"] = "у", ["ou"] = "у", ["ow"] = "ау",
         ["ai"] = "ай", ["ei"] = "ей", ["ay"] = "ай", ["ey"] = "ей",
-        ["au"] = "ау", ["aw"] = "ав", ["ea"] = "и", ["ie"] = "и", ["oh"] = "о",
+        ["au"] = "ау", ["aw"] = "ав", ["ea"] = "и", ["ie"] = "и", ["oh"] = "о", ["ae"] = "е",
         ["ya"] = "я", ["ye"] = "е", ["yi"] = "и", ["yo"] = "ё", ["yu"] = "ю",
     };
 
@@ -45,17 +48,18 @@ public static class Transliterator
         ['f'] = "ф", ['g'] = "г", ['h'] = "х", ['i'] = "и", ['j'] = "дж",
         ['k'] = "к", ['l'] = "л", ['m'] = "м", ['n'] = "н", ['o'] = "о",
         ['p'] = "п", ['q'] = "к", ['r'] = "р", ['s'] = "с", ['t'] = "т",
-        ['u'] = "у", ['v'] = "в", ['w'] = "в", ['x'] = "кс", ['y'] = "й",
-        ['z'] = "з",
+        ['u'] = "у", ['v'] = "в", ['w'] = "в", ['x'] = "кс", ['z'] = "з",
     };
 
-    public static bool IsHebrew(string s) => s.Any(c => c is >= '\u0590' and <= '\u05FF');
-    public static bool IsCyrillic(string s) => s.Any(c => c is >= '\u0400' and <= '\u04FF');
+    private const string Vowels = "aeiouy";
+
+    public static bool IsHebrew(string s) => s.Any(c => c is >= '֐' and <= '׿');
+    public static bool IsCyrillic(string s) => s.Any(c => c is >= 'Ѐ' and <= 'ӿ');
     public static bool IsLatin(string s) => s.All(c => c < 128);
 
-    public static string ToHebrew(string latin) => Transliterate(latin, HebrewPairs, HebrewSingles, ToHebrewChar);
+    public static string ToHebrew(string latin) => Words(latin, HebrewWord);
 
-    public static string ToCyrillic(string latin) => Transliterate(latin, CyrillicPairs, CyrillicSingles, ToCyrillicChar);
+    public static string ToCyrillic(string latin) => Words(latin, CyrillicWord);
 
     public static string Transliterate(string text, NameScript script) => script switch
     {
@@ -67,25 +71,18 @@ public static class Transliterator
     /// <summary>
     /// Renders one morpheme in the requested script: authored forms first,
     /// machine transliteration as the fallback, anything else untouched.
-    /// A capitalized source stays capitalized ("Starhaven" -> "Стархавен",
-    /// while "al-Sahra" keeps its lowercase particle).
     /// </summary>
     public static string Render(MorphemeYaml m, NameScript script) => script switch
     {
         NameScript.Latin => !string.IsNullOrWhiteSpace(m.Latin) ? m.Latin : m.Form,
         NameScript.Hebrew => IsHebrew(m.Form) ? m.Form
-            : !string.IsNullOrWhiteSpace(m.Latin) && IsLatin(m.Latin) ? MatchCase(ToHebrew(m.Latin), m.Latin)
-            : IsLatin(m.Form) ? MatchCase(ToHebrew(m.Form), m.Form) : m.Form,
+            : !string.IsNullOrWhiteSpace(m.Latin) && IsLatin(m.Latin) ? ToHebrew(m.Latin)
+            : IsLatin(m.Form) ? ToHebrew(m.Form) : m.Form,
         NameScript.Cyrillic => IsCyrillic(m.Form) ? m.Form
-            : !string.IsNullOrWhiteSpace(m.Latin) && IsLatin(m.Latin) ? MatchCase(ToCyrillic(m.Latin), m.Latin)
-            : IsLatin(m.Form) ? MatchCase(ToCyrillic(m.Form), m.Form) : m.Form,
+            : !string.IsNullOrWhiteSpace(m.Latin) && IsLatin(m.Latin) ? ToCyrillic(m.Latin)
+            : IsLatin(m.Form) ? ToCyrillic(m.Form) : m.Form,
         _ => m.Form,
     };
-
-    private static string MatchCase(string rendered, string source)
-        => !string.IsNullOrEmpty(source) && char.IsUpper(source[0]) && !string.IsNullOrEmpty(rendered)
-            ? char.ToUpperInvariant(rendered[0]) + rendered.Substring(1)
-            : rendered;
 
     /// <summary>Same fallback chain for plain-string markers (patronymics).</summary>
     public static string RenderToken(string native, string latin, NameScript script) => script switch
@@ -98,54 +95,130 @@ public static class Transliterator
         _ => native,
     };
 
-    private static string Transliterate(
-        string text,
-        Dictionary<string, string> pairs,
-        Dictionary<char, string> singles,
-        Func<char, char, bool, bool, string> single)
+    /// <summary>
+    /// Morphemes are transliterated one at a time, so a fused compound can carry a final-form
+    /// letter mid-word ("Storm"+"bury"); this turns those back into their regular forms.
+    /// </summary>
+    public static string NormalizeInnerFinals(string s)
     {
-        var lower = text.ToLowerInvariant();
-        var out_ = new System.Text.StringBuilder(lower.Length * 2);
-        int i = 0;
-        while (i < lower.Length)
+        if (!IsHebrew(s)) return s;
+        var sb = new StringBuilder(s.Length);
+        for (int i = 0; i < s.Length; i++)
         {
-            if (i + 4 <= lower.Length && pairs.TryGetValue(lower.Substring(i, 4), out var quad))
+            char c = s[i];
+            bool inner = i + 1 < s.Length && s[i + 1] is >= '\u05D0' and <= '\u05EA';
+            sb.Append(inner ? c switch { 'ם' => 'מ', 'ן' => 'נ', 'ף' => 'פ', 'ץ' => 'צ', 'ך' => 'כ', _ => c } : c);
+        }
+        return sb.ToString();
+    }
+
+    /// <summary>Runs <paramref name="word"/> over each ASCII-letter run, keeping separators and word capitalization.</summary>
+    private static string Words(string text, Func<string, string> word)
+    {
+        var sb = new StringBuilder(text.Length * 2);
+        int i = 0;
+        while (i < text.Length)
+        {
+            if (!IsAsciiLetter(text[i])) { sb.Append(text[i++]); continue; }
+            int j = i;
+            while (j < text.Length && IsAsciiLetter(text[j])) j++;
+            var src = text.Substring(i, j - i);
+            var outp = word(src.ToLowerInvariant());
+            if (char.IsUpper(src[0]) && outp.Length > 0) outp = char.ToUpperInvariant(outp[0]) + outp.Substring(1);
+            sb.Append(outp);
+            i = j;
+        }
+        return sb.ToString();
+    }
+
+    private static bool IsAsciiLetter(char c) => c is >= 'a' and <= 'z' or >= 'A' and <= 'Z';
+
+    private static bool IsVowel(char c) => Vowels.IndexOf(c) >= 0;
+
+    private static string HebrewWord(string w)
+    {
+        var sb = new StringBuilder();
+        char prevConsonant = '\0';
+        int i = 0;
+        while (i < w.Length)
+        {
+            bool first = i == 0;
+            if (i + 2 <= w.Length && HebrewPairs.TryGetValue(w.Substring(i, 2), out var pair))
             {
-                out_.Append(quad);
-                i += 4;
-                continue;
-            }
-            if (i + 2 <= lower.Length && pairs.TryGetValue(lower.Substring(i, 2), out var pair))
-            {
-                out_.Append(pair);
+                // A lone yod pair ("ea", "ee", "ie") at the start of a word still needs its alef.
+                sb.Append(first && pair == "י" ? "אי" : pair);
+                prevConsonant = '\0';
                 i += 2;
                 continue;
             }
-            char c = lower[i];
-            char next = i + 1 < lower.Length ? lower[i + 1] : '\0';
-            out_.Append(single(c, next, i == 0, i == lower.Length - 1));
+            char c = w[i];
+            char next = i + 1 < w.Length ? w[i + 1] : '\0';
+            bool last = i == w.Length - 1;
+            switch (c)
+            {
+                // Modern Hebrew leaves short a/e unwritten inside a name ("Karim" -> קרים);
+                // initially they need an alef, and a final "a" is spelled with he ("Dana" -> דנה).
+                case 'a': sb.Append(first ? "א" : last ? "ה" : ""); prevConsonant = '\0'; break;
+                case 'e': sb.Append(first ? "א" : ""); prevConsonant = '\0'; break;
+                case 'i': sb.Append(first ? "אי" : "י"); prevConsonant = '\0'; break;
+                case 'o': sb.Append(first ? "או" : "ו"); prevConsonant = '\0'; break;
+                case 'u': sb.Append(first ? "או" : "ו"); prevConsonant = '\0'; break;
+                case 'y':
+                    sb.Append(first && next != '\0' && !IsVowel(next) ? "אי" : "י");
+                    prevConsonant = '\0';
+                    break;
+                case 'c':
+                    if (prevConsonant == 'c') break;
+                    sb.Append(next is 'e' or 'i' or 'y' ? "ס" : "ק");
+                    prevConsonant = 'c';
+                    break;
+                case 'v' when last && i > 0:
+                    sb.Append("ב"); prevConsonant = '\0'; break;   // Slavic-style final v: Yaroslav -> ירוסלב
+                case 'v' when first || IsVowel(next):
+                case 'w' when first || IsVowel(next):
+                    sb.Append("ו"); prevConsonant = '\0'; break;
+                case 'h' when last && i > 0 && IsVowel(w[i - 1]):
+                    sb.Append("ה"); prevConsonant = 'h'; break;
+                default:
+                    if (HebrewConsonants.TryGetValue(c, out var s))
+                    {
+                        // Doubled consonants ("ll", "ss") are written once.
+                        if (prevConsonant != c)
+                        {
+                            if (last) s = c switch { 'n' => "ן", 'm' => "ם", 'f' => "ף", _ => s };
+                            sb.Append(s);
+                        }
+                        prevConsonant = c;
+                    }
+                    else sb.Append(c);
+                    break;
+            }
             i++;
         }
-        return out_.ToString();
+        return sb.ToString();
     }
 
-    private static string ToHebrewChar(char c, char next, bool first, bool last)
+    private static string CyrillicWord(string w)
     {
-        // Word-initial vowels get their mater ("Or" -> אור, initial "E" -> א);
-        // inner "e" is silent-ish and drops ("Medved" -> מדבד, "Ben" -> בן).
-        // "c" softens before e/i/y ("Cian" -> סיאן, "Crag" -> כרג).
-        if (c == 'e') return first ? "א" : "";
-        if (c == 'o' && first) return "או";
-        if (c == 'c' && (next == 'e' || next == 'i' || next == 'y')) return "ס";
-        if (!HebrewSingles.TryGetValue(c, out var s)) return c.ToString();
-        if (last) s = c switch { 'n' => "ן", 'm' => "ם", 'p' => "ף", 'f' => "ף", _ => s };
-        return s;
-    }
-
-    private static string ToCyrillicChar(char c, char next, bool first, bool last)
-    {
-        if (c == 'c' && (next == 'e' || next == 'i' || next == 'y')) return "с";
-        if (!CyrillicSingles.TryGetValue(c, out var s)) return c.ToString();
-        return s;
+        var sb = new StringBuilder();
+        int i = 0;
+        while (i < w.Length)
+        {
+            if (i + 2 <= w.Length && CyrillicPairs.TryGetValue(w.Substring(i, 2), out var pair))
+            {
+                sb.Append(pair);
+                i += 2;
+                continue;
+            }
+            char c = w[i];
+            char next = i + 1 < w.Length ? w[i + 1] : '\0';
+            bool prevVowel = i > 0 && IsVowel(w[i - 1]);
+            if (c == 'c') sb.Append(next is 'e' or 'i' or 'y' ? "с" : "к");
+            else if (c == 'y') sb.Append(prevVowel ? "й" : "и");
+            else if (CyrillicSingles.TryGetValue(c, out var s)) sb.Append(s);
+            else sb.Append(c);
+            i++;
+        }
+        return sb.ToString();
     }
 }

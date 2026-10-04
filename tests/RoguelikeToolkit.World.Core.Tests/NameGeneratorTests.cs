@@ -359,7 +359,7 @@ public sealed class NameGeneratorTests
     [Fact]
     public void HalfOrc_UsesRequestedCulture()
     {
-        // Eastern family markers carry (masc)/(fem); fantasy_common ones do not.
+        // Eastern surnames end in ov/ova/ski/ska; fantasy_common ones (bury/ford/ham/ley) never do.
         bool sawEastern = false;
         foreach (int seed in Enumerable.Range(1, 20))
         {
@@ -367,7 +367,7 @@ public sealed class NameGeneratorTests
                 FantasyRaces.HalfOrc, Cultures.EasternEuropean, seed);
             sawEastern |= name.Parts.Any(p =>
                 p.Gloss.Contains("(human side)", StringComparison.Ordinal) &&
-                (p.Gloss.Contains("(masc)", StringComparison.Ordinal) || p.Gloss.Contains("(fem)", StringComparison.Ordinal)));
+                new[] { "ov", "ova", "ski", "ska" }.Any(e => p.Form.EndsWith(e, StringComparison.OrdinalIgnoreCase)));
         }
         Assert.True(sawEastern, "Half-orc names never drew on the requested culture's family table.");
     }

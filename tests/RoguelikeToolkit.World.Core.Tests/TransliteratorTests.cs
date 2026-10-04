@@ -10,25 +10,28 @@ public sealed class TransliteratorTests
         Assert.Equal("בן", Transliterator.ToHebrew("Ben"));
         Assert.Equal("סילאון", Transliterator.ToHebrew("Silawen"));
         Assert.Equal("תרוש", Transliterator.ToHebrew("Thrush"));
-        Assert.Equal("סיאן", Transliterator.ToHebrew("Cian"));
-        Assert.Equal("כראג", Transliterator.ToHebrew("Crag"));
+        Assert.Equal("סין", Transliterator.ToHebrew("Cian"));
+        Assert.Equal("קרג", Transliterator.ToHebrew("Crag"));
         Assert.Equal("האול", Transliterator.ToHebrew("Howl"));
-        Assert.Equal("בראן", Transliterator.ToHebrew("Bran"));
+        Assert.Equal("ברן", Transliterator.ToHebrew("Bran"));
         Assert.Equal("איגל", Transliterator.ToHebrew("Eagle"));
         Assert.Equal("דאירדר", Transliterator.ToHebrew("Deirdre"));
+        Assert.Equal("ירוסלב", Transliterator.ToHebrew("Yaroslav"));
     }
 
     [Fact]
     public void Cyrillic_Vectors()
     {
-        Assert.Equal("бен", Transliterator.ToCyrillic("Ben"));
-        Assert.Equal("владимир", Transliterator.ToCyrillic("Vladimir"));
-        Assert.Equal("труш", Transliterator.ToCyrillic("Thrush"));
-        Assert.Equal("сиан", Transliterator.ToCyrillic("Cian"));
-        Assert.Equal("бран", Transliterator.ToCyrillic("Bran"));
-        Assert.Equal("игле", Transliterator.ToCyrillic("Eagle"));
-        Assert.Equal("джон", Transliterator.ToCyrillic("John"));
-        Assert.Equal("ярослав", Transliterator.ToCyrillic("Yaroslav"));
+        // Capitalization follows the source word.
+        Assert.Equal("Бен", Transliterator.ToCyrillic("Ben"));
+        Assert.Equal("Владимир", Transliterator.ToCyrillic("Vladimir"));
+        Assert.Equal("Труш", Transliterator.ToCyrillic("Thrush"));
+        Assert.Equal("Сиан", Transliterator.ToCyrillic("Cian"));
+        Assert.Equal("Бран", Transliterator.ToCyrillic("Bran"));
+        Assert.Equal("Игле", Transliterator.ToCyrillic("Eagle"));
+        Assert.Equal("Джон", Transliterator.ToCyrillic("John"));
+        Assert.Equal("Ярослав", Transliterator.ToCyrillic("Yaroslav"));
+        Assert.Equal("бран", Transliterator.ToCyrillic("bran"));
     }
 
     [Fact]
@@ -45,10 +48,10 @@ public sealed class TransliteratorTests
         Assert.Equal("Владимир", Transliterator.Render(ru, NameScript.Native));
         Assert.Equal("Vladimir", Transliterator.Render(ru, NameScript.Latin));
         Assert.Equal("Владимир", Transliterator.Render(ru, NameScript.Cyrillic));
-        Assert.Equal("ולאדימיר", Transliterator.Render(ru, NameScript.Hebrew));
+        Assert.Equal("ולדימיר", Transliterator.Render(ru, NameScript.Hebrew));
         var elf = new MorphemeYaml { Form = "Starhaven", Gloss = "house" };
         Assert.Equal("Стархавен", Transliterator.Render(elf, NameScript.Cyrillic));
-        Assert.Equal("סטארהאון", Transliterator.Render(elf, NameScript.Hebrew));
+        Assert.Equal("סטרהון", Transliterator.Render(elf, NameScript.Hebrew));
     }
 
     [Fact]

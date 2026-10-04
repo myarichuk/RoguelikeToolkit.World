@@ -3,6 +3,7 @@ using System.Collections.Generic;
 using System.IO;
 using System.IO.MemoryMappedFiles;
 using System.Linq;
+using System.Threading;
 
 namespace RoguelikeToolkit.World.Core;
 
@@ -41,19 +42,37 @@ public unsafe class WorldDataStore : IDisposable
     private readonly string? _filePath;
     private readonly WorldTopology _topology;
 
+    /// <summary>
+    /// Process-wide dense id per layer type, so typed accessors index an array
+    /// instead of hashing a <see cref="Type"/> on every call.
+    /// </summary>
+    private static class LayerSlot<T> where T : unmanaged
+    {
+        public static readonly int Id = Interlocked.Increment(ref _nextId) - 1;
+    }
+    private static int _nextId;
+
+    // Offset per LayerSlot id; -1 = not registered in this store.
+    private long[] _offsetById = Array.Empty<long>();
+
     private readonly Dictionary<Type, long> _layerOffsets = new();
     private readonly Dictionary<Type, int> _layerStrides = new();
+    private readonly Dictionary<Type, int> _tableLengths = new();
+    // Rows per LayerSlot id (tables only; per-tile layers use TileCount).
+    private int[] _lengthById = Array.Empty<int>();
     private long _currentTotalBytes = 0;
     private long _dataOffset = 0;
 
     private const uint FileMagic = 0x31445357u; // "WDS1" little-endian
-    private const int FileVersion = 2;
+    private const int FileVersion = 3;
     // v2 header: room for 32 field layers (dense per-tile structs).
+    // v3: an entry's reserved word holds the row count for fixed-length tables
+    // (0 = per-tile layer), so per-plate data need not be repeated on every tile.
     // Sparse feature catalogs (rivers, water bodies, ranges) live outside
     // the memory-mapped store and are not counted here.
     private const int HeaderSize = 1024;
     private const int MaxHeaderLayers = 32;
-    private const int HeaderLayerEntrySize = 16; // 8 name hash + 4 stride + 4 reserved
+    private const int HeaderLayerEntrySize = 16; // 8 name hash + 4 stride + 4 table length (0 = per-tile)
 
     public int Size => _size;
     public int TileCount => _tileCount;
@@ -80,19 +99,50 @@ public unsafe class WorldDataStore : IDisposable
     /// Registers a layer of type T. This calculates the necessary byte offset for the layer.
     /// Note: Call Allocate() after registering all layers to actually create the memory mapped file.
     /// </summary>
-    public void RegisterLayer<T>() where T : unmanaged
+    public void RegisterLayer<T>() where T : unmanaged => Register<T>(_tileCount, isTable: false);
+
+    /// <summary>
+    /// Registers a fixed-length table of <paramref name="length"/> rows (e.g. one row per
+    /// tectonic plate) in the same mapped block as the per-tile layers. Read it with
+    /// <see cref="GetTable{T}"/>. A type is either a layer or a table, never both.
+    /// </summary>
+    public void RegisterTable<T>(int length) where T : unmanaged
+    {
+        if (length < 0) throw new ArgumentOutOfRangeException(nameof(length));
+        Register<T>(length, isTable: true);
+    }
+
+    private void Register<T>(int rows, bool isTable) where T : unmanaged
     {
         var type = typeof(T);
-        if (_layerOffsets.ContainsKey(type)) return; // Already registered
+        if (_layerOffsets.ContainsKey(type))
+        {
+            if (isTable != _tableLengths.ContainsKey(type) || (isTable && _tableLengths[type] != rows))
+                throw new InvalidOperationException($"{type.Name} is already registered with a different shape.");
+            return; // Already registered
+        }
 
         if (_mmf != null)
         {
             throw new InvalidOperationException("Cannot register layers after Allocate() has been called.");
         }
 
+        int id = LayerSlot<T>.Id;
+        if (id >= _offsetById.Length)
+        {
+            int old = _offsetById.Length;
+            Array.Resize(ref _offsetById, Math.Max(id + 1, Math.Max(8, old * 2)));
+            Array.Fill(_offsetById, -1L, old, _offsetById.Length - old);
+            Array.Resize(ref _lengthById, _offsetById.Length);
+        }
+        // 16-byte alignment keeps doubles in tables aligned after any preceding layer.
+        _currentTotalBytes = (_currentTotalBytes + 15) & ~15L;
+        _offsetById[id] = _currentTotalBytes;
+        _lengthById[id] = rows;
         _layerOffsets[type] = _currentTotalBytes;
         _layerStrides[type] = sizeof(T);
-        _currentTotalBytes += (long)_tileCount * sizeof(T);
+        if (isTable) _tableLengths[type] = rows;
+        _currentTotalBytes += (long)rows * sizeof(T);
     }
 
     /// <summary>
@@ -189,6 +239,7 @@ public unsafe class WorldDataStore : IDisposable
         {
             BitConverter.TryWriteBytes(head.Slice(entry, 8), LayerNameHash(type));
             BitConverter.TryWriteBytes(head.Slice(entry + 8, 4), _layerStrides[type]);
+            BitConverter.TryWriteBytes(head.Slice(entry + 12, 4), _tableLengths.GetValueOrDefault(type));
             entry += HeaderLayerEntrySize;
         }
     }
@@ -225,7 +276,8 @@ public unsafe class WorldDataStore : IDisposable
         {
             ulong hash = BitConverter.ToUInt64(head.Slice(entry, 8));
             int stride = BitConverter.ToInt32(head.Slice(entry + 8, 4));
-            if (hash != LayerNameHash(type) || stride != _layerStrides[type])
+            int tableLength = BitConverter.ToInt32(head.Slice(entry + 12, 4));
+            if (hash != LayerNameHash(type) || stride != _layerStrides[type] || tableLength != _tableLengths.GetValueOrDefault(type))
                 throw new InvalidDataException($"Store file layer table mismatch at entry {entry}.");
             entry += HeaderLayerEntrySize;
         }
@@ -237,37 +289,51 @@ public unsafe class WorldDataStore : IDisposable
         if (_ptr == null) throw new InvalidOperationException("Store not allocated. Call Allocate() first.");
         if (!_layerOffsets.TryGetValue(type, out long offset))
             throw new ArgumentException($"Layer of type {type.Name} is not registered.");
-        long bytes = (long)_layerStrides[type] * _tileCount;
+        long bytes = (long)_layerStrides[type] * _tableLengths.GetValueOrDefault(type, _tileCount);
         new Span<byte>(_ptr + _dataOffset + offset, checked((int)bytes)).Clear();
     }
 
     public bool IsLayerRegistered(Type type) => _layerOffsets.ContainsKey(type);
 
-    public bool IsLayerRegistered<T>() where T : unmanaged => _layerOffsets.ContainsKey(typeof(T));
+    public bool IsLayerRegistered<T>() where T : unmanaged
+    {
+        int id = LayerSlot<T>.Id;
+        return (uint)id < (uint)_offsetById.Length && _offsetById[id] >= 0;
+    }
+
+    private long OffsetOf<T>() where T : unmanaged
+    {
+        if (_ptr == null) throw new InvalidOperationException("Store not allocated. Call Allocate() first.");
+        var offsets = _offsetById;
+        int id = LayerSlot<T>.Id;
+        if ((uint)id >= (uint)offsets.Length || offsets[id] < 0)
+            throw new ArgumentException($"Layer of type {typeof(T).Name} is not registered. Call RegisterLayer<{typeof(T).Name}>() before Allocate().");
+        return offsets[id];
+    }
 
     public Span<T> GetSpan<T>() where T : unmanaged
     {
-        if (_ptr == null) throw new InvalidOperationException("Store not allocated. Call Allocate() first.");
-        if (!_layerOffsets.TryGetValue(typeof(T), out long offset))
-        {
-            throw new ArgumentException($"Layer of type {typeof(T).Name} is not registered. Call RegisterLayer<{typeof(T).Name}>() before Allocate().");
-        }
-
+        long offset = OffsetOf<T>();
+        if (_lengthById[LayerSlot<T>.Id] != _tileCount)
+            throw new InvalidOperationException($"{typeof(T).Name} is a table; use GetTable<{typeof(T).Name}>().");
         return new Span<T>(_ptr + _dataOffset + offset, _tileCount);
     }
+
+    /// <summary>The rows of a table registered with <see cref="RegisterTable{T}"/>.</summary>
+    public Span<T> GetTable<T>() where T : unmanaged
+    {
+        long offset = OffsetOf<T>();
+        return new Span<T>(_ptr + _dataOffset + offset, _lengthById[LayerSlot<T>.Id]);
+    }
+
+    public bool IsTableRegistered<T>() where T : unmanaged => _tableLengths.ContainsKey(typeof(T));
 
     public ref T GetRef<T>(int index) where T : unmanaged
     {
         if ((uint)index >= (uint)_tileCount)
             throw new IndexOutOfRangeException();
 
-        if (_ptr == null) throw new InvalidOperationException("Store not allocated. Call Allocate() first.");
-        if (!_layerOffsets.TryGetValue(typeof(T), out long offset))
-        {
-            throw new ArgumentException($"Layer of type {typeof(T).Name} is not registered. Call RegisterLayer<{typeof(T).Name}>() before Allocate().");
-        }
-
-        return ref ((T*)(_ptr + _dataOffset + offset))[index];
+        return ref ((T*)(_ptr + _dataOffset + OffsetOf<T>()))[index];
     }
 
     /// <summary>
@@ -391,6 +457,9 @@ public unsafe class WorldDataStore : IDisposable
         return _topology.Centers[index];
     }
 
+
+    /// <summary>The shared topology array itself (no copy); treat as read-only.</summary>
+    internal Vector3D[] TileVectorArray => _topology.TileVectors;
 
     public ReadOnlySpan<Vector3D> GetTileVectors()
     {

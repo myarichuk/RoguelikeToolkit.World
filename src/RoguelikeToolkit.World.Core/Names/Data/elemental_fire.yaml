@@ -1,4 +1,7 @@
 Key: elemental_fire
+DisplayName: "Elemental · Fire"
+ClanChance: 100
+EpithetChance: 25
 LineageDefault: Bilineal
 Provenance: original flame/cinder roots; courts of living flame
 PatronymicSon: spark
@@ -36,13 +39,11 @@ SecondStems:
   - {Form: kindler, Gloss: kindling}
   - {Form: sear, Gloss: searing}
   - {Form: glow, Gloss: glowing}
-FamilyAffixes:
-  - {Form: Ember court, Gloss: sworn to the ember court}
-  - {Form: Pyre court, Gloss: sworn to the pyre court}
+FamilyAffixes: []
 Clans:
-  - {Form: Ember court, Gloss: court of embers}
-  - {Form: Pyre court, Gloss: court of the pyre}
-  - {Form: Cinder court, Gloss: court of cinders}
+  - {Form: Ember Court, Gloss: court of embers}
+  - {Form: Pyre Court, Gloss: court of the pyre}
+  - {Form: Cinder Court, Gloss: court of cinders}
 Epithets:
   - {Form: Flameherald, Gloss: herald of flame}
   - {Form: Ashbringer, Gloss: bringer of ash}

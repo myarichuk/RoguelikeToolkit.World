@@ -35,6 +35,24 @@ public class QueryBenchmarks
     [Benchmark(Description = "GetTileIndexExact")]
     public int GetTileIndexExact() => _world.Map.DataStore.GetTileIndexExact(_query);
 
+    [Benchmark(Description = "GetRef x1000 (per-call layer lookup)")]
+    public float GetRefLoop()
+    {
+        var store = _world.Map.DataStore;
+        float sum = 0;
+        for (int i = 0; i < 1000; i++) sum += store.GetRef<ElevationInfo>(i).Height;
+        return sum;
+    }
+
+    [Benchmark(Description = "GetSpan x1000 (hoisted)")]
+    public float GetSpanLoop()
+    {
+        var span = _world.Map.DataStore.GetSpan<ElevationInfo>();
+        float sum = 0;
+        for (int i = 0; i < 1000; i++) sum += span[i].Height;
+        return sum;
+    }
+
     [Benchmark(Description = "GetAdjacent")]
     public int GetAdjacent() => _world.Map.DataStore.GetAdjacent(100, _neighbors);
 
