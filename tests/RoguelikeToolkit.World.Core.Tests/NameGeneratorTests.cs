@@ -254,11 +254,11 @@ public sealed class NameGeneratorTests
     [Fact]
     public void ArabicParticles_JoinWithSpace()
     {
-        // "Karim al-Din", never "Karimal-Din".
+        // "Karim ad-Din", never "Karimad-Din" (the article, assimilated or not, is a word of its own).
         foreach (int seed in Enumerable.Range(1, 20))
         {
             var name = FantasyNameGenerator.GeneratePerson(FantasyRaces.Human, Cultures.Arabic, seed);
-            Assert.DoesNotMatch(new Regex("[A-Za-z]al-"), name.Text);
+            Assert.DoesNotMatch(new Regex("[A-Za-z](al|a(th|dh|sh|[tdrzsn]))-"), name.Text);
         }
     }
 

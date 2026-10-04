@@ -99,6 +99,25 @@ Descriptors:
   - {Form: al-Fidda, Gloss: the silver, Tags: [lake, deposit, river]}
   - {Form: al-Arz, Gloss: the cedars, Tags: [forest, mountain]}
   - {Form: al-Nakhil, Gloss: the palms, Tags: [forest, valley, village, water]}
+  - {Form: al-Bard, Gloss: the cold, Tags: [mountain, high, lake]}
+  - {Form: al-Rih, Gloss: the wind, Tags: [high, mountain, hill]}
+  - {Form: al-Thalj, Gloss: the snow, Tags: [mountain, high]}
+  - {Form: al-Nada, Gloss: the dew, Tags: [valley, forest, village]}
+  - {Form: al-Ghazal, Gloss: the gazelle, Tags: [valley, hill, forest]}
+  - {Form: al-Asad, Gloss: the lion, Tags: [danger, mountain, forest]}
+  - {Form: al-Sharq, Gloss: the east}
+  - {Form: al-Gharb, Gloss: the west}
+  - {Form: al-Shamal, Gloss: the north}
+  - {Form: al-Janub, Gloss: the south}
+  - {Form: al-Najm, Gloss: the star}
+  - {Form: al-Safa, Gloss: the purity, Tags: [lake, river, water]}
+  - {Form: al-Tin, Gloss: the figs, Tags: [valley, village, hill]}
+  - {Form: al-Rumman, Gloss: the pomegranates, Tags: [valley, village, forest]}
+  - {Form: al-Sultan, Gloss: the sultan, Tags: [city, hold, town]}
+  - {Form: al-Amir, Gloss: the prince, Tags: [hold, city, town]}
+  - {Form: al-Sabil, Gloss: the fountain, Tags: [village, town, river]}
+  - {Form: al-Sakhr, Gloss: the rock, Tags: [mountain, hill, hold]}
+  - {Form: al-Hawa, Gloss: the breeze, Tags: [high, hill, lake]}
 Nouns:
   - {Form: Madinat, Gloss: city, Tags: [city, town]}
   - {Form: Qaryat, Gloss: village, Tags: [village]}
@@ -121,3 +140,20 @@ Nouns:
   - {Form: Ribat, Gloss: frontier fort, Tags: [camp, hold]}
   - {Form: Suq, Gloss: market, Tags: [town]}
   - {Form: Sahl, Gloss: plain, Tags: [valley, village]}
+  - {Form: Harsh, Gloss: woods, Tags: [forest, dark]}
+  - {Form: Rawdat, Gloss: garden meadow, Tags: [forest, valley, village]}
+  - {Form: Jannat, Gloss: garden, Tags: [forest, village]}
+  - {Form: Tur, Gloss: mount, Tags: [mountain]}
+  - {Form: Qimmat, Gloss: summit, Tags: [mountain, high]}
+  - {Form: Hadbat, Gloss: plateau, Tags: [mountain, hill, high]}
+  - {Form: Sakhrat, Gloss: rock, Tags: [mountain, hill, hold]}
+  - {Form: Ghadir, Gloss: pond, Tags: [lake, river, village]}
+  - {Form: Sabkhat, Gloss: salt lake, Tags: [lake, valley]}
+  - {Form: Shatt, Gloss: riverbank, Tags: [river, lake]}
+  - {Form: Jadwal, Gloss: stream, Tags: [river, village]}
+  - {Form: Masabb, Gloss: river mouth, Tags: [river]}
+  - {Form: Balad, Gloss: town, Tags: [town, village]}
+  - {Form: Dar, Gloss: abode, Tags: [town, village]}
+  - {Form: Qasbat, Gloss: walled town, Tags: [town, hold, city]}
+  - {Form: Marj, Gloss: meadow, Tags: [valley, village]}
+  - {Form: Ghawr, Gloss: lowland, Tags: [valley]}

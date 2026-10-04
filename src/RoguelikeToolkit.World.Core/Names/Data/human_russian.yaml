@@ -107,6 +107,24 @@ Descriptors:
   - {Form: Верхне, Latin: Verkhne, Gloss: upper, Tags: [high, river, village, hill]}
   - {Form: Нижне, Latin: Nizhne, Gloss: lower, Tags: [valley, river, village, town]}
   - {Form: Каменно, Latin: Kamenno, Gloss: stony, Tags: [hill, mountain, hold, deposit]}
+  - {Form: Высоко, Latin: Vysoko, Gloss: high, Tags: [mountain, hill, high]}
+  - {Form: Снежно, Latin: Snezhno, Gloss: snowy, Tags: [mountain, high]}
+  - {Form: Сине, Latin: Sine, Gloss: blue, Tags: [lake, river, water, mountain]}
+  - {Form: Медно, Latin: Medno, Gloss: copper, Tags: [deposit, mountain, hill]}
+  - {Form: Злато, Latin: Zlato, Gloss: golden, Tags: [deposit, city]}
+  - {Form: Светло, Latin: Svetlo, Gloss: bright}
+  - {Form: Серо, Latin: Sero, Gloss: grey}
+  - {Form: Добро, Latin: Dobro, Gloss: good}
+  - {Form: Солнечно, Latin: Solnechno, Gloss: sunny}
+  - {Form: Средне, Latin: Sredne, Gloss: middle}
+  - {Form: Глубоко, Latin: Gluboko, Gloss: deep, Tags: [lake, river, valley]}
+  - {Form: Студено, Latin: Studeno, Gloss: cold, Tags: [river, lake, water, mountain, high]}
+  - {Form: Быстро, Latin: Bystro, Gloss: swift, Tags: [river]}
+  - {Form: Чисто, Latin: Chisto, Gloss: clear, Tags: [river, lake, water, forest]}
+  - {Form: Остро, Latin: Ostro, Gloss: sharp, Tags: [mountain, hill]}
+  - {Form: Круто, Latin: Kruto, Gloss: steep, Tags: [mountain, hill, river]}
+  - {Form: Тёмно, Latin: Tyomno, Gloss: dark, Tags: [dark, forest, danger]}
+  - {Form: Сосново, Latin: Sosnovo, Gloss: pine, Tags: [forest, hill]}
 Nouns:
   - {Form: град, Latin: grad, Gloss: fortified town, Tags: [town, city, hold]}
   - {Form: село, Latin: selo, Gloss: village, Tags: [village]}
@@ -127,3 +145,21 @@ Nouns:
   - {Form: ручье, Latin: ruchye, Gloss: brook land, Tags: [river]}
   - {Form: морье, Latin: morye, Gloss: inland sea shore, Tags: [lake]}
   - {Form: стан, Latin: stan, Gloss: camp, Tags: [camp]}
+  - {Form: каменск, Latin: kamensk, Gloss: stone town, Tags: [mountain, deposit, town, hold]}
+  - {Form: скалье, Latin: skalye, Gloss: crags, Tags: [mountain, hill, high]}
+  - {Form: камень, Latin: kamen, Gloss: stone peak, Tags: [mountain, hill]}
+  - {Form: горка, Latin: gorka, Gloss: hillock, Tags: [hill, village]}
+  - {Form: озёрск, Latin: ozyorsk, Gloss: lake town, Tags: [lake, town]}
+  - {Form: плёс, Latin: ples, Gloss: open reach, Tags: [lake, river]}
+  - {Form: водье, Latin: vodye, Gloss: waterland, Tags: [lake, river, water]}
+  - {Form: дубье, Latin: dubye, Gloss: oak wood, Tags: [forest]}
+  - {Form: березье, Latin: berezye, Gloss: birch wood, Tags: [forest, village]}
+  - {Form: ельник, Latin: yelnik, Gloss: spruce wood, Tags: [forest, dark]}
+  - {Form: лог, Latin: log, Gloss: ravine, Tags: [valley]}
+  - {Form: дол, Latin: dol, Gloss: dale, Tags: [valley, village]}
+  - {Form: ключ, Latin: klyuch, Gloss: spring, Tags: [river, village]}
+  - {Form: бережье, Latin: berezhye, Gloss: riverbank, Tags: [river, village]}
+  - {Form: город, Latin: gorod, Gloss: city, Tags: [city, town]}
+  - {Form: посад, Latin: posad, Gloss: trading quarter, Tags: [town]}
+  - {Form: дворье, Latin: dvorye, Gloss: farmsteads, Tags: [village]}
+  - {Form: дозор, Latin: dozor, Gloss: watch post, Tags: [camp, hold]}

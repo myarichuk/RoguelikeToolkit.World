@@ -27,7 +27,8 @@ var place  = FantasyNameGenerator.GeneratePlace("village", new PlaceContext { Ne
 | `Epithets`, `EpithetChance` | Epithet slot (default 0 = off). |
 | `FamilyFirst` | Family name is written first (Chinese, Japanese). |
 | `Descriptors`, `Nouns` | Place vocabulary. Nouns are tagged with the kinds they name (`village town city river lake mountain hill valley forest hold camp`); every table needs at least one noun per kind (a test enforces it; at runtime a missing kind borrows a related one, e.g. mountain -> hill). Descriptors are tagged with the kinds/terrain they suit and are *excluded* where none fits, so keep generic words (colours, old/new, compass points) untagged or a town only ever gets two names. |
-| `PlaceOrder`, `PlaceJoin` | `DescriptorFirst`/`NounFirst`; `Fuse`/`Space`/`Hyphen`. Hebrew is `NounFirst`+`Space` (Kfar Zahav), Welsh `NounFirst`+`Fuse` (Caergwyn). |
+| `PlaceOrder`, `PlaceJoin` | `DescriptorFirst`/`NounFirst`; `Fuse`/`Space`/`Hyphen`. Hebrew is `NounFirst`+`Space` (Kfar Zahav), Welsh `NounFirst`+`Fuse` (Caerwen). A fused seam that would run three letters together gets a hyphen instead (`Rhyd-ddu`, not `Rhyddu`). |
+| `PlaceMutation` | `Soft` (Welsh, needs `NounFirst`): a descriptor after a `fem`-tagged noun is soft-mutated (p>b t>d c>g b>f d>dd m>f ll>l rh>r, g lost; t/d resist after s), so Pont+du = `Pontddu`, Moel+mawr = `Moelfawr`, while masculine Llyn+du stays `Llyndu`. A descriptor's `FemForm` is used after a feminine noun before mutating (gwyn/gwen gives `Caerwen`). Blank = off. |
 | `PlaceFallback` | Default true: fantasy_common tops up thin tables, at a third of the weight of the table's own words so a gnome town stays a "-tinkery" more than a "-burg". Language-faithful tables set false so a Hebrew village is never "Clearwood". |
 | `Banned` | Substrings that must never appear (checked in transliterated scripts too). |
 
@@ -37,6 +38,8 @@ Gotcha: in `{...}` flow maps a comma ends the value, so `{Gloss: red, beautiful}
 
 - **No repeated roots across slots.** Every root already in a name (form, Latin, fusable base, and its Hebrew and Cyrillic renderings) is off-limits for later slots: no `Ash ... Ashbringer`, `ibn Saqr Banu Saqr` or `Petrovich Petrov`. Optional slots (clan, epithet) are dropped rather than repeat; picks are the same in every script, so a character keeps their identity when the script changes.
 - **Clean text.** The finished name is checked with `NameLint` (triple letters, a doubled chunk like `Gustgust`, a word twice, a root repeated across parts, stray spaces, Hebrew final letters mid-word) and rerolled deterministically if it fails, exactly like a banned word. `NameLint.Check` is public; tests run it over every style, script, gender and place kind.
+- **The Arabic article is rendered as spoken.** Tables write the dictionary form `al-`; before a sun letter (t th d dh r z s sh l n) it assimilates in every script: `ad-Din` / `ад-Дин` / `א-דין`, `ash-Shams`, `an-Nur`, but `al-Qamar` / `аль-Камар` / `אל-קמר`. Article particles never count as roots (`ash-Shams` does not clash with `Rashid`).
+- **Variety in every terrain.** Each style, place kind and terrain context (water, dark forest, highland, valley, deposit, danger) gives at least 25 distinct names in 120 rolls; a test enforces it, because context narrows the usable descriptors.
 - **Fusion.** Only a doubled boundary *vowel* is dropped (`Eli`+`iel` = `Eliel`); consonants stay (`Shan`+`ning` = `Shanning`, `Fred`+`dochter` = `Freddochter`).
 
 ## Name tester

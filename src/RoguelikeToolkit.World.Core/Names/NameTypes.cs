@@ -212,6 +212,7 @@ public static class NameThemes
         => Words(p.Gloss).Any(w => WordMatches(w, token)) || FormMatches(p.Form, token);
 
     /// <summary>Themes available for person names of a table (stems, clans, epithets, family names).</summary>
+    /// <param name="table">The name table whose vocabulary is listed.</param>
     /// <param name="feminine">When set, only themes reachable for that gender are listed.</param>
     /// <param name="borrowsHumanFamily">Half-bloods take a human surname instead of the table's clans and family names.</param>
     public static IReadOnlyList<string> ForPeople(CultureData table, bool? feminine = null, bool borrowsHumanFamily = false)

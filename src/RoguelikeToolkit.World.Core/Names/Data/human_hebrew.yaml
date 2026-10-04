@@ -140,6 +140,23 @@ Descriptors:
   - {Form: ענבר, Latin: Inbar, Gloss: amber, Tags: [lake, valley]}
   - {Form: ערבה, Latin: Arava, Gloss: willow, Tags: [river, lake, valley]}
   - {Form: שקט, Latin: Sheket, Gloss: quiet, Tags: [river, lake, village]}
+  - {Form: שמש, Latin: Shemesh, Gloss: sun}
+  - {Form: תקווה, Latin: Tikva, Gloss: hope}
+  - {Form: אביב, Latin: Aviv, Gloss: spring}
+  - {Form: זוהר, Latin: Zohar, Gloss: radiance}
+  - {Form: הדס, Latin: Hadas, Gloss: myrtle, Tags: [valley, village, forest]}
+  - {Form: רימון, Latin: Rimon, Gloss: pomegranate, Tags: [village, valley]}
+  - {Form: צבי, Latin: Tzvi, Gloss: gazelle, Tags: [hill, forest, valley]}
+  - {Form: נשר, Latin: Nesher, Gloss: eagle, Tags: [mountain, high, hill]}
+  - {Form: עוז, Latin: Oz, Gloss: strength, Tags: [hold, camp, city]}
+  - {Form: אילן, Latin: Ilan, Gloss: tree, Tags: [forest, village]}
+  - {Form: סלע, Latin: Sela, Gloss: rock, Tags: [mountain, hill, hold]}
+  - {Form: טל, Latin: Tal, Gloss: dew, Tags: [valley, village, hill]}
+  - {Form: שרון, Latin: Sharon, Gloss: plain, Tags: [valley, village]}
+  - {Form: דגן, Latin: Dagan, Gloss: grain, Tags: [valley, village]}
+  - {Form: שוהם, Latin: Shoham, Gloss: onyx, Tags: [deposit, city]}
+  - {Form: ברק, Latin: Barak, Gloss: lightning, Tags: [high, mountain, danger]}
+  - {Form: שלג, Latin: Sheleg, Gloss: snow, Tags: [mountain, high]}
 Nouns:
   - {Form: כפר, Latin: Kfar, Gloss: village, Tags: [village]}
   - {Form: נווה, Latin: Neve, Gloss: oasis home, Tags: [village]}
@@ -167,3 +184,16 @@ Nouns:
   - {Form: מעיין, Latin: Maayan, Gloss: spring, Tags: [river, village]}
   - {Form: מצפה, Latin: Mitzpe, Gloss: lookout, Tags: [camp, hold, hill]}
   - {Form: נוף, Latin: Nof, Gloss: view, Tags: [hill, town]}
+  - {Form: סבך, Latin: Svach, Gloss: thicket, Tags: [forest, dark]}
+  - {Form: פרדס, Latin: Pardes, Gloss: orchard, Tags: [forest, village, valley]}
+  - {Form: רכס, Latin: Reches, Gloss: ridge, Tags: [mountain, hill]}
+  - {Form: פסגת, Latin: Pisgat, Gloss: summit, Tags: [mountain, high]}
+  - {Form: צוק, Latin: Tzuk, Gloss: cliff, Tags: [mountain, hill]}
+  - {Form: מי, Latin: Mei, Gloss: waters, Tags: [lake, river, water]}
+  - {Form: אגמון, Latin: Agamon, Gloss: pond, Tags: [lake]}
+  - {Form: חוף, Latin: Hof, Gloss: shore, Tags: [lake, village]}
+  - {Form: אפיק, Latin: Afik, Gloss: channel, Tags: [river]}
+  - {Form: גשר, Latin: Gesher, Gloss: bridge, Tags: [river, town]}
+  - {Form: בקעת, Latin: Bikat, Gloss: valley, Tags: [valley]}
+  - {Form: גיא, Latin: Gai, Gloss: ravine, Tags: [valley]}
+  - {Form: מבצר, Latin: Mivtzar, Gloss: fortress, Tags: [hold, camp]}

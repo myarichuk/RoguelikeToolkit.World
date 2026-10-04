@@ -82,6 +82,21 @@ Descriptors:
   - {Form: Xia, Gloss: lower, Tags: [valley, river, village]}
   - {Form: Zhu, Gloss: bamboo, Tags: [forest, village, hill]}
   - {Form: Song, Gloss: pine, Tags: [forest, mountain, hill]}
+  - {Form: Tai, Gloss: great peace}
+  - {Form: Yong, Gloss: eternal}
+  - {Form: Ming, Gloss: bright}
+  - {Form: Fu, Gloss: fortune, Tags: [village, town, city]}
+  - {Form: Chang, Gloss: long, Tags: [river, valley, hill]}
+  - {Form: Tian, Gloss: heaven, Tags: [high, mountain]}
+  - {Form: Yun, Gloss: cloud, Tags: [high, mountain, hill]}
+  - {Form: Shi, Gloss: stone, Tags: [mountain, hill, deposit]}
+  - {Form: Tie, Gloss: iron, Tags: [deposit, mountain]}
+  - {Form: Bi, Gloss: jade green, Tags: [lake, river, water, forest]}
+  - {Form: Mei, Gloss: plum blossom, Tags: [village, valley, hill]}
+  - {Form: Tao, Gloss: peach, Tags: [village, valley]}
+  - {Form: Liu, Gloss: willow, Tags: [river, lake, village]}
+  - {Form: Lian, Gloss: lotus, Tags: [lake, water]}
+  - {Form: Wu, Gloss: misty, Tags: [mountain, valley, lake, forest]}
 Nouns:
   - {Form: cun, Gloss: hamlet, Tags: [village]}
   - {Form: zhen, Gloss: market town, Tags: [town]}
@@ -104,3 +119,19 @@ Nouns:
   - {Form: yuan, Gloss: garden, Tags: [forest, village]}
   - {Form: bao, Gloss: fort, Tags: [hold, camp, village]}
   - {Form: ying, Gloss: camp, Tags: [camp]}
+  - {Form: chi, Gloss: pool, Tags: [lake, village]}
+  - {Form: dang, Gloss: shallow lake, Tags: [lake, river]}
+  - {Form: pu, Gloss: shore, Tags: [lake, river]}
+  - {Form: ping, Gloss: flat, Tags: [valley, village]}
+  - {Form: yu, Gloss: narrow valley, Tags: [valley]}
+  - {Form: ao, Gloss: col, Tags: [valley, hill]}
+  - {Form: po, Gloss: slope, Tags: [hill]}
+  - {Form: qiu, Gloss: mound, Tags: [hill]}
+  - {Form: yan, Gloss: cliff, Tags: [mountain, hill]}
+  - {Form: ding, Gloss: summit, Tags: [mountain, high]}
+  - {Form: ji, Gloss: market, Tags: [town, village]}
+  - {Form: dian, Gloss: inn town, Tags: [town, village]}
+  - {Form: xi, Gloss: stream, Tags: [river]}
+  - {Form: kou, Gloss: river mouth, Tags: [river, town]}
+  - {Form: shu, Gloss: grove, Tags: [forest]}
+  - {Form: sen, Gloss: deep forest, Tags: [forest, dark]}

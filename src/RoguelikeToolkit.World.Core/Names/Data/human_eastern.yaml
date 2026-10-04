@@ -64,6 +64,21 @@ Descriptors:
   - {Form: Kameno, Gloss: stony, Tags: [hill, mountain, deposit, hold]}
   - {Form: Dubo, Gloss: oak, Tags: [forest, village, hill]}
   - {Form: Mokro, Gloss: wet, Tags: [river, lake, valley]}
+  - {Form: Visoko, Gloss: high, Tags: [mountain, hill, high]}
+  - {Form: Snezhno, Gloss: snowy, Tags: [mountain, high]}
+  - {Form: Svetlo, Gloss: bright}
+  - {Form: Dobro, Gloss: good}
+  - {Form: Sivo, Gloss: grey}
+  - {Form: Yaro, Gloss: fierce}
+  - {Form: Gluboko, Gloss: deep, Tags: [lake, river, valley]}
+  - {Form: Studeno, Gloss: cold, Tags: [river, lake, water, mountain, high]}
+  - {Form: Bystro, Gloss: swift, Tags: [river]}
+  - {Form: Ostro, Gloss: sharp, Tags: [mountain, hill]}
+  - {Form: Temno, Gloss: dark, Tags: [dark, forest, danger]}
+  - {Form: Bukovo, Gloss: beech, Tags: [forest, hill]}
+  - {Form: Medno, Gloss: copper, Tags: [deposit, mountain]}
+  - {Form: Srebro, Gloss: silver, Tags: [deposit, lake, river]}
+  - {Form: Gorno, Gloss: upper, Tags: [high, mountain, village, hill]}
 Nouns:
   - {Form: grad, Gloss: fortified town, Tags: [town, city, hold]}
   - {Form: ves, Gloss: village, Tags: [village]}
@@ -87,3 +102,23 @@ Nouns:
   - {Form: les, Gloss: forest, Tags: [forest, dark]}
   - {Form: dol, Gloss: dale, Tags: [valley]}
   - {Form: hrad, Gloss: stronghold, Tags: [hold, camp]}
+  - {Form: planina, Gloss: mountain range, Tags: [mountain]}
+  - {Form: kamen, Gloss: stone peak, Tags: [mountain, hill]}
+  - {Form: skala, Gloss: cliff, Tags: [mountain, hill]}
+  - {Form: hum, Gloss: hillock, Tags: [hill]}
+  - {Form: glava, Gloss: hilltop, Tags: [hill, mountain]}
+  - {Form: voda, Gloss: water, Tags: [lake, river, water]}
+  - {Form: lokva, Gloss: pool, Tags: [lake, village]}
+  - {Form: mlaka, Gloss: pond, Tags: [lake, village]}
+  - {Form: dubrava, Gloss: oak wood, Tags: [forest, village]}
+  - {Form: suma, Gloss: forest, Tags: [forest, dark]}
+  - {Form: lug, Gloss: wooded meadow, Tags: [forest, valley]}
+  - {Form: dolac, Gloss: little dale, Tags: [valley, village]}
+  - {Form: kotlina, Gloss: basin, Tags: [valley]}
+  - {Form: vir, Gloss: whirlpool, Tags: [river, lake]}
+  - {Form: struga, Gloss: channel, Tags: [river]}
+  - {Form: izvor, Gloss: spring, Tags: [river, village]}
+  - {Form: trg, Gloss: market, Tags: [town]}
+  - {Form: varos, Gloss: town quarter, Tags: [town, city]}
+  - {Form: dvor, Gloss: court, Tags: [village, hold]}
+  - {Form: tabor, Gloss: camp, Tags: [camp]}

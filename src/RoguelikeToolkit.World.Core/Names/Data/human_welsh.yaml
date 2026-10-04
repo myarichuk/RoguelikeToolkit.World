@@ -1,13 +1,15 @@
 Key: human_welsh
 DisplayName: "Human · Welsh"
 LineageDefault: Patrilineal
-Provenance: real Welsh given names; ap/ferch patronymic is the surname; noun-first place names (Caergwyn)
+Provenance: real Welsh given names; ap/ferch patronymic is the surname; noun-first place names with soft mutation after feminine nouns (Caerwen, Pontddu)
 CompoundChance: 0
 PatronymicSon: ap
 PatronymicDaughter: ferch
 PatronymicPrefix: true
 PlaceOrder: NounFirst
 PlaceJoin: Fuse
+# Feminine nouns (tagged fem) soft-mutate the adjective after them: Pont + du = Pontddu, Moel + mawr = Moelfawr.
+PlaceMutation: Soft
 PlaceFallback: false
 Banned: []
 GivenStems:
@@ -67,7 +69,7 @@ FamilyAffixes: []
 Clans: []
 Epithets: []
 Descriptors:
-  - {Form: gwyn, Gloss: white}
+  - {Form: gwyn, Gloss: white, FemForm: gwen}
   - {Form: coch, Gloss: red}
   - {Form: du, Gloss: black}
   - {Form: mawr, Gloss: great}
@@ -78,35 +80,56 @@ Descriptors:
   - {Form: aur, Gloss: golden, Tags: [deposit, city]}
   - {Form: haearn, Gloss: iron, Tags: [deposit, mountain]}
   - {Form: llwyd, Gloss: grey}
-  - {Form: melyn, Gloss: yellow}
+  - {Form: melyn, Gloss: yellow, FemForm: melen}
   - {Form: teg, Gloss: fair}
   - {Form: isaf, Gloss: lowest, Tags: [valley, village, river]}
   - {Form: uchaf, Gloss: highest, Tags: [hill, mountain, high, village]}
+  - {Form: llydan, Gloss: wide, Tags: [valley, river, lake]}
+  - {Form: cul, Gloss: narrow, Tags: [valley, river]}
+  - {Form: uchel, Gloss: high, Tags: [hill, mountain, high]}
+  - {Form: oer, Gloss: cold, Tags: [mountain, lake, river, high]}
+  - {Form: sych, Gloss: dry, Tags: [river, valley, hill]}
+  - {Form: tywyll, Gloss: dark, Tags: [dark, forest, danger]}
+  - {Form: garw, Gloss: rough, Tags: [mountain, hill, danger]}
+  - {Form: brith, Gloss: speckled}
+  - {Form: crwn, Gloss: round, FemForm: cron, Tags: [hill, lake]}
+  - {Form: cam, Gloss: crooked, Tags: [river, valley]}
+  - {Form: gwyrdd, Gloss: green, FemForm: gwerdd, Tags: [forest, valley, village, hill]}
+  - {Form: arian, Gloss: silver, Tags: [lake, river, deposit]}
 Nouns:
   - {Form: Aber, Gloss: river mouth, Tags: [river, village]}
   - {Form: Pen, Gloss: headland, Tags: [hill, mountain, village]}
   - {Form: Nant, Gloss: brook, Tags: [river, valley]}
-  - {Form: Caer, Gloss: fort, Tags: [hold, town, city]}
-  - {Form: Llan, Gloss: church enclosure, Tags: [village, town]}
+  - {Form: Caer, Gloss: fort, Tags: [fem, hold, town, city]}
+  - {Form: Llan, Gloss: church enclosure, Tags: [fem, village, town]}
   - {Form: Cwm, Gloss: hollow, Tags: [valley]}
-  - {Form: Pont, Gloss: bridge, Tags: [river, village]}
-  - {Form: Dol, Gloss: meadow, Tags: [valley, village]}
+  - {Form: Pont, Gloss: bridge, Tags: [fem, river, village]}
+  - {Form: Dol, Gloss: meadow, Tags: [fem, valley, village]}
   - {Form: Bryn, Gloss: knoll, Tags: [hill]}
   - {Form: Glyn, Gloss: glen, Tags: [valley]}
   - {Form: Llyn, Gloss: lake, Tags: [lake, water]}
   - {Form: Coed, Gloss: wood, Tags: [forest, dark]}
   - {Form: Mynydd, Gloss: mountain, Tags: [mountain]}
-  - {Form: Craig, Gloss: crag, Tags: [hill, camp]}
-  - {Form: Tre, Gloss: homestead, Tags: [village, town]}
+  - {Form: Craig, Gloss: crag, Tags: [fem, hill, camp]}
+  - {Form: Tre, Gloss: homestead, Tags: [fem, village, town]}
   - {Form: Pentre, Gloss: village, Tags: [village]}
-  - {Form: Dinas, Gloss: city fort, Tags: [city, hold]}
+  - {Form: Dinas, Gloss: city fort, Tags: [fem, city, hold]}
   - {Form: Castell, Gloss: castle, Tags: [hold, town]}
   - {Form: Din, Gloss: hillfort, Tags: [hold, camp]}
-  - {Form: Carn, Gloss: cairn, Tags: [hill, mountain, camp]}
-  - {Form: Moel, Gloss: bare hill, Tags: [hill, mountain]}
-  - {Form: Afon, Gloss: river, Tags: [river]}
-  - {Form: Rhyd, Gloss: ford, Tags: [river, village]}
+  - {Form: Carn, Gloss: cairn, Tags: [fem, hill, mountain, camp]}
+  - {Form: Moel, Gloss: bare hill, Tags: [fem, hill, mountain]}
+  - {Form: Afon, Gloss: river, Tags: [fem, river]}
+  - {Form: Rhyd, Gloss: ford, Tags: [fem, river, village]}
   - {Form: Pwll, Gloss: pool, Tags: [lake, water]}
   - {Form: Maes, Gloss: field, Tags: [valley, village]}
-  - {Form: Gelli, Gloss: grove, Tags: [forest]}
+  - {Form: Gelli, Gloss: grove, Tags: [fem, forest]}
   - {Form: Llwyn, Gloss: thicket, Tags: [forest, village]}
+  - {Form: Ynys, Gloss: island, Tags: [fem, lake, river]}
+  - {Form: Ffynnon, Gloss: spring, Tags: [fem, village, lake, water]}
+  - {Form: Morfa, Gloss: sea marsh, Tags: [lake, valley, water]}
+  - {Form: Fforest, Gloss: forest, Tags: [fem, forest]}
+  - {Form: Allt, Gloss: wooded slope, Tags: [fem, forest, hill]}
+  - {Form: Coedwig, Gloss: woodland, Tags: [fem, forest, dark]}
+  - {Form: Porth, Gloss: harbour, Tags: [town, river, lake]}
+  - {Form: Bod, Gloss: dwelling, Tags: [village, town]}
+  - {Form: Hendre, Gloss: winter homestead, Tags: [fem, village, valley]}

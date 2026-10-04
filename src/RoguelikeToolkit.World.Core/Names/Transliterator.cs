@@ -74,15 +74,70 @@ public static class Transliterator
     /// </summary>
     public static string Render(MorphemeYaml m, NameScript script) => script switch
     {
-        NameScript.Latin => !string.IsNullOrWhiteSpace(m.Latin) ? m.Latin : m.Form,
+        NameScript.Latin => Spoken(!string.IsNullOrWhiteSpace(m.Latin) ? m.Latin : m.Form),
         NameScript.Hebrew => IsHebrew(m.Form) ? m.Form
-            : !string.IsNullOrWhiteSpace(m.Latin) && IsLatin(m.Latin) ? ToHebrew(m.Latin)
-            : IsLatin(m.Form) ? ToHebrew(m.Form) : m.Form,
+            : !string.IsNullOrWhiteSpace(m.Latin) && IsLatin(m.Latin) ? HebrewWithArticles(m.Latin)
+            : IsLatin(m.Form) ? HebrewWithArticles(m.Form) : m.Form,
         NameScript.Cyrillic => IsCyrillic(m.Form) ? m.Form
-            : !string.IsNullOrWhiteSpace(m.Latin) && IsLatin(m.Latin) ? ToCyrillic(m.Latin)
-            : IsLatin(m.Form) ? ToCyrillic(m.Form) : m.Form,
-        _ => m.Form,
+            : !string.IsNullOrWhiteSpace(m.Latin) && IsLatin(m.Latin) ? CyrillicWithArticles(m.Latin)
+            : IsLatin(m.Form) ? CyrillicWithArticles(m.Form) : m.Form,
+        _ => Spoken(m.Form),
     };
+
+    // ---- the Arabic article ----------------------------------------------------
+    //
+    // Tables write the article as it is spelled, "al-", the way a dictionary does. Spoken
+    // (and in every popular romanization) it assimilates to a following "sun letter":
+    // "al-Din" is "ad-Din", "al-Shams" is "ash-Shams", "al-Nur" is "an-Nur"; before a
+    // "moon letter" it stays ("al-Qamar", "al-Bahr"). Names are rendered as spoken, so a
+    // table author writes the dictionary form and every script gets the right one:
+    // Latin "ad-Din", Cyrillic "ад-Дин" ("аль-Бахр" for a moon letter, as Russian writes
+    // it), Hebrew "א-דין" (the article reduced to its alef, "אל-בחר" otherwise).
+
+    private static readonly System.Text.RegularExpressions.Regex Article =
+        new(@"(?<![A-Za-z])al-(?=[A-Za-z])", System.Text.RegularExpressions.RegexOptions.CultureInvariant);
+
+    // Romanized sun letters: t th d dh r z s sh (and the emphatics written as t d s z) l n.
+    private static readonly string[] SunLetters = { "th", "dh", "sh", "t", "d", "r", "z", "s", "l", "n" };
+
+    /// <summary>
+    /// The consonant an Arabic article assimilates to before <paramref name="word"/>
+    /// ("sh" for "Shams", "d" for "Din"), or null before a moon letter ("Qamar").
+    /// </summary>
+    public static string? SunLetter(string word)
+    {
+        foreach (var s in SunLetters)
+            if (word.StartsWith(s, StringComparison.OrdinalIgnoreCase))
+                return s;
+        return null;
+    }
+
+    /// <summary>Latin text with every "al-" article as spoken: "Nasr al-Din" -> "Nasr ad-Din".</summary>
+    public static string Spoken(string text)
+        => !text.Contains("al-", StringComparison.Ordinal) ? text
+            : WithArticles(text, w => w, sun => "a" + sun + "-", "al-");
+
+    private static string HebrewWithArticles(string latin)
+        => WithArticles(latin, ToHebrew, _ => "א-", "אל-");
+
+    private static string CyrillicWithArticles(string latin)
+        => WithArticles(latin, ToCyrillic, sun => "а" + ToCyrillic(sun) + "-", "аль-");
+
+    /// <summary>Transliterates the text between articles with <paramref name="word"/> and renders each article itself.</summary>
+    private static string WithArticles(string latin, Func<string, string> word, Func<string, string> sun, string moon)
+    {
+        var sb = new StringBuilder(latin.Length * 2);
+        int last = 0;
+        foreach (System.Text.RegularExpressions.Match m in Article.Matches(latin))
+        {
+            sb.Append(word(latin.Substring(last, m.Index - last)));
+            last = m.Index + m.Length;
+            var letter = SunLetter(latin.Substring(last));
+            sb.Append(letter is null ? moon : sun(letter.ToLowerInvariant()));
+        }
+        sb.Append(word(latin.Substring(last)));
+        return sb.ToString();
+    }
 
     /// <summary>Same fallback chain for plain-string markers (patronymics).</summary>
     public static string RenderToken(string native, string latin, NameScript script) => script switch

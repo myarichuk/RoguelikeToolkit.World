@@ -73,6 +73,23 @@ Descriptors:
   - {Form: Stan, Gloss: stony, Tags: [hill, mountain, hold, deposit, river]}
   - {Form: Ac, Gloss: oak, Tags: [forest, village, town]}
   - {Form: Ceald, Gloss: cold, Tags: [river, lake, high, mountain]}
+  - {Form: Gold, Gloss: gold, Tags: [deposit, city, river]}
+  - {Form: Isen, Gloss: iron, Tags: [deposit, mountain, hold]}
+  - {Form: Seolfor, Gloss: silver, Tags: [lake, river, deposit]}
+  - {Form: Wulf, Gloss: wolf, Tags: [danger, forest, hill]}
+  - {Form: Earn, Gloss: eagle, Tags: [mountain, high]}
+  - {Form: Heort, Gloss: hart, Tags: [forest, valley]}
+  - {Form: Birce, Gloss: birch, Tags: [forest, village]}
+  - {Form: Asc, Gloss: ash tree, Tags: [forest, village]}
+  - {Form: Swan, Gloss: swan, Tags: [lake, river]}
+  - {Form: Crawe, Gloss: crow, Tags: [hill, dark]}
+  - {Form: Brad, Gloss: broad, Tags: [valley, river, lake]}
+  - {Form: Deop, Gloss: deep, Tags: [lake, valley, river]}
+  - {Form: Ful, Gloss: foul, Tags: [danger, dark, lake]}
+  - {Form: Cyning, Gloss: king, Tags: [city, hold, town]}
+  - {Form: Preost, Gloss: priest, Tags: [village, town]}
+  - {Form: Ceorl, Gloss: freeman, Tags: [village]}
+  - {Form: Sunne, Gloss: sun}
 Nouns:
   - {Form: ham, Gloss: homestead, Tags: [village]}
   - {Form: tun, Gloss: town, Tags: [town, city, village]}
@@ -98,3 +115,15 @@ Nouns:
   - {Form: wald, Gloss: woodland, Tags: [forest, dark]}
   - {Form: burn, Gloss: stream, Tags: [river, water]}
   - {Form: mere, Gloss: lake, Tags: [lake, water]}
+  - {Form: fenn, Gloss: fen, Tags: [lake, valley, water]}
+  - {Form: lacu, Gloss: stream pool, Tags: [lake, river]}
+  - {Form: waeter, Gloss: water, Tags: [lake, river, water]}
+  - {Form: graf, Gloss: grove, Tags: [forest]}
+  - {Form: hyrst, Gloss: wooded hill, Tags: [forest, hill]}
+  - {Form: sceaga, Gloss: copse, Tags: [forest]}
+  - {Form: hop, Gloss: enclosed valley, Tags: [valley]}
+  - {Form: botm, Gloss: valley floor, Tags: [valley, river]}
+  - {Form: slaed, Gloss: dell, Tags: [valley]}
+  - {Form: clif, Gloss: cliff, Tags: [mountain, hill]}
+  - {Form: heafod, Gloss: headland, Tags: [mountain, hill]}
+  - {Form: ofer, Gloss: ridge, Tags: [hill, mountain]}

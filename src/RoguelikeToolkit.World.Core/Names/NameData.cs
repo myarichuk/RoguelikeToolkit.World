@@ -15,7 +15,8 @@ public sealed class MorphemeYaml
     public string Gloss { get; set; } = string.Empty;
     /// <summary>
     /// Free tags used for place fit (river, forest, ...) plus reserved markers:
-    /// <c>masc</c>/<c>fem</c> (gendered given names and surname forms),
+    /// <c>masc</c>/<c>fem</c> (gendered given names and surname forms; <c>fem</c> on a place noun
+    /// triggers <see cref="CultureData.PlaceMutation"/>),
     /// <c>solo</c> (never takes a second stem), <c>bound</c> (half a name: always takes a second stem),
     /// <c>nopatron</c> (not usable as a parent name).
     /// </summary>
@@ -23,6 +24,11 @@ public sealed class MorphemeYaml
     /// <summary>Stem to fuse suffixes onto (Russian "Пётр" -> "Петр" + "ович"). Blank uses Form.</summary>
     public string Base { get; set; } = string.Empty;
     public string BaseLatin { get; set; } = string.Empty;
+    /// <summary>
+    /// A descriptor's form after a feminine place noun, before any mutation, where it differs
+    /// (Welsh gwyn -> gwen, melyn -> melen). Only read by tables with <see cref="CultureData.PlaceMutation"/>.
+    /// </summary>
+    public string FemForm { get; set; } = string.Empty;
 }
 
 public sealed class CultureData
@@ -44,6 +50,13 @@ public sealed class CultureData
     public string PlaceOrder { get; set; } = "DescriptorFirst";
     /// <summary>"Fuse" (one word: Clearford), "Space" (two words) or "Hyphen".</summary>
     public string PlaceJoin { get; set; } = "Fuse";
+    /// <summary>
+    /// Initial mutation of a descriptor that follows a feminine (<c>fem</c>-tagged) place noun.
+    /// "Soft" is Welsh soft mutation: Pont + du is "Pontddu", Moel + mawr is "Moelfawr",
+    /// Caer + gwyn (feminine gwen) is "Caerwen"; a masculine noun leaves it alone ("Llyndu").
+    /// Blank (default) mutates nothing.
+    /// </summary>
+    public string PlaceMutation { get; set; } = string.Empty;
     /// <summary>
     /// When true (default) the shared fantasy_common place vocabulary tops up this
     /// table's descriptors/nouns. Language-faithful tables set false so a Hebrew
@@ -342,6 +355,13 @@ public sealed class NameDataStore
             !data.PlaceJoin.Equals("Space", StringComparison.OrdinalIgnoreCase) &&
             !data.PlaceJoin.Equals("Hyphen", StringComparison.OrdinalIgnoreCase))
             problems.Add($"{rel}: unknown PlaceJoin '{data.PlaceJoin}' (want Fuse, Space or Hyphen).");
+        if (!string.IsNullOrWhiteSpace(data.PlaceMutation))
+        {
+            if (!data.PlaceMutation.Equals("Soft", StringComparison.OrdinalIgnoreCase))
+                problems.Add($"{rel}: unknown PlaceMutation '{data.PlaceMutation}' (want Soft, or leave it blank).");
+            else if (!data.PlaceOrder.Equals("NounFirst", StringComparison.OrdinalIgnoreCase))
+                problems.Add($"{rel}: PlaceMutation needs PlaceOrder NounFirst (it mutates the descriptor after the noun).");
+        }
         if (data.GivenStems.Count == 0)
             problems.Add($"{rel}: GivenStems is empty (every table needs at least one given stem).");
         if (data.Patronymic &&

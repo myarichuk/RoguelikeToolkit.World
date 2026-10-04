@@ -102,6 +102,20 @@ Descriptors:
   - {Form: Minami, Gloss: south}
   - {Form: Furu, Gloss: old, Tags: [village, town, hold]}
   - {Form: Ko, Gloss: little, Tags: [village, lake, hill, river]}
+  - {Form: Taka, Gloss: high, Tags: [high, mountain, hill]}
+  - {Form: Naga, Gloss: long, Tags: [river, valley]}
+  - {Form: Fuka, Gloss: deep, Tags: [lake, valley, river]}
+  - {Form: Yuki, Gloss: snow, Tags: [mountain, high]}
+  - {Form: Hana, Gloss: flower, Tags: [village, valley]}
+  - {Form: Sakura, Gloss: cherry, Tags: [village, valley, hill]}
+  - {Form: Kiri, Gloss: mist, Tags: [mountain, valley, lake]}
+  - {Form: Sugi, Gloss: cedar, Tags: [forest, mountain]}
+  - {Form: Tsuru, Gloss: crane, Tags: [lake, river, village]}
+  - {Form: Hiro, Gloss: wide}
+  - {Form: Yoshi, Gloss: good}
+  - {Form: Asa, Gloss: morning}
+  - {Form: Mizu, Gloss: water, Tags: [river, lake, water]}
+  - {Form: Kaze, Gloss: wind, Tags: [high, hill, mountain]}
 Nouns:
   - {Form: mura, Gloss: village, Tags: [village]}
   - {Form: machi, Gloss: town, Tags: [town]}
@@ -127,3 +141,17 @@ Nouns:
   - {Form: hayashi, Gloss: grove, Tags: [forest]}
   - {Form: jin, Gloss: war camp, Tags: [camp]}
   - {Form: seki, Gloss: barrier, Tags: [hold, camp]}
+  - {Form: zono, Gloss: garden, Tags: [forest, village]}
+  - {Form: ki, Gloss: woods, Tags: [forest]}
+  - {Form: ne, Gloss: ridge, Tags: [hill, mountain]}
+  - {Form: dai, Gloss: plateau, Tags: [hill, town]}
+  - {Form: fuchi, Gloss: deep pool, Tags: [lake, river]}
+  - {Form: ura, Gloss: bay, Tags: [lake, village]}
+  - {Form: e, Gloss: inlet, Tags: [lake, river]}
+  - {Form: se, Gloss: shallows, Tags: [river]}
+  - {Form: taki, Gloss: waterfall, Tags: [river, mountain]}
+  - {Form: tsu, Gloss: harbour, Tags: [river, town, lake]}
+  - {Form: kubo, Gloss: hollow, Tags: [valley, village]}
+  - {Form: no, Gloss: plain, Tags: [valley, village]}
+  - {Form: ta, Gloss: paddy, Tags: [valley, village]}
+  - {Form: ichi, Gloss: market town, Tags: [town, city]}

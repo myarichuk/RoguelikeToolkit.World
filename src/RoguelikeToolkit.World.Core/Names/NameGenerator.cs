@@ -494,7 +494,8 @@ public static class FantasyNameGenerator
     /// <summary>
     /// Do two fragments share a root? Any word of one (3+ letters) inside a word of the other,
     /// or a common prefix of 4+ letters: "Ash"/"Ashbringer", "Gust"/"gustess", "Howling"/"howl".
-    /// Short particles ("al", "of", "mac") never count, so "al-Din" and "al-Misri" coexist.
+    /// Short words ("of", "mac") and article particles ("al-", "ash-") never count, so "ad-Din"
+    /// and "al-Misri" coexist.
     /// </summary>
     internal static bool SharesRoot(string? a, string? b)
     {
@@ -513,7 +514,9 @@ public static class FantasyNameGenerator
     private static IEnumerable<string> RootWords(string? s)
         => string.IsNullOrWhiteSpace(s)
             ? Array.Empty<string>()
-            : s.Split(new[] { ' ', '-', '\'' }, StringSplitOptions.RemoveEmptyEntries).Where(w => w.Length >= 3);
+            : s.Split(' ', StringSplitOptions.RemoveEmptyEntries)
+                .SelectMany(w => w.Substring(LeadingParticle(w)).Split(new[] { '-', '\'' }, StringSplitOptions.RemoveEmptyEntries))
+                .Where(w => w.Length >= 3);
 
     /// <summary>
     /// Roots already in a name, in every spelling that can surface: the authored form, its Latin
@@ -690,13 +693,18 @@ public static class FantasyNameGenerator
         noun ??= new MorphemeYaml { Form = "ford", Gloss = "crossing" };
 
         bool nounFirst = table.PlaceOrder.Equals("NounFirst", StringComparison.OrdinalIgnoreCase);
+        // Mutate the source spelling, not the rendering, so every script carries it ("Pontddu", "Понтддю").
+        if (nounFirst && HasTag(noun, "fem") && table.PlaceMutation.Equals("Soft", StringComparison.OrdinalIgnoreCase))
+            desc = AfterFeminine(desc, noun);
         var descShown = Display(desc, script);
         var nounShown = Display(noun, script);
         var first = CapWord(nounFirst ? nounShown : descShown);
         var secondRaw = nounFirst ? descShown : nounShown;
         string join = table.PlaceJoin.ToLowerInvariant();
         bool spaced = join == "space" || secondRaw.Contains(' ') || secondRaw.Contains('-') || first.Contains(' ');
-        string text = join == "hyphen" ? first + "-" + secondRaw
+        // A seam that would run three letters together is written with a hyphen, as Welsh does
+        // ("Rhyd-ddu", "Pwll-llwyd"), rather than losing a letter ("Rhyddu").
+        string text = join == "hyphen" || (!spaced && TripleAtSeam(first, secondRaw)) ? first + "-" + secondRaw
             : spaced ? first + " " + CapWord(secondRaw)
             // Single-word compounds read "Clearford", not "ClearFord".
             : Fuse(first, secondRaw.ToLowerInvariant(), dedupe: false);
@@ -718,6 +726,61 @@ public static class FantasyNameGenerator
             Parts = parts,
             Seed = seed,
         };
+    }
+
+    private static bool TripleAtSeam(string a, string b)
+    {
+        if (a.Length == 0 || b.Length == 0) return false;
+        char x = char.ToLowerInvariant(a[^1]);
+        if (char.ToLowerInvariant(b[0]) != x) return false;
+        return (a.Length > 1 && char.ToLowerInvariant(a[^2]) == x) || (b.Length > 1 && char.ToLowerInvariant(b[1]) == x);
+    }
+
+    /// <summary>A descriptor as it reads after a feminine noun: its feminine form, soft-mutated.</summary>
+    private static MorphemeYaml AfterFeminine(MorphemeYaml desc, MorphemeYaml noun)
+    {
+        var form = string.IsNullOrWhiteSpace(desc.FemForm) ? desc.Form : desc.FemForm;
+        return new MorphemeYaml
+        {
+            Form = SoftMutate(form, noun.Form),
+            Gloss = desc.Gloss,
+            Tags = desc.Tags,
+        };
+    }
+
+    /// <summary>
+    /// Welsh soft mutation of <paramref name="word"/>'s first consonant: p→b, t→d, c→g, b→f, d→dd,
+    /// m→f, ll→l, rh→r, and g is lost (gwyn → wyn, coch → goch). "ch", "th", "ph", "ff", "dd" and
+    /// vowels never mutate. After a word ending in s, t and d resist ("nos da", "Dinas Du").
+    /// Capitalization of the first letter is kept.
+    /// </summary>
+    internal static string SoftMutate(string word, string? previous = null)
+    {
+        if (word.Length < 2) return word;
+        var lower = word.ToLowerInvariant();
+        if (lower.StartsWith("ch") || lower.StartsWith("th") || lower.StartsWith("ph") ||
+            lower.StartsWith("ff") || lower.StartsWith("dd")) return word;
+        bool afterS = !string.IsNullOrEmpty(previous) && char.ToLowerInvariant(previous[^1]) == 's';
+        (int drop, string add) = lower switch
+        {
+            _ when lower.StartsWith("ll") => (2, "l"),
+            _ when lower.StartsWith("rh") => (2, "r"),
+            _ when lower[0] is 't' or 'd' && afterS => (0, ""),
+            _ => lower[0] switch
+            {
+                'p' => (1, "b"),
+                't' => (1, "d"),
+                'c' => (1, "g"),
+                'b' => (1, "f"),
+                'd' => (1, "dd"),
+                'm' => (1, "f"),
+                'g' => (1, ""),
+                _ => (0, ""),
+            },
+        };
+        if (drop == 0) return word;
+        var mutated = add + word.Substring(drop);
+        return char.IsUpper(word[0]) ? Cap(mutated) : mutated;
     }
 
     private static HashSet<string> TagsFor(PlaceContext ctx, string kind)
@@ -841,7 +904,21 @@ public static class FantasyNameGenerator
     private static string Cap(string s)
         => string.IsNullOrEmpty(s) ? s : char.ToUpperInvariant(s[0]) + s.Substring(1);
 
-    /// <summary>Capitalizes a word but leaves lowercase particles ("al-Bahr") alone.</summary>
+    /// <summary>Capitalizes a word but leaves a lowercase particle ("al-Bahr", "ash-Shams", "аль-Бахр") alone.</summary>
     private static string CapWord(string s)
-        => s.StartsWith("al-", StringComparison.Ordinal) ? s : Cap(s);
+        => LeadingParticle(s) > 0 ? s : Cap(s);
+
+    /// <summary>
+    /// Length of a hyphenated lowercase particle opening <paramref name="word"/> ("al-", "ash-",
+    /// "аль-"), 0 when there is none. Particles are grammar, not roots: "ash-Shams" must not
+    /// clash with "Rashid", nor "al-" with "Alder".
+    /// </summary>
+    private static int LeadingParticle(string word)
+    {
+        int h = word.IndexOf('-');
+        if (h <= 0 || h > 3 || h == word.Length - 1) return 0;
+        for (int i = 0; i < h; i++)
+            if (!char.IsLower(word[i])) return 0;
+        return h + 1;
+    }
 }

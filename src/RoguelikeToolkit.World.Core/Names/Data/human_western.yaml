@@ -69,6 +69,22 @@ Descriptors:
   - {Form: Lang, Gloss: long, Tags: [valley, river, lake, village]}
   - {Form: Gold, Gloss: golden, Tags: [deposit, city, river]}
   - {Form: Eisen, Gloss: iron, Tags: [deposit, mountain, hill, hold]}
+  - {Form: Lind, Gloss: lime tree, Tags: [village, forest, valley]}
+  - {Form: Eich, Gloss: oak, Tags: [forest, village]}
+  - {Form: Buch, Gloss: beech, Tags: [forest, hill]}
+  - {Form: Tann, Gloss: fir, Tags: [forest, mountain]}
+  - {Form: Birk, Gloss: birch, Tags: [forest, village]}
+  - {Form: Adler, Gloss: eagle, Tags: [mountain, high]}
+  - {Form: Hirsch, Gloss: stag, Tags: [forest, valley]}
+  - {Form: Schnee, Gloss: snow, Tags: [mountain, high]}
+  - {Form: Silber, Gloss: silver, Tags: [deposit, lake, river]}
+  - {Form: Tief, Gloss: deep, Tags: [lake, valley, river]}
+  - {Form: Mittel, Gloss: middle}
+  - {Form: Frei, Gloss: free, Tags: [town, city]}
+  - {Form: Kaiser, Gloss: emperor, Tags: [city, hold]}
+  - {Form: Rosen, Gloss: roses, Tags: [village, valley]}
+  - {Form: Sonnen, Gloss: sun}
+  - {Form: Dunkel, Gloss: dark, Tags: [dark, forest, danger]}
 Nouns:
   - {Form: dorf, Gloss: village, Tags: [village]}
   - {Form: heim, Gloss: home, Tags: [village, town]}
@@ -94,3 +110,11 @@ Nouns:
   - {Form: feld, Gloss: field, Tags: [valley, village]}
   - {Form: wald, Gloss: forest, Tags: [forest, dark]}
   - {Form: stein, Gloss: rock fort, Tags: [hold, camp]}
+  - {Form: teich, Gloss: pond, Tags: [lake, village]}
+  - {Form: moor, Gloss: moor, Tags: [lake, valley, dark]}
+  - {Form: wasser, Gloss: water, Tags: [lake, river, water]}
+  - {Form: holz, Gloss: wood, Tags: [forest, village]}
+  - {Form: loh, Gloss: grove, Tags: [forest, village]}
+  - {Form: busch, Gloss: thicket, Tags: [forest]}
+  - {Form: au, Gloss: river meadow, Tags: [valley, river, village]}
+  - {Form: winkel, Gloss: nook, Tags: [valley, village]}
