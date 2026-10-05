@@ -9,6 +9,7 @@ A .NET 10 solution containing a core class library (`RoguelikeToolkit.World.Core
 - [Names](docs/NAMES.md) — the data-driven name generator: YAML schema, styles, themes, scripts.
 - [Assessment](docs/ASSESSMENT.md) — how useful the library is for procedural RPGs/roguelikes, the gaps, and a plan for procedural history.
 - [docs/STORAGE.md](docs/STORAGE.md) — storage design for planet-scale terrain and 100k+ NPCs
+- [Surface modes plan](SURFACE_MODES_PLAN.md) — one pipeline, HexSphere and Map2D (lat/lon raster) surfaces; phased implementation plan.
 - [Plugins](docs/PLUGINS.md) — extend generation with full-trust compiled C# stages or untrusted Jint script stages.
 
 ## Core Library Architecture
