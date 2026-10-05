@@ -29,8 +29,8 @@ public class EntityBenchmarks
         for (int i = 0; i < Npcs; i++)
         {
             var id = _store.Create();
-            _place[id] = new Place { Tile = rng.Next(Tiles) };
-            _person[id] = new Person { Age = (byte)rng.Next(80), NameSeed = (uint)rng.Next() };
+            _place[id] = new Place { Tile = rng.Next(Tiles), X = (ushort)rng.Next(1 << 16), Y = (ushort)rng.Next(1 << 16) };
+            _person[id] = new Person { Species = (ushort)rng.Next(8), Faction = (ushort)rng.Next(16), Age = (byte)rng.Next(80), NameSeed = (uint)rng.Next() };
         }
         _index.Rebuild(Tiles, _store, _place, new TileOf());
     }

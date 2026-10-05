@@ -74,6 +74,9 @@ public class TectonicPlateLayer : StoreLayer<TectonicPlate>
     /// <summary>Rows reserved in the plate table even for small plate counts.</summary>
     public const int MinPlateCapacity = 256;
 
+    /// <param name="store">Owning tile store the layer reads through; also hosts the shared plate table.</param>
+    /// <param name="seedCount">Plate count to generate with.</param>
+    /// <param name="seed">Deterministic seed for plate generation.</param>
     /// <param name="arena">Ignored; kept for source compatibility. The layer allocates nothing: plate scratch lives in <see cref="TectonicPlateGenerationStage"/>.</param>
     public TectonicPlateLayer(WorldDataStore store, int seedCount, int seed = 42, ArenaAllocator? arena = null)
         : base(store)
