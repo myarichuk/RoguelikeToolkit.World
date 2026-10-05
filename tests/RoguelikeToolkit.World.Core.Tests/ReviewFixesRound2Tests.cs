@@ -9,6 +9,7 @@ namespace RoguelikeToolkit.World.Core.Tests;
 /// <summary>Second review round: plugin probing, danger re-basing, GridCellAt and sort replacements.</summary>
 public class ReviewFixesRound2Tests
 {
+#if !CORE_NETSTANDARD
     [Fact]
     public void MayContainStages_SkipsValidDependencies_ButNotUnparseableFiles()
     {
@@ -23,7 +24,9 @@ public class ReviewFixesRound2Tests
         try { Assert.True(PluginLoadContext.MayContainStages(junk)); } // surfaced by the real load
         finally { File.Delete(junk); }
     }
+#endif
 
+#if !CORE_NETSTANDARD // loads plugin DLLs from a directory: .NET-only (AssemblyLoadContext)
     [Fact]
     public void Discover_IgnoresDependencyDlls_WithoutDiagnostics()
     {
@@ -40,6 +43,7 @@ public class ReviewFixesRound2Tests
         }
         finally { Directory.Delete(dir, true); }
     }
+#endif
 
     [Fact]
     public void Smoothing_RebasesDanger_ToTheNewBiome()

@@ -6,7 +6,7 @@ ordering and layer contracts are shared.
 | | Compiled C# (`*.dll`) | Jint JavaScript |
 |---|---|---|
 | Trust | **Full trust** — same power as any referenced DLL. Only load DLLs you trust. | **Untrusted** — hardened sandbox: no CLR, no modules, no `eval`, no IO; statement/memory/time budgets. |
-| Package | Reference `RoguelikeToolkit.World.Core` (NuGet, future publish; project reference while developing in this repo). | Reference `RoguelikeToolkit.World.Scripting.Jint` (brings Jint). |
+| Package | Reference `RoguelikeToolkit.World.Core` (NuGet or the `com.rogueliketoolkit.world.core` UPM package; project reference while developing in this repo). | Reference `RoguelikeToolkit.World.Scripting.Jint` (NuGet or `com.rogueliketoolkit.world.scripting.jint`; brings Jint). |
 | Speed | Native; may touch store spans directly. | Proxy helpers per tile; fine for tuning passes, slower for heavy loops. |
 | Contract | `[WorldGeneratorStage(Order, Reads, Writes)]` attribute. | `JintStageSpec` with `Order` + `Reads`/`Writes`/`ReadsOptional` types. |
 | Example | `samples/DesertPlugin/DesertPlugin.cs` | `samples/JintScripts/aridity.js` |
@@ -78,7 +78,10 @@ elevation (15) → climate (16) → erosion (17) → hydrology (18) → biomes (
    foreach (var s in pipeline.Stages.OfType<AridityStage>()) s.Dryness = 0.35;
    pipeline.ValidateContracts(map); // optional early check (Execute checks too)
    ```
-5. Hosting notes: each DLL loads into its own collectible
+5. Unity / IL2CPP (`netstandard2.1` build): DLLs cannot be loaded at runtime. Compile the plugin into the
+   player, mark discovered stage types `[Preserve]` (or list them in `link.xml`), and pass their assemblies:
+   `pipeline.DiscoverFrom(new[] { typeof(AridityStage).Assembly });`. Same ordering, merge and contract rules.
+6. Hosting notes (.NET): each DLL loads into its own collectible
    `PluginLoadContext` — Core contracts stay shared (one
    `IWorldGeneratorStage` identity), plugin dependencies resolve from the
    plugin's own directory first. `ResetStages()`/`Dispose()` disposes stages

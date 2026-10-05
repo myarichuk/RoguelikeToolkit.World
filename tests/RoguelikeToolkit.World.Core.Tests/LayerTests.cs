@@ -2,7 +2,6 @@ using Xunit;
 using RoguelikeToolkit.World.Core;
 using System;
 using System.Diagnostics;
-using SharpArena.Allocators;
 
 namespace RoguelikeToolkit.World.Core.Tests;
 
@@ -39,27 +38,25 @@ public class LayerTests
     [Fact]
     public void TectonicPlateLayer_Generate_ZeroAllocation()
     {
-        using var arena = ArenaDefaults.Create();
         var map = new WorldMap(5);
-        using var layer = new TectonicPlateLayer(map.DataStore, 5, seed: 1234, arena: arena); // size 5 -> 252 tiles
+        using var layer = new TectonicPlateLayer(map.DataStore, 5, seed: 1234); // size 5 -> 252 tiles
         map.RegisterLayer(layer);
         map.DataStore.Allocate();
 
         // Let the JIT warm up the methods to ensure static init and JIT compilation
         // don't skew the results
-        using var warmupArena = ArenaDefaults.Create();
         var warmupMap = new WorldMap(1);
-        using var warmupLayer = new TectonicPlateLayer(warmupMap.DataStore, 1, 1, warmupArena);
+        using var warmupLayer = new TectonicPlateLayer(warmupMap.DataStore, 1, 1);
         warmupMap.RegisterLayer(warmupLayer);
         warmupMap.DataStore.Allocate();
 
         var warmupPipeline = new WorldGenerationPipeline();
-        warmupPipeline.AddStage(new TectonicPlateGenerationStage(1, 1, warmupArena));
+        warmupPipeline.AddStage(new TectonicPlateGenerationStage(1, 1));
         warmupPipeline.Execute(warmupMap);
 
         long memBefore = GC.GetAllocatedBytesForCurrentThread();
         var pipeline = new WorldGenerationPipeline();
-        pipeline.AddStage(new TectonicPlateGenerationStage(5, 1234, arena));
+        pipeline.AddStage(new TectonicPlateGenerationStage(5, 1234));
         pipeline.Execute(map);
         long memAfter = GC.GetAllocatedBytesForCurrentThread();
 
@@ -89,20 +86,18 @@ public class LayerTests
         const int seedCount = 128;
 
         PrewarmTopology(size);
-
-        using var arena = ArenaDefaults.Create();
         using var map = new WorldMap(size);
-        using var layer = new TectonicPlateLayer(map.DataStore, seedCount, seed: 1234, arena: arena);
+        using var layer = new TectonicPlateLayer(map.DataStore, seedCount, seed: 1234);
 
         map.RegisterLayer(layer);
         map.DataStore.Allocate();
 
-        var stage = new TectonicPlateGenerationStage(seedCount, 1234, arena);
+        var stage = new TectonicPlateGenerationStage(seedCount, 1234);
 
         // JIT warmup
         using (var warmupMap = new WorldMap(2))
         {
-            using var warmupLayer = new TectonicPlateLayer(warmupMap.DataStore, 2, 1234, arena);
+            using var warmupLayer = new TectonicPlateLayer(warmupMap.DataStore, 2, 1234);
             warmupMap.RegisterLayer(warmupLayer);
             warmupMap.DataStore.Allocate();
             stage.Execute(warmupMap);
@@ -137,17 +132,40 @@ public class LayerTests
             $"Repeated executes regressed too much: first={first} ticks, repeated median={repeatedMedian:F2} ticks");
     }
 
+    [Fact]
+    public void TectonicPlateGeneration_ReusedStage_MatchesFreshStage_AcrossMapSizes()
+    {
+        // The stage keeps grow-only scratch buffers. Running a larger map (and more plates)
+        // first leaves them oversized with stale data; a smaller map afterwards must still
+        // match a fresh stage bit for bit.
+        static TectonicPlate[] Run(TectonicPlateGenerationStage stage, int size, int seedCount)
+        {
+            using var map = new WorldMap(size);
+            using var layer = new TectonicPlateLayer(map.DataStore, seedCount, seed: 99);
+            map.RegisterLayer(layer);
+            map.DataStore.Allocate();
+            stage.SeedCount = seedCount;
+            stage.Execute(map);
+            return map.DataStore.GetSpan<TectonicPlate>().ToArray();
+        }
+
+        var reused = new TectonicPlateGenerationStage(64, 99);
+        Run(reused, 5, 64);
+        var afterLarge = Run(reused, 3, 12);
+        var fresh = Run(new TectonicPlateGenerationStage(12, 99), 3, 12);
+
+        Assert.Equal(fresh, afterLarge);
+    }
+
     private static void PrewarmTopology(int size)
     {
         const int seedCount = 8;
-
-        using var arena = ArenaDefaults.Create();
         using var map = new WorldMap(size);
-        using var layer = new TectonicPlateLayer(map.DataStore, seedCount, seed: 1, arena: arena);
+        using var layer = new TectonicPlateLayer(map.DataStore, seedCount, seed: 1);
         map.RegisterLayer(layer);
         map.DataStore.Allocate();
 
-        using var stage = new TectonicPlateGenerationStage(seedCount, 1, arena);
+        using var stage = new TectonicPlateGenerationStage(seedCount, 1);
         stage.Execute(map);
     }
 

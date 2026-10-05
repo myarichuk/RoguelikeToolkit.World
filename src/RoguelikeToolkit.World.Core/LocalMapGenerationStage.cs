@@ -2,6 +2,7 @@ using System;
 
 namespace RoguelikeToolkit.World.Core;
 
+[Preserve] // created via reflection by WorldGenerationPipeline.Discover; keep it through Unity code stripping
 [WorldGeneratorStage(20, Reads = new[] { typeof(ElevationInfo) }, ReadsOptional = new[] { typeof(ClimateInfo), typeof(HydrologyInfo) }, Writes = new[] { typeof(LocalMapInfo) })]
 public class LocalMapGenerationStage : IWorldGeneratorStage, ISeededStage
 {

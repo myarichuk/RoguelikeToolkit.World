@@ -2,6 +2,7 @@ using System;
 
 namespace RoguelikeToolkit.World.Core;
 
+[Preserve] // created via reflection by WorldGenerationPipeline.Discover; keep it through Unity code stripping
 [WorldGeneratorStage(15, Reads = new[] { typeof(TectonicPlate) }, Writes = new[] { typeof(ElevationInfo) })]
 public class ElevationGenerationStage : IWorldGeneratorStage, ISeededStage
 {

@@ -36,6 +36,10 @@ public unsafe class WorldDataStore : IDisposable
 
     private MemoryMappedFile? _mmf;
     private MemoryMappedViewAccessor? _accessor;
+    // In-memory stores on netstandard2.1 (Unity) and on browser/WASI .NET: unmanaged heap instead of an
+    // anonymous memory-mapped file, which those platforms do not support (WebGL, browser-wasm, some mobile).
+    // File-backed stores still use the mapping.
+    private IntPtr _heap;
     private byte* _ptr;
     private readonly int _tileCount;
     private readonly int _size;
@@ -122,7 +126,7 @@ public unsafe class WorldDataStore : IDisposable
             return; // Already registered
         }
 
-        if (_mmf != null)
+        if (IsAllocated)
         {
             throw new InvalidOperationException("Cannot register layers after Allocate() has been called.");
         }
@@ -155,7 +159,7 @@ public unsafe class WorldDataStore : IDisposable
     {
         if (_currentTotalBytes == 0)
             throw new InvalidOperationException("No layers registered. Call RegisterLayer<T>() before Allocate().");
-        if (_mmf != null) return;
+        if (IsAllocated) return;
 
         if (_filePath != null)
         {
@@ -187,8 +191,15 @@ public unsafe class WorldDataStore : IDisposable
         }
         else
         {
-            _mmf = MemoryMappedFile.CreateNew(null, _currentTotalBytes);
             _dataOffset = 0;
+            if (UseHeapForInMemory)
+            {
+                _heap = System.Runtime.InteropServices.Marshal.AllocHGlobal(new IntPtr(_currentTotalBytes));
+                _ptr = (byte*)_heap;
+                new Span<byte>(_ptr, (int)_currentTotalBytes).Clear(); // AllocHGlobal memory is not zeroed
+                return;
+            }
+            _mmf = MemoryMappedFile.CreateNew(null, _currentTotalBytes);
         }
 
         long viewBytes = _filePath != null ? HeaderSize + _currentTotalBytes : _currentTotalBytes;
@@ -619,8 +630,28 @@ public unsafe class WorldDataStore : IDisposable
         return latC * lonCells + lonC;
     }
 
+    /// <summary>
+    /// True where anonymous memory-mapped files are unavailable: netstandard2.1 (Unity players, WebGL)
+    /// and browser/WASI .NET, where <see cref="MemoryMappedFile.CreateNew(string, long)"/> throws
+    /// PlatformNotSupportedException.
+    /// </summary>
+    private static bool UseHeapForInMemory =>
+#if NET
+        OperatingSystem.IsBrowser() || OperatingSystem.IsWasi();
+#else
+        true;
+#endif
+
+    private bool IsAllocated => _mmf != null || _heap != IntPtr.Zero;
+
     public void Dispose()
     {
+        if (_heap != IntPtr.Zero)
+        {
+            System.Runtime.InteropServices.Marshal.FreeHGlobal(_heap);
+            _heap = IntPtr.Zero;
+            _ptr = null;
+        }
         if (_ptr != null && _accessor != null)
         {
             _accessor.SafeMemoryMappedViewHandle.ReleasePointer();

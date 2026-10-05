@@ -182,6 +182,6 @@ Log: 2026-09-28.
   Gate re-measure: NO retune needed — tun 4,2,9,3,46,29,204,61; des in bounds; glacier present+confined; canyon seed12 green.
   E3 DONE: rerun-after-hydro picks up lake bonus; `ClimateRefreshTests` (flat map, lake ring +0.06 exactly, far tiles bit-identical, refresh idempotent).
   E4 WONT FIX: s4seed42 mean|dT| 0.026, 2.4% mask flips, glacier 223→177. Fix needs a new stage + order plumbing + gate recalibration for a 2% effect; guardrails pass with stale temps. Revisit if guardrails ever fail.
-  B3 DONE: `docs/FLAT_ARENA_NOTE.md` (reuse/sphere-anchored inventory, spike order, M/L estimate).
+  B3 DONE: flat-arena note, since folded into `SURFACE_MODES_PLAN.md` §9 (Map2D surface mode supersedes the planar arena).
   D3/D4 DONE (Phase 6): `DisplacedRadius` depressionScale/oceanScale + visualizer slider/checkbox; `DepressionCue` umber blend (land-only) in Terrain view.
   Tests (Release): Core 157/157 (Category!=Stress; +E6/E3/Ceiling tests) + Presentation 100/100 (+12 Relief) green; App + Benchmarks build 0 warnings.

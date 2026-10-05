@@ -82,6 +82,7 @@ cell→offset math inside `RegionMaps.DeriveChildContext`.
   non-spherical standalone scenario map needs (`IHexMap` over `OffsetGrid`
   already exists, but derivation is sphere-anchored via `ParentContext`/
   `Vector3D`). Acceptance: design note + estimate; no code until B1/B2 land.
+  Superseded by `SURFACE_MODES_PLAN.md` (Map2D surface mode).
 
 ## Epic C — BenchmarkDotNet + scale smoke tests
 

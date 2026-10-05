@@ -43,6 +43,7 @@ public class PipelineTests
         Assert.Contains("10", ex.Message);
     }
 
+#if !CORE_NETSTANDARD // loads plugin DLLs from a directory: .NET-only (AssemblyLoadContext)
     [Fact]
     public void Discover_ReportsPluginLoadFailuresThroughCallback()
     {
@@ -67,6 +68,7 @@ public class PipelineTests
             Directory.Delete(pluginDirectory, recursive: true);
         }
     }
+#endif
 
     [Fact]
     public void Discover_ThrowsAggregateExceptionForLoadFailuresWithoutCallback()

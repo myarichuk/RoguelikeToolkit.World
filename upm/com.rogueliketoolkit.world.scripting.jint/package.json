@@ -1,0 +1,28 @@
+{
+  "name": "com.rogueliketoolkit.world.scripting.jint",
+  "displayName": "RoguelikeToolkit World Scripting (Jint)",
+  "version": "1.0.0",
+  "unity": "2022.3",
+  "description": "Sandboxed JavaScript (Jint) world generation stages for RoguelikeToolkit World: no CLR access, no IO, statement/memory/time budgets.",
+  "license": "MIT",
+  "author": {
+    "name": "Michael Yarichuk"
+  },
+  "repository": {
+    "type": "git",
+    "url": "https://github.com/myarichuk/RoguelikeToolkit.World.git"
+  },
+  "documentationUrl": "https://github.com/myarichuk/RoguelikeToolkit.World/blob/main/docs/PLUGINS.md",
+  "licensesUrl": "https://github.com/myarichuk/RoguelikeToolkit.World/blob/main/LICENSE",
+  "keywords": [
+    "procedural",
+    "worldgen",
+    "scripting",
+    "jint",
+    "roguelike"
+  ],
+  "dependencies": {
+    "com.rogueliketoolkit.world.core": "1.0.0",
+    "org.nuget.jint": "4.16.2"
+  }
+}

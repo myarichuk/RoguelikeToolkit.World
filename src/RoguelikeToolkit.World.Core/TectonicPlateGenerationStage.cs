@@ -1,9 +1,8 @@
 using System;
-using SharpArena.Allocators;
-using SharpArena.Collections;
 
 namespace RoguelikeToolkit.World.Core;
 
+[Preserve] // created via reflection by WorldGenerationPipeline.Discover; keep it through Unity code stripping
 [WorldGeneratorStage(10, Writes = new[] { typeof(TectonicPlate) })]
 public class TectonicPlateGenerationStage : IWorldGeneratorStage, ISeededStage, IDisposable
 {
@@ -55,23 +54,22 @@ public class TectonicPlateGenerationStage : IWorldGeneratorStage, ISeededStage, 
     /// </summary>
     public double SegmentGapFloor { get; set; } = 0.25;
 
-    private readonly ArenaAllocator _arena;
-
-    // Cached scratch so repeated Execute calls stay allocation-free.
+    // Cached scratch so repeated Execute calls stay allocation-free: buffers grow
+    // to the largest map/plate count seen and are reused (never shrunk) after that.
     private int[] _plateIds = Array.Empty<int>();
     private Vector3D[] _seedCopy = Array.Empty<Vector3D>();
+    private double[] _seedElevations = Array.Empty<double>();
+    private readonly OrogenyScratch _orogeny = new();
     private static readonly VoronoiPlatePartitioner FallbackPartitioner = new();
 
     public TectonicPlateGenerationStage()
     {
-        _arena = ArenaDefaults.Create();
     }
 
-    public TectonicPlateGenerationStage(int seedCount, int seed = 42, ArenaAllocator? arena = null)
+    public TectonicPlateGenerationStage(int seedCount, int seed = 42)
     {
         SeedCount = seedCount;
         Seed = seed;
-        _arena = arena ?? ArenaDefaults.Create();
     }
 
     public TectonicPlateGenerationStage(int seedCount, int seed, IPlatePartitioner partitioner)
@@ -82,7 +80,6 @@ public class TectonicPlateGenerationStage : IWorldGeneratorStage, ISeededStage, 
 
     public void Execute(WorldMap map)
     {
-        _arena.Reset();
         var store = map.DataStore;
         var span = store.GetSpan<TectonicPlate>();
         if (!store.IsTableRegistered<PlateInfo>() || store.GetTable<PlateInfo>().Length < SeedCount)
@@ -94,9 +91,10 @@ public class TectonicPlateGenerationStage : IWorldGeneratorStage, ISeededStage, 
         table.Clear();
         span.Clear();
 
-        var seeds = new ArenaList<Vector3D>(_arena, SeedCount);
-        var seedElevations = new ArenaList<double>(_arena, SeedCount);
-        var seedDriftSpeeds = new ArenaList<double>(_arena, SeedCount);
+        Grow(ref _seedCopy, SeedCount);
+        Grow(ref _seedElevations, SeedCount);
+        var seeds = _seedCopy;
+        var seedElevations = _seedElevations;
 
         // Per-plate sub-streams: each plate's parameters depend only on (Seed, plate
         // ordinal), never on iteration order, so output is reproducible on demand.
@@ -105,9 +103,9 @@ public class TectonicPlateGenerationStage : IWorldGeneratorStage, ISeededStage, 
             var r = Rng.Create(Seed, i);
             double lat = r.NextDouble() * 180.0 - 90.0;
             double lon = r.NextDouble() * 360.0 - 180.0;
-            seeds.Add(Vector3D.FromGeoCoord(new GeoCoord(lat, lon)));
-            seedElevations.Add(r.NextDouble());
-            seedDriftSpeeds.Add(r.NextDouble());
+            seeds[i] = Vector3D.FromGeoCoord(new GeoCoord(lat, lon));
+            seedElevations[i] = r.NextDouble();
+            double driftSpeed = r.NextDouble();
 
             // Uniform random unit vector (drawn after the legacy parameters so the
             // first four draws — and therefore existing plate layouts — are unchanged).
@@ -118,7 +116,7 @@ public class TectonicPlateGenerationStage : IWorldGeneratorStage, ISeededStage, 
             table[i] = new PlateInfo
             {
                 Elevation = seedElevations[i],
-                DriftSpeed = seedDriftSpeeds[i],
+                DriftSpeed = driftSpeed,
                 DriftX = dir.X,
                 DriftY = dir.Y,
                 DriftZ = dir.Z,
@@ -131,12 +129,9 @@ public class TectonicPlateGenerationStage : IWorldGeneratorStage, ISeededStage, 
         // noisy flood-fill growth for organic borders). The strategy writes
         // 0-based seed ordinals; per-plate parameters below stay pure
         // functions of (Seed, plate ordinal) for reproducibility.
-        if (_plateIds.Length < store.TileCount) _plateIds = new int[store.TileCount];
-        if (_seedCopy.Length < SeedCount) _seedCopy = new Vector3D[SeedCount];
+        Grow(ref _plateIds, store.TileCount);
         var plateIds = _plateIds;
-        var seedArray = _seedCopy;
-        for (int s = 0; s < SeedCount; s++) seedArray[s] = seeds[s];
-        var seedSpan = new ReadOnlySpan<Vector3D>(seedArray, 0, SeedCount);
+        var seedSpan = new ReadOnlySpan<Vector3D>(seeds, 0, SeedCount);
         var idSpan = new Span<int>(plateIds, 0, store.TileCount);
         (Partitioner ?? (IPlatePartitioner)FallbackPartitioner).Partition(store, tilePositions, seedSpan, idSpan, Seed);
 
@@ -174,7 +169,7 @@ public class TectonicPlateGenerationStage : IWorldGeneratorStage, ISeededStage, 
         }
 
         ClassifyBoundaries(store, span, table, tilePositions, ConvergenceThreshold);
-        PropagateOrogeny(store, span, table, _arena, MaxBoundaryDistance);
+        PropagateOrogeny(store, span, table, _orogeny, MaxBoundaryDistance);
     }
 
     /// <summary>
@@ -288,24 +283,25 @@ public class TectonicPlateGenerationStage : IWorldGeneratorStage, ISeededStage, 
     /// Multi-source BFS from every boundary tile: each tile learns its distance to
     /// the nearest boundary, that boundary's type, and the orogeny driver decayed
     /// by exp(-d/w). Deterministic (index-ordered seeding, sorted neighbors) and
-    /// allocation-free (all scratch lives in the stage arena).
+    /// allocation-free once warm (all scratch lives in the stage's reused buffers).
     /// </summary>
     private static void PropagateOrogeny(
-        WorldDataStore store, Span<TectonicPlate> span, ReadOnlySpan<PlateInfo> table, ArenaAllocator arena, int maxDistance)
+        WorldDataStore store, Span<TectonicPlate> span, ReadOnlySpan<PlateInfo> table, OrogenyScratch scratch, int maxDistance)
     {
         int n = store.TileCount;
-        var dist = new ArenaList<int>(arena, n);
-        var srcDriver = new ArenaList<float>(arena, n);
-        var srcWidth = new ArenaList<float>(arena, n);
-        var srcType = new ArenaList<byte>(arena, n);
-        var queue = new ArenaList<int>(arena, n);
-        for (int i = 0; i < n; i++)
-        {
-            dist.Add(-1);
-            srcDriver.Add(0f);
-            srcWidth.Add(1f);
-            srcType.Add((byte)PlateBoundaryType.None);
-        }
+        scratch.EnsureCapacity(n);
+        // Spans sliced to n: the buffers may be larger after a bigger map ran on this stage.
+        var dist = scratch.Dist.AsSpan(0, n);
+        var srcDriver = scratch.SrcDriver.AsSpan(0, n);
+        var srcWidth = scratch.SrcWidth.AsSpan(0, n);
+        var srcType = scratch.SrcType.AsSpan(0, n);
+        // Each tile enters the queue at most once (dist is set before enqueue), so n slots suffice.
+        var queue = scratch.Queue.AsSpan(0, n);
+        int tail = 0;
+        dist.Fill(-1);
+        srcDriver.Clear();
+        srcWidth.Fill(1f);
+        srcType.Fill((byte)PlateBoundaryType.None);
 
         // Seed in index order so ties resolve deterministically.
         Span<int> neighbors = stackalloc int[6];
@@ -316,11 +312,11 @@ public class TectonicPlateGenerationStage : IWorldGeneratorStage, ISeededStage, 
             srcDriver[i] = span[i].Orogeny;
             srcType[i] = (byte)span[i].Boundary;
             srcWidth[i] = (float)SourceWidth(store, span, table, i, neighbors);
-            queue.Add(i);
+            queue[tail++] = i;
         }
 
         int head = 0;
-        while (head < queue.Length)
+        while (head < tail)
         {
             int cur = queue[head++];
             int nd = dist[cur] + 1;
@@ -334,7 +330,7 @@ public class TectonicPlateGenerationStage : IWorldGeneratorStage, ISeededStage, 
                 srcDriver[nb] = srcDriver[cur];
                 srcWidth[nb] = srcWidth[cur];
                 srcType[nb] = srcType[cur];
-                queue.Add(nb);
+                queue[tail++] = nb;
             }
         }
 
@@ -383,8 +379,32 @@ public class TectonicPlateGenerationStage : IWorldGeneratorStage, ISeededStage, 
         return BeltWidth(plate.Boundary, plate.Orogeny, plate.Crust, across);
     }
 
+    /// <summary>Nothing unmanaged is held any more; kept so existing <c>using</c> sites compile.</summary>
     public void Dispose()
     {
-        _arena.Dispose();
+    }
+
+    private static void Grow<T>(ref T[] buffer, int length)
+    {
+        if (buffer.Length < length) buffer = new T[length];
+    }
+
+    /// <summary>Per-tile BFS scratch for <see cref="PropagateOrogeny"/>, owned by one stage instance.</summary>
+    private sealed class OrogenyScratch
+    {
+        public int[] Dist = Array.Empty<int>();
+        public float[] SrcDriver = Array.Empty<float>();
+        public float[] SrcWidth = Array.Empty<float>();
+        public byte[] SrcType = Array.Empty<byte>();
+        public int[] Queue = Array.Empty<int>();
+
+        public void EnsureCapacity(int n)
+        {
+            Grow(ref Dist, n);
+            Grow(ref SrcDriver, n);
+            Grow(ref SrcWidth, n);
+            Grow(ref SrcType, n);
+            Grow(ref Queue, n);
+        }
     }
 }

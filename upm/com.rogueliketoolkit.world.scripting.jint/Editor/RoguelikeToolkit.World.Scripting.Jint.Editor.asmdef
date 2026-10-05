@@ -1,0 +1,16 @@
+{
+  "name": "RoguelikeToolkit.World.Scripting.Jint.Editor",
+  "rootNamespace": "RoguelikeToolkit.World.Scripting.Jint.Editor",
+  "references": [],
+  "includePlatforms": [
+    "Editor"
+  ],
+  "excludePlatforms": [],
+  "allowUnsafeCode": false,
+  "overrideReferences": true,
+  "precompiledReferences": [],
+  "autoReferenced": false,
+  "defineConstraints": [],
+  "versionDefines": [],
+  "noEngineReferences": false
+}
