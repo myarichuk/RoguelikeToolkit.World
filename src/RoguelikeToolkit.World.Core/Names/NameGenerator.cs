@@ -299,7 +299,22 @@ public static class FantasyNameGenerator
         // never the child's own stem ("Vess Vessseth" is not a lineage, it is a typo).
         bool matri = effLineage.Equals(Lineages.Matrilineal, StringComparison.OrdinalIgnoreCase);
         string? parentForm = null;
-        if (table.Patronymic)
+        bool human = race.Equals(FantasyRaces.Human, StringComparison.OrdinalIgnoreCase);
+        // Tables like Hebrew use either a patronymic or a family name, never both:
+        // the lineage slot is rolled before the parent is picked so a fired
+        // clan/family slot suppresses the patronymic ("David Cohen", never
+        // "David ben Yosef Cohen").
+        bool preRolledLineage = table.FamilyReplacesPatronymic && table.Patronymic;
+        bool preClanned = false, preFamily = false;
+        if (preRolledLineage)
+        {
+            uint preClanChance = (uint)(table.ClanChance >= 0 ? table.ClanChance : 45);
+            preClanned = table.Clans.Count > 0 && rng.NextUInt(100) < preClanChance;
+            if (!preClanned)
+                preFamily = table.FamilyAffixes.Count > 0 && rng.NextUInt(100) < (uint)table.FamilyChance;
+        }
+        bool lineageTaken = preClanned || preFamily;
+        if (table.Patronymic && !lineageTaken)
         {
             var marker = Marker(table, feminine, script);
             // Never the child's own stem or anything sharing a root with the name so far, which
@@ -334,9 +349,10 @@ public static class FantasyNameGenerator
         }
 
         // Clan / family / warband / epithet slots. Race-specific behaviour lives in
-        // the YAML (ClanChance, EpithetChance, FamilyChance); only the half-bloods,
-        // which borrow a human family name, are special-cased by race.
-        bool human = race.Equals(FantasyRaces.Human, StringComparison.OrdinalIgnoreCase);
+        // the YAML (ClanChance, EpithetChance, FamilyChance, FamilyReplacesPatronymic);
+        // only the half-bloods, which borrow a human family name, are special-cased by race.
+        // A person name holds at most three parts: the epithet below yields when a
+        // patronymic plus a clan/family name already filled the lineage slot.
         if (race.Equals(FantasyRaces.HalfElf, StringComparison.OrdinalIgnoreCase))
         {
             AddHumanFamily(ref rng, store, culture, parts, script, feminine, used);
@@ -351,7 +367,7 @@ public static class FantasyNameGenerator
         else
         {
             uint clanChance = (uint)(table.ClanChance >= 0 ? table.ClanChance : human ? 45 : 80);
-            bool clanned = table.Clans.Count > 0 && rng.NextUInt(100) < clanChance;
+            bool clanned = preRolledLineage ? preClanned : table.Clans.Count > 0 && rng.NextUInt(100) < clanChance;
             if (clanned)
             {
                 // Optional slot: when every clan repeats a word already in the name, leave it out.
@@ -366,7 +382,7 @@ public static class FantasyNameGenerator
                     });
                 }
             }
-            else if (table.FamilyAffixes.Count > 0 && rng.NextUInt(100) < (uint)table.FamilyChance)
+            else if (preRolledLineage ? preFamily : table.FamilyAffixes.Count > 0 && rng.NextUInt(100) < (uint)table.FamilyChance)
             {
                 if (table.FamilySuffix)
                 {
@@ -406,7 +422,7 @@ public static class FantasyNameGenerator
                     }
                 }
             }
-            if (table.Epithets.Count > 0 && rng.NextUInt(100) < (uint)table.EpithetChance)
+            if (table.Epithets.Count > 0 && parts.Count < 3 && rng.NextUInt(100) < (uint)table.EpithetChance)
                 AddPickBiased(ref rng, parts, table.Epithets, NamePartRoles.Epithet, tokens, script, used);
         }
 

@@ -535,4 +535,68 @@ public sealed class NameQualityTests
                     Assert.True(distinct >= 25, $"{s.Label}: only {distinct} distinct {kind} names in 120 rolls (water={ctx.NearWater}, high={ctx.Highland}, dark={ctx.DarkForest}, valley={ctx.Valley}, deposit={ctx.HasDeposit}, danger={ctx.Dangerous}).");
                 }
     }
+
+    [Fact]
+    public void PersonNames_HoldAtMostThreeParts()
+    {
+        // Given + one lineage slot + one optional epithet: no four-part stacks.
+        foreach (var s in FantasyNameGenerator.Styles())
+            for (int seed = 1; seed <= 30; seed++)
+                foreach (var feminine in new[] { false, true })
+                {
+                    var n = FantasyNameGenerator.GeneratePerson(s.Race, s.Culture, seed, feminine: feminine);
+                    Assert.True(n.Parts.Count <= 3, $"{s.Label}: '{n.Text}' has {n.Parts.Count} parts.");
+                }
+    }
+
+    [Fact]
+    public void Hebrew_UsesEitherPatronymicOrFamily_NeverBoth()
+    {
+        int withPatr = 0, withFam = 0;
+        for (int seed = 1; seed <= 120; seed++)
+            foreach (var feminine in new[] { false, true })
+            {
+                var n = FantasyNameGenerator.GeneratePerson(FantasyRaces.Human, Cultures.Hebrew, seed, feminine: feminine);
+                int patr = n.Parts.Count(p => p.Role is NamePartRoles.Patronymic or NamePartRoles.Matronymic);
+                int fam = n.Parts.Count(p => p.Role is NamePartRoles.Family or NamePartRoles.Clan);
+                Assert.True(patr + fam == 1, $"'{n.Text}' has {patr} patronymics and {fam} family names.");
+                if (patr == 1) withPatr++; else withFam++;
+            }
+        Assert.True(withPatr > 20 && withFam > 20, $"patronymic {withPatr}, family {withFam}: both forms should appear.");
+    }
+
+    [Fact]
+    public void Catfolk_AreSingleStoryNames_WithAnOptionalDeed()
+    {
+        // Wandering tale-keepers: a road-name plus an earned deed-title, no parent-names or clans.
+        int withDeed = 0;
+        for (int seed = 1; seed <= 120; seed++)
+        {
+            var n = FantasyNameGenerator.GeneratePerson(FantasyRaces.Catfolk, Cultures.FantasyCommon, seed);
+            Assert.DoesNotContain(n.Parts, p => p.Role is NamePartRoles.Patronymic or NamePartRoles.Matronymic or NamePartRoles.Clan);
+            Assert.True(n.Parts.Count <= 2, $"'{n.Text}' has {n.Parts.Count} parts.");
+            if (n.Parts.Any(p => p.Role == NamePartRoles.Epithet)) withDeed++;
+        }
+        Assert.True(withDeed > 20, $"only {withDeed}/120 catfolk carry a deed-title.");
+    }
+
+    [Fact]
+    public void Dogfolk_CarryPackNames_NotParentNames()
+    {
+        // Hearth-wardens: a duty-name plus a pack name; parent-names are gone.
+        int withPack = 0;
+        for (int seed = 1; seed <= 120; seed++)
+        {
+            var n = FantasyNameGenerator.GeneratePerson(FantasyRaces.Dogfolk, Cultures.FantasyCommon, seed);
+            Assert.DoesNotContain(n.Parts, p => p.Role is NamePartRoles.Patronymic or NamePartRoles.Matronymic);
+            var pack = n.Parts.FirstOrDefault(p => p.Role == NamePartRoles.Clan);
+            if (pack is not null)
+            {
+                withPack++;
+                Assert.Contains("pack", pack.Gloss, StringComparison.OrdinalIgnoreCase);
+            }
+        }
+        Assert.True(withPack >= 80, $"only {withPack}/120 dogfolk carry a pack name.");
+    }
+
 }

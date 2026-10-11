@@ -245,9 +245,14 @@ public sealed class NameGeneratorTests
             var arabic = FantasyNameGenerator.GeneratePerson(FantasyRaces.Human, Cultures.Arabic, seed);
             Assert.StartsWith("ibn ", arabic.Parts.Single(p => p.Role == NamePartRoles.Patronymic).Form, StringComparison.Ordinal);
             var hebrew = FantasyNameGenerator.GeneratePerson(FantasyRaces.Human, Cultures.Hebrew, seed);
-            Assert.StartsWith("בן ", hebrew.Parts.Single(p => p.Role == NamePartRoles.Patronymic).Form, StringComparison.Ordinal);
+            // Hebrew uses either a patronymic or a family name, never both.
+            Assert.Equal(1, hebrew.Parts.Count(p => p.Role == NamePartRoles.Patronymic) + hebrew.Parts.Count(p => p.Role is NamePartRoles.Family or NamePartRoles.Clan));
+            foreach (var hp in hebrew.Parts.Where(p => p.Role == NamePartRoles.Patronymic))
+                Assert.StartsWith("בן ", hp.Form, StringComparison.Ordinal);
             var hebrewLatin = FantasyNameGenerator.GeneratePerson(FantasyRaces.Human, Cultures.Hebrew, seed, script: NameScript.Latin);
-            Assert.StartsWith("ben ", hebrewLatin.Parts.Single(p => p.Role == NamePartRoles.Patronymic).Form, StringComparison.Ordinal);
+            Assert.Equal(1, hebrewLatin.Parts.Count(p => p.Role == NamePartRoles.Patronymic) + hebrewLatin.Parts.Count(p => p.Role is NamePartRoles.Family or NamePartRoles.Clan));
+            foreach (var hp in hebrewLatin.Parts.Where(p => p.Role == NamePartRoles.Patronymic))
+                Assert.StartsWith("ben ", hp.Form, StringComparison.Ordinal);
         }
     }
 
@@ -303,7 +308,7 @@ public sealed class NameGeneratorTests
     {
         var cat = FantasyNameGenerator.GeneratePerson(FantasyRaces.Catfolk, Cultures.FantasyCommon, seed: 3, lineage: "");
         Assert.Equal(Lineages.Matrilineal, cat.Lineage);
-        Assert.Contains(cat.Parts, p => p.Role == NamePartRoles.Matronymic);
+        Assert.DoesNotContain(cat.Parts, p => p.Role is NamePartRoles.Patronymic or NamePartRoles.Matronymic);
         var dwarf = FantasyNameGenerator.GeneratePerson(FantasyRaces.Dwarf, Cultures.FantasyCommon, seed: 3, lineage: "  ");
         Assert.Equal(Lineages.Patrilineal, dwarf.Lineage);
     }
