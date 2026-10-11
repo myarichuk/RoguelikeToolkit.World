@@ -3,7 +3,7 @@ DisplayName: "Human · English (Old English)"
 PlaceFallback: false
 Patronymic: false
 LineageDefault: Patrilineal
-Provenance: real Old English dithematic roots (ASCII transliteration); -son patronymics
+Provenance: real Old English dithematic roots (ASCII transliteration); no patronymic slot, -ham/-ton place words
 PatronymicSon: son
 PatronymicDaughter: dohtor
 FamilySuffix: true

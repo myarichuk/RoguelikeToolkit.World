@@ -21,7 +21,7 @@ GivenStems:
   - {Form: Jalal, Gloss: majesty, Tags: [masc]}
   - {Form: Nasser, Gloss: victor, Tags: [masc]}
   - {Form: Saqr, Gloss: falcon, Tags: [masc]}
-  - {Form: Dhib, Gloss: wolf, Tags: [masc]}
+  - {Form: Dhi'b, Gloss: wolf, Tags: [masc]}
   - {Form: Nasr, Gloss: eagle, Tags: [masc]}
   - {Form: Jamal, Gloss: beauty, Tags: [masc]}
   - {Form: Omar, Gloss: flourishing, Tags: [masc]}
@@ -80,7 +80,7 @@ Descriptors:
   - {Form: al-Qamar, Gloss: the moon, Tags: [lake, water, valley, river, village]}
   - {Form: al-Shams, Gloss: the sun, Tags: [city, hill]}
   - {Form: al-Saqr, Gloss: the falcon, Tags: [mountain, hill, high]}
-  - {Form: al-Dhib, Gloss: the wolf, Tags: [danger, forest, hill]}
+  - {Form: al-Dhi'b, Gloss: the wolf, Tags: [danger, forest, hill]}
   - {Form: al-Nasr, Gloss: the eagle, Tags: [mountain, high]}
   - {Form: al-Hadid, Gloss: the iron, Tags: [deposit, mountain]}
   - {Form: al-Dhahab, Gloss: the gold, Tags: [deposit, city]}

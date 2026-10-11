@@ -5,6 +5,7 @@ Provenance: real Hebrew names (biblical and modern) with ben/bat nasab; Hebrew s
 # Whole authentic names rather than stitched roots: Hebrew theophoric names only work with specific pairings.
 CompoundChance: 0
 FamilyChance: 35
+FamilyReplacesPatronymic: true
 PatronymicSon: בן
 PatronymicDaughter: בת
 PatronymicSonLatin: ben
@@ -34,7 +35,7 @@ GivenStems:
   - {Form: אריאל, Latin: Ariel, Gloss: lion of God, Tags: [masc]}
   - {Form: ברק, Latin: Barak, Gloss: lightning, Tags: [masc]}
   - {Form: נדב, Latin: Nadav, Gloss: generous, Tags: [masc]}
-  - {Form: נועם, Latin: Noam, Gloss: pleasantness, Tags: [masc]}
+  - {Form: נועם, Latin: Noam, Gloss: pleasantness}
   - {Form: עומר, Latin: Omer, Gloss: sheaf of grain, Tags: [masc]}
   - {Form: אורי, Latin: Uri, Gloss: my light, Tags: [masc]}
   - {Form: שאול, Latin: Shaul, Gloss: asked for, Tags: [masc]}

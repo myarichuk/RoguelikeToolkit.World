@@ -19,7 +19,7 @@ GivenStems:
   - {Form: Medved, Gloss: bear, Tags: [bound]}
   - {Form: Orel, Gloss: eagle, Tags: [bound]}
   - {Form: Volko, Base: Volk, Gloss: wolf, Tags: [bound]}
-  - {Form: Casimir, Gloss: peace commander, Tags: [masc, solo]}
+  - {Form: Casimir, Gloss: proclaimer of peace, Tags: [masc, solo]}
   - {Form: Lech, Gloss: cunning, Tags: [masc, solo]}
   - {Form: Radomir, Gloss: joyful peace, Tags: [masc, solo]}
   - {Form: Goran, Gloss: mountain man, Tags: [masc, solo]}

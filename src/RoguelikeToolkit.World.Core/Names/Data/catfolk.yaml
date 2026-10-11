@@ -1,52 +1,58 @@
 Key: catfolk
 DisplayName: "Catfolk"
-ClanChance: 100
-EpithetChance: 25
+EpithetChance: 50
+CompoundChance: 40
 LineageDefault: Matrilineal
-Provenance: original roaming-hunter roots in a tabaxi-like spirit; no milk/mice cliches
-PatronymicSon: tom
-PatronymicDaughter: queenie
+Provenance: original wandering tale-keepers; a single road-name plus an earned deed-title, no parent-names or clans
+Patronymic: false
 Banned: [tabaxi, milk, mice, mouse]
 GivenStems:
-  - {Form: Marr, Gloss: night-purr}
-  - {Form: Taji, Gloss: stripe}
-  - {Form: Whisk, Gloss: whisker}
+  - {Form: Dusk, Gloss: dusk-hunter}
+  - {Form: Hush, Gloss: silent-step}
+  - {Form: Drift, Gloss: drifter}
+  - {Form: Quest, Gloss: curiosity-seeker}
+  - {Form: Tale, Gloss: tale-keeper}
+  - {Form: Taji, Gloss: striped one}
   - {Form: Prowl, Gloss: prowler}
   - {Form: Roam, Gloss: roamer}
-  - {Form: Claw, Gloss: claw-sheath}
-  - {Form: Lith, Gloss: lithe}
   - {Form: Cloud, Gloss: cloud-walker}
-  - {Form: Dusk, Gloss: dusk-hunter}
-  - {Form: Pounce, Gloss: pouncer}
   - {Form: Slink, Gloss: slinker}
-  - {Form: Riff, Gloss: neck-ruff}
-  - {Form: Tale, Gloss: tale-keeper}
-  - {Form: Drift, Gloss: drifter}
-  - {Form: Yowl, Gloss: yowler}
-  - {Form: Hush, Gloss: silent-step}
-  - {Form: Quest, Gloss: curiosity-seeker}
-  - {Form: Canop, Gloss: canopy-leaper}
-  - {Form: Veln, Gloss: velvet-paw}
-  - {Form: Twisk, Gloss: ear-twitch}
+  - {Form: Fern, Gloss: fern-path finder}
+  - {Form: Moth, Gloss: moth-chaser}
+  - {Form: Reed, Gloss: reed-wader}
+  - {Form: Sorrel, Gloss: sorrel-step}
+  - {Form: Ash, Gloss: ash-treader}
+  - {Form: Flint, Gloss: flint-eyed}
+  - {Form: Cinder, Gloss: cinder-sleeper}
+  - {Form: Ember, Gloss: ember-watcher}
+  - {Form: Juniper, Gloss: juniper-leaper}
+  - {Form: Rowan, Gloss: rowan-climber}
+  - {Form: Sage, Gloss: sage-sniffer}
+  - {Form: Willow, Gloss: willow-shade lover}
+  - {Form: Alder, Gloss: alder-percher}
+  - {Form: Wren, Gloss: wren-friend}
 SecondStems:
-  - {Form: pelt, Gloss: peltry}
-  - {Form: paw, Gloss: pawed}
-  - {Form: tail, Gloss: tailed}
-  - {Form: whisker, Gloss: whiskered}
-  - {Form: stripe, Gloss: striped}
-  - {Form: purr, Gloss: purring}
-  - {Form: claw, Gloss: clawed}
-  - {Form: hunter, Gloss: hunter}
-  - {Form: wander, Gloss: wanderer}
+  - {Form: song, Gloss: song-bearer}
   - {Form: tale, Gloss: tale-bearer}
+  - {Form: road, Gloss: road-wise}
+  - {Form: moon, Gloss: moon-watcher}
+  - {Form: whisper, Gloss: soft-whisper}
+  - {Form: dusk, Gloss: dusk-born}
+  - {Form: star, Gloss: star-reader}
+  - {Form: wind, Gloss: wind-follower}
 FamilyAffixes: []
-Clans:
-  - {Form: Farprowl, Gloss: band of the far prowl}
-  - {Form: Cloudleap, Gloss: band of the cloud leap}
-  - {Form: Silentstep, Gloss: band of the silent step}
+Clans: []
 Epithets:
-  - {Form: Fartreader, Gloss: who treads far lands}
+  - {Form: Farwalker, Gloss: who treads far lands}
   - {Form: Taleteller, Gloss: who tells the road tales}
+  - {Form: Moonreader, Gloss: who reads the moon}
+  - {Form: Duskwatcher, Gloss: who watches the dusk}
+  - {Form: Pathfinder, Gloss: who finds the path}
+  - {Form: Nightsinger, Gloss: who sings to the night}
+  - {Form: Cloudchaser, Gloss: who chases the clouds}
+  - {Form: Emberkeeper, Gloss: who keeps the ember}
+  - {Form: Starwatcher, Gloss: who watches the stars}
+  - {Form: Softstep, Gloss: whose step is soft}
 Descriptors:
   - {Form: Moonlit, Gloss: moonlit, Tags: [dark, high]}
   - {Form: Dappled, Gloss: dappled, Tags: [forest]}

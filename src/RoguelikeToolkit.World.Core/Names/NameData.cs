@@ -83,6 +83,14 @@ public sealed class CultureData
     /// (dwarven, fantasy_common, human_eastern, human_western) set this true.
     /// </summary>
     public bool FamilySuffix { get; set; } = false;
+    /// <summary>
+    /// When true, the clan/family slot replaces the patronymic instead of stacking
+    /// with it: a name gets "David ben Yosef" or "David Cohen", never
+    /// "David ben Yosef Cohen". For cultures where both are idiomatic together
+    /// (Russian "Ivan Petrovich Sokolov", Arabic ism + nasab + nisba) leave false.
+    /// Hebrew sets this true.
+    /// </summary>
+    public bool FamilyReplacesPatronymic { get; set; } = false;
     public string LineageDefault { get; set; } = "Patrilineal";
     public string Provenance { get; set; } = "original";
     public List<MorphemeYaml> GivenStems { get; set; } = new();
