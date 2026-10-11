@@ -1,6 +1,4 @@
 using System;
-using SharpArena.Allocators;
-using SharpArena.Collections;
 
 namespace RoguelikeToolkit.World.Core;
 
@@ -77,8 +75,7 @@ public class TectonicPlateLayer : StoreLayer<TectonicPlate>
     /// <param name="store">Store the layer lives in.</param>
     /// <param name="seedCount">Plate count the host intends to generate with (<see cref="SeedCount"/>).</param>
     /// <param name="seed">Generation seed (<see cref="Seed"/>).</param>
-    /// <param name="arena">Ignored; kept for source compatibility. The layer allocates nothing: plate scratch lives in <see cref="TectonicPlateGenerationStage"/>.</param>
-    public TectonicPlateLayer(WorldDataStore store, int seedCount, int seed = 42, ArenaAllocator? arena = null)
+    public TectonicPlateLayer(WorldDataStore store, int seedCount, int seed = 42)
         : base(store)
     {
         if ((uint)seedCount > TectonicPlate.MaxPlates)

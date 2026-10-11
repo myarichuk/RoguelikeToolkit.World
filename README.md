@@ -186,7 +186,7 @@ Supported floor: Unity 2022.3 (IL2CPP before 2022.1 cannot instantiate generics 
 ### Install
 
 Two UPM packages ship the prebuilt `netstandard2.1` DLLs: `com.rogueliketoolkit.world.core` and
-`com.rogueliketoolkit.world.scripting.jint` (depends on core). Third-party DLLs (SharpArena, YamlDotNet, Jint) come
+`com.rogueliketoolkit.world.scripting.jint` (depends on core). Third-party DLLs (YamlDotNet for core, Jint for scripting) come
 from [UnityNuGet](https://github.com/bdovaz/UnityNuGet) as `org.nuget.*` dependencies instead of being bundled: Unity
 refuses two copies of one DLL, and Jint/YamlDotNet are shared with `RoguelikeToolkit.Entities`. In
 `Packages/manifest.json`:
@@ -222,9 +222,9 @@ with the Entities zip, use the same folder so shared DLLs (Jint, YamlDotNet, ...
   assemblies at all). Compile plugin stages into the player and hand their assemblies over:
   `pipeline.DiscoverFrom(new[] { typeof(MyStage).Assembly });`. `Discover("dir")` reports a
   `PlatformNotSupportedException` diagnostic for the directory and still discovers the built-in stages.
-- **Memory:** in-memory stores use `Marshal.AllocHGlobal` instead of an anonymous memory-mapped file, and arenas use
-  SharpArena's `DotNetUnmanaged` backend instead of P/Invoking `mmap`/`VirtualAlloc` (neither resolves on every
-  player platform). File-backed stores (`WithFilePath`) still memory-map; avoid them on WebGL.
+- **Memory:** in-memory stores use `Marshal.AllocHGlobal` instead of an anonymous memory-mapped file (no P/Invoke to
+  `mmap`/`VirtualAlloc`, which does not resolve on every player platform). File-backed stores (`WithFilePath`) still
+  memory-map; avoid them on WebGL.
 - **Stripping:** types Core reaches only through reflection (built-in stages, name/locale YAML DTOs) carry
   `[Preserve]` (honored by UnityLinker) and `[DynamicDependency]`. Each package hands UnityLinker its own `link.xml`
   through an editor hook (Unity ignores `link.xml` inside packages): YamlDotNet for Core; Jint and the script stage for

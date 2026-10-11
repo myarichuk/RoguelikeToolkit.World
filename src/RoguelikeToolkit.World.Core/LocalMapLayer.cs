@@ -1,5 +1,4 @@
 using System;
-using SharpArena.Allocators;
 
 namespace RoguelikeToolkit.World.Core;
 
