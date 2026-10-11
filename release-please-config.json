@@ -1,0 +1,18 @@
+{
+  "$schema": "https://raw.githubusercontent.com/googleapis/release-please/main/schemas/config.json",
+  "bootstrap-sha": "10735ef79607233ecbb0741cb73b3917caef2606",
+  "packages": {
+    ".": {
+      "release-type": "simple",
+      "package-name": "RoguelikeToolkit.World",
+      "include-component-in-tag": false,
+      "extra-files": [
+        { "type": "xml", "path": "src/RoguelikeToolkit.World.Core/RoguelikeToolkit.World.Core.csproj", "xpath": "//Project/PropertyGroup/Version" },
+        { "type": "xml", "path": "src/RoguelikeToolkit.World.Scripting.Jint/RoguelikeToolkit.World.Scripting.Jint.csproj", "xpath": "//Project/PropertyGroup/Version" },
+        { "type": "json", "path": "upm/com.rogueliketoolkit.world.core/package.json", "jsonpath": "$.version" },
+        { "type": "json", "path": "upm/com.rogueliketoolkit.world.scripting.jint/package.json", "jsonpath": "$.version" },
+        { "type": "json", "path": "upm/com.rogueliketoolkit.world.scripting.jint/package.json", "jsonpath": "$.dependencies['com.rogueliketoolkit.world.core']" }
+      ]
+    }
+  }
+}

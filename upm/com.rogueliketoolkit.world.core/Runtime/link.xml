@@ -1,0 +1,8 @@
+<!--
+  UnityLinker only reads link.xml files under Assets/; Editor/LinkXmlInjector.cs hands this one over during builds.
+  Core's own reflection targets (built-in stages, name/locale YAML DTOs) carry [Preserve]; YamlDotNet builds its
+  (de)serializers by reflection. Your own discovered stages need [Preserve] or a link.xml entry of your own.
+-->
+<linker>
+  <assembly fullname="YamlDotNet" preserve="all" />
+</linker>

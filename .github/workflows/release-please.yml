@@ -1,0 +1,23 @@
+name: Release Please
+
+# Maintains CHANGELOG.md, bumps the version (version.txt, both csproj <Version>s, both UPM package.json files) and
+# creates the vX.Y.Z tag + GitHub Release from conventional commits. Publish picks up the tag.
+on:
+  push:
+    branches: [main]
+
+permissions:
+  contents: write
+  pull-requests: write
+
+jobs:
+  release-please:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: googleapis/release-please-action@v4
+        with:
+          # PAT (secret) so the tag + release it creates trigger the tag-driven Publish workflow. Pushes made with
+          # the default GITHUB_TOKEN do not trigger downstream workflows, which would silently disable publishing.
+          token: ${{ secrets.RELEASE_PLEASE_TOKEN }}
+          config-file: release-please-config.json
+          manifest-file: .release-please-manifest.json
