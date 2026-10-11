@@ -4,7 +4,7 @@
   "version": "1.0.0",
   "unity": "2022.3",
   "description": "Sandboxed JavaScript (Jint) world generation stages for RoguelikeToolkit World: no CLR access, no IO, statement/memory/time budgets.",
-  "license": "MIT",
+  "license": "PolyForm-Noncommercial-1.0.0",
   "author": {
     "name": "Michael Yarichuk"
   },

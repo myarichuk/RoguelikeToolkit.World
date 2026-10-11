@@ -14,7 +14,15 @@
     <Description>Spherical hex world generation for RPG/roguelike games: tectonics, elevation, hydrology, climate, biomes, regions, city-site queries, and history hooks.</Description>
     <PackageTags>roguelike;rpg;worldgen;hex;procedural</PackageTags>
     <RepositoryUrl>https://github.com/myarichuk/RoguelikeToolkit.World</RepositoryUrl>
+    <!-- Dual license: PolyForm Noncommercial 1.0.0 (free) + commercial (see LICENSE-COMMERCIAL.md). -->
+    <PackageLicenseFile>LICENSE</PackageLicenseFile>
+    <PackageRequireLicenseAcceptance>true</PackageRequireLicenseAcceptance>
   </PropertyGroup>
+
+  <ItemGroup>
+    <None Include="..\..\LICENSE" Pack="true" PackagePath="\" Visible="false"/>
+    <None Include="..\..\LICENSE-COMMERCIAL.md" Pack="true" PackagePath="\" Visible="false"/>
+  </ItemGroup>
 
   <ItemGroup>
     <PackageReference Include="YamlDotNet" Version="18.1.0"/>
