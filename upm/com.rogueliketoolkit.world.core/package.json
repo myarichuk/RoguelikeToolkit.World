@@ -22,7 +22,6 @@
     "roguelike"
   ],
   "dependencies": {
-    "org.nuget.sharparena": "0.10.7",
     "org.nuget.yamldotnet": "18.1.0"
   }
 }

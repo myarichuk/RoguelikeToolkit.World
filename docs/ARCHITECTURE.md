@@ -200,7 +200,7 @@ If you ever find two runs disagreeing, it's a bug — the test suite has determi
 | Sites | `SiteInjectors.cs` |
 | Queries | `SpatialIndex.cs`, `TileFeatures.cs`, `CitySites.cs`, `Deposits.cs`, `FeatureCatalog.cs`, `Hydrography.cs`, `CanyonAnalysis.cs` |
 | Game-owned state | `HistoryHooks.cs`, `Materialization.cs` |
-| Randomness + noise | `Rng.cs`, `SphereNoise.cs`, `Glaciology.cs`, `PlatePartitioning.cs`, `ArenaDefaults.cs` |
+| Randomness + noise | `Rng.cs`, `SphereNoise.cs`, `Glaciology.cs`, `PlatePartitioning.cs` |
 
 ## Performance notes (no benchmarks were harmed)
 
