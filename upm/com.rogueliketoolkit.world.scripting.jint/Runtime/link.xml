@@ -1,0 +1,8 @@
+<!--
+  UnityLinker only reads link.xml files under Assets/; Editor/LinkXmlInjector.cs hands this one over during builds.
+  The script stage exposes host values (anonymous-type constants, delegates) that Jint reads by reflection.
+-->
+<linker>
+  <assembly fullname="RoguelikeToolkit.World.Scripting.Jint" preserve="all" />
+  <assembly fullname="Jint" preserve="all" />
+</linker>

@@ -1,0 +1,94 @@
+name: Publish
+
+# Tag-driven (vX.Y.Z, created by release-please). Builds and tests, then:
+#  - UPM: com.rogueliketoolkit.world.core-X.Y.Z.tgz and com.rogueliketoolkit.world.scripting.jint-X.Y.Z.tgz
+#    (prebuilt netstandard2.1 DLLs, see tools/upm/pack.py) attached to the GitHub Release; OpenUPM tracks them.
+#  - RoguelikeToolkit.World-X.Y.Z-unity-plugins.zip: full DLL closure for registry-less installs. Its name must
+#    not start with a tarball prefix, or OpenUPM could pick it up.
+#  - NuGet (Core + Scripting.Jint) only when the PUBLISH_ENABLED repo variable is 'true'; uses nuget.org trusted
+#    publishing (register this repo + publish.yml as a trusted publisher; no API key secret).
+on:
+  push:
+    tags: ['v*']
+
+permissions:
+  contents: write
+  id-token: write # NuGet trusted publishing (OIDC).
+
+jobs:
+  publish:
+    if: github.repository == 'myarichuk/RoguelikeToolkit.World'
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Setup .NET
+        uses: actions/setup-dotnet@v4
+        with:
+          dotnet-version: 10.0.x
+
+      - name: Setup Node
+        uses: actions/setup-node@v4
+        with:
+          node-version: 20
+
+      - name: Version from tag
+        id: v
+        run: echo "version=${GITHUB_REF_NAME#v}" >> "$GITHUB_OUTPUT"
+
+      - name: Build
+        run: dotnet build -c Release
+
+      - name: Test
+        run: dotnet test --no-build -c Release --filter "Category!=Stress"
+
+      - name: Pack UPM tarballs
+        run: |
+          python3 tools/upm/pack.py package \
+            --package upm/com.rogueliketoolkit.world.core \
+            --version ${{ steps.v.outputs.version }} \
+            --project src/RoguelikeToolkit.World.Core/RoguelikeToolkit.World.Core.csproj \
+            --out upm-dist
+          python3 tools/upm/pack.py package \
+            --package upm/com.rogueliketoolkit.world.scripting.jint \
+            --version ${{ steps.v.outputs.version }} \
+            --project src/RoguelikeToolkit.World.Scripting.Jint/RoguelikeToolkit.World.Scripting.Jint.csproj \
+            --sync-dependency com.rogueliketoolkit.world.core \
+            --out upm-dist
+
+      - name: Pack plugins zip
+        run: >
+          python3 tools/upm/pack.py plugins
+          --version ${{ steps.v.outputs.version }}
+          --project src/RoguelikeToolkit.World.Core/RoguelikeToolkit.World.Core.csproj
+          --project src/RoguelikeToolkit.World.Scripting.Jint/RoguelikeToolkit.World.Scripting.Jint.csproj
+          --link-xml upm/com.rogueliketoolkit.world.core/Runtime/link.xml
+          --link-xml upm/com.rogueliketoolkit.world.scripting.jint/Runtime/link.xml
+          --out upm-dist/RoguelikeToolkit.World-${{ steps.v.outputs.version }}-unity-plugins.zip
+
+      - name: Attach to release
+        run: gh release upload "${GITHUB_REF_NAME}" upm-dist/*.tgz upm-dist/*.zip --clobber
+        env:
+          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+
+      - name: Pack NuGet
+        if: vars.PUBLISH_ENABLED == 'true'
+        run: |
+          dotnet pack src/RoguelikeToolkit.World.Core -c Release -o nupkgs -p:Version=${{ steps.v.outputs.version }}
+          dotnet pack src/RoguelikeToolkit.World.Scripting.Jint -c Release -o nupkgs -p:Version=${{ steps.v.outputs.version }}
+
+      - name: Login to NuGet (trusted publishing)
+        id: nuget-login
+        if: vars.PUBLISH_ENABLED == 'true'
+        uses: NuGet/login@v1
+        with:
+          user: michael.yarichuk
+
+      - name: Push to NuGet
+        if: vars.PUBLISH_ENABLED == 'true'
+        run: >
+          dotnet nuget push "nupkgs/*.nupkg"
+          --api-key "${{ steps.nuget-login.outputs.NUGET_API_KEY }}"
+          --source https://api.nuget.org/v3/index.json
+          --skip-duplicate
