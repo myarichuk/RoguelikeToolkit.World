@@ -109,7 +109,9 @@ async function generate(p: GenerateParams): Promise<WorldSnapshot> {
 
 const post = (msg: WorkerResponse, transfer: Transferable[] = []) => (self as unknown as DedicatedWorkerGlobalScope).postMessage(msg, transfer);
 
-self.onmessage = async (ev: MessageEvent<WorkerRequest>) => {
+// addEventListener, not `self.onmessage =`: the .NET browser runtime treats an assigned onmessage
+// in a worker as its own channel and dotnet.create() never resolves (verified in Chromium).
+self.addEventListener('message', async (ev: MessageEvent<WorkerRequest>) => {
   const req = ev.data;
   try {
     switch (req.type) {
@@ -133,4 +135,4 @@ self.onmessage = async (ev: MessageEvent<WorkerRequest>) => {
   } catch (err) {
     post({ id: req.id, ok: false, error: String((err as Error)?.stack ?? err) });
   }
-};
+});

@@ -5,7 +5,7 @@ import { contour, pathData, shape } from '../engine/export/contour';
 export interface ContourRequest { sdf: Float32Array; w: number; h: number; scale: number; ring: number; rings: number; tolerance: number; }
 export interface ContourResult { land: string; coast: string; ripples: string[]; ms: number; rings: number; }
 
-self.onmessage = (e: MessageEvent<ContourRequest>) => {
+self.addEventListener('message', (e: MessageEvent<ContourRequest>) => {
   const t0 = performance.now();
   const { sdf, w, h, scale, ring, rings, tolerance } = e.data;
   const k = 1 / scale;
@@ -16,4 +16,4 @@ self.onmessage = (e: MessageEvent<ContourRequest>) => {
     land: pathData(coast, 4, w, h, true, k), coast: pathData(coast, 4, w, h, false, k), ripples, ms: performance.now() - t0, rings: coast.length,
   };
   (self as unknown as DedicatedWorkerGlobalScope).postMessage(result);
-};
+});

@@ -120,6 +120,9 @@ const DEPOSIT_LABEL: Record<DepositType, string> = {
 export const depositLabel = (t: DepositType): string => DEPOSIT_LABEL[t];
 const sizeClass = (r: number) => (r >= 0.85 ? 'rich' : r >= 0.65 ? 'large' : r >= 0.45 ? 'medium' : 'small');
 
+/** The culture (index into the chosen styles) that names places on a plate. Shared with the editor's nameAt. */
+export const styleIndexForPlate = (seed: number, plate: number, n: number): number => (n ? hash2(seed, plate) % n : 0);
+
 export function extractFeatures(c: CatalogInput): FeatureSet {
   const n = c.heights.length;
   const adj = buildAdjacency(n, c.faces);
@@ -150,7 +153,7 @@ export function extractFeatures(c: CatalogInput): FeatureSet {
     list.push(d);
   }
 
-  const styleOf = (t: number) => (c.styles.length ? hash2(c.seed, c.tilePlate[t] & 0xffff) % c.styles.length : 0);
+  const styleOf = (t: number) => styleIndexForPlate(c.seed, c.tilePlate[t] & 0xffff, c.styles.length);
   const near = (t: number, pred: (u: number) => boolean) => {
     if (pred(t)) return true;
     for (let k = adj.start[t]; k < adj.start[t + 1]; k++) if (pred(adj.list[k])) return true;

@@ -3,7 +3,7 @@ using RoguelikeToolkit.World.Core;
 using RoguelikeToolkit.World.Core.Names;
 using CoreWorld = RoguelikeToolkit.World.Core.World;
 
-namespace RoguelikeToolkit.Current.MapEditor.Engine;
+namespace RoguelikeToolkit.World.MapEditor.Engine;
 
 /// <summary>
 /// The worker-facing surface. Generation runs once; the JS side then pulls flat arrays

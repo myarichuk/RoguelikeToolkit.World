@@ -88,6 +88,18 @@ export class PackRegistry {
     this.changed();
   }
 
+  /** Drops a theme override from the user overlay (back to the pack's original). */
+  resetTheme(id: string): void {
+    const themes = this.loaded.find((l) => l.pack.id === USER_PACK_ID)?.pack.themes;
+    const i = themes?.findIndex((t) => t.id === id) ?? -1;
+    if (i >= 0) { themes!.splice(i, 1); this.changed(); }
+  }
+
+  /** True when the user overlay overrides this theme. */
+  isEdited(id: string): boolean {
+    return !!this.loaded.find((l) => l.pack.id === USER_PACK_ID)?.pack.themes?.some((t) => t.id === id);
+  }
+
   /** The user overlay as a standalone pack (for "export my theme"). */
   userPack(): ContentPack | undefined {
     return this.loaded.find((l) => l.pack.id === USER_PACK_ID)?.pack;

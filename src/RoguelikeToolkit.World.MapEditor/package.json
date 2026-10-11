@@ -1,6 +1,7 @@
 {
-  "name": "webmap-editor",
+  "name": "roguelike-toolkit-map-editor",
   "private": true,
+  "license": "PolyForm-Noncommercial-1.0.0",
   "version": "0.0.0",
   "type": "module",
   "scripts": {

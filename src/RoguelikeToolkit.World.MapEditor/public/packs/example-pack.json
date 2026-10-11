@@ -1,0 +1,279 @@
+{
+ "id": "example",
+ "name": "Example pack",
+ "version": "1.0.0",
+ "author": "RoguelikeToolkit.World",
+ "description": "Shows what a content pack can carry: a theme, authored SVG assets with palette tokens, a procedural preset, and placement rules.",
+ "themes": [
+  {
+   "id": "example.verdant",
+   "name": "Verdant (example pack)",
+   "palette": {
+    "ink": "#26301c",
+    "paper": "#ece0c2",
+    "shade": "#b9a37e",
+    "light": "#f6eedb",
+    "foliage": "#7ea85a",
+    "foliageDark": "#4f7a3a",
+    "water": "#7fa3a6",
+    "roof": "#a2553d",
+    "wall": "#ddd0b0",
+    "snow": "#fbfaf5",
+    "sand": "#e3c98f",
+    "none": "none"
+   },
+   "map": {
+    "paper": "#e4e6c9",
+    "sea": "#9fc4c8",
+    "shallow": "#7fb0b4",
+    "seaInk": "#1f4a52",
+    "landInk": "#26301c",
+    "coastWidth": 0.45,
+    "haloWidth": 3.5,
+    "rippleCount": 5,
+    "rippleOpacity": 0.75,
+    "hillshade": 0.18,
+    "grain": 0.035,
+    "stains": 0.06,
+    "innerCoast": 0.55,
+    "river": "#2f6a7a",
+    "riverWidth": 1.0,
+    "frame": "#26301c"
+   },
+   "biomes": {
+    "0": "#dcd2a6",
+    "1": "#cfdca2",
+    "2": "#ebd6a3",
+    "3": "#9ebf7e",
+    "4": "#c2b8a3",
+    "5": "#dbdbcf",
+    "6": "#86b06c",
+    "7": "#97a882",
+    "8": "#f2f2f0",
+    "9": "#d9a880",
+    "10": "#d8d79a",
+    "11": "#d6dc9a",
+    "12": "#cfa078",
+    "13": "#a9a294"
+   },
+   "labels": {
+    "capital": {
+     "font": "caps",
+     "size": 13,
+     "spacing": 0.06,
+     "uppercase": false,
+     "fill": "#26301c",
+     "halo": "#e4e6c9",
+     "haloWidth": 1.8,
+     "minZoom": 0,
+     "sizeExp": 0
+    },
+    "city": {
+     "font": "caps",
+     "size": 9.5,
+     "spacing": 0.04,
+     "uppercase": false,
+     "fill": "#26301c",
+     "halo": "#e4e6c9",
+     "haloWidth": 1.5,
+     "minZoom": 0,
+     "sizeExp": 0
+    },
+    "town": {
+     "font": "serif",
+     "size": 7,
+     "spacing": 0.02,
+     "uppercase": false,
+     "fill": "#26301c",
+     "halo": "#e4e6c9",
+     "haloWidth": 1.2,
+     "minZoom": 0.9,
+     "sizeExp": 0
+    },
+    "village": {
+     "font": "serif",
+     "size": 5,
+     "spacing": 0.0,
+     "uppercase": false,
+     "fill": "#26301c",
+     "halo": "#e4e6c9",
+     "haloWidth": 1.0,
+     "minZoom": 1.6,
+     "sizeExp": 0
+    },
+    "river": {
+     "font": "italic",
+     "size": 5,
+     "spacing": 0.12,
+     "uppercase": false,
+     "fill": "#26301c",
+     "halo": "#e4e6c9",
+     "haloWidth": 1.0,
+     "minZoom": 1.1,
+     "sizeExp": 0
+    },
+    "lake": {
+     "font": "italic",
+     "size": 6.5,
+     "spacing": 0.08,
+     "uppercase": false,
+     "fill": "#26301c",
+     "halo": "#e4e6c9",
+     "haloWidth": 1.1,
+     "minZoom": 0.7,
+     "sizeExp": 0
+    },
+    "sea": {
+     "font": "italic",
+     "size": 15,
+     "spacing": 0.32,
+     "uppercase": true,
+     "fill": "#26301c",
+     "halo": "#e4e6c9",
+     "haloWidth": 0,
+     "minZoom": 0,
+     "sizeExp": 0
+    },
+    "ocean": {
+     "font": "italic",
+     "size": 26,
+     "spacing": 0.55,
+     "uppercase": true,
+     "fill": "#26301c",
+     "halo": "#e4e6c9",
+     "haloWidth": 0,
+     "minZoom": 0,
+     "sizeExp": 0
+    },
+    "mountain": {
+     "font": "caps",
+     "size": 9,
+     "spacing": 0.38,
+     "uppercase": true,
+     "fill": "#26301c",
+     "halo": "#e4e6c9",
+     "haloWidth": 1.3,
+     "minZoom": 0.5,
+     "sizeExp": 0.25
+    },
+    "valley": {
+     "font": "italic",
+     "size": 7,
+     "spacing": 0.18,
+     "uppercase": false,
+     "fill": "#26301c",
+     "halo": "#e4e6c9",
+     "haloWidth": 1.2,
+     "minZoom": 0.9,
+     "sizeExp": 0
+    },
+    "forest": {
+     "font": "italic",
+     "size": 8.5,
+     "spacing": 0.22,
+     "uppercase": false,
+     "fill": "#26301c",
+     "halo": "#e4e6c9",
+     "haloWidth": 1.2,
+     "minZoom": 0.6,
+     "sizeExp": 0.2
+    },
+    "deposit": {
+     "font": "serif",
+     "size": 3.5,
+     "spacing": 0.0,
+     "uppercase": false,
+     "fill": "#26301c",
+     "halo": "#e4e6c9",
+     "haloWidth": 0.8,
+     "minZoom": 2.5,
+     "sizeExp": 0
+    },
+    "title": {
+     "font": "caps",
+     "size": 40,
+     "spacing": 0.12,
+     "uppercase": false,
+     "fill": "#26301c",
+     "halo": "#e4e6c9",
+     "haloWidth": 3,
+     "minZoom": 0,
+     "sizeExp": 0
+    }
+   },
+   "ui": {
+    "--bg": "#161b15",
+    "--panel": "#1f261d",
+    "--fg": "#e3ead8",
+    "--muted": "#98a58c",
+    "--accent": "#9fc46a",
+    "--line": "#33402f"
+   }
+  }
+ ],
+ "assets": [
+  {
+   "id": "example.obelisk",
+   "name": "Obelisk",
+   "category": "structure",
+   "size": 9,
+   "svg": "<svg viewBox=\"0 0 40 100\"><path d=\"M14 92 L17 22 L20 10 L23 22 L26 92 Z\" fill=\"token:wall\" stroke=\"token:ink\" stroke-width=\"2\" stroke-linejoin=\"round\"/><path d=\"M20 10 L23 22 L26 92 L20 92 Z\" fill=\"token:shade\" opacity=\"0.6\"/><path d=\"M6 92 H34 V98 H6 Z\" fill=\"token:shade\" stroke=\"token:ink\" stroke-width=\"2\"/></svg>",
+   "anchor": [
+    0.5,
+    0.96
+   ]
+  },
+  {
+   "id": "example.stones",
+   "name": "Standing stones",
+   "category": "structure",
+   "size": 6,
+   "svg": "<svg viewBox=\"0 0 120 70\"><g fill=\"token:shade\" stroke=\"token:ink\" stroke-width=\"2.5\" stroke-linejoin=\"round\"><path d=\"M8 66 V22 Q14 16 20 22 V66 Z\"/><path d=\"M34 66 V14 Q41 8 48 14 V66 Z\"/><path d=\"M62 66 V18 Q69 12 76 18 V66 Z\"/><path d=\"M92 66 V26 Q98 20 104 26 V66 Z\"/><path d=\"M28 14 H82 V22 H28 Z\" fill=\"token:wall\"/></g><path d=\"M0 68 H120\" stroke=\"token:ink\" stroke-width=\"2\"/></svg>",
+   "anchor": [
+    0.5,
+    0.97
+   ]
+  },
+  {
+   "id": "example.bigPine",
+   "name": "Tall conifer",
+   "category": "tree",
+   "size": 8,
+   "generator": "conifer",
+   "variants": 4
+  }
+ ],
+ "rules": [
+  {
+   "id": "example.desert-obelisks",
+   "assets": [
+    "example.obelisk"
+   ],
+   "biomes": [
+    2
+   ],
+   "elevation": [
+    0.03,
+    0.5
+   ],
+   "spacing": 90,
+   "density": 0.18
+  },
+  {
+   "id": "example.plains-stones",
+   "assets": [
+    "example.stones"
+   ],
+   "biomes": [
+    1,
+    10
+   ],
+   "elevation": [
+    0.03,
+    0.4
+   ],
+   "spacing": 110,
+   "density": 0.12
+  }
+ ]
+}
