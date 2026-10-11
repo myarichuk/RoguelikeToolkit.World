@@ -16,7 +16,7 @@ It is not part of the solution and CI does not build it.
 ## Run
 
 ```bash
-./build.sh                                # dotnet publish Engine -> web/_framework (no wasm workload needed)
+./build.sh                                # or: pwsh ./build.ps1 (Windows); publishes Engine -> web/_framework, no wasm workload needed
 python3 -m http.server -d web 8080        # any static server; open http://localhost:8080
 ```
 
