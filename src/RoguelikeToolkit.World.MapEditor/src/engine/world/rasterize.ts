@@ -1,0 +1,135 @@
+// Forward rasterization of the icosphere into map-space rasters (Mercator, see core/geo.ts).
+//
+// For a pixel direction d, the weights (d·(b×c), d·(c×a), d·(a×b)) are all non-negative iff the
+// ray hits spherical triangle abc, and, normalized, are the barycentric coordinates of that hit.
+// Heights interpolate linearly across each face instead of snapping to the nearest tile, so the
+// coast has no hex staircase. Categorical fields (biome, plate) take the dominant vertex; biome
+// borders get a smooth per-tile jitter so they read as organic regions, not hexagons.
+import { latOfY } from '../core/geo';
+import { hash2 } from '../core/rng';
+
+export interface TileFields {
+  /** xyz interleaved unit vectors. */
+  vectors: Float64Array;
+  /** Three tile indices per face. */
+  faces: Int32Array;
+  heights: Float64Array;
+  biomes: Uint8Array;
+}
+
+export interface Rasters {
+  width: number;
+  height: number;
+  /** Interpolated height, sea level 0. */
+  elevation: Float32Array;
+  /** Biome id per pixel (organic borders). */
+  biome: Uint8Array;
+  /** Dominant tile per pixel (inspection, categorical lookups such as plates). */
+  tile: Int32Array;
+}
+
+/** Smooth 2D value noise in [0,1), one independent field per `salt`. */
+function valueNoise(x: number, y: number, salt: number): number {
+  const xi = Math.floor(x), yi = Math.floor(y);
+  let fx = x - xi, fy = y - yi;
+  fx = fx * fx * (3 - 2 * fx); fy = fy * fy * (3 - 2 * fy);
+  const h = (i: number, j: number) => hash2(salt, (i * 73856093) ^ (j * 19349663)) / 4294967296;
+  const a = h(xi, yi), b = h(xi + 1, yi), c = h(xi, yi + 1), d = h(xi + 1, yi + 1);
+  return a + (b - a) * fx + (c - a) * fy + (a - b - c + d) * fx * fy;
+}
+
+export function rasterize(t: TileFields, W: number, H: number, biomeJitter = 0.22): Rasters {
+  const V = t.vectors, F = t.faces;
+  const elevation = new Float32Array(W * H).fill(NaN);
+  const biome = new Uint8Array(W * H);
+  const tile = new Int32Array(W * H);
+  const nT = V.length / 3;
+  const lon = new Float64Array(nT), lat = new Float64Array(nT);
+  for (let i = 0; i < nT; i++) {
+    lon[i] = Math.atan2(V[i * 3 + 1], V[i * 3]);
+    lat[i] = Math.asin(Math.max(-1, Math.min(1, V[i * 3 + 2])));
+  }
+  const pxLon = (2 * Math.PI) / W;
+  const rowSin = new Float64Array(H), rowCos = new Float64Array(H), rowLat = new Float64Array(H);
+  for (let y = 0; y < H; y++) {
+    const la = latOfY(y + 0.5);
+    rowLat[y] = la; rowSin[y] = Math.sin(la); rowCos[y] = Math.cos(la);
+  }
+  const colSin = new Float64Array(W), colCos = new Float64Array(W);
+  for (let x = 0; x < W; x++) {
+    const lo = -Math.PI + (x + 0.5) * pxLon;
+    colSin[x] = Math.sin(lo); colCos[x] = Math.cos(lo);
+  }
+  // Rows run north -> south (latitude descending): first row at or south of `la`.
+  const rowAtLat = (la: number): number => {
+    let lo = 0, hi = H - 1;
+    while (lo < hi) {
+      const mid = (lo + hi) >> 1;
+      if (rowLat[mid] > la) lo = mid + 1; else hi = mid;
+    }
+    return lo;
+  };
+  const jf = 1 / 7; // jitter feature size ~7 mu
+
+  for (let f = 0; f < F.length; f += 3) {
+    const ia = F[f], ib = F[f + 1], ic = F[f + 2];
+    const ax = V[ia * 3], ay = V[ia * 3 + 1], az = V[ia * 3 + 2];
+    const bx = V[ib * 3], by = V[ib * 3 + 1], bz = V[ib * 3 + 2];
+    const cx = V[ic * 3], cy = V[ic * 3 + 1], cz = V[ic * 3 + 2];
+    const nax = by * cz - bz * cy, nay = bz * cx - bx * cz, naz = bx * cy - by * cx;
+    const nbx = cy * az - cz * ay, nby = cz * ax - cx * az, nbz = cx * ay - cy * ax;
+    const ncx = ay * bz - az * by, ncy = az * bx - ax * bz, ncz = ax * by - ay * bx;
+    const sgn = Math.sign(ax * nax + ay * nay + az * naz) || 1;
+
+    let lo0 = lon[ia], lo1 = lon[ib], lo2 = lon[ic];
+    let la0 = Math.min(lat[ia], lat[ib], lat[ic]), la1 = Math.max(lat[ia], lat[ib], lat[ic]);
+    let lonMin: number, lonMax: number;
+    const containsPole = (pz: number) =>
+      sgn * pz * naz >= 0 && sgn * pz * nbz >= 0 && sgn * pz * ncz >= 0;
+    if (containsPole(1)) { la1 = Math.PI / 2; lonMin = -Math.PI; lonMax = Math.PI; }
+    else if (containsPole(-1)) { la0 = -Math.PI / 2; lonMin = -Math.PI; lonMax = Math.PI; }
+    else {
+      if (Math.max(lo0, lo1, lo2) - Math.min(lo0, lo1, lo2) > Math.PI) {
+        // Straddles the antimeridian: unwrap negatives, rasterize past +pi, wrap x.
+        if (lo0 < 0) lo0 += 2 * Math.PI;
+        if (lo1 < 0) lo1 += 2 * Math.PI;
+        if (lo2 < 0) lo2 += 2 * Math.PI;
+      }
+      lonMin = Math.min(lo0, lo1, lo2); lonMax = Math.max(lo0, lo1, lo2);
+    }
+    // Great-circle edges bulge poleward of their endpoints' latitude range; pad by two rows.
+    const y0 = Math.max(0, rowAtLat(la1) - 2);
+    const y1 = Math.min(H - 1, rowAtLat(la0) + 2);
+    if (y0 > H - 1 || y1 < 0) continue;
+    const x0 = Math.floor((lonMin + Math.PI) / pxLon) - 1;
+    const x1 = Math.ceil((lonMax + Math.PI) / pxLon) + 1;
+
+    const hA = t.heights[ia], hB = t.heights[ib], hC = t.heights[ic];
+    const bA = t.biomes[ia], bB = t.biomes[ib], bC = t.biomes[ic];
+    const sameBiome = bA === bB && bB === bC;
+    for (let y = y0; y <= y1; y++) {
+      const sl = rowSin[y], cl = rowCos[y];
+      for (let xx = x0; xx <= x1; xx++) {
+        const x = ((xx % W) + W) % W;
+        const dx = cl * colCos[x], dy = cl * colSin[x], dz = sl;
+        const wa = sgn * (dx * nax + dy * nay + dz * naz);
+        if (wa < -1e-12) continue;
+        const wb = sgn * (dx * nbx + dy * nby + dz * nbz);
+        if (wb < -1e-12) continue;
+        const wc = sgn * (dx * ncx + dy * ncy + dz * ncz);
+        if (wc < -1e-12) continue;
+        const s = wa + wb + wc;
+        const i = y * W + x;
+        elevation[i] = (wa * hA + wb * hB + wc * hC) / s;
+        tile[i] = wa >= wb && wa >= wc ? ia : wb >= wc ? ib : ic;
+        if (sameBiome) { biome[i] = bA; continue; }
+        const ja = wa / s + biomeJitter * (valueNoise(x * jf, y * jf, ia) - 0.5);
+        const jb = wb / s + biomeJitter * (valueNoise(x * jf, y * jf, ib) - 0.5);
+        const jc = wc / s + biomeJitter * (valueNoise(x * jf, y * jf, ic) - 0.5);
+        biome[i] = ja >= jb && ja >= jc ? bA : jb >= jc ? bB : bC;
+      }
+    }
+  }
+  for (let i = 0; i < elevation.length; i++) if (Number.isNaN(elevation[i])) throw new Error(`raster hole at pixel ${i}`);
+  return { width: W, height: H, elevation, biome, tile };
+}

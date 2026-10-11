@@ -118,6 +118,12 @@ Descriptors:
   - {Form: al-Sabil, Gloss: the fountain, Tags: [village, town, river]}
   - {Form: al-Sakhr, Gloss: the rock, Tags: [mountain, hill, hold]}
   - {Form: al-Hawa, Gloss: the breeze, Tags: [high, hill, lake]}
+  - {Form: al-Milh, Gloss: the salt, Tags: [sea]}
+  - {Form: al-Lulu, Gloss: the pearls, Tags: [sea]}
+  - {Form: al-Marjan, Gloss: the coral, Tags: [sea]}
+  - {Form: al-Zulumat, Gloss: the darkness, Tags: [sea]}
+  - {Form: al-Amwaj, Gloss: the waves, Tags: [sea]}
+  - {Form: al-Hut, Gloss: the whale, Tags: [sea]}
 Nouns:
   - {Form: Madinat, Gloss: city, Tags: [city, town]}
   - {Form: Qaryat, Gloss: village, Tags: [village]}
@@ -128,7 +134,7 @@ Nouns:
   - {Form: Hisn, Gloss: fortress, Tags: [hold, camp, city]}
   - {Form: Jabal, Gloss: mountain, Tags: [mountain, hill]}
   - {Form: Ain, Gloss: spring, Tags: [village, water, river]}
-  - {Form: Bahr, Gloss: sea, Tags: [lake, water]}
+  - {Form: Bahr, Gloss: sea, Tags: [lake, water, sea]}
   - {Form: Ghabat, Gloss: forest, Tags: [forest, dark]}
   - {Form: Wahat, Gloss: oasis, Tags: [village, water, valley]}
   - {Form: Tall, Gloss: mound, Tags: [hill, camp]}
@@ -157,3 +163,8 @@ Nouns:
   - {Form: Qasbat, Gloss: walled town, Tags: [town, hold, city]}
   - {Form: Marj, Gloss: meadow, Tags: [valley, village]}
   - {Form: Ghawr, Gloss: lowland, Tags: [valley]}
+  - {Form: Khalij, Gloss: gulf, Tags: [sea]}
+  - {Form: Muhit, Gloss: ocean, Tags: [sea]}
+  - {Form: Madiq, Gloss: strait, Tags: [sea]}
+  - {Form: Lujjat, Gloss: deep sea, Tags: [sea]}
+  - {Form: Khawr, Gloss: sea inlet, Tags: [sea]}

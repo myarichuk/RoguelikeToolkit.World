@@ -1,8 +1,9 @@
 <Project Sdk="Microsoft.NET.Sdk.WebAssembly">
 
   <!--
-    Spike: RoguelikeToolkit.World.Core compiled to browser-wasm (Mono interpreter, no workload needed),
-    driven from a Web Worker through [JSExport]. Not part of the solution; see ../README.md.
+    The map editor's world engine: RoguelikeToolkit.World.Core compiled to browser-wasm (Mono
+    interpreter, no workload needed), driven from a Web Worker through [JSExport]. The editor
+    front end (../RoguelikeToolkit.World.MapEditor) copies this project's published _framework.
   -->
   <PropertyGroup>
     <TargetFramework>net10.0</TargetFramework>
@@ -15,7 +16,7 @@
   </PropertyGroup>
 
   <ItemGroup>
-    <ProjectReference Include="..\..\..\src\RoguelikeToolkit.World.Core\RoguelikeToolkit.World.Core.csproj" />
+    <ProjectReference Include="..\RoguelikeToolkit.World.Core\RoguelikeToolkit.World.Core.csproj" />
   </ItemGroup>
 
 </Project>

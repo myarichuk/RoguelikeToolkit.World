@@ -70,12 +70,12 @@ Epithets: []
 Descriptors:
   - {Form: mor, Gloss: great}
   - {Form: beg, Gloss: little}
-  - {Form: glas, Gloss: grey-green, Tags: [valley, river, forest]}
+  - {Form: glas, Gloss: grey-green, Tags: [valley, river, forest, sea]}
   - {Form: dubh, Gloss: black}
   - {Form: ban, Gloss: white}
   - {Form: fionn, Gloss: fair}
   - {Form: ruadh, Gloss: red}
-  - {Form: garbh, Gloss: rough, Tags: [mountain, hill, danger]}
+  - {Form: garbh, Gloss: rough, Tags: [mountain, hill, danger, sea]}
   - {Form: cam, Gloss: crooked, Tags: [river, valley, hill]}
   - {Form: boy, Gloss: yellow}
   - {Form: lea, Gloss: grey}
@@ -88,6 +88,9 @@ Descriptors:
   - {Form: fad, Gloss: long, Tags: [valley, river, lake]}
   - {Form: illar, Gloss: eagle, Tags: [mountain, high, hill]}
   - {Form: cullen, Gloss: holly, Tags: [forest, hill, valley]}
+  - {Form: ron, Gloss: seal, Tags: [sea]}
+  - {Form: ciuin, Gloss: calm, Tags: [sea]}
+  - {Form: geal, Gloss: bright, Tags: [sea]}
 Nouns:
   - {Form: Bally, Gloss: townland, Tags: [village, town]}
   - {Form: Knock, Gloss: hill, Tags: [hill]}
@@ -120,3 +123,7 @@ Nouns:
   - {Form: Lag, Gloss: hollow, Tags: [valley]}
   - {Form: Coom, Gloss: corrie, Tags: [valley, mountain]}
   - {Form: Garry, Gloss: garden, Tags: [forest, village]}
+  - {Form: Muir, Gloss: sea, Tags: [sea, water]}
+  - {Form: Keel, Gloss: sea narrows, Tags: [sea]}
+  - {Form: Cuan, Gloss: haven bay, Tags: [sea]}
+  - {Form: Inver, Gloss: estuary, Tags: [sea]}

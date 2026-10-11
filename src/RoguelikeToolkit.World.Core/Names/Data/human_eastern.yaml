@@ -56,11 +56,11 @@ Descriptors:
   - {Form: Novo, Gloss: new, Tags: [village, town, city]}
   - {Form: Staro, Gloss: old, Tags: [village, town, city, hold]}
   - {Form: Zlato, Gloss: golden, Tags: [deposit, city, river]}
-  - {Form: Tikho, Gloss: quiet, Tags: [river, lake, village, valley]}
+  - {Form: Tikho, Gloss: quiet, Tags: [river, lake, village, valley, sea]}
   - {Form: Veliko, Gloss: great, Tags: [town, city, lake, mountain]}
   - {Form: Malo, Gloss: little, Tags: [village, hill, lake]}
   - {Form: Zeleno, Gloss: green, Tags: [forest, valley, hill, village]}
-  - {Form: Sine, Gloss: blue, Tags: [lake, river, mountain]}
+  - {Form: Sine, Gloss: blue, Tags: [lake, river, mountain, sea]}
   - {Form: Kameno, Gloss: stony, Tags: [hill, mountain, deposit, hold]}
   - {Form: Dubo, Gloss: oak, Tags: [forest, village, hill]}
   - {Form: Mokro, Gloss: wet, Tags: [river, lake, valley]}
@@ -79,6 +79,9 @@ Descriptors:
   - {Form: Medno, Gloss: copper, Tags: [deposit, mountain]}
   - {Form: Srebro, Gloss: silver, Tags: [deposit, lake, river]}
   - {Form: Gorno, Gloss: upper, Tags: [high, mountain, village, hill]}
+  - {Form: Modro, Gloss: deep blue, Tags: [sea]}
+  - {Form: Burno, Gloss: stormy, Tags: [sea]}
+  - {Form: Soleno, Gloss: salty, Tags: [sea]}
 Nouns:
   - {Form: grad, Gloss: fortified town, Tags: [town, city, hold]}
   - {Form: ves, Gloss: village, Tags: [village]}
@@ -122,3 +125,7 @@ Nouns:
   - {Form: varos, Gloss: town quarter, Tags: [town, city]}
   - {Form: dvor, Gloss: court, Tags: [village, hold]}
   - {Form: tabor, Gloss: camp, Tags: [camp]}
+  - {Form: more, Gloss: sea, Tags: [sea, water]}
+  - {Form: zaliv, Gloss: bay, Tags: [sea]}
+  - {Form: zatoka, Gloss: gulf, Tags: [sea]}
+  - {Form: pucina, Gloss: open sea, Tags: [sea]}

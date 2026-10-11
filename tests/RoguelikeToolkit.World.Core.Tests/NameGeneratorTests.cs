@@ -80,6 +80,32 @@ public sealed class NameGeneratorTests
         Assert.True(hits >= n / 3, $"Water context rarely reflected: {hits}/{n}.");
     }
 
+    [Theory]
+    [InlineData(FantasyRaces.Human, Cultures.FantasyCommon)]
+    [InlineData(FantasyRaces.Human, Cultures.Japanese)]
+    [InlineData(FantasyRaces.Human, Cultures.Arabic)]
+    [InlineData(FantasyRaces.Human, Cultures.Welsh)]
+    [InlineData(FantasyRaces.Human, Cultures.Russian)]
+    public void Sea_IsDeterministic_AndNamedWithASeaWord(string race, string culture)
+    {
+        Assert.Contains(PlaceKinds.Sea, PlaceKinds.All);
+        var store = FantasyNameGenerator.Shared;
+        var table = store.Get(FantasyNameGenerator.TableKey(race, culture));
+        var common = store.Get(Cultures.FantasyCommon);
+        var nouns = table.PlaceFallback ? table.Nouns.Concat(common.Nouns) : table.Nouns;
+        var seaWords = nouns.Where(n => n.Tags.Contains("sea")).Select(n => n.Form.ToLowerInvariant()).ToHashSet();
+        Assert.NotEmpty(seaWords);
+        for (int seed = 1; seed <= 25; seed++)
+        {
+            var a = FantasyNameGenerator.GeneratePlace(PlaceKinds.Sea, new PlaceContext(), race, culture, seed);
+            var b = FantasyNameGenerator.GeneratePlace(PlaceKinds.Sea, new PlaceContext(), race, culture, seed);
+            Assert.Equal(a.Text, b.Text);
+            Assert.Equal(a.Gloss, b.Gloss);
+            var geo = a.Parts.Single(p => p.Role == NamePartRoles.Geography).Form.ToLowerInvariant();
+            Assert.True(seaWords.Contains(geo), $"{culture}: '{a.Text}' names a sea with '{geo}'.");
+        }
+    }
+
     [Fact]
     public void Names_NeverEmitBannedWords()
     {
