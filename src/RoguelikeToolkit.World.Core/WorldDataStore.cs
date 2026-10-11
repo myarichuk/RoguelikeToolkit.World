@@ -36,6 +36,11 @@ public unsafe class WorldDataStore : IDisposable
 
     private MemoryMappedFile? _mmf;
     private MemoryMappedViewAccessor? _accessor;
+#if !NET
+    // In-memory stores on netstandard2.1 (Unity): unmanaged heap instead of an anonymous memory-mapped file,
+    // which not every player platform supports (WebGL, some mobile). File-backed stores still use the mapping.
+    private IntPtr _heap;
+#endif
     private byte* _ptr;
     private readonly int _tileCount;
     private readonly int _size;
@@ -122,7 +127,7 @@ public unsafe class WorldDataStore : IDisposable
             return; // Already registered
         }
 
-        if (_mmf != null)
+        if (IsAllocated)
         {
             throw new InvalidOperationException("Cannot register layers after Allocate() has been called.");
         }
@@ -155,7 +160,7 @@ public unsafe class WorldDataStore : IDisposable
     {
         if (_currentTotalBytes == 0)
             throw new InvalidOperationException("No layers registered. Call RegisterLayer<T>() before Allocate().");
-        if (_mmf != null) return;
+        if (IsAllocated) return;
 
         if (_filePath != null)
         {
@@ -187,8 +192,16 @@ public unsafe class WorldDataStore : IDisposable
         }
         else
         {
+#if NET
             _mmf = MemoryMappedFile.CreateNew(null, _currentTotalBytes);
             _dataOffset = 0;
+#else
+            _heap = System.Runtime.InteropServices.Marshal.AllocHGlobal(new IntPtr(_currentTotalBytes));
+            _ptr = (byte*)_heap;
+            _dataOffset = 0;
+            new Span<byte>(_ptr, (int)_currentTotalBytes).Clear(); // AllocHGlobal memory is not zeroed
+            return;
+#endif
         }
 
         long viewBytes = _filePath != null ? HeaderSize + _currentTotalBytes : _currentTotalBytes;
@@ -619,8 +632,28 @@ public unsafe class WorldDataStore : IDisposable
         return latC * lonCells + lonC;
     }
 
+    private bool IsAllocated
+    {
+        get
+        {
+#if NET
+            return _mmf != null;
+#else
+            return _mmf != null || _heap != IntPtr.Zero;
+#endif
+        }
+    }
+
     public void Dispose()
     {
+#if !NET
+        if (_heap != IntPtr.Zero)
+        {
+            System.Runtime.InteropServices.Marshal.FreeHGlobal(_heap);
+            _heap = IntPtr.Zero;
+            _ptr = null;
+        }
+#endif
         if (_ptr != null && _accessor != null)
         {
             _accessor.SafeMemoryMappedViewHandle.ReleasePointer();

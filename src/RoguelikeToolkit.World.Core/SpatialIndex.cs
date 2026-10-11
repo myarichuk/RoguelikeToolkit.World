@@ -243,7 +243,11 @@ public sealed class SpatialIndex
             order[c] = c;
             dots[c] = -Vector3D.Dot(target, _cellCenters[c]); // negated: ascending key sort == nearest first
         }
+#if NET5_0_OR_GREATER
         MemoryExtensions.Sort(dots, order);
+#else
+        SortCompat.Sort(dots, order);
+#endif
 
         int best = -1;
         double bestDot = double.NegativeInfinity;

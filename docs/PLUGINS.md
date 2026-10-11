@@ -78,7 +78,10 @@ elevation (15) → climate (16) → erosion (17) → hydrology (18) → biomes (
    foreach (var s in pipeline.Stages.OfType<AridityStage>()) s.Dryness = 0.35;
    pipeline.ValidateContracts(map); // optional early check (Execute checks too)
    ```
-5. Hosting notes: each DLL loads into its own collectible
+5. Unity / IL2CPP (`netstandard2.1` build): DLLs cannot be loaded at runtime. Compile the plugin into the
+   player, mark discovered stage types `[Preserve]` (or list them in `link.xml`), and pass their assemblies:
+   `pipeline.DiscoverFrom(new[] { typeof(AridityStage).Assembly });`. Same ordering, merge and contract rules.
+6. Hosting notes (.NET): each DLL loads into its own collectible
    `PluginLoadContext` — Core contracts stay shared (one
    `IWorldGeneratorStage` identity), plugin dependencies resolve from the
    plugin's own directory first. `ResetStages()`/`Dispose()` disposes stages

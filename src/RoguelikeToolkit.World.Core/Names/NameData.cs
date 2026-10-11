@@ -4,6 +4,7 @@ using YamlDotNet.Serialization.NamingConventions;
 
 namespace RoguelikeToolkit.World.Core.Names;
 
+[Preserve] // populated by YamlDotNet through reflection
 public sealed class MorphemeYaml
 {
     public string Form { get; set; } = string.Empty;
@@ -31,6 +32,7 @@ public sealed class MorphemeYaml
     public string FemForm { get; set; } = string.Empty;
 }
 
+[Preserve] // populated by YamlDotNet through reflection
 public sealed class CultureData
 {
     public string Key { get; set; } = string.Empty;
@@ -234,10 +236,7 @@ public sealed class NameDataStore
     {
         var store = new NameDataStore();
         problems = new List<string>();
-        var des = new DeserializerBuilder()
-            .WithNamingConvention(NullNamingConvention.Instance)
-            .IgnoreUnmatchedProperties()
-            .Build();
+        var des = AotYamlObjectFactory.CreateDeserializer();
 
         var asm = typeof(NameDataStore).Assembly;
         string prefix = asm.GetName().Name + ".Names.Data.";
@@ -422,9 +421,7 @@ public sealed class NameDataStore
         try
         {
             if (File.Exists(manifestPath))
-                manifest = System.Text.Json.JsonSerializer.Deserialize<Dictionary<string, string>>(
-                               File.ReadAllText(manifestPath))
-                           ?? manifest;
+                manifest = ShippedManifestJson.Read(File.ReadAllText(manifestPath)) ?? manifest;
             manifest = new Dictionary<string, string>(manifest, StringComparer.OrdinalIgnoreCase);
         }
         catch (Exception)
@@ -478,8 +475,7 @@ public sealed class NameDataStore
             }
         }
 
-        File.WriteAllText(manifestPath, System.Text.Json.JsonSerializer.Serialize(manifest,
-            new System.Text.Json.JsonSerializerOptions { WriteIndented = true }));
+        File.WriteAllText(manifestPath, ShippedManifestJson.Write(manifest));
         return dir;
     }
 }

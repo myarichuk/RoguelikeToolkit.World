@@ -5,6 +5,7 @@ using YamlDotNet.Serialization.NamingConventions;
 namespace RoguelikeToolkit.World.Core.Localization;
 
 /// <summary>One UI language table (flat key/value strings plus layout direction).</summary>
+[Preserve] // populated by YamlDotNet through reflection
 public sealed class LocaleData
 {
     public string Language { get; set; } = string.Empty;
@@ -115,10 +116,7 @@ public sealed class LocaleStore
     }
 
     private static IDeserializer Deserializer()
-        => new DeserializerBuilder()
-            .WithNamingConvention(NullNamingConvention.Instance)
-            .IgnoreUnmatchedProperties()
-            .Build();
+        => AotYamlObjectFactory.CreateDeserializer();
 
     private static string ReadEmbedded(Assembly asm, string name)
     {

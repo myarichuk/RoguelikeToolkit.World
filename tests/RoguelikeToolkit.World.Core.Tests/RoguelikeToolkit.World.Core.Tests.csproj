@@ -8,6 +8,11 @@
     <IsPackable>false</IsPackable>
   </PropertyGroup>
 
+  <!-- tests of .NET-only facilities (collectible AssemblyLoadContext plugins) are compiled out in netstandard mode -->
+  <PropertyGroup Condition="'$(CoreTargetFramework)' == 'netstandard2.1'">
+    <DefineConstants>$(DefineConstants);CORE_NETSTANDARD</DefineConstants>
+  </PropertyGroup>
+
   <ItemGroup>
     <PackageReference Include="coverlet.collector" Version="6.0.4" />
     <PackageReference Include="Microsoft.NET.Test.Sdk" Version="17.14.1" />
@@ -20,7 +25,13 @@
   </ItemGroup>
 
   <ItemGroup>
-    <ProjectReference Include="..\..\src\RoguelikeToolkit.World.Core\RoguelikeToolkit.World.Core.csproj" />
+    <!-- `dotnet test -p:CoreTargetFramework=netstandard2.1` runs the whole suite against the Unity (netstandard2.1)
+         build of Core instead of the net10.0 one, so its compatibility shims are covered by the same tests. -->
+    <ProjectReference Include="..\..\src\RoguelikeToolkit.World.Core\RoguelikeToolkit.World.Core.csproj"
+                      Condition="'$(CoreTargetFramework)' == ''" />
+    <ProjectReference Include="..\..\src\RoguelikeToolkit.World.Core\RoguelikeToolkit.World.Core.csproj"
+                      SetTargetFramework="TargetFramework=$(CoreTargetFramework)"
+                      Condition="'$(CoreTargetFramework)' != ''" />
   </ItemGroup>
 
 </Project>

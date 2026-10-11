@@ -160,7 +160,11 @@ public sealed class EntityStore
     public void Save(Stream stream)
     {
         // A full save starts a fresh delta chain; deltas written later apply only to this snapshot.
+#if NET6_0_OR_GREATER
         _chainId = (ulong)Random.Shared.NextInt64() | 1ul;
+#else
+        _chainId = (ulong)RandomCompat.NextInt64() | 1ul;
+#endif
         _sequence = 0;
         Span<byte> head = stackalloc byte[40];
         BitConverter.TryWriteBytes(head.Slice(0, 4), SnapshotMagic);

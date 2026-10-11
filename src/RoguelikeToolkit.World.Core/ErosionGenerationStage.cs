@@ -16,6 +16,7 @@ namespace RoguelikeToolkit.World.Core;
 /// and deposit fans/deltas where power fades. Arid gorges incise narrow and
 /// deep (canyons); humid ones spread their load (valleys).
 /// </summary>
+[Preserve] // created via reflection by WorldGenerationPipeline.Discover; keep it through Unity code stripping
 [WorldGeneratorStage(17, Reads = new[] { typeof(ElevationInfo) }, ReadsOptional = new[] { typeof(ClimateInfo), typeof(TectonicPlate) }, Writes = new[] { typeof(ElevationInfo) })]
 public class ErosionGenerationStage : IWorldGeneratorStage
 {
