@@ -16,6 +16,7 @@ namespace RoguelikeToolkit.World.Core;
 /// lakes; dry basins bake into playas. Rivers therefore always terminate in
 /// the sea, a lake, or an inland sink — never mid-slope.
 /// </summary>
+[Preserve] // created via reflection by WorldGenerationPipeline.Discover; keep it through Unity code stripping
 [WorldGeneratorStage(18, Reads = new[] { typeof(ElevationInfo) }, ReadsOptional = new[] { typeof(ClimateInfo) }, Writes = new[] { typeof(HydrologyInfo) })]
 public class HydrologyStage : IWorldGeneratorStage
 {

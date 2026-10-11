@@ -4,6 +4,7 @@ using SharpArena.Collections;
 
 namespace RoguelikeToolkit.World.Core;
 
+[Preserve] // created via reflection by WorldGenerationPipeline.Discover; keep it through Unity code stripping
 [WorldGeneratorStage(10, Writes = new[] { typeof(TectonicPlate) })]
 public class TectonicPlateGenerationStage : IWorldGeneratorStage, ISeededStage, IDisposable
 {

@@ -1,3 +1,6 @@
+#if NET
+// Collectible AssemblyLoadContext isolation exists only on .NET (Core). Unity (Mono/IL2CPP) cannot load or unload
+// plugin DLLs at runtime: plugins are compiled into the player and passed to WorldGenerationPipeline.DiscoverFrom.
 using System;
 using System.Collections.Generic;
 using System.Linq;
@@ -119,3 +122,4 @@ public sealed class PluginLoadContext : AssemblyLoadContext
     /// <summary>Request cooperative unload of this context.</summary>
     public void Reset() => Unload();
 }
+#endif

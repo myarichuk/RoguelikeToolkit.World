@@ -5,7 +5,7 @@ namespace RoguelikeToolkit.World.Core;
 /// <summary>
 /// Transcendental functions built only from IEEE-754 operations whose results
 /// are exactly specified (+, -, *, /, <see cref="Math.Sqrt(double)"/>,
-/// <see cref="Math.Floor(double)"/>, <see cref="Math.ScaleB(double, int)"/>), so
+/// <see cref="Math.Floor(double)"/>, <c>Math.ScaleB</c>), so
 /// the same inputs give the same bits on every OS, CPU and runtime build.
 /// <c>Math.Sin/Cos/Exp/Acos/...</c> defer to the platform C library, whose last
 /// bit differs between libm implementations; a world seed must not depend on

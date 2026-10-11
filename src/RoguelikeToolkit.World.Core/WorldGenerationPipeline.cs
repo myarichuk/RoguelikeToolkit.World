@@ -9,7 +9,9 @@ namespace RoguelikeToolkit.World.Core;
 public class WorldGenerationPipeline : IDisposable
 {
     private readonly List<IWorldGeneratorStage> _stages = new();
+#if NET
     private readonly List<PluginLoadContext> _pluginContexts = new();
+#endif
     // Cached execution order + contract validation. Rebuilt only when the
     // stage set changes, so repeated Execute calls stay allocation-free and
     // keep the zero-GC generation guarantee for hot paths.
@@ -47,11 +49,13 @@ public class WorldGenerationPipeline : IDisposable
         _orderedCache.Clear();
         _writesCache.Clear();
         _clearCache.Clear();
+#if NET
         foreach (var ctx in _pluginContexts)
         {
             try { ctx.Unload(); } catch { /* cooperative unload is best-effort */ }
         }
         _pluginContexts.Clear();
+#endif
         _cacheDirty = true;
     }
 
@@ -61,7 +65,7 @@ public class WorldGenerationPipeline : IDisposable
     /// for runtime stages) from the current assembly and any .dll files in the
     /// specified directory. Compiled C# plugins are full-trust: only load DLLs
     /// you trust. Each plugin file loads into its own collectible
-    /// <see cref="PluginLoadContext"/> (shared Core contracts, plugin-local
+    /// <c>PluginLoadContext</c> (.NET only) (shared Core contracts, plugin-local
     /// dependencies) and unloads on <see cref="ResetStages"/>.
     /// By default, discovered stages are merged with existing stages and matching stage types are skipped.
     /// Throws InvalidOperationException if duplicate Order values are found.
@@ -74,6 +78,7 @@ public class WorldGenerationPipeline : IDisposable
 
         if (!string.IsNullOrWhiteSpace(pluginDirectory) && Directory.Exists(pluginDirectory))
         {
+#if NET
             var dllFiles = Directory.GetFiles(pluginDirectory, "*.dll", SearchOption.AllDirectories);
             Array.Sort(dllFiles, StringComparer.Ordinal);
             foreach (var file in dllFiles)
@@ -111,8 +116,48 @@ public class WorldGenerationPipeline : IDisposable
                     diagnostics.Add(new StageDiscoveryDiagnostic($"Failed to load plugin assembly '{file}'.", ex));
                 }
             }
+        #else
+            diagnostics.Add(new StageDiscoveryDiagnostic(
+                $"Loading plugin DLLs from '{pluginDirectory}' needs .NET's AssemblyLoadContext. On this runtime (Unity Mono/IL2CPP) " +
+                "compile plugins into the player and pass their assemblies to DiscoverFrom(...).",
+                new PlatformNotSupportedException("Runtime plugin loading is not available on this runtime.")));
+#endif
         }
 
+        DiscoverCore(assemblies, diagnostics, onDiagnostic);
+    }
+
+    /// <summary>
+    /// Discovers stages (same rules as <see cref="Discover(string?, Action{StageDiscoveryDiagnostic}?)"/>) from Core plus
+    /// already-loaded <paramref name="pluginAssemblies"/>. This is the plugin path for runtimes that cannot load
+    /// DLLs at runtime (Unity IL2CPP): plugins are compiled into the build and handed over as assemblies.
+    /// No load context is created, so nothing is unloaded on <see cref="ResetStages"/>.
+    /// </summary>
+    public void DiscoverFrom(IEnumerable<Assembly> pluginAssemblies, Action<StageDiscoveryDiagnostic>? onDiagnostic = null)
+    {
+        ArgumentNullException.ThrowIfNull(pluginAssemblies);
+
+        var assemblies = new List<Assembly> { Assembly.GetExecutingAssembly() };
+        foreach (var assembly in pluginAssemblies)
+        {
+            if (assembly != null && !assemblies.Contains(assembly))
+                assemblies.Add(assembly);
+        }
+
+        DiscoverCore(assemblies, new List<StageDiscoveryDiagnostic>(), onDiagnostic);
+    }
+
+    // Built-in stages are only constructed here, through Activator: tell trimming linkers (ILLink/NativeAOT, and
+    // UnityLinker, which shares that codebase) to keep their parameterless constructors. [Preserve] on the types
+    // covers UnityLinker's own convention.
+    [System.Diagnostics.CodeAnalysis.DynamicDependency(System.Diagnostics.CodeAnalysis.DynamicallyAccessedMemberTypes.PublicParameterlessConstructor, typeof(TectonicPlateGenerationStage))]
+    [System.Diagnostics.CodeAnalysis.DynamicDependency(System.Diagnostics.CodeAnalysis.DynamicallyAccessedMemberTypes.PublicParameterlessConstructor, typeof(ElevationGenerationStage))]
+    [System.Diagnostics.CodeAnalysis.DynamicDependency(System.Diagnostics.CodeAnalysis.DynamicallyAccessedMemberTypes.PublicParameterlessConstructor, typeof(ClimateStage))]
+    [System.Diagnostics.CodeAnalysis.DynamicDependency(System.Diagnostics.CodeAnalysis.DynamicallyAccessedMemberTypes.PublicParameterlessConstructor, typeof(ErosionGenerationStage))]
+    [System.Diagnostics.CodeAnalysis.DynamicDependency(System.Diagnostics.CodeAnalysis.DynamicallyAccessedMemberTypes.PublicParameterlessConstructor, typeof(HydrologyStage))]
+    [System.Diagnostics.CodeAnalysis.DynamicDependency(System.Diagnostics.CodeAnalysis.DynamicallyAccessedMemberTypes.PublicParameterlessConstructor, typeof(LocalMapGenerationStage))]
+    private void DiscoverCore(List<Assembly> assemblies, List<StageDiscoveryDiagnostic> diagnostics, Action<StageDiscoveryDiagnostic>? onDiagnostic)
+    {
         var stageTypes = assemblies
             .SelectMany(a => {
                 try { return (IEnumerable<Type>)a.GetTypes(); }

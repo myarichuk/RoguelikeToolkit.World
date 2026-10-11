@@ -20,8 +20,17 @@
   </ItemGroup>
 
   <ItemGroup>
-    <ProjectReference Include="..\..\src\RoguelikeToolkit.World.Core\RoguelikeToolkit.World.Core.csproj" />
-    <ProjectReference Include="..\..\src\RoguelikeToolkit.World.Scripting.Jint\RoguelikeToolkit.World.Scripting.Jint.csproj" />
+    <!-- `dotnet test -p:CoreTargetFramework=netstandard2.1` runs against the Unity (netstandard2.1) builds. -->
+    <ProjectReference Include="..\..\src\RoguelikeToolkit.World.Core\RoguelikeToolkit.World.Core.csproj"
+                      Condition="'$(CoreTargetFramework)' == ''" />
+    <ProjectReference Include="..\..\src\RoguelikeToolkit.World.Scripting.Jint\RoguelikeToolkit.World.Scripting.Jint.csproj"
+                      Condition="'$(CoreTargetFramework)' == ''" />
+    <ProjectReference Include="..\..\src\RoguelikeToolkit.World.Core\RoguelikeToolkit.World.Core.csproj"
+                      SetTargetFramework="TargetFramework=$(CoreTargetFramework)"
+                      Condition="'$(CoreTargetFramework)' != ''" />
+    <ProjectReference Include="..\..\src\RoguelikeToolkit.World.Scripting.Jint\RoguelikeToolkit.World.Scripting.Jint.csproj"
+                      SetTargetFramework="TargetFramework=$(CoreTargetFramework)"
+                      Condition="'$(CoreTargetFramework)' != ''" />
   </ItemGroup>
 
 </Project>

@@ -12,6 +12,28 @@ A .NET 10 solution containing a core class library (`RoguelikeToolkit.World.Core
 - [Surface modes plan](SURFACE_MODES_PLAN.md) — one pipeline, HexSphere and Map2D (lat/lon raster) surfaces; phased implementation plan.
 - [Plugins](docs/PLUGINS.md) — extend generation with full-trust compiled C# stages or untrusted Jint script stages.
 
+## Unity / IL2CPP
+
+`RoguelikeToolkit.World.Core` and `RoguelikeToolkit.World.Scripting.Jint` also target `netstandard2.1`, the profile Unity
+consumes. The whole test suite runs against that build too (`dotnet test -p:CoreTargetFramework=netstandard2.1`), and
+CI publishes a NativeAOT smoke test (stricter than IL2CPP) whose world checksum must match the JIT run.
+
+What differs in the `netstandard2.1` build:
+
+- **Plugins:** no runtime DLL loading (there is no collectible `AssemblyLoadContext`, and IL2CPP cannot load
+  assemblies at all). Compile plugin stages into the player and hand their assemblies over:
+  `pipeline.DiscoverFrom(new[] { typeof(MyStage).Assembly });`. `Discover("dir")` reports a
+  `PlatformNotSupportedException` diagnostic for the directory and still discovers the built-in stages.
+- **Memory:** in-memory stores use `Marshal.AllocHGlobal` instead of an anonymous memory-mapped file, and arenas use
+  SharpArena's `DotNetUnmanaged` backend instead of P/Invoking `mmap`/`VirtualAlloc` (neither resolves on every
+  player platform). File-backed stores (`WithFilePath`) still memory-map; avoid them on WebGL.
+- **Stripping:** types Core reaches only through reflection (built-in stages, name/locale YAML DTOs) carry
+  `[Preserve]` (honored by UnityLinker) and `[DynamicDependency]`. Your own discovered stages need `[Preserve]`
+  (any attribute named `PreserveAttribute`) or a `link.xml` entry.
+- **Determinism:** `DetMath` and the shims (`Math.ScaleB`, `PriorityQueue`) are bit-identical to the .NET ones; the test
+  suite's determinism checks pass against the `netstandard2.1` build. Cross-runtime equality on Mono/IL2CPP itself
+  (their own `Math.*`) is not verified here.
+
 ## Core Library Architecture
 
 The `RoguelikeToolkit.World.Core` library relies on two primary pillars to achieve zero-allocation, high-performance execution:

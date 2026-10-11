@@ -17,6 +17,7 @@ namespace RoguelikeToolkit.World.Core;
 /// feed moisture on the first pass; rerunning this stage after hydrology picks
 /// up lake adjacency where a host explicitly orders a second pass.
 /// </summary>
+[Preserve] // created via reflection by WorldGenerationPipeline.Discover; keep it through Unity code stripping
 [WorldGeneratorStage(16, Reads = new[] { typeof(ElevationInfo) }, ReadsOptional = new[] { typeof(HydrologyInfo) }, Writes = new[] { typeof(ClimateInfo) })]
 public class ClimateStage : IWorldGeneratorStage, ISeededStage
 {
