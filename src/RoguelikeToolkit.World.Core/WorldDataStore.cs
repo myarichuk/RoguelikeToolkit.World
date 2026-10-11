@@ -36,11 +36,10 @@ public unsafe class WorldDataStore : IDisposable
 
     private MemoryMappedFile? _mmf;
     private MemoryMappedViewAccessor? _accessor;
-#if !NET
-    // In-memory stores on netstandard2.1 (Unity): unmanaged heap instead of an anonymous memory-mapped file,
-    // which not every player platform supports (WebGL, some mobile). File-backed stores still use the mapping.
+    // In-memory stores on netstandard2.1 (Unity) and on browser/WASI .NET: unmanaged heap instead of an
+    // anonymous memory-mapped file, which those platforms do not support (WebGL, browser-wasm, some mobile).
+    // File-backed stores still use the mapping.
     private IntPtr _heap;
-#endif
     private byte* _ptr;
     private readonly int _tileCount;
     private readonly int _size;
@@ -192,16 +191,15 @@ public unsafe class WorldDataStore : IDisposable
         }
         else
         {
-#if NET
+            _dataOffset = 0;
+            if (UseHeapForInMemory)
+            {
+                _heap = System.Runtime.InteropServices.Marshal.AllocHGlobal(new IntPtr(_currentTotalBytes));
+                _ptr = (byte*)_heap;
+                new Span<byte>(_ptr, (int)_currentTotalBytes).Clear(); // AllocHGlobal memory is not zeroed
+                return;
+            }
             _mmf = MemoryMappedFile.CreateNew(null, _currentTotalBytes);
-            _dataOffset = 0;
-#else
-            _heap = System.Runtime.InteropServices.Marshal.AllocHGlobal(new IntPtr(_currentTotalBytes));
-            _ptr = (byte*)_heap;
-            _dataOffset = 0;
-            new Span<byte>(_ptr, (int)_currentTotalBytes).Clear(); // AllocHGlobal memory is not zeroed
-            return;
-#endif
         }
 
         long viewBytes = _filePath != null ? HeaderSize + _currentTotalBytes : _currentTotalBytes;
@@ -632,28 +630,28 @@ public unsafe class WorldDataStore : IDisposable
         return latC * lonCells + lonC;
     }
 
-    private bool IsAllocated
-    {
-        get
-        {
+    /// <summary>
+    /// True where anonymous memory-mapped files are unavailable: netstandard2.1 (Unity players, WebGL)
+    /// and browser/WASI .NET, where <see cref="MemoryMappedFile.CreateNew(string, long)"/> throws
+    /// PlatformNotSupportedException.
+    /// </summary>
+    private static bool UseHeapForInMemory =>
 #if NET
-            return _mmf != null;
+        OperatingSystem.IsBrowser() || OperatingSystem.IsWasi();
 #else
-            return _mmf != null || _heap != IntPtr.Zero;
+        true;
 #endif
-        }
-    }
+
+    private bool IsAllocated => _mmf != null || _heap != IntPtr.Zero;
 
     public void Dispose()
     {
-#if !NET
         if (_heap != IntPtr.Zero)
         {
             System.Runtime.InteropServices.Marshal.FreeHGlobal(_heap);
             _heap = IntPtr.Zero;
             _ptr = null;
         }
-#endif
         if (_ptr != null && _accessor != null)
         {
             _accessor.SafeMemoryMappedViewHandle.ReleasePointer();
