@@ -44,6 +44,16 @@ public class ClimateStage : IWorldGeneratorStage, ISeededStage
     /// rain shadows and maritime plumes diagonal as they are on Earth.
     /// </summary>
     public double MeridionalWind { get; set; } = 0.3;
+
+    /// <summary>
+    /// How far the wind speed fades to a calm at the cell boundaries (the horse latitudes near 30 degrees,
+    /// the subpolar low near 60), 0..1. 0 is the legacy field: unit speed everywhere, reversing in one step
+    /// across the boundary. 1 makes the speed follow sin(pi * position-in-cell), zero at both edges and
+    /// strongest mid-cell (the trades near 15 degrees, the westerlies near 45), keeping the direction inside
+    /// each cell. The wind vector's length is what the orographic gate and the maritime hop weigh, so a calm
+    /// belt lifts and shadows less and lets moisture diffuse in every direction.
+    /// </summary>
+    public double WindCellBlend { get; set; } = 0.0;
     public Vector3D PrevailingWindFallback { get; set; } = new Vector3D(1, 0, 0);
 
     /// <summary>
@@ -173,6 +183,12 @@ public class ClimateStage : IWorldGeneratorStage, ISeededStage
                 var north = Vector3D.Cross(vectors[i], east).Normalize();
                 double hemisphere = geo.Latitude >= 0.0 ? 1.0 : -1.0;
                 wind = (east * dir + north * ((evenCell ? -1.0 : 1.0) * hemisphere * MeridionalWind)).Normalize();
+            }
+            if (WindCellBlend > 0.0)
+            {
+                double cellPos = absLat / (30.0 * bandScale) - cell; // 0..1 across the cell
+                double speed = DetMath.Sin(Math.PI * Math.Clamp(cellPos, 0.0, 1.0));
+                wind *= 1.0 - WindCellBlend + WindCellBlend * Math.Max(0.0, speed);
             }
 
             // Base precipitation from independent noise field. Stored now;
