@@ -278,6 +278,7 @@ public sealed class JintWorldStage : IWorldGeneratorStage, IDeclaredStage, IStag
             Swamp = (int)BiomeType.Swamp,
             Glacier = (int)BiomeType.Glacier,
             Canyon = (int)BiomeType.Canyon,
+            Savanna = (int)BiomeType.Savanna,
             Badlands = (int)BiomeType.Badlands,
             RockDesert = (int)BiomeType.RockDesert,
             SaltFlat = (int)BiomeType.SaltFlat,

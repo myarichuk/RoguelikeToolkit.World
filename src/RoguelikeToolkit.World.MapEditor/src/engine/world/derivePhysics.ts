@@ -1,12 +1,12 @@
 // The "Apply physics" use case, minus the editor: turn the user's pixel edits into a tile edit
 // table, have the engine re-derive the world from it, and carry the document's identities
-// (names, deletions, hand-made features, editor-only paint) across. Pure of rendering and UI, so
+// (names, deletions, hand-made features) across. Pure of rendering and UI, so
 // it is tested against a fake engine.
 import { entitiesFromSnapshot } from '../doc/fromWorld';
 import type { PhysicsState } from '../doc/MapDocument';
 import { MapDocument } from '../doc/MapDocument';
 import type { FeatureEntity, RiverEntity } from '../doc/types';
-import { collectClimate, collectEdits, collectLandUse, EDITOR_ONLY_BIOMES, packEdits, type EditMode, type Raster } from './edits';
+import { collectClimate, collectEdits, collectLandUse, packEdits, type EditMode, type Raster } from './edits';
 import type { NameRequest, RecomputeParams, WorldSnapshot } from './protocol';
 import { reconcileFeatures } from './reconcile';
 
@@ -70,10 +70,6 @@ export async function derivePhysics(doc: MapDocument, engine: PhysicsEngine, mod
   const snap = await engine.recompute({ ...params, edits: packEdits(edits), rastersOnly: false });
   const baseline: Raster = { elevation: snap.rasters.elevation.slice(), biome: snap.rasters.biome.slice() };
 
-  // Savanna is paint, not climate: the world cannot reproduce them, so they stay where they were drawn.
-  const biome = snap.rasters.biome;
-  if (mode !== 'revert') for (let i = 0; i < biome.length; i++) if (EDITOR_ONLY_BIOMES.has(doc.biome[i])) biome[i] = doc.biome[i];
-
   const live = [...doc.features.all()].filter((f) => ph.generated.has(f.id));
   const next = entitiesFromSnapshot(snap);
   const rec = reconcileFeatures({
@@ -94,7 +90,7 @@ export async function derivePhysics(doc: MapDocument, engine: PhysicsEngine, mod
   for (const f of rec.features) (counts[f.kind] ??= [0, 0])[1]++;
 
   return {
-    elevation: snap.rasters.elevation, biome,
+    elevation: snap.rasters.elevation, biome: snap.rasters.biome,
     features: rec.features, rivers: rec.rivers,
     warmth: warmth.slice(), wetness: wetness.slice(),
     physics: { edits, baseline, generated: new Set(rec.features.map((f) => f.id)), tombstones: new Map(rec.tombstones.map((t) => [t.id, t])), capacity: snap.capacity, climate: snap.climate },

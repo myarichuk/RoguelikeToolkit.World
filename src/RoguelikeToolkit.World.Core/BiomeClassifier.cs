@@ -25,6 +25,15 @@ public static class BiomeClassifier
     public const double SwampMinMoisture = 0.65;
     public const double SwampMinTemperature = 0.35;
     public const double ForestMinMoisture = 0.42;
+
+    /// <summary>Savanna: warm enough that the dry season is a drought, not a winter.</summary>
+    public const double SavannaMinTemperature = 0.62;
+
+    /// <summary>Savanna: how unevenly the rain must fall (see <see cref="ClimateModel.RainSeasonality"/>), 0 even .. 1 monsoon.</summary>
+    public const double SavannaMinSeasonality = 0.60;
+
+    /// <summary>Savanna: wetter than this and the year-round-wet-enough ground carries forest or jungle instead.</summary>
+    public const double SavannaMaxMoisture = 0.60;
     public const double DeepOceanHeight = -0.6;
 
     /// <summary>A saline site is a salt flat in any climate drier than this (a sump that stays dry is arid by definition).</summary>
@@ -66,11 +75,19 @@ public static class BiomeClassifier
         => temperature > DesertMinTemperature
            && moisture < DesertMaxMoisture + DesertHeatGain * (temperature - DesertMinTemperature);
 
+    /// <summary>
+    /// Savanna test for ground already known not to be arid: warm, not wet enough for forest-grade rain,
+    /// and with a pronounced rainy season. With no seasonality data (0) it never holds.
+    /// </summary>
+    public static bool IsSavanna(double temperature, double moisture, double rainSeasonality)
+        => temperature >= SavannaMinTemperature && moisture <= SavannaMaxMoisture
+           && rainSeasonality >= SavannaMinSeasonality;
+
     /// <summary>Base danger of the moisture-threshold biomes; <see cref="Classify"/> returns the same values.</summary>
     public static byte MoistureBiomeDanger(BiomeType biome) => biome switch
     {
         BiomeType.Jungle or BiomeType.Swamp => 2,
-        BiomeType.Forest => 1,
+        BiomeType.Forest or BiomeType.Savanna => 1,
         _ => 0,
     };
 
@@ -100,7 +117,8 @@ public static class BiomeClassifier
     }
 
     /// <summary>Biome and base danger for a tile, before glacier/canyon overrides and jitter.</summary>
-    public static (BiomeType Biome, byte Danger) Classify(double height, double temperature, double moisture, AridSite site = default)
+    /// <remarks><paramref name="rainSeasonality"/> is optional: callers with no seasonal-rain data pass nothing and get no savanna.</remarks>
+    public static (BiomeType Biome, byte Danger) Classify(double height, double temperature, double moisture, AridSite site = default, double rainSeasonality = 0.0)
     {
         if (height < ElevationGenerationStage.SeaLevel)
             return (BiomeType.Ocean, height < DeepOceanHeight ? (byte)2 : (byte)0);
@@ -118,6 +136,7 @@ public static class BiomeClassifier
             return (type, AridBiomeDanger(type));
         }
         if (temperature > JungleMinTemperature && moisture > JungleMinMoisture) return (BiomeType.Jungle, 2);
+        if (IsSavanna(temperature, moisture, rainSeasonality)) return (BiomeType.Savanna, 1);
         if (moisture > SwampMinMoisture && temperature > SwampMinTemperature) return (BiomeType.Swamp, 2);
         if (moisture > ForestMinMoisture) return (BiomeType.Forest, 1);
         return (BiomeType.Plains, 0);

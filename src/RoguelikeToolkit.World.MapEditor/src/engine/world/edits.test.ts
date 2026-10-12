@@ -61,10 +61,11 @@ describe('collectEdits', () => {
     expect(collectEdits(c, b, tile, TILES, new Map(), 'sculpt').edits.size).toBe(0);
   });
 
-  it('keeps the editor-only savanna out of the physics', () => {
+  it('pins painted savanna like any other Core biome', () => {
     const b = base(), c = clone(b);
     c.biome.fill(10, 0, 4);
-    expect(collectEdits(c, b, tile, TILES, new Map(), 'sculpt').edits.size).toBe(0);
+    const r = collectEdits(c, b, tile, TILES, new Map(), 'sculpt');
+    expect(r.edits.get(0)!.pinBiome).toBe(10);
   });
 
   it('skips pixels with no tile (hand-made maps)', () => {

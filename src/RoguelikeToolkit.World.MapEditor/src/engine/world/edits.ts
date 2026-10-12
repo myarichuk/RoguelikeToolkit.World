@@ -3,11 +3,8 @@
 // what the user has now and what the engine last produced into a sparse per-tile table, and packs
 // that table for the worker. The table (never the derived rasters) is what a document persists.
 
-/**
- * Biome ids the editor paints that Core has no biome for (savanna): decoration only. Farmland and
- * ashlands used to be here; they are land use now (world/landuse.ts), a separate raster.
- */
-export const EDITOR_ONLY_BIOMES: ReadonlySet<number> = new Set([10]);
+// Every biome the editor paints is a Core biome and so can be pinned. Savanna was once paint-only; Core grows it
+// from seasonal rain now. Farmland and ashlands are land use (world/landuse.ts), a separate raster.
 
 /** Mean height change below this (height units; sea level 0, relief about ±1.2) is a stray dab, not an edit. */
 export const MIN_DELTA = 0.02;
@@ -74,7 +71,7 @@ export function collectEdits(
     sumDiff[t] += e - baseline.elevation[i];
     sumCur[t] += e;
     const b = current.biome[i];
-    if (b !== baseline.biome[i] && !EDITOR_ONLY_BIOMES.has(b)) {
+    if (b !== baseline.biome[i]) {
       let m = painted.get(t);
       if (!m) painted.set(t, (m = new Map()));
       m.set(b, (m.get(b) ?? 0) + 1);

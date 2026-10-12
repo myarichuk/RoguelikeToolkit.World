@@ -80,7 +80,7 @@ public class HydrologyStage : IWorldGeneratorStage
             for (int i = 0; i < n; i++)
             {
                 float relief = CanyonAnalysis.Relief(store, heights, i, reliefScratch);
-                cover[i] = LandCover.Provisional(heights[i], climate[i].Temperature, climate[i].Precipitation, relief);
+                cover[i] = LandCover.Provisional(heights[i], climate[i].Temperature, climate[i].Precipitation, relief, climate[i].RainSeasonality);
             }
             // A painted biome is the author's statement of what the ground is: it sheds, soaks and
             // evaporates like that biome, whatever the climate fields would have said.

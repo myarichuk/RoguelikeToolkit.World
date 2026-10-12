@@ -228,4 +228,61 @@ public class BiomeHistogramTests
         LocalMapGenerationStage.SmoothMoistureBiomes(store, span, 1);
         Assert.Equal(BiomeType.SaltFlat, span[centre].Biome);
     }
+
+    [Fact]
+    public void Savanna_NeedsHeat_SeasonalRain_AndStopsWhereForestStarts()
+    {
+        const double warm = 0.8, mid = 0.5, seasonal = 0.9;
+        var flat = new BiomeClassifier.AridSite(0.01, false);
+        Assert.Equal(BiomeType.Savanna, BiomeClassifier.Classify(0.1, warm, mid, flat, seasonal).Biome);
+        // The same climate with even rain is the old ladder's answer: no seasonal data, no savanna.
+        Assert.Equal(BiomeType.Forest, BiomeClassifier.Classify(0.1, warm, mid, flat, 0.0).Biome);
+        Assert.Equal(BiomeType.Forest, BiomeClassifier.Classify(0.1, warm, mid, flat).Biome);
+        Assert.Equal(BiomeType.Forest, BiomeClassifier.Classify(0.1, warm, mid, flat, BiomeClassifier.SavannaMinSeasonality - 0.01).Biome);
+        // Too cool for a dry season to be a drought, too wet for grass, too dry for anything but desert.
+        Assert.NotEqual(BiomeType.Savanna, BiomeClassifier.Classify(0.1, BiomeClassifier.SavannaMinTemperature - 0.05, mid, flat, seasonal).Biome);
+        Assert.Equal(BiomeType.Jungle, BiomeClassifier.Classify(0.1, 0.9, 0.7, flat, seasonal).Biome);
+        Assert.Equal(BiomeType.Swamp, BiomeClassifier.Classify(0.1, 0.65, 0.7, flat, seasonal).Biome);
+        Assert.Equal(BiomeType.Desert, BiomeClassifier.Classify(0.1, 0.9, 0.2, flat, seasonal).Biome);
+        // Water, high ground and ice outrank it.
+        Assert.Equal(BiomeType.Ocean, BiomeClassifier.Classify(-0.2, warm, mid, flat, seasonal).Biome);
+        Assert.Equal(BiomeType.Mountain, BiomeClassifier.Classify(0.8, warm, mid, flat, seasonal).Biome);
+        // The danger every consumer re-bases on matches the ladder's.
+        Assert.Equal(BiomeClassifier.BaseDanger(BiomeType.Savanna), BiomeClassifier.Classify(0.1, warm, mid, flat, seasonal).Danger);
+    }
+
+    [Fact]
+    public void SavannaExistsOnEveryMatrixBuild_MostlyInWarmSeasonalNonAridCountry()
+    {
+        foreach (var (size, seed, _) in Matrix)
+        {
+            using var world = new WorldBuilder().WithSize(size).WithSeed(seed).Build();
+            var locals = world.Map.DataStore.GetSpan<LocalMapInfo>();
+            var climate = world.Map.DataStore.GetSpan<ClimateInfo>();
+            int savanna = 0, qualifying = 0;
+            for (int i = 0; i < locals.Length; i++)
+            {
+                if (locals[i].Biome != BiomeType.Savanna) continue;
+                savanna++;
+                if (BiomeClassifier.IsSavanna(climate[i].Temperature, climate[i].Precipitation, climate[i].RainSeasonality)) qualifying++;
+            }
+            // Neighbour smoothing may flip a stray plains tile into a savanna block, so not every tile qualifies on its own.
+            Assert.True(qualifying >= savanna * 0.85, $"Size {size} seed {seed}: only {qualifying} of {savanna} savanna tiles meet the rule");
+            Assert.True(savanna > 0, $"Size {size} seed {seed}: no savanna");
+        }
+    }
+
+    [Fact]
+    public void Smoothing_TreatsSavannaAsPartOfTheMoistureFamily()
+    {
+        using var world = new WorldBuilder().WithSize(2).WithSeed(1).Build();
+        var store = world.Map.DataStore;
+        var span = new LocalMapInfo[store.TileCount];
+        for (int i = 0; i < span.Length; i++) span[i] = new LocalMapInfo { Biome = BiomeType.Savanna, DangerLevel = 1 };
+        int centre = 0;
+        span[centre] = new LocalMapInfo { Biome = BiomeType.Plains, DangerLevel = 0 };
+        LocalMapGenerationStage.SmoothMoistureBiomes(store, span, 1);
+        Assert.Equal(BiomeType.Savanna, span[centre].Biome);
+        Assert.Equal(1, span[centre].DangerLevel);
+    }
 }

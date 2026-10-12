@@ -30,8 +30,8 @@ export interface CatalogInput {
   styles: NameStyle[];
 }
 
-// Ids 10, 11 and 13 are editor paint-only biomes (Savanna, Farmland, Ashlands); 12 and 14..16 are
-// the Core desert family (Badlands, Rock desert, Salt flat, Cold desert), so ids stay stable across both.
+// Ids match Core's `BiomeType` (Savanna 10; Badlands 12 and the rest of the desert family 14..16). 11 and 13
+// are the old Farmland/Ashlands colour slots, kept so old maps load; those are land use now (world/landuse.ts).
 export const BIOME_NAMES = ['Ocean', 'Plains', 'Desert', 'Forest', 'Mountain', 'Tundra', 'Jungle', 'Swamp', 'Glacier', 'Canyon', 'Savanna', 'Farmland', 'Badlands', 'Ashlands', 'Rock desert', 'Salt flat', 'Cold desert'];
 const Biome = { Ocean: 0, Forest: 3, Jungle: 6, Swamp: 7 } as const;
 const WaterKind = { Lake: 0, Sea: 1, Ocean: 2 } as const;

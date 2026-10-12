@@ -23,8 +23,8 @@ public static class LandCover
     /// facts only hydrology can supply (salt, glaciers). <paramref name="relief"/> is the largest height
     /// step to a neighbour, which splits sand desert from badlands exactly as the biome stage does.
     /// </summary>
-    public static BiomeType Provisional(double height, double temperature, double precipitation, double relief)
-        => BiomeClassifier.Classify(height, temperature, precipitation, new BiomeClassifier.AridSite(relief, false)).Biome;
+    public static BiomeType Provisional(double height, double temperature, double precipitation, double relief, double rainSeasonality = 0.0)
+        => BiomeClassifier.Classify(height, temperature, precipitation, new BiomeClassifier.AridSite(relief, false), rainSeasonality).Biome;
 
     /// <summary>Fraction of a tile's reference rainfall that reaches the channel network (1 = bare reference ground).</summary>
     public static float RunoffCoefficient(BiomeType biome) => biome switch
@@ -66,7 +66,7 @@ public static class LandCover
         BiomeType.Desert => 0.12f,
         BiomeType.ColdDesert => 0.06f,
         BiomeType.RockDesert => 0.05f,
-        BiomeType.Plains => 0.04f,
+        BiomeType.Plains or BiomeType.Savanna => 0.04f,
         BiomeType.Forest or BiomeType.Mountain or BiomeType.Badlands => 0.03f,
         BiomeType.Jungle => 0.02f,
         _ => 0f, // swamp, tundra, salt flat, ocean

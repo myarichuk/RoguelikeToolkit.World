@@ -100,6 +100,7 @@ public static class TerrainShading
             BiomeType.Mountain => new Vector3(0.45f, 0.42f, 0.38f),
             BiomeType.Tundra => new Vector3(0.58f, 0.62f, 0.55f),
             BiomeType.Glacier => new Vector3(0.55f, 0.85f, 0.95f),
+            BiomeType.Savanna => Lerp(new Vector3(0.66f, 0.60f, 0.30f), new Vector3(0.56f, 0.62f, 0.28f), 0.5f + canopy),
             BiomeType.Canyon => new Vector3(0.62f, 0.34f, 0.18f),
             BiomeType.Badlands => Lerp(new Vector3(0.60f, 0.33f, 0.20f), new Vector3(0.74f, 0.50f, 0.32f), 0.5f + canopy),
             BiomeType.RockDesert => Lerp(new Vector3(0.52f, 0.46f, 0.40f), new Vector3(0.66f, 0.58f, 0.48f), 0.5f + canopy),

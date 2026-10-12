@@ -6,7 +6,7 @@ import { CLIMATE_RANGE, PAINT_MAX } from './edits';
 // Wind and ocean current arrive from Core as 3D tangent vectors; the editor draws on a flat map, so they are
 // projected once, at the worker boundary, onto the tile's local east and north (north = up the screen).
 
-export type ClimateKind = 'temperature' | 'rainfall' | 'oceanHeat' | 'seasons';
+export type ClimateKind = 'temperature' | 'rainfall' | 'oceanHeat' | 'seasons' | 'rainSeason';
 
 /** Floats per tile in the snapshot's `climate` array; the order is `CI`. */
 export const CLIMATE_STRIDE = 9;
@@ -74,6 +74,11 @@ export const CLIMATE_KINDS: readonly ClimateDef[] = [
     hint: 'How far the temperature swings between summer and winter. Largest deep inland and far from the equator; a bigger axial tilt makes it larger everywhere.',
     stops: [[0, 242, 240, 247], [0.5, 158, 154, 200], [1, 84, 39, 143]],
   },
+  {
+    key: 'rainSeason', label: 'Wet season', index: CI.rainSeasonality, lo: 0, hi: 1, legend: ['rain all year', 'one wet season'],
+    hint: 'How unevenly the year\'s rain falls. The rain belts follow the sun north and south with the seasons, so a place they sweep across gets a wet season and a dry one (monsoons, Mediterranean summers). Warm, seasonal, not-too-wet ground grows savanna.',
+    stops: [[0, 237, 248, 251], [0.5, 140, 150, 198], [1, 129, 15, 124]],
+  },
 ];
 
 export function climateDef(kind: ClimateKind): ClimateDef { return CLIMATE_KINDS.find((k) => k.key === kind)!; }
@@ -131,6 +136,8 @@ export function describeClimate(climate: Float32Array | undefined, tile: number,
   if (cur) parts.push(`current ${cur}${f(CI.oceanHeat) > 0.01 ? ' (warm)' : f(CI.oceanHeat) < -0.01 ? ' (cold)' : ''}`);
   else if (Math.abs(f(CI.oceanHeat)) > 0.01) parts.push(`sea ${f(CI.oceanHeat) > 0 ? 'warmed' : 'cooled'} ${Math.abs(f(CI.oceanHeat) * KELVIN_PER_UNIT).toFixed(1)} K`);
   parts.push(`season ±${(f(CI.seasonalRange) * KELVIN_PER_UNIT).toFixed(0)} K`);
+  const wet = f(CI.rainSeasonality);
+  if (wet >= 0.3) parts.push(`${wet >= 0.6 ? 'wet/dry seasons' : 'some dry season'} ${wet.toFixed(2)}`);
   if (Math.abs(paintedK) >= 0.5) parts.push(`painted ${paintedK > 0 ? '+' : ''}${paintedK.toFixed(0)} K`);
   if (Math.abs(paintedRain) >= 0.02) parts.push(`painted rain ${paintedRain > 0 ? '+' : ''}${paintedRain.toFixed(2)}`);
   return parts.join(' · ');

@@ -89,6 +89,10 @@ describe('ramps and readouts', () => {
     expect(s).toContain('wind E 0.50');
     expect(s).toContain('current E 0.30 (warm)');
     expect(s).toContain('painted +6 K');
+    expect(s).not.toContain('dry season');
+    const wet = (r: number) => describeClimate(projectClimate([...rec({ r })], [1, 0, 0], 1), 0);
+    expect(wet(0.8)).toContain('wet/dry seasons 0.80');
+    expect(wet(0.4)).toContain('some dry season 0.40');
     expect(describeClimate(undefined, 0)).toBe('');
     expect(describeClimate(t, 5)).toBe('');
   });

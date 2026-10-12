@@ -85,14 +85,15 @@ describe('derivePhysics', () => {
     expect(out.physics.edits.get(1)!.dh).toBeCloseTo(0.5, 5);
   });
 
-  it('keeps editor-only paint, pins Core biomes, and leaves names alone', async () => {
+  it('pins painted biomes, savanna included, and leaves names alone', async () => {
     const eng = fakeEngine();
     const doc = await docFor(eng);
     for (let i = 0; i < N; i++) if (tile[i] === 0) doc.biome[i] = 2;
-    doc.biome[N - 1] = 10;                     // savanna on the other tile: paint only
+    for (let i = 0; i < N; i++) if (tile[i] === 1) doc.biome[i] = 10;   // savanna on the other tile: a Core biome now, pinned like the rest
     const out = await derivePhysics(doc, eng, 'sculpt');
-    expect(out.report.biomeTiles).toBe(1);
+    expect(out.report.biomeTiles).toBe(2);
     expect(out.physics.edits.get(0)!.pinBiome).toBe(2);
+    expect(out.physics.edits.get(1)!.pinBiome).toBe(10);
     expect(out.biome[0]).toBe(2);
     expect(out.biome[N - 1]).toBe(10);
     expect(out.features[0].name).toBe('Silverfen');

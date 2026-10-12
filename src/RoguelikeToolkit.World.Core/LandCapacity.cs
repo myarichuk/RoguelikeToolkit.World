@@ -110,6 +110,7 @@ public static class LandCapacity
     private static double ArableSoil(BiomeType b, bool freshWater) => b switch
     {
         BiomeType.Plains => 1.0,
+        BiomeType.Savanna => 0.75,       // good soil, but the dry season is a gamble
         BiomeType.Forest => 0.70,        // must be cleared
         BiomeType.Jungle => 0.45,        // leached laterite
         BiomeType.Swamp => 0.25,         // must be drained
@@ -121,7 +122,7 @@ public static class LandCapacity
 
     private static double PastureCover(BiomeType b) => b switch
     {
-        BiomeType.Plains => 1.0,
+        BiomeType.Plains or BiomeType.Savanna => 1.0,
         BiomeType.ColdDesert => 0.60,    // steppe
         BiomeType.Forest => 0.45,        // glades
         BiomeType.Tundra => 0.35,        // reindeer moss
@@ -135,6 +136,7 @@ public static class LandCapacity
     private static double GameCover(BiomeType b) => b switch
     {
         BiomeType.Forest => 1.0,
+        BiomeType.Savanna => 0.90,       // the great herds
         BiomeType.Plains => 0.80,
         BiomeType.Jungle => 0.70,
         BiomeType.Swamp => 0.60,

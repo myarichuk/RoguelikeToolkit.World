@@ -62,7 +62,7 @@ export const LAYER_HINTS: Record<string, string> = {
   plateMotion: 'Arrows for each plate\'s drift direction; length grows with speed.',
   graticule: 'Latitude and longitude lines.',
   capacity: 'Tints the land by how much it could carry of the product chosen below (farming, grazing, game, timber or fish). It is what the climate and terrain allow, not what anyone has built. Needs a world made by the engine; Apply physics refreshes it after you edit.',
-  climate: 'Colours the whole map by one climate quantity from the engine (temperature, rainfall, ocean currents or the size of the seasons). Pick which one below. It shows what the physics produced, including your climate paint after Apply physics.',
+  climate: 'Colours the whole map by one climate quantity from the engine (temperature, rainfall, ocean currents, the size of the seasons or how seasonal the rain is). Pick which one below. It shows what the physics produced, including your climate paint after Apply physics.',
   wind: 'Arrows for the prevailing wind. Longer means stronger. Winds carry rain inland from the sea and cause rain shadows behind mountains.',
   currents: 'Arrows for the sea currents. Red ones carry warm water and warm the coast they touch; blue ones carry cold water and cool and dry it.',
   climatePaint: 'Tint of the temperature and rainfall offsets painted with the Climate tool (also shown while that tool is active).',
