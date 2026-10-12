@@ -49,12 +49,12 @@ run('Mediterranean biome', async (t) => {
 
   // The Biome tool offers it, and never offers the land-use colour slots as biomes.
   await t.page.click('button:has-text("Biome")');
-  await t.page.waitForSelector('.swatches span');
-  const names = await t.page.$$eval('.swatches span', (e) => e.map((x) => x.textContent));
+  await t.page.waitForSelector('.choices span');
+  const names = await t.page.$$eval('.choices span', (e) => e.map((x) => x.textContent));
   t.check('the biome palette lists Mediterranean', names.includes('Mediterranean'), names);
   t.check('and does not list the land-use slots', !['Farmland', 'Ashlands', 'Pasture', 'Built'].some((n) => names.includes(n)), names);
-  await t.page.click('.swatches button:has-text("Mediterranean")');
+  await t.page.click('.choices button:has-text("Mediterranean")');
   t.check('selecting its swatch selects biome 19', (await t.evaluate(() => window.editor.options?.biome)) === MEDITERRANEAN);
-  const tip = await t.page.getAttribute('.swatches button:has-text("Mediterranean")', 'title');
+  const tip = await t.page.getAttribute('.choices button:has-text("Mediterranean")', 'title');
   t.check('its tooltip explains the winter rain in plain words', /winter/i.test(tip || ''), tip);
 });

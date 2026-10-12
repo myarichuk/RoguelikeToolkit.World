@@ -1,6 +1,6 @@
 import type { BaseMode, Layers } from '../engine/render/ViewSettings';
 import { useApp, useViewModel } from './hooks';
-import { Section, Segmented, Slider, Toggle } from './controls';
+import { ChoiceGrid, Section, Segmented, Slider, Toggle } from './controls';
 import { CAPACITY_KINDS, type CapacityKind } from '../engine/world/capacity';
 import { CLIMATE_KINDS, climateDef, rampGradient, type ClimateKind } from '../engine/world/climate';
 import { BASE_HINTS, LAYER_HINTS } from './glossary';
@@ -25,9 +25,7 @@ export function ViewPanel() {
   return (
     <>
       <Section title="Presets">
-        <div className="chips">
-          {s.presets.map((p) => <button key={p.id} className={p.active ? 'active' : ''} onClick={() => vm.applyPreset(p.id)}>{p.label}</button>)}
-        </div>
+        <ChoiceGrid label="Presets" value={s.presets.find((p) => p.active)?.id ?? ''} options={s.presets.map((p) => ({ value: p.id, label: p.label }))} onChange={vm.applyPreset} />
       </Section>
       <Section title="Base">
         <Segmented value={v.base} options={BASES.map((b) => ({ ...b, hint: BASE_HINTS[b.value] }))} onChange={vm.setBase} />

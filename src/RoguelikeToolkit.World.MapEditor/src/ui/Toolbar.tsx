@@ -1,6 +1,6 @@
 import { CLIMATE_LAYERS, climateModes, HEIGHT_MODES, TOOLS } from '../viewmodels/ToolsViewModel';
 import { useApp, useViewModel } from './hooks';
-import { Section, Select, Slider } from './controls';
+import { ChoiceGrid, Section, Select, Slider } from './controls';
 import { BIOME_HINTS, LANDUSE_HINTS, TERRAIN_HINTS } from './glossary';
 import { LAND_USES } from '../engine/world/landuse';
 
@@ -35,44 +35,28 @@ export function ToolOptionsPanel() {
       {s.tool === 'terrain' && (
         <>
           <Slider label="Strength" value={o.strength} min={0.005} max={0.2} step={0.005} onChange={(strength) => vm.setOptions({ strength })} hint="Height added per dab at the brush center (raise/lower), or the blend factor for smooth/flatten/roughen." />
-          <div className="chips">
-            {HEIGHT_MODES.map((m) => <button key={m.id} title={TERRAIN_HINTS[m.id]} className={o.heightMode === m.id ? 'active' : ''} aria-pressed={o.heightMode === m.id} onClick={() => vm.setOptions({ heightMode: m.id })}>{m.label}</button>)}
-          </div>
+          <ChoiceGrid label="Terrain brush" value={o.heightMode} options={HEIGHT_MODES.map((m) => ({ value: m.id, label: m.label, hint: TERRAIN_HINTS[m.id] }))} onChange={(heightMode) => vm.setOptions({ heightMode })} />
         </>
       )}
       {s.tool === 'climate' && (
         <>
           <Slider label="Strength" value={o.strength} min={0.005} max={0.2} step={0.005} onChange={(strength) => vm.setOptions({ strength })} hint="How much one dab adds at the brush center, as a share of full scale. Strokes accumulate." />
-          <div className="chips">
-            {CLIMATE_LAYERS.map((l) => <button key={l.id} className={o.climateLayer === l.id ? 'active' : ''} aria-pressed={o.climateLayer === l.id} title={l.hint} onClick={() => vm.setOptions({ climateLayer: l.id })}>{l.label}</button>)}
-          </div>
-          <div className="chips">
-            {climateModes(o.climateLayer).map((m) => <button key={m.id} className={o.climateMode === m.id ? 'active' : ''} aria-pressed={o.climateMode === m.id} title={m.hint} onClick={() => vm.setOptions({ climateMode: m.id })}>{m.label}</button>)}
-          </div>
+          <ChoiceGrid label="Climate layer" value={o.climateLayer} options={CLIMATE_LAYERS.map((l) => ({ value: l.id, label: l.label, hint: l.hint }))} onChange={(climateLayer) => vm.setOptions({ climateLayer })} />
+          <ChoiceGrid label="Climate brush" value={o.climateMode} options={climateModes(o.climateLayer).map((m) => ({ value: m.id, label: m.label, hint: m.hint }))} onChange={(climateMode) => vm.setOptions({ climateMode })} />
           <p className="hint">Red/blue tint: warmer/cooler. Green/ochre: wetter/drier. The offset is local and literal: it is added after winds, orographic rain and ocean currents, so a warm sea patch does not move the gyres.</p>
         </>
       )}
       {s.tool === 'biome' && (
-        <div className="swatches">
-          {s.biomes.map((b) => (
-            <button key={b.id} className={o.biome === b.id ? 'active' : ''} aria-pressed={o.biome === b.id} onClick={() => vm.setOptions({ biome: b.id })} title={BIOME_HINTS[b.name] ?? b.name}>
-              <i style={{ background: s.biomeColors[String(b.id)] ?? b.vivid }} /><i style={{ background: b.vivid }} /><span>{b.name}</span>
-            </button>
-          ))}
-        </div>
+        <ChoiceGrid label="Biome" value={o.biome} onChange={(biome) => vm.setOptions({ biome })}
+          options={s.biomes.map((b) => ({ value: b.id, label: b.name, hint: BIOME_HINTS[b.name] ?? b.name, swatch: <i style={{ background: s.biomeColors[String(b.id)] ?? b.vivid }} /> }))} />
       )}
       {s.tool === 'landuse' && (
         <>
-          <div className="swatches">
-            <button className={o.landUse === 0 ? 'active' : ''} aria-pressed={o.landUse === 0} onClick={() => vm.setOptions({ landUse: 0 })} title={LANDUSE_HINTS.clear}>
-              <i style={{ background: 'transparent' }} /><i style={{ background: 'transparent' }} /><span>Clear</span>
-            </button>
-            {LAND_USES.map((u) => (
-              <button key={u.id} className={o.landUse === u.id ? 'active' : ''} aria-pressed={o.landUse === u.id} onClick={() => vm.setOptions({ landUse: u.id })} title={u.hint}>
-                <i style={{ background: s.biomeColors[String(u.slot)] ?? '#999' }} /><i style={{ background: s.biomeColors[String(u.slot)] ?? '#999' }} /><span>{u.name}</span>
-              </button>
-            ))}
-          </div>
+          <ChoiceGrid label="Land use" value={o.landUse} onChange={(landUse) => vm.setOptions({ landUse })}
+            options={[
+              { value: 0, label: 'Clear', hint: LANDUSE_HINTS.clear, swatch: <i style={{ background: 'transparent' }} /> },
+              ...LAND_USES.map((u) => ({ value: u.id, label: u.name, hint: u.hint, swatch: <i style={{ background: s.biomeColors[String(u.slot)] ?? '#999' }} /> })),
+            ]} />
           <p className="hint">{LANDUSE_HINTS.note}</p>
         </>
       )}

@@ -19,8 +19,8 @@ export function Slider({ label, value, min, max, step, onChange, format, hint }:
   return (
     <label className="row slider" title={hint}>
       <span>{label}</span>
-      <input type="range" min={min} max={max} step={step} value={value} onChange={(e) => onChange(parseFloat(e.target.value))} />
       <output>{format ? format(value) : trim(value)}</output>
+      <input type="range" min={min} max={max} step={step} value={value} onChange={(e) => onChange(parseFloat(e.target.value))} />
     </label>
   );
 }
@@ -80,6 +80,24 @@ export function Segmented<T extends string>({ value, options, onChange }: { valu
   return (
     <div className="segmented">
       {options.map((o) => <button key={o.value} className={o.value === value ? 'active' : ''} aria-pressed={o.value === value} title={o.hint} onClick={() => onChange(o.value)}>{o.label}</button>)}
+    </div>
+  );
+}
+
+/**
+ * Pick one of many. Segmented is for two to four short labels; anything longer, or anything with a
+ * colour chip, is a ChoiceGrid. Both are toggle buttons (aria-pressed), never radios in disguise.
+ */
+export function ChoiceGrid<T extends string | number>({ value, options, onChange, label }: {
+  value: T; options: { value: T; label: string; hint?: string; swatch?: ReactNode; disabled?: boolean }[]; onChange: (v: T) => void; label?: string;
+}) {
+  return (
+    <div className="choices" role="group" aria-label={label}>
+      {options.map((o) => (
+        <button key={String(o.value)} className={o.value === value ? 'active' : ''} aria-pressed={o.value === value} disabled={o.disabled} title={o.hint ?? o.label} onClick={() => onChange(o.value)}>
+          {o.swatch}<span>{o.label}</span>
+        </button>
+      ))}
     </div>
   );
 }
