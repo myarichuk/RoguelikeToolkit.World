@@ -2,6 +2,8 @@
 :root {
   --bg: #1d1a17; --panel: #26221d; --fg: #e8e0d0; --muted: #a59a88; --accent: #c8a46a; --line: #3a342c;
   --danger: #c0533f;
+  /* Intentional fixed colors: the map is a canvas, not themed chrome. */
+  --map-bg: #000; --asset-bg: #e9dcbc; --on-color: #fff;
   /* Scales. Every gap, radius and font size below comes from one of these; do not add a new literal. */
   --s-1: 2px; --s-2: 4px; --s-3: 8px; --s-4: 12px; --s-5: 16px;
   --r-1: 4px; --r-2: 6px; --r-pill: 999px;
@@ -30,6 +32,8 @@ input[type='text'], input[type='number'], select {
 }
 input[type='range'] { accent-color: var(--accent); min-width: 0; }
 .muted { color: var(--muted); }
+.hint.warn { background: var(--bg); border-left: 2px solid var(--danger); padding: var(--s-2) var(--s-3); border-radius: 0 var(--r-1) var(--r-1) 0; color: var(--fg); }
+.hint.warn ul { margin: var(--s-2) 0 0; padding-left: var(--s-5); }
 .small { font-size: var(--fs-sm); }
 .grow { flex: 1; min-width: 0; }
 
@@ -75,7 +79,7 @@ button.dirty { border-color: var(--accent); color: var(--accent); }
 .tabs button.active { color: var(--fg); box-shadow: inset 0 -2px var(--accent); background: transparent; }
 
 .center { grid-area: center; position: relative; min-width: 0; min-height: 0; }
-.mapview { position: absolute; inset: 0; overflow: hidden; background: #000; }
+.mapview { position: absolute; inset: 0; overflow: hidden; background: var(--map-bg); }
 .mapview canvas { position: absolute; inset: 0; width: 100%; height: 100%; display: block; }
 .mapview .overlay { outline: none; touch-action: none; }
 .mapview .overlay:focus-visible { outline: 2px solid var(--accent); outline-offset: -2px; }
@@ -134,10 +138,10 @@ button.info:hover, button.info[aria-expanded='true'] { color: var(--accent); bor
 .toggle.on { color: var(--fg); }
 .toggle input { accent-color: var(--accent); margin: 0; }
 .toggle .count { font-size: var(--fs-xs); color: var(--muted); font-variant-numeric: tabular-nums; }
-i.dep { display: inline-grid; place-items: center; min-width: 20px; height: 16px; border-radius: var(--r-1); font: 600 var(--fs-xs)/1 system-ui; color: #fff; font-style: normal; padding: 0 3px; }
+i.dep { display: inline-grid; place-items: center; min-width: 20px; height: 16px; border-radius: var(--r-1); font: 600 var(--fs-xs)/1 system-ui; color: var(--on-color); font-style: normal; padding: 0 3px; }
 
 .assets .grid { display: grid; grid-template-columns: repeat(4, 1fr); gap: var(--s-2); }
-.assets .grid button { aspect-ratio: 1; padding: var(--s-2); background: #e9dcbc; }
+.assets .grid button { aspect-ratio: 1; padding: var(--s-2); background: var(--asset-bg); }
 .assets .grid button.active { outline: 2px solid var(--accent); outline-offset: 1px; }
 .assets img { width: 100%; height: 100%; object-fit: contain; }
 

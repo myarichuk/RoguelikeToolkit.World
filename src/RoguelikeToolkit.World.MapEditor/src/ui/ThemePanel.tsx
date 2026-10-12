@@ -1,5 +1,6 @@
 import { useState } from 'react';
 import type { PaletteToken } from '../engine/content/types';
+import { chromeContrastIssues, MIN_TEXT_CONTRAST } from '../viewmodels/contrast';
 import { MAP_COLORS, MAP_NUMBERS } from '../viewmodels/ThemeEditorViewModel';
 import { browserFiles } from './files';
 import { useApp, useViewModel } from './hooks';
@@ -55,9 +56,23 @@ export function ThemePanel() {
         )}
       </Section>
       <Section title="Editor chrome" hint={THEME_HINTS.chrome}>
+        <ContrastWarning ui={t.ui ?? {}} />
         {Object.entries(t.ui ?? {}).map(([k, v]) => <ColorField key={k} label={k.replace(/^--/, '')} value={v} onChange={(c) => vm.setUi(k, c)} hint={THEME_HINTS.chrome} />)}
       </Section>
     </>
+  );
+}
+
+/** Text/background pairs of the chrome that fall under WCAG AA. Advisory: the user may still keep them. */
+function ContrastWarning({ ui }: { ui: Record<string, string> }) {
+  const issues = chromeContrastIssues(ui);
+  if (!issues.length) return null;
+  const name = (k: string) => k.replace(/^--/, '');
+  return (
+    <div className="hint warn" role="status">
+      <b>Low contrast.</b> Text should reach {MIN_TEXT_CONTRAST}:1:
+      <ul>{issues.map((i) => <li key={i.fg + i.bg}>{name(i.fg)} on {name(i.bg)}: {i.ratio.toFixed(1)}:1</li>)}</ul>
+    </div>
   );
 }
 
