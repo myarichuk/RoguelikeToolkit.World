@@ -104,7 +104,7 @@ All temperature now comes from one function, `ClimateModel.Temperature`.
 and `RainSeasonality` (0 even .. 1 monsoon or Mediterranean). They are data for hosts and the inspector; the biome
 rules do not read them yet.
 
-Three climate refinements are on by default, and each can be switched off:
+Three climate refinements and one erosion process are on by default, and each can be switched off:
 
 - **Climate refresh** (`WithClimateRefresh(false)` to disable). Erosion runs after the first climate pass and moves the
   coastline, because sediment fills shallows: a size-4 world gains around 20% more land tiles, and every one of them
@@ -142,8 +142,18 @@ Three climate refinements are on by default, and each can be switched off:
   move by 1-2%, and the biome shares by less than half a point. The tidally locked model and sea ice are not covered:
   the wind bands stay Earth-like and the water never freezes.
 
+- **Wind erosion** (`WithErosion(e => e.AeolianIterations = 0)` to disable). After the fluvial passes the erosion stage
+  lifts loose ground from arid, thawed land (a smooth function of first-pass rainfall and temperature), hops it one tile
+  at a time to the neighbour the wind points at, and drops it where the surface rises, the wind dies, or the ground is
+  vegetated; what is still airborne after the last pass settles where it hangs. It is a Jacobi update on a frozen
+  surface, so tile order cannot matter, every move takes from one tile and gives to another (mass is conserved), a tile
+  cannot lose more than `AeolianMaxDeflation` (0.03) in total, and pinned tiles neither give nor keep anything.
+  A tile is tens to hundreds of km across, so the product is broad deflation basins upwind and sand blankets downwind,
+  not dunes. Measured on seeds 42 and 7 at sizes 3-4: 17-20% of tiles move, the largest change is 0.009-0.013 (4 passes), lakes
+  are unchanged and rivers move by 0-3 of 54-109. `AeolianIterations = 0` skips the pass entirely.
+
 For the previous pipeline use `WithClimateRefresh(false)`, `MeridionalWind = 0`, `OceanHeatStrength = 0`,
-`OceanRainGain = 0` and `RiverThresholdScale = 1`.
+`OceanRainGain = 0`, `RiverThresholdScale = 1` and `AeolianIterations = 0`.
 
 ## Editing a world: hand edits as a pipeline input
 

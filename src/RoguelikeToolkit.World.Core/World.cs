@@ -285,6 +285,7 @@ public sealed class WorldBuilder
     private Action<LocalMapGenerationStage>? _biomesConfig;
     private Action<ClimateStage>? _climateConfig;
     private Action<HydrologyStage>? _hydrologyConfig;
+    private Action<ErosionGenerationStage>? _erosionConfig;
     private bool _userEdits;
     private bool _landUse;
     private bool _climateRefresh = true;
@@ -361,6 +362,13 @@ public sealed class WorldBuilder
         _hydrologyConfig = prev == null ? configure : s => { prev(s); configure(s); };
         return this;
     }
+    /// <summary>Tweak the default erosion stage (iteration counts, wind erosion...).</summary>
+    public WorldBuilder WithErosion(Action<ErosionGenerationStage> configure)
+    {
+        var prev = _erosionConfig;
+        _erosionConfig = prev == null ? configure : s => { prev(s); configure(s); };
+        return this;
+    }
     /// <summary>Tweak the default biome stage (smoothing passes...).</summary>
     public WorldBuilder WithBiomes(Action<LocalMapGenerationStage> configure)
     {
@@ -422,7 +430,9 @@ public sealed class WorldBuilder
             hydrologyStage = new HydrologyStage();
             _hydrologyConfig?.Invoke(hydrologyStage);
             riverScale = hydrologyStage.RiverThresholdScale;
-            pipeline.AddStage(new ErosionGenerationStage { RiverThresholdScale = riverScale });
+            var erosion = new ErosionGenerationStage { RiverThresholdScale = riverScale };
+            _erosionConfig?.Invoke(erosion);
+            pipeline.AddStage(erosion);
             if (_climateRefresh) pipeline.AddStage(new ClimateRefreshStage(climate)); // ties erosion's order; the stable sort keeps it after
             pipeline.AddStage(hydrologyStage);
             var biomes = new LocalMapGenerationStage(_seed) { RiverThresholdScale = riverScale };
