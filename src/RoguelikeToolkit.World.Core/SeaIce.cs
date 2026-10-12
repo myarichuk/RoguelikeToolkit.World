@@ -29,6 +29,10 @@ public enum SeaIceKind : byte
 /// (Earth: 7.5 of 33). Seasonal ice sits around 68 degrees on average, the pack around 80; the first ice
 /// appears at about 50 degrees. The pack's share of the frozen area still drifts from 21% to 28% between sizes 3
 /// and 6, which no constant removes.
+/// Consumers: <see cref="LandCapacity"/> (the fish catch of the water) and <see cref="CitySiteScorer"/>
+/// (pack ice is not water access; a coast whose only usable water is seasonal ice scores <see cref="SettlementScoring.WinterIce"/>
+/// lower). On default worlds that moves under 1% of the viable sites (0 to 2 dropped, up to 80 of 7000 re-scored, the best 300 almost
+/// unchanged), because polar land is mostly glacier and tundra already.
 /// Not modelled: the ice-albedo feedback on climate (the mask is read from the climate, never written back),
 /// salinity (brine freezes later), and ice drift.
 /// </summary>

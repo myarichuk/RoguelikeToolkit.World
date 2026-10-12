@@ -17,7 +17,7 @@ export const FACT_HINTS: Record<string, string> = {
   'Source elevation': 'Height of the river\'s first tile.',
   Type: 'The feature\'s subtype.',
   Rank: 'Settlement size class, decided by site quality and spacing.',
-  'Site score': 'How good the place is for a settlement: fresh water, flat fertile ground, climate and nearby resources.',
+  'Site score': 'How good the place is for a settlement: fresh water, flat fertile ground, climate and nearby resources. A coast the sea freezes over in winter scores a little lower, and one locked in permanent ice has no water access.',
   'Water access': 'How a settlement reaches fresh water (river, lake, coast or none).',
   'Nearby resources': 'Deposits within the settlement\'s reach.',
   Resource: 'Kind of ore, fuel or mineral. Deposits form where the geology allows them (e.g. oil in basins, gold near volcanic arcs).',
