@@ -1,15 +1,10 @@
 import { newId } from '../core/ids';
 import type { WorldSnapshot } from '../world/protocol';
-import { MapDocument } from './MapDocument';
+import { isGeneratedFeatureId, MapDocument } from './MapDocument';
 import { DEFAULT_SETTINGS, type DocSettings, type FeatureEntity, type RiverEntity } from './types';
 
-/** Factory: a fresh document from a generated world (rasters, rivers, features; no stamps/labels yet). */
-export function documentFromWorld(w: WorldSnapshot, settings: Partial<DocSettings> = {}): MapDocument {
-  const doc = new MapDocument(
-    { ...DEFAULT_SETTINGS, ...settings, seed: w.seed, size: w.size, plates: w.plates },
-    w.rasters.elevation, w.rasters.biome,
-    { tile: w.rasters.tile, tilePlate: w.tilePlate, plateDrift: w.plateDrift, tileXY: w.tileXY, styles: w.styles },
-  );
+/** The editable entities of a snapshot's extracted features: river ribbons plus one entity per feature. */
+export function entitiesFromSnapshot(w: WorldSnapshot): { features: FeatureEntity[]; rivers: RiverEntity[] } {
   const rivers: RiverEntity[] = [];
   const riverIds = w.features.rivers.map((r) => {
     const id = newId('river');
@@ -25,7 +20,25 @@ export function documentFromWorld(w: WorldSnapshot, settings: Partial<DocSetting
       culture: w.styles[f.style]?.label ?? '', request: f.request,
     };
   });
+  return { features, rivers };
+}
+
+/** Factory: a fresh document from a generated world (rasters, rivers, features; no stamps/labels yet). */
+export function documentFromWorld(w: WorldSnapshot, settings: Partial<DocSettings> = {}): MapDocument {
+  const doc = new MapDocument(
+    { ...DEFAULT_SETTINGS, ...settings, seed: w.seed, size: w.size, plates: w.plates },
+    w.rasters.elevation, w.rasters.biome,
+    { tile: w.rasters.tile, tilePlate: w.tilePlate, plateDrift: w.plateDrift, tileXY: w.tileXY, styles: w.styles },
+  );
+  const { features, rivers } = entitiesFromSnapshot(w);
   doc.rivers.reset(rivers);
   doc.features.reset(features);
+  // The pristine world is the baseline brush strokes are measured against; every feature here is the engine's.
+  doc.physics = {
+    edits: new Map(),
+    baseline: { elevation: w.rasters.elevation.slice(), biome: w.rasters.biome.slice() },
+    generated: new Set(features.map((f) => f.id).filter(isGeneratedFeatureId)),
+    tombstones: new Map(),
+  };
   return doc;
 }

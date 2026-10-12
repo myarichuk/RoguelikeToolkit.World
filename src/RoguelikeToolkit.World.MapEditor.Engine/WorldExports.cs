@@ -25,12 +25,42 @@ public static partial class WorldExports
     public static int Generate(int seed, int size, int plates)
     {
         _world?.Dispose();
-        var builder = new WorldBuilder().WithSize(size).WithSeed(seed);
+        var builder = new WorldBuilder().WithSize(size).WithSeed(seed).WithUserEdits();
         if (plates > 0) builder.WithPlateCount(plates);
         _world = builder.Build();
         // The store discards faces after deriving adjacency; regenerate them (deterministic, same vertex order).
         IcosphereGenerator.Generate(size, out _, out _faces);
         return _world.TileCount;
+    }
+
+    /// <summary>
+    /// Replaces the world's hand edits wholesale and re-derives everything downstream (see
+    /// <see cref="CoreWorld.Recompute"/>). The table is sparse and absolute, so the call is
+    /// idempotent: the engine keeps no history, the document owns the edits. <paramref name="meta"/>
+    /// packs <see cref="UserEditFlags"/> in the low byte and the pinned <see cref="BiomeType"/> above it.
+    /// </summary>
+    [JSExport]
+    public static int ApplyEdits(int[] tiles, double[] heightDelta, double[] pinHeight, int[] meta)
+    {
+        var world = Current;
+        if (tiles.Length != heightDelta.Length || tiles.Length != pinHeight.Length || tiles.Length != meta.Length)
+            throw new ArgumentException("Edit arrays must have equal lengths.");
+        var edits = world.Edits;
+        edits.Clear();
+        for (int k = 0; k < tiles.Length; k++)
+        {
+            int t = tiles[k];
+            if ((uint)t >= (uint)edits.Length) throw new ArgumentOutOfRangeException(nameof(tiles), t, "Tile index out of range.");
+            edits[t] = new UserEditInfo
+            {
+                HeightDelta = (float)heightDelta[k],
+                PinHeight = (float)pinHeight[k],
+                Flags = (UserEditFlags)(meta[k] & 0xff),
+                PinBiome = (BiomeType)((meta[k] >> 8) & 0xff),
+            };
+        }
+        world.Recompute();
+        return world.TileCount;
     }
 
     /// <summary>Unit vectors of tile centers, xyz interleaved.</summary>

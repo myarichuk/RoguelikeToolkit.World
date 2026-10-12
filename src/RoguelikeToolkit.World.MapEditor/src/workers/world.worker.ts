@@ -6,7 +6,7 @@ import { MAP_H, MAP_W, vecToMap } from '../engine/core/geo';
 import { extractFeatures } from '../engine/world/features';
 import {
   DEFAULT_STYLES, snapshotTransfer, styleKey,
-  type GenerateParams, type NameRequest, type NameStyle, type WorkerRequest, type WorkerResponse, type WorldSnapshot,
+  type GenerateParams, type NameRequest, type NameStyle, type RecomputeParams, type WorkerRequest, type WorkerResponse, type WorldSnapshot,
 } from '../engine/world/protocol';
 import { rasterize } from '../engine/world/rasterize';
 
@@ -15,6 +15,7 @@ type Arr = ArrayLike<number>;
 /** The [JSExport] surface of RoguelikeToolkit.World.MapEditor.Engine.WorldExports. */
 interface EngineApi {
   Generate(seed: number, size: number, plates: number): number;
+  ApplyEdits(tiles: number[], heightDelta: number[], pinHeight: number[], meta: number[]): number;
   TileVectors(): Arr;
   Faces(): Arr;
   Heights(): Arr;
@@ -58,14 +59,35 @@ function names(e: EngineApi, reqs: NameRequest[]): string[] {
     reqs.map((r) => r.culture), reqs.map((r) => r.context));
 }
 
+/** Which world the engine currently holds; recompute regenerates when the document asks for another. */
+let loaded = '';
+const worldKey = (p: GenerateParams): string => `${p.seed}|${p.size}|${p.plates}`;
+
 async function generate(p: GenerateParams): Promise<WorldSnapshot> {
   const e = await api();
   const timings: Record<string, number> = { bootMs };
-  let t = performance.now();
+  const t = performance.now();
   const tileCount = e.Generate(p.seed, p.size, p.plates);
+  loaded = worldKey(p);
   timings.generateMs = performance.now() - t;
+  return pull(e, p, tileCount, timings, { features: true, names: true });
+}
 
-  t = performance.now();
+async function recompute(p: RecomputeParams): Promise<WorldSnapshot> {
+  const e = await api();
+  const timings: Record<string, number> = { bootMs };
+  let t = performance.now();
+  const tileCount = loaded === worldKey(p) ? -1 : e.Generate(p.seed, p.size, p.plates);
+  if (tileCount >= 0) loaded = worldKey(p);
+  const n = e.ApplyEdits(Array.from(p.edits.tiles), Array.from(p.edits.delta), Array.from(p.edits.pinHeight), Array.from(p.edits.meta));
+  timings.recomputeMs = performance.now() - t;
+  // Names are the document's business on a recompute: surviving features keep theirs, and the
+  // editor asks only for the ones that are new.
+  return pull(e, p, n, timings, { features: !p.rastersOnly, names: false });
+}
+
+function pull(e: EngineApi, p: GenerateParams, tileCount: number, timings: Record<string, number>, want: { features: boolean; names: boolean }): WorldSnapshot {
+  let t = performance.now();
   const vectors = Float64Array.from(e.TileVectors());
   const faces = Int32Array.from(e.Faces());
   const heights = Float64Array.from(e.Heights());
@@ -89,15 +111,20 @@ async function generate(p: GenerateParams): Promise<WorldSnapshot> {
   const rasters = rasterize({ vectors, faces, heights, biomes }, MAP_W, MAP_H);
   timings.rasterMs = performance.now() - t;
 
-  t = performance.now();
-  const features = extractFeatures({ seed: p.seed, vectors, faces, heights, biomes, flow, climate, tilePlate, ...catalogs, styles: chosen });
-  timings.featuresMs = performance.now() - t;
+  let features: WorldSnapshot['features'] = { features: [], rivers: [] };
+  if (want.features) {
+    t = performance.now();
+    features = extractFeatures({ seed: p.seed, vectors, faces, heights, biomes, flow, climate, tilePlate, ...catalogs, styles: chosen });
+    timings.featuresMs = performance.now() - t;
+  }
 
-  t = performance.now();
-  const named = features.features.filter((f) => f.request);
-  const placeNames = names(e, named.map((f) => f.request!));
-  named.forEach((f, i) => { f.name = placeNames[i]; });
-  timings.namesMs = performance.now() - t;
+  if (want.names) {
+    t = performance.now();
+    const named = features.features.filter((f) => f.request);
+    const placeNames = names(e, named.map((f) => f.request!));
+    named.forEach((f, i) => { f.name = placeNames[i]; });
+    timings.namesMs = performance.now() - t;
+  }
 
   const tileXY = new Float32Array(tileCount * 2);
   for (let i = 0; i < tileCount; i++) {
@@ -123,6 +150,11 @@ self.addEventListener('message', async (ev: MessageEvent<WorkerRequest>) => {
       case 'generate': {
         const world = await generate(req.params);
         post({ id: req.id, ok: true, type: 'generate', world }, snapshotTransfer(world));
+        break;
+      }
+      case 'recompute': {
+        const world = await recompute(req.params);
+        post({ id: req.id, ok: true, type: 'recompute', world }, snapshotTransfer(world));
         break;
       }
       case 'names':

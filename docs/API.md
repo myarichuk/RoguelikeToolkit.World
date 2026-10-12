@@ -77,6 +77,27 @@ string lakeWkt = world.WaterBodyToWkt(0);
 string depositWkt = world.DepositToWkt(0);
 ```
 
+## Editing a world: hand edits as a pipeline input
+
+A world is a pure function of (seed, configuration, hand edits). Build it with `WithUserEdits()` and
+the per-tile `UserEditInfo` layer is an *input* no stage writes:
+
+```csharp
+using var world = new WorldBuilder().WithSize(5).WithSeed(42).WithUserEdits().Build();
+world.Edits[tile].HeightDelta = 0.8f;                         // sculpt: added before climate and erosion
+world.Edits[other].Flags = UserEditFlags.PinHeight;           // fix: the final height, restored after erosion
+world.Edits[other].PinHeight = 0.2f;
+world.Edits[third].Flags = UserEditFlags.PinBiome;            // hydrology cover and the biome stage keep it
+world.Edits[third].PinBiome = BiomeType.Desert;
+world.Recompute();                                            // elevation -> climate -> erosion -> hydrology -> biomes -> catalogs
+```
+
+`Recompute()` re-runs the pipeline from the elevation stage (`WorldGenerationPipeline.ExecuteFrom`),
+clears and repopulates the river, water-body, range and deposit catalogs, and rebuilds the spatial
+index. It does not repeat the plate simulation. With no edits it reproduces the generated world bit for
+bit, and repeated calls never erode twice. It is global: hydrology is a whole-world solve, so one
+raised ridge may redirect a basin far from it.
+
 ## Addresses and seeds: where am I?
 
 Every map in the hierarchy has a stable address. The planet tier uses tile indices; the lower tiers hang off those:

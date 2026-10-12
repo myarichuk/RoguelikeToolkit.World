@@ -1,5 +1,6 @@
 // The contract between the editor (main thread) and the world worker (.NET Core in wasm).
 // Plain data only: everything crosses postMessage, big arrays as transferables.
+import type { PackedEdits } from './edits';
 import type { Rasters } from './rasterize';
 
 export interface NameStyle { race: string; culture: string; label: string; }
@@ -83,6 +84,13 @@ export interface GenerateParams {
   styles: string[];
 }
 
+export interface RecomputeParams extends GenerateParams {
+  /** The whole hand-edit table (absolute, not a delta): the engine keeps no history. */
+  edits: PackedEdits;
+  /** Rasters only: no feature extraction or naming (used to rebuild a baseline). */
+  rastersOnly: boolean;
+}
+
 /** A mixed fantasy world out of the box; the editor lets the user pick any engine style. */
 export const DEFAULT_STYLES = [
   'human|fantasy_common', 'human|human_western', 'human|human_welsh', 'human|human_irish',
@@ -94,12 +102,14 @@ export const styleKey = (s: NameStyle): string => `${s.race}|${s.culture}`;
 export type WorkerRequest =
   | { id: number; type: 'init'; frameworkUrl: string }
   | { id: number; type: 'generate'; params: GenerateParams }
+  | { id: number; type: 'recompute'; params: RecomputeParams }
   | { id: number; type: 'names'; requests: NameRequest[] }
   | { id: number; type: 'styles' };
 
 export type WorkerResponse =
   | { id: number; ok: true; type: 'init'; bootMs: number }
   | { id: number; ok: true; type: 'generate'; world: WorldSnapshot }
+  | { id: number; ok: true; type: 'recompute'; world: WorldSnapshot }
   | { id: number; ok: true; type: 'names'; names: string[] }
   | { id: number; ok: true; type: 'styles'; styles: NameStyle[] }
   | { id: number; ok: false; error: string };

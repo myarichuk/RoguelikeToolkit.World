@@ -46,6 +46,7 @@ export function ToolOptionsPanel() {
           ))}
         </div>
       )}
+      {brush && <PhysicsControls />}
       {s.tool === 'stamp' && (
         <>
           <Slider label="Scale" value={o.stampScale} min={0.3} max={3} step={0.05} onChange={(stampScale) => vm.setOptions({ stampScale })} />
@@ -58,6 +59,28 @@ export function ToolOptionsPanel() {
         <Select label="Style" value={o.labelStyle} options={s.labelStyles.map((k) => ({ value: k, label: k }))} onChange={(labelStyle) => vm.setOptions({ labelStyle })} />
       )}
     </Section>
+  );
+}
+
+/**
+ * Brush strokes only repaint pixels; this is what makes them matter. It folds the strokes into
+ * per-tile edits and re-derives climate, erosion, rivers, lakes and biomes from them.
+ */
+function PhysicsControls() {
+  const { vms } = useApp();
+  const s = useViewModel(vms.tools);
+  const off = !s.physicsReady || s.busy;
+  return (
+    <div className="physics">
+      <h4>Physics</h4>
+      <p className="hint">Strokes only repaint until you apply them. Sculpt lets erosion reshape your terrain; Fix keeps it exactly as drawn. Rivers, lakes and biomes follow.</p>
+      <div className="chips">
+        <button disabled={off} onClick={() => void vms.tools.applyPhysics('sculpt')} title="Re-derive the world from your strokes; erosion and rain shadows act on them">Apply (sculpt)</button>
+        <button disabled={off} onClick={() => void vms.tools.applyPhysics('fix')} title="Re-derive the world, keeping the heights you drew exactly">Apply (fix)</button>
+        <button disabled={off} onClick={() => void vms.tools.applyPhysics('revert')} title="Discard every terrain edit and return to the generated world">Revert</button>
+      </div>
+      {!s.physicsReady && <p className="hint">Generate a world first: this map has no planet behind it.</p>}
+    </div>
   );
 }
 

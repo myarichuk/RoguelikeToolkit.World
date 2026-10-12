@@ -1,5 +1,6 @@
 import type { Editor } from '../engine/Editor';
 import type { BiomeDef } from '../engine/content/types';
+import type { PhysicsMode } from '../engine/world/derivePhysics';
 import type { HeightMode } from '../engine/tools/brushes';
 import type { ToolId, ToolOptions } from '../engine/tools/Tool';
 import { ViewModel } from './ViewModel';
@@ -32,15 +33,20 @@ export interface ToolsState {
   biomeColors: Record<string, string>;
   assets: AssetOption[];
   labelStyles: string[];
+  /** The document has an engine world behind it, so brush work can be turned into new rivers, lakes and climate. */
+  physicsReady: boolean;
+  busy: boolean;
 }
 
 /** Tool palette and the active tool's options (brush, biome palette, stamp palette, label style). */
 export class ToolsViewModel extends ViewModel<ToolsState> {
   constructor(private readonly editor: Editor) {
-    super({ tool: editor.toolId, options: editor.options, biomes: [], biomeColors: {}, assets: [], labelStyles: [] });
+    super({ tool: editor.toolId, options: editor.options, biomes: [], biomeColors: {}, assets: [], labelStyles: [], physicsReady: false, busy: false });
     this.track(editor.events.on('tool', (tool) => this.set({ tool })));
     this.track(editor.events.on('options', (options) => this.set({ options })));
     this.track(editor.events.on('theme', () => this.syncContent()));
+    this.track(editor.events.on('doc', (doc) => this.set({ physicsReady: !!doc.physics && doc.hasWorld })));
+    this.track(editor.events.on('busy', (b) => this.set({ busy: !!b })));
     this.syncContent();
   }
 
@@ -65,5 +71,6 @@ export class ToolsViewModel extends ViewModel<ToolsState> {
   setTool = (id: ToolId): void => this.editor.setTool(id);
   setOptions = (patch: Partial<ToolOptions>): void => this.editor.setOptions(patch);
   pickAsset = (asset: string): void => { this.editor.setOptions({ asset }); this.editor.setTool('stamp'); };
+  applyPhysics = (mode: PhysicsMode): Promise<void> => this.editor.applyPhysics(mode).catch(() => {});
   pickBiome = (biome: number): void => { this.editor.setOptions({ biome }); this.editor.setTool('biome'); };
 }

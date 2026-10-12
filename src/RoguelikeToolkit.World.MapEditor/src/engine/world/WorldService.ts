@@ -1,6 +1,6 @@
 // Main-thread proxy for the world worker (Proxy pattern): promise-based RPC over postMessage.
 // Callers never see the worker, the .NET runtime, or message ids.
-import type { GenerateParams, NameRequest, NameStyle, WorkerRequest, WorkerResponse, WorldSnapshot } from './protocol';
+import type { GenerateParams, NameRequest, RecomputeParams, NameStyle, WorkerRequest, WorkerResponse, WorldSnapshot } from './protocol';
 
 type Ok = Extract<WorkerResponse, { ok: true }>;
 type Pending = { resolve: (r: Ok) => void; reject: (e: Error) => void };
@@ -40,6 +40,12 @@ export class WorldService {
   async generate(params: GenerateParams): Promise<WorldSnapshot> {
     await this.ready;
     return (await this.call<'generate'>({ type: 'generate', params })).world;
+  }
+
+  /** Re-derives the world from the hand-edit table (see Core's World.Recompute). Regenerates first if the engine holds another world. */
+  async recompute(params: RecomputeParams): Promise<WorldSnapshot> {
+    await this.ready;
+    return (await this.call<'recompute'>({ type: 'recompute', params })).world;
   }
 
   async names(requests: NameRequest[]): Promise<string[]> {

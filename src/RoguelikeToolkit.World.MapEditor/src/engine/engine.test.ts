@@ -149,6 +149,16 @@ describe('.wmap serialization', () => {
     expect(back.labels.get('l1')!.text).toBe('Ælfheim');
     expect(back.stamps.get('s')).toEqual(doc.stamps.get('s'));
   });
+  it('round-trips the hand-edit table, the generated-feature ids and the tombstones', () => {
+    const doc = MapDocument.empty();
+    const gone = { id: 'f_lake:4', kind: 'lake' as const, name: 'Gone', x: 1, y: 2, angle: 0, extent: 1, weight: 1, tiles: [1, 2], details: [] as [string, string][], culture: '' };
+    doc.physics = { edits: new Map([[3, { dh: 0.25 }], [9, { pinH: 0.5, pinBiome: 12 }]]), baseline: null, generated: new Set(['f_lake:5']), tombstones: new Map([[gone.id, gone]]) };
+    const back = decodeDocument(encodeDocument(doc));
+    expect([...back.physics!.edits]).toEqual([[3, { dh: 0.25 }], [9, { pinH: 0.5, pinBiome: 12 }]]);
+    expect([...back.physics!.generated]).toEqual(['f_lake:5']);
+    expect(back.physics!.tombstones.get('f_lake:4')).toEqual(gone);
+    expect(back.physics!.baseline).toBeNull();   // a cache: rebuilt from the table on demand
+  });
   it('rejects garbage with a readable error', () => {
     expect(() => decodeDocument(new Uint8Array(64))).toThrow(/bad magic/);
   });

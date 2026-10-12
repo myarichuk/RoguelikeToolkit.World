@@ -1,0 +1,141 @@
+// Hand edits, in the tile space the physics lives in. The editor paints pixels; the world is
+// computed per icosphere tile. This module is the bridge: it folds the pixel difference between
+// what the user has now and what the engine last produced into a sparse per-tile table, and packs
+// that table for the worker. The table (never the derived rasters) is what a document persists.
+
+/** Biome ids the editor paints that Core has no biome for (savanna, farmland, ashlands): decoration only. */
+export const EDITOR_ONLY_BIOMES: ReadonlySet<number> = new Set([10, 11, 13]);
+
+/** Mean height change below this (height units; sea level 0, relief about ±1.2) is a stray dab, not an edit. */
+export const MIN_DELTA = 0.02;
+/** A tile is repainted when at least this share of its pixels now carry one other biome. */
+export const MIN_BIOME_SHARE = 0.4;
+
+export interface TileEdit {
+  /** Sculpt: added to the tectonic relief before climate and erosion (erosion still acts on it). */
+  dh?: number;
+  /** Fix: the final height after erosion. */
+  pinH?: number;
+  /** Fix: the Core biome id the tile keeps. */
+  pinBiome?: number;
+}
+
+export type TileEdits = Map<number, TileEdit>;
+export type EditMode = 'sculpt' | 'fix';
+
+export interface Raster { elevation: Float32Array; biome: Uint8Array; }
+
+export interface CollectResult {
+  edits: TileEdits;
+  /** Tiles whose height changed by at least MIN_DELTA. */
+  heightTiles: number;
+  /** Tiles newly pinned to a painted biome. */
+  biomeTiles: number;
+}
+
+/** Pixels per tile (the dominant-tile raster is fixed for a world, so callers may cache this). */
+export function tilePixelCounts(tile: Int32Array, tileCount: number): Int32Array {
+  const counts = new Int32Array(tileCount);
+  for (let i = 0; i < tile.length; i++) { const t = tile[i]; if (t >= 0 && t < tileCount) counts[t]++; }
+  return counts;
+}
+
+/**
+ * Folds `current - baseline` into `prior`, returning a new table. `baseline` is the raster the
+ * engine last produced for `prior`; anything the user has done since shows up as a difference.
+ * Sculpt accumulates onto the tile's delta and releases a height pin; fix pins the tile to its
+ * current mean height. Biome repaints become pins when they cover enough of the tile.
+ */
+export function collectEdits(
+  current: Raster, baseline: Raster, tile: Int32Array, tileCount: number, prior: TileEdits, mode: EditMode,
+  counts: Int32Array = tilePixelCounts(tile, tileCount),
+): CollectResult {
+  const sumDiff = new Float64Array(tileCount), sumCur = new Float64Array(tileCount);
+  const painted = new Map<number, Map<number, number>>();
+  for (let i = 0; i < tile.length; i++) {
+    const t = tile[i];
+    if (t < 0 || t >= tileCount) continue;
+    const e = current.elevation[i];
+    sumDiff[t] += e - baseline.elevation[i];
+    sumCur[t] += e;
+    const b = current.biome[i];
+    if (b !== baseline.biome[i] && !EDITOR_ONLY_BIOMES.has(b)) {
+      let m = painted.get(t);
+      if (!m) painted.set(t, (m = new Map()));
+      m.set(b, (m.get(b) ?? 0) + 1);
+    }
+  }
+  const edits: TileEdits = new Map();
+  for (const [t, e] of prior) edits.set(t, { ...e });
+  let heightTiles = 0, biomeTiles = 0;
+  for (let t = 0; t < tileCount; t++) {
+    const n = counts[t];
+    if (!n) continue;
+    const mean = sumDiff[t] / n;
+    if (Math.abs(mean) >= MIN_DELTA) {
+      heightTiles++;
+      const e = edits.get(t) ?? {};
+      if (mode === 'sculpt') { e.dh = (e.dh ?? 0) + mean; delete e.pinH; }
+      else e.pinH = sumCur[t] / n;
+      edits.set(t, e);
+    }
+  }
+  for (const [t, m] of painted) {
+    let best = -1, bestN = 0;
+    for (const [b, c] of m) if (c > bestN || (c === bestN && b < best)) { best = b; bestN = c; }
+    if (bestN >= MIN_BIOME_SHARE * counts[t]) {
+      const e = edits.get(t) ?? {};
+      e.pinBiome = best;
+      edits.set(t, e);
+      biomeTiles++;
+    }
+  }
+  return { edits, heightTiles, biomeTiles };
+}
+
+export interface PackedEdits { tiles: Int32Array; delta: Float64Array; pinHeight: Float64Array; meta: Int32Array; }
+
+/** Core's UserEditFlags. */
+const PIN_HEIGHT = 1, PIN_BIOME = 2;
+
+/** The wire form for `WorldExports.ApplyEdits`; tile order is ascending so the table is canonical. */
+export function packEdits(edits: TileEdits): PackedEdits {
+  const keys = [...edits.keys()].sort((a, b) => a - b);
+  const out: PackedEdits = {
+    tiles: new Int32Array(keys.length), delta: new Float64Array(keys.length),
+    pinHeight: new Float64Array(keys.length), meta: new Int32Array(keys.length),
+  };
+  keys.forEach((t, k) => {
+    const e = edits.get(t)!;
+    let flags = 0;
+    if (e.pinH !== undefined) flags |= PIN_HEIGHT;
+    if (e.pinBiome !== undefined) flags |= PIN_BIOME;
+    out.tiles[k] = t;
+    out.delta[k] = e.dh ?? 0;
+    out.pinHeight[k] = e.pinH ?? 0;
+    out.meta[k] = flags | ((e.pinBiome ?? 0) << 8);
+  });
+  return out;
+}
+
+/** Plain JSON for the .wmap header: `[tile, dh, pinH, pinBiome]` rows, null for "unset". */
+export type EditRow = [number, number | null, number | null, number | null];
+
+export function editsToRows(edits: TileEdits): EditRow[] {
+  return [...edits.keys()].sort((a, b) => a - b).map((t) => {
+    const e = edits.get(t)!;
+    return [t, e.dh ?? null, e.pinH ?? null, e.pinBiome ?? null];
+  });
+}
+
+export function editsFromRows(rows: readonly EditRow[]): TileEdits {
+  const m: TileEdits = new Map();
+  for (const [t, dh, pinH, pinBiome] of rows) {
+    const e: TileEdit = {};
+    if (dh !== null) e.dh = dh;
+    if (pinH !== null) e.pinH = pinH;
+    if (pinBiome !== null) e.pinBiome = pinBiome;
+    m.set(t, e);
+  }
+  return m;
+}

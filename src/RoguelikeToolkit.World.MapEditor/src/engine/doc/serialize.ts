@@ -1,5 +1,6 @@
 import { MAP_H, MAP_W } from '../core/geo';
-import { MapDocument } from './MapDocument';
+import { editsFromRows, editsToRows, type EditRow } from '../world/edits';
+import { isGeneratedFeatureId, MapDocument } from './MapDocument';
 import { DEFAULT_SETTINGS, type DocSettings, type FeatureEntity, type LabelEntity, type RiverEntity, type StampEntity } from './types';
 
 // .wmap: gzip( "WMAP" | u32 version | u32 headerLength | header JSON (utf-8) | pad to 8 | blobs ).
@@ -8,7 +9,8 @@ import { DEFAULT_SETTINGS, type DocSettings, type FeatureEntity, type LabelEntit
 // ~22 MB raw and compresses to a few MB; JSON for rasters would be ~10x larger and slower.
 
 const MAGIC = 0x50414d57; // "WMAP" little-endian
-export const WMAP_VERSION = 1;
+// v2 adds `physics` (the hand-edit table); v1 files load as worlds with no recorded edits.
+export const WMAP_VERSION = 2;
 
 type BlobName = 'elevation' | 'biome' | 'tile' | 'tilePlate' | 'plateDrift' | 'tileXY';
 type Typed = Float32Array | Uint8Array | Int32Array | Uint32Array | Float64Array;
@@ -25,6 +27,7 @@ interface Header {
   stamps: StampEntity[];
   labels: LabelEntity[];
   rivers: RiverEntity[];
+  physics?: { edits: EditRow[]; generated: string[]; tombstones: FeatureEntity[] };
   blobs: { name: BlobName; type: keyof typeof CTORS; offset: number; length: number }[];
 }
 
@@ -43,6 +46,7 @@ export function encodeDocument(doc: MapDocument): Uint8Array {
   const header: Header = {
     format: 'wmap', version: WMAP_VERSION, width: doc.width, height: doc.height, settings: doc.settings, styles: doc.world.styles,
     features: [...doc.features.all()], stamps: [...doc.stamps.all()], labels: [...doc.labels.all()].map(labelOut), rivers: [...doc.rivers.all()],
+    physics: doc.physics ? { edits: editsToRows(doc.physics.edits), generated: [...doc.physics.generated], tombstones: [...doc.physics.tombstones.values()] } : undefined,
     blobs,
   };
   const json = new TextEncoder().encode(JSON.stringify(header));
@@ -87,6 +91,15 @@ export function decodeDocument(bytes: Uint8Array): MapDocument {
   doc.stamps.reset(header.stamps ?? []);
   doc.labels.reset((header.labels ?? []).map(labelIn));
   doc.rivers.reset(header.rivers ?? []);
+  if (header.physics) {
+    doc.physics = {
+      edits: editsFromRows(header.physics.edits), baseline: null,
+      generated: new Set(header.physics.generated), tombstones: new Map(header.physics.tombstones.map((f) => [f.id, f])),
+    };
+  } else if (doc.hasWorld) {
+    // Pre-physics file: nothing was ever recorded, so the engine's own features are told apart by their key shape.
+    doc.physics = { edits: new Map(), baseline: null, generated: new Set([...doc.features.all()].map((f) => f.id).filter(isGeneratedFeatureId)), tombstones: new Map() };
+  }
   return doc;
 }
 

@@ -1,5 +1,6 @@
 import { CompositeCommand, type Command } from './commands/Command';
 import { AddEntities, RemoveEntities, SetValue, UpdateEntities } from './commands/EntityCommands';
+import { applyFrame, captureFrame, PhysicsApply, type PhysicsFrame } from './commands/PhysicsApply';
 import { UndoStack } from './commands/UndoStack';
 import { AssetLibrary } from './content/AssetLibrary';
 import corePack from './content/core-pack.json';
@@ -32,6 +33,7 @@ import { StampTool } from './tools/StampTool';
 import { TextTool } from './tools/TextTool';
 import { DEFAULT_TOOL_OPTIONS, type Tool, type ToolContext, type ToolId, type ToolOptions } from './tools/Tool';
 import { ToolController, type ToolHost } from './tools/ToolController';
+import { derivePhysics, describeReport, type PhysicsMode } from './world/derivePhysics';
 import { styleIndexForPlate } from './world/features';
 import { NameCtx, type GenerateParams, type NameRequest, type NameStyle } from './world/protocol';
 import { WorldService } from './world/WorldService';
@@ -97,6 +99,7 @@ export class Editor implements ToolContext, ToolHost {
   private contentTimer = 0;
   private lastFrameEmit = 0;
   private nameNonce = 1;
+  private density = 1;
   private maskKey = '';
   /** Resolves when fonts and the atlas for the current theme are ready. */
   contentReady: Promise<void> = Promise.resolve();
@@ -302,6 +305,7 @@ export class Editor implements ToolContext, ToolHost {
       const t0 = performance.now();
       const snap = await this.world.generate({ seed: req.seed >>> 0, size: req.size, plates: req.plates, styles: req.styles });
       const doc = documentFromWorld(snap, { title: req.title ?? `World ${req.seed}`, styles: req.styles });
+      this.density = req.density ?? 1;
       await this.contentReady;
       let t = performance.now();
       doc.stamps.reset(this.autoStamps(doc, req.density));
@@ -401,11 +405,50 @@ export class Editor implements ToolContext, ToolHost {
     ]);
   }
 
+  /**
+   * Re-derives the world from the author's hand work. The brush strokes since the last apply are
+   * folded into per-tile edits (sculpt: erosion still shapes them; fix: the ground stays as drawn),
+   * the engine recomputes climate, erosion, hydrology and biomes from them, and rivers, lakes,
+   * ranges and deposits follow. Names, deletions and hand-made features are carried across. One
+   * undo step. Not run per dab: hydrology is global, a ridge can send a river basin elsewhere.
+   */
+  async applyPhysics(mode: PhysicsMode): Promise<void> {
+    const doc = this._doc;
+    if (!doc.physics || !doc.hasWorld) { this.status('This map has no generated world behind it: generate one to re-derive its rivers and climate.'); return; }
+    await this.busy(mode === 'revert' ? 'Reverting to the generated world…' : 'Applying physics…', async () => {
+      const t0 = performance.now();
+      const out = await derivePhysics(doc, this.world, mode);
+      if (doc !== this._doc) return; // another map was opened while the engine worked
+      await this.contentReady;
+      const before = captureFrame(doc), ph = doc.physics!;
+      const generatedRivers = new Set(before.features.filter((f) => ph.generated.has(f.id) && f.riverId).map((f) => f.riverId!));
+      const shell: PhysicsFrame = {
+        elevation: out.elevation, biome: out.biome,
+        features: [...before.features.filter((f) => !ph.generated.has(f.id)), ...out.features],
+        rivers: [...before.rivers.filter((r) => !generatedRivers.has(r.id)), ...out.rivers],
+        labels: before.labels.filter((l) => !l.id.startsWith('lb_f_')), stamps: before.stamps.filter((s) => !s.id.startsWith('st_')), physics: out.physics,
+      };
+      // Labels and stamps are placed from the document and dodge what is already there, so it takes
+      // the new world with only the hand-made ones in it (the old auto-placed ones must not crowd the new).
+      applyFrame(doc, shell);
+      // Same order as generation (stamps first, labels dodge them), so reverting reproduces the generated map.
+      const stamps = [...shell.stamps, ...this.autoStamps(doc, this.density)];
+      doc.stamps.reset(stamps);
+      const labels = [...shell.labels, ...placeLabels(doc, this.theme(), this.fonts, doc.settings.seed)];
+      this.selection.clear();
+      this.selection.set({ hoverFeature: null });
+      this.undo.execute(new PhysicsApply(mode === 'revert' ? 'Revert to generated world' : 'Apply physics', doc, before, { ...shell, labels, stamps }));
+      this.status(`${mode === 'revert' ? 'Reverted' : 'Physics applied'} in ${Math.round(performance.now() - t0)} ms — ${describeReport(out.report)}`);
+    });
+  }
+
   /** Deletes a feature with everything drawn for it (label, river ribbon, settlement marker). */
   deleteFeature(id: string): void {
     const doc = this._doc, f = doc.features.get(id);
     const del = f && deleteFeatureCommand(doc, id);
     if (!f || !del) return;
+    // A re-derived world proposes engine features again; the tombstone is how it knows this one was refused.
+    if (doc.physics?.generated.has(id)) doc.physics.tombstones.set(id, f);
     this.selection.set({ feature: null, hoverFeature: null });
     this.undo.execute(del.command);
     const name = f.name || f.kind;

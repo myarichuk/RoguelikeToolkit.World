@@ -2,6 +2,7 @@ import { Emitter } from '../core/Emitter';
 import { MAP_H, MAP_W, type Rect } from '../core/geo';
 import type { RasterTarget } from '../commands/RasterEdit';
 import type { NameStyle } from '../world/protocol';
+import type { Raster, TileEdits } from '../world/edits';
 import { EntityStore } from './EntityStore';
 import { DEFAULT_SETTINGS, type DocSettings, type FeatureEntity, type LabelEntity, type RiverEntity, type StampEntity } from './types';
 
@@ -21,6 +22,24 @@ export interface WorldReference {
 }
 
 /**
+ * What the physics knows about this document's hand edits (see world/edits.ts). The edit table is
+ * the persistent part; the baseline is a cache of what the engine produced for it.
+ */
+export interface PhysicsState {
+  /** Sparse per-tile edits the world is derived from (with the seed, the whole truth about the terrain). */
+  edits: TileEdits;
+  /** The rasters the engine produced for `edits`; null until needed (rebuilt deterministically from the table). */
+  baseline: Raster | null;
+  /** Ids of features that came from the engine, as opposed to hand-made ones (river tool...). */
+  generated: Set<string>;
+  /** Engine features the author deleted, with their geometry, so they stay deleted when the world is re-derived. */
+  tombstones: Map<string, FeatureEntity>;
+}
+
+/** Engine feature keys look like `f_lake:3`; hand-made ones (`f_river_x7k2`) never contain a colon. */
+export const isGeneratedFeatureId = (id: string): boolean => /^f_[a-z]+:/.test(id);
+
+/**
  * The aggregate root of a map: editable rasters, entity stores, settings and world reference
  * data. It knows nothing about rendering, tools or UI; those observe its events.
  */
@@ -33,6 +52,8 @@ export class MapDocument {
   readonly rivers = new EntityStore<RiverEntity>();
   readonly events = new Emitter<{ raster: { layer: RasterLayer; rect: Rect }; settings: DocSettings; reset: MapDocument }>();
   private featureByTile: Map<number, string[]> | null = null;
+  /** Null for hand-made maps (no engine world behind them), so there is nothing to re-derive. */
+  physics: PhysicsState | null = null;
 
   constructor(
     public settings: DocSettings,
@@ -54,6 +75,18 @@ export class MapDocument {
   target(layer: RasterLayer): RasterTarget<Float32Array> | RasterTarget<Uint8Array> {
     const data = layer === 'elevation' ? this.elevation : this.biome;
     return { data: data as never, width: this.width, height: this.height, touched: (rect) => this.events.emit('raster', { layer, rect }) };
+  }
+
+  /** True when the pixels map to an engine world, i.e. physics can be re-derived from edits. */
+  get hasWorld(): boolean { return this.world.tileXY.length > 0; }
+
+  /** Overwrites both rasters in place (renderers hold these arrays) and tells them everything changed. */
+  replaceRasters(elevation: Float32Array, biome: Uint8Array): void {
+    this.elevation.set(elevation);
+    this.biome.set(biome);
+    const rect = { x0: 0, y0: 0, x1: this.width, y1: this.height };
+    this.events.emit('raster', { layer: 'elevation', rect });
+    this.events.emit('raster', { layer: 'biome', rect });
   }
 
   setSettings(patch: Partial<DocSettings>): void {
