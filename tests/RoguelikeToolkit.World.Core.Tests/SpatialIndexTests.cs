@@ -18,6 +18,10 @@ public class SpatialIndexTests
             case FeatureKind.River:
                 foreach (var r in world.Rivers.Rivers)
                     foreach (int t in r.Path) set.Add(t);
+                // The index also covers sub-resolution trickles: lone IsRiver tiles too short to catalog.
+                var riverHydro = store.GetSpan<HydrologyInfo>();
+                for (int i = 0; i < store.TileCount; i++)
+                    if (riverHydro[i].IsRiver == 1) set.Add(i);
                 break;
             case FeatureKind.WaterBody:
                 var elev = store.GetSpan<ElevationInfo>();

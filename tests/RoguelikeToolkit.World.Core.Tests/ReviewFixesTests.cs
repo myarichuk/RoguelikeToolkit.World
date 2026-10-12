@@ -117,8 +117,12 @@ public class ReviewFixesTests
         foreach (var f in world.Ranges.Features.Where(f => f.Kind == RangeKind.Canyon))
             foreach (int t in f.Tiles)
                 Assert.True(hydro[t].Flow >= need, $"canyon tile {t} flow {hydro[t].Flow} < {need}");
+        // Steep ground starts a channel on a fraction of the base threshold (never below the steepest-ground floor).
+        var stage = new HydrologyStage();
+        float floor = Hydrography.ChannelThreshold(
+            Hydrography.RiverThreshold(world.TileCount, scale), float.MaxValue, stage.SteepBoost, stage.SteepSlope);
         foreach (var t in Enumerable.Range(0, world.TileCount).Where(i => hydro[i].IsRiver == 1))
-            Assert.True(hydro[t].Flow >= Hydrography.RiverThreshold(world.TileCount, scale));
+            Assert.True(hydro[t].Flow >= floor, $"river tile {t} flow {hydro[t].Flow} < floor {floor}");
     }
 
     [Theory]

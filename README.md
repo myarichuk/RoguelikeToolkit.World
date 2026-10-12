@@ -86,14 +86,21 @@ build from the finished tectonics + climate + hydrology.
   trenches, ridges for divergent oceans, rifts for divergent continents.
 - **Elevation** stacks continentality, swells, rolling hills, micro ripples,
   belt orogeny with ridged crests, and hotspot swells.
-- **Erosion** runs frost-boosted talus, hillslope diffusion, flux-weighted
-  glacial U-valley carving with overdeepening (future tarns), and
-  stream-power fluvial incision (`E = K·Q^m·S^n`) over rock hardness, with
-  fan/delta splays — narrow and deep in arid canyon reaches.
+- **Erosion** runs frost-boosted talus collapse (Jacobi sweeps; welded orogenic
+  rock stands steeper and erodes slower, so ranges keep their flanks instead of
+  relaxing into pancakes), hillslope diffusion, flux-weighted glacial U-valley
+  carving with overdeepening (future tarns), and transport-limited stream-power
+  incision (`E = K·Q^m·S^n` on channelised tiles only, over rock hardness): each
+  channel carries a sediment load, cuts while it has spare capacity, drops the
+  surplus as fans/floodplains and builds a delta at the coast. Mass-conserving;
+  narrow and deep in arid canyon reaches.
 - **Hydrology** routes discharge on the priority-flood filled surface with
-  flat-resolved channels and desert transmission loss. Depressions pond by
-  water balance (inflow vs evaporation) into open or endorheic lakes; dry
-  sumps become playas. Every river terminates: sea, lake, or sink.
+  flat-resolved channels and desert transmission loss. Channels start on a
+  smaller catchment where the ground is steep (area-slope initiation) and,
+  once started, persist downstream. Depressions pond by water balance (inflow
+  vs evaporation) into open or endorheic lakes; hollows shallower than
+  `LakeSolver.MinLakeDepth` are marshes, not lakes; dry sumps become playas.
+  Every river terminates: sea, lake, or sink.
 - **Glaciers** are a climate-aware cover mask (cold + accumulation, with dry
   polar interiors staying tundra) and a first-class `Glacier` biome;
   `Canyon` is a biome too. The visualizer adds Climate and Deposits color

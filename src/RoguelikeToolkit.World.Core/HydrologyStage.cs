@@ -21,7 +21,19 @@ namespace RoguelikeToolkit.World.Core;
 public class HydrologyStage : IWorldGeneratorStage
 {
     public float RiverThresholdScale { get; set; } = 1.0f;
-    public int MaxRivers { get; set; } = 64;
+    public int MaxRivers { get; set; } = 256;
+
+    /// <summary>
+    /// How much steeper ground lowers the discharge needed to start a channel:
+    /// a tile descending <see cref="SteepSlope"/> or more needs only
+    /// <c>1 / (1 + SteepBoost)</c> of the base threshold, so rivers begin on
+    /// mountain flanks instead of waiting for the foothills. 0 restores one
+    /// global threshold.
+    /// </summary>
+    public float SteepBoost { get; set; } = 3f;
+
+    /// <summary>Descent per tile (on the routing surface) at which the full <see cref="SteepBoost"/> applies.</summary>
+    public float SteepSlope { get; set; } = 0.05f;
     /// <summary>
     /// Transmission-loss strength multiplier. 1.0 charges the full local water
     /// deficit; lower values keep more desert rivers alive.
@@ -129,16 +141,33 @@ public class HydrologyStage : IWorldGeneratorStage
             nextBody++;
         }
 
+        // Channels. A tile is a river where its discharge clears the head
+        // threshold for its slope; once a channel exists it keeps going while
+        // the flow stays above the steepest-ground threshold, so a stream born
+        // on a mountain flank does not disappear the moment it reaches gentle
+        // ground (the base threshold is higher there than the flow it carries).
+        // Donors are visited before receivers.
+        var isRiver = new bool[n];
+        var fed = new bool[n];
+        float floorThreshold = Hydrography.ChannelThreshold(threshold, float.MaxValue, SteepBoost, SteepSlope);
+        foreach (int i in Hydrography.DrainageOrder(lakes.Surface, depth))
+        {
+            if (elev[i].Height < ElevationGenerationStage.SeaLevel || lakes.Depth[i] > 0f) continue;
+            int rcv = receiver[i];
+            float descent = rcv >= 0 ? lakes.Surface[i] - lakes.Surface[rcv] : 0f;
+            float need = fed[i] ? floorThreshold : Hydrography.ChannelThreshold(threshold, descent, SteepBoost, SteepSlope);
+            if (flow[i] < need) continue;
+            isRiver[i] = true;
+            if (rcv >= 0) fed[rcv] = true;
+        }
+
         for (int i = 0; i < n; i++)
         {
-            bool land = elev[i].Height >= ElevationGenerationStage.SeaLevel;
-            bool lake = lakes.Depth[i] > 0f;
-            bool river = flow[i] >= threshold && land && !lake;
             hydro[i] = new HydrologyInfo
             {
                 Flow = flow[i],
                 WaterBodyId = bodyId[i],
-                IsRiver = (byte)(river ? 1 : 0),
+                IsRiver = (byte)(isRiver[i] ? 1 : 0),
                 Surface = lakes.Surface[i],
                 LakeDepth = lakes.Depth[i],
                 IsPlaya = (byte)(lakes.IsPlaya[i] ? 1 : 0)

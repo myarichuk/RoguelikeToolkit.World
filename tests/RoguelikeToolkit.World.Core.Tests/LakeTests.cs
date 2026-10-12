@@ -116,11 +116,10 @@ public class LakeTests
         bool hasInlet = false, hasOutlet = false;
         foreach (var r in rivers.Rivers)
         {
-            if (r.Terminal == RiverTerminal.Lake)
-            {
+            // Tributaries inherit the trunk's terminal at their confluence, so only the trunk
+            // (the reach that actually ends in the lake) has to end on a ponded tile.
+            if (r.Terminal == RiverTerminal.Lake && hydro[r.Path[^1]].LakeDepth > 0f)
                 hasInlet = true;
-                Assert.True(hydro[r.Path[^1]].LakeDepth > 0f);
-            }
             if (r.Terminal == RiverTerminal.Sea) hasOutlet = true;
         }
         Assert.True(hasInlet, "Expected a Lake-terminal inlet river");

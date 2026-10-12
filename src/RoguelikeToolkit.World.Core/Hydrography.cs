@@ -20,6 +20,44 @@ public static class Hydrography
     public static float RiverThreshold(int tileCount, float scale = 1f)
         => Math.Max(6f, tileCount / 200f) * scale;
 
+    /// <summary>
+    /// Channel head threshold on a given reach. Water concentrates into a
+    /// channel on a much smaller catchment where the ground is steep, so the
+    /// base discharge is divided by up to <c>1 + steepBoost</c> as the descent to
+    /// the receiver approaches <paramref name="steepSlope"/> (Montgomery–Dietrich
+    /// area–slope initiation). Gentle plains keep the full base threshold.
+    /// </summary>
+    public static float ChannelThreshold(float baseThreshold, float descent, float steepBoost, float steepSlope)
+    {
+        if (steepBoost <= 0f || steepSlope <= 0f || descent <= 0f) return baseThreshold;
+        float t = Math.Min(1f, descent / steepSlope);
+        return baseThreshold / (1f + steepBoost * t);
+    }
+
+    /// <summary>
+    /// Donors-before-receivers processing order: surface descending, then
+    /// distance-to-outlet descending on level ground, then index. Shared by
+    /// flow accumulation, river extraction and sediment routing, which all
+    /// pass something downstream and must not visit a receiver first.
+    /// </summary>
+    public static int[] DrainageOrder(ReadOnlySpan<float> surface, ReadOnlySpan<int> drainDepth = default)
+    {
+        int n = surface.Length;
+        var snapshot = surface.ToArray();
+        var depth = drainDepth.IsEmpty ? null : drainDepth.ToArray();
+        if (depth == null) return TileOrdering.DescendingByValue(snapshot);
+        var order = new int[n];
+        for (int i = 0; i < n; i++) order[i] = i;
+        Array.Sort(order, (a, b) =>
+        {
+            int c = snapshot[b].CompareTo(snapshot[a]);
+            if (c != 0) return c;
+            c = depth[b].CompareTo(depth[a]);
+            return c != 0 ? c : a.CompareTo(b);
+        });
+        return order;
+    }
+
     public static int LowestNeighbor(WorldDataStore store, ReadOnlySpan<float> heights, int tile, Span<int> scratch)
     {
         int adjacent = store.GetAdjacent(tile, scratch);
@@ -316,26 +354,7 @@ public static class Hydrography
         int n = store.TileCount;
         for (int i = 0; i < n; i++) flow[i] = runoff[i];
 
-        var snapshot = new float[n];
-        for (int i = 0; i < n; i++) snapshot[i] = surface[i];
-        var depth = drainDepth.IsEmpty ? null : drainDepth.ToArray();
-        int[] order;
-        if (depth == null)
-        {
-            order = TileOrdering.DescendingByValue(snapshot);
-        }
-        else
-        {
-            order = new int[n];
-            for (int i = 0; i < n; i++) order[i] = i;
-            Array.Sort(order, (a, b) =>
-            {
-                int c = snapshot[b].CompareTo(snapshot[a]);
-                if (c != 0) return c;
-                c = depth[b].CompareTo(depth[a]);
-                return c != 0 ? c : a.CompareTo(b);
-            });
-        }
+        int[] order = DrainageOrder(surface, drainDepth);
 
         bool hasSink = !evapSink.IsEmpty;
         bool hasLoss = !channelLoss.IsEmpty;
@@ -395,6 +414,9 @@ public sealed class LakeSolution
 /// </summary>
 public static class LakeSolver
 {
+    /// <summary>Deepest point a ponded depression must reach (height units) to count as a lake rather than a marsh.</summary>
+    public const float MinLakeDepth = 0.03f;
+
     public static LakeSolution Solve(
         WorldDataStore store,
         ReadOnlySpan<float> heights,
@@ -530,10 +552,19 @@ public static class LakeSolver
             return;
         }
 
-        var lake = new Lake(solution.Lakes.Count);
         bool full = ponded.Count == region.Count;
         // Closed lakes pond below the pour point; the top tile is the shoreline.
-        lake.Surface = full ? spill : Math.Min(heights[ponded[^1]] + 1e-4f, spill);
+        float surface = full ? spill : Math.Min(heights[ponded[^1]] + 1e-4f, spill);
+
+        // A film of water over a hair-thin depression is a marsh, not a lake:
+        // it carries no open water to map and would only cut the river that
+        // crosses it into stubs. The flow still passes over the filled surface.
+        float deepest = 0f;
+        foreach (int t in ponded) deepest = Math.Max(deepest, surface - heights[t]);
+        if (deepest < MinLakeDepth) return;
+
+        var lake = new Lake(solution.Lakes.Count);
+        lake.Surface = surface;
         lake.IsOpen = full;
         lake.EvapTotal = (float)evapSum;
         foreach (int t in ponded)
