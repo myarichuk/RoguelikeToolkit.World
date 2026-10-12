@@ -27,7 +27,21 @@ namespace RoguelikeToolkit.World.Core;
 public class ClimateStage : IWorldGeneratorStage, ISeededStage
 {
     public int Seed { get; set; } = 42;
-    public double LapseRate { get; set; } = 0.35;
+    public double LapseRate { get; set; } = ClimateModel.DefaultLapseRate;
+
+    /// <summary>
+    /// Axial tilt, stellar flux and spin of the planet (see <see cref="PlanetParameters"/>). The default is
+    /// Earth, which takes the legacy arithmetic exactly.
+    /// </summary>
+    public PlanetParameters Planet { get; set; } = new PlanetParameters();
+
+    /// <summary>
+    /// Share of the surface wind that blows along the meridian (towards the equator in the Hadley and
+    /// polar cells, towards the pole in the Ferrel cell), as the Coriolis force turns the pressure-gradient
+    /// flow: the north-east trades and the south-westerlies instead of due-east/due-west. 0 keeps the
+    /// wind purely zonal.
+    /// </summary>
+    public double MeridionalWind { get; set; } = 0.0;
     public Vector3D PrevailingWindFallback { get; set; } = new Vector3D(1, 0, 0);
 
     /// <summary>
@@ -96,22 +110,34 @@ public class ClimateStage : IWorldGeneratorStage, ISeededStage
 
         var moistureOffset = new Vector3D(13.7, -7.3, 5.1);
         Span<int> neighbors = stackalloc int[6];
+        var planet = Planet ?? new PlanetParameters();
+        double bandScale = planet.BandScale;
 
         for (int i = 0; i < store.TileCount; i++)
         {
             double height = elev[i].Height;
             var geo = vectors[i].ToGeoCoord();
 
-            double temperature = 1.0 - Math.Abs(geo.Latitude) / 90.0;
-            temperature -= Math.Max(0.0, height) * LapseRate;
+            double absLat = Math.Abs(geo.Latitude);
+            double temperature = ClimateModel.Temperature(vectors[i], absLat, height, LapseRate, planet);
 
             // Zonal prevailing wind: trades (tropics, east->west), westerlies
-            // (mid latitudes), polar easterlies. Tangent east vector at position.
+            // (mid latitudes), polar easterlies. The cells alternate every 30 degrees on Earth and are
+            // narrower on a fast spinner, wider on a slow one. Tangent east vector at position.
             double lonR = geo.LongitudeRad;
             var east = new Vector3D(-DetMath.Sin(lonR), DetMath.Cos(lonR), 0).Normalize();
-            double absLat = Math.Abs(geo.Latitude);
-            double dir = absLat < 30.0 ? -1.0 : (absLat < 60.0 ? 1.0 : -1.0);
+            int cell = (int)(Math.Min(absLat, 90.0 - 1e-9) / (30.0 * bandScale)); // the pole itself belongs to the last cell
+            bool evenCell = (cell & 1) == 0;
+            double dir = evenCell ? -1.0 : 1.0;
             var wind = east * dir;
+            if (MeridionalWind > 0.0)
+            {
+                // Surface return flow of the Hadley and polar cells runs towards the equator, the
+                // Ferrel cell's towards the pole; east x north = up, so north = up x east.
+                var north = Vector3D.Cross(vectors[i], east).Normalize();
+                double hemisphere = geo.Latitude >= 0.0 ? 1.0 : -1.0;
+                wind = (east * dir + north * ((evenCell ? -1.0 : 1.0) * hemisphere * MeridionalWind)).Normalize();
+            }
 
             // Base precipitation from independent noise field. Stored now;
             // orographic + water terms apply in a second pass over the
@@ -121,14 +147,15 @@ public class ClimateStage : IWorldGeneratorStage, ISeededStage
             // Zonal banding scales the base field, so the maritime and orographic terms below still
             // act on top of it: a subtropical coast stays wetter than the continent behind it, but
             // the whole belt starts from a much drier baseline than the equator or the westerlies.
-            moisture *= ZonalFactor(absLat, ZonalStrength);
+            moisture *= ZonalFactor(absLat, ZonalStrength, bandScale);
             climate[i] = new ClimateInfo
             {
                 Temperature = (float)Math.Clamp(temperature, 0.0, 1.0),
                 Precipitation = (float)Math.Clamp(moisture, 0.0, 1.0),
                 WindX = (float)wind.X,
                 WindY = (float)wind.Y,
-                WindZ = (float)wind.Z
+                WindZ = (float)wind.Z,
+                RainSeasonality = (float)ClimateModel.RainSeasonality(geo.Latitude, planet.ObliquityDegrees, ZonalStrength, bandScale),
             };
         }
 
@@ -194,6 +221,7 @@ public class ClimateStage : IWorldGeneratorStage, ISeededStage
             moisture = Math.Clamp(moisture, 0.0, 1.0);
 
             var updated = climate[i];
+            updated.SeasonalRange = (float)ClimateModel.Continental(ClimateModel.SeasonalAmplitude(vectors[i].Z, planet.ObliquityDegrees), maritime[i]);
             updated.Precipitation = (float)moisture;
             climate[i] = updated;
         }
@@ -206,14 +234,24 @@ public class ClimateStage : IWorldGeneratorStage, ISeededStage
     /// mid-latitude storm tracks (+, 55 degrees) and the polar cold-air desert (-, from 65).
     /// Floored at 0.2 so a strength above 1 cannot zero a band out.
     /// </summary>
-    public static double ZonalFactor(double absLatitude, double strength = 1.0)
+    public static double ZonalFactor(double absLatitude, double strength = 1.0) => ZonalFactor(absLatitude, strength, 1.0);
+
+    /// <summary>
+    /// <see cref="ZonalFactor(double, double)"/> for a planet whose circulation cells are
+    /// <paramref name="bandScale"/> times Earth's width (1 / the rotation rate, Held &amp; Hou): every band centre
+    /// moves with it, and the bands widen with its square root. The dry belt stops at 75 degrees and the
+    /// storm track at 82 so a very slow planet's bands do not slide off the pole. 1 is exactly Earth.
+    /// </summary>
+    public static double ZonalFactor(double absLatitude, double strength, double bandScale)
     {
         static double Bump(double x, double centre, double width) { double d = (x - centre) / width; return Math.Exp(-d * d); }
-        double polarT = Math.Clamp((absLatitude - 65.0) / 25.0, 0.0, 1.0);
+        double w = bandScale == 1.0 ? 1.0 : Math.Sqrt(bandScale);
+        double polarStart = Math.Min(80.0, 65.0 * bandScale);
+        double polarT = Math.Clamp((absLatitude - polarStart) / (25.0 * w), 0.0, 1.0);
         double polar = polarT * polarT * (3.0 - 2.0 * polarT);
-        double delta = 0.30 * Bump(absLatitude, 0.0, 9.0)
-                     - 0.55 * Bump(absLatitude, 27.0, 8.0)
-                     + 0.12 * Bump(absLatitude, 55.0, 10.0)
+        double delta = 0.30 * Bump(absLatitude, 0.0, 9.0 * w)
+                     - 0.55 * Bump(absLatitude, Math.Min(75.0, 27.0 * bandScale), 8.0 * w)
+                     + 0.12 * Bump(absLatitude, Math.Min(82.0, 55.0 * bandScale), 10.0 * w)
                      - 0.20 * polar;
         return Math.Max(0.2, 1.0 + strength * delta);
     }

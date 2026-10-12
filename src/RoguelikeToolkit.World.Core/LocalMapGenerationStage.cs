@@ -65,8 +65,7 @@ public class LocalMapGenerationStage : IWorldGeneratorStage, ISeededStage
             }
             else
             {
-                temperature = 1.0 - Math.Abs(vectors[i].ToGeoCoord().Latitude) / 90.0;
-                temperature -= Math.Max(0.0, height) * 0.35;
+                temperature = ClimateModel.Temperature(vectors[i], Math.Abs(vectors[i].ToGeoCoord().Latitude), height, ClimateModel.DefaultLapseRate, null);
                 moisture = SphereNoise.Fbm(vectors[i] * 2.0 + moistureOffset, Seed + 1000) * 0.5 + 0.5;
             }
 

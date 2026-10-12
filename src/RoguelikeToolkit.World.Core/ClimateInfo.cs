@@ -14,6 +14,10 @@ public struct ClimateInfo
     public float WindX;
     public float WindY;
     public float WindZ;
+    /// <summary>Half the annual swing of Temperature (same units), larger inland and towards the poles; see <see cref="ClimateModel.SeasonalAmplitude"/>.</summary>
+    public float SeasonalRange;
+    /// <summary>How unevenly the year's rain falls, 0 (even) .. 1 (monsoon / Mediterranean); see <see cref="ClimateModel.RainSeasonality"/>.</summary>
+    public float RainSeasonality;
 }
 
 public class ClimateLayer : StoreLayer<ClimateInfo>

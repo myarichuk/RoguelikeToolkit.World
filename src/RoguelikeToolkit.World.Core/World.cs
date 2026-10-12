@@ -45,6 +45,9 @@ public sealed class World : IDisposable
         Seed = seed;
     }
 
+    /// <summary>The astronomical parameters the climate was generated with (Earth unless <see cref="WorldBuilder.WithPlanet"/> said otherwise).</summary>
+    public PlanetParameters Planet { get; internal set; } = new PlanetParameters();
+
     internal void Attach(WorldGenerationPipeline pipeline, int maxRivers, float riverScale)
     {
         _pipeline = pipeline;
@@ -322,6 +325,18 @@ public sealed class WorldBuilder
         _climateConfig = prev == null ? configure : s => { prev(s); configure(s); };
         return this;
     }
+    /// <summary>
+    /// Sets the planet's axial tilt, stellar flux, spin and (optionally) a custom insolation field; see
+    /// <see cref="PlanetParameters"/>. Earth by default. The parameters are copied, so later changes to
+    /// <paramref name="planet"/> do not affect this builder.
+    /// </summary>
+    public WorldBuilder WithPlanet(PlanetParameters planet)
+    {
+        if (planet == null) throw new ArgumentNullException(nameof(planet));
+        var copy = planet.Clone();
+        return WithClimate(c => c.Planet = copy);
+    }
+
     /// <summary>Tweak the default hydrology stage (river threshold, max rivers...).</summary>
     public WorldBuilder WithHydrology(Action<HydrologyStage> configure)
     {
@@ -359,6 +374,7 @@ public sealed class WorldBuilder
 
         var pipeline = new WorldGenerationPipeline();
         HydrologyStage? hydrologyStage = null;
+        PlanetParameters planet = new PlanetParameters();
         float riverScale = 1f;
         if (_useDefaults)
         {
@@ -368,6 +384,7 @@ public sealed class WorldBuilder
             pipeline.AddStage(new ElevationGenerationStage(_seed));
             var climate = new ClimateStage(_seed);
             _climateConfig?.Invoke(climate);
+            planet = climate.Planet ?? planet;
             pipeline.AddStage(climate);
             hydrologyStage = new HydrologyStage();
             _hydrologyConfig?.Invoke(hydrologyStage);
@@ -382,7 +399,7 @@ public sealed class WorldBuilder
 
         pipeline.Execute(map);
 
-        var world = new World(map, _seed);
+        var world = new World(map, _seed) { Planet = planet };
         world.Attach(pipeline, hydrologyStage?.MaxRivers ?? new HydrologyStage().MaxRivers, riverScale);
         world.PopulateFeatureCatalogs();
         world.RebuildIndex();
