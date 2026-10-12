@@ -95,10 +95,11 @@ public static class PlaceKinds
     public const string Forest = "forest";
     public const string Hold = "hold";
     public const string Camp = "camp";
+    public const string Sea = "sea";
 
     public static readonly IReadOnlyList<string> All = new[]
     {
-        Village, Town, City, River, Lake, Mountain, Hill, Valley, Forest, Hold, Camp,
+        Village, Town, City, River, Lake, Mountain, Hill, Valley, Forest, Hold, Camp, Sea,
     };
 }
 

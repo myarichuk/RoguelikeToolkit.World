@@ -78,13 +78,17 @@ Descriptors:
   - {Form: Hirsch, Gloss: stag, Tags: [forest, valley]}
   - {Form: Schnee, Gloss: snow, Tags: [mountain, high]}
   - {Form: Silber, Gloss: silver, Tags: [deposit, lake, river]}
-  - {Form: Tief, Gloss: deep, Tags: [lake, valley, river]}
+  - {Form: Tief, Gloss: deep, Tags: [lake, valley, river, sea]}
   - {Form: Mittel, Gloss: middle}
   - {Form: Frei, Gloss: free, Tags: [town, city]}
   - {Form: Kaiser, Gloss: emperor, Tags: [city, hold]}
   - {Form: Rosen, Gloss: roses, Tags: [village, valley]}
   - {Form: Sonnen, Gloss: sun}
   - {Form: Dunkel, Gloss: dark, Tags: [dark, forest, danger]}
+  - {Form: Salz, Gloss: salt, Tags: [sea]}
+  - {Form: Sturm, Gloss: storm, Tags: [sea]}
+  - {Form: Grau, Gloss: grey, Tags: [sea]}
+  - {Form: Bernstein, Gloss: amber, Tags: [sea]}
 Nouns:
   - {Form: dorf, Gloss: village, Tags: [village]}
   - {Form: heim, Gloss: home, Tags: [village, town]}
@@ -118,3 +122,7 @@ Nouns:
   - {Form: busch, Gloss: thicket, Tags: [forest]}
   - {Form: au, Gloss: river meadow, Tags: [valley, river, village]}
   - {Form: winkel, Gloss: nook, Tags: [valley, village]}
+  - {Form: meer, Gloss: sea, Tags: [sea, water]}
+  - {Form: bucht, Gloss: bay, Tags: [sea]}
+  - {Form: sund, Gloss: sound, Tags: [sea]}
+  - {Form: haff, Gloss: lagoon, Tags: [sea]}

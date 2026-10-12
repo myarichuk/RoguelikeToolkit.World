@@ -8,7 +8,7 @@ namespace RoguelikeToolkit.World.Core.Tests;
 public sealed class NameQualityTests
 {
     private static readonly string[] Kinds =
-        { "village", "town", "city", "river", "lake", "mountain", "hill", "valley", "forest", "hold", "camp" };
+        { "village", "town", "city", "river", "lake", "mountain", "hill", "valley", "forest", "hold", "camp", "sea" };
 
     [Fact]
     public void ShippedYaml_MatchesTheSchemaStrictly()

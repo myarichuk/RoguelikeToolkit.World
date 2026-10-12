@@ -802,6 +802,8 @@ public static class FantasyNameGenerator
     private static HashSet<string> TagsFor(PlaceContext ctx, string kind)
     {
         var tags = new HashSet<string>(KindTags(kind), StringComparer.OrdinalIgnoreCase);
+        // A sea is open water: it draws on water words ("Grey", "Still") as well as its own.
+        if (kind.Equals(PlaceKinds.Sea, StringComparison.OrdinalIgnoreCase)) tags.Add("water");
         if (ctx.NearWater) { tags.Add("water"); tags.Add("river"); tags.Add("lake"); }
         if (ctx.NearForest) tags.Add("forest");
         if (ctx.DarkForest) { tags.Add("dark"); tags.Add("forest"); }
@@ -817,6 +819,7 @@ public static class FantasyNameGenerator
     {
         PlaceKinds.River => new[] { "river" },
         PlaceKinds.Lake => new[] { "lake" },
+        PlaceKinds.Sea => new[] { "sea" },
         PlaceKinds.Mountain => new[] { "mountain" },
         PlaceKinds.Hill => new[] { "hill" },
         PlaceKinds.Valley => new[] { "valley" },
@@ -833,6 +836,7 @@ public static class FantasyNameGenerator
     {
         PlaceKinds.River => new[] { "water", "lake" },
         PlaceKinds.Lake => new[] { "water" },
+        PlaceKinds.Sea => new[] { "water", "lake" },
         PlaceKinds.Mountain => new[] { "hill", "high" },
         PlaceKinds.Hill => new[] { "mountain" },
         PlaceKinds.Valley => new[] { "village" },

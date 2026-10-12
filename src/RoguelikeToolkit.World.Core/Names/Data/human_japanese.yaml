@@ -89,7 +89,7 @@ Descriptors:
   - {Form: Aka, Gloss: red}
   - {Form: Shira, Gloss: white}
   - {Form: Kuro, Gloss: black}
-  - {Form: Ao, Gloss: azure, Tags: [lake, forest, valley]}
+  - {Form: Ao, Gloss: azure, Tags: [lake, forest, valley, sea]}
   - {Form: Naka, Gloss: middle}
   - {Form: Matsu, Gloss: pine, Tags: [forest, hill]}
   - {Form: Take, Gloss: bamboo, Tags: [forest, valley]}
@@ -116,6 +116,11 @@ Descriptors:
   - {Form: Asa, Gloss: morning}
   - {Form: Mizu, Gloss: water, Tags: [river, lake, water]}
   - {Form: Kaze, Gloss: wind, Tags: [high, hill, mountain]}
+  - {Form: Ara, Gloss: rough, Tags: [sea]}
+  - {Form: Shio, Gloss: tide, Tags: [sea]}
+  - {Form: Nami, Gloss: wave, Tags: [sea]}
+  - {Form: Kujira, Gloss: whale, Tags: [sea]}
+  - {Form: Iso, Gloss: rocky shore, Tags: [sea]}
 Nouns:
   - {Form: mura, Gloss: village, Tags: [village]}
   - {Form: machi, Gloss: town, Tags: [town]}
@@ -146,7 +151,7 @@ Nouns:
   - {Form: ne, Gloss: ridge, Tags: [hill, mountain]}
   - {Form: dai, Gloss: plateau, Tags: [hill, town]}
   - {Form: fuchi, Gloss: deep pool, Tags: [lake, river]}
-  - {Form: ura, Gloss: bay, Tags: [lake, village]}
+  - {Form: ura, Gloss: bay, Tags: [lake, village, sea]}
   - {Form: e, Gloss: inlet, Tags: [lake, river]}
   - {Form: se, Gloss: shallows, Tags: [river]}
   - {Form: taki, Gloss: waterfall, Tags: [river, mountain]}
@@ -155,3 +160,6 @@ Nouns:
   - {Form: no, Gloss: plain, Tags: [valley, village]}
   - {Form: ta, Gloss: paddy, Tags: [valley, village]}
   - {Form: ichi, Gloss: market town, Tags: [town, city]}
+  - {Form: umi, Gloss: sea, Tags: [sea, water]}
+  - {Form: nada, Gloss: open sea, Tags: [sea]}
+  - {Form: wan, Gloss: gulf, Tags: [sea]}

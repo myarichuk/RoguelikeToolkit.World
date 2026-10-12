@@ -63,7 +63,7 @@ Descriptors:
   - {Form: Raven, Gloss: raven-haunted, Tags: [hill, danger]}
   - {Form: Ember, Gloss: ember-red, Tags: [hill, danger]}
   - {Form: Stone, Gloss: stony, Tags: [hill, mountain, deposit]}
-  - {Form: Frost, Gloss: frosty, Tags: [mountain, high]}
+  - {Form: Frost, Gloss: frosty, Tags: [mountain, high, sea]}
   - {Form: Hollow, Gloss: sunken, Tags: [valley]}
   - {Form: Old, Gloss: old}
   - {Form: North, Gloss: northern}
@@ -87,6 +87,14 @@ Descriptors:
   - {Form: Elder, Gloss: elder-grown, Tags: [forest, valley]}
   - {Form: Wind, Gloss: windswept, Tags: [high, hill, mountain, camp]}
   - {Form: Grim, Gloss: grim, Tags: [danger, dark, hold, camp]}
+  - {Form: Salt, Gloss: salt, Tags: [sea]}
+  - {Form: Storm, Gloss: stormy, Tags: [sea]}
+  - {Form: Whale, Gloss: whale-roamed, Tags: [sea]}
+  - {Form: Amber, Gloss: amber, Tags: [sea]}
+  - {Form: Sunken, Gloss: drowned, Tags: [sea]}
+  - {Form: Shiver, Gloss: shivering, Tags: [sea]}
+  - {Form: Pearl, Gloss: pearl, Tags: [sea]}
+  - {Form: Wrack, Gloss: wreck-strewn, Tags: [sea]}
 Nouns:
   - {Form: wood, Gloss: forest, Tags: [forest]}
   - {Form: water, Gloss: water, Tags: [water, river, lake]}
@@ -130,3 +138,12 @@ Nouns:
   - {Form: camp, Gloss: camp, Tags: [camp]}
   - {Form: rest, Gloss: resting place, Tags: [camp]}
   - {Form: watch, Gloss: watch post, Tags: [camp, hold, hill]}
+  - {Form: sea, Gloss: sea, Tags: [sea, water]}
+  - {Form: deeps, Gloss: deep waters, Tags: [sea]}
+  - {Form: sound, Gloss: sound, Tags: [sea]}
+  - {Form: gulf, Gloss: gulf, Tags: [sea]}
+  - {Form: firth, Gloss: sea inlet, Tags: [sea]}
+  - {Form: strait, Gloss: strait, Tags: [sea]}
+  - {Form: reach, Gloss: open reach, Tags: [sea]}
+  - {Form: bight, Gloss: bay, Tags: [sea]}
+  - {Form: main, Gloss: open sea, Tags: [sea]}

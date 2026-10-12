@@ -1,0 +1,1172 @@
+{
+ "id": "core",
+ "name": "Core: ink & parchment",
+ "version": "1.0.0",
+ "author": "RoguelikeToolkit",
+ "description": "Built-in themes, procedural stamps and placement rules.",
+ "themes": [
+  {
+   "id": "parchment",
+   "name": "Parchment & ink",
+   "palette": {
+    "ink": "#2b2119",
+    "paper": "#ece0c2",
+    "shade": "#b9a37e",
+    "light": "#f6eedb",
+    "foliage": "#8fa36c",
+    "foliageDark": "#5f7347",
+    "water": "#7fa3a6",
+    "roof": "#a2553d",
+    "wall": "#ddd0b0",
+    "snow": "#fbfaf5",
+    "sand": "#e3c98f",
+    "none": "none"
+   },
+   "map": {
+    "paper": "#e9dcbc",
+    "sea": "#bccfca",
+    "shallow": "#94b3b2",
+    "seaInk": "#2e4549",
+    "landInk": "#2b2119",
+    "coastWidth": 0.45,
+    "haloWidth": 3.5,
+    "rippleCount": 4,
+    "rippleOpacity": 0.75,
+    "hillshade": 0.18,
+    "grain": 0.035,
+    "stains": 0.06,
+    "innerCoast": 0.55,
+    "river": "#3e6170",
+    "riverWidth": 1.0,
+    "frame": "#38302a"
+   },
+   "biomes": {
+    "0": "#dcd2a6",
+    "1": "#ded4a6",
+    "2": "#ebd6a3",
+    "3": "#abba8c",
+    "4": "#c2b8a3",
+    "5": "#dbdbcf",
+    "6": "#94ab7d",
+    "7": "#a1ab8f",
+    "8": "#f2f2f0",
+    "9": "#d9a880",
+    "10": "#dccb98",
+    "11": "#e0d49c",
+    "12": "#cfa078",
+    "13": "#a9a294"
+   },
+   "labels": {
+    "capital": {
+     "font": "caps",
+     "size": 13,
+     "spacing": 0.06,
+     "uppercase": false,
+     "fill": "#2b2119",
+     "halo": "#ece0c2",
+     "haloWidth": 1.8,
+     "minZoom": 0,
+     "sizeExp": 0
+    },
+    "city": {
+     "font": "caps",
+     "size": 9.5,
+     "spacing": 0.04,
+     "uppercase": false,
+     "fill": "#2b2119",
+     "halo": "#ece0c2",
+     "haloWidth": 1.5,
+     "minZoom": 0,
+     "sizeExp": 0
+    },
+    "town": {
+     "font": "serif",
+     "size": 7,
+     "spacing": 0.02,
+     "uppercase": false,
+     "fill": "#2b2119",
+     "halo": "#ece0c2",
+     "haloWidth": 1.2,
+     "minZoom": 0.9,
+     "sizeExp": 0
+    },
+    "village": {
+     "font": "serif",
+     "size": 5,
+     "spacing": 0.0,
+     "uppercase": false,
+     "fill": "#2b2119",
+     "halo": "#ece0c2",
+     "haloWidth": 1.0,
+     "minZoom": 1.6,
+     "sizeExp": 0
+    },
+    "river": {
+     "font": "italic",
+     "size": 5,
+     "spacing": 0.12,
+     "uppercase": false,
+     "fill": "#2c4a5a",
+     "halo": "#ece0c2",
+     "haloWidth": 1.0,
+     "minZoom": 1.1,
+     "sizeExp": 0
+    },
+    "lake": {
+     "font": "italic",
+     "size": 6.5,
+     "spacing": 0.08,
+     "uppercase": false,
+     "fill": "#2c4a5a",
+     "halo": "#ece0c2",
+     "haloWidth": 1.1,
+     "minZoom": 0.7,
+     "sizeExp": 0
+    },
+    "sea": {
+     "font": "italic",
+     "size": 15,
+     "spacing": 0.32,
+     "uppercase": true,
+     "fill": "#2c4a5a",
+     "halo": "#ece0c2",
+     "haloWidth": 0,
+     "minZoom": 0,
+     "sizeExp": 0
+    },
+    "ocean": {
+     "font": "italic",
+     "size": 26,
+     "spacing": 0.55,
+     "uppercase": true,
+     "fill": "#2c4a5a",
+     "halo": "#ece0c2",
+     "haloWidth": 0,
+     "minZoom": 0,
+     "sizeExp": 0
+    },
+    "mountain": {
+     "font": "caps",
+     "size": 9,
+     "spacing": 0.38,
+     "uppercase": true,
+     "fill": "#2b2119",
+     "halo": "#ece0c2",
+     "haloWidth": 1.3,
+     "minZoom": 0.5,
+     "sizeExp": 0.25
+    },
+    "valley": {
+     "font": "italic",
+     "size": 7,
+     "spacing": 0.18,
+     "uppercase": false,
+     "fill": "#2b2119",
+     "halo": "#ece0c2",
+     "haloWidth": 1.2,
+     "minZoom": 0.9,
+     "sizeExp": 0
+    },
+    "forest": {
+     "font": "italic",
+     "size": 8.5,
+     "spacing": 0.22,
+     "uppercase": false,
+     "fill": "#2f4426",
+     "halo": "#ece0c2",
+     "haloWidth": 1.2,
+     "minZoom": 0.6,
+     "sizeExp": 0.2
+    },
+    "deposit": {
+     "font": "serif",
+     "size": 3.5,
+     "spacing": 0.0,
+     "uppercase": false,
+     "fill": "#2b2119",
+     "halo": "#ece0c2",
+     "haloWidth": 0.8,
+     "minZoom": 2.5,
+     "sizeExp": 0
+    },
+    "title": {
+     "font": "caps",
+     "size": 40,
+     "spacing": 0.12,
+     "uppercase": false,
+     "fill": "#2b2119",
+     "halo": "#ece0c2",
+     "haloWidth": 3,
+     "minZoom": 0,
+     "sizeExp": 0
+    }
+   },
+   "ui": {
+    "--bg": "#1d1a17",
+    "--panel": "#26221d",
+    "--fg": "#e8e0d0",
+    "--muted": "#a59a88",
+    "--accent": "#c8a46a",
+    "--line": "#3a342c"
+   }
+  },
+  {
+   "id": "atlas",
+   "name": "Coloured atlas",
+   "palette": {
+    "ink": "#3b2f2a",
+    "paper": "#fbf6e8",
+    "shade": "#c9b593",
+    "light": "#ffffff",
+    "foliage": "#6fa35a",
+    "foliageDark": "#3f7a3a",
+    "water": "#5b9ac4",
+    "roof": "#c0553a",
+    "wall": "#f1e6cc",
+    "snow": "#ffffff",
+    "sand": "#ecd28e",
+    "none": "none"
+   },
+   "map": {
+    "paper": "#f4ecd6",
+    "sea": "#a9cfe6",
+    "shallow": "#7fb8da",
+    "seaInk": "#2f5f80",
+    "landInk": "#4a3a30",
+    "coastWidth": 0.35,
+    "haloWidth": 4.5,
+    "rippleCount": 2,
+    "rippleOpacity": 0.5,
+    "hillshade": 0.3,
+    "grain": 0.015,
+    "stains": 0.0,
+    "innerCoast": 0.25,
+    "river": "#3d86bf",
+    "riverWidth": 1.1,
+    "frame": "#2c3a46"
+   },
+   "biomes": {
+    "0": "#cfe0a8",
+    "1": "#cfe0a8",
+    "2": "#f1dfa0",
+    "3": "#8fbf7a",
+    "4": "#c9b79a",
+    "5": "#dfe6dc",
+    "6": "#7fb57a",
+    "7": "#9fb58f",
+    "8": "#ffffff",
+    "9": "#e0a676",
+    "10": "#e3d38a",
+    "11": "#e8dd8c",
+    "12": "#d79a6e",
+    "13": "#a89f97"
+   },
+   "labels": {
+    "capital": {
+     "font": "caps",
+     "size": 13,
+     "spacing": 0.06,
+     "uppercase": false,
+     "fill": "#2f2622",
+     "halo": "#fbf6e8",
+     "haloWidth": 1.8,
+     "minZoom": 0,
+     "sizeExp": 0
+    },
+    "city": {
+     "font": "caps",
+     "size": 9.5,
+     "spacing": 0.04,
+     "uppercase": false,
+     "fill": "#2f2622",
+     "halo": "#fbf6e8",
+     "haloWidth": 1.5,
+     "minZoom": 0,
+     "sizeExp": 0
+    },
+    "town": {
+     "font": "serif",
+     "size": 7,
+     "spacing": 0.02,
+     "uppercase": false,
+     "fill": "#2f2622",
+     "halo": "#fbf6e8",
+     "haloWidth": 1.2,
+     "minZoom": 0.9,
+     "sizeExp": 0
+    },
+    "village": {
+     "font": "serif",
+     "size": 5,
+     "spacing": 0.0,
+     "uppercase": false,
+     "fill": "#2f2622",
+     "halo": "#fbf6e8",
+     "haloWidth": 1.0,
+     "minZoom": 1.6,
+     "sizeExp": 0
+    },
+    "river": {
+     "font": "italic",
+     "size": 5,
+     "spacing": 0.12,
+     "uppercase": false,
+     "fill": "#1f5d8a",
+     "halo": "#fbf6e8",
+     "haloWidth": 1.0,
+     "minZoom": 1.1,
+     "sizeExp": 0
+    },
+    "lake": {
+     "font": "italic",
+     "size": 6.5,
+     "spacing": 0.08,
+     "uppercase": false,
+     "fill": "#1f5d8a",
+     "halo": "#fbf6e8",
+     "haloWidth": 1.1,
+     "minZoom": 0.7,
+     "sizeExp": 0
+    },
+    "sea": {
+     "font": "italic",
+     "size": 15,
+     "spacing": 0.32,
+     "uppercase": true,
+     "fill": "#1f5d8a",
+     "halo": "#fbf6e8",
+     "haloWidth": 0,
+     "minZoom": 0,
+     "sizeExp": 0
+    },
+    "ocean": {
+     "font": "italic",
+     "size": 26,
+     "spacing": 0.55,
+     "uppercase": true,
+     "fill": "#1f5d8a",
+     "halo": "#fbf6e8",
+     "haloWidth": 0,
+     "minZoom": 0,
+     "sizeExp": 0
+    },
+    "mountain": {
+     "font": "caps",
+     "size": 9,
+     "spacing": 0.38,
+     "uppercase": true,
+     "fill": "#2f2622",
+     "halo": "#fbf6e8",
+     "haloWidth": 1.3,
+     "minZoom": 0.5,
+     "sizeExp": 0.25
+    },
+    "valley": {
+     "font": "italic",
+     "size": 7,
+     "spacing": 0.18,
+     "uppercase": false,
+     "fill": "#2f2622",
+     "halo": "#fbf6e8",
+     "haloWidth": 1.2,
+     "minZoom": 0.9,
+     "sizeExp": 0
+    },
+    "forest": {
+     "font": "italic",
+     "size": 8.5,
+     "spacing": 0.22,
+     "uppercase": false,
+     "fill": "#2d5a26",
+     "halo": "#fbf6e8",
+     "haloWidth": 1.2,
+     "minZoom": 0.6,
+     "sizeExp": 0.2
+    },
+    "deposit": {
+     "font": "serif",
+     "size": 3.5,
+     "spacing": 0.0,
+     "uppercase": false,
+     "fill": "#2f2622",
+     "halo": "#fbf6e8",
+     "haloWidth": 0.8,
+     "minZoom": 2.5,
+     "sizeExp": 0
+    },
+    "title": {
+     "font": "caps",
+     "size": 40,
+     "spacing": 0.12,
+     "uppercase": false,
+     "fill": "#2f2622",
+     "halo": "#fbf6e8",
+     "haloWidth": 3,
+     "minZoom": 0,
+     "sizeExp": 0
+    }
+   },
+   "ui": {
+    "--bg": "#1a1f24",
+    "--panel": "#222a31",
+    "--fg": "#e6edf2",
+    "--muted": "#93a4b1",
+    "--accent": "#6fb1e0",
+    "--line": "#33404b"
+   }
+  },
+  {
+   "id": "nocturne",
+   "name": "Nocturne",
+   "palette": {
+    "ink": "#d9e2ec",
+    "paper": "#1f2a38",
+    "shade": "#2f3d52",
+    "light": "#3c4c63",
+    "foliage": "#3f5d5a",
+    "foliageDark": "#2a4442",
+    "water": "#3b5a7a",
+    "roof": "#7a5a6a",
+    "wall": "#2c394b",
+    "snow": "#e8eef6",
+    "sand": "#4b4f5c",
+    "none": "none"
+   },
+   "map": {
+    "paper": "#1c2533",
+    "sea": "#121b27",
+    "shallow": "#1d2c3f",
+    "seaInk": "#7f9cbc",
+    "landInk": "#d9e2ec",
+    "coastWidth": 0.4,
+    "haloWidth": 3,
+    "rippleCount": 5,
+    "rippleOpacity": 0.6,
+    "hillshade": 0.35,
+    "grain": 0.03,
+    "stains": 0.04,
+    "innerCoast": 0.3,
+    "river": "#6f97c4",
+    "riverWidth": 1.0,
+    "frame": "#0b1018"
+   },
+   "biomes": {
+    "0": "#2b3a4c",
+    "1": "#2f3f52",
+    "2": "#3d4252",
+    "3": "#26384a",
+    "4": "#3a4658",
+    "5": "#3b4a5c",
+    "6": "#223646",
+    "7": "#2a3a48",
+    "8": "#56677c",
+    "9": "#45404c",
+    "10": "#38434f",
+    "11": "#36444f",
+    "12": "#46404a",
+    "13": "#2c2f38"
+   },
+   "labels": {
+    "capital": {
+     "font": "caps",
+     "size": 13,
+     "spacing": 0.06,
+     "uppercase": false,
+     "fill": "#e2e8f0",
+     "halo": "#1c2533",
+     "haloWidth": 1.8,
+     "minZoom": 0,
+     "sizeExp": 0
+    },
+    "city": {
+     "font": "caps",
+     "size": 9.5,
+     "spacing": 0.04,
+     "uppercase": false,
+     "fill": "#e2e8f0",
+     "halo": "#1c2533",
+     "haloWidth": 1.5,
+     "minZoom": 0,
+     "sizeExp": 0
+    },
+    "town": {
+     "font": "serif",
+     "size": 7,
+     "spacing": 0.02,
+     "uppercase": false,
+     "fill": "#e2e8f0",
+     "halo": "#1c2533",
+     "haloWidth": 1.2,
+     "minZoom": 0.9,
+     "sizeExp": 0
+    },
+    "village": {
+     "font": "serif",
+     "size": 5,
+     "spacing": 0.0,
+     "uppercase": false,
+     "fill": "#e2e8f0",
+     "halo": "#1c2533",
+     "haloWidth": 1.0,
+     "minZoom": 1.6,
+     "sizeExp": 0
+    },
+    "river": {
+     "font": "italic",
+     "size": 5,
+     "spacing": 0.12,
+     "uppercase": false,
+     "fill": "#9fc0e6",
+     "halo": "#1c2533",
+     "haloWidth": 1.0,
+     "minZoom": 1.1,
+     "sizeExp": 0
+    },
+    "lake": {
+     "font": "italic",
+     "size": 6.5,
+     "spacing": 0.08,
+     "uppercase": false,
+     "fill": "#9fc0e6",
+     "halo": "#1c2533",
+     "haloWidth": 1.1,
+     "minZoom": 0.7,
+     "sizeExp": 0
+    },
+    "sea": {
+     "font": "italic",
+     "size": 15,
+     "spacing": 0.32,
+     "uppercase": true,
+     "fill": "#9fc0e6",
+     "halo": "#1c2533",
+     "haloWidth": 0,
+     "minZoom": 0,
+     "sizeExp": 0
+    },
+    "ocean": {
+     "font": "italic",
+     "size": 26,
+     "spacing": 0.55,
+     "uppercase": true,
+     "fill": "#9fc0e6",
+     "halo": "#1c2533",
+     "haloWidth": 0,
+     "minZoom": 0,
+     "sizeExp": 0
+    },
+    "mountain": {
+     "font": "caps",
+     "size": 9,
+     "spacing": 0.38,
+     "uppercase": true,
+     "fill": "#e2e8f0",
+     "halo": "#1c2533",
+     "haloWidth": 1.3,
+     "minZoom": 0.5,
+     "sizeExp": 0.25
+    },
+    "valley": {
+     "font": "italic",
+     "size": 7,
+     "spacing": 0.18,
+     "uppercase": false,
+     "fill": "#e2e8f0",
+     "halo": "#1c2533",
+     "haloWidth": 1.2,
+     "minZoom": 0.9,
+     "sizeExp": 0
+    },
+    "forest": {
+     "font": "italic",
+     "size": 8.5,
+     "spacing": 0.22,
+     "uppercase": false,
+     "fill": "#a9cbb0",
+     "halo": "#1c2533",
+     "haloWidth": 1.2,
+     "minZoom": 0.6,
+     "sizeExp": 0.2
+    },
+    "deposit": {
+     "font": "serif",
+     "size": 3.5,
+     "spacing": 0.0,
+     "uppercase": false,
+     "fill": "#e2e8f0",
+     "halo": "#1c2533",
+     "haloWidth": 0.8,
+     "minZoom": 2.5,
+     "sizeExp": 0
+    },
+    "title": {
+     "font": "caps",
+     "size": 40,
+     "spacing": 0.12,
+     "uppercase": false,
+     "fill": "#e2e8f0",
+     "halo": "#1c2533",
+     "haloWidth": 3,
+     "minZoom": 0,
+     "sizeExp": 0
+    }
+   },
+   "ui": {
+    "--bg": "#0f141b",
+    "--panel": "#161d27",
+    "--fg": "#dbe4ee",
+    "--muted": "#7f90a3",
+    "--accent": "#8fb3e8",
+    "--line": "#253141"
+   }
+  }
+ ],
+ "biomes": [
+  {
+   "id": 0,
+   "name": "Ocean floor",
+   "vivid": "#2f5d8a"
+  },
+  {
+   "id": 1,
+   "name": "Plains",
+   "vivid": "#9ccf6a"
+  },
+  {
+   "id": 2,
+   "name": "Desert",
+   "vivid": "#f0d27a"
+  },
+  {
+   "id": 3,
+   "name": "Forest",
+   "vivid": "#2f7d3a"
+  },
+  {
+   "id": 4,
+   "name": "Mountain",
+   "vivid": "#8c7a66"
+  },
+  {
+   "id": 5,
+   "name": "Tundra",
+   "vivid": "#a7b7a7"
+  },
+  {
+   "id": 6,
+   "name": "Jungle",
+   "vivid": "#1f8f4f"
+  },
+  {
+   "id": 7,
+   "name": "Swamp",
+   "vivid": "#5d7a4a"
+  },
+  {
+   "id": 8,
+   "name": "Glacier",
+   "vivid": "#f4f8ff"
+  },
+  {
+   "id": 9,
+   "name": "Canyon",
+   "vivid": "#c8743c"
+  },
+  {
+   "id": 10,
+   "name": "Savanna",
+   "vivid": "#c9b458"
+  },
+  {
+   "id": 11,
+   "name": "Farmland",
+   "vivid": "#d8c35a"
+  },
+  {
+   "id": 12,
+   "name": "Badlands",
+   "vivid": "#a8603a"
+  },
+  {
+   "id": 13,
+   "name": "Ashlands",
+   "vivid": "#5e5652"
+  }
+ ],
+ "assets": [
+  {
+   "id": "core.mountain",
+   "name": "Mountain",
+   "category": "mountain",
+   "size": 16,
+   "generator": "mountain",
+   "variants": 12
+  },
+  {
+   "id": "core.mountainSnow",
+   "name": "Snowy mountain",
+   "category": "mountain",
+   "size": 18,
+   "generator": "mountainSnow",
+   "variants": 8
+  },
+  {
+   "id": "core.volcano",
+   "name": "Volcano",
+   "category": "mountain",
+   "size": 17,
+   "generator": "volcano",
+   "variants": 4
+  },
+  {
+   "id": "core.hill",
+   "name": "Hill",
+   "category": "hill",
+   "size": 8,
+   "generator": "hill",
+   "variants": 10
+  },
+  {
+   "id": "core.conifer",
+   "name": "Conifer",
+   "category": "tree",
+   "size": 5.5,
+   "generator": "conifer",
+   "variants": 10
+  },
+  {
+   "id": "core.deciduous",
+   "name": "Deciduous tree",
+   "category": "tree",
+   "size": 5.5,
+   "generator": "deciduous",
+   "variants": 10
+  },
+  {
+   "id": "core.palm",
+   "name": "Palm",
+   "category": "tree",
+   "size": 6,
+   "generator": "palm",
+   "variants": 6
+  },
+  {
+   "id": "core.deadTree",
+   "name": "Dead tree",
+   "category": "tree",
+   "size": 5,
+   "generator": "deadTree",
+   "variants": 6
+  },
+  {
+   "id": "core.shrub",
+   "name": "Shrub",
+   "category": "vegetation",
+   "size": 3,
+   "generator": "shrub",
+   "variants": 6
+  },
+  {
+   "id": "core.grassTuft",
+   "name": "Grass tuft",
+   "category": "vegetation",
+   "size": 2.5,
+   "generator": "grassTuft",
+   "variants": 6
+  },
+  {
+   "id": "core.reeds",
+   "name": "Reeds",
+   "category": "vegetation",
+   "size": 3.5,
+   "generator": "reeds",
+   "variants": 6
+  },
+  {
+   "id": "core.dunes",
+   "name": "Dunes",
+   "category": "terrain",
+   "size": 7,
+   "generator": "dunes",
+   "variants": 6
+  },
+  {
+   "id": "core.cactus",
+   "name": "Cactus",
+   "category": "vegetation",
+   "size": 4,
+   "generator": "cactus",
+   "variants": 4
+  },
+  {
+   "id": "core.rock",
+   "name": "Rocks",
+   "category": "terrain",
+   "size": 4,
+   "generator": "rock",
+   "variants": 6
+  },
+  {
+   "id": "core.village",
+   "name": "Village",
+   "category": "settlement",
+   "size": 7,
+   "generator": "village",
+   "variants": 8
+  },
+  {
+   "id": "core.town",
+   "name": "Town",
+   "category": "settlement",
+   "size": 10,
+   "generator": "town",
+   "variants": 6
+  },
+  {
+   "id": "core.city",
+   "name": "City",
+   "category": "settlement",
+   "size": 14,
+   "generator": "city",
+   "variants": 6
+  },
+  {
+   "id": "core.capital",
+   "name": "Capital",
+   "category": "settlement",
+   "size": 18,
+   "generator": "capital",
+   "variants": 4
+  },
+  {
+   "id": "core.castle",
+   "name": "Castle",
+   "category": "structure",
+   "size": 11,
+   "generator": "castle",
+   "variants": 4
+  },
+  {
+   "id": "core.tower",
+   "name": "Tower",
+   "category": "structure",
+   "size": 8,
+   "generator": "tower",
+   "variants": 4
+  },
+  {
+   "id": "core.ruins",
+   "name": "Ruins",
+   "category": "structure",
+   "size": 8,
+   "generator": "ruins",
+   "variants": 4
+  },
+  {
+   "id": "core.temple",
+   "name": "Temple",
+   "category": "structure",
+   "size": 9,
+   "generator": "temple",
+   "variants": 3
+  },
+  {
+   "id": "core.port",
+   "name": "Port",
+   "category": "settlement",
+   "size": 10,
+   "generator": "port",
+   "variants": 4
+  },
+  {
+   "id": "core.lighthouse",
+   "name": "Lighthouse",
+   "category": "structure",
+   "size": 8,
+   "generator": "lighthouse",
+   "variants": 3
+  },
+  {
+   "id": "core.wave",
+   "name": "Wave",
+   "category": "water",
+   "size": 4,
+   "generator": "wave",
+   "variants": 6
+  },
+  {
+   "id": "core.ship",
+   "name": "Ship",
+   "category": "water",
+   "size": 9,
+   "generator": "ship",
+   "variants": 4
+  },
+  {
+   "id": "core.seaMonster",
+   "name": "Sea monster",
+   "category": "water",
+   "size": 14,
+   "generator": "seaMonster",
+   "variants": 3
+  },
+  {
+   "id": "core.whirlpool",
+   "name": "Whirlpool",
+   "category": "water",
+   "size": 8,
+   "generator": "whirlpool",
+   "variants": 2
+  },
+  {
+   "id": "core.compass",
+   "name": "Compass rose",
+   "category": "decoration",
+   "size": 60,
+   "generator": "compass",
+   "variants": 1
+  }
+ ],
+ "rules": [
+  {
+   "id": "peaks",
+   "assets": [
+    "core.mountainSnow"
+   ],
+   "elevation": [
+    0.72,
+    9
+   ],
+   "spacing": 9,
+   "density": 0.95,
+   "scale": [
+    0.9,
+    1.25
+   ],
+   "scaleWithElevation": 0.72
+  },
+  {
+   "id": "mountains",
+   "assets": [
+    "core.mountain"
+   ],
+   "elevation": [
+    0.47,
+    0.72
+   ],
+   "spacing": 8.5,
+   "density": 0.92,
+   "scale": [
+    0.75,
+    1.15
+   ],
+   "scaleWithElevation": 0.47
+  },
+  {
+   "id": "hills",
+   "assets": [
+    "core.hill"
+   ],
+   "elevation": [
+    0.3,
+    0.47
+   ],
+   "spacing": 9,
+   "density": 0.45,
+   "scale": [
+    0.8,
+    1.15
+   ]
+  },
+  {
+   "id": "forest",
+   "assets": [
+    "core.deciduous",
+    "core.deciduous",
+    "core.conifer"
+   ],
+   "biomes": [
+    3
+   ],
+   "elevation": [
+    0,
+    0.47
+   ],
+   "spacing": 4.2,
+   "density": 0.88,
+   "scale": [
+    0.85,
+    1.15
+   ]
+  },
+  {
+   "id": "taiga",
+   "assets": [
+    "core.conifer"
+   ],
+   "biomes": [
+    5
+   ],
+   "elevation": [
+    0,
+    0.47
+   ],
+   "spacing": 5,
+   "density": 0.55,
+   "scale": [
+    0.8,
+    1.05
+   ]
+  },
+  {
+   "id": "jungle",
+   "assets": [
+    "core.palm",
+    "core.deciduous",
+    "core.deciduous"
+   ],
+   "biomes": [
+    6
+   ],
+   "elevation": [
+    0,
+    0.47
+   ],
+   "spacing": 4,
+   "density": 0.9,
+   "scale": [
+    0.9,
+    1.2
+   ]
+  },
+  {
+   "id": "swamp",
+   "assets": [
+    "core.reeds",
+    "core.reeds",
+    "core.shrub",
+    "core.deadTree"
+   ],
+   "biomes": [
+    7
+   ],
+   "elevation": [
+    0,
+    0.47
+   ],
+   "spacing": 5.5,
+   "density": 0.6
+  },
+  {
+   "id": "desert",
+   "assets": [
+    "core.dunes"
+   ],
+   "biomes": [
+    2
+   ],
+   "elevation": [
+    0,
+    0.47
+   ],
+   "spacing": 13,
+   "density": 0.35
+  },
+  {
+   "id": "desertRocks",
+   "assets": [
+    "core.cactus",
+    "core.rock"
+   ],
+   "biomes": [
+    2
+   ],
+   "elevation": [
+    0,
+    0.47
+   ],
+   "spacing": 14,
+   "density": 0.12
+  },
+  {
+   "id": "plains",
+   "assets": [
+    "core.grassTuft",
+    "core.shrub"
+   ],
+   "biomes": [
+    1,
+    10
+   ],
+   "elevation": [
+    0,
+    0.3
+   ],
+   "spacing": 12,
+   "density": 0.12
+  },
+  {
+   "id": "waves",
+   "assets": [
+    "core.wave"
+   ],
+   "elevation": [
+    -9,
+    -0.18
+   ],
+   "spacing": 38,
+   "density": 0.35,
+   "scale": [
+    0.8,
+    1.2
+   ]
+  },
+  {
+   "id": "ships",
+   "assets": [
+    "core.ship"
+   ],
+   "elevation": [
+    -9,
+    -0.12
+   ],
+   "spacing": 260,
+   "density": 0.25
+  },
+  {
+   "id": "monsters",
+   "assets": [
+    "core.seaMonster",
+    "core.whirlpool"
+   ],
+   "elevation": [
+    -9,
+    -0.3
+   ],
+   "spacing": 520,
+   "density": 0.2
+  }
+ ],
+ "featureAssets": {
+  "capital": [
+   "core.capital"
+  ],
+  "city": [
+   "core.city"
+  ],
+  "town": [
+   "core.town"
+  ],
+  "village": [
+   "core.village"
+  ],
+  "port": [
+   "core.port"
+  ]
+ },
+ "fonts": {
+  "serif": "fonts/IMFellEnglish-Regular.woff",
+  "italic": "fonts/IMFellEnglish-Italic.woff",
+  "caps": "fonts/IMFellEnglishSC-Regular.woff"
+ }
+}

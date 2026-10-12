@@ -134,7 +134,7 @@ Descriptors:
   - {Form: אורן, Latin: Oren, Gloss: pine, Tags: [forest, mountain]}
   - {Form: צל, Latin: Tzel, Gloss: shadow, Tags: [forest, dark, danger]}
   - {Form: אפלה, Latin: Afela, Gloss: darkness, Tags: [dark, danger, valley]}
-  - {Form: תכלת, Latin: Tchelet, Gloss: sky blue, Tags: [lake, water, river, high]}
+  - {Form: תכלת, Latin: Tchelet, Gloss: sky blue, Tags: [lake, water, river, high, sea]}
   - {Form: כסף, Latin: Kesef, Gloss: silver, Tags: [lake, water, deposit]}
   - {Form: אלון, Latin: Alon, Gloss: oak, Tags: [forest, hill, village]}
   - {Form: ברוש, Latin: Brosh, Gloss: cypress, Tags: [forest, hill]}
@@ -158,6 +158,11 @@ Descriptors:
   - {Form: שוהם, Latin: Shoham, Gloss: onyx, Tags: [deposit, city]}
   - {Form: ברק, Latin: Barak, Gloss: lightning, Tags: [high, mountain, danger]}
   - {Form: שלג, Latin: Sheleg, Gloss: snow, Tags: [mountain, high]}
+  - {Form: מלח, Latin: Melach, Gloss: salt, Tags: [sea]}
+  - {Form: אלמוג, Latin: Almog, Gloss: coral, Tags: [sea]}
+  - {Form: סערה, Latin: Seara, Gloss: storm, Tags: [sea]}
+  - {Form: פנינה, Latin: Pnina, Gloss: pearl, Tags: [sea]}
+  - {Form: קצף, Latin: Ketzef, Gloss: foam, Tags: [sea]}
 Nouns:
   - {Form: כפר, Latin: Kfar, Gloss: village, Tags: [village]}
   - {Form: נווה, Latin: Neve, Gloss: oasis home, Tags: [village]}
@@ -165,7 +170,7 @@ Nouns:
   - {Form: קרית, Latin: Kiryat, Gloss: township, Tags: [town, city]}
   - {Form: עיר, Latin: Ir, Gloss: city, Tags: [city, town]}
   - {Form: נחל, Latin: Nahal, Gloss: stream, Tags: [river, water]}
-  - {Form: ים, Latin: Yam, Gloss: sea, Tags: [lake, water]}
+  - {Form: ים, Latin: Yam, Gloss: sea, Tags: [lake, water, sea]}
   - {Form: הר, Latin: Har, Gloss: mountain, Tags: [mountain]}
   - {Form: גבעת, Latin: Givat, Gloss: hill, Tags: [hill]}
   - {Form: רמת, Latin: Ramat, Gloss: heights, Tags: [hill, town]}
@@ -198,3 +203,7 @@ Nouns:
   - {Form: בקעת, Latin: Bikat, Gloss: valley, Tags: [valley]}
   - {Form: גיא, Latin: Gai, Gloss: ravine, Tags: [valley]}
   - {Form: מבצר, Latin: Mivtzar, Gloss: fortress, Tags: [hold, camp]}
+  - {Form: מפרץ, Latin: Mifratz, Gloss: gulf, Tags: [sea]}
+  - {Form: מיצר, Latin: Meitzar, Gloss: strait, Tags: [sea]}
+  - {Form: מצולות, Latin: Metzulot, Gloss: sea depths, Tags: [sea]}
+  - {Form: תהום, Latin: Tehom, Gloss: abyss, Tags: [sea, dark]}

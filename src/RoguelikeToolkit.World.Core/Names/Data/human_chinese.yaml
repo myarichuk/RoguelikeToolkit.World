@@ -8,7 +8,7 @@ FamilyFirst: true
 PlaceFallback: false
 PatronymicSon: zi
 PatronymicDaughter: nu
-Banned: []
+Banned: [taiwan, taiyang]
 GivenStems:
   - {Form: Wei, Gloss: greatness, Tags: [masc]}
   - {Form: Bo, Gloss: wave, Tags: [masc]}
@@ -97,6 +97,11 @@ Descriptors:
   - {Form: Liu, Gloss: willow, Tags: [river, lake, village]}
   - {Form: Lian, Gloss: lotus, Tags: [lake, water]}
   - {Form: Wu, Gloss: misty, Tags: [mountain, valley, lake, forest]}
+  - {Form: Huang, Gloss: yellow, Tags: [sea]}
+  - {Form: Cang, Gloss: vast blue, Tags: [sea]}
+  - {Form: Bo, Gloss: surging, Tags: [sea]}
+  - {Form: Lan, Gloss: blue, Tags: [sea]}
+  - {Form: Lang, Gloss: wave, Tags: [sea]}
 Nouns:
   - {Form: cun, Gloss: hamlet, Tags: [village]}
   - {Form: zhen, Gloss: market town, Tags: [town]}
@@ -135,3 +140,8 @@ Nouns:
   - {Form: kou, Gloss: river mouth, Tags: [river, town]}
   - {Form: shu, Gloss: grove, Tags: [forest]}
   - {Form: sen, Gloss: deep forest, Tags: [forest, dark]}
+  - {Form: hai, Gloss: sea, Tags: [sea, water]}
+  - {Form: yang, Gloss: ocean, Tags: [sea]}
+  - {Form: wan, Gloss: gulf, Tags: [sea]}
+  - {Form: men, Gloss: sea gate, Tags: [sea]}
+  - {Form: xia, Gloss: strait, Tags: [sea]}

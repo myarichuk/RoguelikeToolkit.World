@@ -48,10 +48,12 @@ Epithets:
   - {Form: Tideherald, Gloss: herald of tides}
   - {Form: Raincaller, Gloss: caller of rain}
 Descriptors:
-  - {Form: Misty, Gloss: misty, Tags: [water, lake]}
+  - {Form: Misty, Gloss: misty, Tags: [water, lake, sea]}
   - {Form: Flowing, Gloss: flowing, Tags: [river, water]}
-  - {Form: Sunken, Gloss: sunken, Tags: [lake, valley]}
+  - {Form: Sunken, Gloss: sunken, Tags: [lake, valley, sea]}
 Nouns:
   - {Form: spring, Gloss: ever-spring, Tags: [river, water]}
   - {Form: falls, Gloss: falls, Tags: [river, mountain]}
   - {Form: pool, Gloss: deep pool, Tags: [lake, water]}
+  - {Form: tide, Gloss: tide-sea, Tags: [sea, water]}
+  - {Form: abyss, Gloss: abyssal deep, Tags: [sea, dark]}

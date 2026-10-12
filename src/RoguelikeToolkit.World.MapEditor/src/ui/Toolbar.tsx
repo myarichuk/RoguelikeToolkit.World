@@ -1,0 +1,84 @@
+import { HEIGHT_MODES, TOOLS } from '../viewmodels/ToolsViewModel';
+import { useApp, useViewModel } from './hooks';
+import { Section, Select, Slider } from './controls';
+
+export function Toolbar() {
+  const { vms } = useApp();
+  const s = useViewModel(vms.tools);
+  return (
+    <nav className="toolbar" aria-label="Tools">
+      {TOOLS.map((t) => (
+        <button key={t.id} className={s.tool === t.id ? 'active' : ''} onClick={() => vms.tools.setTool(t.id)} title={`${t.label} (${t.key}) — ${t.hint}`}>
+          <span className="icon">{t.icon}</span>
+          <span className="label">{t.label}</span>
+        </button>
+      ))}
+    </nav>
+  );
+}
+
+/** Options of the active tool. */
+export function ToolOptionsPanel() {
+  const { vms } = useApp();
+  const vm = vms.tools;
+  const s = useViewModel(vm);
+  const o = s.options;
+  const info = TOOLS.find((t) => t.id === s.tool)!;
+  const brush = s.tool === 'terrain' || s.tool === 'biome';
+  return (
+    <Section title={info.label}>
+      <p className="hint">{info.hint}</p>
+      {brush && <Slider label="Radius" value={o.radius} min={2} max={200} step={1} onChange={(radius) => vm.setOptions({ radius })} />}
+      {s.tool === 'terrain' && (
+        <>
+          <Slider label="Strength" value={o.strength} min={0.005} max={0.2} step={0.005} onChange={(strength) => vm.setOptions({ strength })} />
+          <div className="chips">
+            {HEIGHT_MODES.map((m) => <button key={m.id} className={o.heightMode === m.id ? 'active' : ''} onClick={() => vm.setOptions({ heightMode: m.id })}>{m.label}</button>)}
+          </div>
+        </>
+      )}
+      {s.tool === 'biome' && (
+        <div className="swatches">
+          {s.biomes.map((b) => (
+            <button key={b.id} className={o.biome === b.id ? 'active' : ''} onClick={() => vm.setOptions({ biome: b.id })} title={b.name}>
+              <i style={{ background: s.biomeColors[String(b.id)] ?? b.vivid }} /><i style={{ background: b.vivid }} /><span>{b.name}</span>
+            </button>
+          ))}
+        </div>
+      )}
+      {s.tool === 'stamp' && (
+        <>
+          <Slider label="Scale" value={o.stampScale} min={0.3} max={3} step={0.05} onChange={(stampScale) => vm.setOptions({ stampScale })} />
+          <Slider label="Scatter" value={o.scatter} min={0} max={40} step={1} onChange={(scatter) => vm.setOptions({ scatter })} format={(v) => (v ? `${v} mu` : 'off')} />
+          {o.scatter > 0 && <Slider label="Spray radius" value={o.radius} min={4} max={120} step={1} onChange={(radius) => vm.setOptions({ radius })} />}
+          <AssetPalette />
+        </>
+      )}
+      {s.tool === 'text' && (
+        <Select label="Style" value={o.labelStyle} options={s.labelStyles.map((k) => ({ value: k, label: k }))} onChange={(labelStyle) => vm.setOptions({ labelStyle })} />
+      )}
+    </Section>
+  );
+}
+
+export function AssetPalette() {
+  const { vms } = useApp();
+  const s = useViewModel(vms.tools);
+  const cats = [...new Set(s.assets.map((a) => a.category))];
+  return (
+    <div className="assets">
+      {cats.map((c) => (
+        <div key={c}>
+          <h4>{c}</h4>
+          <div className="grid">
+            {s.assets.filter((a) => a.category === c).map((a) => (
+              <button key={a.id} className={s.options.asset === a.id ? 'active' : ''} title={a.name} onClick={() => vms.tools.pickAsset(a.id)}>
+                <img src={a.thumb} alt={a.name} draggable={false} />
+              </button>
+            ))}
+          </div>
+        </div>
+      ))}
+    </div>
+  );
+}

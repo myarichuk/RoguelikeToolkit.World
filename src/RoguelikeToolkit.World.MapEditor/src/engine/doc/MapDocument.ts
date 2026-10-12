@@ -1,0 +1,95 @@
+import { Emitter } from '../core/Emitter';
+import { MAP_H, MAP_W, type Rect } from '../core/geo';
+import type { RasterTarget } from '../commands/RasterEdit';
+import type { NameStyle } from '../world/protocol';
+import { EntityStore } from './EntityStore';
+import { DEFAULT_SETTINGS, type DocSettings, type FeatureEntity, type LabelEntity, type RiverEntity, type StampEntity } from './types';
+
+export type RasterLayer = 'elevation' | 'biome';
+
+/** Read-only reference data from generation: what the planet *is*, as opposed to what was drawn. */
+export interface WorldReference {
+  /** Dominant tile per pixel (feature membership, inspection). */
+  tile: Int32Array;
+  /** Per tile: plate id | boundary << 16 | crust << 24. */
+  tilePlate: Uint32Array;
+  /** Per plate: drift xyz + speed. */
+  plateDrift: Float64Array;
+  /** Per tile map position. */
+  tileXY: Float32Array;
+  styles: NameStyle[];
+}
+
+/**
+ * The aggregate root of a map: editable rasters, entity stores, settings and world reference
+ * data. It knows nothing about rendering, tools or UI; those observe its events.
+ */
+export class MapDocument {
+  readonly width = MAP_W;
+  readonly height = MAP_H;
+  readonly features = new EntityStore<FeatureEntity>();
+  readonly stamps = new EntityStore<StampEntity>();
+  readonly labels = new EntityStore<LabelEntity>();
+  readonly rivers = new EntityStore<RiverEntity>();
+  readonly events = new Emitter<{ raster: { layer: RasterLayer; rect: Rect }; settings: DocSettings; reset: MapDocument }>();
+  private featureByTile: Map<number, string[]> | null = null;
+
+  constructor(
+    public settings: DocSettings,
+    public readonly elevation: Float32Array,
+    public readonly biome: Uint8Array,
+    public readonly world: WorldReference,
+  ) {
+    this.features.events.on('change', () => { this.featureByTile = null; });
+  }
+
+  static empty(): MapDocument {
+    return new MapDocument({ ...DEFAULT_SETTINGS }, new Float32Array(MAP_W * MAP_H).fill(-0.2), new Uint8Array(MAP_W * MAP_H),
+      { tile: new Int32Array(MAP_W * MAP_H).fill(-1), tilePlate: new Uint32Array(0), plateDrift: new Float64Array(0), tileXY: new Float32Array(0), styles: [] });
+  }
+
+  /** A raster as an undo/redo target that keeps renderers informed. */
+  target(layer: 'elevation'): RasterTarget<Float32Array>;
+  target(layer: 'biome'): RasterTarget<Uint8Array>;
+  target(layer: RasterLayer): RasterTarget<Float32Array> | RasterTarget<Uint8Array> {
+    const data = layer === 'elevation' ? this.elevation : this.biome;
+    return { data: data as never, width: this.width, height: this.height, touched: (rect) => this.events.emit('raster', { layer, rect }) };
+  }
+
+  setSettings(patch: Partial<DocSettings>): void {
+    this.settings = { ...this.settings, ...patch };
+    this.events.emit('settings', this.settings);
+  }
+
+  /** Pixel -> tile (or -1 off-world / for hand-made documents). */
+  tileAt(x: number, y: number): number {
+    const xi = ((Math.floor(x) % this.width) + this.width) % this.width, yi = Math.floor(y);
+    if (yi < 0 || yi >= this.height) return -1;
+    return this.world.tile[yi * this.width + xi];
+  }
+
+  /** Area features containing a pixel (via its tile). */
+  featuresAt(x: number, y: number): FeatureEntity[] {
+    const t = this.tileAt(x, y);
+    if (t < 0) return [];
+    if (!this.featureByTile) {
+      const m = new Map<number, string[]>();
+      for (const f of this.features.all()) {
+        if (!f.tiles || f.kind === 'river') continue;
+        for (const tile of f.tiles) { let l = m.get(tile); if (!l) m.set(tile, (l = [])); l.push(f.id); }
+      }
+      this.featureByTile = m;
+    }
+    return (this.featureByTile.get(t) ?? []).map((id) => this.features.get(id)!).filter(Boolean);
+  }
+
+  elevationAt(x: number, y: number): number {
+    const xi = ((Math.floor(x) % this.width) + this.width) % this.width, yi = Math.max(0, Math.min(this.height - 1, Math.floor(y)));
+    return this.elevation[yi * this.width + xi];
+  }
+
+  biomeAt(x: number, y: number): number {
+    const xi = ((Math.floor(x) % this.width) + this.width) % this.width, yi = Math.max(0, Math.min(this.height - 1, Math.floor(y)));
+    return this.biome[yi * this.width + xi];
+  }
+}

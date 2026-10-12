@@ -74,7 +74,7 @@ Descriptors:
   - {Form: du, Gloss: black}
   - {Form: mawr, Gloss: great}
   - {Form: bach, Gloss: little}
-  - {Form: glas, Gloss: blue-green, Tags: [water, valley, lake]}
+  - {Form: glas, Gloss: blue-green, Tags: [water, valley, lake, sea]}
   - {Form: hir, Gloss: long, Tags: [valley, river]}
   - {Form: newydd, Gloss: new, Tags: [village, town, city, hold]}
   - {Form: aur, Gloss: golden, Tags: [deposit, city]}
@@ -96,6 +96,10 @@ Descriptors:
   - {Form: cam, Gloss: crooked, Tags: [river, valley]}
   - {Form: gwyrdd, Gloss: green, FemForm: gwerdd, Tags: [forest, valley, village, hill]}
   - {Form: arian, Gloss: silver, Tags: [lake, river, deposit]}
+  - {Form: hallt, Gloss: salty, Tags: [sea]}
+  - {Form: gwyllt, Gloss: wild, Tags: [sea]}
+  - {Form: dwfn, Gloss: deep, FemForm: dofn, Tags: [sea]}
+  - {Form: tawel, Gloss: calm, Tags: [sea]}
 Nouns:
   - {Form: Aber, Gloss: river mouth, Tags: [river, village]}
   - {Form: Pen, Gloss: headland, Tags: [hill, mountain, village]}
@@ -133,3 +137,7 @@ Nouns:
   - {Form: Porth, Gloss: harbour, Tags: [town, river, lake]}
   - {Form: Bod, Gloss: dwelling, Tags: [village, town]}
   - {Form: Hendre, Gloss: winter homestead, Tags: [fem, village, valley]}
+  - {Form: Mor, Gloss: sea, Tags: [sea, water]}
+  - {Form: Bae, Gloss: bay, Tags: [sea]}
+  - {Form: Culfor, Gloss: strait, Tags: [sea]}
+  - {Form: Eigion, Gloss: ocean deep, Tags: [sea]}

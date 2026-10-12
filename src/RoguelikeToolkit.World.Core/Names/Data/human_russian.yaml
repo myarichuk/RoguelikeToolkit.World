@@ -124,6 +124,10 @@ Descriptors:
   - {Form: Круто, Latin: Kruto, Gloss: steep, Tags: [mountain, hill, river]}
   - {Form: Тёмно, Latin: Tyomno, Gloss: dark, Tags: [dark, forest, danger]}
   - {Form: Сосново, Latin: Sosnovo, Gloss: pine, Tags: [forest, hill]}
+  - {Form: Солено, Latin: Soleno, Gloss: salty, Tags: [sea]}
+  - {Form: Бурно, Latin: Burno, Gloss: stormy, Tags: [sea]}
+  - {Form: Ветрено, Latin: Vetreno, Gloss: windy, Tags: [sea]}
+  - {Form: Ледо, Latin: Ledo, Gloss: icy, Tags: [sea]}
 Nouns:
   - {Form: град, Latin: grad, Gloss: fortified town, Tags: [town, city, hold]}
   - {Form: село, Latin: selo, Gloss: village, Tags: [village]}
@@ -142,7 +146,7 @@ Nouns:
   - {Form: горье, Latin: gorye, Gloss: highland, Tags: [mountain, hill]}
   - {Form: борье, Latin: borye, Gloss: pine woods, Tags: [forest]}
   - {Form: ручье, Latin: ruchye, Gloss: brook land, Tags: [river]}
-  - {Form: морье, Latin: morye, Gloss: inland sea shore, Tags: [lake]}
+  - {Form: морье, Latin: morye, Gloss: inland sea shore, Tags: [lake, sea]}
   - {Form: стан, Latin: stan, Gloss: camp, Tags: [camp]}
   - {Form: каменск, Latin: kamensk, Gloss: stone town, Tags: [mountain, deposit, town, hold]}
   - {Form: скалье, Latin: skalye, Gloss: crags, Tags: [mountain, hill, high]}
@@ -150,7 +154,7 @@ Nouns:
   - {Form: горка, Latin: gorka, Gloss: hillock, Tags: [hill, village]}
   - {Form: озёрск, Latin: ozyorsk, Gloss: lake town, Tags: [lake, town]}
   - {Form: плёс, Latin: ples, Gloss: open reach, Tags: [lake, river]}
-  - {Form: водье, Latin: vodye, Gloss: waterland, Tags: [lake, river, water]}
+  - {Form: водье, Latin: vodye, Gloss: waterland, Tags: [lake, river, water, sea]}
   - {Form: дубье, Latin: dubye, Gloss: oak wood, Tags: [forest]}
   - {Form: березье, Latin: berezye, Gloss: birch wood, Tags: [forest, village]}
   - {Form: ельник, Latin: yelnik, Gloss: spruce wood, Tags: [forest, dark]}
@@ -162,3 +166,5 @@ Nouns:
   - {Form: посад, Latin: posad, Gloss: trading quarter, Tags: [town]}
   - {Form: дворье, Latin: dvorye, Gloss: farmsteads, Tags: [village]}
   - {Form: дозор, Latin: dozor, Gloss: watch post, Tags: [camp, hold]}
+  - {Form: море, Latin: more, Gloss: sea, Tags: [sea, water]}
+  - {Form: глубь, Latin: glub, Gloss: the deep, Tags: [sea]}
