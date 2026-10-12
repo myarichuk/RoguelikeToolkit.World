@@ -9,6 +9,7 @@
   </Folder>
   <Folder Name="/tests/">
     <Project Path="tests/RoguelikeToolkit.World.Core.Tests/RoguelikeToolkit.World.Core.Tests.csproj" />
+    <Project Path="tests/RoguelikeToolkit.World.MapEditor.Engine.Tests/RoguelikeToolkit.World.MapEditor.Engine.Tests.csproj" />
     <Project Path="tests/RoguelikeToolkit.World.Scripting.Jint.Tests/RoguelikeToolkit.World.Scripting.Jint.Tests.csproj" />
     <Project Path="tests/RoguelikeToolkit.World.Presentation.Tests/RoguelikeToolkit.World.Presentation.Tests.csproj" />
     <Project Path="tests/RoguelikeToolkit.World.AotSmoke/RoguelikeToolkit.World.AotSmoke.csproj" />
