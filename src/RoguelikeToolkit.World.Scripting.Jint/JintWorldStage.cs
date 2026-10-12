@@ -248,6 +248,10 @@ public sealed class JintWorldStage : IWorldGeneratorStage, IDeclaredStage, IStag
             Swamp = (int)BiomeType.Swamp,
             Glacier = (int)BiomeType.Glacier,
             Canyon = (int)BiomeType.Canyon,
+            Badlands = (int)BiomeType.Badlands,
+            RockDesert = (int)BiomeType.RockDesert,
+            SaltFlat = (int)BiomeType.SaltFlat,
+            ColdDesert = (int)BiomeType.ColdDesert,
         });
         engine.SetValue("lat", new Func<int, double>(i => store.GetGeoCoord(CheckIndex(i, tileCount)).Latitude));
         engine.SetValue("lon", new Func<int, double>(i => store.GetGeoCoord(CheckIndex(i, tileCount)).Longitude));
@@ -324,8 +328,8 @@ public sealed class JintWorldStage : IWorldGeneratorStage, IDeclaredStage, IStag
 
     private static int CheckBiome(int v)
     {
-        if (v < 0 || v > 9)
-            throw new InvalidOperationException($"Biome value {v} is out of range (0..9, see BIOME.*).");
+        if (v < 0 || v > 255 || !Enum.IsDefined(typeof(BiomeType), (byte)v))
+            throw new InvalidOperationException($"Biome value {v} is not a known biome id (see BIOME.*).");
         return v;
     }
 

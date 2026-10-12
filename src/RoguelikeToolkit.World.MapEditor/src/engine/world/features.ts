@@ -30,7 +30,9 @@ export interface CatalogInput {
   styles: NameStyle[];
 }
 
-export const BIOME_NAMES = ['Ocean', 'Plains', 'Desert', 'Forest', 'Mountain', 'Tundra', 'Jungle', 'Swamp', 'Glacier', 'Canyon'];
+// Ids 10, 11 and 13 are editor paint-only biomes (Savanna, Farmland, Ashlands); 12 and 14..16 are
+// the Core desert family (Badlands, Rock desert, Salt flat, Cold desert), so ids stay stable across both.
+export const BIOME_NAMES = ['Ocean', 'Plains', 'Desert', 'Forest', 'Mountain', 'Tundra', 'Jungle', 'Swamp', 'Glacier', 'Canyon', 'Savanna', 'Farmland', 'Badlands', 'Ashlands', 'Rock desert', 'Salt flat', 'Cold desert'];
 const Biome = { Ocean: 0, Forest: 3, Jungle: 6, Swamp: 7 } as const;
 const WaterKind = { Lake: 0, Sea: 1, Ocean: 2 } as const;
 const RangeKind = { MountainRange: 0, Valley: 1, Canyon: 2, Playa: 3 } as const;

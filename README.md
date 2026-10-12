@@ -103,10 +103,16 @@ build from the finished tectonics + climate + hydrology.
   Every river terminates: sea, lake, or sink.
 - **Climate** bands precipitation by latitude (`ClimateStage.ZonalFactor`: wet
   equator, a dry subtropical belt near 27 degrees, wet storm tracks near 55,
-  dry poles; `ZonalStrength` scales or disables it). **Desert** is hot and
-  arid (`BiomeClassifier.IsArid`): the moisture ceiling rises with temperature,
-  a crude rainfall-versus-evaporation balance, so deserts follow the dry belt,
-  rain shadows and continental interiors rather than the shoreline.
+  dry poles; `ZonalStrength` scales or disables it). Aridity is hot and dry
+  (`BiomeClassifier.IsArid`): the moisture ceiling rises with temperature, a
+  crude rainfall-versus-evaporation balance, so deserts follow the dry belt,
+  rain shadows and continental interiors rather than the shoreline. Arid land
+  is a family of five biomes (`BiomeClassifier.IsDesert`): `Desert` (sand,
+  low flat ground), `RockDesert` (stony plateau above 0.30), `Badlands`
+  (dissected ground, a 0.12 height step to a neighbour), `SaltFlat` (playa
+  floors and the shores of lakes in dry country) and `ColdDesert` (very dry
+  but below the hot-desert temperature). The 2D editor and the 3D globe both
+  colour them, and the editor stamps each with its own scatter rules.
 - **Glaciers** are a climate-aware cover mask (cold + accumulation, with dry
   polar interiors staying tundra) and a first-class `Glacier` biome;
   `Canyon` is a biome too. The visualizer adds Climate and Deposits color

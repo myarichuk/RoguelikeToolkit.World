@@ -54,7 +54,10 @@
     "10": "#dccb98",
     "11": "#e0d49c",
     "12": "#cfa078",
-    "13": "#a9a294"
+    "13": "#a9a294",
+    "14": "#b8aa91",
+    "15": "#ece5d0",
+    "16": "#d3c9a4"
    },
    "labels": {
     "capital": {
@@ -259,7 +262,10 @@
     "10": "#e3d38a",
     "11": "#e8dd8c",
     "12": "#d79a6e",
-    "13": "#a89f97"
+    "13": "#a89f97",
+    "14": "#c4b69b",
+    "15": "#f4efdf",
+    "16": "#dbd5a8"
    },
    "labels": {
     "capital": {
@@ -464,7 +470,10 @@
     "10": "#38434f",
     "11": "#36444f",
     "12": "#46404a",
-    "13": "#2c2f38"
+    "13": "#2c2f38",
+    "14": "#3c4150",
+    "15": "#5a6679",
+    "16": "#363f4a"
    },
    "labels": {
     "capital": {
@@ -691,6 +700,21 @@
    "id": 13,
    "name": "Ashlands",
    "vivid": "#5e5652"
+  },
+  {
+   "id": 14,
+   "name": "Rock desert",
+   "vivid": "#a89880"
+  },
+  {
+   "id": 15,
+   "name": "Salt flat",
+   "vivid": "#eeebe0"
+  },
+  {
+   "id": 16,
+   "name": "Cold desert",
+   "vivid": "#c4b992"
   }
  ],
  "assets": [
@@ -1087,6 +1111,41 @@
    ],
    "spacing": 14,
    "density": 0.12
+  },
+  {
+   "id": "stonyDesert",
+   "assets": [
+    "core.rock",
+    "core.rock",
+    "core.hill"
+   ],
+   "biomes": [
+    12,
+    14
+   ],
+   "elevation": [
+    0,
+    0.47
+   ],
+   "spacing": 9,
+   "density": 0.3
+  },
+  {
+   "id": "steppeScrub",
+   "assets": [
+    "core.shrub",
+    "core.grassTuft",
+    "core.rock"
+   ],
+   "biomes": [
+    16
+   ],
+   "elevation": [
+    0,
+    0.47
+   ],
+   "spacing": 13,
+   "density": 0.14
   },
   {
    "id": "plains",

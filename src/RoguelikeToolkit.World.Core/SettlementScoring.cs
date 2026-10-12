@@ -25,7 +25,7 @@ public static class SettlementScoring
         double score = Base;
         if (water) { score += FreshWater; reasons?.Add("water"); }
         if (biome is BiomeType.Plains or BiomeType.Forest) { score += Fertile; reasons?.Add("fertile"); }
-        if (biome is BiomeType.Tundra or BiomeType.Desert or BiomeType.Mountain or BiomeType.Canyon) { score += Harsh; reasons?.Add("harsh"); }
+        if (biome is BiomeType.Tundra or BiomeType.Mountain or BiomeType.Canyon || BiomeClassifier.IsDesert(biome)) { score += Harsh; reasons?.Add("harsh"); }
         if (elevation > HighGroundHeight) { score += HighGround; reasons?.Add("high"); }
         score -= effectiveDanger * PerDanger;
         score += habitabilityDelta;

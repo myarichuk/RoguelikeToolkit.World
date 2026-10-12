@@ -99,7 +99,7 @@ elevation (15) → climate (16) → erosion (17) → hydrology (18) → biomes (
    | Global | Meaning |
    |---|---|
    | `TILE_COUNT`, `SEED`, `PARAMS` | tile count, stage seed, your params object |
-   | `BIOME.Ocean/Plains/Desert/Forest/Mountain/Tundra/Jungle/Swamp/Glacier/Canyon` | biome ids (ints) |
+   | `BIOME.Ocean/Plains/Desert/Forest/Mountain/Tundra/Jungle/Swamp/Glacier/Canyon/Badlands/RockDesert/SaltFlat/ColdDesert` | biome ids (ints) |
    | `lat(i)`, `lon(i)` | tile center degrees |
    | `continentality(i)`, `orogeny(i)` | tectonics drivers (need `TectonicPlate` in Reads/ReadsOptional) |
    | `height(i)` / `setHeight(i, v)` | `ElevationInfo.Height` |

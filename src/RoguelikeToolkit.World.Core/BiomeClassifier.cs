@@ -27,6 +27,36 @@ public static class BiomeClassifier
     public const double ForestMinMoisture = 0.42;
     public const double DeepOceanHeight = -0.6;
 
+    /// <summary>A saline site is a salt flat in any climate drier than this (a sump that stays dry is arid by definition).</summary>
+    public const double PlayaMaxMoisture = 0.50;
+
+    /// <summary>Cold steppe-desert: dry enough to starve grass, below the hot-desert temperature.</summary>
+    public const double ColdDesertMaxMoisture = 0.22;
+
+    /// <summary>Largest height step to a neighbour above which hot arid ground is dissected badlands.</summary>
+    public const double BadlandsRelief = 0.12;
+
+    /// <summary>Hot arid ground at or above this height is stony plateau rather than sand.</summary>
+    public const double RockDesertHeight = 0.30;
+
+    /// <summary>
+    /// Terrain facts the arid sub-types depend on and the three scalar inputs cannot carry.
+    /// <paramref name="Relief"/> is the largest height step to a neighbouring tile and
+    /// <paramref name="Saline"/> marks ground that holds salt: a dry endorheic basin floor, or the
+    /// shore of a lake in dry country, where evaporation leaves the crust behind.
+    /// </summary>
+    public readonly record struct AridSite(double Relief, bool Saline);
+
+    /// <summary>True for every member of the desert family, hot or cold.</summary>
+    public static bool IsDesert(BiomeType biome)
+        => biome is BiomeType.Desert or BiomeType.Badlands or BiomeType.RockDesert
+            or BiomeType.SaltFlat or BiomeType.ColdDesert;
+
+    /// <summary>Cold steppe-desert test: above the tundra line, below hot desert, and very dry.</summary>
+    public static bool IsColdArid(double temperature, double moisture)
+        => temperature >= TundraMaxTemperature && temperature <= DesertMinTemperature
+           && moisture < ColdDesertMaxMoisture;
+
     /// <summary>
     /// Aridity test: hot enough to need the rain it lacks. The moisture ceiling is
     /// <see cref="DesertMaxMoisture"/> at the cold edge and climbs with temperature, a crude
@@ -44,14 +74,49 @@ public static class BiomeClassifier
         _ => 0,
     };
 
+    /// <summary>Base danger of the desert family; <see cref="Classify"/> returns the same values.</summary>
+    public static byte AridBiomeDanger(BiomeType biome) => biome switch
+    {
+        BiomeType.Badlands => 3,
+        BiomeType.Desert or BiomeType.RockDesert or BiomeType.SaltFlat => 2,
+        BiomeType.ColdDesert => 1,
+        _ => 0,
+    };
+
+    /// <summary>Base danger of any biome <see cref="Classify"/> can return from moisture or aridity.</summary>
+    public static byte BaseDanger(BiomeType biome)
+        => IsDesert(biome) ? AridBiomeDanger(biome) : MoistureBiomeDanger(biome);
+
+    /// <summary>
+    /// Sub-type of a tile already known to be arid (salt flats are decided earlier, in <see cref="Classify"/>). Hot ground splits by relief (dissected badlands), then height (stony plateau)
+    /// and defaults to sand desert, while the cold side is steppe-desert.
+    /// </summary>
+    public static BiomeType AridType(double height, bool hot, AridSite site)
+    {
+        if (!hot) return BiomeType.ColdDesert;
+        if (site.Relief >= BadlandsRelief) return BiomeType.Badlands;
+        if (height >= RockDesertHeight) return BiomeType.RockDesert;
+        return BiomeType.Desert;
+    }
+
     /// <summary>Biome and base danger for a tile, before glacier/canyon overrides and jitter.</summary>
-    public static (BiomeType Biome, byte Danger) Classify(double height, double temperature, double moisture)
+    public static (BiomeType Biome, byte Danger) Classify(double height, double temperature, double moisture, AridSite site = default)
     {
         if (height < ElevationGenerationStage.SeaLevel)
             return (BiomeType.Ocean, height < DeepOceanHeight ? (byte)2 : (byte)0);
         if (height > MountainHeight) return (BiomeType.Mountain, 3);
         if (temperature < TundraMaxTemperature) return (BiomeType.Tundra, 1);
-        if (IsArid(temperature, moisture)) return (BiomeType.Desert, 2);
+        if (site.Saline && moisture < PlayaMaxMoisture) return (BiomeType.SaltFlat, AridBiomeDanger(BiomeType.SaltFlat));
+        if (IsArid(temperature, moisture))
+        {
+            var type = AridType(height, true, site);
+            return (type, AridBiomeDanger(type));
+        }
+        if (IsColdArid(temperature, moisture))
+        {
+            var type = AridType(height, false, site);
+            return (type, AridBiomeDanger(type));
+        }
         if (temperature > JungleMinTemperature && moisture > JungleMinMoisture) return (BiomeType.Jungle, 2);
         if (moisture > SwampMinMoisture && temperature > SwampMinTemperature) return (BiomeType.Swamp, 2);
         if (moisture > ForestMinMoisture) return (BiomeType.Forest, 1);
