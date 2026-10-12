@@ -2,18 +2,34 @@ import { CLIMATE_LAYERS, climateModes, HEIGHT_MODES, TOOLS } from '../viewmodels
 import { useApp, useViewModel } from './hooks';
 import { ChoiceGrid, Section, Select, Slider } from './controls';
 import { BIOME_HINTS, LANDUSE_HINTS, TERRAIN_HINTS } from './glossary';
+import { ToolIcon } from './icons';
+import type { ToolId } from '../engine/tools/Tool';
 import { LAND_USES } from '../engine/world/landuse';
+
+const GROUPS: { name: string; tools: ToolId[] }[] = [
+  { name: 'Navigate', tools: ['inspect', 'select', 'navigate'] },
+  { name: 'Paint', tools: ['terrain', 'biome', 'landuse', 'climate'] },
+  { name: 'Place', tools: ['stamp', 'text', 'river'] },
+];
 
 export function Toolbar() {
   const { vms } = useApp();
   const s = useViewModel(vms.tools);
   return (
     <nav className="toolbar" aria-label="Tools">
-      {TOOLS.map((t) => (
-        <button key={t.id} className={s.tool === t.id ? 'active' : ''} aria-pressed={s.tool === t.id} onClick={() => vms.tools.setTool(t.id)} title={`${t.label} (${t.key}) — ${t.hint}`}>
-          <span className="icon" aria-hidden="true">{t.icon}</span>
-          <span className="label">{t.label}</span>
-        </button>
+      {GROUPS.map((g) => (
+        <div key={g.name} className="tool-group" role="group" aria-label={g.name}>
+          <span className="group-name" aria-hidden="true">{g.name}</span>
+          {g.tools.map((id) => {
+            const t = TOOLS.find((x) => x.id === id)!;
+            return (
+              <button key={t.id} className={s.tool === t.id ? 'active' : ''} aria-pressed={s.tool === t.id} aria-keyshortcuts={t.key} onClick={() => vms.tools.setTool(t.id)} title={`${t.label} (${t.key}) — ${t.hint}`}>
+                <ToolIcon id={t.id} />
+                <span className="label">{t.label}</span>
+              </button>
+            );
+          })}
+        </div>
       ))}
     </nav>
   );

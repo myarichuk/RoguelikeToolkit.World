@@ -88,6 +88,13 @@ export class GenerateViewModel extends ViewModel<GenerateState> {
     this.set({ styles: has ? this.state.styles.filter((k) => k !== key) : [...this.state.styles, key] });
   };
 
+  /** Select or clear every culture of one race at once, keeping the rest of the selection. */
+  setRace = (race: string, on: boolean): void => {
+    const keys = this.state.available.filter((o) => o.race === race).map((o) => o.key);
+    const rest = this.state.styles.filter((k) => !keys.includes(k));
+    this.set({ styles: on ? [...rest, ...keys] : rest });
+  };
+
   generate = async (): Promise<void> => {
     const s = this.state;
     await this.editor.generate({ seed: s.seed, size: s.size, plates: s.plates, planet: { obliquity: s.obliquity, flux: s.flux, rotation: s.rotation }, model: { climateRefresh: s.climateRefresh, meridionalWind: s.meridionalWind, windCellBlend: s.windCellBlend, oceanHeat: s.oceanHeat, oceanRain: s.oceanRain, aeolian: s.aeolian }, styles: s.styles, title: this.editor.doc.settings.title || undefined, density: s.density }).catch(() => {});

@@ -37,3 +37,21 @@ describe('GenerateViewModel.stale', () => {
     expect(vm.state.stale).toBe(false);
   });
 });
+
+describe('GenerateViewModel.setRace', () => {
+  it('selects and clears one race without touching the others', () => {
+    const { editor, emit } = fakeEditor();
+    (editor as unknown as { nameStyles: unknown[] }).nameStyles = [
+      { race: 'A', culture: '1', label: 'A · One' }, { race: 'A', culture: '2', label: 'A · Two' }, { race: 'B', culture: '1', label: 'B · One' },
+    ];
+    const vm = new GenerateViewModel(editor);
+    emit('content');
+    vm.toggleStyle('B|1');
+    const before = [...vm.state.styles];
+    vm.setRace('A', true);
+    expect(vm.state.styles).toEqual(expect.arrayContaining(['A|1', 'A|2', ...before]));
+    vm.setRace('A', false);
+    expect(vm.state.styles.some((k) => k.startsWith('A|'))).toBe(false);
+    expect(vm.state.styles).toEqual(before);
+  });
+});

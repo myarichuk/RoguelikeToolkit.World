@@ -7,19 +7,19 @@ import { LAND_USE_SLOTS } from '../engine/world/landuse';
 import { LANDUSE_HINTS } from '../ui/glossary';
 import { ViewModel } from './ViewModel';
 
-export interface ToolInfo { id: ToolId; label: string; key: string; hint: string; icon: string; }
+export interface ToolInfo { id: ToolId; label: string; key: string; hint: string; }
 
 export const TOOLS: ToolInfo[] = [
-  { id: 'inspect', label: 'Inspect', key: 'I', icon: '⌕', hint: 'Hover and click map features (rivers, ranges, seas, cities, resources) to see details.' },
-  { id: 'select', label: 'Select', key: 'V', icon: '➚', hint: 'Select, move, rotate (R), scale ([ ]), flip (F) and delete stamps and labels. Drag on empty map to box-select.' },
-  { id: 'navigate', label: 'Pan', key: 'H', icon: '✥', hint: 'Drag to pan. Wheel zooms everywhere; middle/right drag or Space+drag pans in every tool.' },
-  { id: 'terrain', label: 'Terrain', key: 'B', icon: '⛰', hint: 'Sculpt height: raise, lower, smooth, flatten, roughen; paint land or sea. Alt inverts raise/lower. [ ] brush size.' },
-  { id: 'biome', label: 'Biome', key: 'G', icon: '❀', hint: 'Paint biomes. Alt+click picks the biome under the cursor.' },
-  { id: 'landuse', label: 'Land use', key: 'L', icon: '▦', hint: LANDUSE_HINTS.tool },
-  { id: 'climate', label: 'Climate', key: 'C', icon: '☀', hint: 'Paint warmer/cooler or wetter/drier air. Nothing changes until you apply physics; then biomes, rivers and lakes follow. Alt inverts. Tinted while this tool is active.' },
-  { id: 'stamp', label: 'Stamp', key: 'S', icon: '♣', hint: 'Place decals. Scatter > 0 paints a spray of variants. Alt+drag erases.' },
-  { id: 'text', label: 'Text', key: 'T', icon: 'A', hint: 'Click to add a label named in the local culture; click a label to select it.' },
-  { id: 'river', label: 'River', key: 'W', icon: '〰', hint: 'Drag from source to mouth to draw a named river. Alt+click deletes one.' },
+  { id: 'inspect', label: 'Inspect', key: 'I', hint: 'Hover and click map features (rivers, ranges, seas, cities, resources) to see details.' },
+  { id: 'select', label: 'Select', key: 'V', hint: 'Select, move, rotate (R), scale ([ ]), flip (F) and delete stamps and labels. Drag on empty map to box-select.' },
+  { id: 'navigate', label: 'Pan', key: 'H', hint: 'Drag to pan. Wheel zooms everywhere; middle/right drag or Space+drag pans in every tool.' },
+  { id: 'terrain', label: 'Terrain', key: 'B', hint: 'Sculpt height: raise, lower, smooth, flatten, roughen; paint land or sea. Alt inverts raise/lower. [ ] brush size.' },
+  { id: 'biome', label: 'Biome', key: 'G', hint: 'Paint biomes. Alt+click picks the biome under the cursor.' },
+  { id: 'landuse', label: 'Land use', key: 'L', hint: LANDUSE_HINTS.tool },
+  { id: 'climate', label: 'Climate', key: 'C', hint: 'Paint warmer/cooler or wetter/drier air. Nothing changes until you apply physics; then biomes, rivers and lakes follow. Alt inverts. Tinted while this tool is active.' },
+  { id: 'stamp', label: 'Stamp', key: 'S', hint: 'Place decals. Scatter > 0 paints a spray of variants. Alt+drag erases.' },
+  { id: 'text', label: 'Text', key: 'T', hint: 'Click to add a label named in the local culture; click a label to select it.' },
+  { id: 'river', label: 'River', key: 'W', hint: 'Drag from source to mouth to draw a named river. Alt+click deletes one.' },
 ];
 
 export const HEIGHT_MODES: { id: HeightMode; label: string }[] = [

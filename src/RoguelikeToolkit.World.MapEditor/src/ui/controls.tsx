@@ -1,4 +1,4 @@
-import { useEffect, useState, type ReactNode } from 'react';
+import { useEffect, useId, useState, type ReactNode } from 'react';
 
 // Small, dumb, reusable controls. No state of their own beyond text-entry drafts.
 
@@ -14,17 +14,50 @@ export function Section({ title, children, actions, hint, collapsible, defaultOp
 }) {
   const [open, setOpen] = useState(() => !collapsible || (sectionOpen.get(title) ?? defaultOpen));
   const toggle = () => { sectionOpen.set(title, !open); setOpen(!open); };
+  const [info, setInfo] = useState(false);
   return (
     <section className="section">
       <header>
         {collapsible
-          ? <h3 title={hint}><button className="disclosure" aria-expanded={open} onClick={toggle}><span aria-hidden="true">{open ? '▾' : '▸'}</span>{title}</button></h3>
-          : <h3 title={hint}>{title}</h3>}
+          ? <h3><button className="disclosure" aria-expanded={open} onClick={toggle}><span aria-hidden="true">{open ? '▾' : '▸'}</span>{title}</button></h3>
+          : <h3>{title}</h3>}
+        {hint && <InfoButton open={info} onToggle={() => setInfo(!info)} label={title} />}
         {collapsible && !open && summary && <span className="summary">{summary}</span>}
         {actions && open && <div className="actions">{actions}</div>}
       </header>
+      {hint && info && <p className="hint info">{hint}</p>}
       {open && children}
     </section>
+  );
+}
+
+
+/**
+ * A labelled row. The hint is a real (i) button, reachable by keyboard and touch, that expands the
+ * explanation under the row; a `title` tooltip is neither. The label is wired with htmlFor, not
+ * wrapped, because a button inside a <label> would swallow clicks meant for the control.
+ */
+function Field({ label, hint, className = '', children }: { label: string; hint?: string; className?: string; children: (id: string) => ReactNode}) {
+  const id = useId();
+  const [open, setOpen] = useState(false);
+  return (
+    <div className="field">
+      <div className={`row ${className}`}>
+        <span className="lbl">
+          <label htmlFor={id}>{label}</label>
+          {hint && <InfoButton open={open} onToggle={() => setOpen(!open)} label={label} />}
+        </span>
+        {children(id)}
+      </div>
+      {hint && open && <p className="hint info">{hint}</p>}
+    </div>
+  );
+}
+
+export function InfoButton({ open, onToggle, label }: { open: boolean; onToggle: () => void; label: string }) {
+  return (
+    <button type="button" className="info" aria-expanded={open} aria-label={`About ${label}`} onClick={onToggle}
+      onKeyDown={(e) => { if (e.key === 'Escape' && open) { e.stopPropagation(); onToggle(); } }}>i</button>
   );
 }
 
@@ -34,20 +67,22 @@ export function Slider({ label, value, min, max, step, onChange, format, hint }:
   hint?: string;
 }) {
   return (
-    <label className="row slider" title={hint}>
-      <span>{label}</span>
-      <output>{format ? format(value) : trim(value)}</output>
-      <input type="range" min={min} max={max} step={step} value={value} onChange={(e) => onChange(parseFloat(e.target.value))} />
-    </label>
+    <Field label={label} hint={hint} className="slider">
+      {(id) => (
+        <>
+          <output htmlFor={id}>{format ? format(value) : trim(value)}</output>
+          <input id={id} type="range" min={min} max={max} step={step} value={value} onChange={(e) => onChange(parseFloat(e.target.value))} />
+        </>
+      )}
+    </Field>
   );
 }
 
 export function NumberField({ label, value, onChange, min, max, step = 1, hint }: { label: string; value: number; onChange: (v: number) => void; min?: number; max?: number; step?: number; hint?: string }) {
   return (
-    <label className="row" title={hint}>
-      <span>{label}</span>
-      <input type="number" value={value} min={min} max={max} step={step} onChange={(e) => { const v = parseFloat(e.target.value); if (Number.isFinite(v)) onChange(v); }} />
-    </label>
+    <Field label={label} hint={hint}>
+      {(id) => <input id={id} type="number" value={value} min={min} max={max} step={step} onChange={(e) => { const v = parseFloat(e.target.value); if (Number.isFinite(v)) onChange(v); }} />}
+    </Field>
   );
 }
 
@@ -56,11 +91,11 @@ export function TextField({ label, value, onCommit, placeholder, hint }: { label
   const [draft, setDraft] = useState(value);
   useEffect(() => setDraft(value), [value]);
   const commit = () => { if (draft !== value) onCommit(draft); };
-  const input = (
-    <input type="text" value={draft} placeholder={placeholder} onChange={(e) => setDraft(e.target.value)} onBlur={commit}
+  const input = (id?: string) => (
+    <input id={id} type="text" value={draft} placeholder={placeholder} onChange={(e) => setDraft(e.target.value)} onBlur={commit}
       onKeyDown={(e) => { if (e.key === 'Enter') commit(); if (e.key === 'Escape') setDraft(value); }} />
   );
-  return label ? <label className="row" title={hint}><span>{label}</span>{input}</label> : input;
+  return label ? <Field label={label} hint={hint}>{(id) => input(id)}</Field> : input();
 }
 
 export function Toggle({ label, on, onChange, swatch, count, hint }: { label: string; on: boolean; onChange: () => void; swatch?: ReactNode; count?: number; hint?: string }) {
@@ -76,21 +111,24 @@ export function Toggle({ label, on, onChange, swatch, count, hint }: { label: st
 
 export function ColorField({ label, value, onChange, hint }: { label: string; value: string; onChange: (v: string) => void; hint?: string }) {
   return (
-    <label className="row color" title={hint}>
-      <span>{label}</span>
-      <input type="color" value={toHex(value)} onChange={(e) => onChange(e.target.value)} />
-      <code>{value}</code>
-    </label>
+    <Field label={label} hint={hint} className="color">
+      {(id) => (
+        <>
+          <input id={id} type="color" value={toHex(value)} onChange={(e) => onChange(e.target.value)} />
+          <code>{value}</code>
+        </>
+      )}
+    </Field>
   );
 }
 
 export function Select<T extends string>({ label, value, options, onChange, hint }: { label?: string; value: T; options: { value: T; label: string }[]; onChange: (v: T) => void; hint?: string }) {
-  const sel = (
-    <select value={value} onChange={(e) => onChange(e.target.value as T)}>
+  const sel = (id?: string) => (
+    <select id={id} value={value} onChange={(e) => onChange(e.target.value as T)}>
       {options.map((o) => <option key={o.value} value={o.value}>{o.label}</option>)}
     </select>
   );
-  return label ? <label className="row" title={hint}><span>{label}</span>{sel}</label> : sel;
+  return label ? <Field label={label} hint={hint}>{(id) => sel(id)}</Field> : sel();
 }
 
 export function Segmented<T extends string>({ value, options, onChange }: { value: T; options: { value: T; label: string; hint?: string }[]; onChange: (v: T) => void }) {

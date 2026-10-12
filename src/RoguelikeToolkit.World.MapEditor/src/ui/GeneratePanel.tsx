@@ -1,4 +1,4 @@
-import { useMemo } from 'react';
+import { useMemo, useState } from 'react';
 import { useApp, useViewModel } from './hooks';
 import { NumberField, Section, Slider, Toggle } from './controls';
 import { CLIMATE_MODEL_DEFAULTS, EARTH } from '../engine/world/protocol';
@@ -8,11 +8,6 @@ export function GeneratePanel() {
   const { vms } = useApp();
   const vm = vms.generate;
   const s = useViewModel(vm);
-  const byRace = useMemo(() => {
-    const m = new Map<string, typeof s.available>();
-    for (const o of s.available) { const l = m.get(o.race) ?? []; l.push(o); m.set(o.race, l); }
-    return [...m.entries()];
-  }, [s.available]);
   return (
     <>
       <Section title="World" hint="The seed and size fully determine the simulated planet (with the planet settings).">
@@ -43,19 +38,7 @@ export function GeneratePanel() {
       </Section>
       <Section title="Cultures" collapsible defaultOpen={false} summary={s.styles.length ? `${s.styles.length} selected` : 'default mix'} hint={WORLD_HINTS.cultures}>
         <p className="hint">Each tectonic plate is named by one of these. Names come from the Core name generator.</p>
-        <div className="cultures">
-          {byRace.map(([race, list]) => (
-            <div key={race}>
-              <h4>{race.replace(/_/g, ' ')}</h4>
-              {list.map((o) => (
-                <label key={o.key} className={`chip ${s.styles.includes(o.key) ? 'on' : ''}`}>
-                  <input type="checkbox" checked={s.styles.includes(o.key)} onChange={() => vm.toggleStyle(o.key)} />{o.label}
-                </label>
-              ))}
-            </div>
-          ))}
-          {!byRace.length && <p className="muted">Loading the world engine…</p>}
-        </div>
+        <CulturePicker />
       </Section>
     </>
   );
@@ -75,3 +58,75 @@ export function GenerateFooter() {
 }
 
 const same = <T extends object>(s: object, ref: T): boolean => (Object.keys(ref) as (keyof T)[]).every((k) => (s as T)[k] === ref[k]);
+
+const raceName = (race: string) => race.replace(/_/g, ' ');
+
+/** "Human · Arabic" under "Human" is just "Arabic"; the group heading already says the race. */
+const cultureLabel = (race: string, label: string) => {
+  const name = raceName(race);
+  const i = label.indexOf(' · ');
+  return i >= 0 && label.slice(0, i).toLowerCase() === name.toLowerCase() ? label.slice(i + 3) : label;
+};
+
+/**
+ * Cultures grouped by race: each group shows how many of its cultures are on and folds away, with
+ * all/none per group and a filter box. A filter opens every group that still has a match.
+ */
+function CulturePicker() {
+  const { vms } = useApp();
+  const vm = vms.generate;
+  const s = useViewModel(vm);
+  const [q, setQ] = useState('');
+  const [open, setOpen] = useState<Record<string, boolean>>({});
+  const groups = useMemo(() => {
+    const m = new Map<string, typeof s.available>();
+    for (const o of s.available) { const l = m.get(o.race) ?? []; l.push(o); m.set(o.race, l); }
+    return [...m.entries()];
+  }, [s.available]);
+  if (!groups.length) return <p className="muted">Loading the world engine…</p>;
+  const needle = q.trim().toLowerCase();
+  const visible = groups
+    .map(([race, list]) => [race, needle ? list.filter((o) => o.label.toLowerCase().includes(needle) || raceName(race).toLowerCase().includes(needle)) : list] as const)
+    .filter(([, list]) => list.length);
+  return (
+    <div className="cultures">
+      <input type="search" value={q} onChange={(e) => setQ(e.target.value)} placeholder="Filter cultures…" aria-label="Filter cultures" />
+      {!visible.length && <p className="muted">No culture matches “{q}”.</p>}
+      {visible.map(([race, list]) => {
+        const all = groups.find(([r]) => r === race)![1];
+        const on = all.filter((o) => s.styles.includes(o.key)).length;
+        if (all.length === 1) {
+          const o = all[0];
+          return (
+            <div key={race} className="culture-group single">
+              <label className={`chip ${s.styles.includes(o.key) ? 'on' : ''}`}>
+                <input type="checkbox" checked={s.styles.includes(o.key)} onChange={() => vm.toggleStyle(o.key)} />{o.label}
+              </label>
+            </div>
+          );
+        }
+        const expanded = needle ? true : !!open[race];
+        return (
+          <div key={race} className="culture-group">
+            <div className="culture-head">
+              <button className="disclosure" aria-expanded={expanded} onClick={() => setOpen({ ...open, [race]: !expanded })}>
+                <span aria-hidden="true">{expanded ? '▾' : '▸'}</span>{raceName(race)}
+              </button>
+              <span className="count" aria-label={`${on} of ${all.length} selected`}>{on}/{all.length}</span>
+              <button className="mini" onClick={() => vm.setRace(race, on < all.length)} aria-label={`${on < all.length ? 'Select all' : 'Clear'} ${raceName(race)}`}>{on < all.length ? 'All' : 'None'}</button>
+            </div>
+            {expanded && (
+              <div className="chips">
+                {list.map((o) => (
+                  <label key={o.key} className={`chip ${s.styles.includes(o.key) ? 'on' : ''}`}>
+                    <input type="checkbox" checked={s.styles.includes(o.key)} onChange={() => vm.toggleStyle(o.key)} />{cultureLabel(race, o.label)}
+                  </label>
+                ))}
+              </div>
+            )}
+          </div>
+        );
+      })}
+    </div>
+  );
+}
