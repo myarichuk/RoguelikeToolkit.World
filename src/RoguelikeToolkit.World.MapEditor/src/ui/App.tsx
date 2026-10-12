@@ -33,15 +33,23 @@ export function App() {
       <TopBar />
       <Toolbar />
       <aside className="left">
-        <div className="tabs" role="tablist">
-          {TABS.map((t) => <button key={t.id} role="tab" aria-selected={tab === t.id} className={tab === t.id ? 'active' : ''} onClick={() => setTab(t.id)}>{t.label}</button>)}
+        <div className="tabs" role="tablist" onKeyDown={(e) => {
+          const i = TABS.findIndex((t) => t.id === tab);
+          const n = e.key === 'ArrowRight' ? i + 1 : e.key === 'ArrowLeft' ? i - 1 : e.key === 'Home' ? 0 : e.key === 'End' ? TABS.length - 1 : -1;
+          if (n < 0) return;
+          e.preventDefault();
+          const next = TABS[(n + TABS.length) % TABS.length].id;
+          setTab(next);
+          document.getElementById(`tab-${next}`)?.focus();
+        }}>
+          {TABS.map((t) => <button key={t.id} id={`tab-${t.id}`} role="tab" aria-selected={tab === t.id} aria-controls="side-panel" tabIndex={tab === t.id ? 0 : -1} className={tab === t.id ? 'active' : ''} onClick={() => setTab(t.id)}>{t.label}</button>)}
         </div>
-        <div className="scroll"><Active /></div>
+        <div className="scroll" id="side-panel" role="tabpanel" aria-labelledby={`tab-${tab}`}><Active /></div>
       </aside>
       <main className="center"><MapView /></main>
       <aside className="right"><div className="scroll"><ToolOptionsPanel /><Inspector /></div></aside>
       <StatusBar />
-      {shell.error && <div className="toast" onClick={vms.shell.dismissError} role="alert"><b>Error</b><pre>{shell.error}</pre><small>click to dismiss</small></div>}
+      {shell.error && <div className="toast" role="alert"><b>Error</b><pre>{shell.error}</pre><button className="dismiss" onClick={vms.shell.dismissError}><small>Dismiss</small></button></div>}
     </div>
   );
 }

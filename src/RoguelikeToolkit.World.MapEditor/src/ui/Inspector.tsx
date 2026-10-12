@@ -15,11 +15,11 @@ export function Inspector() {
   if (s.mode === 'feature' && s.feature) {
     const f = s.feature;
     return (
-      <Section title={KIND_TITLE[f.kind] ?? f.kind} actions={<button onClick={vm.clear} title="Clear selection (Esc)">×</button>}>
+      <Section title={KIND_TITLE[f.kind] ?? f.kind} actions={<button onClick={vm.clear} title="Clear selection (Esc)" aria-label="Clear selection">×</button>}>
         {f.kind !== 'deposit' && (
           <div className="name-row">
             <TextField value={f.name} onCommit={vm.rename} placeholder="Name" />
-            {f.canReroll && <button onClick={vm.reroll} title="Generate another name in this culture">⟳</button>}
+            {f.canReroll && <button onClick={vm.reroll} title="Generate another name in this culture" aria-label="Generate another name">⟳</button>}
           </div>
         )}
         {f.culture && f.kind !== 'deposit' && <p className="muted small">Named in the {f.culture} tradition</p>}
@@ -38,7 +38,7 @@ export function Inspector() {
   if (s.mode === 'labels' && s.label) {
     const l = s.label;
     return (
-      <Section title={s.labelCount > 1 ? `${s.labelCount} labels` : 'Label'} actions={<button onClick={vm.clear}>×</button>}>
+      <Section title={s.labelCount > 1 ? `${s.labelCount} labels` : 'Label'} actions={<button onClick={vm.clear} aria-label="Clear selection">×</button>}>
         {s.labelCount === 1 && <TextField label="Text" value={l.text} onCommit={(text) => vm.updateLabel({ text })} />}
         <Select label="Style" value={l.style} options={s.labelStyles.map((k) => ({ value: k, label: k }))} onChange={(style) => vm.updateLabel({ style, size: 0 })} />
         <Slider label="Size" value={l.size} min={0} max={60} step={0.5} onChange={(size) => vm.updateLabel({ size }, 'size')} format={(v) => (v ? v.toFixed(1) : 'style')} />
@@ -54,7 +54,7 @@ export function Inspector() {
   if (s.mode === 'stamps' && s.stamp) {
     const st = s.stamp;
     return (
-      <Section title={s.stampCount > 1 ? `${s.stampCount} stamps` : s.stampName} actions={<button onClick={vm.clear}>×</button>}>
+      <Section title={s.stampCount > 1 ? `${s.stampCount} stamps` : s.stampName} actions={<button onClick={vm.clear} aria-label="Clear selection">×</button>}>
         <Slider label="Scale" value={st.scale} min={0.2} max={4} step={0.01} onChange={(scale) => vm.updateStamp({ scale }, 'scale')} />
         <Slider label="Rotation" value={(st.rotation * 180) / Math.PI} min={-180} max={180} step={1} onChange={(a) => vm.updateStamp({ rotation: (a * Math.PI) / 180 }, 'rotation')} format={(v) => `${v.toFixed(0)}°`} />
         <div className="buttons">

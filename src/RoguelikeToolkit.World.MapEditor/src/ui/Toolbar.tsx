@@ -10,8 +10,8 @@ export function Toolbar() {
   return (
     <nav className="toolbar" aria-label="Tools">
       {TOOLS.map((t) => (
-        <button key={t.id} className={s.tool === t.id ? 'active' : ''} onClick={() => vms.tools.setTool(t.id)} title={`${t.label} (${t.key}) — ${t.hint}`}>
-          <span className="icon">{t.icon}</span>
+        <button key={t.id} className={s.tool === t.id ? 'active' : ''} aria-pressed={s.tool === t.id} onClick={() => vms.tools.setTool(t.id)} title={`${t.label} (${t.key}) — ${t.hint}`}>
+          <span className="icon" aria-hidden="true">{t.icon}</span>
           <span className="label">{t.label}</span>
         </button>
       ))}
@@ -36,7 +36,7 @@ export function ToolOptionsPanel() {
         <>
           <Slider label="Strength" value={o.strength} min={0.005} max={0.2} step={0.005} onChange={(strength) => vm.setOptions({ strength })} hint="Height added per dab at the brush center (raise/lower), or the blend factor for smooth/flatten/roughen." />
           <div className="chips">
-            {HEIGHT_MODES.map((m) => <button key={m.id} title={TERRAIN_HINTS[m.id]} className={o.heightMode === m.id ? 'active' : ''} onClick={() => vm.setOptions({ heightMode: m.id })}>{m.label}</button>)}
+            {HEIGHT_MODES.map((m) => <button key={m.id} title={TERRAIN_HINTS[m.id]} className={o.heightMode === m.id ? 'active' : ''} aria-pressed={o.heightMode === m.id} onClick={() => vm.setOptions({ heightMode: m.id })}>{m.label}</button>)}
           </div>
         </>
       )}
@@ -44,10 +44,10 @@ export function ToolOptionsPanel() {
         <>
           <Slider label="Strength" value={o.strength} min={0.005} max={0.2} step={0.005} onChange={(strength) => vm.setOptions({ strength })} hint="How much one dab adds at the brush center, as a share of full scale. Strokes accumulate." />
           <div className="chips">
-            {CLIMATE_LAYERS.map((l) => <button key={l.id} className={o.climateLayer === l.id ? 'active' : ''} title={l.hint} onClick={() => vm.setOptions({ climateLayer: l.id })}>{l.label}</button>)}
+            {CLIMATE_LAYERS.map((l) => <button key={l.id} className={o.climateLayer === l.id ? 'active' : ''} aria-pressed={o.climateLayer === l.id} title={l.hint} onClick={() => vm.setOptions({ climateLayer: l.id })}>{l.label}</button>)}
           </div>
           <div className="chips">
-            {climateModes(o.climateLayer).map((m) => <button key={m.id} className={o.climateMode === m.id ? 'active' : ''} title={m.hint} onClick={() => vm.setOptions({ climateMode: m.id })}>{m.label}</button>)}
+            {climateModes(o.climateLayer).map((m) => <button key={m.id} className={o.climateMode === m.id ? 'active' : ''} aria-pressed={o.climateMode === m.id} title={m.hint} onClick={() => vm.setOptions({ climateMode: m.id })}>{m.label}</button>)}
           </div>
           <p className="hint">Red/blue tint: warmer/cooler. Green/ochre: wetter/drier. The offset is local and literal: it is added after winds, orographic rain and ocean currents, so a warm sea patch does not move the gyres.</p>
         </>
@@ -55,7 +55,7 @@ export function ToolOptionsPanel() {
       {s.tool === 'biome' && (
         <div className="swatches">
           {s.biomes.map((b) => (
-            <button key={b.id} className={o.biome === b.id ? 'active' : ''} onClick={() => vm.setOptions({ biome: b.id })} title={BIOME_HINTS[b.name] ?? b.name}>
+            <button key={b.id} className={o.biome === b.id ? 'active' : ''} aria-pressed={o.biome === b.id} onClick={() => vm.setOptions({ biome: b.id })} title={BIOME_HINTS[b.name] ?? b.name}>
               <i style={{ background: s.biomeColors[String(b.id)] ?? b.vivid }} /><i style={{ background: b.vivid }} /><span>{b.name}</span>
             </button>
           ))}
@@ -64,11 +64,11 @@ export function ToolOptionsPanel() {
       {s.tool === 'landuse' && (
         <>
           <div className="swatches">
-            <button className={o.landUse === 0 ? 'active' : ''} onClick={() => vm.setOptions({ landUse: 0 })} title={LANDUSE_HINTS.clear}>
+            <button className={o.landUse === 0 ? 'active' : ''} aria-pressed={o.landUse === 0} onClick={() => vm.setOptions({ landUse: 0 })} title={LANDUSE_HINTS.clear}>
               <i style={{ background: 'transparent' }} /><i style={{ background: 'transparent' }} /><span>Clear</span>
             </button>
             {LAND_USES.map((u) => (
-              <button key={u.id} className={o.landUse === u.id ? 'active' : ''} onClick={() => vm.setOptions({ landUse: u.id })} title={u.hint}>
+              <button key={u.id} className={o.landUse === u.id ? 'active' : ''} aria-pressed={o.landUse === u.id} onClick={() => vm.setOptions({ landUse: u.id })} title={u.hint}>
                 <i style={{ background: s.biomeColors[String(u.slot)] ?? '#999' }} /><i style={{ background: s.biomeColors[String(u.slot)] ?? '#999' }} /><span>{u.name}</span>
               </button>
             ))}
@@ -125,7 +125,7 @@ export function AssetPalette() {
           <h4>{c}</h4>
           <div className="grid">
             {s.assets.filter((a) => a.category === c).map((a) => (
-              <button key={a.id} className={s.options.asset === a.id ? 'active' : ''} title={a.name} onClick={() => vms.tools.pickAsset(a.id)}>
+              <button key={a.id} className={s.options.asset === a.id ? 'active' : ''} aria-pressed={s.options.asset === a.id} title={a.name} onClick={() => vms.tools.pickAsset(a.id)}>
                 <img src={a.thumb} alt={a.name} draggable={false} />
               </button>
             ))}

@@ -18,8 +18,8 @@ export function TopBar() {
         <button onClick={vm.exportWkt} title="Rivers, towns, deposits and named areas as a CSV with WKT geometry (longitude/latitude), for QGIS or GIS tools. Includes your edits and names.">WKT</button>
         <button onClick={() => void vm.exportPng()} title="Current view as PNG">PNG</button>
         <span className="sep" />
-        <button onClick={vm.undo} disabled={!s.undo.canUndo} title={`Undo ${s.undo.undoLabel ?? ''} (Ctrl+Z)`}>↶</button>
-        <button onClick={vm.redo} disabled={!s.undo.canRedo} title={`Redo ${s.undo.redoLabel ?? ''} (Ctrl+Shift+Z)`}>↷</button>
+        <button onClick={vm.undo} disabled={!s.undo.canUndo} title={`Undo ${s.undo.undoLabel ?? ''} (Ctrl+Z)`} aria-label="Undo">↶</button>
+        <button onClick={vm.redo} disabled={!s.undo.canRedo} title={`Redo ${s.undo.redoLabel ?? ''} (Ctrl+Shift+Z)`} aria-label="Redo">↷</button>
       </div>
       <div className="title"><TextField value={s.title} onCommit={vm.setTitle} placeholder="Map title" /></div>
       <label className="theme-pick" title={SHELL_HINTS.theme}>

@@ -12,7 +12,7 @@ export function PacksPanel() {
       <button onClick={() => void vm.importUrl('packs/example-pack.json')} title={SHELL_HINTS.packExample}>Example</button>
     </>}>
       <p className="hint">Packs add themes, biomes, stamp assets (procedural presets or SVG), placement rules and fonts. Later packs override earlier ones by id.</p>
-      {s.error && <pre className="error" onClick={vm.dismissError}>{s.error}</pre>}
+      {s.error && <button className="dismiss" onClick={vm.dismissError} title="Dismiss"><pre className="error">{s.error}</pre></button>}
       <ul className="packs">
         {s.packs.map((p) => (
           <li key={p.id} className={p.enabled ? '' : 'off'}>
@@ -23,7 +23,7 @@ export function PacksPanel() {
             </div>
             {p.removable && <>
               <button onClick={() => vm.toggle(p.id)} title={SHELL_HINTS.packToggle}>{p.enabled ? 'Disable' : 'Enable'}</button>
-              <button onClick={() => vm.remove(p.id)} title="Remove this pack">×</button>
+              <button onClick={() => vm.remove(p.id)} title="Remove this pack" aria-label={`Remove ${p.name}`}>×</button>
             </>}
             {p.id === 'user' && <button onClick={vm.exportUser} title={SHELL_HINTS.packExport}>Export</button>}
           </li>

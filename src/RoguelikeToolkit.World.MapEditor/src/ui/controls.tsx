@@ -79,7 +79,7 @@ export function Select<T extends string>({ label, value, options, onChange, hint
 export function Segmented<T extends string>({ value, options, onChange }: { value: T; options: { value: T; label: string; hint?: string }[]; onChange: (v: T) => void }) {
   return (
     <div className="segmented">
-      {options.map((o) => <button key={o.value} className={o.value === value ? 'active' : ''} title={o.hint} onClick={() => onChange(o.value)}>{o.label}</button>)}
+      {options.map((o) => <button key={o.value} className={o.value === value ? 'active' : ''} aria-pressed={o.value === value} title={o.hint} onClick={() => onChange(o.value)}>{o.label}</button>)}
     </div>
   );
 }

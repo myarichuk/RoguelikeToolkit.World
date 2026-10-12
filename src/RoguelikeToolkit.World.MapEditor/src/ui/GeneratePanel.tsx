@@ -18,7 +18,7 @@ export function GeneratePanel() {
         <TextField label="Title" value={s.title} onCommit={vm.setTitle} />
         <div className="name-row">
           <NumberField label="Seed" value={s.seed} onChange={vm.setSeed} min={0} hint={WORLD_HINTS.seed} />
-          <button onClick={vm.randomSeed} title="Random seed">⚄</button>
+          <button onClick={vm.randomSeed} title="Random seed" aria-label="Random seed">⚄</button>
         </div>
         <Slider label="Detail" value={s.size} min={3} max={7} step={1} onChange={vm.setSize} format={(v) => `${10 * 4 ** v + 2} tiles`} hint={WORLD_HINTS.detail} />
         <Slider label="Plates" value={s.plates} min={2} max={40} step={1} onChange={vm.setPlates} hint={WORLD_HINTS.plates} />
