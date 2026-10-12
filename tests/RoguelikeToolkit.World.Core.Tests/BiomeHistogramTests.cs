@@ -1,3 +1,4 @@
+using System;
 using System.Collections.Generic;
 using RoguelikeToolkit.World.Core;
 using Xunit;
@@ -270,6 +271,172 @@ public class BiomeHistogramTests
             Assert.True(qualifying >= savanna * 0.85, $"Size {size} seed {seed}: only {qualifying} of {savanna} savanna tiles meet the rule");
             Assert.True(savanna > 0, $"Size {size} seed {seed}: no savanna");
         }
+    }
+
+    private static readonly BiomeClassifier.AridSite Flat = new(0.01, false);
+
+    private static BiomeType Land(double temperature, double moisture, double seasonality, double phase)
+        => BiomeClassifier.Classify(0.1, temperature, moisture, Flat, seasonality, phase).Biome;
+
+    [Fact]
+    public void NoCoreBiomeTakesAnIdTheEditorReservesForALandUse()
+    {
+        // The editor's colour slots 11, 13, 17 and 18 are Farmland, Ashlands, Pasture and Built-up. A biome on one of them would be
+        // drawn, named and pinned as a land use. Plugins also read these ids (BIOME in the Jint table), so they are API.
+        var reserved = new HashSet<int> { 11, 13, 17, 18 };
+        foreach (BiomeType biome in Enum.GetValues(typeof(BiomeType)))
+            Assert.DoesNotContain((int)biome, reserved);
+        Assert.Equal(19, (int)BiomeType.Mediterranean);
+        Assert.Equal(10, (int)BiomeType.Savanna);
+    }
+
+    [Fact]
+    public void Mediterranean_NeedsWinterRain_AndYieldsToForestWhereItIsWetter()
+    {
+        // 0.55 / 0.45 is forest on the old ladder; with a winter-wet regime it is scrub instead.
+        Assert.Equal(BiomeType.Mediterranean, Land(0.55, 0.45, 0.8, 0.8));
+        Assert.Equal(BiomeType.Forest, Land(0.55, 0.45, 0.0, 0.0));
+        Assert.Equal(BiomeType.Forest, Land(0.55, 0.45, 0.8, -0.8)); // a summer-wet regime at the same climate is not
+        Assert.Equal(BiomeType.Plains, Land(0.55, 0.30, 0.0, 0.0));
+        Assert.Equal(BiomeType.Mediterranean, Land(0.55, 0.30, 0.8, 0.8));
+        // Callers with no seasonal data (the classifier's default arguments) get the old ladder.
+        Assert.Equal(BiomeType.Forest, BiomeClassifier.Classify(0.1, 0.55, 0.45, Flat).Biome);
+    }
+
+    [Theory]
+    // Each line straddled by 0.004 with literal numbers: a retune of the constant has to edit this row on purpose.
+    [InlineData(0.496, 0.40, 0.80, false)] // temperature 0.50
+    [InlineData(0.504, 0.40, 0.80, true)]
+    [InlineData(0.55, 0.546, 0.80, true)]  // moisture 0.55
+    [InlineData(0.55, 0.554, 0.80, false)]
+    [InlineData(0.55, 0.40, 0.596, false)] // phase 0.60
+    [InlineData(0.55, 0.40, 0.604, true)]
+    public void Mediterranean_LinesAreWhereTheCalibrationPutsThem(double temperature, double moisture, double phase, bool expected)
+    {
+        Assert.Equal(expected, BiomeClassifier.IsMediterranean(temperature, moisture, phase));
+        Assert.Equal(expected, Land(temperature, moisture, Math.Abs(phase), phase) == BiomeType.Mediterranean);
+    }
+
+    [Fact]
+    public void Mediterranean_RanksBelowAridGroundJungleHighGroundAndWater_AndAboveSavanna()
+    {
+        // Dry enough to be desert is desert, whatever the season; the heat-scaled ceiling is the arid test's, not this biome's.
+        Assert.Equal(BiomeType.Desert, Land(0.9, 0.2, 0.8, 0.8));
+        Assert.Equal(BiomeType.ColdDesert, Land(0.52, 0.15, 0.8, 0.8));
+        Assert.Equal(BiomeType.Jungle, Land(0.9, 0.7, 0.8, 0.8));
+        Assert.Equal(BiomeType.Tundra, Land(0.1, 0.4, 0.8, 0.8));
+        Assert.Equal(BiomeType.Ocean, BiomeClassifier.Classify(-0.2, 0.55, 0.4, Flat, 0.8, 0.8).Biome);
+        Assert.Equal(BiomeType.Mountain, BiomeClassifier.Classify(0.8, 0.55, 0.4, Flat, 0.8, 0.8).Biome);
+        // Warm, seasonal, mid-wet ground that is winter-wet is scrub; the same ground with a summer rain is savanna.
+        Assert.Equal(BiomeType.Mediterranean, Land(0.8, 0.5, 0.9, 0.9));
+        Assert.Equal(BiomeType.Savanna, Land(0.8, 0.5, 0.9, -0.9));
+        // Savanna is summer-wet by definition: winter rain too wet for scrub (0.55 < m <= 0.60) is forest, never savanna (0.70 sits below the jungle line).
+        Assert.Equal(BiomeType.Forest, Land(0.70, 0.58, 0.9, 0.9));
+        // ...while a caller that passes no phase keeps the savanna it always got.
+        Assert.Equal(BiomeType.Savanna, BiomeClassifier.Classify(0.1, 0.70, 0.58, Flat, 0.9).Biome);
+        Assert.Equal(BiomeClassifier.BaseDanger(BiomeType.Mediterranean), BiomeClassifier.Classify(0.1, 0.55, 0.4, Flat, 0.8, 0.8).Danger);
+        Assert.False(BiomeClassifier.IsDesert(BiomeType.Mediterranean));
+    }
+
+    [Fact]
+    public void TheHydrologyCoverGuess_SeesMediterraneanToo()
+    {
+        // Hydrology classifies provisionally from the climate fields to pick runoff and seepage; it must agree with the biome stage.
+        Assert.Equal(BiomeType.Mediterranean, LandCover.Provisional(0.1, 0.55, 0.45, 0.01, 0.8, 0.8));
+        Assert.Equal(BiomeType.Forest, LandCover.Provisional(0.1, 0.55, 0.45, 0.01, 0.8, 0.0));
+        Assert.Equal(LandCover.Seepage(BiomeType.Plains), LandCover.Seepage(BiomeType.Mediterranean));
+    }
+
+    /// <summary>A northern dome draining into a southern sea, with uniform climate whose only variable is the rain's season.</summary>
+    private static double TotalFlowOnLand(float rainPhase)
+    {
+        using var map = new WorldMap(4);
+        map.RegisterLayer<ElevationInfo>(new ElevationLayer(map.DataStore));
+        map.RegisterLayer<ClimateInfo>(new ClimateLayer(map.DataStore));
+        map.RegisterLayer<HydrologyInfo>(new HydrologyLayer(map.DataStore));
+        map.DataStore.Allocate();
+        var store = map.DataStore;
+        var vectors = store.GetTileVectors();
+        var elev = store.GetSpan<ElevationInfo>();
+        var climate = store.GetSpan<ClimateInfo>();
+        for (int i = 0; i < store.TileCount; i++)
+        {
+            elev[i] = new ElevationInfo { Height = (float)(0.55 * vectors[i].Z - 0.05) };
+            // 0.55 / 0.45 is forest on an even year and Mediterranean on a winter-wet one (see Mediterranean_NeedsWinterRain...).
+            climate[i] = new ClimateInfo { Temperature = 0.55f, Precipitation = 0.45f, RainSeasonality = Math.Abs(rainPhase), RainPhase = rainPhase };
+        }
+        new HydrologyStage().Execute(map);
+        var hydro = store.GetSpan<HydrologyInfo>();
+        double total = 0;
+        for (int i = 0; i < store.TileCount; i++)
+            if (elev[i].Height >= ElevationGenerationStage.SeaLevel) total += hydro[i].Flow;
+        return total;
+    }
+
+    [Fact]
+    public void Hydrology_ShedsRainOffMediterraneanGroundLikeScrub_NotLikeForest()
+    {
+        // The stage judges each tile's cover from the climate fields; a Mediterranean tile (runoff 1.0) sheds more than the forest (0.90)
+        // the same temperature and rain would be without a winter-wet regime. If the stage dropped the phase, these would be equal.
+        double scrub = TotalFlowOnLand(0.8f), forest = TotalFlowOnLand(-0.8f);
+        Assert.True(forest > 0, "the dome has to shed some water for this to mean anything");
+        Assert.True(scrub > forest * 1.05, $"scrub {scrub:F1} vs forest {forest:F1}: expected about 11% more");
+        Assert.True(scrub < forest * 1.20);
+    }
+
+    [Fact]
+    public void MediterraneanExistsOnEveryMatrixBuild_InBothHemispheres_AndOnlyWhereTheRainIsWinterRain()
+    {
+        long north = 0, south = 0;
+        foreach (var (size, seed, _) in Matrix)
+        {
+            using var world = new WorldBuilder().WithSize(size).WithSeed(seed).Build();
+            var store = world.Map.DataStore;
+            var locals = store.GetSpan<LocalMapInfo>();
+            var climate = store.GetSpan<ClimateInfo>();
+            var vectors = store.GetTileVectors();
+            int med = 0, qualifying = 0;
+            for (int i = 0; i < locals.Length; i++)
+            {
+                if (locals[i].Biome != BiomeType.Mediterranean) continue;
+                med++;
+                if (BiomeClassifier.IsMediterranean(climate[i].Temperature, climate[i].Precipitation, climate[i].RainPhase)) qualifying++;
+                double lat = vectors[i].ToGeoCoord().Latitude;
+                Assert.InRange(Math.Abs(lat), 28.0, 55.0); // winter-wet and warm enough: nowhere near the tropics or the pole
+                if (lat >= 0) north++; else south++;
+            }
+            Assert.True(med > 0, $"Size {size} seed {seed}: no Mediterranean");
+            Assert.True(qualifying >= med * 0.85, $"Size {size} seed {seed}: only {qualifying} of {med} Mediterranean tiles meet the rule");
+        }
+        Assert.True(north > 0 && south > 0, $"One hemisphere has none (north {north}, south {south})");
+    }
+
+    [Fact]
+    public void Mediterranean_IsAFewPercentOfLand_LikeEarthsTwo()
+    {
+        long land = 0, med = 0;
+        foreach (var (size, seed, _) in Matrix)
+        {
+            using var world = new WorldBuilder().WithSize(size).WithSeed(seed).Build();
+            var hist = Histogram(world);
+            foreach (var (biome, count) in hist) if (biome != BiomeType.Ocean) land += count;
+            med += Get(hist, BiomeType.Mediterranean);
+        }
+        // Earth's Csa/Csb is about 2% of land; the calibration sweep measured 1.8-2.5% on default worlds.
+        Assert.InRange(100.0 * med / land, 1.0, 5.0);
+    }
+
+    [Fact]
+    public void Smoothing_TreatsMediterraneanAsPartOfTheMoistureFamily()
+    {
+        using var world = new WorldBuilder().WithSize(2).WithSeed(1).Build();
+        var store = world.Map.DataStore;
+        var span = new LocalMapInfo[store.TileCount];
+        for (int i = 0; i < span.Length; i++) span[i] = new LocalMapInfo { Biome = BiomeType.Mediterranean, DangerLevel = 1 };
+        span[0] = new LocalMapInfo { Biome = BiomeType.Plains, DangerLevel = 0 };
+        LocalMapGenerationStage.SmoothMoistureBiomes(store, span, 1);
+        Assert.Equal(BiomeType.Mediterranean, span[0].Biome);
+        Assert.Equal(1, span[0].DangerLevel);
     }
 
     [Fact]

@@ -114,6 +114,7 @@ public static class LandCapacity
     {
         BiomeType.Plains => 1.0,
         BiomeType.Savanna => 0.75,       // good soil, but the dry season is a gamble
+        BiomeType.Mediterranean => 0.85, // wheat in the wet winter, vine and olive through the dry summer
         BiomeType.Forest => 0.70,        // must be cleared
         BiomeType.Jungle => 0.45,        // leached laterite
         BiomeType.Swamp => 0.25,         // must be drained
@@ -126,6 +127,7 @@ public static class LandCapacity
     private static double PastureCover(BiomeType b) => b switch
     {
         BiomeType.Plains or BiomeType.Savanna => 1.0,
+        BiomeType.Mediterranean => 0.70, // garrigue: sheep and goats, but the summer grass is gone
         BiomeType.ColdDesert => 0.60,    // steppe
         BiomeType.Forest => 0.45,        // glades
         BiomeType.Tundra => 0.35,        // reindeer moss
@@ -141,6 +143,7 @@ public static class LandCapacity
         BiomeType.Forest => 1.0,
         BiomeType.Savanna => 0.90,       // the great herds
         BiomeType.Plains => 0.80,
+        BiomeType.Mediterranean => 0.75, // open woodland and scrub
         BiomeType.Jungle => 0.70,
         BiomeType.Swamp => 0.60,
         BiomeType.Tundra => 0.50,

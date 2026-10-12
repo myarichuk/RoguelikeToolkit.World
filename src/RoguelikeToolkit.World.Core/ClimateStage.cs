@@ -208,6 +208,7 @@ public class ClimateStage : IWorldGeneratorStage, ISeededStage
                 WindY = (float)wind.Y,
                 WindZ = (float)wind.Z,
                 RainSeasonality = (float)ClimateModel.RainSeasonality(geo.Latitude, planet.ObliquityDegrees, ZonalStrength, bandScale),
+                RainPhase = (float)ClimateModel.RainPhase(geo.Latitude, planet.ObliquityDegrees, ZonalStrength, bandScale),
             };
         }
 

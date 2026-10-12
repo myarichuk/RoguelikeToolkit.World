@@ -110,4 +110,23 @@ public static class ClimateModel
         double b = ClimateStage.ZonalFactor(Math.Abs(signedLatitudeDegrees - shift), zonalStrength, bandScale);
         return Math.Clamp(2.0 * Math.Abs(a - b) / (a + b), 0.0, 1.0);
     }
+
+    /// <summary>
+    /// Which season the rain comes in, signed: +1 all of it in winter (Mediterranean), -1 all of it in summer
+    /// (monsoon, savanna), 0 even. The magnitude is <see cref="RainSeasonality"/>. The belts advance
+    /// poleward in a hemisphere's summer and retreat in its winter, so a place samples the zonal profile
+    /// at |latitude| - shift in summer and |latitude| + shift in winter. Equatorward of the subtropical dry
+    /// belt the summer sample is the wetter one (the ITCZ arrives); poleward of it the winter sample is
+    /// (the storm track arrives, the high-pressure cell leaves). The sign is therefore a hemisphere-free
+    /// function of |latitude|, which is why the southern twin of a latitude has the same phase.
+    /// </summary>
+    public static double RainPhase(double signedLatitudeDegrees, double obliquityDegrees, double zonalStrength, double bandScale)
+    {
+        double shift = 0.65 * obliquityDegrees;
+        if (shift <= 0.0) return 0.0;
+        double lat = Math.Abs(signedLatitudeDegrees);
+        double winter = ClimateStage.ZonalFactor(lat + shift, zonalStrength, bandScale);
+        double summer = ClimateStage.ZonalFactor(Math.Abs(lat - shift), zonalStrength, bandScale);
+        return Math.Clamp(2.0 * (winter - summer) / (winter + summer), -1.0, 1.0);
+    }
 }

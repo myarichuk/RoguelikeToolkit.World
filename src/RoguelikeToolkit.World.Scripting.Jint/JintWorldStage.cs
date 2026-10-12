@@ -283,6 +283,7 @@ public sealed class JintWorldStage : IWorldGeneratorStage, IDeclaredStage, IStag
             RockDesert = (int)BiomeType.RockDesert,
             SaltFlat = (int)BiomeType.SaltFlat,
             ColdDesert = (int)BiomeType.ColdDesert,
+            Mediterranean = (int)BiomeType.Mediterranean,
         });
         engine.SetValue("LANDUSE", new
         {

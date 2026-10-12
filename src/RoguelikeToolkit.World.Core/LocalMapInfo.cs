@@ -30,7 +30,15 @@ public enum BiomeType : byte
     /// <summary>Dry endorheic basin floor: salt pan, playa, sabkha.</summary>
     SaltFlat = 15,
     /// <summary>Dry but cold steppe-desert (Gobi, Patagonia): too cold to be hot desert, too dry to be grassland.</summary>
-    ColdDesert = 16
+    ColdDesert = 16,
+    /// <summary>
+    /// Warm-temperate scrub and open woodland with a dry summer (maquis, chaparral, fynbos): the rain falls
+    /// in winter, when the storm tracks have retreated towards the equator, and the summer belongs to the
+    /// subtropical high (see <see cref="ClimateInfo.RainPhase"/>). The mirror of <see cref="Savanna"/>, whose
+    /// rain comes in summer.
+    /// </summary>
+    // 17 and 18 are the editor's Pasture and Built-up colour slots (see LandUseId), so the next free id is 19.
+    Mediterranean = 19
 }
 
 public struct LocalMapInfo

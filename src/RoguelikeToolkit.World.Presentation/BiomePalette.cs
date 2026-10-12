@@ -22,6 +22,7 @@ public static class BiomePalette
         BiomeType.Swamp => new Vector3(0.35f, 0.45f, 0.25f),
         BiomeType.Glacier => new Vector3(0.88f, 0.93f, 0.97f),
         BiomeType.Savanna => new Vector3(0.74f, 0.68f, 0.32f),
+        BiomeType.Mediterranean => new Vector3(0.52f, 0.58f, 0.30f),
         BiomeType.Canyon => new Vector3(0.70f, 0.36f, 0.20f),
         // The desert family stays in the yellow-red-white range but spreads far enough apart to tell at a glance.
         BiomeType.Badlands => new Vector3(0.66f, 0.38f, 0.24f),

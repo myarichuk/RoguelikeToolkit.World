@@ -12,17 +12,33 @@ export type ClimateKind = 'temperature' | 'rainfall' | 'oceanHeat' | 'seasons' |
 export const NOT_A_COLUMN = -1;
 
 /** Floats per tile in the snapshot's `climate` array; the order is `CI`. */
-export const CLIMATE_STRIDE = 9;
-export const CI = { temperature: 0, rainfall: 1, windE: 2, windN: 3, currentE: 4, currentN: 5, oceanHeat: 6, seasonalRange: 7, rainSeasonality: 8 } as const;
+export const CLIMATE_STRIDE = 10;
+export const CI = { temperature: 0, rainfall: 1, windE: 2, windN: 3, currentE: 4, currentN: 5, oceanHeat: 6, seasonalRange: 7, rainSeasonality: 8, rainPhase: 9 } as const;
+
+/** The stride before `rainPhase` was added: a cached climate array of this width is widened, not thrown away. */
+export const LEGACY_CLIMATE_STRIDE = 9;
 
 /** Doubles per tile in the engine's `ClimateField()` (Core's ClimateInfo, field by field). */
-export const ENGINE_CLIMATE_STRIDE = 11;
+export const ENGINE_CLIMATE_STRIDE = 12;
+
+/**
+ * A cache saved before the rain phase existed, widened to the current stride. The new column is 0 ("no known season"),
+ * which reads as an even year; Apply physics fills it in. Anything else (a different world) is not a cache of this one.
+ */
+export function widenClimate(cached: Float32Array, tileCount: number): Float32Array | undefined {
+  if (cached.length === tileCount * CLIMATE_STRIDE) return cached;
+  if (cached.length !== tileCount * LEGACY_CLIMATE_STRIDE) return undefined;
+  const out = new Float32Array(tileCount * CLIMATE_STRIDE);
+  for (let i = 0; i < tileCount; i++)
+    for (let k = 0; k < LEGACY_CLIMATE_STRIDE; k++) out[i * CLIMATE_STRIDE + k] = cached[i * LEGACY_CLIMATE_STRIDE + k];
+  return out;
+}
 
 /** Core's temperature units are about 55 K per unit (ClimateModel); the equator at sea level is 1 and the poles are 0. */
 export const KELVIN_PER_UNIT = 55;
 
 /**
- * Engine climate (eleven doubles per tile) -> editor climate (nine floats per tile), with wind and current
+ * Engine climate (twelve doubles per tile) -> editor climate (ten floats per tile), with wind and current
  * projected onto east / north at each tile's position. `vectors` are the unit tile centres, xyz interleaved, z up.
  */
 export function projectClimate(raw: ArrayLike<number>, vectors: ArrayLike<number>, tileCount: number): Float32Array {
@@ -37,7 +53,7 @@ export function projectClimate(raw: ArrayLike<number>, vectors: ArrayLike<number
     out[o + CI.temperature] = raw[r]; out[o + CI.rainfall] = raw[r + 1];
     out[o + CI.windE] = raw[r + 2] * ex + raw[r + 3] * ey;
     out[o + CI.windN] = raw[r + 2] * nx + raw[r + 3] * ny + raw[r + 4] * nz;
-    out[o + CI.seasonalRange] = raw[r + 5]; out[o + CI.rainSeasonality] = raw[r + 6]; out[o + CI.oceanHeat] = raw[r + 7];
+    out[o + CI.seasonalRange] = raw[r + 5]; out[o + CI.rainSeasonality] = raw[r + 6]; out[o + CI.oceanHeat] = raw[r + 7]; out[o + CI.rainPhase] = raw[r + 11];
     out[o + CI.currentE] = raw[r + 8] * ex + raw[r + 9] * ey;
     out[o + CI.currentN] = raw[r + 8] * nx + raw[r + 9] * ny + raw[r + 10] * nz;
   }
@@ -78,9 +94,9 @@ export const CLIMATE_KINDS: readonly ClimateDef[] = [
     stops: [[0, 242, 240, 247], [0.5, 158, 154, 200], [1, 84, 39, 143]],
   },
   {
-    key: 'rainSeason', label: 'Wet season', index: CI.rainSeasonality, lo: 0, hi: 1, legend: ['rain all year', 'one wet season'],
-    hint: 'How unevenly the year\'s rain falls. The rain belts follow the sun north and south with the seasons, so a place they sweep across gets a wet season and a dry one (monsoons, Mediterranean summers). Warm, seasonal, not-too-wet ground grows savanna.',
-    stops: [[0, 237, 248, 251], [0.5, 140, 150, 198], [1, 129, 15, 124]],
+    key: 'rainSeason', label: 'Wet season', index: CI.rainPhase, lo: -1, hi: 1, legend: ['summer rain', 'winter rain'],
+    hint: 'When the year\'s rain falls. The rain belts follow the sun north and south with the seasons, so a place they sweep across gets a wet season and a dry one. White: rain all year. Brown: the rain comes in summer (monsoons); warm, not-too-wet ground like that grows savanna. Teal: it comes in winter, with a dry summer; temperate ground like that grows Mediterranean scrub. The stronger the colour, the sharper the seasons.',
+    stops: [[0, 140, 81, 10], [0.25, 216, 179, 101], [0.5, 245, 245, 245], [0.75, 90, 180, 172], [1, 1, 102, 94]],
   },
   {
     key: 'seaIce', label: 'Sea ice', index: NOT_A_COLUMN, lo: 1, hi: 2, legend: ['frozen in winter', 'frozen all year'],
@@ -148,7 +164,8 @@ export function describeClimate(climate: Float32Array | undefined, tile: number,
   if (seaIce === 1) parts.push('sea ice in winter');
   else if (seaIce === 2) parts.push('sea ice all year');
   const wet = f(CI.rainSeasonality);
-  if (wet >= 0.3) parts.push(`${wet >= 0.6 ? 'wet/dry seasons' : 'some dry season'} ${wet.toFixed(2)}`);
+  const phase = f(CI.rainPhase);
+  if (wet >= 0.3) parts.push(`${wet >= 0.6 ? 'wet/dry seasons' : 'some dry season'} ${wet.toFixed(2)}${phase >= 0.3 ? ', rain in winter' : phase <= -0.3 ? ', rain in summer' : ''}`);
   if (Math.abs(paintedK) >= 0.5) parts.push(`painted ${paintedK > 0 ? '+' : ''}${paintedK.toFixed(0)} K`);
   if (Math.abs(paintedRain) >= 0.02) parts.push(`painted rain ${paintedRain > 0 ? '+' : ''}${paintedRain.toFixed(2)}`);
   return parts.join(' · ');

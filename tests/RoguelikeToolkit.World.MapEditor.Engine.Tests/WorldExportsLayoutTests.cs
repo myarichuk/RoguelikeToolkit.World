@@ -1,10 +1,11 @@
+using System;
 using RoguelikeToolkit.World.MapEditor.Engine;
 
 namespace RoguelikeToolkit.World.MapEditor.Engine.Tests;
 
 /// <summary>
 /// The exports are a wire format: flat typed arrays whose layout the TypeScript side indexes by hand
-/// (<c>c[i * 11 + 6]</c>). A length or stride drifting here is silent corruption in the editor, so pin them.
+/// (<c>c[i * 12 + 6]</c>). A length or stride drifting here is silent corruption in the editor, so pin them.
 /// </summary>
 public class WorldExportsLayoutTests
 {
@@ -20,7 +21,7 @@ public class WorldExportsLayoutTests
         Assert.Equal(n, WorldExports.Plates().Length);
         Assert.Equal(n, WorldExports.Flow().Length);
         Assert.Equal(n * 2, WorldExports.Climate().Length);
-        Assert.Equal(n * 11, WorldExports.ClimateField().Length);
+        Assert.Equal(n * 12, WorldExports.ClimateField().Length);
         Assert.Equal(n * 5, WorldExports.LandCapacity().Length);
         Assert.Equal(n * 3, WorldExports.LandUse().Length);
     }
@@ -66,9 +67,28 @@ public class WorldExportsLayoutTests
         var f = WorldExports.ClimateField();
         for (int i = 0; i < n; i++)
         {
-            Assert.Equal(c[i * 2], f[i * 11]);
-            Assert.Equal(c[i * 2 + 1], f[i * 11 + 1]);
+            Assert.Equal(c[i * 2], f[i * 12]);
+            Assert.Equal(c[i * 2 + 1], f[i * 12 + 1]);
         }
+    }
+
+    [Fact]
+    public void ClimateField_EndsWithTheRainPhase_AndItsMagnitudeIsTheRainSeasonality()
+    {
+        int n = Tiles();
+        var f = WorldExports.ClimateField();
+        double widest = 0;
+        bool sawWinter = false, sawSummer = false;
+        for (int i = 0; i < n; i++)
+        {
+            double seasonality = f[i * 12 + 6], phase = f[i * 12 + 11];
+            Assert.InRange(phase, -1.0, 1.0);
+            Assert.Equal(seasonality, Math.Abs(phase), 5); // float32 storage on both columns
+            widest = Math.Max(widest, Math.Abs(phase));
+            sawWinter |= phase > 0.3; sawSummer |= phase < -0.3;
+        }
+        Assert.True(widest > 0.5, "an Earth-tilt world has strongly seasonal rain somewhere");
+        Assert.True(sawWinter && sawSummer, "and both regimes: monsoon (summer) and Mediterranean (winter)");
     }
 
     [Fact]

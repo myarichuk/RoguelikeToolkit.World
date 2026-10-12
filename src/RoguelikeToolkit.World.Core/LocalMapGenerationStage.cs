@@ -57,12 +57,13 @@ public class LocalMapGenerationStage : IWorldGeneratorStage, ISeededStage
         for (int i = 0; i < span.Length; i++)
         {
             double height = elev[i].Height;
-            double temperature, moisture, seasonality = 0.0;
+            double temperature, moisture, seasonality = 0.0, phase = 0.0;
             if (hasClimate)
             {
                 temperature = climate[i].Temperature;
                 moisture = climate[i].Precipitation;
                 seasonality = climate[i].RainSeasonality;
+                phase = climate[i].RainPhase;
             }
             else
             {
@@ -87,7 +88,7 @@ public class LocalMapGenerationStage : IWorldGeneratorStage, ISeededStage
                     relief = Math.Max(relief, Math.Abs(height - elev[neighbors[k]].Height));
                 site = new BiomeClassifier.AridSite(relief, saline);
             }
-            var (biome, danger) = BiomeClassifier.Classify(height, temperature, moisture, site, seasonality);
+            var (biome, danger) = BiomeClassifier.Classify(height, temperature, moisture, site, seasonality, phase);
             if (biome != BiomeType.Ocean)
             {
                 bool glacier = hasClimate
@@ -137,7 +138,7 @@ public class LocalMapGenerationStage : IWorldGeneratorStage, ISeededStage
     }
 
     // Candidate order doubles as the tie-break, as it always has for the moisture set.
-    private static readonly BiomeType[] MoistureFamily = { BiomeType.Plains, BiomeType.Forest, BiomeType.Jungle, BiomeType.Swamp, BiomeType.Savanna };
+    private static readonly BiomeType[] MoistureFamily = { BiomeType.Plains, BiomeType.Forest, BiomeType.Jungle, BiomeType.Swamp, BiomeType.Savanna, BiomeType.Mediterranean };
     // Hot arid sub-types differ by a relief or height cut that crosses tile by tile; salt flats are
     // a hydrology feature and cold desert a climate band, so neither is smoothed into its neighbours.
     private static readonly BiomeType[] HotAridFamily = { BiomeType.Desert, BiomeType.RockDesert, BiomeType.Badlands };
@@ -149,7 +150,7 @@ public class LocalMapGenerationStage : IWorldGeneratorStage, ISeededStage
 
     /// <summary>
     /// Neighbor-majority cleanup restricted to two families of close-threshold biomes that speckle
-    /// on noisy inputs: the moisture set (plains/forest/jungle/swamp/savanna) and the hot arid set
+    /// on noisy inputs: the moisture set (plains/forest/jungle/swamp/savanna/mediterranean) and the hot arid set
     /// (desert/rock desert/badlands). A tile flips only to a member of its own family, and only when
     /// 4+ neighbors agree on it; each pass reads from a snapshot so the result is independent of
     /// tile iteration order.

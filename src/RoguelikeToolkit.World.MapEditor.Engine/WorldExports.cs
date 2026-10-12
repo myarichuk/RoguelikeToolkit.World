@@ -246,22 +246,23 @@ public static partial class WorldExports
     }
 
     /// <summary>
-    /// The whole climate layer, eleven doubles per tile: temperature, precipitation, wind x y z, seasonal range,
-    /// rain seasonality, ocean heat, current x y z (<see cref="ClimateInfo"/>). Wind and current are 3D tangent
+    /// The whole climate layer, twelve doubles per tile: temperature, precipitation, wind x y z, seasonal range,
+    /// rain seasonality, ocean heat, current x y z, rain phase (<see cref="ClimateInfo"/>). Wind and current are 3D tangent
     /// vectors; the host projects them onto east/north with its own tile vectors.
     /// </summary>
     [JSExport]
     public static double[] ClimateField()
     {
         var c = Current.Map.DataStore.GetSpan<ClimateInfo>();
-        var result = new double[c.Length * 11];
+        var result = new double[c.Length * 12];
         for (int i = 0; i < c.Length; i++)
         {
-            int o = i * 11;
+            int o = i * 12;
             result[o] = c[i].Temperature; result[o + 1] = c[i].Precipitation;
             result[o + 2] = c[i].WindX; result[o + 3] = c[i].WindY; result[o + 4] = c[i].WindZ;
             result[o + 5] = c[i].SeasonalRange; result[o + 6] = c[i].RainSeasonality; result[o + 7] = c[i].OceanHeat;
             result[o + 8] = c[i].CurrentX; result[o + 9] = c[i].CurrentY; result[o + 10] = c[i].CurrentZ;
+            result[o + 11] = c[i].RainPhase;
         }
         return result;
     }

@@ -103,7 +103,7 @@ The default pipeline also has a second climate pass (`ClimateRefreshStage`, `Wit
    | Global | Meaning |
    |---|---|
    | `TILE_COUNT`, `SEED`, `PARAMS` | tile count, stage seed, your params object |
-   | `BIOME.Ocean/Plains/Desert/Forest/Mountain/Tundra/Jungle/Swamp/Glacier/Canyon/Savanna/Badlands/RockDesert/SaltFlat/ColdDesert` | biome ids (ints) |
+   | `BIOME.Ocean/Plains/Desert/Forest/Mountain/Tundra/Jungle/Swamp/Glacier/Canyon/Savanna/Badlands/RockDesert/SaltFlat/ColdDesert/Mediterranean` | biome ids (ints) |
    | `lat(i)`, `lon(i)` | tile center degrees |
    | `continentality(i)`, `orogeny(i)` | tectonics drivers (need `TectonicPlate` in Reads/ReadsOptional) |
    | `height(i)` / `setHeight(i, v)` | `ElevationInfo.Height` |

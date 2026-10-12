@@ -30,9 +30,10 @@ export interface CatalogInput {
   styles: NameStyle[];
 }
 
-// Ids match Core's `BiomeType` (Savanna 10; Badlands 12 and the rest of the desert family 14..16). 11 and 13
-// are the old Farmland/Ashlands colour slots, kept so old maps load; those are land use now (world/landuse.ts).
-export const BIOME_NAMES = ['Ocean', 'Plains', 'Desert', 'Forest', 'Mountain', 'Tundra', 'Jungle', 'Swamp', 'Glacier', 'Canyon', 'Savanna', 'Farmland', 'Badlands', 'Ashlands', 'Rock desert', 'Salt flat', 'Cold desert'];
+// Ids match Core's `BiomeType` (Savanna 10; Badlands 12 and the rest of the desert family 14..16; Mediterranean 19). 11, 13, 17
+// and 18 are the land uses' colour slots (Farmland, Ashlands, Pasture, Built), kept so old maps load; those are land use now
+// (world/landuse.ts), so Core never assigns them to a biome.
+export const BIOME_NAMES = ['Ocean', 'Plains', 'Desert', 'Forest', 'Mountain', 'Tundra', 'Jungle', 'Swamp', 'Glacier', 'Canyon', 'Savanna', 'Farmland', 'Badlands', 'Ashlands', 'Rock desert', 'Salt flat', 'Cold desert', 'Pasture', 'Built', 'Mediterranean'];
 const Biome = { Ocean: 0, Forest: 3, Jungle: 6, Swamp: 7 } as const;
 const WaterKind = { Lake: 0, Sea: 1, Ocean: 2 } as const;
 const RangeKind = { MountainRange: 0, Valley: 1, Canyon: 2, Playa: 3 } as const;

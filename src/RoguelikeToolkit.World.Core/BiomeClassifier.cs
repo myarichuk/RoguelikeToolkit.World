@@ -34,6 +34,19 @@ public static class BiomeClassifier
 
     /// <summary>Savanna: wetter than this and the year-round-wet-enough ground carries forest or jungle instead.</summary>
     public const double SavannaMaxMoisture = 0.60;
+
+    /// <summary>
+    /// Mediterranean: how far towards winter the rain must fall (<see cref="ClimateInfo.RainPhase"/>, +1 all in winter,
+    /// -1 all in summer). The phase's magnitude is the rain seasonality, so this is "winter-wet and at least this
+    /// seasonal": on Earth it holds from 37 to 47 degrees, the basin's own latitudes.
+    /// </summary>
+    public const double MediterraneanMinPhase = 0.60;
+
+    /// <summary>Mediterranean: cool enough that winter is the growing season, warm enough for olives (about 45 degrees on Earth).</summary>
+    public const double MediterraneanMinTemperature = 0.50;
+
+    /// <summary>Mediterranean: wetter than this and the same winter rain feeds temperate forest instead of scrub.</summary>
+    public const double MediterraneanMaxMoisture = 0.55;
     public const double DeepOceanHeight = -0.6;
 
     /// <summary>A saline site is a salt flat in any climate drier than this (a sump that stays dry is arid by definition).</summary>
@@ -77,17 +90,26 @@ public static class BiomeClassifier
 
     /// <summary>
     /// Savanna test for ground already known not to be arid: warm, not wet enough for forest-grade rain,
-    /// and with a pronounced rainy season. With no seasonality data (0) it never holds.
+    /// and with a pronounced rainy season that is the summer one (a winter-wet place is Mediterranean, not savanna).
+    /// With no seasonality data (0) it never holds. <paramref name="rainPhase"/> is optional; without it the season is not checked.
     /// </summary>
-    public static bool IsSavanna(double temperature, double moisture, double rainSeasonality)
+    public static bool IsSavanna(double temperature, double moisture, double rainSeasonality, double rainPhase = 0.0)
         => temperature >= SavannaMinTemperature && moisture <= SavannaMaxMoisture
-           && rainSeasonality >= SavannaMinSeasonality;
+           && rainSeasonality >= SavannaMinSeasonality && rainPhase <= 0.0;
+
+    /// <summary>
+    /// Mediterranean test for ground already known not to be arid or jungle: temperate-warm, not wet enough for forest,
+    /// and with rain that falls in winter. With no phase data (0) it never holds.
+    /// </summary>
+    public static bool IsMediterranean(double temperature, double moisture, double rainPhase)
+        => temperature >= MediterraneanMinTemperature && moisture <= MediterraneanMaxMoisture
+           && rainPhase >= MediterraneanMinPhase;
 
     /// <summary>Base danger of the moisture-threshold biomes; <see cref="Classify"/> returns the same values.</summary>
     public static byte MoistureBiomeDanger(BiomeType biome) => biome switch
     {
         BiomeType.Jungle or BiomeType.Swamp => 2,
-        BiomeType.Forest or BiomeType.Savanna => 1,
+        BiomeType.Forest or BiomeType.Savanna or BiomeType.Mediterranean => 1,
         _ => 0,
     };
 
@@ -117,8 +139,11 @@ public static class BiomeClassifier
     }
 
     /// <summary>Biome and base danger for a tile, before glacier/canyon overrides and jitter.</summary>
-    /// <remarks><paramref name="rainSeasonality"/> is optional: callers with no seasonal-rain data pass nothing and get no savanna.</remarks>
-    public static (BiomeType Biome, byte Danger) Classify(double height, double temperature, double moisture, AridSite site = default, double rainSeasonality = 0.0)
+    /// <remarks>
+    /// <paramref name="rainSeasonality"/> and <paramref name="rainPhase"/> are optional: callers with no seasonal-rain data
+    /// pass nothing and get neither savanna nor Mediterranean.
+    /// </remarks>
+    public static (BiomeType Biome, byte Danger) Classify(double height, double temperature, double moisture, AridSite site = default, double rainSeasonality = 0.0, double rainPhase = 0.0)
     {
         if (height < ElevationGenerationStage.SeaLevel)
             return (BiomeType.Ocean, height < DeepOceanHeight ? (byte)2 : (byte)0);
@@ -136,7 +161,10 @@ public static class BiomeClassifier
             return (type, AridBiomeDanger(type));
         }
         if (temperature > JungleMinTemperature && moisture > JungleMinMoisture) return (BiomeType.Jungle, 2);
-        if (IsSavanna(temperature, moisture, rainSeasonality)) return (BiomeType.Savanna, 1);
+        // Mediterranean (winter rain) and savanna (summer rain) cannot both hold: they need opposite signs of the phase.
+        // Neither can overlap jungle, which starts above the moisture ceiling Mediterranean stops at. The order is for the reader.
+        if (IsMediterranean(temperature, moisture, rainPhase)) return (BiomeType.Mediterranean, 1);
+        if (IsSavanna(temperature, moisture, rainSeasonality, rainPhase)) return (BiomeType.Savanna, 1);
         if (moisture > SwampMinMoisture && temperature > SwampMinTemperature) return (BiomeType.Swamp, 2);
         if (moisture > ForestMinMoisture) return (BiomeType.Forest, 1);
         return (BiomeType.Plains, 0);

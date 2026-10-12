@@ -18,6 +18,8 @@ public struct ClimateInfo
     public float SeasonalRange;
     /// <summary>How unevenly the year's rain falls, 0 (even) .. 1 (monsoon / Mediterranean); see <see cref="ClimateModel.RainSeasonality"/>.</summary>
     public float RainSeasonality;
+    /// <summary>Which season the rain favours, +1 winter (Mediterranean) .. -1 summer (monsoon); its magnitude is <see cref="RainSeasonality"/>. See <see cref="ClimateModel.RainPhase"/>.</summary>
+    public float RainPhase;
     /// <summary>
     /// The temperature the ocean currents added (this tile's, in the same units as Temperature, already included in it):
     /// the sea-surface anomaly over water, the share of it a sea breeze carries onto coastal land. Positive

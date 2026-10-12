@@ -1,5 +1,5 @@
 import { MAP_H, MAP_W } from '../core/geo';
-import { CLIMATE_STRIDE } from '../world/climate';
+import { widenClimate } from '../world/climate';
 import { editsFromRows, editsToRows, type EditRow } from '../world/edits';
 import { migrateLegacyLandUse } from '../world/landuse';
 import { isGeneratedFeatureId, MapDocument } from './MapDocument';
@@ -116,7 +116,7 @@ export function decodeDocument(bytes: Uint8Array): MapDocument {
   const seaIce = header.blobs.some((b) => b.name === 'seaIce') ? blob<Uint8Array>('seaIce') : undefined;
   const goodSeaIce = seaIce && seaIce.length === doc.world.tileXY.length / 2 ? seaIce : undefined;
   const climate = header.blobs.some((b) => b.name === 'climate') ? blob<Float32Array>('climate') : undefined;
-  const goodClimate = climate && climate.length === (doc.world.tileXY.length / 2) * CLIMATE_STRIDE ? climate : undefined;
+  const goodClimate = climate ? widenClimate(climate, doc.world.tileXY.length / 2) : undefined;
   if (header.physics) {
     doc.physics = {
       edits: editsFromRows(header.physics.edits), baseline: null,

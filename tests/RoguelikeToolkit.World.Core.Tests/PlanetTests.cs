@@ -252,6 +252,43 @@ public class PlanetTests
             Assert.InRange(ClimateModel.RainSeasonality(lat, 60, 1.0, 0.7), 0.0, 1.0);
     }
 
+    [Theory]
+    [InlineData(23.44, 1.0, 1.0)]
+    [InlineData(45.0, 1.0, 1.0)]
+    [InlineData(60.0, 0.7, 1.4)]
+    [InlineData(10.0, 1.5, 0.8)]
+    public void RainPhase_HasTheSeasonalityAsItsMagnitude_AndIsTheSameInBothHemispheres(double tilt, double strength, double bands)
+    {
+        for (double lat = -90; lat <= 90; lat += 1)
+        {
+            double phase = ClimateModel.RainPhase(lat, tilt, strength, bands);
+            Assert.InRange(phase, -1.0, 1.0);
+            Assert.Equal(ClimateModel.RainSeasonality(lat, tilt, strength, bands), Math.Abs(phase), 12);
+            Assert.Equal(phase, ClimateModel.RainPhase(-lat, tilt, strength, bands), 12);
+        }
+        Assert.Equal(0.0, ClimateModel.RainPhase(40, 0, strength, bands));
+    }
+
+    [Fact]
+    public void RainPhase_IsSummerWetInTheMonsoonBelt_AndWinterWetPolewardOfTheDryBelt()
+    {
+        const double earth = 23.44;
+        // Equatorward of the subtropical high the ITCZ's summer visit is the wet season; poleward the storm track's winter one is.
+        Assert.True(ClimateModel.RainPhase(12, earth, 1.0, 1.0) < -0.6, "the monsoon belt rains in summer");
+        Assert.True(ClimateModel.RainPhase(42, earth, 1.0, 1.0) > 0.6, "the Mediterranean belt rains in winter");
+        // The sign flips at the dry belt itself (27 degrees on Earth), not somewhere arbitrary.
+        double flip = double.NaN;
+        for (double lat = 10; lat < 50; lat += 0.5)
+            if (ClimateModel.RainPhase(lat, earth, 1.0, 1.0) > 0) { flip = lat; break; }
+        Assert.InRange(flip, 26.0, 30.0);
+        // The winter-wet stretch that clears the Mediterranean bar is the basin's own latitudes.
+        double lo = double.NaN, hi = double.NaN;
+        for (double lat = 20; lat < 60; lat += 0.5)
+            if (ClimateModel.RainPhase(lat, earth, 1.0, 1.0) >= BiomeClassifier.MediterraneanMinPhase) { if (double.IsNaN(lo)) lo = lat; hi = lat; }
+        Assert.InRange(lo, 35.0, 39.0);
+        Assert.InRange(hi, 45.0, 49.0);
+    }
+
     [Fact]
     public void TidallyLocked_SubstellarPointIsTheHotSpot()
     {

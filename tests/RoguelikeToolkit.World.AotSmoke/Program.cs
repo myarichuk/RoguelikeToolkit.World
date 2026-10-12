@@ -72,6 +72,7 @@ foreach (var planet in new[]
     {
         Mix((ulong)BitConverter.SingleToInt32Bits(tClimate[i].Temperature));
         Mix((ulong)BitConverter.SingleToInt32Bits(tClimate[i].RainSeasonality));
+        Mix((ulong)BitConverter.SingleToInt32Bits(tClimate[i].RainPhase));
     }
     Check(tilted.Editable, "editable world");
     tilted.Edits[tilted.TileCount / 2] = new UserEditInfo { HeightDelta = 0.2f };

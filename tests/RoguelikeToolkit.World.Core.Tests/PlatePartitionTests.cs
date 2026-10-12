@@ -224,7 +224,7 @@ public class PlatePartitionTests
 
     private static bool IsMoistureBiome(BiomeType biome)
         => biome == BiomeType.Plains || biome == BiomeType.Forest
-            || biome == BiomeType.Jungle || biome == BiomeType.Swamp || biome == BiomeType.Savanna;
+            || biome == BiomeType.Jungle || biome == BiomeType.Swamp || biome == BiomeType.Savanna || biome == BiomeType.Mediterranean;
 
     private static int CountEnclaves(int seed, LocalMapInfo[] locals)
     {
