@@ -9,6 +9,7 @@ import { Properties } from './Properties';
 import { Toolbar } from './Toolbar';
 import { TopBar } from './TopBar';
 import { ViewPanel } from './ViewPanel';
+import styles from './App.module.css';
 
 const TABS = [
   { id: 'world', label: 'World', View: GeneratePanel },
@@ -29,11 +30,11 @@ export function App() {
   }, [shell.chrome]);
   const Active = TABS.find((t) => t.id === tab)!.View;
   return (
-    <div className="app">
+    <div className={styles.app}>
       <TopBar />
       <Toolbar />
-      <aside className="left">
-        <div className="tabs" role="tablist" onKeyDown={(e) => {
+      <aside className={styles.left}>
+        <div className={styles.tabs} role="tablist" onKeyDown={(e) => {
           const i = TABS.findIndex((t) => t.id === tab);
           const n = e.key === 'ArrowRight' ? i + 1 : e.key === 'ArrowLeft' ? i - 1 : e.key === 'Home' ? 0 : e.key === 'End' ? TABS.length - 1 : -1;
           if (n < 0) return;
@@ -42,17 +43,17 @@ export function App() {
           setTab(next);
           document.getElementById(`tab-${next}`)?.focus();
         }}>
-          {TABS.map((t) => <button key={t.id} id={`tab-${t.id}`} role="tab" aria-selected={tab === t.id} aria-controls="side-panel" tabIndex={tab === t.id ? 0 : -1} className={tab === t.id ? 'active' : ''} onClick={() => setTab(t.id)}>{t.label}</button>)}
+          {TABS.map((t) => <button key={t.id} id={`tab-${t.id}`} role="tab" aria-selected={tab === t.id} aria-controls="side-panel" tabIndex={tab === t.id ? 0 : -1} className={styles.tab} onClick={() => setTab(t.id)}>{t.label}</button>)}
         </div>
-        <div className="tabpanel" id="side-panel" role="tabpanel" aria-labelledby={`tab-${tab}`}>
-          <div className="scroll"><Active /></div>
+        <div className={styles.tabpanel} id="side-panel" role="tabpanel" aria-labelledby={`tab-${tab}`}>
+          <div className={styles.scroll}><Active /></div>
           {tab === 'world' && <GenerateFooter />}
         </div>
       </aside>
-      <main className="center"><MapView /></main>
+      <main className={styles.center}><MapView /></main>
       <Properties />
       <StatusBar />
-      {shell.error && <div className="toast" role="alert"><b>Error</b><pre>{shell.error}</pre><button className="dismiss" onClick={vms.shell.dismissError}><small>Dismiss</small></button></div>}
+      {shell.error && <div className={styles.toast} role="alert"><b>Error</b><pre>{shell.error}</pre><button className="dismiss" onClick={vms.shell.dismissError}><small>Dismiss</small></button></div>}
     </div>
   );
 }

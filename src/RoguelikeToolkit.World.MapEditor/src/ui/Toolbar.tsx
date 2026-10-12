@@ -1,10 +1,11 @@
 import { CLIMATE_LAYERS, climateModes, HEIGHT_MODES, TOOLS } from '../viewmodels/ToolsViewModel';
 import { useApp, useViewModel } from './hooks';
-import { ChoiceGrid, Section, Select, Slider } from './controls';
+import { ChoiceGrid, Section, Select, Slider, Swatch } from './controls';
 import { BIOME_HINTS, LANDUSE_HINTS, TERRAIN_HINTS } from './glossary';
 import { ToolIcon } from './icons';
 import type { ToolId } from '../engine/tools/Tool';
 import { LAND_USES } from '../engine/world/landuse';
+import styles from './Toolbar.module.css';
 
 const GROUPS: { name: string; tools: ToolId[] }[] = [
   { name: 'Navigate', tools: ['inspect', 'select', 'navigate'] },
@@ -16,16 +17,16 @@ export function Toolbar() {
   const { vms } = useApp();
   const s = useViewModel(vms.tools);
   return (
-    <nav className="toolbar" aria-label="Tools">
+    <nav className={styles.toolbar} aria-label="Tools">
       {GROUPS.map((g) => (
-        <div key={g.name} className="tool-group" role="group" aria-label={g.name}>
-          <span className="group-name" aria-hidden="true">{g.name}</span>
+        <div key={g.name} className={styles.group} role="group" aria-label={g.name}>
+          <span className={styles.groupName} aria-hidden="true">{g.name}</span>
           {g.tools.map((id) => {
             const t = TOOLS.find((x) => x.id === id)!;
             return (
               <button key={t.id} className={s.tool === t.id ? 'active' : ''} aria-pressed={s.tool === t.id} aria-keyshortcuts={t.key} onClick={() => vms.tools.setTool(t.id)} title={`${t.label} (${t.key}) — ${t.hint}`}>
                 <ToolIcon id={t.id} />
-                <span className="label">{t.label}</span>
+                <span className={styles.label}>{t.label}</span>
               </button>
             );
           })}
@@ -65,14 +66,14 @@ export function ToolOptionsPanel() {
       )}
       {s.tool === 'biome' && (
         <ChoiceGrid label="Biome" value={o.biome} onChange={(biome) => vm.setOptions({ biome })}
-          options={s.biomes.map((b) => ({ value: b.id, label: b.name, hint: BIOME_HINTS[b.name] ?? b.name, swatch: <i style={{ background: s.biomeColors[String(b.id)] ?? b.vivid }} /> }))} />
+          options={s.biomes.map((b) => ({ value: b.id, label: b.name, hint: BIOME_HINTS[b.name] ?? b.name, swatch: <Swatch color={s.biomeColors[String(b.id)] ?? b.vivid} /> }))} />
       )}
       {s.tool === 'landuse' && (
         <>
           <ChoiceGrid label="Land use" value={o.landUse} onChange={(landUse) => vm.setOptions({ landUse })}
             options={[
-              { value: 0, label: 'Clear', hint: LANDUSE_HINTS.clear, swatch: <i style={{ background: 'transparent' }} /> },
-              ...LAND_USES.map((u) => ({ value: u.id, label: u.name, hint: u.hint, swatch: <i style={{ background: s.biomeColors[String(u.slot)] ?? '#999' }} /> })),
+              { value: 0, label: 'Clear', hint: LANDUSE_HINTS.clear, swatch: <Swatch color="transparent" /> },
+              ...LAND_USES.map((u) => ({ value: u.id, label: u.name, hint: u.hint, swatch: <Swatch color={s.biomeColors[String(u.slot)] ?? '#999'} /> })),
             ]} />
           <p className="hint">{LANDUSE_HINTS.note}</p>
         </>
@@ -102,10 +103,10 @@ function PhysicsControls() {
   const s = useViewModel(vms.tools);
   const off = !s.physicsReady || s.busy;
   return (
-    <div className="physics">
+    <div>
       <h4 title="Physics re-derives climate, erosion, rivers, lakes and biomes from your strokes.">Physics</h4>
       <p className="hint">Strokes only repaint until you apply them. Sculpt lets erosion reshape your terrain; Fix keeps it exactly as drawn. Rivers, lakes and biomes follow.</p>
-      <div className="chips">
+      <div className={styles.applyRow}>
         <button disabled={off} onClick={() => void vms.tools.applyPhysics('sculpt')} title="Re-derive the world from your strokes; erosion and rain shadows act on them">Apply (sculpt)</button>
         <button disabled={off} onClick={() => void vms.tools.applyPhysics('fix')} title="Re-derive the world, keeping the heights you drew exactly">Apply (fix)</button>
         <button disabled={off} onClick={() => void vms.tools.applyPhysics('revert')} title="Discard every terrain, biome and climate edit and return to the generated world">Revert</button>
@@ -120,11 +121,11 @@ export function AssetPalette() {
   const s = useViewModel(vms.tools);
   const cats = [...new Set(s.assets.map((a) => a.category))];
   return (
-    <div className="assets">
+    <div>
       {cats.map((c) => (
         <div key={c}>
           <h4>{c}</h4>
-          <div className="grid">
+          <div className={styles.grid}>
             {s.assets.filter((a) => a.category === c).map((a) => (
               <button key={a.id} className={s.options.asset === a.id ? 'active' : ''} aria-pressed={s.options.asset === a.id} title={a.name} onClick={() => vms.tools.pickAsset(a.id)}>
                 <img src={a.thumb} alt={a.name} draggable={false} />

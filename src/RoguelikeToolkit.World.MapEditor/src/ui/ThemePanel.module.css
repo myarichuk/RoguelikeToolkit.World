@@ -1,0 +1,2 @@
+.warn { background: var(--bg); border-left: 2px solid var(--danger); padding: var(--s-2) var(--s-3); border-radius: 0 var(--r-1) var(--r-1) 0; color: var(--fg); }
+.warn ul { margin: var(--s-2) 0 0; padding-left: var(--s-5); }

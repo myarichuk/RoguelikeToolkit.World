@@ -63,7 +63,7 @@ async function run(name, body, { viewport = { width: 1500, height: 900 } } = {})
     },
     /** Merges a patch into the view settings (layers merged one level deep). */
     setView: (patch) => page.evaluate((p) => { const v = window.editor.view(); window.editor.setView({ ...v, ...p, layers: { ...v.layers, ...(p.layers || {}) } }); }, patch),
-    statusBar: () => page.evaluate(() => document.querySelector('.statusbar')?.innerText.replace(/\s+/g, ' ') ?? ''),
+    statusBar: () => page.evaluate(() => document.querySelector('[data-testid=statusbar]')?.innerText.replace(/\s+/g, ' ') ?? ''),
     async shot(file, clip) { await page.screenshot({ path: path.join(OUT, file), ...(clip ? { clip } : {}) }); },
   };
 

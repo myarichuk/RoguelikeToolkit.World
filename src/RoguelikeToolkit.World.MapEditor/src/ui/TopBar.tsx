@@ -1,6 +1,7 @@
 import { useEffect, useRef, useState } from 'react';
 import { useApp, useViewModel } from './hooks';
 import { TextField } from './controls';
+import styles from './TopBar.module.css';
 
 export function TopBar() {
   const { vms } = useApp();
@@ -8,19 +9,19 @@ export function TopBar() {
   const s = useViewModel(vm);
   const dirty = s.undo.dirty;
   return (
-    <header className="topbar">
-      <div className="brand">World Map Editor</div>
-      <div className="menu" role="group" aria-label="File">
+    <header className={styles.topbar}>
+      <div className={styles.brand}>World Map Editor</div>
+      <div className={styles.menu} role="group" aria-label="File">
         <button onClick={vm.newBlank} title="Blank ocean to paint on">New</button>
         <button onClick={() => void vm.open()} title="Ctrl+O">Open…</button>
-        <button className={dirty ? 'dirty' : ''} onClick={() => void vm.save()} title="Ctrl+S">Save{dirty && <span className="badge">Unsaved</span>}</button>
+        <button className={dirty ? styles.dirty : ''} onClick={() => void vm.save()} title="Ctrl+S">Save{dirty && <span className={styles.badge}>Unsaved</span>}</button>
         <ExportMenu />
       </div>
-      <div className="menu" role="group" aria-label="History">
+      <div className={styles.menu} role="group" aria-label="History">
         <button onClick={vm.undo} disabled={!s.undo.canUndo} title={`Undo ${s.undo.undoLabel ?? ''} (Ctrl+Z)`} aria-label="Undo">↶</button>
         <button onClick={vm.redo} disabled={!s.undo.canRedo} title={`Redo ${s.undo.redoLabel ?? ''} (Ctrl+Shift+Z)`} aria-label="Redo">↷</button>
       </div>
-      <div className="title"><TextField value={s.title} onCommit={vm.setTitle} placeholder="Map title" /></div>
+      <div className={styles.title}><TextField value={s.title} onCommit={vm.setTitle} placeholder="Map title" /></div>
     </header>
   );
 }
@@ -49,10 +50,10 @@ function ExportMenu() {
     items[(items.indexOf(document.activeElement as HTMLElement) + d + items.length) % items.length]?.focus();
   };
   return (
-    <div className="dropdown" ref={root} onKeyDown={onKey}>
+    <div className={styles.dropdown} ref={root} onKeyDown={onKey}>
       <button ref={trigger} aria-haspopup="menu" aria-expanded={open} onClick={() => setOpen(!open)}>Export ▾</button>
       {open && (
-        <div className="menu-pop" role="menu" aria-label="Export">
+        <div className={styles.menuPop} role="menu" aria-label="Export">
           <button role="menuitem" onClick={run(vm.exportSvg)} title="Vector export (Inkscape layers)">SVG</button>
           <button role="menuitem" onClick={run(vm.exportPng)} title="Current view as PNG">PNG</button>
           <button role="menuitem" onClick={run(vm.exportWkt)} title="Rivers, towns, deposits and named areas as a CSV with WKT geometry (longitude/latitude), for QGIS or GIS tools. Includes your edits and names.">WKT (GIS)</button>

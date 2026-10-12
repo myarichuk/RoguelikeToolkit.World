@@ -1,0 +1,14 @@
+.nameRow { display: flex; gap: var(--s-2); align-items: center; }
+.nameRow > :first-child { flex: 1; }
+.nameRow input[type='text'] { width: 100%; font-size: var(--fs-lg); }
+
+.footer { padding: var(--s-4); border-top: 1px solid var(--line); display: flex; flex-direction: column; gap: var(--s-3); }
+.footer button { margin-top: 0; }
+.stale { color: var(--accent); font-size: var(--fs-sm); }
+
+.cultures { display: flex; flex-direction: column; gap: var(--s-2); }
+.cultures input[type='search'] { width: 100%; }
+.head { display: flex; align-items: center; gap: var(--s-3); border-top: 1px solid var(--line); padding-top: var(--s-2); }
+.raceToggle { flex: 1; text-transform: capitalize; }
+.count { color: var(--muted); font-size: var(--fs-xs); font-variant-numeric: tabular-nums; }
+.chips { display: flex; flex-wrap: wrap; gap: var(--s-2); }

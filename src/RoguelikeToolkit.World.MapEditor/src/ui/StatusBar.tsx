@@ -1,5 +1,6 @@
 import { useApp, useViewModel } from './hooks';
 import { SHELL_HINTS } from './glossary';
+import styles from './StatusBar.module.css';
 
 /** Engineering telemetry (per-stage timings, ms/frame) is opt-in: `?debug` in the URL. */
 const debug = typeof location !== 'undefined' && new URLSearchParams(location.search).has('debug');
@@ -12,8 +13,8 @@ export function StatusBar() {
   const total = t.totalMs ? `Generated in ${(t.totalMs / 1000).toFixed(1)} s` : '';
   const breakdown = `gen ${Math.round(t.generateMs ?? 0)} + raster ${Math.round(t.rasterMs ?? 0)} + features ${Math.round(t.featuresMs ?? 0)} + names ${Math.round(t.namesMs ?? 0)} ms`;
   return (
-    <footer className="statusbar">
-      {s.busy && <span className="busy"><span className="spinner" />{s.busy}</span>}
+    <footer className={styles.statusbar} data-testid="statusbar">
+      {s.busy && <span className={styles.busy}><span className={styles.spinner} />{s.busy}</span>}
       <span className="grow">{s.status}</span>
       {c && (
         <span title={SHELL_HINTS.cursor}>

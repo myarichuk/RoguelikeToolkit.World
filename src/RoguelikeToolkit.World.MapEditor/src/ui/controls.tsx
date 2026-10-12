@@ -1,4 +1,5 @@
 import { useEffect, useId, useState, type ReactNode } from 'react';
+import styles from './controls.module.css';
 
 // Small, dumb, reusable controls. No state of their own beyond text-entry drafts.
 
@@ -16,16 +17,16 @@ export function Section({ title, children, actions, hint, collapsible, defaultOp
   const toggle = () => { sectionOpen.set(title, !open); setOpen(!open); };
   const [info, setInfo] = useState(false);
   return (
-    <section className="section">
+    <section className={styles.section}>
       <header>
         {collapsible
           ? <h3><button className="disclosure" aria-expanded={open} onClick={toggle}><span aria-hidden="true">{open ? '▾' : '▸'}</span>{title}</button></h3>
           : <h3>{title}</h3>}
         {hint && <InfoButton open={info} onToggle={() => setInfo(!info)} label={title} />}
-        {collapsible && !open && summary && <span className="summary">{summary}</span>}
-        {actions && open && <div className="actions">{actions}</div>}
+        {collapsible && !open && summary && <span className={styles.summary}>{summary}</span>}
+        {actions && open && <div className={styles.actions}>{actions}</div>}
       </header>
-      {hint && info && <p className="hint info">{hint}</p>}
+      {hint && info && <p className={`hint ${styles.hintInfo}`}>{hint}</p>}
       {open && children}
     </section>
   );
@@ -37,26 +38,26 @@ export function Section({ title, children, actions, hint, collapsible, defaultOp
  * explanation under the row; a `title` tooltip is neither. The label is wired with htmlFor, not
  * wrapped, because a button inside a <label> would swallow clicks meant for the control.
  */
-function Field({ label, hint, className = '', children }: { label: string; hint?: string; className?: string; children: (id: string) => ReactNode}) {
+function Field({ label, hint, variant, children }: { label: string; hint?: string; variant?: 'slider' | 'color'; children: (id: string) => ReactNode}) {
   const id = useId();
   const [open, setOpen] = useState(false);
   return (
-    <div className="field">
-      <div className={`row ${className}`}>
-        <span className="lbl">
+    <div className={styles.field}>
+      <div className={`${styles.row} ${variant ? styles[variant] : ''}`}>
+        <span className={styles.lbl}>
           <label htmlFor={id}>{label}</label>
           {hint && <InfoButton open={open} onToggle={() => setOpen(!open)} label={label} />}
         </span>
         {children(id)}
       </div>
-      {hint && open && <p className="hint info">{hint}</p>}
+      {hint && open && <p className={`hint ${styles.hintInfo}`}>{hint}</p>}
     </div>
   );
 }
 
 export function InfoButton({ open, onToggle, label }: { open: boolean; onToggle: () => void; label: string }) {
   return (
-    <button type="button" className="info" aria-expanded={open} aria-label={`About ${label}`} onClick={onToggle}
+    <button type="button" className={styles.info} aria-expanded={open} aria-label={`About ${label}`} onClick={onToggle}
       onKeyDown={(e) => { if (e.key === 'Escape' && open) { e.stopPropagation(); onToggle(); } }}>i</button>
   );
 }
@@ -67,7 +68,7 @@ export function Slider({ label, value, min, max, step, onChange, format, hint }:
   hint?: string;
 }) {
   return (
-    <Field label={label} hint={hint} className="slider">
+    <Field label={label} hint={hint} variant="slider">
       {(id) => (
         <>
           <output htmlFor={id}>{format ? format(value) : trim(value)}</output>
@@ -100,18 +101,18 @@ export function TextField({ label, value, onCommit, placeholder, hint }: { label
 
 export function Toggle({ label, on, onChange, swatch, count, hint }: { label: string; on: boolean; onChange: () => void; swatch?: ReactNode; count?: number; hint?: string }) {
   return (
-    <label className={`toggle ${on ? 'on' : ''}`} title={hint}>
+    <label className={`${styles.toggle} ${on ? styles.toggleOn : ''}`} title={hint}>
       <input type="checkbox" checked={on} onChange={onChange} />
       {swatch}
       <span className="grow">{label}</span>
-      {count !== undefined && <span className="count">{count}</span>}
+      {count !== undefined && <span className={styles.count}>{count}</span>}
     </label>
   );
 }
 
 export function ColorField({ label, value, onChange, hint }: { label: string; value: string; onChange: (v: string) => void; hint?: string }) {
   return (
-    <Field label={label} hint={hint} className="color">
+    <Field label={label} hint={hint} variant="color">
       {(id) => (
         <>
           <input id={id} type="color" value={toHex(value)} onChange={(e) => onChange(e.target.value)} />
@@ -133,7 +134,7 @@ export function Select<T extends string>({ label, value, options, onChange, hint
 
 export function Segmented<T extends string>({ value, options, onChange }: { value: T; options: { value: T; label: string; hint?: string }[]; onChange: (v: T) => void }) {
   return (
-    <div className="segmented">
+    <div className={styles.segmented}>
       {options.map((o) => <button key={o.value} className={o.value === value ? 'active' : ''} aria-pressed={o.value === value} title={o.hint} onClick={() => onChange(o.value)}>{o.label}</button>)}
     </div>
   );
@@ -147,13 +148,27 @@ export function ChoiceGrid<T extends string | number>({ value, options, onChange
   value: T; options: { value: T; label: string; hint?: string; swatch?: ReactNode; disabled?: boolean }[]; onChange: (v: T) => void; label?: string;
 }) {
   return (
-    <div className="choices" role="group" aria-label={label}>
+    <div className={styles.choices} data-testid="choices" role="group" aria-label={label}>
       {options.map((o) => (
         <button key={String(o.value)} className={o.value === value ? 'active' : ''} aria-pressed={o.value === value} disabled={o.disabled} title={o.hint ?? o.label} onClick={() => onChange(o.value)}>
           {o.swatch}<span>{o.label}</span>
         </button>
       ))}
     </div>
+  );
+}
+
+/** Colour chip for a ChoiceGrid option; `transparent` draws an outline-only box. */
+export function Swatch({ color }: { color: string }) {
+  return <i className={styles.swatch} style={{ background: color }} />;
+}
+
+/** A checkbox drawn as a pill. */
+export function Chip({ label, on, onChange }: { label: string; on: boolean; onChange: () => void }) {
+  return (
+    <label className={`${styles.chip} ${on ? styles.chipOn : ''}`}>
+      <input type="checkbox" checked={on} onChange={onChange} />{label}
+    </label>
   );
 }
 

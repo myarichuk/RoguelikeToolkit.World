@@ -6,6 +6,7 @@ import { browserFiles } from './files';
 import { useApp, useViewModel } from './hooks';
 import { ColorField, Section, Select, Slider, TextField, Toggle } from './controls';
 import { SHELL_HINTS, THEME_HINTS, WORLD_HINTS } from './glossary';
+import styles from './ThemePanel.module.css';
 
 /** Live theme editor: every control writes into the user overlay pack. */
 export function ThemePanel() {
@@ -69,7 +70,7 @@ function ContrastWarning({ ui }: { ui: Record<string, string> }) {
   if (!issues.length) return null;
   const name = (k: string) => k.replace(/^--/, '');
   return (
-    <div className="hint warn" role="status">
+    <div className={`hint ${styles.warn}`} role="status">
       <b>Low contrast.</b> Text should reach {MIN_TEXT_CONTRAST}:1:
       <ul>{issues.map((i) => <li key={i.fg + i.bg}>{name(i.fg)} on {name(i.bg)}: {i.ratio.toFixed(1)}:1</li>)}</ul>
     </div>

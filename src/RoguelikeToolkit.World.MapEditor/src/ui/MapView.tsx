@@ -1,5 +1,6 @@
 import { useEffect, useRef } from 'react';
 import { useApp } from './hooks';
+import styles from './MapView.module.css';
 
 /** Hosts the two canvases. The editor owns everything drawn on them; React only provides the elements. */
 export function MapView() {
@@ -11,9 +12,9 @@ export function MapView() {
     return () => editor.unmount();
   }, [editor]);
   return (
-    <div className="mapview">
-      <canvas ref={gl} className="gl" />
-      <canvas ref={overlay} className="overlay" tabIndex={0} aria-label="Map" />
+    <div className={styles.mapview}>
+      <canvas ref={gl} />
+      <canvas ref={overlay} className={styles.overlay} tabIndex={0} aria-label="Map" />
     </div>
   );
 }

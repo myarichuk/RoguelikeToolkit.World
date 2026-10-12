@@ -4,6 +4,7 @@ import type { ToolId } from '../engine/tools/Tool';
 import { useApp, useViewModel } from './hooks';
 import { Inspector } from './Inspector';
 import { ToolOptionsPanel } from './Toolbar';
+import styles from './Properties.module.css';
 
 /** Brushes have nothing to select; a leftover selection must not hide their options. */
 const BRUSHES: ReadonlySet<ToolId> = new Set(['terrain', 'biome', 'landuse', 'climate']);
@@ -26,11 +27,11 @@ export function Properties() {
   const [open, setOpen] = useState(false);
   useEffect(() => { if (selection) setOpen(true); }, [selection]);
   return (
-    <aside className={`right ${open ? 'open' : ''}`} aria-label="Properties">
-      <button className="sheet-handle" aria-expanded={open} onClick={() => setOpen(!open)}>
+    <aside className={`${styles.right} ${open ? styles.open : ''}`} aria-label="Properties">
+      <button className={styles.sheetHandle} aria-expanded={open} onClick={() => setOpen(!open)}>
         <span aria-hidden="true">{open ? '▾' : '▴'}</span>Properties · {label}
       </button>
-      <div className="scroll">{selection ? <Inspector /> : <ToolOptionsPanel />}</div>
+      <div className={styles.body}>{selection ? <Inspector /> : <ToolOptionsPanel />}</div>
     </aside>
   );
 }

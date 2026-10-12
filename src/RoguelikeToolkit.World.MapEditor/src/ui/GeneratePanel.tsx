@@ -1,8 +1,9 @@
 import { useMemo, useState } from 'react';
 import { useApp, useViewModel } from './hooks';
-import { NumberField, Section, Slider, Toggle } from './controls';
+import { Chip, NumberField, Section, Slider, Toggle } from './controls';
 import { CLIMATE_MODEL_DEFAULTS, EARTH } from '../engine/world/protocol';
 import { MODEL_HINTS, PLANET_HINTS, WORLD_HINTS } from './glossary';
+import styles from './GeneratePanel.module.css';
 
 export function GeneratePanel() {
   const { vms } = useApp();
@@ -11,7 +12,7 @@ export function GeneratePanel() {
   return (
     <>
       <Section title="World" hint="The seed and size fully determine the simulated planet (with the planet settings).">
-        <div className="name-row">
+        <div className={styles.nameRow}>
           <NumberField label="Seed" value={s.seed} onChange={vm.setSeed} min={0} hint={WORLD_HINTS.seed} />
           <button onClick={vm.randomSeed} title="Random seed" aria-label="Random seed">⚄</button>
         </div>
@@ -50,8 +51,8 @@ export function GenerateFooter() {
   const vm = vms.generate;
   const s = useViewModel(vm);
   return (
-    <footer className="generate-footer">
-      {s.stale && <span className="stale" role="status">● Settings changed since the last generate</span>}
+    <footer className={styles.footer}>
+      {s.stale && <span className={styles.stale} role="status">● Settings changed since the last generate</span>}
       <button className="primary wide" disabled={s.busy} onClick={() => void vm.generate()}>{s.busy ? 'Working…' : 'Generate world'}</button>
     </footer>
   );
@@ -89,7 +90,7 @@ function CulturePicker() {
     .map(([race, list]) => [race, needle ? list.filter((o) => o.label.toLowerCase().includes(needle) || raceName(race).toLowerCase().includes(needle)) : list] as const)
     .filter(([, list]) => list.length);
   return (
-    <div className="cultures">
+    <div className={styles.cultures}>
       <input type="search" value={q} onChange={(e) => setQ(e.target.value)} placeholder="Filter cultures…" aria-label="Filter cultures" />
       {!visible.length && <p className="muted">No culture matches “{q}”.</p>}
       {visible.map(([race, list]) => {
@@ -98,29 +99,25 @@ function CulturePicker() {
         if (all.length === 1) {
           const o = all[0];
           return (
-            <div key={race} className="culture-group single">
-              <label className={`chip ${s.styles.includes(o.key) ? 'on' : ''}`}>
-                <input type="checkbox" checked={s.styles.includes(o.key)} onChange={() => vm.toggleStyle(o.key)} />{o.label}
-              </label>
+            <div key={race}>
+              <Chip label={o.label} on={s.styles.includes(o.key)} onChange={() => vm.toggleStyle(o.key)} />
             </div>
           );
         }
         const expanded = needle ? true : !!open[race];
         return (
-          <div key={race} className="culture-group">
-            <div className="culture-head">
-              <button className="disclosure" aria-expanded={expanded} onClick={() => setOpen({ ...open, [race]: !expanded })}>
+          <div key={race}>
+            <div className={styles.head}>
+              <button className={`disclosure ${styles.raceToggle}`} aria-expanded={expanded} onClick={() => setOpen({ ...open, [race]: !expanded })}>
                 <span aria-hidden="true">{expanded ? '▾' : '▸'}</span>{raceName(race)}
               </button>
-              <span className="count" aria-label={`${on} of ${all.length} selected`}>{on}/{all.length}</span>
+              <span className={styles.count} aria-label={`${on} of ${all.length} selected`}>{on}/{all.length}</span>
               <button className="mini" onClick={() => vm.setRace(race, on < all.length)} aria-label={`${on < all.length ? 'Select all' : 'Clear'} ${raceName(race)}`}>{on < all.length ? 'All' : 'None'}</button>
             </div>
             {expanded && (
-              <div className="chips">
+              <div className={styles.chips}>
                 {list.map((o) => (
-                  <label key={o.key} className={`chip ${s.styles.includes(o.key) ? 'on' : ''}`}>
-                    <input type="checkbox" checked={s.styles.includes(o.key)} onChange={() => vm.toggleStyle(o.key)} />{cultureLabel(race, o.label)}
-                  </label>
+                  <Chip key={o.key} label={cultureLabel(race, o.label)} on={s.styles.includes(o.key)} onChange={() => vm.toggleStyle(o.key)} />
                 ))}
               </div>
             )}
