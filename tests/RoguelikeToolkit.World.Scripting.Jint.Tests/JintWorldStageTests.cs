@@ -15,6 +15,8 @@ public class JintWorldStageTests
         map.RegisterLayer<ElevationInfo>(new ElevationLayer(map.DataStore));
         map.RegisterLayer<ClimateInfo>(new ClimateLayer(map.DataStore));
         map.RegisterLayer<LocalMapInfo>(new LocalMapLayer(map.DataStore, 42, new TectonicPlateLayer(map.DataStore, 4, 42)));
+        map.RegisterLayer<LandCapacityInfo>(new LandCapacityLayer(map.DataStore));
+        map.RegisterLayer<LandUseInfo>(new LandUseLayer(map.DataStore));
         map.DataStore.Allocate();
         return map;
     }
@@ -251,8 +253,8 @@ public class JintWorldStageTests
                 Name = Path.GetFileName(file),
                 Order = 21,
                 Source = File.ReadAllText(file),
-                Reads = new[] { typeof(ClimateInfo), typeof(LocalMapInfo) },
-                Writes = new[] { typeof(ClimateInfo), typeof(LocalMapInfo) },
+                Reads = new[] { typeof(ClimateInfo), typeof(LocalMapInfo), typeof(LandCapacityInfo), typeof(LandUseInfo) },
+                Writes = new[] { typeof(ClimateInfo), typeof(LocalMapInfo), typeof(LandUseInfo) },
             });
 
             stage.Execute(map); // must not throw

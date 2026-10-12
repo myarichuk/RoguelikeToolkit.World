@@ -13,6 +13,9 @@ ordering and layer contracts are shared.
 
 Default generation order (leave gaps for plugins): tectonics (10) →
 elevation (15) → climate (16) → erosion (17) → hydrology (18) → biomes (20).
+With `WorldBuilder.WithLandUse()` the pipeline also gets land capacity (25) and a pin resolver (99); land-use
+allocation plugins go in 26..98 and must declare `Reads` and `Writes` for `LandUseInfo` (see docs/API.md,
+"Land use"). Orders 21..24 stay free for biome and danger tweaks, which run before capacity reads the final biome.
 The default pipeline also has a second climate pass (`ClimateRefreshStage`, `WithClimateRefresh(false)` removes it) that shares erosion's order 17 and runs right after it (stable sort).
 
 ## Rules both kinds follow
@@ -107,6 +110,8 @@ The default pipeline also has a second climate pass (`ClimateRefreshStage`, `Wit
    | `temp(i)` / `setTemp(i, v)`, `precip(i)` / `setPrecip(i, v)` | `ClimateInfo` fields |
    | `flow(i)`, `surface(i)` | `HydrologyInfo` (read-only in v1) |
    | `biome(i)` / `setBiome(i, id)`, `danger(i)` / `setDanger(i, n)` | `LocalMapInfo` fields |
+   | `arable(i)`, `pasture(i)`, `game(i)`, `timber(i)`, `fish(i)` | `LandCapacityInfo` (0-255, read-only; needs `WithLandUse()`) |
+   | `landUse(i)` / `setLandUse(i, id)`, `activities(i)` / `setActivities(i, flags)`, `intensity(i)` / `setIntensity(i, n)` | `LandUseInfo`; constants `LANDUSE.*`, `ACTIVITY.*` |
    | `rand01(tile, salt)` | deterministic `[0,1)` from `(seed, tile, salt)` |
    | `tileSeed(tile)` | the per-tile seed (same as `World.TileSeed`); not stored per hex |
 

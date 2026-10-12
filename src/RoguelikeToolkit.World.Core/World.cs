@@ -286,6 +286,7 @@ public sealed class WorldBuilder
     private Action<ClimateStage>? _climateConfig;
     private Action<HydrologyStage>? _hydrologyConfig;
     private bool _userEdits;
+    private bool _landUse;
     private bool _climateRefresh = true;
 
     /// <summary>
@@ -370,9 +371,19 @@ public sealed class WorldBuilder
 
     /// <summary>
     /// Registers the <see cref="UserEditInfo"/> input layer so the result supports hand edits and
-    /// <see cref="World.Recompute"/>. Costs 12 bytes per tile; an unedited layer changes nothing.
+    /// <see cref="World.Recompute"/>. Costs 20 bytes per tile; an unedited layer changes nothing.
     /// </summary>
     public WorldBuilder WithUserEdits() { _userEdits = true; return this; }
+
+    /// <summary>
+    /// Adds the land-use layers and their two framing stages: <see cref="LandCapacityInfo"/> (what each tile
+    /// could support, order 25) and <see cref="LandUseInfo"/> (what is decided to be done with it), which starts
+    /// empty and is filled by the allocation stages you add with <see cref="AddStage"/> at orders 26..98.
+    /// <see cref="LandUseResolveStage"/> (99) then applies hand-painted pins. Implies <see cref="WithUserEdits"/>.
+    /// Off by default: a default world carries no people, and costs nothing. Land use is never read by the
+    /// climate, erosion, hydrology or biome stages, so it cannot change them.
+    /// </summary>
+    public WorldBuilder WithLandUse() { _landUse = true; _userEdits = true; return this; }
 
     public World Build()
     {
@@ -386,6 +397,11 @@ public sealed class WorldBuilder
         map.RegisterLayer<LocalMapInfo>(new LocalMapLayer(map.DataStore, _seed,
             platesLayer));
         if (_userEdits) map.RegisterLayer<UserEditInfo>(new UserEditLayer(map.DataStore));
+        if (_landUse)
+        {
+            map.RegisterLayer<LandCapacityInfo>(new LandCapacityLayer(map.DataStore));
+            map.RegisterLayer<LandUseInfo>(new LandUseLayer(map.DataStore));
+        }
         map.DataStore.Allocate();
 
         var pipeline = new WorldGenerationPipeline();
@@ -413,7 +429,9 @@ public sealed class WorldBuilder
             _biomesConfig?.Invoke(biomes);
             pipeline.AddStage(biomes);
         }
+        if (_landUse) pipeline.AddStage(new LandCapacityStage());
         foreach (var s in _extraStages) pipeline.AddStage(s);
+        if (_landUse) pipeline.AddStage(new LandUseResolveStage());
 
         pipeline.Execute(map);
 

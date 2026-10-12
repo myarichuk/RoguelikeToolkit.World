@@ -15,8 +15,9 @@ public enum BiomeType : byte
     Glacier = 8,
     /// <summary>Arid slot gorge carved by a powerful river.</summary>
     Canyon = 9,
-    // Ids 10, 11 and 13 are left free on purpose: the MapEditor ships paint-only biomes there
-    // (Savanna, Farmland, Ashlands). Badlands deliberately shares the editor's id 12.
+    // Id 10 is left free on purpose: the MapEditor ships a paint-only Savanna there. Ids 11 and 13 are
+    // the editor's old Farmland/Ashlands colour slots; those are land uses now (see LandUseId), not biomes.
+    // Badlands deliberately shares the editor's id 12.
     /// <summary>Hot arid ground carved into dissected, banded gullies and mesas.</summary>
     Badlands = 12,
     /// <summary>Hot arid stony plateau (hamada, reg): scoured bedrock and desert pavement, little sand.</summary>

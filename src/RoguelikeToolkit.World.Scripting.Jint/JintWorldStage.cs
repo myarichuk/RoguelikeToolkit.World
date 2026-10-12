@@ -150,6 +150,8 @@ public sealed class JintWorldStage : IWorldGeneratorStage, IDeclaredStage, IStag
         var modeClimateInfo = ResolveRead(store, typeof(ClimateInfo), _reads, _readsOptional);
         var modeHydrologyInfo = ResolveRead(store, typeof(HydrologyInfo), _reads, _readsOptional);
         var modeLocalMapInfo = ResolveRead(store, typeof(LocalMapInfo), _reads, _readsOptional);
+        var modeCapacity = ResolveRead(store, typeof(LandCapacityInfo), _reads, _readsOptional);
+        var modeLandUse = ResolveRead(store, typeof(LandUseInfo), _reads, _readsOptional);
 
         double ReadContinentality(int i)
         {
@@ -195,6 +197,34 @@ public sealed class JintWorldStage : IWorldGeneratorStage, IDeclaredStage, IStag
         {
             int t = CheckIndex(i, tileCount);
             return modeLocalMapInfo == ReadMode.Direct ? store.GetRef<LocalMapInfo>(t).DangerLevel : ReadFallback(modeLocalMapInfo, typeof(LocalMapInfo), stageName);
+        }
+
+        double Capacity(int i, Func<LandCapacityInfo, byte> pick)
+        {
+            int t = CheckIndex(i, tileCount);
+            return modeCapacity == ReadMode.Direct ? pick(store.GetRef<LandCapacityInfo>(t)) : ReadFallback(modeCapacity, typeof(LandCapacityInfo), stageName);
+        }
+        double LandUseOf(int i, Func<LandUseInfo, byte> pick)
+        {
+            int t = CheckIndex(i, tileCount);
+            return modeLandUse == ReadMode.Direct ? pick(store.GetRef<LandUseInfo>(t)) : ReadFallback(modeLandUse, typeof(LandUseInfo), stageName);
+        }
+        void WriteLandUse(int i, double v)
+        {
+            RequireWrite(typeof(LandUseInfo), stageName, _writes);
+            store.GetRef<LandUseInfo>(CheckIndex(i, tileCount)).Use = CheckByte((int)v, "Land use id");
+        }
+
+        void WriteActivities(int i, double v)
+        {
+            RequireWrite(typeof(LandUseInfo), stageName, _writes);
+            store.GetRef<LandUseInfo>(CheckIndex(i, tileCount)).Activities = CheckByte((int)v, "Activities");
+        }
+
+        void WriteIntensity(int i, double v)
+        {
+            RequireWrite(typeof(LandUseInfo), stageName, _writes);
+            store.GetRef<LandUseInfo>(CheckIndex(i, tileCount)).Intensity = CheckByte((int)v, "Intensity");
         }
 
         void WriteHeight(int i, double v)
@@ -253,6 +283,34 @@ public sealed class JintWorldStage : IWorldGeneratorStage, IDeclaredStage, IStag
             SaltFlat = (int)BiomeType.SaltFlat,
             ColdDesert = (int)BiomeType.ColdDesert,
         });
+        engine.SetValue("LANDUSE", new
+        {
+            None = (int)LandUseId.None,
+            Farmland = (int)LandUseId.Farmland,
+            Ashlands = (int)LandUseId.Ashlands,
+            Pasture = (int)LandUseId.Pasture,
+            Built = (int)LandUseId.Built,
+            FirstPluginId = (int)LandUseId.FirstPluginId,
+        });
+        engine.SetValue("ACTIVITY", new
+        {
+            Grazing = (int)LandActivity.Grazing,
+            Hunting = (int)LandActivity.Hunting,
+            Foraging = (int)LandActivity.Foraging,
+            Logging = (int)LandActivity.Logging,
+            Fishing = (int)LandActivity.Fishing,
+        });
+        engine.SetValue("arable", new Func<int, double>(i => Capacity(i, c => c.Arable)));
+        engine.SetValue("pasture", new Func<int, double>(i => Capacity(i, c => c.Pasture)));
+        engine.SetValue("game", new Func<int, double>(i => Capacity(i, c => c.Game)));
+        engine.SetValue("timber", new Func<int, double>(i => Capacity(i, c => c.Timber)));
+        engine.SetValue("fish", new Func<int, double>(i => Capacity(i, c => c.Fish)));
+        engine.SetValue("landUse", new Func<int, double>(i => LandUseOf(i, u => u.Use)));
+        engine.SetValue("activities", new Func<int, double>(i => LandUseOf(i, u => u.Activities)));
+        engine.SetValue("intensity", new Func<int, double>(i => LandUseOf(i, u => u.Intensity)));
+        engine.SetValue("setLandUse", new Action<int, double>(WriteLandUse));
+        engine.SetValue("setActivities", new Action<int, double>(WriteActivities));
+        engine.SetValue("setIntensity", new Action<int, double>(WriteIntensity));
         engine.SetValue("lat", new Func<int, double>(i => store.GetGeoCoord(CheckIndex(i, tileCount)).Latitude));
         engine.SetValue("lon", new Func<int, double>(i => store.GetGeoCoord(CheckIndex(i, tileCount)).Longitude));
         engine.SetValue("continentality", new Func<int, double>(ReadContinentality));
@@ -331,6 +389,13 @@ public sealed class JintWorldStage : IWorldGeneratorStage, IDeclaredStage, IStag
         if (v < 0 || v > 255 || !Enum.IsDefined(typeof(BiomeType), (byte)v))
             throw new InvalidOperationException($"Biome value {v} is not a known biome id (see BIOME.*).");
         return v;
+    }
+
+    private static byte CheckByte(int v, string what)
+    {
+        if (v < 0 || v > 255)
+            throw new InvalidOperationException($"{what} value {v} is out of range (0..255).");
+        return (byte)v;
     }
 
     private static int CheckDanger(int v)

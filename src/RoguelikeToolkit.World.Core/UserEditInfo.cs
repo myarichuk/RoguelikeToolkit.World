@@ -11,6 +11,8 @@ public enum UserEditFlags : byte
     PinHeight = 1,
     /// <summary>The biome is fixed to <see cref="UserEditInfo.PinBiome"/>: hydrology classifies its cover from it and the biome stage keeps it.</summary>
     PinBiome = 2,
+    /// <summary>The land use is fixed to <see cref="UserEditInfo.LandUse"/> / <see cref="UserEditInfo.LandActivities"/>, whatever the allocation stages decided. Land use is a decision, never a physics input.</summary>
+    PinLandUse = 4,
 }
 
 /// <summary>
@@ -43,6 +45,11 @@ public struct UserEditInfo
     public float TemperatureDelta;
     /// <summary>Added to the tile's precipitation at the end of the climate stage (both passes), then clamped to [0, 1]; same rules as <see cref="TemperatureDelta"/>.</summary>
     public float PrecipitationDelta;
+
+    /// <summary>Hand-painted <see cref="LandUseId"/> (or plugin id) where <see cref="UserEditFlags.PinLandUse"/> is set. 0 pins "no land use".</summary>
+    public byte LandUse;
+    /// <summary>Hand-painted <see cref="LandActivity"/> bits where <see cref="UserEditFlags.PinLandUse"/> is set.</summary>
+    public byte LandActivities;
 
     public readonly bool IsEmpty => HeightDelta == 0f && Flags == UserEditFlags.None && TemperatureDelta == 0f && PrecipitationDelta == 0f;
 }

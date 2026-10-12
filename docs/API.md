@@ -171,6 +171,57 @@ sea air does not carry the offset inland (paint the coast too if you want that).
 lakes read the offset climate like any other. It is global: hydrology is a whole-world solve, so one
 raised ridge may redirect a basin far from it.
 
+## Land use: what the ground could carry, and what people decide to do with it
+
+A biome is what the climate grows, and the physics reproduces it. Farmland, pasture, a burn scar, a
+hunting range or a fishery are not biomes: they sit on top of one and move nothing. Core therefore keeps
+them in two layers of their own, outside the physics, and leaves the *decision* to plugins:
+
+| Layer | Meaning | Written by |
+|---|---|---|
+| `LandCapacityInfo` | what a tile **could** support, 0-255 each: `Arable`, `Pasture`, `Game`, `Timber`, `Fish` | `LandCapacityStage` (order 25), from biome, climate, slope, fresh water and ocean currents |
+| `LandUseInfo` | what is **decided**: `Use` (an exclusive id), `Activities` (overlapping `LandActivity` flags), `Intensity` | allocation stages you add, orders 26..98 |
+| `UserEditInfo.LandUse` / `LandActivities` + `PinLandUse` | a hand-painted answer that always wins | `LandUseResolveStage` (order 99) |
+
+```csharp
+using var world = new WorldBuilder().WithSize(5).WithSeed(42).WithLandUse()   // implies WithUserEdits()
+    .AddStage(new MyHerdersAndFarmers())                                      // your allocation, order 26..98
+    .Build();
+var use = world.Map.DataStore.GetSpan<LandUseInfo>()[tile];                   // Use, Activities, Intensity
+var cap = world.Map.DataStore.GetSpan<LandCapacityInfo>()[tile];              // what it could carry
+world.Edits[tile].Flags |= UserEditFlags.PinLandUse;                          // the player painted it
+world.Edits[tile].LandUse = LandUseId.Farmland;
+world.Recompute();
+```
+
+The split is deliberate. *Use* is exclusive (a tile is farmland **or** pasture **or** built-up), but
+*activities* overlap (a forest is hunted and logged; a nomad's range crosses pasture), so they are bit
+flags: `Grazing`, `Hunting`, `Foraging`, `Logging`, `Fishing`, with the top three bits free. Use ids 1-4
+are Core (`Farmland`, `Ashlands`, `Pasture`, `Built`) and are persisted, so never renumber them; 5-127
+are reserved; 128-255 belong to games and plugins, whose names and colours travel in their own content
+pack. `LandCapacity.Evaluate(new LandSite(...))` scores a hypothetical tile without a world.
+
+Plugin rules, all from the existing stage contract:
+
+- `LandCapacityStage` is the first writer of `LandUseInfo`, so the pipeline clears it on every run and
+  `Recompute()` never leaves a stale decision behind. Declare `Reads` **and** `Writes` for `LandUseInfo`
+  (refine what earlier stages decided); a blind second writer throws, as for any layer.
+- Nothing in climate, erosion, hydrology or the biome stage reads these layers, so land use cannot move a
+  river or a biome. If you want people to change the land (clear a forest), write that into
+  `UserEditInfo.PinBiome` or a plugin that runs *before* the biome stage; it is a physics decision, not
+  a land-use one.
+- Off by default: a default world carries no people and pays nothing for any of this.
+
+Capacity is calibrated by direction, not precision (like `LandCover` and `SettlementScoring`): every
+product is a product of smooth factors, so a threshold cannot stripe a coast into speckle. Measured on
+seed 42, 14% of land tiles score 128+ for farming at size 4 (27% at size 3, 12.6% at size 5): coarse
+worlds credit more, because a coarse tile averages steep ground away. At this scale a tile is tens to
+hundreds of kilometres across, so "arable" means the best the tile could do, not a field. Fish follow
+shallow shelves and cold currents (the Humboldt and Benguela fisheries), so the ocean-current layer
+feeds the economy. Scripts get the same data: `arable(i)`, `pasture(i)`, `game(i)`, `timber(i)`,
+`fish(i)`, `landUse(i)`, `activities(i)`, `intensity(i)` and the setters `setLandUse`, `setActivities`,
+`setIntensity`, with `LANDUSE.*` and `ACTIVITY.*` constants (`samples/JintScripts/herders-and-farmers.js`).
+
 ## Addresses and seeds: where am I?
 
 Every map in the hierarchy has a stable address. The planet tier uses tile indices; the lower tiers hang off those:
