@@ -20,7 +20,14 @@ namespace RoguelikeToolkit.World.Core;
 [WorldGeneratorStage(18, Reads = new[] { typeof(ElevationInfo) }, ReadsOptional = new[] { typeof(ClimateInfo), typeof(UserEditInfo) }, Writes = new[] { typeof(HydrologyInfo) })]
 public class HydrologyStage : IWorldGeneratorStage
 {
-    public float RiverThresholdScale { get; set; } = 1.0f;
+    /// <summary>
+    /// Scales the discharge a channel needs (lower = more rivers). 0.92 is calibrated for the default pipeline,
+    /// whose climate is recomputed on the eroded relief (<see cref="WorldBuilder.WithClimateRefresh"/>): that
+    /// pass is drier inland, and 0.92 restores the river count the earlier tuning (scale 1 on the unrefreshed
+    /// climate) produced, 513 vs 513 over seven reference worlds. Use 1 with <c>WithClimateRefresh(false)</c> to
+    /// get the pre-refresh pipeline back.
+    /// </summary>
+    public float RiverThresholdScale { get; set; } = 0.92f;
     public int MaxRivers { get; set; } = 256;
 
     /// <summary>

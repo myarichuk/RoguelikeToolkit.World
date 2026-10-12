@@ -206,8 +206,8 @@ public class PlatePartitionTests
                 if (before[i].Biome != after[i].Biome)
                 {
                     flips++;
-                    Assert.True(IsMoistureBiome(before[i].Biome), "Smoothing must not flip gated biomes.");
-                    Assert.True(IsMoistureBiome(after[i].Biome), "Smoothing must flip within the moisture set.");
+                    Assert.True(FamilyOf(before[i].Biome) != 0, "Smoothing must not flip gated biomes.");
+                    Assert.True(FamilyOf(before[i].Biome) == FamilyOf(after[i].Biome), "Smoothing must flip within a family.");
                 }
             }
             enclavesBefore += CountEnclaves(seed, before);
@@ -216,6 +216,11 @@ public class PlatePartitionTests
         Assert.True(flips > 0, "Smoothing should flip speckled tiles on some seed.");
         Assert.True(enclavesAfter <= enclavesBefore, "Smoothing should not create enclaves.");
     }
+
+    // 1 = moisture set, 2 = hot arid set (desert/rock desert/badlands), 0 = gated: smoothing never touches it.
+    private static int FamilyOf(BiomeType biome)
+        => IsMoistureBiome(biome) ? 1
+         : biome == BiomeType.Desert || biome == BiomeType.RockDesert || biome == BiomeType.Badlands ? 2 : 0;
 
     private static bool IsMoistureBiome(BiomeType biome)
         => biome == BiomeType.Plains || biome == BiomeType.Forest

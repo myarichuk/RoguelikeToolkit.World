@@ -111,7 +111,7 @@ public class RiversLakesErosionTests
         Assert.True(Count(steep) > Count(flat) * 1.2, $"steep-aware {Count(steep)} vs global threshold {Count(flat)}");
 
         // Without the boost the old invariant holds: every river tile clears the single threshold.
-        float threshold = Hydrography.RiverThreshold(flat.TileCount, 1f);
+        float threshold = Hydrography.RiverThreshold(flat.TileCount, new HydrologyStage().RiverThresholdScale);
         foreach (var h in flat.Map.DataStore.GetSpan<HydrologyInfo>().ToArray().Where(h => h.IsRiver == 1))
             Assert.True(h.Flow >= threshold);
     }
@@ -129,7 +129,7 @@ public class RiversLakesErosionTests
         var receiver = new int[n];
         Hydrography.ComputeReceivers(store, surface, receiver);
         var stage = new HydrologyStage();
-        float floor = Hydrography.ChannelThreshold(Hydrography.RiverThreshold(n, 1f), float.MaxValue, stage.SteepBoost, stage.SteepSlope);
+        float floor = Hydrography.ChannelThreshold(Hydrography.RiverThreshold(n, stage.RiverThresholdScale), float.MaxValue, stage.SteepBoost, stage.SteepSlope);
         int checkedTiles = 0;
         for (int i = 0; i < n; i++)
         {

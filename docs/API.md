@@ -104,13 +104,23 @@ All temperature now comes from one function, `ClimateModel.Temperature`.
 and `RainSeasonality` (0 even .. 1 monsoon or Mediterranean). They are data for hosts and the inspector; the biome
 rules do not read them yet.
 
-Two climate refinements are opt-in because they change default worlds:
+Two climate refinements are on by default, and each can be switched off:
 
-- `WithClimate(c => c.MeridionalWind = 0.45)` turns the surface wind along the meridian (equatorward in the Hadley and
-  polar cells, poleward in the Ferrel cell). Default 0: purely zonal.
-- `WithClimateRefresh()` re-runs the climate on the eroded relief before hydrology and biomes (`ClimateRefreshStage`,
-  order 17, tied with erosion and placed after it by the stable sort). Measured on size 3-5: 8-23% of tiles change
-  biome and river counts drop 20-25%, so it needs its own calibration pass before it can be the default.
+- **Climate refresh** (`WithClimateRefresh(false)` to disable). Erosion runs after the first climate pass and moves the
+  coastline, because sediment fills shallows: a size-4 world gains around 20% more land tiles, and every one of them
+  kept the ocean's 0.55 rainfall floor. `ClimateRefreshStage` (order 17, tied with erosion and placed after it by the
+  stable sort) re-runs the same configured climate on the final relief, so rain shadows, temperature and the
+  maritime-distance term follow the coast and mountains the player sees. Measured over seven worlds (sizes 3-5): land
+  is 0.01-0.04 drier and 0.015-0.033 warmer, jungle drops from 16% to 12% of land, desert rises from 7% to 10%,
+  glacier falls from 13% to 10%, lakes are unchanged. Rivers fell 12%, so `HydrologyStage.RiverThresholdScale`
+  defaults to 0.92 (it was 1) to restore the count; on seven other worlds it landed at -4.7% in aggregate, with the
+  per-world scatter of +/-30% that a river count of 35-120 always has.
+- **Meridional wind** (`WithClimate(c => c.MeridionalWind = 0)` for purely zonal wind). The surface wind blows 0.3 of
+  its strength along the meridian (equatorward in the Hadley and polar cells, poleward in the Ferrel cell), about 17
+  degrees off the parallel. It leaves the mean temperature, rainfall and biome shares within half a point and moves
+  3-6% of tiles to another biome; what it changes is the direction of the rain shadows and maritime plumes.
+
+For the previous pipeline use `WithClimateRefresh(false)`, `MeridionalWind = 0` and `RiverThresholdScale = 1`.
 
 ## Editing a world: hand edits as a pipeline input
 

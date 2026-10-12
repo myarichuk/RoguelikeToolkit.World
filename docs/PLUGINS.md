@@ -13,7 +13,7 @@ ordering and layer contracts are shared.
 
 Default generation order (leave gaps for plugins): tectonics (10) →
 elevation (15) → climate (16) → erosion (17) → hydrology (18) → biomes (20).
-The opt-in `WithClimateRefresh()` adds a second climate pass that shares erosion's order 17 and runs right after it (stable sort).
+The default pipeline also has a second climate pass (`ClimateRefreshStage`, `WithClimateRefresh(false)` removes it) that shares erosion's order 17 and runs right after it (stable sort).
 
 ## Rules both kinds follow
 

@@ -13,10 +13,14 @@ public class ReviewFixesTests
         var p = new WorldGenerationPipeline();
         p.AddStage(new TectonicPlateGenerationStage(plates, seed));
         p.AddStage(new ElevationGenerationStage(seed));
-        p.AddStage(new ClimateStage(seed));
-        p.AddStage(new ErosionGenerationStage());
-        p.AddStage(new HydrologyStage());
-        p.AddStage(new LocalMapGenerationStage(seed));
+        var climate = new ClimateStage(seed);
+        var hydrology = new HydrologyStage();
+        float scale = hydrology.RiverThresholdScale; // the builder wires one scale through erosion, hydrology and biomes
+        p.AddStage(climate);
+        p.AddStage(new ErosionGenerationStage { RiverThresholdScale = scale });
+        p.AddStage(new ClimateRefreshStage(climate));
+        p.AddStage(hydrology);
+        p.AddStage(new LocalMapGenerationStage(seed) { RiverThresholdScale = scale });
         return p;
     }
 

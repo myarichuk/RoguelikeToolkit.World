@@ -47,6 +47,29 @@ using (var world = new WorldBuilder().WithSize(3).WithSeed(42).Build())
     Mix((ulong)local.Tiles.Length);
 }
 
+// 2b. Planet parameters (tilt, flux, spin, custom insolation) and hand edits re-derived by Recompute: the
+// climate refresh pass, meridional wind, ClimateModel and the edit layer all run under the AOT compiler too.
+foreach (var planet in new[]
+{
+    new PlanetParameters { ObliquityDegrees = 60, StellarFlux = 1.1, RotationRate = 2 },
+    new PlanetParameters { Insolation = new TidallyLockedInsolation(new Vector3D(1, 0, 0)) },
+})
+{
+    using var tilted = new WorldBuilder().WithSize(3).WithSeed(7).WithPlanet(planet).WithUserEdits().Build();
+    var tClimate = tilted.Map.DataStore.GetSpan<ClimateInfo>();
+    for (int i = 0; i < tClimate.Length; i++)
+    {
+        Mix((ulong)BitConverter.SingleToInt32Bits(tClimate[i].Temperature));
+        Mix((ulong)BitConverter.SingleToInt32Bits(tClimate[i].RainSeasonality));
+    }
+    Check(tilted.Editable, "editable world");
+    tilted.Edits[tilted.TileCount / 2] = new UserEditInfo { HeightDelta = 0.2f };
+    tilted.Recompute();
+    var tHeights = tilted.Map.DataStore.GetSpan<ElevationInfo>();
+    Mix((ulong)BitConverter.SingleToInt32Bits(tHeights[tilted.TileCount / 2].Height));
+    Mix((ulong)tilted.Rivers.Rivers.Count);
+}
+
 // 3. Pipeline discovery (reflection over Core's stage types) + contract validation.
 using (var pipeline = new WorldGenerationPipeline())
 {

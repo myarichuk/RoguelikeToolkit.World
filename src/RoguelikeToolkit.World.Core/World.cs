@@ -286,7 +286,7 @@ public sealed class WorldBuilder
     private Action<ClimateStage>? _climateConfig;
     private Action<HydrologyStage>? _hydrologyConfig;
     private bool _userEdits;
-    private bool _climateRefresh;
+    private bool _climateRefresh = true;
 
     /// <summary>
     /// Largest supported planet size (backlog A2, from the Phase 2
@@ -341,7 +341,15 @@ public sealed class WorldBuilder
     /// <summary>
     /// Re-runs the climate on the eroded relief before hydrology and biomes (see <see cref="ClimateRefreshStage"/>),
     /// so rain shadows and biome borders follow the mountains the player sees rather than the raw tectonic
-    /// surface. Costs one more climate pass.
+    /// surface. On by default; <c>WithClimateRefresh(false)</c> restores the single-pass pipeline (pair it with
+    /// <c>RiverThresholdScale = 1</c>, which is what that pipeline was calibrated at).
+    /// <para>
+    /// Why it is the default: erosion moves the coastline (sediment fills shallows, so a size-4 world gains
+    /// around 20% more land tiles), and the single pass left every one of those tiles with the ocean's 0.55
+    /// precipitation floor and no maritime-distance correction. The refresh measured on seven worlds: land
+    /// 0.01-0.04 drier, 0.015-0.033 warmer, jungle 16% to 12% of land, desert 7% to 10%, glacier 13% to 10%;
+    /// river count restored by the hydrology scale (0.92), lakes unchanged.
+    /// </para>
     /// </summary>
     public WorldBuilder WithClimateRefresh(bool enabled = true) { _climateRefresh = enabled; return this; }
 

@@ -39,9 +39,11 @@ public class ClimateStage : IWorldGeneratorStage, ISeededStage
     /// Share of the surface wind that blows along the meridian (towards the equator in the Hadley and
     /// polar cells, towards the pole in the Ferrel cell), as the Coriolis force turns the pressure-gradient
     /// flow: the north-east trades and the south-westerlies instead of due-east/due-west. 0 keeps the
-    /// wind purely zonal.
+    /// wind purely zonal. 0.3 (about 17 degrees off the parallel) is the default: measured over seven
+    /// worlds it leaves mean temperature, rainfall and the biome shares within half a point, and turns the
+    /// rain shadows and maritime plumes diagonal as they are on Earth.
     /// </summary>
-    public double MeridionalWind { get; set; } = 0.0;
+    public double MeridionalWind { get; set; } = 0.3;
     public Vector3D PrevailingWindFallback { get; set; } = new Vector3D(1, 0, 0);
 
     /// <summary>
