@@ -1,5 +1,12 @@
 # Changelog
 
+## [1.1.0](https://github.com/myarichuk/RoguelikeToolkit.World/compare/v1.0.0...v1.1.0) (2026-10-12)
+
+
+### Features
+
+* browser map editor + dual license (PolyForm Noncommercial / commercial) ([1557063](https://github.com/myarichuk/RoguelikeToolkit.World/commit/1557063d821c4ac8ff7475337e6c698fff6ce3a4))
+
 ## [1.0.0](https://github.com/myarichuk/RoguelikeToolkit.World/compare/v0.3.0...v1.0.0) (2026-10-11)
 
 

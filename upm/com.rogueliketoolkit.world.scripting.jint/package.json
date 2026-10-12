@@ -1,7 +1,7 @@
 {
   "name": "com.rogueliketoolkit.world.scripting.jint",
   "displayName": "RoguelikeToolkit World Scripting (Jint)",
-  "version": "1.0.0",
+  "version": "1.1.0",
   "unity": "2022.3",
   "description": "Sandboxed JavaScript (Jint) world generation stages for RoguelikeToolkit World: no CLR access, no IO, statement/memory/time budgets.",
   "license": "PolyForm-Noncommercial-1.0.0",
@@ -22,7 +22,7 @@
     "roguelike"
   ],
   "dependencies": {
-    "com.rogueliketoolkit.world.core": "1.0.0",
+    "com.rogueliketoolkit.world.core": "1.1.0",
     "org.nuget.jint": "4.16.2"
   }
 }
