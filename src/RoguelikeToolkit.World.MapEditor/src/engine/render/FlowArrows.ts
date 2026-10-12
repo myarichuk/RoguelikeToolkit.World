@@ -15,7 +15,7 @@ export type FlowKind = 'wind' | 'current';
 export function drawFlowArrows(ctx: CanvasRenderingContext2D, doc: MapDocument, kind: FlowKind, zoom: number, view: { x0: number; y0: number; x1: number; y1: number }): void {
   const climate = doc.physics?.climate;
   if (!climate) return;
-  const step = Math.min(128, Math.max(16, 2 ** Math.round(Math.log2(56 / zoom))));
+  const step = Math.min(256, Math.max(32, 2 ** Math.round(Math.log2(112 / zoom))));
   const e = kind === 'wind' ? CI.windE : CI.currentE, n = kind === 'wind' ? CI.windN : CI.currentN;
   const tile = doc.world.tile;
   ctx.save();
@@ -35,9 +35,9 @@ export function drawFlowArrows(ctx: CanvasRenderingContext2D, doc: MapDocument, 
       if (kind === 'current' && doc.elevationAt(x, y) >= 0) continue;
       // The map's y runs north -> south, so north is up the screen: negative y.
       const ux = east / m, uy = -north / m;
-      const len = step * (0.28 + 0.5 * Math.min(1, m));
+      const len = step * (kind === 'wind' ? 0.5 + 0.4 * Math.min(1, m) : 0.4 + 0.3 * Math.min(1, m));
       const ax = x - (ux * len) / 2, ay = y - (uy * len) / 2, bx = x + (ux * len) / 2, by = y + (uy * len) / 2;
-      const head = Math.min(len * 0.3, step * 0.2);
+      const head = Math.min(len * 0.3, step * 0.14);
       let stroke = '#ffffff';
       if (kind === 'current') {
         const heat = climate[t * CLIMATE_STRIDE + CI.oceanHeat];
@@ -45,12 +45,23 @@ export function drawFlowArrows(ctx: CanvasRenderingContext2D, doc: MapDocument, 
       }
       const path = new Path2D();
       path.moveTo(ax, ay); path.lineTo(bx, by);
-      path.moveTo(bx - ux * head - uy * head * 0.55, by - uy * head + ux * head * 0.55);
-      path.lineTo(bx, by);
-      path.lineTo(bx - ux * head + uy * head * 0.55, by - uy * head - ux * head * 0.55);
-      // A dark halo under the stroke keeps the arrows readable over both the pale and the saturated ramp ends.
-      ctx.strokeStyle = 'rgba(20,20,30,0.7)'; ctx.lineWidth = 2.8 / zoom; ctx.stroke(path);
-      ctx.strokeStyle = stroke; ctx.lineWidth = 1.3 / zoom; ctx.stroke(path);
+      const lx = bx - ux * head - uy * head * 0.55, ly = by - uy * head + ux * head * 0.55;
+      const rx = bx - ux * head + uy * head * 0.55, ry = by - uy * head - ux * head * 0.55;
+      // Two glyphs so the layers cannot be mistaken for each other: wind is a thin line with an open chevron,
+      // a current is a thicker, coloured line with a solid triangular head.
+      if (kind === 'wind') {
+        path.moveTo(lx, ly); path.lineTo(bx, by); path.lineTo(rx, ry);
+        // A dark halo under the stroke keeps the arrows readable over both the pale and the saturated ramp ends.
+        ctx.strokeStyle = 'rgba(20,20,30,0.7)'; ctx.lineWidth = 2.8 / zoom; ctx.stroke(path);
+        ctx.strokeStyle = stroke; ctx.lineWidth = 1.3 / zoom; ctx.stroke(path);
+      } else {
+        ctx.strokeStyle = 'rgba(20,20,30,0.7)'; ctx.lineWidth = 4.2 / zoom; ctx.stroke(path);
+        ctx.strokeStyle = stroke; ctx.lineWidth = 2.6 / zoom; ctx.stroke(path);
+        const tri = new Path2D();
+        tri.moveTo(bx + ux * head * 0.4, by + uy * head * 0.4); tri.lineTo(lx, ly); tri.lineTo(rx, ry); tri.closePath();
+        ctx.fillStyle = stroke; ctx.lineWidth = 1 / zoom; ctx.strokeStyle = 'rgba(20,20,30,0.7)';
+        ctx.stroke(tri); ctx.fill(tri);
+      }
     }
   }
   ctx.restore();

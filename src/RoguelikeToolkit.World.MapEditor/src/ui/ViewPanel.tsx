@@ -38,6 +38,9 @@ export function ViewPanel() {
         {v.layers.capacity && (
           <Segmented<CapacityKind> value={v.capacityKind} options={CAPACITY_KINDS.map((k) => ({ value: k.key, label: k.label, hint: k.hint }))} onChange={vm.setCapacityKind} />
         )}
+        {v.layers.wind && v.layers.currents && (
+          <p className="hint">Thin white lines with an open arrowhead are wind. Thick coloured arrows with a solid head are sea currents (red warm, blue cold).</p>
+        )}
         {v.layers.climate && (
           <>
             <Segmented<ClimateKind> value={v.climateKind} options={CLIMATE_KINDS.map((k) => ({ value: k.key, label: k.label, hint: k.hint }))} onChange={vm.setClimateKind} />
