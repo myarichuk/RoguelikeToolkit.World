@@ -66,9 +66,5 @@ export function Inspector() {
     );
   }
 
-  return (
-    <Section title="Inspector">
-      <p className="hint">Use <b>Inspect</b> (I) to pick rivers, ranges, seas, lakes, forests, settlements and resources; <b>Select</b> (V) for stamps and labels. Filters in the <b>View</b> tab decide what can be picked.</p>
-    </Section>
-  );
+  return null;
 }

@@ -9,6 +9,7 @@ export function StatusBar() {
   const gen = t.totalMs ? `gen ${Math.round(t.generateMs ?? 0)} + raster ${Math.round(t.rasterMs ?? 0)} + features ${Math.round(t.featuresMs ?? 0)} + names ${Math.round(t.namesMs ?? 0)} ms` : '';
   return (
     <footer className="statusbar">
+      {s.busy && <span className="busy"><span className="spinner" />{s.busy}</span>}
       <span className="grow">{s.status}</span>
       {c && (
         <span title={SHELL_HINTS.cursor}>

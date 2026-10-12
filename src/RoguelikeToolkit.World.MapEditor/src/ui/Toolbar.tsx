@@ -31,6 +31,7 @@ export function ToolOptionsPanel() {
   return (
     <Section title={info.label}>
       <p className="hint">{info.hint}</p>
+      {(s.tool === 'inspect' || s.tool === 'select') && <p className="hint">Filters in the <b>View</b> tab decide what can be picked. Picked features, stamps and labels are edited here.</p>}
       {sized && <Slider label="Radius" value={o.radius} min={2} max={200} step={1} onChange={(radius) => vm.setOptions({ radius })} hint="Brush size in map units. [ and ] change it from the keyboard." />}
       {s.tool === 'terrain' && (
         <>

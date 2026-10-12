@@ -1,12 +1,12 @@
 import { useEffect, useState } from 'react';
-import { GeneratePanel } from './GeneratePanel';
+import { GeneratePanel, GenerateFooter } from './GeneratePanel';
 import { useApp, useViewModel } from './hooks';
-import { Inspector } from './Inspector';
 import { MapView } from './MapView';
 import { PacksPanel } from './PacksPanel';
 import { StatusBar } from './StatusBar';
 import { ThemePanel } from './ThemePanel';
-import { Toolbar, ToolOptionsPanel } from './Toolbar';
+import { Properties } from './Properties';
+import { Toolbar } from './Toolbar';
 import { TopBar } from './TopBar';
 import { ViewPanel } from './ViewPanel';
 
@@ -44,10 +44,13 @@ export function App() {
         }}>
           {TABS.map((t) => <button key={t.id} id={`tab-${t.id}`} role="tab" aria-selected={tab === t.id} aria-controls="side-panel" tabIndex={tab === t.id ? 0 : -1} className={tab === t.id ? 'active' : ''} onClick={() => setTab(t.id)}>{t.label}</button>)}
         </div>
-        <div className="scroll" id="side-panel" role="tabpanel" aria-labelledby={`tab-${tab}`}><Active /></div>
+        <div className="tabpanel" id="side-panel" role="tabpanel" aria-labelledby={`tab-${tab}`}>
+          <div className="scroll"><Active /></div>
+          {tab === 'world' && <GenerateFooter />}
+        </div>
       </aside>
       <main className="center"><MapView /></main>
-      <aside className="right"><div className="scroll"><ToolOptionsPanel /><Inspector /></div></aside>
+      <Properties />
       <StatusBar />
       {shell.error && <div className="toast" role="alert"><b>Error</b><pre>{shell.error}</pre><button className="dismiss" onClick={vms.shell.dismissError}><small>Dismiss</small></button></div>}
     </div>

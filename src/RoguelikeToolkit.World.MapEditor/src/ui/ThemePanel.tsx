@@ -4,13 +4,14 @@ import { MAP_COLORS, MAP_NUMBERS } from '../viewmodels/ThemeEditorViewModel';
 import { browserFiles } from './files';
 import { useApp, useViewModel } from './hooks';
 import { ColorField, Section, Select, Slider, TextField, Toggle } from './controls';
-import { THEME_HINTS } from './glossary';
+import { SHELL_HINTS, THEME_HINTS, WORLD_HINTS } from './glossary';
 
 /** Live theme editor: every control writes into the user overlay pack. */
 export function ThemePanel() {
   const { vms } = useApp();
   const vm = vms.theme;
   const s = useViewModel(vm);
+  const shell = useViewModel(vms.shell);
   const t = s.theme;
   const kinds = Object.keys(t.labels);
   const [kind, setKind] = useState(kinds[0] ?? 'city');
@@ -22,9 +23,11 @@ export function ThemePanel() {
         {s.edited && <button onClick={vm.reset} title="Drop your edits to this theme">Reset</button>}
         <button onClick={() => { const b = vm.exportPack(); if (b) browserFiles.save(b, 'my-theme-pack.json'); }} disabled={!s.edited} title="Save your edits as a content pack">Export</button>
       </>}>
+        <Select label="Theme" value={shell.themeId} options={shell.themes.map((th) => ({ value: th.id, label: `${th.name}${th.edited ? ' (edited)' : ''}` }))} onChange={vms.shell.setTheme} hint={SHELL_HINTS.theme} />
         <TextField label="Name" value={t.name} onCommit={vm.rename} hint={THEME_HINTS.name} />
         <p className="hint">Edits are stored in the <b>My edits</b> pack (non-destructive). Export it to share or ship a theme.</p>
       </Section>
+      <CoastlineSection />
       <Section title="Map">
         {MAP_COLORS.map((c) => <ColorField key={c.key} label={c.label} value={t.map[c.key] as string} onChange={(v) => vm.setMap(c.key, v)} hint={THEME_HINTS[c.key]} />)}
         {MAP_NUMBERS.map((n) => <Slider key={n.key} label={n.label} value={t.map[n.key] as number} min={n.min} max={n.max} step={n.step} onChange={(v) => vm.setMap(n.key, v)} hint={THEME_HINTS[n.key]} />)}
@@ -55,5 +58,19 @@ export function ThemePanel() {
         {Object.entries(t.ui ?? {}).map(([k, v]) => <ColorField key={k} label={k.replace(/^--/, '')} value={v} onChange={(c) => vm.setUi(k, c)} hint={THEME_HINTS.chrome} />)}
       </Section>
     </>
+  );
+}
+
+/** Cosmetic only: how the hexagonal tile coast is drawn. Lives with the theme, not with generation. */
+function CoastlineSection() {
+  const { vms } = useApp();
+  const vm = vms.generate;
+  const s = useViewModel(vm);
+  return (
+    <Section title="Coastline style" hint="Cosmetic only: how the hexagonal tile coast is drawn. It does not change the simulated world.">
+      <Slider label="Warp" value={s.warp} min={0} max={16} step={0.25} onChange={(warp) => vm.setCoast({ warp })} format={(v) => `${v} mu`} hint={WORLD_HINTS.warp} />
+      <Slider label="Detail noise" value={s.detail} min={0} max={0.2} step={0.005} onChange={(detail) => vm.setCoast({ detail })} hint={WORLD_HINTS.detailNoise} />
+      <Slider label="Ripple spacing" value={s.ring} min={1} max={8} step={0.25} onChange={(ring) => vm.setCoast({ ring })} format={(v) => `${v} mu`} hint={WORLD_HINTS.ripple} />
+    </Section>
   );
 }

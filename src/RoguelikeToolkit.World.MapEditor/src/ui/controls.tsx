@@ -2,11 +2,28 @@ import { useEffect, useState, type ReactNode } from 'react';
 
 // Small, dumb, reusable controls. No state of their own beyond text-entry drafts.
 
-export function Section({ title, children, actions, hint }: { title: string; children: ReactNode; actions?: ReactNode; hint?: string }) {
+// Remembered per title so a collapsed section stays collapsed when its tab is unmounted and remounted.
+const sectionOpen = new Map<string, boolean>();
+
+/**
+ * A titled block. `collapsible` turns the title into a disclosure button; `summary` is what the
+ * closed section shows in its place ("Earth", "8 selected") so the state is visible without opening it.
+ */
+export function Section({ title, children, actions, hint, collapsible, defaultOpen = true, summary }: {
+  title: string; children: ReactNode; actions?: ReactNode; hint?: string; collapsible?: boolean; defaultOpen?: boolean; summary?: string;
+}) {
+  const [open, setOpen] = useState(() => !collapsible || (sectionOpen.get(title) ?? defaultOpen));
+  const toggle = () => { sectionOpen.set(title, !open); setOpen(!open); };
   return (
     <section className="section">
-      <header><h3 title={hint}>{title}</h3>{actions && <div className="actions">{actions}</div>}</header>
-      {children}
+      <header>
+        {collapsible
+          ? <h3 title={hint}><button className="disclosure" aria-expanded={open} onClick={toggle}><span aria-hidden="true">{open ? '▾' : '▸'}</span>{title}</button></h3>
+          : <h3 title={hint}>{title}</h3>}
+        {collapsible && !open && summary && <span className="summary">{summary}</span>}
+        {actions && open && <div className="actions">{actions}</div>}
+      </header>
+      {open && children}
     </section>
   );
 }

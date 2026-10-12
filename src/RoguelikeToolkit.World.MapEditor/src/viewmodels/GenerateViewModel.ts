@@ -13,12 +13,13 @@ export interface GenerateState extends ClimateModelSettings {
   obliquity: number;
   flux: number;
   rotation: number;
-  title: string;
   density: number;
   /** Selected `race|culture` keys; empty = the default mix. */
   styles: string[];
   available: StyleOption[];
   busy: boolean;
+  /** True when a generator input differs from what the current document was generated or loaded with. */
+  stale: boolean;
   warp: number;
   detail: number;
   ring: number;
@@ -29,17 +30,34 @@ export class GenerateViewModel extends ViewModel<GenerateState> {
   constructor(private readonly editor: Editor) {
     const s = editor.doc.settings;
     super({
-      seed: 1337, size: 5, plates: 14, ...EARTH, ...CLIMATE_MODEL_DEFAULTS, title: 'Untitled world', density: 1, styles: [...DEFAULT_STYLES], available: [], busy: false,
+      seed: 1337, size: 5, plates: 14, ...EARTH, ...CLIMATE_MODEL_DEFAULTS, density: 1, styles: [...DEFAULT_STYLES], available: [], busy: false, stale: false,
       warp: s.warp, detail: s.detail, ring: s.ring,
     });
+    this.baseline = this.paramsKey();
     this.track(editor.events.on('content', () => this.syncStyles()));
     this.track(editor.events.on('busy', (b) => this.set({ busy: !!b })));
     this.track(editor.events.on('doc', (doc) => this.syncDoc(doc.settings)));
     this.syncStyles();
   }
 
+  private baseline = '';
+
+  private paramsKey(): string {
+    const s = this.state;
+    return JSON.stringify([s.seed, s.size, s.plates, s.obliquity, s.flux, s.rotation, s.climateRefresh, s.meridionalWind, s.windCellBlend, s.oceanHeat, s.oceanRain, s.aeolian, s.density, s.styles]);
+  }
+
+  /** Every setter funnels through here, so `stale` can never drift from the inputs. */
+  protected override set(patch: Partial<GenerateState>): void {
+    super.set(patch);
+    super.set({ stale: this.paramsKey() !== this.baseline });
+  }
+
   private syncDoc(s: DocSettings): void {
     this.set({ warp: s.warp, detail: s.detail, ring: s.ring, obliquity: s.obliquity, flux: s.flux, rotation: s.rotation, climateRefresh: s.climateRefresh, meridionalWind: s.meridionalWind, windCellBlend: s.windCellBlend, oceanHeat: s.oceanHeat, oceanRain: s.oceanRain, aeolian: s.aeolian });
+    // A document was generated, opened or created: whatever the inputs say now is the new baseline.
+    this.baseline = this.paramsKey();
+    this.set({});
   }
 
   private syncStyles(): void {
@@ -63,7 +81,6 @@ export class GenerateViewModel extends ViewModel<GenerateState> {
   setAeolian = (v: number): void => this.set({ aeolian: Math.round(this.clampTo(v, CLIMATE_MODEL_LIMITS.aeolian)) });
   resetModel = (): void => this.set({ ...CLIMATE_MODEL_DEFAULTS });
   resetPlanet = (): void => this.set({ ...EARTH });
-  setTitle = (title: string): void => this.set({ title });
   setDensity = (density: number): void => this.set({ density });
 
   toggleStyle = (key: string): void => {
@@ -73,7 +90,7 @@ export class GenerateViewModel extends ViewModel<GenerateState> {
 
   generate = async (): Promise<void> => {
     const s = this.state;
-    await this.editor.generate({ seed: s.seed, size: s.size, plates: s.plates, planet: { obliquity: s.obliquity, flux: s.flux, rotation: s.rotation }, model: { climateRefresh: s.climateRefresh, meridionalWind: s.meridionalWind, windCellBlend: s.windCellBlend, oceanHeat: s.oceanHeat, oceanRain: s.oceanRain, aeolian: s.aeolian }, styles: s.styles, title: s.title, density: s.density }).catch(() => {});
+    await this.editor.generate({ seed: s.seed, size: s.size, plates: s.plates, planet: { obliquity: s.obliquity, flux: s.flux, rotation: s.rotation }, model: { climateRefresh: s.climateRefresh, meridionalWind: s.meridionalWind, windCellBlend: s.windCellBlend, oceanHeat: s.oceanHeat, oceanRain: s.oceanRain, aeolian: s.aeolian }, styles: s.styles, title: this.editor.doc.settings.title || undefined, density: s.density }).catch(() => {});
   };
 
   /** Coastline look: live, undoable (one step per slider scrub). */
