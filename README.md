@@ -64,7 +64,7 @@ build from the finished tectonics + climate + hydrology.
 - **Field layers** (dense, blittable, in `WorldDataStore`): `TectonicPlate`
   (16 bytes per tile: `Crust` + `Boundary`, continentality, boundary rings, a
   signed orogeny driver, and a plate `Id` into the per-plate `PlateInfo` table), `ElevationInfo`, `HydrologyInfo` (discharge,
-  water-body id, river flag, routing surface, lake depth, playa flag),
+  water-body id, river flag, routing surface, lake depth, playa, endorheic and saline flags),
   `ClimateInfo` (temperature, precipitation, wind), `LocalMapInfo` (biome,
   danger, seed). File-backed stores use the v3 header (up to 32 field
   layers and tables); old v1/v2 files are rejected with `InvalidDataException` by design.
@@ -73,7 +73,7 @@ build from the finished tectonics + climate + hydrology.
   (ocean/seas plus open and endorheic lakes, with boundary loops),
   `RangeCatalog` (mountain ranges, valleys, canyons, playas), and
   `DepositCatalog` (ore/fuel/mineral overlay: iron, copper, gold, silver,
-  tin, lead-zinc, uranium, coal, oil, gas, salt, gems, bauxite). Query in
+  tin, lead-zinc, uranium, coal, oil, gas, salt, gypsum, gems, bauxite). Query in
   tile-id space; call `GeoWkt` / `World.RiverToWkt` for WKT only at the
   boundary.
 
@@ -98,9 +98,17 @@ build from the finished tectonics + climate + hydrology.
   flat-resolved channels and desert transmission loss. Channels start on a
   smaller catchment where the ground is steep (area-slope initiation) and,
   once started, persist downstream. Depressions pond by water balance (inflow
-  vs evaporation) into open or endorheic lakes; hollows shallower than
-  `LakeSolver.MinLakeDepth` are marshes, not lakes; dry sumps become playas.
-  Every river terminates: sea, lake, or sink.
+  after transmission loss vs evaporation) into open or endorheic lakes; hollows
+  shallower than `LakeSolver.MinLakeDepth` are marshes, not lakes; dry sumps
+  become playas. The balance reads land cover (`LandCover`, the provisional
+  climate-only biome of each tile): forest and jungle shed less rain, sand
+  drinks it, bare rock and permafrost shed more; open water evaporates faster
+  in desert air than in humid air; sandy beds leak while peat, clay, salt crust
+  and permafrost hold; a swamp swallows shallow ponds as wetland. Closed
+  depressions swallow what reaches them. A lake that evaporates most of its
+  inflow (`Lake.Flushing`) is saline even when open; `HydrologyInfo.Endorheic`
+  marks every tile whose water has no path to the sea and `Saline` the brine
+  and the crusted ground around it. Every river terminates: sea, lake, or sink.
 - **Climate** bands precipitation by latitude (`ClimateStage.ZonalFactor`: wet
   equator, a dry subtropical belt near 27 degrees, wet storm tracks near 55,
   dry poles; `ZonalStrength` scales or disables it). Aridity is hot and dry
@@ -110,9 +118,19 @@ build from the finished tectonics + climate + hydrology.
   is a family of five biomes (`BiomeClassifier.IsDesert`): `Desert` (sand,
   low flat ground), `RockDesert` (stony plateau above 0.30), `Badlands`
   (dissected ground, a 0.12 height step to a neighbour), `SaltFlat` (playa
-  floors and the shores of lakes in dry country) and `ColdDesert` (very dry
+  floors and the crusted margins of saline lakes, from the lake solver) and `ColdDesert` (very dry
   but below the hot-desert temperature). The 2D editor and the 3D globe both
   colour them, and the editor stamps each with its own scatter rules.
+- **Deposits** key on the crust that hosts them (`Geology.Classify`: craton,
+  orogen, rift, platform, ridge, arc) and have no fallback score, so a deposit
+  is always explicable by where it sits. Orogens and arcs: hydrothermal Cu, Au,
+  Ag, Pb-Zn, Sn and gems; cratons (old, interior, quiet basement): banded iron,
+  greenstone and paleoplacer Au, unconformity and placer U, diamond pipes;
+  rifts and ridges: volcanogenic massive sulfide (Cu, Zn, Pb, Ag). Evaporites
+  form only in low endorheic basins where evaporation beats rainfall: halite
+  on the saline sump, gypsum on its margin. Coal, oil, gas, roll-front
+  uranium and bauxite follow sedimentary platforms, shelves and old flat
+  tropical surfaces.
 - **Glaciers** are a climate-aware cover mask (cold + accumulation, with dry
   polar interiors staying tundra) and a first-class `Glacier` biome;
   `Canyon` is a biome too. The visualizer adds Climate and Deposits color

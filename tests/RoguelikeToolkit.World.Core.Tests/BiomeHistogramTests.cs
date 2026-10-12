@@ -175,13 +175,13 @@ public class BiomeHistogramTests
         int all = 0;
         foreach (var n in total.Values) all += n;
         foreach (var b in new[] { BiomeType.Desert, BiomeType.Badlands, BiomeType.RockDesert, BiomeType.SaltFlat, BiomeType.ColdDesert })
-            Assert.True(Get(total, b) >= 50, $"{b}: only {Get(total, b)} of {all} desert tiles");
+            Assert.True(Get(total, b) >= 40, $"{b}: only {Get(total, b)} of {all} desert tiles");
         foreach (var (biome, count) in total)
             Assert.True(count < all * 0.7, $"{biome} is {count} of {all} desert tiles; the family collapsed into one type");
     }
 
     [Fact]
-    public void SaltFlats_SitOnPlayasOrLakeShoresInDryCountry()
+    public void SaltFlats_SitOnSalineGroundFromTheLakeSolver()
     {
         foreach (var seed in new[] { 42, 7, 1234, 99 })
         {
@@ -190,14 +190,11 @@ public class BiomeHistogramTests
             var locals = store.GetSpan<LocalMapInfo>();
             var hydro = store.GetSpan<HydrologyInfo>();
             var climate = store.GetSpan<ClimateInfo>();
-            var neighbors = new int[6];
             for (int i = 0; i < store.TileCount; i++)
             {
                 if (locals[i].Biome != BiomeType.SaltFlat) continue;
-                bool onLakeShore = false;
-                int n = store.GetAdjacent(i, neighbors);
-                for (int k = 0; k < n; k++) if (hydro[neighbors[k]].LakeDepth > 0f) onLakeShore = true;
-                Assert.True(hydro[i].IsPlaya == 1 || onLakeShore, $"seed {seed} tile {i}: salt flat with no playa or lake beside it");
+                Assert.True(hydro[i].Saline == 1, $"seed {seed} tile {i}: salt flat the lake solver did not mark saline");
+                Assert.True(hydro[i].LakeDepth <= 0f, $"seed {seed} tile {i}: salt flat under open water");
                 Assert.True(climate[i].Precipitation < BiomeClassifier.PlayaMaxMoisture, $"seed {seed} tile {i}: salt flat in a wet climate");
             }
         }

@@ -40,6 +40,12 @@ public class HydrologyStage : IWorldGeneratorStage
     /// </summary>
     public float LossFactor { get; set; } = 1.0f;
 
+    /// <summary>
+    /// Let the provisional biome shape the water balance (runoff coefficient, lake evaporation,
+    /// bed seepage, minimum lake depth). False restores the climate-only balance.
+    /// </summary>
+    public bool UseLandCover { get; set; } = true;
+
     public void Execute(WorldMap map)
     {
         var store = map.DataStore;
@@ -53,24 +59,45 @@ public class HydrologyStage : IWorldGeneratorStage
         var vectors = store.GetTileVectors();
         bool hasClimate = store.IsLayerRegistered<ClimateInfo>();
         var climate = hasClimate ? store.GetSpan<ClimateInfo>() : default;
+        var heights = new float[n];
+        for (int i = 0; i < n; i++) heights[i] = elev[i].Height;
+
+        // Land cover: the biome each tile will be, judged from climate alone
+        // (the biome stage runs after this one). It sets how much of the rain
+        // a catchment sheds and what a lake over it loses. Without a climate
+        // layer there is nothing to classify, and cover stays neutral.
+        var cover = new BiomeType[n];
+        Span<int> reliefScratch = stackalloc int[6];
+        if (hasClimate && UseLandCover)
+        {
+            for (int i = 0; i < n; i++)
+            {
+                float relief = CanyonAnalysis.Relief(store, heights, i, reliefScratch);
+                cover[i] = LandCover.Provisional(heights[i], climate[i].Temperature, climate[i].Precipitation, relief);
+            }
+        }
+        else
+        {
+            for (int i = 0; i < n; i++) cover[i] = heights[i] >= ElevationGenerationStage.SeaLevel ? BiomeType.Plains : BiomeType.Ocean;
+        }
+
         var runoff = new float[n];
+        var rain = new float[n];   // runoff on neutral cover: the reference the transmission-loss deficit is measured against
         var evap = new float[n];
         for (int i = 0; i < n; i++)
         {
             if (hasClimate)
             {
-                runoff[i] = Glaciology.RunoffWeight(vectors[i], elev[i].Height, climate[i].Precipitation, climate[i].Temperature);
+                runoff[i] = Glaciology.RunoffWeight(vectors[i], elev[i].Height, climate[i].Precipitation, climate[i].Temperature, LandCover.RunoffCoefficient(cover[i]));
+                rain[i] = Glaciology.RunoffWeight(vectors[i], elev[i].Height, climate[i].Precipitation, climate[i].Temperature);
                 evap[i] = Hydrography.EvaporationRate(climate[i].Temperature);
             }
             else
             {
-                runoff[i] = Glaciology.RunoffWeight(vectors[i], elev[i].Height);
+                runoff[i] = rain[i] = Glaciology.RunoffWeight(vectors[i], elev[i].Height);
                 evap[i] = Hydrography.EvaporationRate(Glaciology.EstimateTemperature(vectors[i], elev[i].Height));
             }
         }
-
-        var heights = new float[n];
-        for (int i = 0; i < n; i++) heights[i] = elev[i].Height;
 
         // Fill depressions, route once to measure catchment supply, solve lake
         // water balance, then route for real on the leveled hydro surface.
@@ -79,9 +106,23 @@ public class HydrologyStage : IWorldGeneratorStage
         var recvFilled = new int[n];
         var depthFilled = new int[n];
         Hydrography.ComputeReceivers(store, filled, recvFilled, depthFilled);
+        // Transmission loss: every land tile keeps its water deficit
+        // (evaporation minus rainfall) out of the channel, so arid tiles
+        // contribute nothing downstream and desert rivers fed by distant wet
+        // headwaters shrink and can die in inland sinks (Nile/Okavango-style),
+        // while humid rivers persist. The loss is charged before lakes are
+        // solved too, so a basin in dry country is fed by what survives the
+        // desert and can end up closed instead of overflowing on phantom water.
+        var loss = new float[n];
+        for (int i = 0; i < n; i++)
+        {
+            if (heights[i] >= ElevationGenerationStage.SeaLevel)
+                loss[i] = (Math.Max(0f, evap[i] - rain[i]) + evap[i] * 0.1f) * LossFactor;
+        }
         var flowFilled = new float[n];
-        Hydrography.AccumulateFlow(store, filled, recvFilled, runoff, flowFilled, default, default, depthFilled);
-        var lakes = LakeSolver.Solve(store, heights, filled, flowFilled, recvFilled, runoff, evap);
+        Hydrography.AccumulateFlow(store, filled, recvFilled, runoff, flowFilled, default, loss, depthFilled);
+        var lakes = LakeSolver.Solve(store, heights, filled, flowFilled, recvFilled, runoff, evap,
+            (float)ElevationGenerationStage.SeaLevel, hasClimate && UseLandCover ? cover : default, loss);
 
         var evapSink = new float[n];
         foreach (var lake in lakes.Lakes)
@@ -89,16 +130,17 @@ public class HydrologyStage : IWorldGeneratorStage
             if (lake.IsOpen && lake.Outlet >= 0) evapSink[lake.Outlet] = lake.EvapTotal;
             else if (!lake.IsOpen && lake.Tiles.Count > 0) evapSink[lake.Tiles[0]] += lake.EvapTotal;
         }
-        // Transmission loss: every land tile keeps its water deficit
-        // (evaporation minus rainfall) out of the channel, so arid tiles
-        // contribute nothing downstream and desert rivers fed by distant wet
-        // headwaters shrink and can die in inland sinks (Nile/Okavango-style),
-        // while humid rivers persist.
-        var loss = new float[n];
+        // A closed depression without a lake (dry basin, closed marsh) swallows
+        // everything that reaches it: a playa is where rivers go to die.
         for (int i = 0; i < n; i++)
         {
-            if (heights[i] >= ElevationGenerationStage.SeaLevel && lakes.Depth[i] <= 0f)
-                loss[i] = (Math.Max(0f, evap[i] - runoff[i]) + evap[i] * 0.1f) * LossFactor;
+            if (lakes.Sink[i]) evapSink[i] = float.MaxValue;
+        }
+        // Final routing charges the loss only on dry land: ponded tiles are
+        // water, and lose to evaporation through the lake balance instead.
+        for (int i = 0; i < n; i++)
+        {
+            if (lakes.Depth[i] > 0f) loss[i] = 0f;
         }
         var receiver = new int[n];
         var depth = new int[n];
@@ -161,6 +203,19 @@ public class HydrologyStage : IWorldGeneratorStage
             if (rcv >= 0) fed[rcv] = true;
         }
 
+        // Endorheic reach: a land tile has no path to the sea when its drainage
+        // ends in a closed depression or an inland sink. Receivers are visited
+        // before their donors, so each tile just inherits its receiver's answer.
+        var endorheic = new bool[n];
+        int[] drainOrder = Hydrography.DrainageOrder(lakes.Surface, depth);
+        for (int k = drainOrder.Length - 1; k >= 0; k--)
+        {
+            int i = drainOrder[k];
+            if (elev[i].Height < ElevationGenerationStage.SeaLevel) continue;
+            int rcv = receiver[i];
+            endorheic[i] = lakes.Endorheic[i] || rcv < 0 || endorheic[rcv];
+        }
+
         for (int i = 0; i < n; i++)
         {
             hydro[i] = new HydrologyInfo
@@ -170,7 +225,9 @@ public class HydrologyStage : IWorldGeneratorStage
                 IsRiver = (byte)(isRiver[i] ? 1 : 0),
                 Surface = lakes.Surface[i],
                 LakeDepth = lakes.Depth[i],
-                IsPlaya = (byte)(lakes.IsPlaya[i] ? 1 : 0)
+                IsPlaya = (byte)(lakes.IsPlaya[i] ? 1 : 0),
+                Endorheic = (byte)(endorheic[i] ? 1 : 0),
+                Saline = (byte)(lakes.Saline[i] ? 1 : 0)
             };
         }
     }

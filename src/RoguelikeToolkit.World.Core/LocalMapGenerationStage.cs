@@ -72,23 +72,18 @@ public class LocalMapGenerationStage : IWorldGeneratorStage, ISeededStage
             // canyon override land only. Glacier outranks mountain: a high, wet,
             // cold tile is ice, not rock; dry cold peaks stay Mountain.
             BiomeClassifier.AridSite site = default;
-            bool playa = hasHydro && hydro[i].IsPlaya == 1;
+            // Salt crust comes from the lake solver: a playa floor or the lakebed ringing a terminal lake.
+            // An open lake flushes through its outlet and leaves none, however dry the country around it.
+            bool saline = hasHydro && hydro[i].Saline == 1 && hydro[i].LakeDepth <= 0f;
             bool arid = height >= ElevationGenerationStage.SeaLevel
                 && (BiomeClassifier.IsArid(temperature, moisture) || BiomeClassifier.IsColdArid(temperature, moisture));
-            if (playa || arid)
+            if (saline || arid)
             {
                 double relief = 0.0;
-                bool lakeShore = false;
                 int adjacent = store.GetAdjacent(i, neighbors);
                 for (int k = 0; k < adjacent; k++)
-                {
-                    int j = neighbors[k];
-                    relief = Math.Max(relief, Math.Abs(height - elev[j].Height));
-                    if (hasHydro && hydro[j].LakeDepth > 0f) lakeShore = true;
-                }
-                // A lake in dry country loses more to the sun than it gains, so its margin is salt crust.
-                bool ownLake = hasHydro && hydro[i].LakeDepth > 0f;
-                site = new BiomeClassifier.AridSite(relief, playa || (arid && lakeShore && !ownLake));
+                    relief = Math.Max(relief, Math.Abs(height - elev[neighbors[k]].Height));
+                site = new BiomeClassifier.AridSite(relief, saline);
             }
             var (biome, danger) = BiomeClassifier.Classify(height, temperature, moisture, site);
             if (biome != BiomeType.Ocean)

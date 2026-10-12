@@ -13,7 +13,7 @@ export const DEPOSIT_MARKERS: Record<DepositType, { color: string; symbol: strin
   silver: { color: '#9aa3ad', symbol: 'Ag' }, tin: { color: '#7d8c8f', symbol: 'Sn' }, leadZinc: { color: '#5f6670', symbol: 'Pb' },
   uranium: { color: '#6a9a3a', symbol: 'U' }, coal: { color: '#2d2a28', symbol: 'C' }, oil: { color: '#1f1f2a', symbol: 'Oil' },
   gas: { color: '#4f7fa8', symbol: 'Gas' }, salt: { color: '#c8c3b8', symbol: 'Na' }, gems: { color: '#8a3fa0', symbol: '◆' },
-  bauxite: { color: '#a85a4a', symbol: 'Al' },
+  bauxite: { color: '#a85a4a', symbol: 'Al' }, gypsum: { color: '#d8cf9c', symbol: 'CaSO₄' },
 };
 
 /** Something a tool wants drawn on top of the map this frame, in device pixels. */

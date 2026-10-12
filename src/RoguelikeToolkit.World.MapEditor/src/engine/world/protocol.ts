@@ -23,7 +23,7 @@ export const NAME_KIND: Record<Exclude<FeatureKind, 'deposit'>, string> = {
 };
 
 /** Core's DepositType, by value. */
-export const DEPOSIT_TYPES = ['iron', 'copper', 'gold', 'silver', 'tin', 'leadZinc', 'uranium', 'coal', 'oil', 'gas', 'salt', 'gems', 'bauxite'] as const;
+export const DEPOSIT_TYPES = ['iron', 'copper', 'gold', 'silver', 'tin', 'leadZinc', 'uranium', 'coal', 'oil', 'gas', 'salt', 'gems', 'bauxite', 'gypsum'] as const;
 export type DepositType = (typeof DEPOSIT_TYPES)[number];
 
 /** Name context bits understood by the engine's NamePlaces. */

@@ -117,7 +117,7 @@ const tempWord = (t: number) => (t < 0.2 ? 'polar' : t < 0.4 ? 'cold' : t < 0.6 
 const rainWord = (p: number) => (p < 0.15 ? 'arid' : p < 0.35 ? 'dry' : p < 0.6 ? 'moderate' : p < 0.8 ? 'wet' : 'very wet');
 const DEPOSIT_LABEL: Record<DepositType, string> = {
   iron: 'Iron', copper: 'Copper', gold: 'Gold', silver: 'Silver', tin: 'Tin', leadZinc: 'Lead & zinc', uranium: 'Uranium',
-  coal: 'Coal', oil: 'Oil', gas: 'Natural gas', salt: 'Salt', gems: 'Gems', bauxite: 'Bauxite',
+  coal: 'Coal', oil: 'Oil', gas: 'Natural gas', salt: 'Salt', gems: 'Gems', bauxite: 'Bauxite', gypsum: 'Gypsum',
 };
 export const depositLabel = (t: DepositType): string => DEPOSIT_LABEL[t];
 const sizeClass = (r: number) => (r >= 0.85 ? 'rich' : r >= 0.65 ? 'large' : r >= 0.45 ? 'medium' : 'small');

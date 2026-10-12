@@ -238,4 +238,191 @@ public class LakeTests
             Assert.Equal(a.Path, b.Path);
         }
     }
+
+    /// <summary>One-tile pit on a plateau, solved directly with hand-set water terms and a chosen land cover.</summary>
+    private static (LakeSolution Solution, int Pit) SolvePit(BiomeType cover, float runoffAtPit = 1.0f, float evap = 0.9f)
+    {
+        var map = new WorldMap(2);
+        map.RegisterLayer<ElevationInfo>(new ElevationLayer(map.DataStore));
+        map.DataStore.Allocate();
+        var store = map.DataStore;
+        int n = store.TileCount;
+        var heights = new float[n];
+        for (int i = 0; i < n; i++) heights[i] = 0.3f;
+        int pit = 50;
+        heights[pit] = 0.05f;
+        System.Span<int> scratch = stackalloc int[6];
+        int adjacent = store.GetAdjacent(pit, scratch);
+        for (int k = 0; k < adjacent; k++) heights[scratch[k]] = 0.5f;
+        heights[0] = -1f;
+
+        var filled = new float[n];
+        Hydrography.ComputeFilledSurface(store, heights, filled);
+        var receivers = new int[n];
+        var depth = new int[n];
+        Hydrography.ComputeReceivers(store, filled, receivers, depth);
+        var runoff = new float[n];
+        runoff[pit] = runoffAtPit;
+        var flow = new float[n];
+        Hydrography.AccumulateFlow(store, filled, receivers, runoff, flow, default, default, depth);
+        var evaps = new float[n];
+        for (int i = 0; i < n; i++) evaps[i] = evap;
+        var covers = new BiomeType[n];
+        for (int i = 0; i < n; i++) covers[i] = cover;
+        var solution = LakeSolver.Solve(store, heights, filled, flow, receivers, runoff, evaps, 0f, covers);
+        map.Dispose();
+        return (solution, pit);
+    }
+
+    [Fact]
+    public void LandCover_DecidesWhetherTheSameBasinHoldsALake()
+    {
+        // Identical rainfall and identical temperature-driven evaporation: only the ground and the air differ.
+        var (humid, pit) = SolvePit(BiomeType.Jungle);
+        Assert.True(humid.Depth[pit] > 0.3f, "humid-air, peat-bedded basin should hold a deep lake");
+        Assert.False(humid.IsPlaya[pit]);
+
+        var (desert, _) = SolvePit(BiomeType.Desert);
+        Assert.Equal(0f, desert.Depth[pit]);
+        Assert.True(desert.IsPlaya[pit], "hot dry air and a leaking sand bed should leave a dry playa");
+        Assert.True(desert.Endorheic[pit] && desert.Sink[pit] && desert.Saline[pit]);
+    }
+
+    [Fact]
+    public void Seepage_LeaksPorousBedsAndSealsTheRest()
+    {
+        Assert.True(LandCover.Seepage(BiomeType.Desert) > LandCover.Seepage(BiomeType.Plains));
+        Assert.True(LandCover.Seepage(BiomeType.Plains) > LandCover.Seepage(BiomeType.Jungle));
+        foreach (var sealedBed in new[] { BiomeType.Swamp, BiomeType.Tundra, BiomeType.SaltFlat })
+            Assert.Equal(0f, LandCover.Seepage(sealedBed));
+    }
+
+    [Fact]
+    public void ClosedLake_IsEndorheicAndSaline_OpenFreshLakeIsNeither()
+    {
+        // Rainfall just above the open-lake threshold fills the basin and spills it.
+        var (open, pit) = SolvePit(BiomeType.Plains, runoffAtPit: 3.0f);
+        Assert.Single(open.Lakes);
+        Assert.True(open.Lakes[0].IsOpen);
+        Assert.False(open.Lakes[0].IsSaline);
+        Assert.False(open.Endorheic[pit]);
+        Assert.False(open.Saline[pit]);
+        Assert.True(open.Lakes[0].Flushing > 0.5f);
+    }
+
+    [Fact]
+    public void NearlyDryOpenLake_IsSalineEvenThoughItSpills()
+    {
+        // Barely more inflow than evaporation: it overflows, but evaporates >2/3 of what it receives.
+        var (marginal, pit) = SolvePit(BiomeType.Plains, runoffAtPit: 0.95f, evap: 0.9f);
+        Assert.Single(marginal.Lakes);
+        var lake = marginal.Lakes[0];
+        Assert.True(lake.IsOpen);
+        Assert.True(lake.Flushing * Lake.SalineConcentration < 1f, $"flushing {lake.Flushing}");
+        Assert.True(lake.IsSaline);
+        Assert.True(marginal.Saline[pit]);
+        Assert.False(marginal.Endorheic[pit], "an overflowing lake still reaches the sea");
+    }
+
+    [Fact]
+    public void MinimumLakeDepth_DependsOnWhatGrowsInTheHollow()
+    {
+        Assert.True(LandCover.MinDepthScale(BiomeType.Swamp) > 1f);
+        Assert.True(LandCover.MinDepthScale(BiomeType.Tundra) < 1f);
+        Assert.Equal(1f, LandCover.MinDepthScale(BiomeType.Plains));
+    }
+
+    [Fact]
+    public void RunoffCoefficients_AreMildAndOrdered()
+    {
+        Assert.Equal(1f, LandCover.RunoffCoefficient(BiomeType.Plains));
+        Assert.True(LandCover.RunoffCoefficient(BiomeType.Forest) < 1f);
+        Assert.True(LandCover.RunoffCoefficient(BiomeType.Desert) < LandCover.RunoffCoefficient(BiomeType.RockDesert));
+        Assert.True(LandCover.RunoffCoefficient(BiomeType.Badlands) > 1f);
+        foreach (BiomeType b in System.Enum.GetValues<BiomeType>())
+        {
+            Assert.InRange(LandCover.RunoffCoefficient(b), 0.5f, 1.5f);
+            Assert.InRange(LandCover.EvaporationFactor(b), 0.5f, 1.5f);
+        }
+    }
+
+    [Fact]
+    public void AridPit_BasinAndItsCatchmentAreEndorheic()
+    {
+        using var map = new WorldMap(2);
+        map.RegisterLayer<ElevationInfo>(new ElevationLayer(map.DataStore));
+        map.RegisterLayer<ClimateInfo>(new ClimateLayer(map.DataStore));
+        map.RegisterLayer<HydrologyInfo>(new HydrologyLayer(map.DataStore));
+        map.DataStore.Allocate();
+
+        var store = map.DataStore;
+        var elev = store.GetSpan<ElevationInfo>();
+        var climate = store.GetSpan<ClimateInfo>();
+        for (int i = 0; i < store.TileCount; i++)
+        {
+            elev[i] = new ElevationInfo { Height = 0.3f };
+            climate[i] = new ClimateInfo { Temperature = 0.8f, Precipitation = 0.1f };
+        }
+        int pit = 50;
+        elev[pit] = new ElevationInfo { Height = 0.05f };
+        System.Span<int> scratch = stackalloc int[6];
+        int adjacent = store.GetAdjacent(pit, scratch);
+        for (int k = 0; k < adjacent; k++)
+            elev[scratch[k]] = new ElevationInfo { Height = 0.5f };
+        elev[0] = new ElevationInfo { Height = -1f };
+
+        new HydrologyStage().Execute(map);
+        var hydro = store.GetSpan<HydrologyInfo>();
+
+        Assert.Equal(1, hydro[pit].Endorheic);
+        Assert.Equal(1, hydro[pit].Saline);
+        // Ground that drains to the open ocean is not endorheic.
+        Assert.Equal(0, hydro[0].Endorheic);
+        int exorheic = 0;
+        for (int i = 0; i < store.TileCount; i++)
+            if (elev[i].Height >= 0f && hydro[i].Endorheic == 0) exorheic++;
+        Assert.True(exorheic > store.TileCount / 2, "most of the plateau drains to the sea");
+    }
+
+    [Fact]
+    public void RealWorlds_EndorheicFlagIsConsistentWithRiverTerminals()
+    {
+        foreach (int seed in new[] { 42, 7, 99 })
+        {
+            using var world = new WorldBuilder().WithSize(5).WithSeed(seed).Build();
+            var hydro = world.Map.DataStore.GetSpan<HydrologyInfo>();
+            foreach (var river in world.Rivers.Rivers)
+            {
+                foreach (int t in river.Path)
+                {
+                    if (river.Terminal == RiverTerminal.Sea)
+                        Assert.True(hydro[t].Endorheic == 0, $"seed {seed} river {river.Id} reaches the sea through endorheic tile {t}");
+                }
+            }
+            for (int i = 0; i < hydro.Length; i++)
+            {
+                // Open water on a terminal lake is brine; a playa floor is both dry and saline.
+                if (hydro[i].IsPlaya == 1)
+                {
+                    Assert.Equal(1, hydro[i].Saline);
+                    Assert.Equal(1, hydro[i].Endorheic);
+                }
+            }
+        }
+    }
+
+    [Fact]
+    public void LandCover_ChangesOnlyTheWaterBalance_NotDeterminism()
+    {
+        using var a = new WorldBuilder().WithSize(4).WithSeed(11).Build();
+        using var b = new WorldBuilder().WithSize(4).WithSeed(11).Build();
+        var ha = a.Map.DataStore.GetSpan<HydrologyInfo>();
+        var hb = b.Map.DataStore.GetSpan<HydrologyInfo>();
+        for (int i = 0; i < ha.Length; i++)
+        {
+            Assert.Equal(ha[i].Endorheic, hb[i].Endorheic);
+            Assert.Equal(ha[i].Saline, hb[i].Saline);
+            Assert.Equal(ha[i].LakeDepth, hb[i].LakeDepth);
+        }
+    }
 }

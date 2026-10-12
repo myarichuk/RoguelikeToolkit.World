@@ -377,6 +377,13 @@ public static class Hydrography
     /// </summary>
     public static float EvaporationRate(float temperature)
         => 0.25f + 1.1f * temperature;
+
+    /// <summary>
+    /// Evaporative demand minus rainfall, in runoff units: positive where the ground loses more water to
+    /// the air than it receives (precipitation below evaporation), negative where it has a surplus to shed.
+    /// </summary>
+    public static float WaterDeficit(float temperature, float precipitation)
+        => EvaporationRate(temperature) - (0.3f + 1.4f * precipitation);
 }
 
 /// <summary>One resolved lake: ponded tiles, surface level, and outflow state.</summary>
@@ -389,6 +396,25 @@ public sealed class Lake
     public float EvapTotal { get; set; }
     /// <summary>Outlet tile (an in-lake tile draining out); -1 for closed lakes.</summary>
     public int Outlet { get; set; } = -1;
+
+    /// <summary>Water reaching the lake per unit time: its basin's outside inflow plus the runoff its own tiles catch.</summary>
+    public float Supply { get; set; }
+
+    /// <summary>
+    /// Share of the inflow that leaves through the outlet instead of evaporating (0 for a closed lake).
+    /// Dissolved salt only leaves with the outflow, so the brine concentrates to about 1 / flushing times
+    /// the inflow's salinity.
+    /// </summary>
+    public float Flushing => IsOpen && Supply > 0f ? Math.Max(0f, (Supply - EvapTotal) / Supply) : 0f;
+
+    /// <summary>Concentration factor above which a lake reads as salty: a lake that evaporates two thirds of what it receives.</summary>
+    public const float SalineConcentration = 3f;
+
+    /// <summary>
+    /// Terminal lakes are salt lakes (Dead Sea, Great Salt Lake), and so are open ones that evaporate most of
+    /// their inflow and spill little (Lake Chad, Titicaca's brackish south). A lake that flushes freely stays fresh.
+    /// </summary>
+    public bool IsSaline => !IsOpen || Flushing * SalineConcentration < 1f;
 
     public Lake(int id) => Id = id;
 }
@@ -403,6 +429,12 @@ public sealed class LakeSolution
     public float[] Surface = Array.Empty<float>();
     public int[] LakeId = Array.Empty<int>();
     public bool[] IsPlaya = Array.Empty<bool>();
+    /// <summary>Tiles of a closed depression (terminal lake, dry basin or closed marsh): their water has no way out except evaporation.</summary>
+    public bool[] Endorheic = Array.Empty<bool>();
+    /// <summary>Closed-depression tiles that hold no lake: whatever flows in evaporates in place and must not be routed on.</summary>
+    public bool[] Sink = Array.Empty<bool>();
+    /// <summary>Playa floors, terminal-lake tiles, and the exposed lakebed ringing them.</summary>
+    public bool[] Saline = Array.Empty<bool>();
     public List<Lake> Lakes { get; } = new();
 }
 
@@ -411,6 +443,14 @@ public sealed class LakeSolution
 /// depression's catchment) vs evaporation over the ponded area. Wet depressions
 /// fill to their pour point and overflow (open lakes); arid ones pond partially
 /// (closed/endorheic lakes) or stay dry (playas/salt flats).
+/// <para>
+/// The water balance is not hydrology alone. When land cover is supplied (the
+/// provisional biome of each tile, see <see cref="LandCover"/>), the loss over
+/// a candidate lake is the open-water evaporation scaled by the air above it
+/// (hot dry desert air against humid jungle air) plus what the bed leaks into
+/// porous ground, and the depth a hollow needs to count as a lake depends on
+/// what grows in it (a swamp turns a shallow pond into wetland).
+/// </para>
 /// </summary>
 public static class LakeSolver
 {
@@ -425,7 +465,9 @@ public static class LakeSolver
         ReadOnlySpan<int> receiverFilled,
         ReadOnlySpan<float> runoff,
         ReadOnlySpan<float> evap,
-        float seaLevel = 0f)
+        float seaLevel = 0f,
+        ReadOnlySpan<BiomeType> cover = default,
+        ReadOnlySpan<float> channelLoss = default)
     {
         int n = store.TileCount;
         var solution = new LakeSolution
@@ -433,7 +475,10 @@ public static class LakeSolver
             Depth = new float[n],
             Surface = new float[n],
             LakeId = new int[n],
-            IsPlaya = new bool[n]
+            IsPlaya = new bool[n],
+            Endorheic = new bool[n],
+            Sink = new bool[n],
+            Saline = new bool[n]
         };
         for (int i = 0; i < n; i++)
         {
@@ -471,7 +516,7 @@ public static class LakeSolver
 
         var bed = heights.ToArray(); // once, not per region (was a full-planet LOH copy each)
         foreach (var region in regions)
-            ResolveRegion(store, heights, bed, filled, flowFilled, receiverFilled, runoff, evap, region, solution, scratch);
+            ResolveRegion(store, heights, bed, filled, flowFilled, receiverFilled, runoff, evap, cover, channelLoss, region, solution, scratch);
 
         return solution;
     }
@@ -485,6 +530,8 @@ public static class LakeSolver
         ReadOnlySpan<int> receiverFilled,
         ReadOnlySpan<float> runoff,
         ReadOnlySpan<float> evap,
+        ReadOnlySpan<BiomeType> cover,
+        ReadOnlySpan<float> channelLoss,
         List<int> region,
         LakeSolution solution,
         Span<int> scratch)
@@ -505,17 +552,24 @@ public static class LakeSolver
         }
         if (spill == float.MaxValue) spill = filled[region[0]];
 
-        // Total supply: the region's own runoff plus water routed in from
-        // outside (all incoming through-flow minus internal passing).
-        double incoming = 0;
-        double internalPass = 0;
+        // Total supply: the region's own runoff plus what its outside donors
+        // deliver. A donor delivers what is left after the channel has lost its
+        // share to the ground and the sun on the way (transmission loss), so a
+        // basin ringed by desert is fed by what survives the desert, not by the
+        // water the same rivers would carry across wet ground.
+        double external = 0;
         foreach (int t in region)
         {
-            incoming += flowFilled[t] - runoff[t];
-            int r = receiverFilled[t];
-            if (r >= 0 && inRegion.Contains(r)) internalPass += flowFilled[t];
+            int adjacent = store.GetAdjacent(t, scratch);
+            for (int k = 0; k < adjacent; k++)
+            {
+                int d = scratch[k];
+                if (inRegion.Contains(d) || receiverFilled[d] != t) continue;
+                double held = flowFilled[d];
+                if (!channelLoss.IsEmpty) held = Math.Max(0.0, held - channelLoss[d]);
+                external += held;
+            }
         }
-        double external = Math.Max(0.0, incoming - internalPass);
 
         // Grow the ponded set while supply beats evaporation (lowest tiles first).
         region.Sort((a, b) =>
@@ -529,7 +583,7 @@ public static class LakeSolver
         foreach (int t in region)
         {
             double w = water + runoff[t];
-            double e = evapSum + evap[t];
+            double e = evapSum + TileLoss(evap, cover, t);
             // The ponded set grows while external inflow plus its own caught
             // runoff still beats the open-water evaporation over its area.
             if (external + w > e)
@@ -543,12 +597,18 @@ public static class LakeSolver
 
         if (ponded.Count == 0)
         {
-            // Dry basin: the sump floor bakes into a playa (salt flat).
+            // Dry basin: the sump floor bakes into a playa (salt flat), and the
+            // basin is closed: nothing leaves it, so nothing may be routed on.
             float floor = heights[region[0]];
             foreach (int t in region)
             {
+                solution.Endorheic[t] = true;
+                solution.Sink[t] = true;
                 if (heights[t] <= floor + 0.015f) solution.IsPlaya[t] = true;
             }
+            var floorTiles = new List<int>();
+            foreach (int t in region) if (solution.IsPlaya[t]) floorTiles.Add(t);
+            MarkSaline(store, heights, floorTiles, solution, scratch);
             return;
         }
 
@@ -560,13 +620,28 @@ public static class LakeSolver
         // it carries no open water to map and would only cut the river that
         // crosses it into stubs. The flow still passes over the filled surface.
         float deepest = 0f;
-        foreach (int t in ponded) deepest = Math.Max(deepest, surface - heights[t]);
-        if (deepest < MinLakeDepth) return;
+        int deepestTile = ponded[0];
+        foreach (int t in ponded)
+        {
+            float d = surface - heights[t];
+            if (d > deepest) { deepest = d; deepestTile = t; }
+        }
+        float minDepth = MinLakeDepth * (cover.IsEmpty ? 1f : LandCover.MinDepthScale(cover[deepestTile]));
+        if (deepest < minDepth)
+        {
+            // A closed marsh still never reaches the sea: it evaporates where it stands.
+            if (!full)
+            {
+                foreach (int t in region) { solution.Endorheic[t] = true; solution.Sink[t] = true; }
+            }
+            return;
+        }
 
         var lake = new Lake(solution.Lakes.Count);
         lake.Surface = surface;
         lake.IsOpen = full;
         lake.EvapTotal = (float)evapSum;
+        lake.Supply = (float)(external + water);
         foreach (int t in ponded)
         {
             lake.Tiles.Add(t);
@@ -597,6 +672,33 @@ public static class LakeSolver
             }
             lake.Outlet = outlet;
         }
+        // Terminal lake: every tile of its basin drains to it and nowhere else.
+        if (!full) foreach (int t in region) solution.Endorheic[t] = true;
+        if (lake.IsSaline) MarkSaline(store, heights, ponded, solution, scratch);
         solution.Lakes.Add(lake);
     }
+
+    /// <summary>
+    /// Salt crust: the brine tiles themselves plus the dry land they touch, the margin the water has
+    /// shrunk back from and left crusted.
+    /// </summary>
+    private static void MarkSaline(WorldDataStore store, ReadOnlySpan<float> heights, List<int> brine, LakeSolution solution, Span<int> scratch)
+    {
+        foreach (int t in brine) solution.Saline[t] = true;
+        foreach (int t in brine)
+        {
+            int adjacent = store.GetAdjacent(t, scratch);
+            for (int k = 0; k < adjacent; k++)
+            {
+                int nb = scratch[k];
+                if (heights[nb] >= 0f && solution.Depth[nb] <= 0f) solution.Saline[nb] = true;
+            }
+        }
+    }
+
+    /// <summary>Water a ponded tile loses per unit time: open-water evaporation under its local air, plus seepage through its bed.</summary>
+    private static double TileLoss(ReadOnlySpan<float> evap, ReadOnlySpan<BiomeType> cover, int tile)
+        => cover.IsEmpty
+            ? evap[tile]
+            : evap[tile] * LandCover.EvaporationFactor(cover[tile]) + LandCover.Seepage(cover[tile]);
 }

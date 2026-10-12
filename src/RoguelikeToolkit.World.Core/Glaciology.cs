@@ -101,6 +101,17 @@ public static class Glaciology
         return weight;
     }
 
+    /// <summary>
+    /// Runoff weight with a land-cover coefficient (see <see cref="LandCover.RunoffCoefficient"/>) on the
+    /// rainfall part only: glacier melt is ice leaving the ground, not rain the ground can absorb.
+    /// </summary>
+    public static float RunoffWeight(Vector3D position, float height, float precipitation, float temperature, float cover)
+    {
+        float weight = (0.3f + 1.4f * precipitation) * cover;
+        if (IsGlacierTile(position, height, temperature, precipitation)) weight += (float)MeltBonusWeight;
+        return weight;
+    }
+
     /// <summary>Runoff weight with estimated temperature (no climate layer yet).</summary>
     public static float RunoffWeight(Vector3D position, float height, float precipitation)
     {
