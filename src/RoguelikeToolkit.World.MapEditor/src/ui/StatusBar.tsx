@@ -12,7 +12,7 @@ export function StatusBar() {
       {c && (
         <span>
           {fmtLat(c.lat)} {fmtLon(c.lon)} · h {c.elevation >= 0 ? '+' : ''}{c.elevation.toFixed(3)} · {c.biome}
-          {c.feature && ` · ${c.feature}`} · {c.kmPerPx < 1 ? `${(c.kmPerPx * 1000).toFixed(0)} m/px` : `${c.kmPerPx.toFixed(1)} km/px`}
+          {c.feature && ` · ${c.feature}`}{c.climate && ` · ${c.climate}`} · {c.kmPerPx < 1 ? `${(c.kmPerPx * 1000).toFixed(0)} m/px` : `${c.kmPerPx.toFixed(1)} km/px`}
         </span>
       )}
       {gen && <span className="muted" title={JSON.stringify(t, null, 1)}>{gen}</span>}

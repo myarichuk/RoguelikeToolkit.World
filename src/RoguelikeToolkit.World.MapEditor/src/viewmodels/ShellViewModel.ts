@@ -1,4 +1,5 @@
 import { CAPACITY_KINDS, capacityOf } from '../engine/world/capacity';
+import { describeClimate, paintedKelvin, paintedRain } from '../engine/world/climate';
 import { landUseName } from '../engine/world/landuse';
 import type { Editor } from '../engine/Editor';
 import { kmPerMu, mapToLonLatDeg, wrapX } from '../engine/core/geo';
@@ -6,7 +7,7 @@ import type { UndoState } from '../engine/commands/UndoStack';
 import { svgOptionsFromView } from '../engine/export/SvgExporter';
 import { ViewModel, type FileService } from './ViewModel';
 
-export interface CursorInfo { lon: number; lat: number; elevation: number; biome: string; feature: string; kmPerPx: number; }
+export interface CursorInfo { lon: number; lat: number; elevation: number; biome: string; feature: string; climate: string; kmPerPx: number; }
 
 export interface ShellState {
   title: string;
@@ -70,10 +71,19 @@ export class ShellViewModel extends ViewModel<ShellState> {
         cursor: {
           lon: ll.lon, lat: ll.lat, elevation: doc.elevationAt(q.x, q.y), feature: area?.name ?? '',
           biome: doc.elevationAt(q.x, q.y) < 0 ? 'Sea' : (biomes.find((b) => b.id === doc.biomeAt(q.x, q.y))?.name ?? '') + (doc.landUseAt(q.x, q.y) ? ` (${landUseName(doc.landUseAt(q.x, q.y)) ?? ''})` : '') + this.capacityReadout(doc, q.x, q.y),
+          climate: this.climateReadout(doc, q.x, q.y),
           kmPerPx: kmPerMu(q.y) / this.editor.camera.zoom,
         },
       });
     });
+  }
+
+  /** The engine's climate at the cursor (and the brush's offsets there) while a climate layer is on; else nothing. */
+  private climateReadout(doc: Editor['doc'], x: number, y: number): string {
+    const l = this.editor.view().layers;
+    if (!(l.climate || l.wind || l.currents) || !doc.physics?.climate) return '';
+    const px = Math.floor(wrapX(x)), py = Math.floor(y), i = py * doc.width + px;
+    return describeClimate(doc.physics.climate, doc.tileAt(x, y), paintedKelvin(doc.warmth[i] ?? 0), paintedRain(doc.wetness[i] ?? 0));
   }
 
   /** ` · Farming 143` while the capacity layer is on and the document has a capacity to read; else nothing. */

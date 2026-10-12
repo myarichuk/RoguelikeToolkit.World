@@ -1,4 +1,5 @@
 import type { CapacityKind } from '../world/capacity';
+import type { ClimateKind } from '../world/climate';
 import { DEPOSIT_TYPES, FEATURE_KINDS, type DepositType, type FeatureKind } from '../world/protocol';
 
 export type BaseMode = 'styled' | 'biomes' | 'elevation' | 'plates';
@@ -19,6 +20,12 @@ export interface Layers {
   climatePaint: boolean;
   /** Tint of what the land could carry (farming, grazing, game, timber, fish), from the engine's capacity. */
   capacity: boolean;
+  /** Tint of the engine's climate (temperature, rainfall, currents or seasons: see `climateKind`). */
+  climate: boolean;
+  /** Arrows for the prevailing wind. */
+  wind: boolean;
+  /** Arrows for the ocean surface currents, warm ones red and cold ones blue. */
+  currents: boolean;
 }
 
 /**
@@ -31,6 +38,8 @@ export interface ViewSettings {
   plateTopo: number;
   /** Which capacity the `capacity` layer shows. */
   capacityKind: CapacityKind;
+  /** Which climate field the `climate` layer shows. */
+  climateKind: ClimateKind;
   layers: Layers;
   kinds: Record<FeatureKind, boolean>;
   deposits: Record<DepositType, boolean>;
@@ -41,11 +50,11 @@ const allDeposits = (v: boolean) => Object.fromEntries(DEPOSIT_TYPES.map((k) => 
 
 const LAYERS_OFF: Layers = {
   hillshade: false, contours: false, plateBoundaries: false, plateMotion: false, graticule: false,
-  ripples: false, coastline: false, rivers: false, stamps: false, labels: false, resources: false, climatePaint: false, capacity: false,
+  ripples: false, coastline: false, rivers: false, stamps: false, labels: false, resources: false, climatePaint: false, capacity: false, climate: false, wind: false, currents: false,
 };
 
 export const DEFAULT_VIEW: ViewSettings = {
-  base: 'styled', plateTopo: 0, capacityKind: 'arable',
+  base: 'styled', plateTopo: 0, capacityKind: 'arable', climateKind: 'temperature',
   layers: { ...LAYERS_OFF, ripples: true, rivers: true, stamps: true, labels: true },
   kinds: { ...allKinds(true), deposit: false },
   deposits: allDeposits(true),
@@ -61,6 +70,8 @@ export const VIEW_PRESETS: ViewPreset[] = [
   { id: 'topo', label: 'Topography', apply: (v) => ({ ...v, base: 'elevation', layers: { ...LAYERS_OFF, hillshade: true, contours: true, coastline: true, rivers: true } }) },
   { id: 'biomes', label: 'Biomes', apply: (v) => ({ ...v, base: 'biomes', layers: { ...LAYERS_OFF, hillshade: true, coastline: true, rivers: true } }) },
   { id: 'land', label: 'Land capacity', apply: (v) => ({ ...v, base: 'biomes', layers: { ...LAYERS_OFF, hillshade: true, coastline: true, rivers: true, capacity: true } }) },
+  { id: 'climate', label: 'Climate', apply: (v) => ({ ...v, base: 'elevation', layers: { ...LAYERS_OFF, hillshade: true, coastline: true, climate: true } }) },
+  { id: 'air', label: 'Winds & currents', apply: (v) => ({ ...v, base: 'elevation', layers: { ...LAYERS_OFF, hillshade: true, coastline: true, climate: true, wind: true, currents: true }, climateKind: 'oceanHeat' }) },
   { id: 'resources', label: 'Resources', apply: (v) => ({ ...v, base: 'elevation', layers: { ...LAYERS_OFF, hillshade: true, coastline: true, rivers: true, labels: true, resources: true }, kinds: { ...v.kinds, deposit: true } }) },
 ];
 

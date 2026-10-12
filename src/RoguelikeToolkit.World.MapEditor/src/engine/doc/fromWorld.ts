@@ -40,6 +40,7 @@ export function documentFromWorld(w: WorldSnapshot, settings: Partial<DocSetting
     generated: new Set(features.map((f) => f.id).filter(isGeneratedFeatureId)),
     tombstones: new Map(),
     capacity: w.capacity,
+    climate: w.climate,
   };
   return doc;
 }

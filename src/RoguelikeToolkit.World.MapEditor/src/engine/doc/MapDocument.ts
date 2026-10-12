@@ -36,6 +36,8 @@ export interface PhysicsState {
   tombstones: Map<string, FeatureEntity>;
   /** Land capacity per tile (world/capacity.ts) as the engine last computed it; absent in files from before it existed. */
   capacity?: Uint8Array;
+  /** Climate per tile (world/climate.ts), as the engine last computed it; absent in files from before it existed. */
+  climate?: Float32Array;
 }
 
 /** Engine feature keys look like `f_lake:3`; hand-made ones (`f_river_x7k2`) never contain a colon. */

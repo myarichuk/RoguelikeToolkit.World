@@ -3,6 +3,7 @@
 // .NET runtime; the editor only ever sees plain data (protocol.ts). Rasterization and feature
 // extraction run here too, in V8 — measurably faster than the Mono interpreter for per-pixel loops.
 import { MAP_H, MAP_W, vecToMap } from '../engine/core/geo';
+import { projectClimate } from '../engine/world/climate';
 import { extractFeatures } from '../engine/world/features';
 import {
   DEFAULT_STYLES, EARTH, snapshotTransfer, styleKey,
@@ -25,6 +26,7 @@ interface EngineApi {
   Flow(): Arr;
   Climate(): Arr;
   LandCapacity(): Arr;
+  ClimateField(): Arr;
   Rivers(): Arr;
   WaterBodies(): Arr;
   Ranges(): Arr;
@@ -100,6 +102,7 @@ function pull(e: EngineApi, p: GenerateParams, tileCount: number, timings: Recor
   const flow = Float64Array.from(e.Flow());
   const climate = Float64Array.from(e.Climate());
   const capacity = Uint8Array.from(e.LandCapacity());
+  const climateField = projectClimate(e.ClimateField(), vectors, tileCount);
   const catalogs = {
     rivers: Int32Array.from(e.Rivers()), waterBodies: Int32Array.from(e.WaterBodies()),
     ranges: Int32Array.from(e.Ranges()), deposits: Int32Array.from(e.Deposits()),
@@ -135,7 +138,7 @@ function pull(e: EngineApi, p: GenerateParams, tileCount: number, timings: Recor
     const q = vecToMap(vectors[i * 3], vectors[i * 3 + 1], vectors[i * 3 + 2]);
     tileXY[i * 2] = q.x; tileXY[i * 2 + 1] = q.y;
   }
-  return { seed: p.seed, size: p.size, plates: p.plates, tileCount, rasters, tilePlate, plateDrift, tileXY, capacity, features, styles: chosen, timings };
+  return { seed: p.seed, size: p.size, plates: p.plates, tileCount, rasters, tilePlate, plateDrift, tileXY, capacity, climate: climateField, features, styles: chosen, timings };
 }
 
 const post = (msg: WorkerResponse, transfer: Transferable[] = []) => (self as unknown as DedicatedWorkerGlobalScope).postMessage(msg, transfer);

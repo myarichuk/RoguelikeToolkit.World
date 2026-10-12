@@ -97,7 +97,7 @@ export async function derivePhysics(doc: MapDocument, engine: PhysicsEngine, mod
     elevation: snap.rasters.elevation, biome,
     features: rec.features, rivers: rec.rivers,
     warmth: warmth.slice(), wetness: wetness.slice(),
-    physics: { edits, baseline, generated: new Set(rec.features.map((f) => f.id)), tombstones: new Map(rec.tombstones.map((t) => [t.id, t])), capacity: snap.capacity },
+    physics: { edits, baseline, generated: new Set(rec.features.map((f) => f.id)), tombstones: new Map(rec.tombstones.map((t) => [t.id, t])), capacity: snap.capacity, climate: snap.climate },
     report: { heightTiles, biomeTiles, climateTiles, landUseTiles, counts, kept: rec.kept, added: rec.added, removed: rec.removed },
   };
 }

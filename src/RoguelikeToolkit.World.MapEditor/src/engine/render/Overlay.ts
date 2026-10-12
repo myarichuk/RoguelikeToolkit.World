@@ -6,6 +6,8 @@ import type { LabelCache } from '../text/LabelCache';
 import type { DepositType } from '../world/protocol';
 import type { Camera } from './Camera';
 import { CapacityTint } from './CapacityTint';
+import { ClimateTint } from './ClimateTint';
+import { drawFlowArrows } from './FlowArrows';
 import { ClimatePaint } from './ClimatePaint';
 import type { ViewSettings } from './ViewSettings';
 
@@ -33,6 +35,7 @@ export class Overlay {
   showClimatePaint = false;
   readonly climatePaint = new ClimatePaint();
   private readonly capacityTint = new CapacityTint();
+  private readonly climateTint = new ClimateTint();
   selection: { labels: Set<string>; stamps: Set<string>; feature: string | null; hoverFeature: string | null } = { labels: new Set(), stamps: new Set(), feature: null, hoverFeature: null };
   private plateArrows: { x: number; y: number; dx: number; dy: number }[] | null = null;
   private plateArrowsFor: MapDocument | null = null;
@@ -56,11 +59,14 @@ export class Overlay {
         const f = fid ? doc.features.get(fid) : undefined;
         if (f?.riverId) this.strokeRiver(doc, f.riverId, theme, cam, fid === this.selection.feature);
       }
+      if (view.layers.climate) this.drawClimate(doc, view);
       if (view.layers.capacity) this.drawCapacity(doc, view);
       if (view.layers.climatePaint || this.showClimatePaint) this.drawClimatePaint(doc);
       if (view.layers.labels) this.drawLabels(cam, doc, theme, view, off, vis);
       if (view.layers.resources && view.kinds.deposit) this.drawDeposits(cam, doc, view, off);
       if (view.layers.plateMotion) this.drawPlateMotion(cam, doc);
+      if (view.layers.currents) drawFlowArrows(ctx, doc, 'current', cam.zoom, this.visibleIn(vis, off));
+      if (view.layers.wind) drawFlowArrows(ctx, doc, 'wind', cam.zoom, this.visibleIn(vis, off));
       // Point-feature selection rings (settlements).
       for (const fid of [this.selection.hoverFeature, this.selection.feature]) {
         const f = fid ? doc.features.get(fid) : undefined;
@@ -77,6 +83,18 @@ export class Overlay {
     if (kind && kind in view.kinds && !view.kinds[kind as keyof typeof view.kinds]) return false;
     const style = theme.labels[l.style];
     return !style?.minZoom || zoom >= style.minZoom || this.selection.labels.has(l.id);
+  }
+
+  /** The visible rectangle in the coordinates of the map copy drawn at x offset `off`. */
+  private visibleIn(vis: { x0: number; y0: number; x1: number; y1: number }, off: number): { x0: number; y0: number; x1: number; y1: number } {
+    return { x0: vis.x0 - off, x1: vis.x1 - off, y0: vis.y0, y1: vis.y1 };
+  }
+
+  private drawClimate(doc: MapDocument, view: ViewSettings): void {
+    const img = this.climateTint.current(doc, view.climateKind);
+    if (!img) return;
+    this.ctx.imageSmoothingEnabled = true;
+    this.ctx.drawImage(img, 0, 0, doc.width, doc.height);
   }
 
   private drawCapacity(doc: MapDocument, view: ViewSettings): void {
