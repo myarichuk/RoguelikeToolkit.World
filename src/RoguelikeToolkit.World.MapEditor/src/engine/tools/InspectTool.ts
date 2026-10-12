@@ -1,7 +1,7 @@
 import { pickFeature } from './pick';
 import type { PointerInput, Tool, ToolContext } from './Tool';
 
-/** Hover highlights a map feature; click selects it for the inspector. */
+/** Hover highlights a map feature; click selects it for the inspector; Delete removes it. */
 export class InspectTool implements Tool {
   readonly id = 'inspect' as const;
   readonly cursor = 'help';
@@ -16,6 +16,11 @@ export class InspectTool implements Tool {
   }
   key(e: KeyboardEvent, ctx: ToolContext): boolean {
     if (e.key === 'Escape') { ctx.selection.set({ feature: null }); return true; }
+    if (e.key === 'Delete' || e.key === 'Backspace') {
+      if (!ctx.selection.state.feature) return false;
+      ctx.deleteSelected();
+      return true;
+    }
     return false;
   }
   deactivate(ctx: ToolContext): void { ctx.selection.set({ hoverFeature: null }); }

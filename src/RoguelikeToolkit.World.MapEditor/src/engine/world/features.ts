@@ -253,18 +253,22 @@ export function extractFeatures(c: CatalogInput): FeatureSet {
     ], { river: rivers.length - 1, tiles: Int32Array.from(path) });
   }
 
-  // --- Water bodies: lakes, seas, and oceans split into named seas -----------------------------
+  // --- Water bodies: lakes, seas, and an ocean divided into its basins -------------------------
+  // Core already hands over connected bodies: an enclosed marine body is one sea and stays one
+  // feature, however large. Only the world ocean is divided, along geography (see oceanBasins).
   const oceanTarget = Math.max(60, Math.round(n * 0.03));
   for (const b of records(c.waterBodies, 2)) {
     const [id, kind] = b.head;
-    const tiles = Array.from(b.items).filter(inMap);
     if (kind === WaterKind.Lake) {
+      const tiles = Array.from(b.items).filter(inMap);
       if (tiles.length < 2) continue;
       const anchor = deepest(tiles, waterDist);
       add(`lake:${id}`, 'lake', anchor, shapeOf(tiles, anchor, xy), tiles.length, areaFacts(tiles, true), { tiles: Int32Array.from(tiles) });
       continue;
     }
-    for (const [ri, region] of splitRegions(tiles, oceanTarget, c.vectors, waterDist).entries()) {
+    const basins = kind === WaterKind.Ocean ? oceanBasins(b.items, adj, waterDist, n) : [Array.from(b.items)];
+    for (const [ri, basin] of basins.entries()) {
+      const region = basin.filter(inMap);
       if (region.length < 8) continue;
       const anchor = deepest(region, waterDist);
       const big = kind === WaterKind.Ocean && region.length > oceanTarget * 0.8;
@@ -410,34 +414,51 @@ function central(tiles: number[], xy: Float32Array): number {
   return best;
 }
 
+/** Narrowest neck, in radians of arc, that still separates one basin from another. */
+const BASIN_NECK = 0.5;
+/** Open-water cores smaller than this are noise, not a basin of their own. */
+const MIN_CORE_TILES = 4;
+
 /**
- * Splits a big water body into roughly `target`-tile regions: farthest-point seeds (starting
- * from the deepest tile, preferring open water) and nearest-seed assignment on the sphere.
- * Deterministic: seeds depend only on geometry.
+ * Divides the world ocean into its basins along geography instead of cutting it into equal
+ * pieces. The body is eroded to its open water (tiles at least `BASIN_NECK/2` of arc from any
+ * coast): basins joined only through a strait narrower than the neck fall apart into separate
+ * cores, while bays and coastal fringes stay attached to their core. Every remaining water tile
+ * then joins the nearest core by flood fill, so each basin is connected and its border follows
+ * straits and capes. Result is largest basin first; a body with a single core is returned whole.
+ * Deterministic: cores and flood order depend only on tile indices.
  */
-export function splitRegions(tiles: number[], target: number, V: Float64Array, depth: Int32Array): number[][] {
-  const k = Math.max(1, Math.min(24, Math.round(tiles.length / target)));
-  if (k === 1) return [tiles];
-  const seeds = [deepest(tiles, depth)];
-  const closest = new Float64Array(tiles.length).fill(-2); // max dot to any seed so far
-  const dot = (a: number, b: number) => V[a * 3] * V[b * 3] + V[a * 3 + 1] * V[b * 3 + 1] + V[a * 3 + 2] * V[b * 3 + 2];
-  while (seeds.length < k) {
-    const s = seeds[seeds.length - 1];
-    let best = -1, bestScore = -Infinity;
-    for (let i = 0; i < tiles.length; i++) {
-      closest[i] = Math.max(closest[i], dot(tiles[i], s));
-      const score = Math.acos(Math.min(1, closest[i])) * (1 + 0.04 * Math.min(depth[tiles[i]], 10));
-      if (score > bestScore) { bestScore = score; best = tiles[i]; }
-    }
-    seeds.push(best);
-  }
-  const regions: number[][] = seeds.map(() => []);
+export function oceanBasins(body: ArrayLike<number>, adj: Adjacency, depth: Int32Array, n: number, neck = BASIN_NECK): number[][] {
+  const tiles = Array.from(body).sort((a, b) => a - b);
+  const spacing = Math.sqrt((4 * Math.PI) / n);
+  const reach = Math.max(2, Math.round(neck / 2 / spacing));
+  const inBody = new Uint8Array(n);
+  for (const t of tiles) inBody[t] = 1;
+  const open = (t: number) => inBody[t] === 1 && (depth[t] < 0 || depth[t] >= reach);
+
+  const seen = new Uint8Array(n);
+  const cores: number[][] = [];
   for (const t of tiles) {
-    let bi = 0, bd = -2;
-    for (let j = 0; j < seeds.length; j++) { const d = dot(t, seeds[j]); if (d > bd) { bd = d; bi = j; } }
-    regions[bi].push(t);
+    if (seen[t] || !open(t)) continue;
+    const core = component(t, open, adj, seen);
+    if (core.length >= MIN_CORE_TILES) cores.push(core);
   }
-  return regions;
+  if (cores.length <= 1) return [tiles];
+  cores.sort((a, b) => b.length - a.length || a[0] - b[0]);
+
+  const owner = new Int32Array(n).fill(-1);
+  const queue: number[] = [];
+  for (const [ci, core] of cores.entries()) for (const t of core) { owner[t] = ci; queue.push(t); }
+  for (let h = 0; h < queue.length; h++) {
+    const t = queue[h];
+    for (let k = adj.start[t]; k < adj.start[t + 1]; k++) {
+      const u = adj.list[k];
+      if (inBody[u] && owner[u] < 0) { owner[u] = owner[t]; queue.push(u); }
+    }
+  }
+  const basins: number[][] = cores.map(() => []);
+  for (const t of tiles) if (owner[t] >= 0) basins[owner[t]].push(t);
+  return basins;
 }
 
 /**

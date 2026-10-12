@@ -13,6 +13,7 @@ import { loadDocument, saveDocument } from './doc/serialize';
 import type { DocSettings, Entity, FeatureEntity, LabelEntity, RiverEntity, StampEntity } from './doc/types';
 import type { EntityStore } from './doc/EntityStore';
 import { exportSvg, type SvgExportOptions } from './export/SvgExporter';
+import { deleteFeatureCommand } from './features/deleteFeature';
 import { placeLabels } from './features/placeLabels';
 import { populate } from './features/populate';
 import { Camera } from './render/Camera';
@@ -403,13 +404,14 @@ export class Editor implements ToolContext, ToolHost {
   /** Deletes a feature with everything drawn for it (label, river ribbon, settlement marker). */
   deleteFeature(id: string): void {
     const doc = this._doc, f = doc.features.get(id);
-    if (!f) return;
-    const parts: Command[] = [new RemoveEntities('feature', doc.features, [id])];
-    if (doc.labels.get(`lb_${id}`)) parts.push(new RemoveEntities('label', doc.labels, [`lb_${id}`]));
-    if (f.riverId && doc.rivers.get(f.riverId)) parts.push(new RemoveEntities('river', doc.rivers, [f.riverId]));
-    if (doc.stamps.get(`st_${id}`)) parts.push(new RemoveEntities('marker', doc.stamps, [`st_${id}`]));
+    const del = f && deleteFeatureCommand(doc, id);
+    if (!f || !del) return;
     this.selection.set({ feature: null, hoverFeature: null });
-    this.undo.execute(new CompositeCommand(`Delete ${f.name || f.kind}`, parts));
+    this.undo.execute(del.command);
+    const name = f.name || f.kind;
+    this.status(del.removed.length
+      ? `Deleted ${name} and its ${del.removed.join(', ')}`
+      : `Deleted ${name} (its terrain stays; reshape it with the terrain and biome brushes)`);
   }
 
   updateLabels(ids: string[], patch: Partial<LabelEntity>, key?: string): void {
@@ -426,6 +428,7 @@ export class Editor implements ToolContext, ToolHost {
     this.undo.execute(new UpdateEntities(label, store, before, before.map((e) => ({ ...e, ...patch })), key));
   }
 
+  /** Deletes whatever is selected: stamps and labels, or else the inspected map feature. */
   deleteSelected(): void {
     const s = this.selection.state, doc = this._doc;
     const parts: Command[] = [];

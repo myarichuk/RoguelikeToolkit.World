@@ -7,6 +7,11 @@ namespace RoguelikeToolkit.World.Core;
 /// lapse rate only (no continentality or ocean-heat term); precipitation from seamless noise modulated by orographic
 /// effects (windward wet / leeward rain shadow) and water proximity; wind as a
 /// zonal prevailing field (trades / westerlies / polar easterlies).
+/// Maritime moisture is advected from every water tile along the prevailing wind
+/// (<see cref="ComputeMaritimeAir"/>), decays with distance travelled and is wrung
+/// out crossing high ground, so coasts and windward slopes are wet while
+/// continental interiors and rain shadows are dry. Without it aridity is plain
+/// noise and lands on the shoreline as often as in a continent's heart.
 /// Precipitation is box-blurred (PrecipSmoothingPasses, default 1, backlog
 /// E6) to kill tile-scale speckle while keeping the rain shadow.
 /// Runs after elevation (15) and before erosion (17) so rainfall can seed
@@ -36,6 +41,22 @@ public class ClimateStage : IWorldGeneratorStage, ISeededStage
     /// calibrated against — re-measure the biome matrix after changing this.
     /// </summary>
     public int PrecipSmoothingPasses { get; set; } = 1;
+
+    /// <summary>
+    /// E-folding distance of maritime air over land, in radians of arc (about 5700 km on an
+    /// Earth-sized planet) along the wind. Angular, so the same world reads the same at any
+    /// icosphere size.
+    /// </summary>
+    public double MoistureReach { get; set; } = 0.9;
+
+    /// <summary>Moisture surviving a climb: factor = exp(-ClimbLoss * rise). 0 disables the extra orographic loss.</summary>
+    public double ClimbLoss { get; set; } = 2.5;
+
+    /// <summary>Precipitation multiplier in dead-still continental air (maritime = 0).</summary>
+    public double InteriorFactor { get; set; } = 0.76;
+
+    /// <summary>Extra multiplier gained at full maritime influence (factor = Interior + Gain * maritime).</summary>
+    public double MaritimeGain { get; set; } = 0.56;
 
     /// <summary>Upwindness weight ramps 0 at/below Lo, 1 at/above Hi.</summary>
     private const double UpwindGateLo = 0.05;
@@ -102,10 +123,14 @@ public class ClimateStage : IWorldGeneratorStage, ISeededStage
         for (int pass = 0; pass < PrecipSmoothingPasses; pass++)
             BlurPrecipitation(map);
 
+        var maritime = ComputeMaritimeAir(store, elev, climate, vectors);
+
         for (int i = 0; i < store.TileCount; i++)
         {
             double height = elev[i].Height;
             double moisture = climate[i].Precipitation;
+            if (height >= ElevationGenerationStage.SeaLevel)
+                moisture *= InteriorFactor + MaritimeGain * maritime[i];
             var wind = new Vector3D(climate[i].WindX, climate[i].WindY, climate[i].WindZ);
 
             // Orographic effect: compare against the most upwind neighbor.
@@ -160,6 +185,53 @@ public class ClimateStage : IWorldGeneratorStage, ISeededStage
             updated.Precipitation = (float)moisture;
             climate[i] = updated;
         }
+    }
+
+    /// <summary>
+    /// Maritime air in [0, 1] per tile: 1 over water, then carried to downwind land by a best-path
+    /// relaxation (max over routes of the product of per-hop survival), so it is exact and
+    /// independent of tile iteration order. A hop survives as exp(-chord / <see cref="MoistureReach"/>),
+    /// is strongest along the wind (a quarter of that against it, so there is still some diffusion
+    /// and sea breeze), and loses exp(-<see cref="ClimbLoss"/> * rise) climbing, which leaves dry air
+    /// behind mountain ranges and cold, dry continental interiors.
+    /// </summary>
+    internal ReadOnlySpan<double> ComputeMaritimeAir(WorldDataStore store, Span<ElevationInfo> elev, Span<ClimateInfo> climate, ReadOnlySpan<Vector3D> vectors)
+    {
+        int n = store.TileCount;
+        var air = new double[n];
+        var queue = new PriorityQueue<int, double>();
+        for (int i = 0; i < n; i++)
+        {
+            if (elev[i].Height >= ElevationGenerationStage.SeaLevel) continue;
+            air[i] = 1.0;
+            queue.Enqueue(i, -1.0);
+        }
+        Span<int> neighbors = stackalloc int[6];
+        while (queue.TryDequeue(out int i, out double prio))
+        {
+            if (-prio < air[i]) continue; // stale entry
+            int adjacent = store.GetAdjacent(i, neighbors);
+            for (int k = 0; k < adjacent; k++)
+            {
+                int j = neighbors[k];
+                if (elev[j].Height < ElevationGenerationStage.SeaLevel) continue; // already a source
+                var step = vectors[j] - vectors[i];
+                double chord = step.Length;
+                if (chord <= 0.0) continue;
+                var wind = new Vector3D(climate[j].WindX, climate[j].WindY, climate[j].WindZ);
+                double along = Math.Clamp(Vector3D.Dot(step * (1.0 / chord), wind), -1.0, 1.0);
+                double hop = Math.Exp(-chord / MoistureReach) * (0.25 + 0.75 * (along + 1.0) * 0.5);
+                double rise = elev[j].Height - Math.Max(elev[i].Height, ElevationGenerationStage.SeaLevel);
+                if (rise > 0.0) hop *= Math.Exp(-ClimbLoss * rise);
+                double candidate = air[i] * hop;
+                if (candidate > air[j])
+                {
+                    air[j] = candidate;
+                    queue.Enqueue(j, -candidate);
+                }
+            }
+        }
+        return air;
     }
 
     /// <summary>

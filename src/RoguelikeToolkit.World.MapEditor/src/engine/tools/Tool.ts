@@ -51,6 +51,8 @@ export interface ToolContext {
   view(): ViewSettings;
   requestRender(): void;
   setHiddenStamps(ids: Iterable<string>): void;
+  /** Deletes the selected stamps/labels, or the inspected feature when nothing else is selected (undoable). */
+  deleteSelected(): void;
   /** Generates a name in the culture of the location (rivers, new labels). */
   nameAt(kind: string, x: number, y: number): Promise<string>;
   status(text: string): void;

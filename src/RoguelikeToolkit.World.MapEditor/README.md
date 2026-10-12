@@ -157,7 +157,7 @@ The rest is SwiftShader GPU work, not editor cost:
 - **Projection, not shader tuning, fixed the polar distortion.** Once styling is computed in map space on a conformal projection, coastal waves look the same at 70° as at the equator.
 - **Feature extraction belongs in JS, not Core.**
   - Core already exposes rivers, water bodies, ranges, deposits and city sites as catalogs.
-  - The cartographic layer (sea or ocean split, settlement hierarchy, label anchors, details text) is presentation. It runs in about 30 ms in V8.
+  - The cartographic layer (ocean divided into basins at its straits, settlement hierarchy, label anchors, details text) is presentation. It runs in about 30 ms in V8.
   - Naming stays in Core, batched into one interop call.
 - **Labels as outlines, not text:**
   - The SVG looks the same everywhere, with no font installation.
