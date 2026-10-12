@@ -172,7 +172,7 @@ export class MapRenderer {
     gl.bindVertexArray(this.vao);
     bind(gl, this.display, {
       uMap: [MAP_W, MAP_H], uCanvas: [cam.width, cam.height], uCenter: [cam.cx, cam.cy], uZoom: cam.zoom,
-      uFieldSize: [this.terrain.fw, this.terrain.fh], uWarp: 0, uSeed: 0,
+      uFieldSize: [this.terrain.fw, this.terrain.fh], uWarp: this.terrain.params.warp, uSeed: this.terrain.params.seed % 1000,
       uMode: { i: BASE_MODE_INDEX[v.base] }, uFlags: { i: displayFlags(v, this.hasMask) }, uPlateTopo: v.plateTopo,
       uPaper: rgb(th.paper), uSea: rgb(th.sea), uShallow: rgb(th.shallow), uSeaInk: rgb(th.seaInk), uLandInk: rgb(th.landInk),
       uFrame: rgb(th.frame), uAccent: rgb(this.theme.ui?.['--accent'] ?? '#d08a2a'),
