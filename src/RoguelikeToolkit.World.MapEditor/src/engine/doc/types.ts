@@ -58,6 +58,7 @@ export interface DocSettings {
   /** How the climate was modelled (see ClimateModelSettings); part of what identifies the generated world. Absent in old files = the defaults. */
   climateRefresh: boolean;
   meridionalWind: number;
+  windCellBlend: number;
   oceanHeat: number;
   oceanRain: number;
   aeolian: number;
@@ -66,7 +67,7 @@ export interface DocSettings {
 export const DEFAULT_SETTINGS: DocSettings = {
   seed: 42, size: 5, plates: 12, warp: 6, detail: 0.05, ring: 2.5, styles: [], title: 'Untitled world',
   obliquity: 23.44, flux: 1, rotation: 1,
-  climateRefresh: true, meridionalWind: 0.3, oceanHeat: 1, oceanRain: 2, aeolian: 4,
+  climateRefresh: true, meridionalWind: 0.3, windCellBlend: 0, oceanHeat: 1, oceanRain: 2, aeolian: 4,
 };
 
 /** A named, selectable map feature (river, range, sea, settlement, deposit...). */

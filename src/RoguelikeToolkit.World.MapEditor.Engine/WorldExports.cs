@@ -23,16 +23,18 @@ public static partial class WorldExports
 
     [JSExport]
     public static int Generate(int seed, int size, int plates, double obliquity, double flux, double rotation,
-        bool climateRefresh, double meridionalWind, double oceanHeat, double oceanRain, int aeolian)
+        bool climateRefresh, double meridionalWind, double windCellBlend, double oceanHeat, double oceanRain, int aeolian)
     {
         // Validate before disposing: a bad planet must not leave the editor with no world behind it.
         var planet = new PlanetParameters { ObliquityDegrees = obliquity, StellarFlux = flux, RotationRate = rotation };
         _world?.Dispose();
+        if (windCellBlend < 0 || windCellBlend > 1)
+            throw new ArgumentOutOfRangeException(nameof(windCellBlend), "Wind cell blend must be within 0..1.");
         if (meridionalWind < 0 || oceanHeat < 0 || oceanRain < 0 || aeolian < 0)
             throw new ArgumentOutOfRangeException(nameof(meridionalWind), "Climate model strengths cannot be negative.");
         var builder = new WorldBuilder().WithSize(size).WithSeed(seed).WithUserEdits().WithLandUse().WithPlanet(planet)
             .WithClimateRefresh(climateRefresh)
-            .WithClimate(c => { c.MeridionalWind = meridionalWind; c.OceanHeatStrength = oceanHeat; c.OceanRainGain = oceanRain; })
+            .WithClimate(c => { c.MeridionalWind = meridionalWind; c.WindCellBlend = windCellBlend; c.OceanHeatStrength = oceanHeat; c.OceanRainGain = oceanRain; })
             .WithErosion(e => e.AeolianIterations = aeolian);
         // The unrefreshed pipeline was calibrated at a river threshold of 1; 0.92 is for the refreshed climate (see WithClimateRefresh).
         if (!climateRefresh) builder.WithHydrology(h => h.RiverThresholdScale = 1f);

@@ -39,7 +39,7 @@ export class GenerateViewModel extends ViewModel<GenerateState> {
   }
 
   private syncDoc(s: DocSettings): void {
-    this.set({ warp: s.warp, detail: s.detail, ring: s.ring, obliquity: s.obliquity, flux: s.flux, rotation: s.rotation, climateRefresh: s.climateRefresh, meridionalWind: s.meridionalWind, oceanHeat: s.oceanHeat, oceanRain: s.oceanRain, aeolian: s.aeolian });
+    this.set({ warp: s.warp, detail: s.detail, ring: s.ring, obliquity: s.obliquity, flux: s.flux, rotation: s.rotation, climateRefresh: s.climateRefresh, meridionalWind: s.meridionalWind, windCellBlend: s.windCellBlend, oceanHeat: s.oceanHeat, oceanRain: s.oceanRain, aeolian: s.aeolian });
   }
 
   private syncStyles(): void {
@@ -57,6 +57,7 @@ export class GenerateViewModel extends ViewModel<GenerateState> {
   setRotation = (v: number): void => this.set({ rotation: this.clampTo(v, PLANET_LIMITS.rotation) });
   setClimateRefresh = (v: boolean): void => this.set({ climateRefresh: v });
   setMeridionalWind = (v: number): void => this.set({ meridionalWind: this.clampTo(v, CLIMATE_MODEL_LIMITS.meridionalWind) });
+  setWindCellBlend = (v: number): void => this.set({ windCellBlend: this.clampTo(v, CLIMATE_MODEL_LIMITS.windCellBlend) });
   setOceanHeat = (v: number): void => this.set({ oceanHeat: this.clampTo(v, CLIMATE_MODEL_LIMITS.oceanHeat) });
   setOceanRain = (v: number): void => this.set({ oceanRain: this.clampTo(v, CLIMATE_MODEL_LIMITS.oceanRain) });
   setAeolian = (v: number): void => this.set({ aeolian: Math.round(this.clampTo(v, CLIMATE_MODEL_LIMITS.aeolian)) });
@@ -72,7 +73,7 @@ export class GenerateViewModel extends ViewModel<GenerateState> {
 
   generate = async (): Promise<void> => {
     const s = this.state;
-    await this.editor.generate({ seed: s.seed, size: s.size, plates: s.plates, planet: { obliquity: s.obliquity, flux: s.flux, rotation: s.rotation }, model: { climateRefresh: s.climateRefresh, meridionalWind: s.meridionalWind, oceanHeat: s.oceanHeat, oceanRain: s.oceanRain, aeolian: s.aeolian }, styles: s.styles, title: s.title, density: s.density }).catch(() => {});
+    await this.editor.generate({ seed: s.seed, size: s.size, plates: s.plates, planet: { obliquity: s.obliquity, flux: s.flux, rotation: s.rotation }, model: { climateRefresh: s.climateRefresh, meridionalWind: s.meridionalWind, windCellBlend: s.windCellBlend, oceanHeat: s.oceanHeat, oceanRain: s.oceanRain, aeolian: s.aeolian }, styles: s.styles, title: s.title, density: s.density }).catch(() => {});
   };
 
   /** Coastline look: live, undoable (one step per slider scrub). */

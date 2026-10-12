@@ -101,13 +101,13 @@ describe('ramps and readouts', () => {
 describe('the climate model in a .wmap', () => {
   it('round-trips, and a file from before it existed loads as the calibrated defaults', () => {
     const doc = MapDocument.empty();
-    doc.setSettings({ climateRefresh: false, meridionalWind: 0.1, oceanHeat: 0, oceanRain: 3, aeolian: 7 });
+    doc.setSettings({ climateRefresh: false, meridionalWind: 0.1, windCellBlend: 0.5, oceanHeat: 0, oceanRain: 3, aeolian: 7 });
     const s = decodeDocument(encodeDocument(doc)).settings;
-    expect([s.climateRefresh, s.meridionalWind, s.oceanHeat, s.oceanRain, s.aeolian]).toEqual([false, 0.1, 0, 3, 7]);
+    expect([s.climateRefresh, s.meridionalWind, s.windCellBlend, s.oceanHeat, s.oceanRain, s.aeolian]).toEqual([false, 0.1, 0.5, 0, 3, 7]);
     const old = MapDocument.empty();
-    for (const k of ['climateRefresh', 'meridionalWind', 'oceanHeat', 'oceanRain', 'aeolian']) delete (old.settings as unknown as Record<string, unknown>)[k];
+    for (const k of ['climateRefresh', 'meridionalWind', 'windCellBlend', 'oceanHeat', 'oceanRain', 'aeolian']) delete (old.settings as unknown as Record<string, unknown>)[k];
     const d = decodeDocument(encodeDocument(old)).settings;
-    expect([d.climateRefresh, d.meridionalWind, d.oceanHeat, d.oceanRain, d.aeolian]).toEqual([true, 0.3, 1, 2, 4]);
+    expect([d.climateRefresh, d.meridionalWind, d.windCellBlend, d.oceanHeat, d.oceanRain, d.aeolian]).toEqual([true, 0.3, 0, 1, 2, 4]);
   });
 });
 

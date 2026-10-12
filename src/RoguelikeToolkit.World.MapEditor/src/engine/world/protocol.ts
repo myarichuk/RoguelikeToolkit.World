@@ -103,6 +103,8 @@ export interface ClimateModelSettings {
   climateRefresh: boolean;
   /** Share of the wind that blows along the meridian (Coriolis-turned): 0 is purely zonal. */
   meridionalWind: number;
+  /** 0 = the legacy wind (unit speed, hard reversal at cell edges); 1 = speed fades to calm at the belt edges. */
+  windCellBlend: number;
   /** Strength of the warm/cold ocean-current temperature effect (0 = off). */
   oceanHeat: number;
   /** Rainfall response at the coast to the current's temperature (0 = off). */
@@ -111,8 +113,8 @@ export interface ClimateModelSettings {
   aeolian: number;
 }
 
-export const CLIMATE_MODEL_DEFAULTS: Readonly<ClimateModelSettings> = { climateRefresh: true, meridionalWind: 0.3, oceanHeat: 1, oceanRain: 2, aeolian: 4 };
-export const CLIMATE_MODEL_LIMITS = { meridionalWind: [0, 0.6], oceanHeat: [0, 2], oceanRain: [0, 4], aeolian: [0, 8] } as const;
+export const CLIMATE_MODEL_DEFAULTS: Readonly<ClimateModelSettings> = { climateRefresh: true, meridionalWind: 0.3, windCellBlend: 0, oceanHeat: 1, oceanRain: 2, aeolian: 4 };
+export const CLIMATE_MODEL_LIMITS = { meridionalWind: [0, 0.6], windCellBlend: [0, 1], oceanHeat: [0, 2], oceanRain: [0, 4], aeolian: [0, 8] } as const;
 
 export interface GenerateParams {
   seed: number;

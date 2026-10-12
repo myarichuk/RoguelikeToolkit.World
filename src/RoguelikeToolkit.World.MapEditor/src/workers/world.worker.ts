@@ -16,7 +16,7 @@ type Arr = ArrayLike<number>;
 /** The [JSExport] surface of RoguelikeToolkit.World.MapEditor.Engine.WorldExports. */
 interface EngineApi {
   Generate(seed: number, size: number, plates: number, obliquity: number, flux: number, rotation: number,
-    climateRefresh: boolean, meridionalWind: number, oceanHeat: number, oceanRain: number, aeolian: number): number;
+    climateRefresh: boolean, meridionalWind: number, windCellBlend: number, oceanHeat: number, oceanRain: number, aeolian: number): number;
   ApplyEdits(tiles: number[], heightDelta: number[], pinHeight: number[], meta: number[], temperature: number[], precipitation: number[]): number;
   TileVectors(): Arr;
   Faces(): Arr;
@@ -69,11 +69,11 @@ const planetOf = (p: GenerateParams) => ({ ...EARTH, ...p.planet });
 const modelOf = (p: GenerateParams) => ({ ...CLIMATE_MODEL_DEFAULTS, ...p.model });
 const worldKey = (p: GenerateParams): string => {
   const w = planetOf(p), m = modelOf(p);
-  return `${p.seed}|${p.size}|${p.plates}|${w.obliquity}|${w.flux}|${w.rotation}|${m.climateRefresh}|${m.meridionalWind}|${m.oceanHeat}|${m.oceanRain}|${m.aeolian}`;
+  return `${p.seed}|${p.size}|${p.plates}|${w.obliquity}|${w.flux}|${w.rotation}|${m.climateRefresh}|${m.meridionalWind}|${m.windCellBlend}|${m.oceanHeat}|${m.oceanRain}|${m.aeolian}`;
 };
 const generateWorld = (e: EngineApi, p: GenerateParams): number => {
   const w = planetOf(p), m = modelOf(p);
-  return e.Generate(p.seed, p.size, p.plates, w.obliquity, w.flux, w.rotation, m.climateRefresh, m.meridionalWind, m.oceanHeat, m.oceanRain, m.aeolian);
+  return e.Generate(p.seed, p.size, p.plates, w.obliquity, w.flux, w.rotation, m.climateRefresh, m.meridionalWind, m.windCellBlend, m.oceanHeat, m.oceanRain, m.aeolian);
 };
 
 async function generate(p: GenerateParams): Promise<WorldSnapshot> {

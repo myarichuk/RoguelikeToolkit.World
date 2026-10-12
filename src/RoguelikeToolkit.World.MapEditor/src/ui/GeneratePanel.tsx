@@ -36,6 +36,7 @@ export function GeneratePanel() {
         <p className="hint">Takes effect on the next Generate. A saved map keeps the settings it was generated with.</p>
         <Toggle label="Re-run climate after erosion" on={s.climateRefresh} onChange={() => vm.setClimateRefresh(!s.climateRefresh)} hint={MODEL_HINTS.climateRefresh} />
         <Slider label="Diagonal wind" value={s.meridionalWind} min={0} max={0.6} step={0.05} onChange={vm.setMeridionalWind} format={(v) => v.toFixed(2)} hint={MODEL_HINTS.meridionalWind} />
+        <Slider label="Calm belts" value={s.windCellBlend} min={0} max={1} step={0.05} onChange={vm.setWindCellBlend} format={(v) => (v === 0 ? 'off' : v.toFixed(2))} hint={MODEL_HINTS.windCellBlend} />
         <Slider label="Sea warmth" value={s.oceanHeat} min={0} max={2} step={0.1} onChange={vm.setOceanHeat} format={(v) => `${v.toFixed(1)}×`} hint={MODEL_HINTS.oceanHeat} />
         <Slider label="Sea rain" value={s.oceanRain} min={0} max={4} step={0.25} onChange={vm.setOceanRain} format={(v) => v.toFixed(2)} hint={MODEL_HINTS.oceanRain} />
         <Slider label="Wind erosion" value={s.aeolian} min={0} max={8} step={1} onChange={vm.setAeolian} format={(v) => (v === 0 ? 'off' : `${v} passes`)} hint={MODEL_HINTS.aeolian} />

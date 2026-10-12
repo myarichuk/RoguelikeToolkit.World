@@ -184,9 +184,9 @@ describe('derivePhysics', () => {
     const log: RecomputeParams[] = [];
     const eng = fakeEngine(log);
     const doc = await docFor(eng);
-    doc.setSettings({ climateRefresh: false, meridionalWind: 0, oceanHeat: 0.5, oceanRain: 1, aeolian: 0 });
+    doc.setSettings({ climateRefresh: false, meridionalWind: 0, windCellBlend: 0.75, oceanHeat: 0.5, oceanRain: 1, aeolian: 0 });
     await derivePhysics(doc, eng, 'sculpt');
-    expect(log.at(-1)!.model).toEqual({ climateRefresh: false, meridionalWind: 0, oceanHeat: 0.5, oceanRain: 1, aeolian: 0 });
+    expect(log.at(-1)!.model).toEqual({ climateRefresh: false, meridionalWind: 0, windCellBlend: 0.75, oceanHeat: 0.5, oceanRain: 1, aeolian: 0 });
   });
 
   it('carries the engine\'s land capacity into the physics state, refreshed on every apply', async () => {
