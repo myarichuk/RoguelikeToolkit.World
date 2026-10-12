@@ -63,9 +63,9 @@ export const LAYER_HINTS: Record<string, string> = {
   plateMotion: 'Arrows for each plate\'s drift direction; length grows with speed.',
   graticule: 'Latitude and longitude lines.',
   capacity: 'Tints the land by how much it could carry of the product chosen below (farming, grazing, game, timber or fish). It is what the climate and terrain allow, not what anyone has built. Needs a world made by the engine; Apply physics refreshes it after you edit.',
-  climate: 'Colours the whole map by one climate quantity from the engine (temperature, rainfall, ocean currents, the size of the seasons, which season the rain falls in, or where the sea freezes). Pick which one below. It shows what the physics produced, including your climate paint after Apply physics.',
-  wind: 'Arrows for the prevailing wind. Longer means stronger. Winds carry rain inland from the sea and cause rain shadows behind mountains.',
-  currents: 'Arrows for the sea currents. Red ones carry warm water and warm the coast they touch; blue ones carry cold water and cool and dry it.',
+  climate: 'Colours the whole map by one climate quantity from the engine (temperature, rainfall, how the currents warm or cool, how fast the sea flows, the size of the seasons, which season the rain falls in, or where the sea freezes). Pick which one below. It shows what the physics produced, including your climate paint after Apply physics.',
+  wind: 'Arrows for the prevailing wind: they point the way the air moves. By default the wind is equally strong everywhere, so the arrows are all the same length; they shorten only where calm belts are on (the Wind-cell blend setting). Winds carry rain inland from the sea and cause rain shadows behind mountains.',
+  currents: 'Arrows for the sea currents. Red ones carry warm water and warm the coast they touch; blue ones carry cold water and cool and dry it; white ones are neutral (they neither warm nor cool).',
   climatePaint: 'Tint of the temperature and rainfall offsets painted with the Climate tool (also shown while that tool is active).',
 };
 

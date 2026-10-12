@@ -2,7 +2,7 @@ import { describe, expect, it } from 'vitest';
 import { MapDocument } from '../doc/MapDocument';
 import { decodeDocument, encodeDocument } from '../doc/serialize';
 import {
-  CI, CLIMATE_KINDS, CLIMATE_STRIDE, describeClimate, ENGINE_CLIMATE_STRIDE, flowLabel, LEGACY_CLIMATE_STRIDE, paintedKelvin, projectClimate, rampColor, widenClimate,
+  CI, CLIMATE_KINDS, CLIMATE_STRIDE, climateValue, describeClimate, ENGINE_CLIMATE_STRIDE, flowLabel, LEGACY_CLIMATE_STRIDE, paintedKelvin, projectClimate, rampColor, widenClimate,
 } from './climate';
 
 /** A raw engine record: temperature, rain, wind xyz, seasonal range, rain seasonality, ocean heat, current xyz, rain phase. */
@@ -177,5 +177,37 @@ describe('an older climate cache in a .wmap', () => {
     const back = decodeDocument(encodeDocument(doc)).physics!.climate!;
     expect(back.length).toBe(3 * CLIMATE_STRIDE);
     expect(back[CLIMATE_STRIDE + CI.temperature]).toBeCloseTo(old[LEGACY_CLIMATE_STRIDE], 6);
+  });
+});
+
+describe('current speed as a climate kind', () => {
+  const def = (key: string) => CLIMATE_KINDS.find((k) => k.key === key)!;
+
+  it('is the length of the east / north current, whichever way it points', () => {
+    const speed = def('currentSpeed');
+    // A 3-4-5 current: 0.3 east and 0.4 north is 0.5, and flipping its direction must not change it.
+    for (const c of [[0, 0.3, 0.4], [0, -0.3, -0.4], [0, 0.4, -0.3]]) {
+      const t = projectClimate(rec({ c }), [1, 0, 0], 1);
+      expect(climateValue(speed, t, 0)).toBeCloseTo(0.5, 6);
+    }
+  });
+
+  it('still reads a plain column for the other kinds, and is 0 with no climate', () => {
+    const t = projectClimate(rec({ t: 0.7, c: [0, 0.3, 0.4] }), [1, 0, 0], 1);
+    expect(climateValue(def('temperature'), t, 0)).toBeCloseTo(0.7, 6);
+    expect(climateValue(def('currentSpeed'), undefined, 0)).toBe(0);
+    expect(climateValue(def('currentSpeed'), t, 3)).toBe(0); // a tile past the array
+  });
+
+  it('every kind that is a pair names two real, different columns', () => {
+    for (const k of CLIMATE_KINDS.filter((d) => d.pair !== undefined)) {
+      expect(k.index, k.key).toBeGreaterThanOrEqual(0);
+      expect(k.pair, k.key).toBeLessThan(CLIMATE_STRIDE);
+      expect(k.pair, k.key).not.toBe(k.index);
+    }
+  });
+
+  it('every kind explains itself for the tooltip', () => {
+    for (const k of CLIMATE_KINDS) expect(k.hint.length, k.key).toBeGreaterThan(40);
   });
 });

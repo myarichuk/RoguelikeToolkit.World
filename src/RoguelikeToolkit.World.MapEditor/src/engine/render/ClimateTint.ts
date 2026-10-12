@@ -1,6 +1,6 @@
 import { MAP_H, MAP_W } from '../core/geo';
 import type { MapDocument } from '../doc/MapDocument';
-import { CLIMATE_STRIDE, NOT_A_COLUMN, climateDef, rampColor, type ClimateKind } from '../world/climate';
+import { CLIMATE_STRIDE, NOT_A_COLUMN, climateDef, climateValue, rampColor, type ClimateKind } from '../world/climate';
 
 /** Shown at 1/CELL resolution, like the capacity tint: a picture to read, not a surface to trace. */
 const CELL = 4;
@@ -49,7 +49,7 @@ export class ClimateTint {
         let v = 0, clear = true;
         if (t >= 0) {
           if (ice) { v = seaIce && t < seaIce.length ? seaIce[t] : 0; clear = v === 0; } // a mask: open water and land stay clear
-          else if (climate && (t + 1) * CLIMATE_STRIDE <= climate.length) { v = climate[t * CLIMATE_STRIDE + def.index]; clear = false; }
+          else if (climate && (t + 1) * CLIMATE_STRIDE <= climate.length) { v = climateValue(def, climate, t); clear = def.pair !== undefined && v < 0.02; } // a speed of nothing (land, dead water) stays clear
         }
         if (clear) { px[o + 3] = 0; continue; }
         rampColor(def, v, rgb);

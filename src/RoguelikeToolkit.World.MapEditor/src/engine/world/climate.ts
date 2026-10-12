@@ -6,7 +6,7 @@ import { CLIMATE_RANGE, PAINT_MAX } from './edits';
 // Wind and ocean current arrive from Core as 3D tangent vectors; the editor draws on a flat map, so they are
 // projected once, at the worker boundary, onto the tile's local east and north (north = up the screen).
 
-export type ClimateKind = 'temperature' | 'rainfall' | 'oceanHeat' | 'seasons' | 'rainSeason' | 'seaIce';
+export type ClimateKind = 'temperature' | 'rainfall' | 'oceanHeat' | 'currentSpeed' | 'seasons' | 'rainSeason' | 'seaIce';
 
 /** `ClimateDef.index` of a kind that is not a column of the climate array (sea ice has its own per-tile byte array). */
 export const NOT_A_COLUMN = -1;
@@ -65,6 +65,8 @@ type Stop = readonly [pos: number, r: number, g: number, b: number];
 export interface ClimateDef {
   key: ClimateKind; label: string; hint: string;
   index: number;
+  /** When set, the value is the length of the vector (`index`, `pair`): a speed from its east and north components. */
+  pair?: number;
   /** The value range the ramp spans. */
   lo: number; hi: number;
   stops: readonly Stop[];
@@ -87,6 +89,11 @@ export const CLIMATE_KINDS: readonly ClimateDef[] = [
     key: 'oceanHeat', label: 'Currents', index: CI.oceanHeat, lo: -0.15, hi: 0.15, legend: ['cold current', 'warm current'],
     hint: 'How much the sea currents warm (red) or cool (blue) a tile: the Gulf Stream warms Europe, the Humboldt and Benguela currents cool the coasts of Peru and Namibia. Land shows the share a sea breeze carries inland.',
     stops: [[0, 33, 102, 172], [0.5, 247, 247, 247], [1, 178, 24, 43]],
+  },
+  {
+    key: 'currentSpeed', label: 'Current flow', index: CI.currentE, pair: CI.currentN, lo: 0, hi: 1.6, legend: ['still', 'strong current'],
+    hint: 'How fast the sea moves, whatever its temperature: the great boundary currents (the Gulf Stream, the Kuroshio) are the fast ribbons, the open gyres between them are slow. 1 is a strong boundary current. Land and still water show no tint. The Currents view shows the same flow as warming or cooling instead.',
+    stops: [[0, 237, 248, 251], [0.3, 158, 202, 225], [0.6, 66, 146, 198], [1, 8, 48, 107]],
   },
   {
     key: 'seasons', label: 'Seasons', index: CI.seasonalRange, lo: 0, hi: 0.5, legend: ['mild year', 'harsh swing'],
@@ -121,6 +128,15 @@ export function rampColor(def: Pick<ClimateDef, 'lo' | 'hi' | 'stops'>, v: numbe
 /** CSS gradient of a ramp, for the legend bar. */
 export function rampGradient(def: ClimateDef): string {
   return `linear-gradient(90deg, ${def.stops.map((s) => `rgb(${s[1]} ${s[2]} ${s[3]}) ${Math.round(s[0] * 100)}%`).join(', ')})`;
+}
+
+/**
+ * What a climate kind shows at a tile: its column, or the length of its east / north pair for a speed. 0 when there is
+ * no climate for the tile. Sea ice is not a column and is read from its own array, not here.
+ */
+export function climateValue(def: Pick<ClimateDef, 'index' | 'pair'>, climate: Float32Array | undefined, tile: number): number {
+  const a = climateOf(climate, tile, def.index);
+  return def.pair === undefined ? a : Math.hypot(a, climateOf(climate, tile, def.pair));
 }
 
 /** The value of one field at a tile; 0 when there is no climate (an older file, a hand-made map) or the tile is off the world. */

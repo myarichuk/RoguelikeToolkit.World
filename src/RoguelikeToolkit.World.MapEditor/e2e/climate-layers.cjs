@@ -18,6 +18,17 @@ run('climate data and layers', async (t) => {
   t.check('and no NaN or infinity', st.nan === 0, st);
   t.check('rain phase is signed and bounded in [-1, 1]', st.phaseMin >= -1 - 1e-6 && st.phaseMax <= 1 + 1e-6 && st.phaseMin < 0 && st.phaseMax > 0, st);
 
+  // The current-speed tint is calibrated for "1 = a strong boundary current": the engine must really span that range,
+  // and the climate array must carry a flow on the sea and none on land (the tint leaves still water clear).
+  const flow = await t.evaluate((S) => {
+    const d = window.editor.doc, c = d.physics.climate, sp = [];
+    for (let i = 0; i < c.length / S; i++) sp.push(Math.hypot(c[i * S + 4], c[i * S + 5]));
+    sp.sort((a, b) => a - b);
+    return { p50: sp[Math.floor(sp.length * 0.5)], p99: sp[Math.floor(sp.length * 0.99)], moving: sp.filter((v) => v > 0.02).length / sp.length };
+  }, STRIDE);
+  t.note('current speed over all tiles', flow);
+  t.check('currents span the tint range: the fastest 1% of tiles flow at about 1 or more, and only about the sea (not land) moves', flow.p99 > 0.8 && flow.p99 < 4 && flow.moving > 0.2 && flow.moving < 0.95, flow);
+
   // Each layer must actually paint something different from the plain map.
   const box = await t.canvasBox();
   const clip = { x: box.x, y: box.y, width: box.w, height: box.h };
@@ -25,7 +36,7 @@ run('climate data and layers', async (t) => {
   await t.setView({ layers: { climate: false, wind: false, currents: false } });
   await t.page.waitForTimeout(500);
   const plain = await pixels();
-  for (const kind of ['temperature', 'rainfall', 'oceanHeat', 'seasons', 'rainSeason']) {
+  for (const kind of ['temperature', 'rainfall', 'oceanHeat', 'currentSpeed', 'seasons', 'rainSeason']) {
     await t.setView({ climateKind: kind, layers: { climate: true } });
     await t.page.waitForTimeout(500);
     t.check(`the ${kind} layer changes the picture`, (await pixels()) !== plain);
