@@ -18,6 +18,16 @@ public struct ClimateInfo
     public float SeasonalRange;
     /// <summary>How unevenly the year's rain falls, 0 (even) .. 1 (monsoon / Mediterranean); see <see cref="ClimateModel.RainSeasonality"/>.</summary>
     public float RainSeasonality;
+    /// <summary>
+    /// The temperature the ocean currents added (this tile's, in the same units as Temperature, already included in it):
+    /// the sea-surface anomaly over water, the share of it a sea breeze carries onto coastal land. Positive
+    /// beside a warm current (the Gulf Stream), negative beside a cold one (Humboldt, Benguela); see <see cref="OceanCurrents"/>.
+    /// </summary>
+    public float OceanHeat;
+    /// <summary>Surface current over water (tangent to the sphere), in units of a strong boundary current; zero on land.</summary>
+    public float CurrentX;
+    public float CurrentY;
+    public float CurrentZ;
 }
 
 public class ClimateLayer : StoreLayer<ClimateInfo>

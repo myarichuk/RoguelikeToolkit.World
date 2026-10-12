@@ -3,8 +3,8 @@ using System;
 namespace RoguelikeToolkit.World.Core;
 
 /// <summary>
-/// First-class climate layer. Temperature from latitude and the elevation
-/// lapse rate only (no continentality or ocean-heat term); precipitation from seamless noise modulated by orographic
+/// First-class climate layer. Temperature from latitude, the planet's heat budget and the elevation
+/// lapse rate, plus the heat the ocean currents bring to the coasts (<see cref="OceanCurrents"/>); precipitation from seamless noise modulated by orographic
 /// effects (windward wet / leeward rain shadow) and water proximity; wind as a
 /// zonal prevailing field (trades / westerlies / polar easterlies).
 /// Maritime moisture is advected from every water tile along the prevailing wind
@@ -82,6 +82,22 @@ public class ClimateStage : IWorldGeneratorStage, ISeededStage
     /// </summary>
     public double ZonalStrength { get; set; } = 1.0;
 
+    /// <summary>
+    /// How much of the sea-surface temperature anomaly the ocean currents carry (see <see cref="OceanCurrents"/>) is added to
+    /// the temperature, over the water and, scaled by the maritime air that reaches it, over coastal land: a warm
+    /// current mellows the coast it runs along (north-west Europe), a cold one chills it. 1 is the calibrated
+    /// strength (peaks of about 0.15 units, 8 K, along the strongest boundary currents); 0 turns the heat off.
+    /// </summary>
+    public double OceanHeatStrength { get; set; } = 1.0;
+
+    /// <summary>
+    /// Rainfall response to the current's temperature at the coast: the multiplier is 1 + gain * maritime * anomaly,
+    /// clamped to [0.5, 1.4], so cold-current coasts under the subtropical highs get the fog deserts (Atacama,
+    /// Namib) and warm ones the wet east coasts. 0 turns it off; with <see cref="OceanHeatStrength"/> also 0 no
+    /// current is solved at all.
+    /// </summary>
+    public double OceanRainGain { get; set; } = 2.0;
+
     /// <summary>Upwindness weight ramps 0 at/below Lo, 1 at/above Hi.</summary>
     private const double UpwindGateLo = 0.05;
     private const double UpwindGateHi = 0.25;
@@ -89,7 +105,21 @@ public class ClimateStage : IWorldGeneratorStage, ISeededStage
     public ClimateStage() { }
     public ClimateStage(int seed = 42) { Seed = seed; }
 
-    public void Execute(WorldMap map)
+    /// <summary>
+    /// Set by the builder when a <see cref="ClimateRefreshStage"/> follows erosion: that pass overwrites the layer wholesale
+    /// and everything downstream of erosion reads it, while the first pass only feeds erosion rainfall and
+    /// temperature, to which a coastal current's few hundredths make no difference. The first pass then skips the
+    /// ocean-current solve, which is most of this stage's cost on a fine world. A hand-built pipeline that leaves it
+    /// false solves in both passes.
+    /// </summary>
+    internal bool CurrentsInRefreshPassOnly { get; set; }
+
+    public void Execute(WorldMap map) => Run(map, !CurrentsInRefreshPassOnly);
+
+    /// <summary>The post-erosion pass: always with the currents, on the relief the player sees.</summary>
+    internal void ExecuteRefresh(WorldMap map) => Run(map, true);
+
+    private void Run(WorldMap map, bool solveCurrents)
     {
         var store = map.DataStore;
         var elev = store.GetSpan<ElevationInfo>();
@@ -110,6 +140,7 @@ public class ClimateStage : IWorldGeneratorStage, ISeededStage
         var climate = store.GetSpan<ClimateInfo>();
         var vectors = store.GetTileVectors();
 
+        var rawTemperature = new double[store.TileCount];
         var moistureOffset = new Vector3D(13.7, -7.3, 5.1);
         Span<int> neighbors = stackalloc int[6];
         var planet = Planet ?? new PlanetParameters();
@@ -122,6 +153,7 @@ public class ClimateStage : IWorldGeneratorStage, ISeededStage
 
             double absLat = Math.Abs(geo.Latitude);
             double temperature = ClimateModel.Temperature(vectors[i], absLat, height, LapseRate, planet);
+            rawTemperature[i] = temperature;
 
             // Zonal prevailing wind: trades (tropics, east->west), westerlies
             // (mid latitudes), polar easterlies. The cells alternate every 30 degrees on Earth and are
@@ -164,7 +196,10 @@ public class ClimateStage : IWorldGeneratorStage, ISeededStage
         for (int pass = 0; pass < PrecipSmoothingPasses; pass++)
             BlurPrecipitation(map);
 
-        var maritime = ComputeMaritimeAir(store, elev, climate, vectors);
+        bool currents = solveCurrents && (OceanHeatStrength > 0.0 || OceanRainGain > 0.0);
+        var field = currents ? OceanCurrents.Solve(store, elev, vectors, planet, OceanCurrentSettings.Default) : null;
+        var origin = new int[store.TileCount];
+        var maritime = ComputeMaritimeAir(store, elev, climate, vectors, origin);
 
         for (int i = 0; i < store.TileCount; i++)
         {
@@ -218,11 +253,35 @@ public class ClimateStage : IWorldGeneratorStage, ISeededStage
                 }
             }
             if (nearWater) moisture += 0.06;
+
+            // Ocean currents: land breathes the sea-surface temperature of the water its maritime air crossed.
+            double heat = 0.0;
+            if (field != null)
+            {
+                if (height < ElevationGenerationStage.SeaLevel) heat = field.Anomaly[i];
+                else if (origin[i] >= 0)
+                {
+                    double carried = maritime[i] * field.Anomaly[origin[i]];
+                    heat = carried;
+                    if (OceanRainGain > 0.0)
+                        moisture *= Math.Clamp(1.0 + OceanRainGain * carried, 0.5, 1.4);
+                }
+            }
             if (height < ElevationGenerationStage.SeaLevel) moisture = Math.Max(moisture, 0.55);
 
             moisture = Math.Clamp(moisture, 0.0, 1.0);
 
             var updated = climate[i];
+            if (field != null)
+            {
+                double applied = OceanHeatStrength * heat;
+                updated.Temperature = (float)Math.Clamp(rawTemperature[i] + applied, 0.0, 1.0);
+                updated.OceanHeat = (float)applied;
+                var cur = field.Velocity[i];
+                updated.CurrentX = (float)cur.X;
+                updated.CurrentY = (float)cur.Y;
+                updated.CurrentZ = (float)cur.Z;
+            }
             updated.SeasonalRange = (float)ClimateModel.Continental(ClimateModel.SeasonalAmplitude(vectors[i].Z, planet.ObliquityDegrees), maritime[i]);
             updated.Precipitation = (float)moisture;
             climate[i] = updated;
@@ -264,16 +323,21 @@ public class ClimateStage : IWorldGeneratorStage, ISeededStage
     /// independent of tile iteration order. A hop survives as exp(-chord / <see cref="MoistureReach"/>),
     /// is strongest along the wind (a quarter of that against it, so there is still some diffusion
     /// and sea breeze), and loses exp(-<see cref="ClimbLoss"/> * rise) climbing, which leaves dry air
-    /// behind mountain ranges and cold, dry continental interiors.
+    /// behind mountain ranges and cold, dry continental interiors. When <paramref name="origin"/> is given it
+    /// receives, per tile, the water tile its best path started from (-1 where no maritime air arrives), so the
+    /// ocean currents' temperature can follow the air onto the coast.
     /// </summary>
-    internal ReadOnlySpan<double> ComputeMaritimeAir(WorldDataStore store, Span<ElevationInfo> elev, Span<ClimateInfo> climate, ReadOnlySpan<Vector3D> vectors)
+    internal ReadOnlySpan<double> ComputeMaritimeAir(WorldDataStore store, Span<ElevationInfo> elev, Span<ClimateInfo> climate, ReadOnlySpan<Vector3D> vectors, Span<int> origin = default)
     {
         int n = store.TileCount;
         var air = new double[n];
         var queue = new PriorityQueue<int, double>();
+        bool track = !origin.IsEmpty;
         for (int i = 0; i < n; i++)
         {
+            if (track) origin[i] = -1;
             if (elev[i].Height >= ElevationGenerationStage.SeaLevel) continue;
+            if (track) origin[i] = i;
             air[i] = 1.0;
             queue.Enqueue(i, -1.0);
         }
@@ -298,6 +362,7 @@ public class ClimateStage : IWorldGeneratorStage, ISeededStage
                 if (candidate > air[j])
                 {
                     air[j] = candidate;
+                    if (track) origin[j] = origin[i]; // the water this air mass came from
                     queue.Enqueue(j, -candidate);
                 }
             }

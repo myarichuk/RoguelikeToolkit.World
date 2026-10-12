@@ -104,7 +104,7 @@ All temperature now comes from one function, `ClimateModel.Temperature`.
 and `RainSeasonality` (0 even .. 1 monsoon or Mediterranean). They are data for hosts and the inspector; the biome
 rules do not read them yet.
 
-Two climate refinements are on by default, and each can be switched off:
+Three climate refinements are on by default, and each can be switched off:
 
 - **Climate refresh** (`WithClimateRefresh(false)` to disable). Erosion runs after the first climate pass and moves the
   coastline, because sediment fills shallows: a size-4 world gains around 20% more land tiles, and every one of them
@@ -120,7 +120,30 @@ Two climate refinements are on by default, and each can be switched off:
   degrees off the parallel. It leaves the mean temperature, rainfall and biome shares within half a point and moves
   3-6% of tiles to another biome; what it changes is the direction of the rain shadows and maritime plumes.
 
-For the previous pipeline use `WithClimateRefresh(false)`, `MeridionalWind = 0` and `RiverThresholdScale = 1`.
+- **Ocean currents** (`OceanHeatStrength = 0` and `OceanRainGain = 0` on the climate stage to disable). The wind
+  bands already in the model are a wind stress; its curl spins a subtropical gyre at about 30 degrees (anticyclonic)
+  and a subpolar one at 60 (cyclonic), mirrored across the equator and rescaled with the rotation rate like the
+  wind. The stream function solves the Stommel balance on the tile graph with no flow through any shore, and the
+  beta effect (rotation varying with latitude, so a boundary layer of 0.06 rad, about 380 km, whatever the detail
+  level) makes the western side of every basin a narrow, fast, poleward jet and the eastern side a broad, slow,
+  equatorward drift: the Gulf Stream and Kuroshio against the Canary and Humboldt currents. Measured on a rectangular
+  test basin, the western side's mean speed is 1.7-2.2 times the eastern and its peak 3.5-5.3 times (sizes 4-6; the peak keeps sharpening as the layer is better resolved), and with the beta
+  effect removed the two sides are mirror images (a test pins both). A parcel carried along the flow keeps the
+  temperature of where it came from and relaxes to the local equilibrium over 0.45 rad, so poleward flow is warm
+  and equatorward flow cold; the anomaly peaks at about +0.19 / -0.11 temperature units (roughly 10 K and 6 K). Coastal land
+  takes the anomaly of the water its maritime air crossed, weighted by that air (`ClimateInfo.OceanHeat`, already
+  included in `Temperature`), and rainfall follows it (`1 + 2 x anomaly`, clamped to [0.5, 1.4]): cold-current coasts under the
+  subtropical highs get the fog deserts, warm ones the wet east coasts. `ClimateInfo.CurrentX/Y/Z` is the surface
+  current over water. It is solved after erosion only (the first climate pass exists to give erosion its rainfall and
+  temperature, and the refresh overwrites it), on the icosphere's own level hierarchy: a coarse solve, then a
+  fixed number of Gauss-Seidel sweeps per level, so the cost is linear in the tile count (+12 / +28 / +172 ms at sizes
+  4 / 5 / 6) and the stream function agrees with a 20000-sweep flat solve to about 1% (relative L2) and the carried temperature to 1e-3 on average. Over eleven worlds 6.7% of land moves by more
+  than 0.03 temperature units (about 1.6 K), 2.3% by more than 0.05, and 4% of land changes biome; river and lake counts
+  move by 1-2%, and the biome shares by less than half a point. The tidally locked model and sea ice are not covered:
+  the wind bands stay Earth-like and the water never freezes.
+
+For the previous pipeline use `WithClimateRefresh(false)`, `MeridionalWind = 0`, `OceanHeatStrength = 0`,
+`OceanRainGain = 0` and `RiverThresholdScale = 1`.
 
 ## Editing a world: hand edits as a pipeline input
 

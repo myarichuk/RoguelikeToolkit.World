@@ -13,7 +13,7 @@ public class ReviewFixesTests
         var p = new WorldGenerationPipeline();
         p.AddStage(new TectonicPlateGenerationStage(plates, seed));
         p.AddStage(new ElevationGenerationStage(seed));
-        var climate = new ClimateStage(seed);
+        var climate = new ClimateStage(seed) { CurrentsInRefreshPassOnly = true }; // as the builder wires it
         var hydrology = new HydrologyStage();
         float scale = hydrology.RiverThresholdScale; // the builder wires one scale through erosion, hydrology and biomes
         p.AddStage(climate);

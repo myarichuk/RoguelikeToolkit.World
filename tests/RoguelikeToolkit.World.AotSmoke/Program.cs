@@ -39,6 +39,17 @@ using (var world = new WorldBuilder().WithSize(3).WithSeed(42).Build())
     Mix((ulong)world.Rivers.Rivers.Count);
     Mix((ulong)world.WaterBodies.Bodies.Count);
 
+    // Ocean currents (stream-function hierarchy, heat relaxation): the climate layer carries their heat and flow.
+    var climateLayer = world.Map.DataStore.GetSpan<ClimateInfo>();
+    double currentHeat = 0;
+    for (int i = 0; i < climateLayer.Length; i++)
+    {
+        Mix((ulong)BitConverter.SingleToInt32Bits(climateLayer[i].OceanHeat));
+        Mix((ulong)BitConverter.SingleToInt32Bits(climateLayer[i].CurrentX));
+        currentHeat += Math.Abs(climateLayer[i].OceanHeat);
+    }
+    Check(currentHeat > 0, "ocean currents warmed or cooled some coast");
+
     // 2. Lazy zoom: region -> local.
     var region = world.GetRegion(world.Resolve(vienna).TileIndex);
     var local = region.GetLocal(0);

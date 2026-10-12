@@ -400,6 +400,7 @@ public sealed class WorldBuilder
             pipeline.AddStage(new ElevationGenerationStage(_seed));
             var climate = new ClimateStage(_seed);
             _climateConfig?.Invoke(climate);
+            climate.CurrentsInRefreshPassOnly = _climateRefresh;
             planet = climate.Planet ?? planet;
             pipeline.AddStage(climate);
             hydrologyStage = new HydrologyStage();

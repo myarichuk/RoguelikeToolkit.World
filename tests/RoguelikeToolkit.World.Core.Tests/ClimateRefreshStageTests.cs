@@ -17,7 +17,8 @@ public class ClimateRefreshStageTests
         for (int i = 0; i < store.TileCount; i++)
         {
             double t = ClimateModel.Temperature(vectors[i], Math.Abs(vectors[i].ToGeoCoord().Latitude), elev[i].Height, ClimateModel.DefaultLapseRate, w.Planet);
-            if (climate[i].Temperature != (float)Math.Clamp(t, 0.0, 1.0)) mismatches++;
+            // The ocean currents' share is exposed as OceanHeat (a float, so match to its rounding), the rest is the model.
+            if (Math.Abs(climate[i].Temperature - Math.Clamp(t + climate[i].OceanHeat, 0.0, 1.0)) > 1e-5) mismatches++;
         }
         return mismatches;
     }
@@ -97,7 +98,10 @@ public class ClimateRefreshStageTests
     [Fact]
     public void Refresh_ChangesTheWorldButNotItsSkeleton()
     {
-        using var plain = new WorldBuilder().WithSize(4).WithSeed(7).WithClimateRefresh(false).Build();
+        // The legacy pipeline: the single pass, and no ocean currents (the default solves them only after erosion, so the
+        // first pass that erosion reads must be the same in both).
+        using var plain = new WorldBuilder().WithSize(4).WithSeed(7).WithClimateRefresh(false)
+            .WithClimate(c => { c.OceanHeatStrength = 0.0; c.OceanRainGain = 0.0; }).Build();
         using var fresh = new WorldBuilder().WithSize(4).WithSeed(7).Build();
         var pe = plain.Map.DataStore.GetSpan<ElevationInfo>();
         var fe = fresh.Map.DataStore.GetSpan<ElevationInfo>();

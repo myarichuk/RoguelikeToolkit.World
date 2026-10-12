@@ -34,5 +34,5 @@ public sealed class ClimateRefreshStage : IWorldGeneratorStage, IDeclaredStage, 
     public Type[] ReadsOptional => Array.Empty<Type>();
     public Type[] Writes => new[] { typeof(ClimateInfo) };
 
-    public void Execute(WorldMap map) => _climate.Execute(map);
+    public void Execute(WorldMap map) => _climate.ExecuteRefresh(map);
 }
