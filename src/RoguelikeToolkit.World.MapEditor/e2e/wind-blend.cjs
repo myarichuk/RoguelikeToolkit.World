@@ -45,7 +45,11 @@ run('Calm belts (wind cell blend)', async (t) => {
   const applied = await t.evaluate(async () => { await window.editor.applyPhysics('fix'); return window.editor.doc.settings.windCellBlend; });
   t.check('Apply physics keeps the setting', applied === 1, applied);
 
-  // The slider's tooltip names the cost (fewer dunes), not just the benefit.
-  const tip = await t.evaluate(() => [...document.querySelectorAll('[title]')].map((e) => e.getAttribute('title')).find((x) => /doldrums/.test(x || '')) ?? '');
+  // The slider's hint names the cost (fewer dunes), not just the benefit. Hints sit behind a real (i) button, so
+  // read it the way a user does: open the Climate model section, then "About Calm belts", and take the text it reveals.
+  const disclosure = t.page.getByRole('button', { name: 'Climate model', exact: true });
+  if ((await disclosure.getAttribute('aria-expanded')) !== 'true') await disclosure.click();
+  await t.page.getByRole('button', { name: 'About Calm belts' }).click();
+  const tip = await t.page.getByText(/doldrums/).first().textContent({ timeout: 3000 }).catch(() => '');
   t.check('the Calm belts tooltip warns about wind erosion', /wind erosion/i.test(tip), tip.slice(0, 160));
 });

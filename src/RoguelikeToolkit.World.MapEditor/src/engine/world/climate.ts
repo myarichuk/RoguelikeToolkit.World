@@ -91,7 +91,7 @@ export const CLIMATE_KINDS: readonly ClimateDef[] = [
     stops: [[0, 33, 102, 172], [0.5, 247, 247, 247], [1, 178, 24, 43]],
   },
   {
-    key: 'currentSpeed', label: 'Current flow', index: CI.currentE, pair: CI.currentN, lo: 0, hi: 1.6, legend: ['still', 'strong current'],
+    key: 'currentSpeed', label: 'Flow', index: CI.currentE, pair: CI.currentN, lo: 0, hi: 1.6, legend: ['still', 'strong current'],
     hint: 'How fast the sea moves, whatever its temperature: the great boundary currents (the Gulf Stream, the Kuroshio) are the fast ribbons, the open gyres between them are slow. 1 is a strong boundary current. Land and still water show no tint. The Currents view shows the same flow as warming or cooling instead.',
     stops: [[0, 237, 248, 251], [0.3, 158, 202, 225], [0.6, 66, 146, 198], [1, 8, 48, 107]],
   },
