@@ -157,6 +157,26 @@ public class SpatialIndexTests
     }
 
     [Fact]
+    public void NearestDeposit_OfAType_FindsATileThatHoldsSeveralTypes()
+    {
+        // A tile with iron AND gold must answer for both. It used to remember only the last type written, so a
+        // query for the earlier one skipped its own tile and returned a farther deposit (or none).
+        using var world = BuildWorld();
+        var store = world.Map.DataStore;
+        var catalog = new DepositCatalog();
+        catalog.Deposits.Add(new Deposit(1, DepositType.Iron, 5, 0.5f));
+        catalog.Deposits.Add(new Deposit(2, DepositType.Gold, 5, 0.5f));
+        catalog.Deposits.Add(new Deposit(3, DepositType.Iron, 100, 0.5f));
+        var index = new SpatialIndex(store, deposits: catalog);
+
+        var from = store.GetGeoCoord(5);
+        Assert.Equal(5, index.NearestDeposit(from, DepositType.Iron)!.Value.TileIndex);
+        Assert.Equal(5, index.NearestDeposit(from, DepositType.Gold)!.Value.TileIndex);
+        Assert.Equal(100, index.NearestDeposit(store.GetGeoCoord(100), DepositType.Iron)!.Value.TileIndex);
+        Assert.Null(index.NearestDeposit(from, DepositType.Coal));
+    }
+
+    [Fact]
     public void NearestSite_FindsClosestOfKind()
     {
         using var world = BuildWorld();

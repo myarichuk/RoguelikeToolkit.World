@@ -41,7 +41,8 @@ public sealed class SpatialIndex
     private readonly Dictionary<FeatureKind, bool[]> _masksByKind = new();
     private readonly bool _hasDeposits;
     private readonly bool[] _depositMask;
-    private readonly DepositType[] _depositTypeOfTile;
+    // Per-tile bitmask of the deposit types present (bit = 1 << type): a tile can hold several types at once.
+    private readonly uint[] _depositTypesOfTile;
     private readonly List<(SiteKind Kind, int TileIndex, PlacedSite Site)> _sites = new();
 
     public WorldDataStore Store => _store;
@@ -98,14 +99,14 @@ public sealed class SpatialIndex
             if (isGlacier(i)) glacierMask[i] = true;
 
         _depositMask = new bool[n];
-        _depositTypeOfTile = new DepositType[n];
+        _depositTypesOfTile = new uint[n];
         if (deposits != null)
         {
             foreach (var d in deposits.Deposits)
             {
                 if ((uint)d.TileIndex >= (uint)n) continue;
                 _depositMask[d.TileIndex] = true;
-                _depositTypeOfTile[d.TileIndex] = d.Type;
+                _depositTypesOfTile[d.TileIndex] |= 1u << (int)d.Type;
                 _hasDeposits = true;
             }
         }
@@ -260,7 +261,7 @@ public sealed class SpatialIndex
             {
                 int t = _cellTiles[k];
                 if (!mask[t]) continue;
-                if (depositType.HasValue && _depositTypeOfTile[t] != depositType.Value) continue;
+                if (depositType.HasValue && (_depositTypesOfTile[t] & (1u << (int)depositType.Value)) == 0) continue;
                 double dot = Vector3D.Dot(target, _vectors[t]);
                 if (dot > bestDot) { bestDot = dot; best = t; }
             }
