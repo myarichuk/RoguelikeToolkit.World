@@ -1,10 +1,12 @@
 import type { Editor } from '../engine/Editor';
-import { DEFAULT_STYLES, EARTH, PLANET_LIMITS, styleKey } from '../engine/world/protocol';
+import { CLIMATE_MODEL_DEFAULTS, CLIMATE_MODEL_LIMITS, DEFAULT_STYLES, EARTH, PLANET_LIMITS, styleKey } from '../engine/world/protocol';
+import type { DocSettings } from '../engine/doc/types';
+import type { ClimateModelSettings } from '../engine/world/protocol';
 import { ViewModel } from './ViewModel';
 
 export interface StyleOption { key: string; race: string; label: string; }
 
-export interface GenerateState {
+export interface GenerateState extends ClimateModelSettings {
   seed: number;
   size: number;
   plates: number;
@@ -27,7 +29,7 @@ export class GenerateViewModel extends ViewModel<GenerateState> {
   constructor(private readonly editor: Editor) {
     const s = editor.doc.settings;
     super({
-      seed: 1337, size: 5, plates: 14, ...EARTH, title: 'Untitled world', density: 1, styles: [...DEFAULT_STYLES], available: [], busy: false,
+      seed: 1337, size: 5, plates: 14, ...EARTH, ...CLIMATE_MODEL_DEFAULTS, title: 'Untitled world', density: 1, styles: [...DEFAULT_STYLES], available: [], busy: false,
       warp: s.warp, detail: s.detail, ring: s.ring,
     });
     this.track(editor.events.on('content', () => this.syncStyles()));
@@ -36,8 +38,8 @@ export class GenerateViewModel extends ViewModel<GenerateState> {
     this.syncStyles();
   }
 
-  private syncDoc(s: { warp: number; detail: number; ring: number; obliquity: number; flux: number; rotation: number }): void {
-    this.set({ warp: s.warp, detail: s.detail, ring: s.ring, obliquity: s.obliquity, flux: s.flux, rotation: s.rotation });
+  private syncDoc(s: DocSettings): void {
+    this.set({ warp: s.warp, detail: s.detail, ring: s.ring, obliquity: s.obliquity, flux: s.flux, rotation: s.rotation, climateRefresh: s.climateRefresh, meridionalWind: s.meridionalWind, oceanHeat: s.oceanHeat, oceanRain: s.oceanRain, aeolian: s.aeolian });
   }
 
   private syncStyles(): void {
@@ -53,6 +55,12 @@ export class GenerateViewModel extends ViewModel<GenerateState> {
   setObliquity = (v: number): void => this.set({ obliquity: this.clampTo(v, PLANET_LIMITS.obliquity) });
   setFlux = (v: number): void => this.set({ flux: this.clampTo(v, PLANET_LIMITS.flux) });
   setRotation = (v: number): void => this.set({ rotation: this.clampTo(v, PLANET_LIMITS.rotation) });
+  setClimateRefresh = (v: boolean): void => this.set({ climateRefresh: v });
+  setMeridionalWind = (v: number): void => this.set({ meridionalWind: this.clampTo(v, CLIMATE_MODEL_LIMITS.meridionalWind) });
+  setOceanHeat = (v: number): void => this.set({ oceanHeat: this.clampTo(v, CLIMATE_MODEL_LIMITS.oceanHeat) });
+  setOceanRain = (v: number): void => this.set({ oceanRain: this.clampTo(v, CLIMATE_MODEL_LIMITS.oceanRain) });
+  setAeolian = (v: number): void => this.set({ aeolian: Math.round(this.clampTo(v, CLIMATE_MODEL_LIMITS.aeolian)) });
+  resetModel = (): void => this.set({ ...CLIMATE_MODEL_DEFAULTS });
   resetPlanet = (): void => this.set({ ...EARTH });
   setTitle = (title: string): void => this.set({ title });
   setDensity = (density: number): void => this.set({ density });
@@ -64,7 +72,7 @@ export class GenerateViewModel extends ViewModel<GenerateState> {
 
   generate = async (): Promise<void> => {
     const s = this.state;
-    await this.editor.generate({ seed: s.seed, size: s.size, plates: s.plates, planet: { obliquity: s.obliquity, flux: s.flux, rotation: s.rotation }, styles: s.styles, title: s.title, density: s.density }).catch(() => {});
+    await this.editor.generate({ seed: s.seed, size: s.size, plates: s.plates, planet: { obliquity: s.obliquity, flux: s.flux, rotation: s.rotation }, model: { climateRefresh: s.climateRefresh, meridionalWind: s.meridionalWind, oceanHeat: s.oceanHeat, oceanRain: s.oceanRain, aeolian: s.aeolian }, styles: s.styles, title: s.title, density: s.density }).catch(() => {});
   };
 
   /** Coastline look: live, undoable (one step per slider scrub). */

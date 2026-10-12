@@ -93,12 +93,35 @@ export interface PlanetSettings {
 export const EARTH: Readonly<PlanetSettings> = { obliquity: 23.44, flux: 1, rotation: 1 };
 export const PLANET_LIMITS = { obliquity: [0, 90], flux: [0.3, 2.5], rotation: [0.25, 4] } as const;
 
+/**
+ * How the climate is modelled (Core's `WithClimateRefresh`, `ClimateStage.MeridionalWind`, `OceanHeatStrength`,
+ * `OceanRainGain` and `ErosionGenerationStage.AeolianIterations`). The defaults are the engine's calibrated
+ * ones, so a world generated before these existed (or a file without them) reproduces exactly.
+ */
+export interface ClimateModelSettings {
+  /** Re-run the climate on the eroded relief before rivers and biomes. */
+  climateRefresh: boolean;
+  /** Share of the wind that blows along the meridian (Coriolis-turned): 0 is purely zonal. */
+  meridionalWind: number;
+  /** Strength of the warm/cold ocean-current temperature effect (0 = off). */
+  oceanHeat: number;
+  /** Rainfall response at the coast to the current's temperature (0 = off). */
+  oceanRain: number;
+  /** Wind-erosion passes over arid land (0 = off). */
+  aeolian: number;
+}
+
+export const CLIMATE_MODEL_DEFAULTS: Readonly<ClimateModelSettings> = { climateRefresh: true, meridionalWind: 0.3, oceanHeat: 1, oceanRain: 2, aeolian: 4 };
+export const CLIMATE_MODEL_LIMITS = { meridionalWind: [0, 0.6], oceanHeat: [0, 2], oceanRain: [0, 4], aeolian: [0, 8] } as const;
+
 export interface GenerateParams {
   seed: number;
   size: number;
   plates: number;
   /** Absent = Earth. */
   planet?: PlanetSettings;
+  /** Absent = the calibrated defaults. */
+  model?: ClimateModelSettings;
   /** Name styles (`race|culture`) cultures are drawn from, one per plate; empty = DEFAULT_STYLES. */
   styles: string[];
 }

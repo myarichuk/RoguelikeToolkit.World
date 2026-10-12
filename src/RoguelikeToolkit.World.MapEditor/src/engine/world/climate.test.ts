@@ -94,6 +94,19 @@ describe('ramps and readouts', () => {
   });
 });
 
+describe('the climate model in a .wmap', () => {
+  it('round-trips, and a file from before it existed loads as the calibrated defaults', () => {
+    const doc = MapDocument.empty();
+    doc.setSettings({ climateRefresh: false, meridionalWind: 0.1, oceanHeat: 0, oceanRain: 3, aeolian: 7 });
+    const s = decodeDocument(encodeDocument(doc)).settings;
+    expect([s.climateRefresh, s.meridionalWind, s.oceanHeat, s.oceanRain, s.aeolian]).toEqual([false, 0.1, 0, 3, 7]);
+    const old = MapDocument.empty();
+    for (const k of ['climateRefresh', 'meridionalWind', 'oceanHeat', 'oceanRain', 'aeolian']) delete (old.settings as unknown as Record<string, unknown>)[k];
+    const d = decodeDocument(encodeDocument(old)).settings;
+    expect([d.climateRefresh, d.meridionalWind, d.oceanHeat, d.oceanRain, d.aeolian]).toEqual([true, 0.3, 1, 2, 4]);
+  });
+});
+
 describe('the climate cache in a .wmap', () => {
   const make = (tiles: number, climate: Float32Array | undefined) => {
     const doc = MapDocument.empty();

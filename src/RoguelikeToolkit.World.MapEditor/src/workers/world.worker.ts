@@ -6,7 +6,7 @@ import { MAP_H, MAP_W, vecToMap } from '../engine/core/geo';
 import { projectClimate } from '../engine/world/climate';
 import { extractFeatures } from '../engine/world/features';
 import {
-  DEFAULT_STYLES, EARTH, snapshotTransfer, styleKey,
+  CLIMATE_MODEL_DEFAULTS, DEFAULT_STYLES, EARTH, snapshotTransfer, styleKey,
   type GenerateParams, type NameRequest, type NameStyle, type RecomputeParams, type WorkerRequest, type WorkerResponse, type WorldSnapshot,
 } from '../engine/world/protocol';
 import { rasterize } from '../engine/world/rasterize';
@@ -15,7 +15,8 @@ type Arr = ArrayLike<number>;
 
 /** The [JSExport] surface of RoguelikeToolkit.World.MapEditor.Engine.WorldExports. */
 interface EngineApi {
-  Generate(seed: number, size: number, plates: number, obliquity: number, flux: number, rotation: number): number;
+  Generate(seed: number, size: number, plates: number, obliquity: number, flux: number, rotation: number,
+    climateRefresh: boolean, meridionalWind: number, oceanHeat: number, oceanRain: number, aeolian: number): number;
   ApplyEdits(tiles: number[], heightDelta: number[], pinHeight: number[], meta: number[], temperature: number[], precipitation: number[]): number;
   TileVectors(): Arr;
   Faces(): Arr;
@@ -65,8 +66,15 @@ function names(e: EngineApi, reqs: NameRequest[]): string[] {
 /** Which world the engine currently holds; recompute regenerates when the document asks for another. */
 let loaded = '';
 const planetOf = (p: GenerateParams) => ({ ...EARTH, ...p.planet });
-const worldKey = (p: GenerateParams): string => { const w = planetOf(p); return `${p.seed}|${p.size}|${p.plates}|${w.obliquity}|${w.flux}|${w.rotation}`; };
-const generateWorld = (e: EngineApi, p: GenerateParams): number => { const w = planetOf(p); return e.Generate(p.seed, p.size, p.plates, w.obliquity, w.flux, w.rotation); };
+const modelOf = (p: GenerateParams) => ({ ...CLIMATE_MODEL_DEFAULTS, ...p.model });
+const worldKey = (p: GenerateParams): string => {
+  const w = planetOf(p), m = modelOf(p);
+  return `${p.seed}|${p.size}|${p.plates}|${w.obliquity}|${w.flux}|${w.rotation}|${m.climateRefresh}|${m.meridionalWind}|${m.oceanHeat}|${m.oceanRain}|${m.aeolian}`;
+};
+const generateWorld = (e: EngineApi, p: GenerateParams): number => {
+  const w = planetOf(p), m = modelOf(p);
+  return e.Generate(p.seed, p.size, p.plates, w.obliquity, w.flux, w.rotation, m.climateRefresh, m.meridionalWind, m.oceanHeat, m.oceanRain, m.aeolian);
+};
 
 async function generate(p: GenerateParams): Promise<WorldSnapshot> {
   const e = await api();

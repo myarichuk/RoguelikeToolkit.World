@@ -30,6 +30,14 @@ export const PLANET_HINTS = {
   rotation: 'Spin rate relative to Earth. Faster spin makes narrower wind belts and more, thinner climate bands; slower spin makes fewer, wider ones.',
 } as const;
 
+export const MODEL_HINTS = {
+  climateRefresh: 'After erosion reshapes the land, work out the climate again on the new relief, so rain shadows and biome edges follow the mountains you see. Turn it off for the older single-pass climate (drier coasts, fewer inland rivers).',
+  meridionalWind: 'How much the wind blows north or south as well as east or west, as the Earth\'s spin turns it. 0 gives purely east-west winds; the default 0.3 gives the diagonal trade winds and westerlies, and slants rain shadows.',
+  oceanHeat: 'How strongly warm and cold sea currents warm or cool the coasts they touch (the Gulf Stream, the Humboldt). 0 switches the temperature effect off; 2 doubles it.',
+  oceanRain: 'How strongly those currents change coastal rain: cold currents make fog deserts, warm ones wet coasts. 0 switches it off.',
+  aeolian: 'Passes of wind erosion over dry land: it scours basins upwind and piles sand downwind into sand seas. 0 switches it off; more passes make bigger features.',
+} as const;
+
 export const WORLD_HINTS = {
   seed: 'Same seed, same size and same planet make the same world every time.',
   detail: 'Resolution of the simulated planet (an icosphere of hexagonal tiles). Each step has four times the tiles: finer rivers and coasts, slower generation.',

@@ -1,7 +1,7 @@
 import { useMemo } from 'react';
 import { useApp, useViewModel } from './hooks';
-import { NumberField, Section, Slider, TextField } from './controls';
-import { PLANET_HINTS, WORLD_HINTS } from './glossary';
+import { NumberField, Section, Slider, TextField, Toggle } from './controls';
+import { MODEL_HINTS, PLANET_HINTS, WORLD_HINTS } from './glossary';
 
 export function GeneratePanel() {
   const { vms } = useApp();
@@ -31,6 +31,15 @@ export function GeneratePanel() {
         <Slider label="Stellar flux" value={s.flux} min={0.6} max={1.4} step={0.01} onChange={vm.setFlux} format={(v) => `${v.toFixed(2)}× Earth`} hint={PLANET_HINTS.flux} />
         <Slider label="Spin" value={s.rotation} min={0.25} max={4} step={0.05} onChange={vm.setRotation} format={(v) => `${v.toFixed(2)}× Earth`} hint={PLANET_HINTS.rotation} />
         <button className="wide" onClick={vm.resetPlanet}>Earth</button>
+      </Section>
+      <Section title="Climate model" hint="Which climate physics the generator runs. The defaults are the calibrated ones; changing them changes every biome, river and desert.">
+        <p className="hint">Takes effect on the next Generate. A saved map keeps the settings it was generated with.</p>
+        <Toggle label="Re-run climate after erosion" on={s.climateRefresh} onChange={() => vm.setClimateRefresh(!s.climateRefresh)} hint={MODEL_HINTS.climateRefresh} />
+        <Slider label="Diagonal wind" value={s.meridionalWind} min={0} max={0.6} step={0.05} onChange={vm.setMeridionalWind} format={(v) => v.toFixed(2)} hint={MODEL_HINTS.meridionalWind} />
+        <Slider label="Sea warmth" value={s.oceanHeat} min={0} max={2} step={0.1} onChange={vm.setOceanHeat} format={(v) => `${v.toFixed(1)}×`} hint={MODEL_HINTS.oceanHeat} />
+        <Slider label="Sea rain" value={s.oceanRain} min={0} max={4} step={0.25} onChange={vm.setOceanRain} format={(v) => v.toFixed(2)} hint={MODEL_HINTS.oceanRain} />
+        <Slider label="Wind erosion" value={s.aeolian} min={0} max={8} step={1} onChange={vm.setAeolian} format={(v) => (v === 0 ? 'off' : `${v} passes`)} hint={MODEL_HINTS.aeolian} />
+        <button className="wide" onClick={vm.resetModel}>Calibrated defaults</button>
       </Section>
       <Section title="Coastline style" hint="Cosmetic only: how the hexagonal tile coast is drawn. It does not change the simulated world.">
         <Slider label="Warp" value={s.warp} min={0} max={16} step={0.25} onChange={(warp) => vm.setCoast({ warp })} format={(v) => `${v} mu`} hint={WORLD_HINTS.warp} />
