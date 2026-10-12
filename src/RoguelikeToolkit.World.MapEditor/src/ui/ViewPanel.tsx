@@ -1,13 +1,14 @@
 import type { BaseMode, Layers } from '../engine/render/ViewSettings';
 import { useApp, useViewModel } from './hooks';
 import { Section, Segmented, Slider, Toggle } from './controls';
+import { CAPACITY_KINDS, type CapacityKind } from '../engine/world/capacity';
 import { BASE_HINTS, LAYER_HINTS } from './glossary';
 
 const LAYERS: { key: keyof Layers; label: string }[] = [
   { key: 'hillshade', label: 'Hillshade' }, { key: 'contours', label: 'Contours' }, { key: 'coastline', label: 'Coastline' },
   { key: 'ripples', label: 'Ripples' }, { key: 'rivers', label: 'Rivers' }, { key: 'stamps', label: 'Stamps' },
   { key: 'labels', label: 'Labels' }, { key: 'resources', label: 'Resource markers' }, { key: 'plateBoundaries', label: 'Plate boundaries' },
-  { key: 'plateMotion', label: 'Plate motion' }, { key: 'graticule', label: 'Graticule' }, { key: 'climatePaint', label: 'Climate paint' },
+  { key: 'plateMotion', label: 'Plate motion' }, { key: 'graticule', label: 'Graticule' }, { key: 'climatePaint', label: 'Climate paint' }, { key: 'capacity', label: 'Land capacity' },
 ];
 
 const BASES: { value: BaseMode; label: string }[] = [
@@ -32,6 +33,9 @@ export function ViewPanel() {
         <div className="toggles">
           {LAYERS.map((l) => <Toggle key={l.key} label={l.label} on={v.layers[l.key]} onChange={() => vm.toggleLayer(l.key)} hint={LAYER_HINTS[l.key]} />)}
         </div>
+        {v.layers.capacity && (
+          <Segmented<CapacityKind> value={v.capacityKind} options={CAPACITY_KINDS.map((k) => ({ value: k.key, label: k.label, hint: k.hint }))} onChange={vm.setCapacityKind} />
+        )}
       </Section>
       <Section title="Features">
         <p className="hint">Hidden features are not drawn and cannot be picked.</p>

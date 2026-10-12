@@ -53,6 +53,7 @@ export const LAYER_HINTS: Record<string, string> = {
   plateBoundaries: 'Edges between tectonic plates, where mountains, trenches and volcanoes form.',
   plateMotion: 'Arrows for each plate\'s drift direction; length grows with speed.',
   graticule: 'Latitude and longitude lines.',
+  capacity: 'Tints the land by how much it could carry of the product chosen below (farming, grazing, game, timber or fish). It is what the climate and terrain allow, not what anyone has built. Needs a world made by the engine; Apply physics refreshes it after you edit.',
   climatePaint: 'Tint of the temperature and rainfall offsets painted with the Climate tool (also shown while that tool is active).',
 };
 

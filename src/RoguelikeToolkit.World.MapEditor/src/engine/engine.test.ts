@@ -8,6 +8,7 @@ import { PackRegistry } from './content/PackRegistry';
 import { validatePack } from './content/validate';
 import { MAP_H, MAP_W, latOfY, lonLatToMap, lonOfX, vecToMap } from './core/geo';
 import { MapDocument } from './doc/MapDocument';
+import { DEFAULT_SETTINGS } from './doc/types';
 import { decodeDocument, encodeDocument } from './doc/serialize';
 import type { LabelEntity, StampEntity } from './doc/types';
 import { contour, pathData, shape } from './export/contour';
@@ -183,6 +184,19 @@ describe('.wmap serialization', () => {
     expect(back.labels.get('l2')!.spacing).toBe(0.1);
     expect(back.labels.get('l1')!.text).toBe('Ælfheim');
     expect(back.stamps.get('s')).toEqual(doc.stamps.get('s'));
+  });
+  it('round-trips the land-capacity cache, and drops one that does not fit the world', () => {
+    const world = (tiles: number) => ({ tile: new Int32Array(MAP_W * MAP_H).fill(-1), tilePlate: new Uint32Array(tiles), plateDrift: new Float64Array(0), tileXY: new Float32Array(tiles * 2), styles: [] });
+    const make = (tiles: number, capacity: Uint8Array | undefined) => {
+      const doc = new MapDocument({ ...DEFAULT_SETTINGS }, new Float32Array(MAP_W * MAP_H), new Uint8Array(MAP_W * MAP_H), world(tiles));
+      doc.physics = { edits: new Map(), baseline: null, generated: new Set(), tombstones: new Map(), capacity };
+      return doc;
+    };
+    const cap = Uint8Array.from({ length: 15 }, (_, i) => i * 10);
+    expect([...decodeDocument(encodeDocument(make(3, cap))).physics!.capacity!]).toEqual([...cap]);
+    expect(decodeDocument(encodeDocument(make(3, undefined))).physics!.capacity).toBeUndefined();
+    // Five bytes per tile: a cache for a different tile count must not be trusted.
+    expect(decodeDocument(encodeDocument(make(3, new Uint8Array(10)))).physics!.capacity).toBeUndefined();
   });
   it('round-trips the planet, and an older file without one reads as Earth', () => {
     const doc = MapDocument.empty();

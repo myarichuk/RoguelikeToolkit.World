@@ -5,6 +5,7 @@ import type { FeatureEntity, LabelEntity } from '../doc/types';
 import type { LabelCache } from '../text/LabelCache';
 import type { DepositType } from '../world/protocol';
 import type { Camera } from './Camera';
+import { CapacityTint } from './CapacityTint';
 import { ClimatePaint } from './ClimatePaint';
 import type { ViewSettings } from './ViewSettings';
 
@@ -31,6 +32,7 @@ export class Overlay {
   /** The climate brush is active: show the paint whatever the layer toggle says. */
   showClimatePaint = false;
   readonly climatePaint = new ClimatePaint();
+  private readonly capacityTint = new CapacityTint();
   selection: { labels: Set<string>; stamps: Set<string>; feature: string | null; hoverFeature: string | null } = { labels: new Set(), stamps: new Set(), feature: null, hoverFeature: null };
   private plateArrows: { x: number; y: number; dx: number; dy: number }[] | null = null;
   private plateArrowsFor: MapDocument | null = null;
@@ -54,6 +56,7 @@ export class Overlay {
         const f = fid ? doc.features.get(fid) : undefined;
         if (f?.riverId) this.strokeRiver(doc, f.riverId, theme, cam, fid === this.selection.feature);
       }
+      if (view.layers.capacity) this.drawCapacity(doc, view);
       if (view.layers.climatePaint || this.showClimatePaint) this.drawClimatePaint(doc);
       if (view.layers.labels) this.drawLabels(cam, doc, theme, view, off, vis);
       if (view.layers.resources && view.kinds.deposit) this.drawDeposits(cam, doc, view, off);
@@ -74,6 +77,13 @@ export class Overlay {
     if (kind && kind in view.kinds && !view.kinds[kind as keyof typeof view.kinds]) return false;
     const style = theme.labels[l.style];
     return !style?.minZoom || zoom >= style.minZoom || this.selection.labels.has(l.id);
+  }
+
+  private drawCapacity(doc: MapDocument, view: ViewSettings): void {
+    const img = this.capacityTint.current(doc, view.capacityKind);
+    if (!img) return;
+    this.ctx.imageSmoothingEnabled = true;
+    this.ctx.drawImage(img, 0, 0, doc.width, doc.height);
   }
 
   private drawClimatePaint(doc: MapDocument): void {

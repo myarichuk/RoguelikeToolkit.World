@@ -27,7 +27,7 @@ public static partial class WorldExports
         // Validate before disposing: a bad planet must not leave the editor with no world behind it.
         var planet = new PlanetParameters { ObliquityDegrees = obliquity, StellarFlux = flux, RotationRate = rotation };
         _world?.Dispose();
-        var builder = new WorldBuilder().WithSize(size).WithSeed(seed).WithUserEdits().WithPlanet(planet);
+        var builder = new WorldBuilder().WithSize(size).WithSeed(seed).WithUserEdits().WithLandUse().WithPlanet(planet);
         if (plates > 0) builder.WithPlateCount(plates);
         _world = builder.Build();
         // The store discards faces after deriving adjacency; regenerate them (deterministic, same vertex order).
@@ -39,7 +39,8 @@ public static partial class WorldExports
     /// Replaces the world's hand edits wholesale and re-derives everything downstream (see
     /// <see cref="CoreWorld.Recompute"/>). The table is sparse and absolute, so the call is
     /// idempotent: the engine keeps no history, the document owns the edits. <paramref name="meta"/>
-    /// packs <see cref="UserEditFlags"/> in the low byte and the pinned <see cref="BiomeType"/> above it.
+    /// packs <see cref="UserEditFlags"/> in bits 0-7, the pinned <see cref="BiomeType"/> in 8-15, the pinned
+    /// <see cref="LandUseInfo.Use"/> in 16-23 and its <see cref="LandUseInfo.Activities"/> in 24-31.
     /// <paramref name="temperature"/> and <paramref name="precipitation"/> are the brushed climate offsets
     /// (<see cref="UserEditInfo.TemperatureDelta"/>, <see cref="UserEditInfo.PrecipitationDelta"/>).
     /// </summary>
@@ -62,6 +63,8 @@ public static partial class WorldExports
                 PinHeight = (float)pinHeight[k],
                 Flags = (UserEditFlags)(meta[k] & 0xff),
                 PinBiome = (BiomeType)((meta[k] >> 8) & 0xff),
+                LandUse = (byte)((meta[k] >> 16) & 0xff),
+                LandActivities = (byte)((meta[k] >> 24) & 0xff),
                 TemperatureDelta = (float)temperature[k],
                 PrecipitationDelta = (float)precipitation[k],
             };
@@ -227,6 +230,36 @@ public static partial class WorldExports
         {
             result[i * 2] = c[i].Temperature;
             result[i * 2 + 1] = c[i].Precipitation;
+        }
+        return result;
+    }
+
+    /// <summary>
+    /// What each tile could carry, five bytes per tile interleaved: arable, pasture, game, timber, fish
+    /// (<see cref="LandCapacityInfo"/>).
+    /// </summary>
+    [JSExport]
+    public static byte[] LandCapacity()
+    {
+        var c = Current.Map.DataStore.GetSpan<LandCapacityInfo>();
+        var result = new byte[c.Length * 5];
+        for (int i = 0; i < c.Length; i++)
+        {
+            result[i * 5] = c[i].Arable; result[i * 5 + 1] = c[i].Pasture; result[i * 5 + 2] = c[i].Game;
+            result[i * 5 + 3] = c[i].Timber; result[i * 5 + 4] = c[i].Fish;
+        }
+        return result;
+    }
+
+    /// <summary>What is decided for each tile, three bytes per tile: use, activities, intensity (<see cref="LandUseInfo"/>). Only hand pins unless the host adds allocation stages.</summary>
+    [JSExport]
+    public static byte[] LandUse()
+    {
+        var u = Current.Map.DataStore.GetSpan<LandUseInfo>();
+        var result = new byte[u.Length * 3];
+        for (int i = 0; i < u.Length; i++)
+        {
+            result[i * 3] = u[i].Use; result[i * 3 + 1] = u[i].Activities; result[i * 3 + 2] = u[i].Intensity;
         }
         return result;
     }

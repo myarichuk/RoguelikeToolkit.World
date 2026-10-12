@@ -1,5 +1,6 @@
 import type { Editor } from '../engine/Editor';
 import { depositLabel } from '../engine/world/features';
+import type { CapacityKind } from '../engine/world/capacity';
 import { DEPOSIT_TYPES, FEATURE_KINDS, type DepositType, type FeatureKind } from '../engine/world/protocol';
 import { DEPOSIT_MARKERS } from '../engine/render/Overlay';
 import { VIEW_PRESETS, type BaseMode, type Layers, type ViewSettings } from '../engine/render/ViewSettings';
@@ -54,6 +55,7 @@ export class ViewFiltersViewModel extends ViewModel<ViewFiltersState> {
 
   applyPreset = (id: string): void => this.editor.applyPreset(id);
   setBase = (base: BaseMode): void => this.update((v) => ({ ...v, base }));
+  setCapacityKind = (capacityKind: CapacityKind): void => this.update((v) => ({ ...v, capacityKind }));
   setPlateTopo = (plateTopo: number): void => this.update((v) => ({ ...v, plateTopo }));
   toggleLayer = (key: keyof Layers): void => this.update((v) => ({ ...v, layers: { ...v.layers, [key]: !v.layers[key] } }));
   toggleKind = (k: FeatureKind): void => this.update((v) => ({
@@ -66,4 +68,4 @@ export class ViewFiltersViewModel extends ViewModel<ViewFiltersState> {
 }
 
 const sameLook = (a: ViewSettings, b: ViewSettings) =>
-  a.base === b.base && a.plateTopo === b.plateTopo && JSON.stringify(a.layers) === JSON.stringify(b.layers);
+  a.base === b.base && a.plateTopo === b.plateTopo && a.capacityKind === b.capacityKind && JSON.stringify(a.layers) === JSON.stringify(b.layers);

@@ -71,6 +71,8 @@ export interface WorldSnapshot {
   plateDrift: Float64Array;
   /** Per tile map position (x, y). */
   tileXY: Float32Array;
+  /** Per tile land capacity, five bytes each (world/capacity.ts). */
+  capacity: Uint8Array;
   features: FeatureSet;
   styles: NameStyle[];
   timings: Record<string, number>;
@@ -132,7 +134,7 @@ export type WorkerResponse =
 /** Transferable buffers of a snapshot (zero-copy handoff). */
 export function snapshotTransfer(w: WorldSnapshot): Transferable[] {
   const r = w.rasters;
-  const out: Transferable[] = [r.elevation.buffer, r.biome.buffer, r.tile.buffer, w.tilePlate.buffer, w.plateDrift.buffer, w.tileXY.buffer];
+  const out: Transferable[] = [r.elevation.buffer, r.biome.buffer, r.tile.buffer, w.tilePlate.buffer, w.plateDrift.buffer, w.tileXY.buffer, w.capacity.buffer];
   for (const rv of w.features.rivers) out.push(rv.points.buffer);
   for (const f of w.features.features) if (f.tiles) out.push(f.tiles.buffer);
   return out;

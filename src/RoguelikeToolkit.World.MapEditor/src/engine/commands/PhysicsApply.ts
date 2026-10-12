@@ -21,7 +21,7 @@ export function captureFrame(doc: MapDocument): PhysicsFrame {
   return {
     elevation: doc.elevation.slice(), biome: doc.biome.slice(), warmth: doc.warmth.slice(), wetness: doc.wetness.slice(),
     features: doc.features.toArray(), rivers: doc.rivers.toArray(), labels: doc.labels.toArray(), stamps: doc.stamps.toArray(),
-    physics: p && { edits: new Map(p.edits), baseline: p.baseline, generated: new Set(p.generated), tombstones: new Map(p.tombstones) },
+    physics: p && { edits: new Map(p.edits), baseline: p.baseline, generated: new Set(p.generated), tombstones: new Map(p.tombstones), capacity: p.capacity },
   };
 }
 

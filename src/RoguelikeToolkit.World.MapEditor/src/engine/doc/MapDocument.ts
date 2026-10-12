@@ -34,6 +34,8 @@ export interface PhysicsState {
   generated: Set<string>;
   /** Engine features the author deleted, with their geometry, so they stay deleted when the world is re-derived. */
   tombstones: Map<string, FeatureEntity>;
+  /** Land capacity per tile (world/capacity.ts) as the engine last computed it; absent in files from before it existed. */
+  capacity?: Uint8Array;
 }
 
 /** Engine feature keys look like `f_lake:3`; hand-made ones (`f_river_x7k2`) never contain a colon. */

@@ -15,7 +15,7 @@ const MAGIC = 0x50414d57; // "WMAP" little-endian
 // v4 adds the land-use raster (`landuse`); farmland and ashlands used to be biome ids 11 and 13 and are migrated out on load.
 export const WMAP_VERSION = 4;
 
-type BlobName = 'elevation' | 'biome' | 'tile' | 'tilePlate' | 'plateDrift' | 'tileXY' | 'warmth' | 'wetness' | 'landuse';
+type BlobName = 'elevation' | 'biome' | 'tile' | 'tilePlate' | 'plateDrift' | 'tileXY' | 'warmth' | 'wetness' | 'landuse' | 'capacity';
 type Typed = Float32Array | Uint8Array | Int8Array | Int32Array | Uint32Array | Float64Array;
 const CTORS = { Float32Array, Uint8Array, Int8Array, Int32Array, Uint32Array, Float64Array } as const;
 
@@ -41,6 +41,8 @@ export function encodeDocument(doc: MapDocument): Uint8Array {
     ['tilePlate', doc.world.tilePlate], ['plateDrift', doc.world.plateDrift], ['tileXY', doc.world.tileXY],
     ['warmth', doc.warmth], ['wetness', doc.wetness], ['landuse', doc.landuse],
   ];
+  // Derived and cached: written so the capacity overlay works straight after opening, never read as an input.
+  if (doc.physics?.capacity) arrays.push(['capacity', doc.physics.capacity]);
   const blobs: Header['blobs'] = [];
   let offset = 0;
   for (const [name, a] of arrays) {
@@ -105,14 +107,18 @@ export function decodeDocument(bytes: Uint8Array): MapDocument {
   doc.stamps.reset(header.stamps ?? []);
   doc.labels.reset((header.labels ?? []).map(labelIn));
   doc.rivers.reset(header.rivers ?? []);
+  // The cache is only good for the world it was computed on: a length that does not match the tile count is dropped.
+  const capacity = header.blobs.some((b) => b.name === 'capacity') ? blob<Uint8Array>('capacity') : undefined;
+  const goodCapacity = capacity && capacity.length === (doc.world.tileXY.length / 2) * 5 ? capacity : undefined;
   if (header.physics) {
     doc.physics = {
       edits: editsFromRows(header.physics.edits), baseline: null,
       generated: new Set(header.physics.generated), tombstones: new Map(header.physics.tombstones.map((f) => [f.id, f])),
+      capacity: goodCapacity,
     };
   } else if (doc.hasWorld) {
     // Pre-physics file: nothing was ever recorded, so the engine's own features are told apart by their key shape.
-    doc.physics = { edits: new Map(), baseline: null, generated: new Set([...doc.features.all()].map((f) => f.id).filter(isGeneratedFeatureId)), tombstones: new Map() };
+    doc.physics = { edits: new Map(), baseline: null, generated: new Set([...doc.features.all()].map((f) => f.id).filter(isGeneratedFeatureId)), tombstones: new Map(), capacity: goodCapacity };
   }
   return doc;
 }

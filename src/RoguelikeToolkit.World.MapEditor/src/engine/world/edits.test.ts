@@ -1,5 +1,5 @@
 import { describe, expect, it } from 'vitest';
-import { CLIMATE_RANGE, collectClimate, collectEdits, editsFromRows, editsToRows, MIN_CLIMATE, MIN_DELTA, packEdits, tilePixelCounts, type Raster, type TileEdits } from './edits';
+import { CLIMATE_RANGE, collectClimate, collectEdits, collectLandUse, editsFromRows, editsToRows, MIN_CLIMATE, MIN_DELTA, packEdits, tilePixelCounts, type Raster, type TileEdits } from './edits';
 
 // Four tiles of four pixels each: tile t owns pixels 4t..4t+3.
 const TILES = 4, PX = 16;
@@ -144,5 +144,66 @@ describe('climate offsets on the wire', () => {
   it('round-trips the climate columns', () => {
     const t: TileEdits = new Map([[1, { dt: -0.15, dr: 0.25, dh: 0.1 }]]);
     expect(editsFromRows(JSON.parse(JSON.stringify(editsToRows(t))))).toEqual(t);
+  });
+});
+
+describe('collectLandUse', () => {
+  const land = () => new Uint8Array(PX).fill(1);
+
+  it('pins a tile to the land use that covers enough of it', () => {
+    const lu = new Uint8Array(PX);
+    lu.fill(1, 4, 8);                          // tile 1 entirely farmland
+    lu.fill(3, 8, 10);                         // half of tile 2 pasture
+    lu[12] = 2;                                // one pixel of four in tile 3: a stray dab, below the share
+    const r = collectLandUse(lu, land(), tile, TILES, new Map());
+    expect(r.edits.get(1)!.lu).toBe(1);
+    expect(r.edits.get(2)!.lu).toBe(3);
+    expect(r.edits.has(3)).toBe(false);
+    expect(r.landUseTiles).toBe(2);
+  });
+
+  it('breaks a tie towards the lower id, so the table cannot depend on pixel order', () => {
+    const a = new Uint8Array(PX), b = new Uint8Array(PX);
+    a[4] = a[5] = 2; a[6] = a[7] = 1;
+    b[4] = b[5] = 1; b[6] = b[7] = 2;
+    expect(collectLandUse(a, land(), tile, TILES, new Map()).edits.get(1)!.lu).toBe(1);
+    expect(collectLandUse(b, land(), tile, TILES, new Map()).edits.get(1)!.lu).toBe(1);
+  });
+
+  it('never pins water: a stroke over the sea is stored, not decided', () => {
+    const lu = new Uint8Array(PX).fill(1), biome = land();
+    biome.fill(0, 4, 8);                       // tile 1 is ocean
+    const r = collectLandUse(lu, biome, tile, TILES, new Map());
+    expect(r.edits.has(1)).toBe(false);
+    expect(r.edits.has(0)).toBe(true);
+  });
+
+  it('rebuilds from the paint: erased pins go, other edits stay, the prior table is untouched', () => {
+    const prior: TileEdits = new Map([[1, { lu: 2, dh: 0.1 }], [2, { lu: 1 }]]);
+    const r = collectLandUse(new Uint8Array(PX), land(), tile, TILES, prior);
+    expect(r.edits.get(1)).toEqual({ dh: 0.1 });
+    expect(r.edits.has(2)).toBe(false);
+    expect(prior.get(1)!.lu).toBe(2);
+  });
+
+  it('skips pixels with no tile', () => {
+    expect(collectLandUse(land(), land(), new Int32Array(PX).fill(-1), TILES, new Map()).edits.size).toBe(0);
+  });
+});
+
+describe('land-use pins on the wire', () => {
+  it('sets the pin flag and packs the use above the biome, leaving the other bytes alone', () => {
+    const p = packEdits(new Map([[2, { lu: 3 }], [5, { lu: 4, pinBiome: 6, pinH: 0.2 }], [7, { dh: 0.3 }]]));
+    expect(p.meta[0]).toBe(4 | (3 << 16));
+    expect(p.meta[1]).toBe(1 | 2 | 4 | (6 << 8) | (4 << 16));
+    expect(p.meta[2]).toBe(0);
+    expect((p.meta[1] >> 8) & 0xff).toBe(6);   // what WorldExports.ApplyEdits unpacks
+    expect((p.meta[1] >> 16) & 0xff).toBe(4);
+  });
+
+  it('survives the .wmap rows, and a file from before the pins reads back without them', () => {
+    const t: TileEdits = new Map([[3, { lu: 3, dt: 0.1 }], [9, { dh: 0.5 }]]);
+    expect(editsFromRows(JSON.parse(JSON.stringify(editsToRows(t))))).toEqual(t);
+    expect(editsFromRows([[3, 0.2, null, null, null, null]]).get(3)).toEqual({ dh: 0.2 });
   });
 });

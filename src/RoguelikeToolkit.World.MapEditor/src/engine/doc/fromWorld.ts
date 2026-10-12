@@ -39,6 +39,7 @@ export function documentFromWorld(w: WorldSnapshot, settings: Partial<DocSetting
     baseline: { elevation: w.rasters.elevation.slice(), biome: w.rasters.biome.slice() },
     generated: new Set(features.map((f) => f.id).filter(isGeneratedFeatureId)),
     tombstones: new Map(),
+    capacity: w.capacity,
   };
   return doc;
 }

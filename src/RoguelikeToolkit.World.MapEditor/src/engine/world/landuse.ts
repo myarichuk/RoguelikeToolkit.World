@@ -16,10 +16,15 @@ export interface LandUseDef {
   hint: string;
 }
 
-/** Id 0 is "none". Ids are persisted in `.wmap`: never renumber. */
+/**
+ * Id 0 is "none". Ids are persisted in `.wmap`: never renumber. Ids 1..4 are Core's `LandUseId`, so a painted
+ * stroke and a plugin's allocation mean the same thing; `slot` is only the editor's colour slot.
+ */
 export const LAND_USES: readonly LandUseDef[] = [
   { id: 1, name: 'Farmland', slot: 11, hint: 'Tilled fields and pasture. Drawn over whatever biome grows there; the biome underneath is unchanged.' },
   { id: 2, name: 'Ashlands', slot: 13, hint: 'Burn scars and volcanic waste. Drawn over the biome; the biome underneath is unchanged.' },
+  { id: 3, name: 'Pasture', slot: 17, hint: 'Fenced or sown grazing land. Drawn over the biome; the biome underneath is unchanged.' },
+  { id: 4, name: 'Built-up', slot: 18, hint: 'Ground under a town or city. Drawn over the biome; the biome underneath is unchanged.' },
 ];
 
 /** Biome ids that used to hold land use (documents saved before the land-use layer). */

@@ -27,7 +27,7 @@ function fakeEngine(log: RecomputeParams[] = []): PhysicsEngine {
       const features = p.rastersOnly ? [] : [{ key: 'lake:0', kind: 'lake' as const, name: '', x: 1, y: 1, angle: 0, extent: 1, weight: 1, style: 0, tiles: Int32Array.from(lake.tiles!), details: [], request: lake.request }];
       return {
         seed: p.seed, size: p.size, plates: p.plates, tileCount: 2, rasters: { width: MAP_W, height: MAP_H, elevation, biome, tile }, tilePlate: new Uint32Array(2),
-        plateDrift: new Float64Array(0), tileXY: new Float32Array(4), features: { features, rivers: [] }, styles: [{ race: 'h', culture: 'c', label: 'Human' }], timings: {},
+        plateDrift: new Float64Array(0), tileXY: new Float32Array(4), capacity: new Uint8Array(10).fill(p.edits.tiles.length + 1), features: { features, rivers: [] }, styles: [{ race: 'h', culture: 'c', label: 'Human' }], timings: {},
       } as WorldSnapshot;
     },
     async names(reqs) { return reqs.map((_, i) => `Name${i}`); },
@@ -138,6 +138,24 @@ describe('derivePhysics', () => {
     expect(doc.warmth[N - 1]).toBe(127);              // derivePhysics does not touch the document; the command swaps frames
   });
 
+  it('sends painted land use as per-tile pins, never for water, and erasing it removes the pin', async () => {
+    const log: RecomputeParams[] = [];
+    const eng = fakeEngine(log);
+    const doc = await docFor(eng);
+    for (let i = 0; i < N; i++) if (tile[i] === 1 && doc.biome[i] !== 0) doc.landuse[i] = 3;
+    const out = await derivePhysics(doc, eng, 'sculpt');
+    const sent = unpackForTest(log.at(-1)!.edits);
+    expect(sent.get(1)?.lu).toBe(3);
+    expect(sent.get(1)?.pinBiome).toBeUndefined();     // a land-use pin is not a biome pin
+    expect(out.report.landUseTiles).toBe(1);
+    expect(describeReport(out.report)).toContain('1 land-use pins');
+    doc.replaceRasters(out.elevation, out.biome);
+    doc.physics = out.physics;
+    doc.landuse.fill(0);
+    const again = await derivePhysics(doc, eng, 'sculpt');
+    expect(again.physics.edits.has(1)).toBe(false);
+  });
+
   it('erasing the paint and applying again removes the offset from the table', async () => {
     const log: RecomputeParams[] = [];
     const eng = fakeEngine(log);
@@ -161,12 +179,22 @@ describe('derivePhysics', () => {
     expect(log.at(-1)!.planet).toEqual({ obliquity: 60, flux: 0.95, rotation: 1.5 });
   });
 
+  it('carries the engine\'s land capacity into the physics state, refreshed on every apply', async () => {
+    const eng = fakeEngine();
+    const doc = await docFor(eng);
+    expect(doc.physics!.capacity).toBeUndefined();               // the fake baseline has none; a real generate supplies it
+    for (let i = 0; i < N; i++) if (tile[i] === 1) doc.warmth[i] = 127;
+    const out = await derivePhysics(doc, eng, 'sculpt');
+    expect(out.physics.capacity).toBeDefined();
+    expect(out.physics.capacity![0]).toBe(2);                    // one edited tile, so the fake engine said 1 + 1
+  });
+
   it('refuses a hand-made map', async () => {
     await expect(derivePhysics(MapDocument.empty(), fakeEngine(), 'sculpt')).rejects.toThrow(/no generated world/);
   });
 
   it('describes what moved', () => {
-    expect(describeReport({ heightTiles: 12, biomeTiles: 0, climateTiles: 0, counts: { river: [14, 17], lake: [9, 9] }, kept: 20, added: 3, removed: 0 })).toBe('12 tiles reshaped · rivers 14→17 · 3 new');
-    expect(describeReport({ heightTiles: 0, biomeTiles: 0, climateTiles: 0, counts: {}, kept: 0, added: 0, removed: 0 })).toBe('no change');
+    expect(describeReport({ heightTiles: 12, biomeTiles: 0, climateTiles: 0, landUseTiles: 0, counts: { river: [14, 17], lake: [9, 9] }, kept: 20, added: 3, removed: 0 })).toBe('12 tiles reshaped · rivers 14→17 · 3 new');
+    expect(describeReport({ heightTiles: 0, biomeTiles: 0, climateTiles: 0, landUseTiles: 0, counts: {}, kept: 0, added: 0, removed: 0 })).toBe('no change');
   });
 });

@@ -24,6 +24,7 @@ interface EngineApi {
   PlateDrift(): Arr;
   Flow(): Arr;
   Climate(): Arr;
+  LandCapacity(): Arr;
   Rivers(): Arr;
   WaterBodies(): Arr;
   Ranges(): Arr;
@@ -98,6 +99,7 @@ function pull(e: EngineApi, p: GenerateParams, tileCount: number, timings: Recor
   const plateDrift = Float64Array.from(e.PlateDrift());
   const flow = Float64Array.from(e.Flow());
   const climate = Float64Array.from(e.Climate());
+  const capacity = Uint8Array.from(e.LandCapacity());
   const catalogs = {
     rivers: Int32Array.from(e.Rivers()), waterBodies: Int32Array.from(e.WaterBodies()),
     ranges: Int32Array.from(e.Ranges()), deposits: Int32Array.from(e.Deposits()),
@@ -133,7 +135,7 @@ function pull(e: EngineApi, p: GenerateParams, tileCount: number, timings: Recor
     const q = vecToMap(vectors[i * 3], vectors[i * 3 + 1], vectors[i * 3 + 2]);
     tileXY[i * 2] = q.x; tileXY[i * 2 + 1] = q.y;
   }
-  return { seed: p.seed, size: p.size, plates: p.plates, tileCount, rasters, tilePlate, plateDrift, tileXY, features, styles: chosen, timings };
+  return { seed: p.seed, size: p.size, plates: p.plates, tileCount, rasters, tilePlate, plateDrift, tileXY, capacity, features, styles: chosen, timings };
 }
 
 const post = (msg: WorkerResponse, transfer: Transferable[] = []) => (self as unknown as DedicatedWorkerGlobalScope).postMessage(msg, transfer);

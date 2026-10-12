@@ -1,3 +1,4 @@
+import type { CapacityKind } from '../world/capacity';
 import { DEPOSIT_TYPES, FEATURE_KINDS, type DepositType, type FeatureKind } from '../world/protocol';
 
 export type BaseMode = 'styled' | 'biomes' | 'elevation' | 'plates';
@@ -16,6 +17,8 @@ export interface Layers {
   resources: boolean;
   /** Tint of the temperature / rainfall offsets painted with the climate brush. */
   climatePaint: boolean;
+  /** Tint of what the land could carry (farming, grazing, game, timber, fish), from the engine's capacity. */
+  capacity: boolean;
 }
 
 /**
@@ -26,6 +29,8 @@ export interface ViewSettings {
   base: BaseMode;
   /** Plates view: 0 = flat plate colors, 1 = plates tinted over topography. */
   plateTopo: number;
+  /** Which capacity the `capacity` layer shows. */
+  capacityKind: CapacityKind;
   layers: Layers;
   kinds: Record<FeatureKind, boolean>;
   deposits: Record<DepositType, boolean>;
@@ -36,11 +41,11 @@ const allDeposits = (v: boolean) => Object.fromEntries(DEPOSIT_TYPES.map((k) => 
 
 const LAYERS_OFF: Layers = {
   hillshade: false, contours: false, plateBoundaries: false, plateMotion: false, graticule: false,
-  ripples: false, coastline: false, rivers: false, stamps: false, labels: false, resources: false, climatePaint: false,
+  ripples: false, coastline: false, rivers: false, stamps: false, labels: false, resources: false, climatePaint: false, capacity: false,
 };
 
 export const DEFAULT_VIEW: ViewSettings = {
-  base: 'styled', plateTopo: 0,
+  base: 'styled', plateTopo: 0, capacityKind: 'arable',
   layers: { ...LAYERS_OFF, ripples: true, rivers: true, stamps: true, labels: true },
   kinds: { ...allKinds(true), deposit: false },
   deposits: allDeposits(true),
@@ -55,6 +60,7 @@ export const VIEW_PRESETS: ViewPreset[] = [
   { id: 'plates-topo', label: 'Plates + topography', apply: (v) => ({ ...v, base: 'plates', plateTopo: 0.75, layers: { ...LAYERS_OFF, hillshade: true, plateBoundaries: true, plateMotion: true, coastline: true } }) },
   { id: 'topo', label: 'Topography', apply: (v) => ({ ...v, base: 'elevation', layers: { ...LAYERS_OFF, hillshade: true, contours: true, coastline: true, rivers: true } }) },
   { id: 'biomes', label: 'Biomes', apply: (v) => ({ ...v, base: 'biomes', layers: { ...LAYERS_OFF, hillshade: true, coastline: true, rivers: true } }) },
+  { id: 'land', label: 'Land capacity', apply: (v) => ({ ...v, base: 'biomes', layers: { ...LAYERS_OFF, hillshade: true, coastline: true, rivers: true, capacity: true } }) },
   { id: 'resources', label: 'Resources', apply: (v) => ({ ...v, base: 'elevation', layers: { ...LAYERS_OFF, hillshade: true, coastline: true, rivers: true, labels: true, resources: true }, kinds: { ...v.kinds, deposit: true } }) },
 ];
 

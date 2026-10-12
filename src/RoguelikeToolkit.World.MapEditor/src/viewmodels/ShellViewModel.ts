@@ -1,3 +1,4 @@
+import { CAPACITY_KINDS, capacityOf } from '../engine/world/capacity';
 import { landUseName } from '../engine/world/landuse';
 import type { Editor } from '../engine/Editor';
 import { kmPerMu, mapToLonLatDeg, wrapX } from '../engine/core/geo';
@@ -68,11 +69,19 @@ export class ShellViewModel extends ViewModel<ShellState> {
       this.set({
         cursor: {
           lon: ll.lon, lat: ll.lat, elevation: doc.elevationAt(q.x, q.y), feature: area?.name ?? '',
-          biome: doc.elevationAt(q.x, q.y) < 0 ? 'Sea' : (biomes.find((b) => b.id === doc.biomeAt(q.x, q.y))?.name ?? '') + (doc.landUseAt(q.x, q.y) ? ` (${landUseName(doc.landUseAt(q.x, q.y)) ?? ''})` : ''),
+          biome: doc.elevationAt(q.x, q.y) < 0 ? 'Sea' : (biomes.find((b) => b.id === doc.biomeAt(q.x, q.y))?.name ?? '') + (doc.landUseAt(q.x, q.y) ? ` (${landUseName(doc.landUseAt(q.x, q.y)) ?? ''})` : '') + this.capacityReadout(doc, q.x, q.y),
           kmPerPx: kmPerMu(q.y) / this.editor.camera.zoom,
         },
       });
     });
+  }
+
+  /** ` · Farming 143` while the capacity layer is on and the document has a capacity to read; else nothing. */
+  private capacityReadout(doc: Editor['doc'], x: number, y: number): string {
+    const view = this.editor.view();
+    if (!view.layers.capacity || !doc.physics?.capacity) return '';
+    const kind = CAPACITY_KINDS.find((k) => k.key === view.capacityKind)!;
+    return ` · ${kind.label} ${capacityOf(doc.physics.capacity, doc.tileAt(x, y), kind.key)}`;
   }
 
   undo = (): void => this.editor.undo.undo();
