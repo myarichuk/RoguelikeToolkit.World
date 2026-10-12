@@ -1,7 +1,7 @@
 import { describe, expect, it } from 'vitest';
 import { MAP_H, MAP_W } from '../core/geo';
 import { MapDocument } from '../doc/MapDocument';
-import type { FeatureEntity } from '../doc/types';
+import { DEFAULT_SETTINGS, type FeatureEntity } from '../doc/types';
 import { derivePhysics, describeReport, type PhysicsEngine } from './derivePhysics';
 import { unpackForTest } from './testSupport';
 import type { RecomputeParams, WorldSnapshot } from './protocol';
@@ -36,7 +36,7 @@ function fakeEngine(log: RecomputeParams[] = []): PhysicsEngine {
 
 function docFor(engine: PhysicsEngine): Promise<MapDocument> {
   return engine.recompute({ seed: 1, size: 1, plates: 1, styles: [], edits: { tiles: new Int32Array(0), delta: new Float64Array(0), pinHeight: new Float64Array(0), meta: new Int32Array(0) }, rastersOnly: false }).then((s) => {
-    const doc = new MapDocument({ seed: 1, size: 1, plates: 1, warp: 6, detail: 0.05, ring: 2.5, styles: [], title: 't' }, s.rasters.elevation.slice(), s.rasters.biome.slice(),
+    const doc = new MapDocument({ ...DEFAULT_SETTINGS, seed: 1, size: 1, plates: 1, styles: [], title: 't' }, s.rasters.elevation.slice(), s.rasters.biome.slice(),
       { tile, tilePlate: s.tilePlate, plateDrift: s.plateDrift, tileXY: s.tileXY, styles: s.styles });
     doc.features.reset([{ id: 'f_lake:0', kind: 'lake', name: 'Silverfen', x: 1, y: 1, angle: 0, extent: 1, weight: 1, tiles: [0], details: [], culture: '' }]);
     doc.physics = { edits: new Map(), baseline: { elevation: s.rasters.elevation.slice(), biome: s.rasters.biome.slice() }, generated: new Set(['f_lake:0']), tombstones: new Map() };
@@ -117,6 +117,15 @@ describe('derivePhysics', () => {
     const out = await derivePhysics(doc, eng, 'revert');
     expect(out.physics.edits.size).toBe(0);
     expect(out.biome[0]).toBe(1);
+  });
+
+  it('asks the engine for the world the document was generated on, planet included', async () => {
+    const log: RecomputeParams[] = [];
+    const eng = fakeEngine(log);
+    const doc = await docFor(eng);
+    doc.setSettings({ obliquity: 60, flux: 0.95, rotation: 1.5 });
+    await derivePhysics(doc, eng, 'sculpt');
+    expect(log.at(-1)!.planet).toEqual({ obliquity: 60, flux: 0.95, rotation: 1.5 });
   });
 
   it('refuses a hand-made map', async () => {

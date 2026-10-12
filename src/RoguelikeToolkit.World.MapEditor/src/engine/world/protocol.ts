@@ -76,10 +76,25 @@ export interface WorldSnapshot {
   timings: Record<string, number>;
 }
 
+/** The planet's astronomy (Core's PlanetParameters). Earth by default; every field is a difference-from-Earth knob. */
+export interface PlanetSettings {
+  /** Axial tilt in degrees, 0..90. */
+  obliquity: number;
+  /** Stellar flux relative to Earth's. */
+  flux: number;
+  /** Spin relative to Earth's. */
+  rotation: number;
+}
+
+export const EARTH: Readonly<PlanetSettings> = { obliquity: 23.44, flux: 1, rotation: 1 };
+export const PLANET_LIMITS = { obliquity: [0, 90], flux: [0.3, 2.5], rotation: [0.25, 4] } as const;
+
 export interface GenerateParams {
   seed: number;
   size: number;
   plates: number;
+  /** Absent = Earth. */
+  planet?: PlanetSettings;
   /** Name styles (`race|culture`) cultures are drawn from, one per plate; empty = DEFAULT_STYLES. */
   styles: string[];
 }

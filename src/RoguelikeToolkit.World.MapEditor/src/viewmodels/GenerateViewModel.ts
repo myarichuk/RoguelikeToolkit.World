@@ -1,5 +1,5 @@
 import type { Editor } from '../engine/Editor';
-import { DEFAULT_STYLES, styleKey } from '../engine/world/protocol';
+import { DEFAULT_STYLES, EARTH, PLANET_LIMITS, styleKey } from '../engine/world/protocol';
 import { ViewModel } from './ViewModel';
 
 export interface StyleOption { key: string; race: string; label: string; }
@@ -8,6 +8,9 @@ export interface GenerateState {
   seed: number;
   size: number;
   plates: number;
+  obliquity: number;
+  flux: number;
+  rotation: number;
   title: string;
   density: number;
   /** Selected `race|culture` keys; empty = the default mix. */
@@ -24,7 +27,7 @@ export class GenerateViewModel extends ViewModel<GenerateState> {
   constructor(private readonly editor: Editor) {
     const s = editor.doc.settings;
     super({
-      seed: 1337, size: 5, plates: 14, title: 'Untitled world', density: 1, styles: [...DEFAULT_STYLES], available: [], busy: false,
+      seed: 1337, size: 5, plates: 14, ...EARTH, title: 'Untitled world', density: 1, styles: [...DEFAULT_STYLES], available: [], busy: false,
       warp: s.warp, detail: s.detail, ring: s.ring,
     });
     this.track(editor.events.on('content', () => this.syncStyles()));
@@ -33,8 +36,8 @@ export class GenerateViewModel extends ViewModel<GenerateState> {
     this.syncStyles();
   }
 
-  private syncDoc(s: { warp: number; detail: number; ring: number }): void {
-    this.set({ warp: s.warp, detail: s.detail, ring: s.ring });
+  private syncDoc(s: { warp: number; detail: number; ring: number; obliquity: number; flux: number; rotation: number }): void {
+    this.set({ warp: s.warp, detail: s.detail, ring: s.ring, obliquity: s.obliquity, flux: s.flux, rotation: s.rotation });
   }
 
   private syncStyles(): void {
@@ -46,6 +49,11 @@ export class GenerateViewModel extends ViewModel<GenerateState> {
   randomSeed = (): void => this.set({ seed: (Math.random() * 2 ** 31) >>> 0 });
   setSize = (size: number): void => this.set({ size: Math.min(7, Math.max(3, Math.round(size))) });
   setPlates = (plates: number): void => this.set({ plates: Math.min(40, Math.max(2, Math.round(plates))) });
+  private clampTo = (v: number, [lo, hi]: readonly [number, number]): number => Math.min(hi, Math.max(lo, Number.isFinite(v) ? v : lo));
+  setObliquity = (v: number): void => this.set({ obliquity: this.clampTo(v, PLANET_LIMITS.obliquity) });
+  setFlux = (v: number): void => this.set({ flux: this.clampTo(v, PLANET_LIMITS.flux) });
+  setRotation = (v: number): void => this.set({ rotation: this.clampTo(v, PLANET_LIMITS.rotation) });
+  resetPlanet = (): void => this.set({ ...EARTH });
   setTitle = (title: string): void => this.set({ title });
   setDensity = (density: number): void => this.set({ density });
 
@@ -56,7 +64,7 @@ export class GenerateViewModel extends ViewModel<GenerateState> {
 
   generate = async (): Promise<void> => {
     const s = this.state;
-    await this.editor.generate({ seed: s.seed, size: s.size, plates: s.plates, styles: s.styles, title: s.title, density: s.density }).catch(() => {});
+    await this.editor.generate({ seed: s.seed, size: s.size, plates: s.plates, planet: { obliquity: s.obliquity, flux: s.flux, rotation: s.rotation }, styles: s.styles, title: s.title, density: s.density }).catch(() => {});
   };
 
   /** Coastline look: live, undoable (one step per slider scrub). */

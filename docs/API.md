@@ -77,6 +77,41 @@ string lakeWkt = world.WaterBodyToWkt(0);
 string depositWkt = world.DepositToWkt(0);
 ```
 
+## The planet: tilt, sun and spin
+
+Climate is a function of three astronomical numbers, all defaulting to Earth. An Earth-like set takes the
+exact legacy arithmetic, so existing worlds are unchanged bit for bit.
+
+```csharp
+var world = new WorldBuilder().WithSize(5).WithSeed(42)
+    .WithPlanet(new PlanetParameters { ObliquityDegrees = 60, StellarFlux = 0.95, RotationRate = 1.5 })
+    .Build();                                                   // world.Planet reports what it was built with
+```
+
+| Parameter | Range | Effect |
+|---|---|---|
+| `ObliquityDegrees` | 0..90 (Earth 23.44) | Latitude distribution of annual-mean insolation (S(x) = 1 + S2·P2(x), S2 = -(5/16)(2 - 3 sin²ε)) and the size of the seasons. 0° freezes the high latitudes; 90° makes the poles out-heat the equator. |
+| `StellarFlux` | 0.3..2.5 (Earth 1) | Raises or lowers every temperature (2.5 temperature units per unit of flux; ±10% is a ±0.25 shift, so useful worlds live in roughly 0.85-1.15). |
+| `RotationRate` | 0.25..4 (Earth 1) | Circulation cells span a latitude ∝ 1/rotation (Held & Hou): the dry belt, storm track and polar desert move with it, and the prevailing wind alternates every 30°/rotation instead of every 30°. |
+| `Insolation` | `IInsolationModel` | Replaces the tilt-driven pattern, e.g. `TidallyLockedInsolation` for a world with a permanent day side. |
+
+Deviations are *differences against Earth*, so the biome thresholds calibrated on Earth's 0..1 temperature field
+stay valid. The redistribution of heat between latitudes (a different tilt) is applied at 1.0 per unit of
+insolation, the change of the mean (flux) at 2.5: winds and currents flatten the former, not the latter.
+All temperature now comes from one function, `ClimateModel.Temperature`.
+
+`ClimateInfo` also carries `SeasonalRange` (half the annual temperature swing, larger inland and towards the poles)
+and `RainSeasonality` (0 even .. 1 monsoon or Mediterranean). They are data for hosts and the inspector; the biome
+rules do not read them yet.
+
+Two climate refinements are opt-in because they change default worlds:
+
+- `WithClimate(c => c.MeridionalWind = 0.45)` turns the surface wind along the meridian (equatorward in the Hadley and
+  polar cells, poleward in the Ferrel cell). Default 0: purely zonal.
+- `WithClimateRefresh()` re-runs the climate on the eroded relief before hydrology and biomes (`ClimateRefreshStage`,
+  order 17, tied with erosion and placed after it by the stable sort). Measured on size 3-5: 8-23% of tiles change
+  biome and river counts drop 20-25%, so it needs its own calibration pass before it can be the default.
+
 ## Editing a world: hand edits as a pipeline input
 
 A world is a pure function of (seed, configuration, hand edits). Build it with `WithUserEdits()` and

@@ -51,10 +51,15 @@ export interface DocSettings {
   /** Name styles used for cultures (`race|culture`). */
   styles: string[];
   title: string;
+  /** The planet's axial tilt (degrees), stellar flux and spin, relative to Earth. Part of what identifies the generated world. */
+  obliquity: number;
+  flux: number;
+  rotation: number;
 }
 
 export const DEFAULT_SETTINGS: DocSettings = {
   seed: 42, size: 5, plates: 12, warp: 6, detail: 0.05, ring: 2.5, styles: [], title: 'Untitled world',
+  obliquity: 23.44, flux: 1, rotation: 1,
 };
 
 /** A named, selectable map feature (river, range, sea, settlement, deposit...). */

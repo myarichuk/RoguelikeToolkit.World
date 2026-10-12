@@ -149,6 +149,16 @@ describe('.wmap serialization', () => {
     expect(back.labels.get('l1')!.text).toBe('Ælfheim');
     expect(back.stamps.get('s')).toEqual(doc.stamps.get('s'));
   });
+  it('round-trips the planet, and an older file without one reads as Earth', () => {
+    const doc = MapDocument.empty();
+    doc.setSettings({ obliquity: 71, flux: 0.9, rotation: 0.5 });
+    const back = decodeDocument(encodeDocument(doc));
+    expect([back.settings.obliquity, back.settings.flux, back.settings.rotation]).toEqual([71, 0.9, 0.5]);
+    const old = MapDocument.empty();
+    for (const k of ['obliquity', 'flux', 'rotation'] as const) delete (old.settings as Partial<typeof old.settings>)[k];
+    const reread = decodeDocument(encodeDocument(old));
+    expect([reread.settings.obliquity, reread.settings.flux, reread.settings.rotation]).toEqual([23.44, 1, 1]);
+  });
   it('round-trips the hand-edit table, the generated-feature ids and the tombstones', () => {
     const doc = MapDocument.empty();
     const gone = { id: 'f_lake:4', kind: 'lake' as const, name: 'Gone', x: 1, y: 2, angle: 0, extent: 1, weight: 1, tiles: [1, 2], details: [] as [string, string][], culture: '' };

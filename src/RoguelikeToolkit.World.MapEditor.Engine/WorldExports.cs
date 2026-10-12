@@ -22,10 +22,12 @@ public static partial class WorldExports
     private static TriangleIndices[]? _faces;
 
     [JSExport]
-    public static int Generate(int seed, int size, int plates)
+    public static int Generate(int seed, int size, int plates, double obliquity, double flux, double rotation)
     {
+        // Validate before disposing: a bad planet must not leave the editor with no world behind it.
+        var planet = new PlanetParameters { ObliquityDegrees = obliquity, StellarFlux = flux, RotationRate = rotation };
         _world?.Dispose();
-        var builder = new WorldBuilder().WithSize(size).WithSeed(seed).WithUserEdits();
+        var builder = new WorldBuilder().WithSize(size).WithSeed(seed).WithUserEdits().WithPlanet(planet);
         if (plates > 0) builder.WithPlateCount(plates);
         _world = builder.Build();
         // The store discards faces after deriving adjacency; regenerate them (deterministic, same vertex order).

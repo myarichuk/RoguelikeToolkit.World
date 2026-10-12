@@ -40,8 +40,8 @@ export interface PhysicsOutcome {
 export async function derivePhysics(doc: MapDocument, engine: PhysicsEngine, mode: PhysicsMode): Promise<PhysicsOutcome> {
   const ph = doc.physics;
   if (!ph || !doc.hasWorld) throw new Error('This map has no generated world behind it, so there is nothing to re-derive. Generate a world first.');
-  const { seed, size, plates, styles } = doc.settings;
-  const params = { seed, size, plates, styles };
+  const { seed, size, plates, styles, obliquity, flux, rotation } = doc.settings;
+  const params = { seed, size, plates, styles, planet: { obliquity, flux, rotation } };
   const tileCount = doc.world.tileXY.length / 2;
 
   let edits = ph.edits, heightTiles = 0, biomeTiles = 0;

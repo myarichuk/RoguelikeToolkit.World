@@ -5,7 +5,7 @@
 import { MAP_H, MAP_W, vecToMap } from '../engine/core/geo';
 import { extractFeatures } from '../engine/world/features';
 import {
-  DEFAULT_STYLES, snapshotTransfer, styleKey,
+  DEFAULT_STYLES, EARTH, snapshotTransfer, styleKey,
   type GenerateParams, type NameRequest, type NameStyle, type RecomputeParams, type WorkerRequest, type WorkerResponse, type WorldSnapshot,
 } from '../engine/world/protocol';
 import { rasterize } from '../engine/world/rasterize';
@@ -14,7 +14,7 @@ type Arr = ArrayLike<number>;
 
 /** The [JSExport] surface of RoguelikeToolkit.World.MapEditor.Engine.WorldExports. */
 interface EngineApi {
-  Generate(seed: number, size: number, plates: number): number;
+  Generate(seed: number, size: number, plates: number, obliquity: number, flux: number, rotation: number): number;
   ApplyEdits(tiles: number[], heightDelta: number[], pinHeight: number[], meta: number[]): number;
   TileVectors(): Arr;
   Faces(): Arr;
@@ -61,13 +61,15 @@ function names(e: EngineApi, reqs: NameRequest[]): string[] {
 
 /** Which world the engine currently holds; recompute regenerates when the document asks for another. */
 let loaded = '';
-const worldKey = (p: GenerateParams): string => `${p.seed}|${p.size}|${p.plates}`;
+const planetOf = (p: GenerateParams) => ({ ...EARTH, ...p.planet });
+const worldKey = (p: GenerateParams): string => { const w = planetOf(p); return `${p.seed}|${p.size}|${p.plates}|${w.obliquity}|${w.flux}|${w.rotation}`; };
+const generateWorld = (e: EngineApi, p: GenerateParams): number => { const w = planetOf(p); return e.Generate(p.seed, p.size, p.plates, w.obliquity, w.flux, w.rotation); };
 
 async function generate(p: GenerateParams): Promise<WorldSnapshot> {
   const e = await api();
   const timings: Record<string, number> = { bootMs };
   const t = performance.now();
-  const tileCount = e.Generate(p.seed, p.size, p.plates);
+  const tileCount = generateWorld(e, p);
   loaded = worldKey(p);
   timings.generateMs = performance.now() - t;
   return pull(e, p, tileCount, timings, { features: true, names: true });
@@ -77,7 +79,7 @@ async function recompute(p: RecomputeParams): Promise<WorldSnapshot> {
   const e = await api();
   const timings: Record<string, number> = { bootMs };
   let t = performance.now();
-  const tileCount = loaded === worldKey(p) ? -1 : e.Generate(p.seed, p.size, p.plates);
+  const tileCount = loaded === worldKey(p) ? -1 : generateWorld(e, p);
   if (tileCount >= 0) loaded = worldKey(p);
   const n = e.ApplyEdits(Array.from(p.edits.tiles), Array.from(p.edits.delta), Array.from(p.edits.pinHeight), Array.from(p.edits.meta));
   timings.recomputeMs = performance.now() - t;

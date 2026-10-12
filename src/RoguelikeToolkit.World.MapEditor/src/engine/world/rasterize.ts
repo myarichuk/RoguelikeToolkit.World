@@ -38,6 +38,38 @@ function valueNoise(x: number, y: number, salt: number): number {
   return a + (b - a) * fx + (c - a) * fy + (a - b - c + d) * fx * fy;
 }
 
+/**
+ * Latitude extremes of the great-circle arc between tiles p and q. The arc's highest (lowest) point is the
+ * apex of its great circle when that apex lies between the endpoints; otherwise the endpoints are the extremes.
+ */
+export function arcLatitudeExtremes(V: ArrayLike<number>, p: number, q: number): { min: number; max: number } {
+  const ax = V[p * 3], ay = V[p * 3 + 1], az = V[p * 3 + 2];
+  const bx = V[q * 3], by = V[q * 3 + 1], bz = V[q * 3 + 2];
+  let min = Math.min(Math.asin(clampUnit(az)), Math.asin(clampUnit(bz)));
+  let max = Math.max(Math.asin(clampUnit(az)), Math.asin(clampUnit(bz)));
+  // Plane normal n = a x b.
+  const nx = ay * bz - az * by, ny = az * bx - ax * bz, nz = ax * by - ay * bx;
+  const nl = Math.hypot(nx, ny, nz);
+  if (nl < 1e-12) return { min, max };
+  // Apex of the northern half of the circle: the component of +z along the plane, normalised.
+  const k = nz / (nl * nl);
+  const px = -k * nx, py = -k * ny, pz = 1 - k * nz;
+  const pl = Math.hypot(px, py, pz);
+  if (pl < 1e-12) return { min, max };   // the equator: no bulge
+  const apexLat = Math.asin(clampUnit(pz / pl));
+  // On the arc iff it lies on the same side of both endpoints as the arc's interior.
+  const inArc = (x: number, y: number, z: number): boolean => {
+    const c1 = (ay * z - az * y) * nx + (az * x - ax * z) * ny + (ax * y - ay * x) * nz;           // (a x v) . n
+    const c2 = (y * bz - z * by) * nx + (z * bx - x * bz) * ny + (x * by - y * bx) * nz;           // (v x b) . n
+    return c1 >= 0 && c2 >= 0;
+  };
+  if (inArc(px / pl, py / pl, pz / pl)) max = Math.max(max, apexLat);
+  if (inArc(-px / pl, -py / pl, -pz / pl)) min = Math.min(min, -apexLat);
+  return { min, max };
+}
+
+const clampUnit = (v: number): number => Math.max(-1, Math.min(1, v));
+
 export function rasterize(t: TileFields, W: number, H: number, biomeJitter = 0.22): Rasters {
   const V = t.vectors, F = t.faces;
   const elevation = new Float32Array(W * H).fill(NaN);
@@ -97,7 +129,14 @@ export function rasterize(t: TileFields, W: number, H: number, biomeJitter = 0.2
       }
       lonMin = Math.min(lo0, lo1, lo2); lonMax = Math.max(lo0, lo1, lo2);
     }
-    // Great-circle edges bulge poleward of their endpoints' latitude range; pad by two rows.
+    // Great-circle edges bulge poleward of their endpoints' latitude range: widen to each arc's true extreme
+    // (a fixed row pad is wrong on coarse meshes near the poles, where a row is a tiny sliver of latitude).
+    for (const [p, q] of [[ia, ib], [ib, ic], [ic, ia]] as const) {
+      const e = arcLatitudeExtremes(V, p, q);
+      if (e.max > la1) la1 = e.max;
+      if (e.min < la0) la0 = e.min;
+    }
+    // A little slack on top: the extremes are exact, the row quantisation is not.
     const y0 = Math.max(0, rowAtLat(la1) - 2);
     const y1 = Math.min(H - 1, rowAtLat(la0) + 2);
     if (y0 > H - 1 || y1 < 0) continue;

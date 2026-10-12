@@ -24,6 +24,13 @@ export function GeneratePanel() {
         <Slider label="Decal density" value={s.density} min={0} max={2} step={0.05} onChange={vm.setDensity} />
         <button className="primary wide" disabled={s.busy} onClick={() => void vm.generate()}>{s.busy ? 'Working…' : 'Generate world'}</button>
       </Section>
+      <Section title="Planet">
+        <p className="hint">Takes effect on the next Generate. Earth is 23.4° tilt, flux 1, spin 1.</p>
+        <Slider label="Axial tilt" value={s.obliquity} min={0} max={90} step={0.5} onChange={vm.setObliquity} format={(v) => `${v}°`} />
+        <Slider label="Stellar flux" value={s.flux} min={0.6} max={1.4} step={0.01} onChange={vm.setFlux} format={(v) => `${v.toFixed(2)}× Earth`} />
+        <Slider label="Spin" value={s.rotation} min={0.25} max={4} step={0.05} onChange={vm.setRotation} format={(v) => `${v.toFixed(2)}× Earth`} />
+        <button className="wide" onClick={vm.resetPlanet}>Earth</button>
+      </Section>
       <Section title="Coastline style">
         <Slider label="Warp" value={s.warp} min={0} max={16} step={0.25} onChange={(warp) => vm.setCoast({ warp })} format={(v) => `${v} mu`} />
         <Slider label="Detail noise" value={s.detail} min={0} max={0.2} step={0.005} onChange={(detail) => vm.setCoast({ detail })} />

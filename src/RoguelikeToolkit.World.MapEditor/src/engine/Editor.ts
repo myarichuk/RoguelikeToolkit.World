@@ -35,7 +35,7 @@ import { DEFAULT_TOOL_OPTIONS, type Tool, type ToolContext, type ToolId, type To
 import { ToolController, type ToolHost } from './tools/ToolController';
 import { derivePhysics, describeReport, type PhysicsMode } from './world/derivePhysics';
 import { styleIndexForPlate } from './world/features';
-import { NameCtx, type GenerateParams, type NameRequest, type NameStyle } from './world/protocol';
+import { EARTH, NameCtx, type GenerateParams, type NameRequest, type NameStyle } from './world/protocol';
 import { WorldService } from './world/WorldService';
 
 export interface GenerateRequest extends GenerateParams { title?: string; density?: number; }
@@ -303,8 +303,9 @@ export class Editor implements ToolContext, ToolHost {
   async generate(req: GenerateRequest): Promise<void> {
     await this.busy('Generating world…', async () => {
       const t0 = performance.now();
-      const snap = await this.world.generate({ seed: req.seed >>> 0, size: req.size, plates: req.plates, styles: req.styles });
-      const doc = documentFromWorld(snap, { title: req.title ?? `World ${req.seed}`, styles: req.styles });
+      const planet = { ...EARTH, ...req.planet };
+      const snap = await this.world.generate({ seed: req.seed >>> 0, size: req.size, plates: req.plates, styles: req.styles, planet });
+      const doc = documentFromWorld(snap, { title: req.title ?? `World ${req.seed}`, styles: req.styles, ...planet });
       this.density = req.density ?? 1;
       await this.contentReady;
       let t = performance.now();
