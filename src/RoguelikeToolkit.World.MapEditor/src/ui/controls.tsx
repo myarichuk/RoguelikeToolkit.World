@@ -35,7 +35,7 @@ export function NumberField({ label, value, onChange, min, max, step = 1, hint }
 }
 
 /** Commits on Enter/blur so every keystroke is not an undo step. */
-export function TextField({ label, value, onCommit, placeholder }: { label?: string; value: string; onCommit: (v: string) => void; placeholder?: string }) {
+export function TextField({ label, value, onCommit, placeholder, hint }: { label?: string; value: string; onCommit: (v: string) => void; placeholder?: string; hint?: string }) {
   const [draft, setDraft] = useState(value);
   useEffect(() => setDraft(value), [value]);
   const commit = () => { if (draft !== value) onCommit(draft); };
@@ -43,7 +43,7 @@ export function TextField({ label, value, onCommit, placeholder }: { label?: str
     <input type="text" value={draft} placeholder={placeholder} onChange={(e) => setDraft(e.target.value)} onBlur={commit}
       onKeyDown={(e) => { if (e.key === 'Enter') commit(); if (e.key === 'Escape') setDraft(value); }} />
   );
-  return label ? <label className="row"><span>{label}</span>{input}</label> : input;
+  return label ? <label className="row" title={hint}><span>{label}</span>{input}</label> : input;
 }
 
 export function Toggle({ label, on, onChange, swatch, count, hint }: { label: string; on: boolean; onChange: () => void; swatch?: ReactNode; count?: number; hint?: string }) {
@@ -57,9 +57,9 @@ export function Toggle({ label, on, onChange, swatch, count, hint }: { label: st
   );
 }
 
-export function ColorField({ label, value, onChange }: { label: string; value: string; onChange: (v: string) => void }) {
+export function ColorField({ label, value, onChange, hint }: { label: string; value: string; onChange: (v: string) => void; hint?: string }) {
   return (
-    <label className="row color">
+    <label className="row color" title={hint}>
       <span>{label}</span>
       <input type="color" value={toHex(value)} onChange={(e) => onChange(e.target.value)} />
       <code>{value}</code>

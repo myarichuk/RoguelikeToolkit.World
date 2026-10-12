@@ -1,4 +1,5 @@
 import { useApp, useViewModel } from './hooks';
+import { SHELL_HINTS } from './glossary';
 
 export function StatusBar() {
   const { vms } = useApp();
@@ -10,12 +11,12 @@ export function StatusBar() {
     <footer className="statusbar">
       <span className="grow">{s.status}</span>
       {c && (
-        <span>
+        <span title={SHELL_HINTS.cursor}>
           {fmtLat(c.lat)} {fmtLon(c.lon)} · h {c.elevation >= 0 ? '+' : ''}{c.elevation.toFixed(3)} · {c.biome}
           {c.feature && ` · ${c.feature}`}{c.climate && ` · ${c.climate}`} · {c.kmPerPx < 1 ? `${(c.kmPerPx * 1000).toFixed(0)} m/px` : `${c.kmPerPx.toFixed(1)} km/px`}
         </span>
       )}
-      {gen && <span className="muted" title={JSON.stringify(t, null, 1)}>{gen}</span>}
+      {gen && <span className="muted" title={`${SHELL_HINTS.timings}\n${JSON.stringify(t, null, 1)}`}>{gen}</span>}
       <span className="muted">{s.frame}</span>
     </footer>
   );

@@ -1,5 +1,6 @@
 import { useApp, useViewModel } from './hooks';
 import { TextField } from './controls';
+import { SHELL_HINTS } from './glossary';
 
 export function TopBar() {
   const { vms } = useApp();
@@ -20,8 +21,8 @@ export function TopBar() {
         <button onClick={vm.undo} disabled={!s.undo.canUndo} title={`Undo ${s.undo.undoLabel ?? ''} (Ctrl+Z)`}>↶</button>
         <button onClick={vm.redo} disabled={!s.undo.canRedo} title={`Redo ${s.undo.redoLabel ?? ''} (Ctrl+Shift+Z)`}>↷</button>
       </div>
-      <div className="title"><TextField value={s.title} onCommit={vm.setTitle} /></div>
-      <label className="theme-pick">
+      <div className="title"><TextField value={s.title} onCommit={vm.setTitle} placeholder="Map title" /></div>
+      <label className="theme-pick" title={SHELL_HINTS.theme}>
         Theme
         <select value={s.themeId} onChange={(e) => vm.setTheme(e.target.value)}>
           {s.themes.map((t) => <option key={t.id} value={t.id}>{t.name}{t.edited ? ' (edited)' : ''}</option>)}

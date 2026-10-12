@@ -465,4 +465,66 @@ public class OceanCurrentTests
             maxSpeed = Math.Max(maxSpeed, new Vector3D(climate[i].CurrentX, climate[i].CurrentY, climate[i].CurrentZ).Length);
         Assert.True(maxSpeed > 0.5, "the final climate layer carries the current field");
     }
+
+    // --- The reference-speed normalisation: degenerate seas -------------------------------------------------------
+    // Velocity is divided by the 75th-percentile speed of the sea. A sea that barely moves has two ways to make that
+    // zero: nothing moves at all (the wind-stress curl is exactly zero on the equator), or most of it is still and
+    // only a few tiles move. Neither may divide by zero or leave a field that is not a unit-scale current.
+
+    private static (WorldDataStore store, Vector3D[] vec, ElevationInfo[] land) EmptySea(World w)
+    {
+        var store = w.Map.DataStore;
+        var vec = store.GetTileVectors().ToArray();
+        var land = new ElevationInfo[store.TileCount];
+        for (int i = 0; i < land.Length; i++) land[i] = new ElevationInfo { Height = 0.4f };
+        return (store, vec, land);
+    }
+
+    private static OceanCurrentField SolveWith(WorldDataStore store, Vector3D[] vec, ElevationInfo[] elev)
+        => OceanCurrents.Solve(store, elev, vec, new PlanetParameters(), OceanCurrentSettings.Default);
+
+    [Fact]
+    public void ALoneEquatorialTile_HasNoCurrent_AndNothingIsNotANumber()
+    {
+        using var w = new WorldBuilder().WithSize(3).WithSeed(1).WithoutDefaultStages().Build();
+        var (store, vec, elev) = EmptySea(w);
+        int t = Array.FindIndex(vec, v => Math.Abs(v.Z) < 1e-12);
+        Assert.True(t >= 0, "an icosphere has tiles exactly on the equator");
+        elev[t] = new ElevationInfo { Height = -0.5f };
+        var f = SolveWith(store, vec, elev);
+        Assert.Equal(0.0, f.ReferenceSpeed);
+        for (int i = 0; i < vec.Length; i++)
+        {
+            Assert.Equal(0.0, f.Velocity[i].Length);
+            Assert.False(double.IsNaN(f.Psi[i]) || double.IsNaN(f.Anomaly[i]));
+        }
+    }
+
+    [Fact]
+    public void ASeaWhereMostTilesAreStill_IsScaledByItsFastestTile()
+    {
+        // The equatorial ring has psi = 0 (no forcing there); one tile just north of it is the only thing that moves.
+        using var w = new WorldBuilder().WithSize(3).WithSeed(1).WithoutDefaultStages().Build();
+        var (store, vec, elev) = EmptySea(w);
+        var ring = new System.Collections.Generic.List<int>();
+        for (int i = 0; i < vec.Length; i++) if (Math.Abs(vec[i].Z) < 1e-12) ring.Add(i);
+        int tried = 0, still = 0;
+        for (int north = 0; north < vec.Length; north++)
+        {
+            if (vec[north].Z <= 1e-3 || vec[north].Z >= 0.12) continue;
+            var sea = (ElevationInfo[])elev.Clone();
+            foreach (int i in ring) sea[i] = new ElevationInfo { Height = -0.5f };
+            sea[north] = new ElevationInfo { Height = -0.5f };
+            var f = SolveWith(store, vec, sea);
+            var speeds = new System.Collections.Generic.List<double>();
+            for (int i = 0; i < sea.Length; i++) if (sea[i].Height < ElevationGenerationStage.SeaLevel) speeds.Add(f.Velocity[i].Length);
+            speeds.Sort();
+            tried++;
+            if (speeds[(int)(speeds.Count * 0.75)] != 0.0) continue; // this one is in the ordinary regime
+            still++;
+            Assert.True(f.ReferenceSpeed > 0.0, "falls back to the fastest tile, not to zero");
+            Assert.Equal(1.0, speeds[speeds.Count - 1], 9);
+        }
+        Assert.True(tried > 0 && still > 0, $"no mostly-still sea found ({still} of {tried})");
+    }
 }

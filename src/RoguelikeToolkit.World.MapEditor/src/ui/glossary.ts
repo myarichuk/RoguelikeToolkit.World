@@ -85,3 +85,48 @@ export const TERRAIN_HINTS: Record<string, string> = {
   land: 'Lifts the sea floor just above sea level.',
   sea: 'Sinks the ground just below sea level.',
 };
+
+/** Theme editor controls, keyed by the `MapStyle` field they write. */
+export const THEME_HINTS: Record<string, string> = {
+  paper: 'Background colour of the map sheet, behind everything.',
+  sea: 'Colour of deep water.',
+  shallow: 'Colour of shallow water along the coast.',
+  seaInk: 'Ink for ripples and other marks drawn on the water.',
+  landInk: 'Ink for outlines and marks drawn on the land.',
+  river: 'Colour of rivers.',
+  frame: 'Colour of the border drawn around the map.',
+  coastWidth: 'Thickness of the coastline.',
+  haloWidth: 'How far the lighter shallow-water band reaches out from the coast.',
+  rippleCount: 'How many decorative rings run along the coast.',
+  rippleOpacity: 'How strong the coastal rings are; 0 hides them.',
+  hillshade: 'How strongly slopes are shaded. 0 is flat, 1 is full relief shading.',
+  grain: 'Amount of paper texture speckle.',
+  stains: 'Amount of blotchy ageing on the paper.',
+  innerCoast: 'Darkening of the land just inside the coastline.',
+  riverWidth: 'Overall thickness of river ribbons.',
+  name: 'The theme\'s name, as shown in the Theme picker.',
+  biomes: 'Fill colour of each biome in the styled map.',
+  inks: 'Colours the hand-drawn stamps (mountains, trees, hills) are inked with. Changing one redraws the stamps.',
+  labelKind: 'Which sort of label to style: towns, rivers, mountains and so on. The controls below change only this kind.',
+  labelFont: 'Letter style for this kind of label: serif, italic or capitals.',
+  labelSize: 'Base text size of this label kind.',
+  labelGrow: 'How much bigger features get bigger labels. 0 makes every label the same size.',
+  labelTracking: 'Extra space between letters. Wide spacing suits large areas such as seas and ranges.',
+  labelHalo: 'Thickness of the outline that keeps the text readable over the map.',
+  labelMinZoom: 'Zoom level at which this kind of label appears; "always" shows it at every zoom.',
+  labelUppercase: 'Writes this kind of label in capitals.',
+  labelFill: 'Text colour.',
+  labelHaloColor: 'Colour of the outline around the text.',
+  chrome: 'Colour of the editor\'s own panels and buttons (not the map).',
+};
+
+/** Top bar, status bar and content-pack controls. */
+export const SHELL_HINTS = {
+  theme: 'The map\'s look: colours, label styles and stamp inks. Edit the chosen theme in the Theme panel.',
+  cursor: 'Under the pointer: latitude and longitude, height above sea level (sea is 0), biome, the named feature, the climate while a climate layer is on, and the map scale.',
+  timings: 'How long the last Generate took, split into the world simulation, drawing the map, finding features and naming them. Hover for the exact numbers.',
+  packImport: 'Add a content pack (themes, biomes, stamps, fonts) from a file on your computer.',
+  packExample: 'Load the example pack that ships with the editor.',
+  packToggle: 'Turn this pack on or off without removing it.',
+  packExport: 'Save your own edits as a pack file you can share.',
+} as const;
