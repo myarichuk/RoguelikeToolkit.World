@@ -31,6 +31,7 @@ npm run dev              # http://localhost:5173
 On Windows, use `build.ps1` with `-EngineOnly` / `-Aot`. Other scripts:
 
 - `npm test`: vitest, engine logic, no browser.
+- `npm run e2e`: browser checks against the real engine (headless Chromium + Playwright); see [`e2e/README.md`](e2e/README.md).
 - `npm run typecheck`
 
 Requirements: a WebGL2 browser with `EXT_color_buffer_float`. That covers every current desktop browser.
