@@ -24,8 +24,11 @@ public enum SeaIceKind : byte
 /// warm current such as the Gulf Stream keeps its coast open and a cold one pushes the edge towards the
 /// equator) and the half-swing (<see cref="ClimateInfo.SeasonalRange"/>, which grows with axial tilt, so a
 /// strongly tilted planet freezes more of its sea in winter and thaws more of it in summer).
-/// Calibrated on the temperature index of an Earth-like world: ice first appears near 65 degrees,
-/// the permanent pack starts near 80.
+/// Calibrated against Earth on default worlds pooled over 10 to 30 seeds at each of sizes 3 to 6: about 9% of the
+/// ocean freezes in winter (Earth: 33 of 361 million km2), and the permanent pack is about a quarter of that
+/// (Earth: 7.5 of 33). Seasonal ice sits around 68 degrees on average, the pack around 80; the first ice
+/// appears at about 50 degrees. The pack's share of the frozen area still drifts from 21% to 28% between sizes 3
+/// and 6, which no constant removes.
 /// Not modelled: the ice-albedo feedback on climate (the mask is read from the climate, never written back),
 /// salinity (brine freezes later), and ice drift.
 /// </summary>
@@ -34,7 +37,7 @@ public static class SeaIce
     /// <summary>Winter temperature (mean minus half-swing) at or below which the sea freezes over.</summary>
     public const double FreezeTemperature = 0.20;
     /// <summary>Summer temperature (mean plus half-swing) at or below which the ice survives to autumn.</summary>
-    public const double PerennialTemperature = 0.30;
+    public const double PerennialTemperature = 0.28;
 
     // A fixed salt, like Glaciology's: the ragged margin is a function of geometry alone.
     private const int MarginNoiseSalt = 7349;
