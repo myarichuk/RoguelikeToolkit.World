@@ -93,6 +93,10 @@ describe('ramps and readouts', () => {
     const wet = (r: number) => describeClimate(projectClimate([...rec({ r })], [1, 0, 0], 1), 0);
     expect(wet(0.8)).toContain('wet/dry seasons 0.80');
     expect(wet(0.4)).toContain('some dry season 0.40');
+    expect(s).not.toContain('sea ice');
+    expect(describeClimate(t, 0, 0, 0, 1)).toContain('sea ice in winter');
+    expect(describeClimate(t, 0, 0, 0, 2)).toContain('sea ice all year');
+    expect(describeClimate(undefined, 0, 0, 0, 2)).toBe('');
     expect(describeClimate(undefined, 0)).toBe('');
     expect(describeClimate(t, 5)).toBe('');
   });

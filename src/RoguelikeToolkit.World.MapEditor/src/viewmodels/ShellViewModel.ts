@@ -83,7 +83,8 @@ export class ShellViewModel extends ViewModel<ShellState> {
     const l = this.editor.view().layers;
     if (!(l.climate || l.wind || l.currents) || !doc.physics?.climate) return '';
     const px = Math.floor(wrapX(x)), py = Math.floor(y), i = py * doc.width + px;
-    return describeClimate(doc.physics.climate, doc.tileAt(x, y), paintedKelvin(doc.warmth[i] ?? 0), paintedRain(doc.wetness[i] ?? 0));
+    const tile = doc.tileAt(x, y);
+    return describeClimate(doc.physics.climate, tile, paintedKelvin(doc.warmth[i] ?? 0), paintedRain(doc.wetness[i] ?? 0), doc.physics.seaIce?.[tile] ?? 0);
   }
 
   /** ` · Farming 143` while the capacity layer is on and the document has a capacity to read; else nothing. */

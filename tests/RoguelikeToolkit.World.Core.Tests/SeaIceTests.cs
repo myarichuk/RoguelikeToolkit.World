@@ -14,6 +14,9 @@ public class SeaIceTests
     [InlineData(0.30f, 0.10f, SeaIceKind.Seasonal)]   // winter 0.20 - 0.03 margin is frozen, summer 0.40 is open
     [InlineData(0.10f, 0.05f, SeaIceKind.Perennial)]  // even the summer stays cold
     [InlineData(0.50f, 0.40f, SeaIceKind.Seasonal)]   // a huge swing freezes a mild sea in winter, and it thaws
+    [InlineData(0.27f, 0.00f, SeaIceKind.None)]       // winter 0.27 is just above the freeze line (0.20 + margin): open, pins FreezeTemperature
+    [InlineData(0.15f, 0.10f, SeaIceKind.Perennial)]  // summer 0.25 is just under the pack line (0.30 - margin): pins PerennialTemperature
+    [InlineData(0.20f, 0.20f, SeaIceKind.Seasonal)]   // summer 0.40 is above it, winter 0.00 is frozen
     public void Classify_FollowsWinterAndSummerTemperature(float temperature, float range, SeaIceKind expected)
         => Assert.Equal(expected, SeaIce.Classify(Pole, Sea, temperature, range));
 

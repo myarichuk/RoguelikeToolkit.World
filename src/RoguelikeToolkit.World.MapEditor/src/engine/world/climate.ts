@@ -132,9 +132,10 @@ export function flowLabel(east: number, north: number, quiet = 0.02): string {
 
 /**
  * One line for the status bar: what the climate is at a tile. `paintedKelvin` / `paintedRain` are the climate
- * brush's offsets at the pixel (0 = none). Empty when the document has no climate for the tile.
+ * brush's offsets at the pixel (0 = none). `seaIce` is the engine's 0 / 1 / 2 (none, winter, all year) for the tile.
+ * Empty when the document has no climate for the tile.
  */
-export function describeClimate(climate: Float32Array | undefined, tile: number, paintedK = 0, paintedRain = 0): string {
+export function describeClimate(climate: Float32Array | undefined, tile: number, paintedK = 0, paintedRain = 0, seaIce = 0): string {
   if (!hasClimate(climate, tile)) return '';
   const f = (i: number) => climateOf(climate, tile, i);
   const parts = [`temp ${f(CI.temperature).toFixed(2)}`, `rain ${f(CI.rainfall).toFixed(2)}`];
@@ -144,6 +145,8 @@ export function describeClimate(climate: Float32Array | undefined, tile: number,
   if (cur) parts.push(`current ${cur}${f(CI.oceanHeat) > 0.01 ? ' (warm)' : f(CI.oceanHeat) < -0.01 ? ' (cold)' : ''}`);
   else if (Math.abs(f(CI.oceanHeat)) > 0.01) parts.push(`sea ${f(CI.oceanHeat) > 0 ? 'warmed' : 'cooled'} ${Math.abs(f(CI.oceanHeat) * KELVIN_PER_UNIT).toFixed(1)} K`);
   parts.push(`season ±${(f(CI.seasonalRange) * KELVIN_PER_UNIT).toFixed(0)} K`);
+  if (seaIce === 1) parts.push('sea ice in winter');
+  else if (seaIce === 2) parts.push('sea ice all year');
   const wet = f(CI.rainSeasonality);
   if (wet >= 0.3) parts.push(`${wet >= 0.6 ? 'wet/dry seasons' : 'some dry season'} ${wet.toFixed(2)}`);
   if (Math.abs(paintedK) >= 0.5) parts.push(`painted ${paintedK > 0 ? '+' : ''}${paintedK.toFixed(0)} K`);
