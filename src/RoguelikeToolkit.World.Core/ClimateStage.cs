@@ -58,6 +58,14 @@ public class ClimateStage : IWorldGeneratorStage, ISeededStage
     /// <summary>Extra multiplier gained at full maritime influence (factor = Interior + Gain * maritime).</summary>
     public double MaritimeGain { get; set; } = 0.56;
 
+    /// <summary>
+    /// Strength of the zonal (Hadley-cell) moisture banding, see <see cref="ZonalFactor"/>:
+    /// wet equatorial convergence, a dry belt of subtropical highs near 27 degrees, wetter
+    /// mid-latitude storm tracks and dry poles. 1 is the calibrated default, 0 turns the banding
+    /// off (precipitation then has no latitude structure beyond temperature).
+    /// </summary>
+    public double ZonalStrength { get; set; } = 1.0;
+
     /// <summary>Upwindness weight ramps 0 at/below Lo, 1 at/above Hi.</summary>
     private const double UpwindGateLo = 0.05;
     private const double UpwindGateHi = 0.25;
@@ -110,6 +118,10 @@ public class ClimateStage : IWorldGeneratorStage, ISeededStage
             // blurred field, so the rain shadow keeps full contrast while
             // the noise speckle is gone (backlog E6).
             double moisture = SphereNoise.Fbm(vectors[i] * 2.0 + moistureOffset, Seed + 1000) * 0.5 + 0.5;
+            // Zonal banding scales the base field, so the maritime and orographic terms below still
+            // act on top of it: a subtropical coast stays wetter than the continent behind it, but
+            // the whole belt starts from a much drier baseline than the equator or the westerlies.
+            moisture *= ZonalFactor(absLat, ZonalStrength);
             climate[i] = new ClimateInfo
             {
                 Temperature = (float)Math.Clamp(temperature, 0.0, 1.0),
@@ -185,6 +197,25 @@ public class ClimateStage : IWorldGeneratorStage, ISeededStage
             updated.Precipitation = (float)moisture;
             climate[i] = updated;
         }
+    }
+
+    /// <summary>
+    /// Zonal precipitation multiplier at an absolute latitude in degrees. The sum of four bumps
+    /// around 1: the ITCZ (+, centred on the equator), the subtropical high-pressure belt (-,
+    /// 27 degrees, where descending air makes the Sahara/Atacama/Australian deserts), the
+    /// mid-latitude storm tracks (+, 55 degrees) and the polar cold-air desert (-, from 65).
+    /// Floored at 0.2 so a strength above 1 cannot zero a band out.
+    /// </summary>
+    public static double ZonalFactor(double absLatitude, double strength = 1.0)
+    {
+        static double Bump(double x, double centre, double width) { double d = (x - centre) / width; return Math.Exp(-d * d); }
+        double polarT = Math.Clamp((absLatitude - 65.0) / 25.0, 0.0, 1.0);
+        double polar = polarT * polarT * (3.0 - 2.0 * polarT);
+        double delta = 0.30 * Bump(absLatitude, 0.0, 9.0)
+                     - 0.55 * Bump(absLatitude, 27.0, 8.0)
+                     + 0.12 * Bump(absLatitude, 55.0, 10.0)
+                     - 0.20 * polar;
+        return Math.Max(0.2, 1.0 + strength * delta);
     }
 
     /// <summary>

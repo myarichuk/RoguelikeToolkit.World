@@ -61,7 +61,7 @@ public class ClimateContinentalityTests
             {
                 // Hot ground only: a desert needs heat, so cold or temperate tiles cannot dilute the share.
                 if (dist[i] <= 0 || climate[i].Temperature <= BiomeClassifier.DesertMinTemperature) continue;
-                bool arid = climate[i].Precipitation < BiomeClassifier.DesertMaxMoisture;
+                bool arid = BiomeClassifier.IsArid(climate[i].Temperature, climate[i].Precipitation);
                 if (dist[i] <= 2) { coastN++; coastP += climate[i].Precipitation; if (arid) coastArid++; }
                 else if (dist[i] >= inland) { inlandN++; inlandP += climate[i].Precipitation; if (arid) inlandArid++; }
             }

@@ -101,6 +101,12 @@ build from the finished tectonics + climate + hydrology.
   vs evaporation) into open or endorheic lakes; hollows shallower than
   `LakeSolver.MinLakeDepth` are marshes, not lakes; dry sumps become playas.
   Every river terminates: sea, lake, or sink.
+- **Climate** bands precipitation by latitude (`ClimateStage.ZonalFactor`: wet
+  equator, a dry subtropical belt near 27 degrees, wet storm tracks near 55,
+  dry poles; `ZonalStrength` scales or disables it). **Desert** is hot and
+  arid (`BiomeClassifier.IsArid`): the moisture ceiling rises with temperature,
+  a crude rainfall-versus-evaporation balance, so deserts follow the dry belt,
+  rain shadows and continental interiors rather than the shoreline.
 - **Glaciers** are a climate-aware cover mask (cold + accumulation, with dry
   polar interiors staying tundra) and a first-class `Glacier` biome;
   `Canyon` is a biome too. The visualizer adds Climate and Deposits color
