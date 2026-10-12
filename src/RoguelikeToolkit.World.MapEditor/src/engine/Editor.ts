@@ -14,6 +14,7 @@ import { loadDocument, saveDocument } from './doc/serialize';
 import type { DocSettings, Entity, FeatureEntity, LabelEntity, RiverEntity, StampEntity } from './doc/types';
 import type { EntityStore } from './doc/EntityStore';
 import { exportSvg, type SvgExportOptions } from './export/SvgExporter';
+import { exportWkt } from './export/WktExporter';
 import { deleteFeatureCommand } from './features/deleteFeature';
 import { placeLabels } from './features/placeLabels';
 import { populate } from './features/populate';
@@ -351,6 +352,11 @@ export class Editor implements ToolContext, ToolHost {
       this.status(`SVG: ${(r.svg.length / 1e6).toFixed(1)} MB in ${Math.round(Object.values(r.timings).reduce((a, b) => a + b, 0))} ms`);
       return new Blob([r.svg], { type: 'image/svg+xml' });
     });
+  }
+
+  /** Rivers, settlements, deposits and area anchors as WKT CSV (lon/lat), exactly as the map shows them. */
+  exportWkt(): Blob {
+    return new Blob([exportWkt(this._doc)], { type: 'text/csv' });
   }
 
   /** PNG of what is on screen (map + overlay), at device resolution. */

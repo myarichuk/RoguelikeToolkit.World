@@ -106,6 +106,10 @@ export class ShellViewModel extends ViewModel<ShellState> {
     if (blob) this.files.save(blob, `${slug(this.editor.doc.settings.title)}.svg`);
   };
 
+  exportWkt = (): void => {
+    this.files.save(this.editor.exportWkt(), `${slug(this.editor.doc.settings.title)}.wkt.csv`);
+  };
+
   exportPng = async (): Promise<void> => {
     const blob = await this.editor.exportPng();
     this.files.save(blob, `${slug(this.editor.doc.settings.title)}.png`);

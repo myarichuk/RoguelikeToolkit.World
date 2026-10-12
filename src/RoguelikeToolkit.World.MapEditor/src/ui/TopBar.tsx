@@ -14,6 +14,7 @@ export function TopBar() {
         <button onClick={() => void vm.save()} title="Ctrl+S">Save{s.undo.dirty ? ' •' : ''}</button>
         <span className="sep" />
         <button onClick={() => void vm.exportSvg()} title="Vector export (Inkscape layers)">Export SVG</button>
+        <button onClick={vm.exportWkt} title="Rivers, towns, deposits and named areas as a CSV with WKT geometry (longitude/latitude), for QGIS or GIS tools. Includes your edits and names.">WKT</button>
         <button onClick={() => void vm.exportPng()} title="Current view as PNG">PNG</button>
         <span className="sep" />
         <button onClick={vm.undo} disabled={!s.undo.canUndo} title={`Undo ${s.undo.undoLabel ?? ''} (Ctrl+Z)`}>↶</button>

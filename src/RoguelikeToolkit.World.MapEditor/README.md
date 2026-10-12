@@ -5,7 +5,7 @@ A browser map editor in the style of Inkarnate, built on `RoguelikeToolkit.World
 - **Generate:** Core generates the planet in the browser (.NET → WebAssembly, in a worker).
 - **Draw:** the editor turns the planet into a hand-drawn map.
 - **Edit:** you sculpt terrain, paint biomes, place stamps, write labels and draw rivers.
-- **Export:** vector SVG.
+- **Export:** vector SVG, PNG, and WKT (a CSV of rivers, towns, deposits and area anchors in lon/lat, for GIS tools).
 
 ![editor](docs/editor-map.jpg)
 
@@ -47,7 +47,7 @@ Requirements: a WebGL2 browser with `EXT_color_buffer_float`. That covers every 
 | Text | All labels are vector glyph outlines (opentype.js). Baselines can be straight, arched, or follow a river. The same path data is drawn on screen and written to SVG. |
 | Content | Packs carry themes, biomes, assets (procedural generator presets or authored SVG with palette tokens), placement rules and fonts. Packs layer by id. Try **Packs → Example**: `public/packs/example-pack.json`. |
 | Theming | The live theme editor covers map colors, line weights, biome colors, stamp inks, typography per label kind, and the editor chrome. Edits go to a "My edits" overlay pack: non-destructive, resettable, exportable as a pack. |
-| Files | `.wmap` (gzip; JSON header + raw typed-array rasters); SVG with Inkscape layers; PNG of the current view. |
+| Files | `.wmap` (gzip; JSON header + raw typed-array rasters); SVG with Inkscape layers; PNG of the current view; `.wkt.csv` (columns `wkt,layer,kind,name,id,attrs`, EPSG:4326, rivers cut at the antimeridian; areas are their label anchor because the document stores them as tiles, not outlines). |
 
 Keys:
 
