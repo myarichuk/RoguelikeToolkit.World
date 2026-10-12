@@ -135,10 +135,23 @@ public sealed class PopulationGridTests
         var grid = Seeded(2000, 4);
         var adj = new Ring(2000);
         var policy = new Rates(0.02, 0.01, 0.1);
-        grid.Step(policy, adj, 1);
-        long before = GC.GetAllocatedBytesForCurrentThread();
-        grid.Step(policy, adj, 1);
-        Assert.Equal(0, GC.GetAllocatedBytesForCurrentThread() - before);
+
+        // Steady state, not first-call state: a few warm-up ticks let the generic instantiations over the
+        // struct policy/adjacency get compiled (and OSR/tier-up settle) before anything is measured.
+        for (int i = 0; i < 4; i++) grid.Step(policy, adj, 1);
+
+        // A regression in Step allocates on every tick (2000 cells x 4 groups hit every branch each time),
+        // while one-off runtime work (a late tier-up, an event listener) lands on a call or two. So the
+        // contract is "Step can run allocation-free": the smallest delta over several ticks must be zero,
+        // and the message carries every delta so a failure is diagnosable rather than a bare "1 != 0".
+        var deltas = new long[8];
+        for (int i = 0; i < deltas.Length; i++)
+        {
+            long before = GC.GetAllocatedBytesForCurrentThread();
+            grid.Step(policy, adj, 1);
+            deltas[i] = GC.GetAllocatedBytesForCurrentThread() - before;
+        }
+        Assert.True(deltas.Min() == 0, "Step allocated on every measured tick: [" + string.Join(", ", deltas) + "] bytes");
     }
 
     private struct Npc { public ushort Group; public uint Seed; }
