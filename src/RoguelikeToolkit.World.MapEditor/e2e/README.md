@@ -14,7 +14,7 @@ or on an HTTP error from the page.
 | `landuse.cjs` | Land use never changes the biome, apply/revert never touch it, it never moves capacity, pasture pins reach the physics edits, capacity round-trips through `.wmap`. |
 | `climate-layers.cjs` | The engine's climate array has the editor stride, no NaN, a signed rain phase; each climate layer changes the picture; the hover readout; apply/undo; round trip. |
 | `mediterranean.cjs` | The Mediterranean biome covers a plausible share of land, sits on tiles that satisfy Core's rule, is named in the status bar, is offered (and the land-use slots are not) in the Biome palette, and has its tooltip. |
-| `sea-ice.cjs` | The engine reports seasonal and perennial ice, the status bar names each ("in winter" / "all year") only while the overlay is on, and the settlement export places every tier and repeats exactly for the same seed. |
+| `sea-ice.cjs` | The engine reports seasonal and perennial ice, the status bar names each ("in winter" / "all year") only while the overlay is on, and the settlement export places every tier, repeats exactly for the same seed, and gives each site its factors in plain words. |
 | `wind-blend.cjs` | Calm belts off keeps unit wind everywhere, on fades it to a calm at the cell edges, changes the biomes (slightly more desert), survives Apply physics, and the tooltip warns that wind erosion builds fewer dunes. |
 
 ## Running

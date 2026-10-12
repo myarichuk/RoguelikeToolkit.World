@@ -1,4 +1,6 @@
 using System;
+using System.Linq;
+using RoguelikeToolkit.World.Core;
 using RoguelikeToolkit.World.MapEditor.Engine;
 
 namespace RoguelikeToolkit.World.MapEditor.Engine.Tests;
@@ -145,6 +147,31 @@ public class WorldExportsLayoutTests
         Tiles();
         Assert.Equal(0, WorldExports.PlateDrift().Length % 4);
         Assert.True(WorldExports.PlateDrift().Length > 0);
+    }
+
+    [Fact]
+    public void CitySiteReasons_LineUpWithTheSitesAndExplainTheirScores()
+    {
+        Tiles();
+        var sites = WorldExports.CitySites(40);
+        var reasons = WorldExports.CitySiteReasons(40);
+        Assert.NotEmpty(reasons);
+        Assert.Equal(sites.Length / 2, reasons.Length);
+        var weight = new System.Collections.Generic.Dictionary<string, double>
+        {
+            ["water"] = SettlementScoring.FreshWater, ["fertile"] = SettlementScoring.Fertile, ["harsh"] = SettlementScoring.Harsh,
+            ["winter-ice"] = SettlementScoring.WinterIce, ["high"] = SettlementScoring.HighGround,
+        };
+        for (int i = 0; i < reasons.Length; i++)
+        {
+            var terms = reasons[i].Split(',', StringSplitOptions.RemoveEmptyEntries);
+            if (terms.Contains("history") || terms.Contains("past-events")) continue;   // those add terms the list does not weigh
+            double named = SettlementScoring.Base + terms.Sum(t => weight[t]);
+            // What the named terms do not account for is danger, at 0.2 a step and never a bonus: a reason list that names a
+            // term the score did not take (or omits one it did) leaves a remainder that is not a whole number of danger steps.
+            double gap = (named - sites[i * 2 + 1] / 1000.0) / SettlementScoring.PerDanger;
+            Assert.True(gap > -0.01 && Math.Abs(gap - Math.Round(gap)) < 0.02, $"site {i}: reasons '{reasons[i]}' leave {gap:F3} danger steps");
+        }
     }
 
     [Fact]

@@ -34,6 +34,7 @@ interface EngineApi {
   Ranges(): Arr;
   Deposits(): Arr;
   CitySites(max: number): Arr;
+  CitySiteReasons(max: number): string[];
   NameStyles(): string[];
   NamePlaces(kinds: string[], seeds: number[], races: string[], cultures: string[], context: number[]): string[];
 }
@@ -116,7 +117,7 @@ function pull(e: EngineApi, p: GenerateParams, tileCount: number, timings: Recor
   const catalogs = {
     rivers: Int32Array.from(e.Rivers()), waterBodies: Int32Array.from(e.WaterBodies()),
     ranges: Int32Array.from(e.Ranges()), deposits: Int32Array.from(e.Deposits()),
-    citySites: Int32Array.from(e.CitySites(4000)),
+    citySites: Int32Array.from(e.CitySites(4000)), citySiteReasons: e.CitySiteReasons(4000),
   };
   const all = styles(e);
   const wanted = p.styles.length ? p.styles : DEFAULT_STYLES;

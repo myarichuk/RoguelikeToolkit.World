@@ -307,6 +307,10 @@ public static partial class WorldExports
         return result;
     }
 
+    // The editor's one site search: both exports below must ask the same question or their arrays stop lining up.
+    private static List<CitySiteScore> SiteSearch(int max)
+        => Current.ScoreCitySites(new CitySiteFilter { TopN = max, FreshWaterRadiusKm = 400 });
+
     /// <summary>
     /// Every viable settlement tile with its score, best first: <c>[tile, score*1000]</c> pairs.
     /// Spacing and the city/town/village hierarchy are a cartographic decision, made by the editor.
@@ -314,13 +318,27 @@ public static partial class WorldExports
     [JSExport]
     public static int[] CitySites(int max)
     {
-        var sites = Current.ScoreCitySites(new CitySiteFilter { TopN = max, FreshWaterRadiusKm = 400 });
+        var sites = SiteSearch(max);
         var result = new int[sites.Count * 2];
         for (int i = 0; i < sites.Count; i++)
         {
             result[i * 2] = sites[i].TileIndex;
             result[i * 2 + 1] = (int)Math.Round(sites[i].Score * 1000);
         }
+        return result;
+    }
+
+    /// <summary>
+    /// Why each site scored what it did: one comma-joined list of <see cref="SettlementScoring"/> terms per site (<c>"water,fertile"</c>),
+    /// in the same order as the pairs <see cref="CitySites"/> returns, so entry <c>i</c> explains pair <c>i</c>. The search runs again
+    /// rather than being cached (no mutable statics); it is a single pass over the land tiles.
+    /// </summary>
+    [JSExport]
+    public static string[] CitySiteReasons(int max)
+    {
+        var sites = SiteSearch(max);
+        var result = new string[sites.Count];
+        for (int i = 0; i < sites.Count; i++) result[i] = sites[i].Reasons;
         return result;
     }
 

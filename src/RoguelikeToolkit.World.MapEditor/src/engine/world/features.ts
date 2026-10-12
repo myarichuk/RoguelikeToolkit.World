@@ -27,6 +27,8 @@ export interface CatalogInput {
   deposits: Int32Array;
   /** (tile, score*1000) pairs, best first. */
   citySites: Int32Array;
+  /** One comma-joined list of scoring terms per site, same order as `citySites` pairs. */
+  citySiteReasons: string[];
   styles: NameStyle[];
 }
 
@@ -37,6 +39,13 @@ export const BIOME_NAMES = ['Ocean', 'Plains', 'Desert', 'Forest', 'Mountain', '
 const Biome = { Ocean: 0, Forest: 3, Jungle: 6, Swamp: 7 } as const;
 const WaterKind = { Lake: 0, Sea: 1, Ocean: 2 } as const;
 const RangeKind = { MountainRange: 0, Valley: 1, Canyon: 2, Playa: 3 } as const;
+/** Core's scoring terms (SettlementScoring), as a reader would say them. */
+const SITE_REASON: Record<string, string> = {
+  water: 'fresh water', fertile: 'fertile land', harsh: 'harsh terrain', 'winter-ice': 'sea ice in winter',
+  high: 'high ground', history: 'shaped by history', 'past-events': 'past events',
+};
+export const siteReasons = (raw: string | undefined): string =>
+  (raw ?? '').split(',').filter(Boolean).map((r) => SITE_REASON[r] ?? r).join(', ');
 const TERMINAL = ['the sea', 'a lake', 'an inland sink'];
 const EARTH_AREA_KM2 = 4 * Math.PI * 6371 * 6371;
 
@@ -309,7 +318,7 @@ export function extractFeatures(c: CatalogInput): FeatureSet {
     { kind: 'town', count: 42, spacing: 0.11 },
     { kind: 'village', count: 90, spacing: 0.065 },
   ];
-  const picked: { tile: number; kind: FeatureKind; score: number }[] = [];
+  const picked: { tile: number; kind: FeatureKind; score: number; reasons: string }[] = [];
   const far = (t: number, rad: number) => {
     const cos = Math.cos(rad);
     for (const p of picked) {
@@ -323,7 +332,7 @@ export function extractFeatures(c: CatalogInput): FeatureSet {
     for (let i = 0; i < c.citySites.length && placed < tier.count; i += 2) {
       const t = c.citySites[i];
       if (!inMap(t) || !far(t, tier.spacing)) continue;
-      picked.push({ tile: t, kind: tier.kind, score: c.citySites[i + 1] / 1000 }); placed++;
+      picked.push({ tile: t, kind: tier.kind, score: c.citySites[i + 1] / 1000, reasons: siteReasons(c.citySiteReasons[i / 2]) }); placed++;
     }
   }
   // The best city of each landmass is its capital.
@@ -354,6 +363,7 @@ export function extractFeatures(c: CatalogInput): FeatureSet {
     add(`settlement:${t}`, p.kind, t, shape, tierWeight[p.kind] ?? 1, [
       ['Rank', tierName[p.kind] ?? p.kind],
       ['Site score', p.score.toFixed(2)],
+      ...(p.reasons ? [['Site factors', p.reasons] as [string, string]] : []),
       ['Water access', access],
       ...pointFacts(t),
       ...(res.size ? [['Nearby resources', [...res].join(', ')] as [string, string]] : []),

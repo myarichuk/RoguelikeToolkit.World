@@ -52,4 +52,19 @@ run('Sea ice', async (t) => {
   t.check('every settlement tier is placed', ['capital', 'city', 'town', 'village'].every((k) => first.kinds[k] > 0), first.kinds);
   await t.generate({ seed: 7, size: 4 });
   t.check('the same seed places the same settlements', (await sites()).key === first.key);
+
+  // The export says why each site scored what it did, and the editor shows it as a fact on the settlement.
+  const why = await t.evaluate(() => {
+    const out = [];
+    for (const f of window.editor.doc.features.all()) {
+      if (!['capital', 'city', 'town', 'village'].includes(f.kind)) continue;
+      const row = f.details.find((d) => d[0] === 'Site factors');
+      out.push({ kind: f.kind, factors: row ? row[1] : null, score: Number(f.details.find((d) => d[0] === 'Site score')[1]) });
+    }
+    return out;
+  });
+  const known = /^(fresh water|fertile land|harsh terrain|sea ice in winter|high ground|shaped by history|past events)(, (fresh water|fertile land|harsh terrain|sea ice in winter|high ground|shaped by history|past events))*$/;
+  t.check('settlements list their site factors in plain words', why.length > 0 && why.every((w) => w.factors && known.test(w.factors)), why.filter((w) => !w.factors || !known.test(w.factors)).slice(0, 3));
+  const best = why.slice().sort((a, b) => b.score - a.score)[0];
+  t.check('the best-scoring site is credited with fresh water', /fresh water/.test(best.factors), best);
 });
