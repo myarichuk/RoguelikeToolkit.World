@@ -14,6 +14,8 @@ export interface Layers {
   stamps: boolean;
   labels: boolean;
   resources: boolean;
+  /** Tint of the temperature / rainfall offsets painted with the climate brush. */
+  climatePaint: boolean;
 }
 
 /**
@@ -34,7 +36,7 @@ const allDeposits = (v: boolean) => Object.fromEntries(DEPOSIT_TYPES.map((k) => 
 
 const LAYERS_OFF: Layers = {
   hillshade: false, contours: false, plateBoundaries: false, plateMotion: false, graticule: false,
-  ripples: false, coastline: false, rivers: false, stamps: false, labels: false, resources: false,
+  ripples: false, coastline: false, rivers: false, stamps: false, labels: false, resources: false, climatePaint: false,
 };
 
 export const DEFAULT_VIEW: ViewSettings = {

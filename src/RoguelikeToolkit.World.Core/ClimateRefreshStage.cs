@@ -31,7 +31,7 @@ public sealed class ClimateRefreshStage : IWorldGeneratorStage, IDeclaredStage, 
     public string Name => "ClimateRefresh";
     public int Order => 17;
     public Type[] Reads => new[] { typeof(ElevationInfo), typeof(ClimateInfo) };
-    public Type[] ReadsOptional => Array.Empty<Type>();
+    public Type[] ReadsOptional => new[] { typeof(UserEditInfo) };
     public Type[] Writes => new[] { typeof(ClimateInfo) };
 
     public void Execute(WorldMap map) => _climate.ExecuteRefresh(map);

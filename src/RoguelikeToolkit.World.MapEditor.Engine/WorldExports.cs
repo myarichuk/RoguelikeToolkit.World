@@ -40,12 +40,15 @@ public static partial class WorldExports
     /// <see cref="CoreWorld.Recompute"/>). The table is sparse and absolute, so the call is
     /// idempotent: the engine keeps no history, the document owns the edits. <paramref name="meta"/>
     /// packs <see cref="UserEditFlags"/> in the low byte and the pinned <see cref="BiomeType"/> above it.
+    /// <paramref name="temperature"/> and <paramref name="precipitation"/> are the brushed climate offsets
+    /// (<see cref="UserEditInfo.TemperatureDelta"/>, <see cref="UserEditInfo.PrecipitationDelta"/>).
     /// </summary>
     [JSExport]
-    public static int ApplyEdits(int[] tiles, double[] heightDelta, double[] pinHeight, int[] meta)
+    public static int ApplyEdits(int[] tiles, double[] heightDelta, double[] pinHeight, int[] meta, double[] temperature, double[] precipitation)
     {
         var world = Current;
-        if (tiles.Length != heightDelta.Length || tiles.Length != pinHeight.Length || tiles.Length != meta.Length)
+        if (tiles.Length != heightDelta.Length || tiles.Length != pinHeight.Length || tiles.Length != meta.Length
+            || tiles.Length != temperature.Length || tiles.Length != precipitation.Length)
             throw new ArgumentException("Edit arrays must have equal lengths.");
         var edits = world.Edits;
         edits.Clear();
@@ -59,6 +62,8 @@ public static partial class WorldExports
                 PinHeight = (float)pinHeight[k],
                 Flags = (UserEditFlags)(meta[k] & 0xff),
                 PinBiome = (BiomeType)((meta[k] >> 8) & 0xff),
+                TemperatureDelta = (float)temperature[k],
+                PrecipitationDelta = (float)precipitation[k],
             };
         }
         world.Recompute();

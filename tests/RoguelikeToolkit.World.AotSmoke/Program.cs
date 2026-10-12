@@ -75,7 +75,11 @@ foreach (var planet in new[]
     }
     Check(tilted.Editable, "editable world");
     tilted.Edits[tilted.TileCount / 2] = new UserEditInfo { HeightDelta = 0.2f };
+    tilted.Edits[tilted.TileCount / 3] = new UserEditInfo { TemperatureDelta = 0.15f, PrecipitationDelta = -0.1f };
     tilted.Recompute();
+    var tClimate2 = tilted.Map.DataStore.GetSpan<ClimateInfo>();
+    Mix((ulong)BitConverter.SingleToInt32Bits(tClimate2[tilted.TileCount / 3].Temperature));
+    Mix((ulong)BitConverter.SingleToInt32Bits(tClimate2[tilted.TileCount / 3].Precipitation));
     var tHeights = tilted.Map.DataStore.GetSpan<ElevationInfo>();
     Mix((ulong)BitConverter.SingleToInt32Bits(tHeights[tilted.TileCount / 2].Height));
     Mix((ulong)tilted.Rivers.Rivers.Count);

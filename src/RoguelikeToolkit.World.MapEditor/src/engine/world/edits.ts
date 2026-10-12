@@ -18,7 +18,17 @@ export interface TileEdit {
   pinH?: number;
   /** Fix: the Core biome id the tile keeps. */
   pinBiome?: number;
+  /** Climate brush: added to the tile's temperature (Core units, about 55 K per unit) after every physical term. */
+  dt?: number;
+  /** Climate brush: added to the tile's precipitation (0..1 units) after every physical term. */
+  dr?: number;
 }
+
+/** Full-scale climate paint: a texel at +/-127 means this much (temperature units / precipitation units). */
+export const CLIMATE_RANGE = { temperature: 0.4, precipitation: 0.4 } as const;
+export const PAINT_MAX = 127;
+/** A tile whose mean climate paint is below this (in Core units) is a stray dab, not an edit. */
+export const MIN_CLIMATE = 0.01;
 
 export type TileEdits = Map<number, TileEdit>;
 export type EditMode = 'sculpt' | 'fix';
@@ -93,7 +103,44 @@ export function collectEdits(
   return { edits, heightTiles, biomeTiles };
 }
 
-export interface PackedEdits { tiles: Int32Array; delta: Float64Array; pinHeight: Float64Array; meta: Int32Array; }
+/**
+ * Folds the two climate paint rasters into the table: a tile's offset is the mean paint over its pixels.
+ * The rasters are the authority (they are what the author sees and keeps editing), so every tile's
+ * `dt`/`dr` is rebuilt from them and tiles left with nothing are dropped. Returns a new table.
+ */
+export function collectClimate(
+  warmth: Int8Array, wetness: Int8Array, tile: Int32Array, tileCount: number, prior: TileEdits,
+  counts: Int32Array = tilePixelCounts(tile, tileCount),
+): { edits: TileEdits; climateTiles: number } {
+  const sumT = new Float64Array(tileCount), sumR = new Float64Array(tileCount);
+  for (let i = 0; i < tile.length; i++) {
+    const t = tile[i];
+    if (t < 0 || t >= tileCount) continue;
+    sumT[t] += warmth[i]; sumR[t] += wetness[i];
+  }
+  const edits: TileEdits = new Map();
+  for (const [t, e] of prior) { const { dt: _dt, dr: _dr, ...rest } = e; if (Object.keys(rest).length) edits.set(t, rest); }
+  let climateTiles = 0;
+  for (let t = 0; t < tileCount; t++) {
+    const n = counts[t];
+    if (!n) continue;
+    const dt = (sumT[t] / n / PAINT_MAX) * CLIMATE_RANGE.temperature, dr = (sumR[t] / n / PAINT_MAX) * CLIMATE_RANGE.precipitation;
+    const hasT = Math.abs(dt) >= MIN_CLIMATE, hasR = Math.abs(dr) >= MIN_CLIMATE;
+    if (!hasT && !hasR) continue;
+    const e = edits.get(t) ?? {};
+    if (hasT) e.dt = dt;
+    if (hasR) e.dr = dr;
+    edits.set(t, e);
+    climateTiles++;
+  }
+  return { edits, climateTiles };
+}
+
+export interface PackedEdits {
+  tiles: Int32Array; delta: Float64Array; pinHeight: Float64Array; meta: Int32Array;
+  /** Per tile climate offsets (Core's UserEditInfo.TemperatureDelta / PrecipitationDelta). */
+  temperature: Float64Array; precipitation: Float64Array;
+}
 
 /** Core's UserEditFlags. */
 const PIN_HEIGHT = 1, PIN_BIOME = 2;
@@ -104,6 +151,7 @@ export function packEdits(edits: TileEdits): PackedEdits {
   const out: PackedEdits = {
     tiles: new Int32Array(keys.length), delta: new Float64Array(keys.length),
     pinHeight: new Float64Array(keys.length), meta: new Int32Array(keys.length),
+    temperature: new Float64Array(keys.length), precipitation: new Float64Array(keys.length),
   };
   keys.forEach((t, k) => {
     const e = edits.get(t)!;
@@ -114,27 +162,31 @@ export function packEdits(edits: TileEdits): PackedEdits {
     out.delta[k] = e.dh ?? 0;
     out.pinHeight[k] = e.pinH ?? 0;
     out.meta[k] = flags | ((e.pinBiome ?? 0) << 8);
+    out.temperature[k] = e.dt ?? 0;
+    out.precipitation[k] = e.dr ?? 0;
   });
   return out;
 }
 
-/** Plain JSON for the .wmap header: `[tile, dh, pinH, pinBiome]` rows, null for "unset". */
-export type EditRow = [number, number | null, number | null, number | null];
+/** Plain JSON for the .wmap header: `[tile, dh, pinH, pinBiome, dt, dr]` rows, null for "unset". Files from before the climate brush have four columns. */
+export type EditRow = [number, number | null, number | null, number | null, (number | null)?, (number | null)?];
 
 export function editsToRows(edits: TileEdits): EditRow[] {
   return [...edits.keys()].sort((a, b) => a - b).map((t) => {
     const e = edits.get(t)!;
-    return [t, e.dh ?? null, e.pinH ?? null, e.pinBiome ?? null];
+    return [t, e.dh ?? null, e.pinH ?? null, e.pinBiome ?? null, e.dt ?? null, e.dr ?? null];
   });
 }
 
 export function editsFromRows(rows: readonly EditRow[]): TileEdits {
   const m: TileEdits = new Map();
-  for (const [t, dh, pinH, pinBiome] of rows) {
+  for (const [t, dh, pinH, pinBiome, dt, dr] of rows) {
     const e: TileEdit = {};
     if (dh !== null) e.dh = dh;
     if (pinH !== null) e.pinH = pinH;
     if (pinBiome !== null) e.pinBiome = pinBiome;
+    if (dt != null) e.dt = dt;
+    if (dr != null) e.dr = dr;
     m.set(t, e);
   }
   return m;

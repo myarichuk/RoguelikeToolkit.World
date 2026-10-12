@@ -6,7 +6,7 @@ import { entitiesFromSnapshot } from '../doc/fromWorld';
 import type { PhysicsState } from '../doc/MapDocument';
 import { MapDocument } from '../doc/MapDocument';
 import type { FeatureEntity, RiverEntity } from '../doc/types';
-import { collectEdits, EDITOR_ONLY_BIOMES, packEdits, type EditMode, type Raster } from './edits';
+import { collectClimate, collectEdits, EDITOR_ONLY_BIOMES, packEdits, type EditMode, type Raster } from './edits';
 import type { NameRequest, RecomputeParams, WorldSnapshot } from './protocol';
 import { reconcileFeatures } from './reconcile';
 
@@ -22,6 +22,8 @@ export interface PhysicsReport {
   heightTiles: number;
   /** Tiles pinned to a painted biome. */
   biomeTiles: number;
+  /** Tiles carrying a brushed temperature or rainfall offset. */
+  climateTiles: number;
   /** Engine features per kind: [before, after]. */
   counts: Record<string, [number, number]>;
   kept: number; added: number; removed: number;
@@ -34,6 +36,9 @@ export interface PhysicsOutcome {
   features: FeatureEntity[];
   rivers: RiverEntity[];
   physics: PhysicsState;
+  /** The climate paint after the apply: the same as before, or all zero after a revert. */
+  warmth: Int8Array;
+  wetness: Int8Array;
   report: PhysicsReport;
 }
 
@@ -44,14 +49,18 @@ export async function derivePhysics(doc: MapDocument, engine: PhysicsEngine, mod
   const params = { seed, size, plates, styles, planet: { obliquity, flux, rotation } };
   const tileCount = doc.world.tileXY.length / 2;
 
-  let edits = ph.edits, heightTiles = 0, biomeTiles = 0;
+  let edits = ph.edits, heightTiles = 0, biomeTiles = 0, climateTiles = 0;
+  let warmth = doc.warmth, wetness = doc.wetness;
   if (mode === 'revert') {
     edits = new Map();
+    warmth = new Int8Array(warmth.length); wetness = new Int8Array(wetness.length);
   } else {
     // What the engine last produced for the stored table; deterministic, so rebuilt on demand (after open, say).
     const baseline: Raster = ph.baseline ?? (await engine.recompute({ ...params, edits: packEdits(ph.edits), rastersOnly: true })).rasters;
     const r = collectEdits({ elevation: doc.elevation, biome: doc.biome }, baseline, doc.world.tile, tileCount, ph.edits, mode);
-    edits = r.edits; heightTiles = r.heightTiles; biomeTiles = r.biomeTiles;
+    // The climate paint is an input the author keeps editing, so it is re-read whole every time, not diffed.
+    const c = collectClimate(doc.warmth, doc.wetness, doc.world.tile, tileCount, r.edits);
+    edits = c.edits; heightTiles = r.heightTiles; biomeTiles = r.biomeTiles; climateTiles = c.climateTiles;
   }
 
   const snap = await engine.recompute({ ...params, edits: packEdits(edits), rastersOnly: false });
@@ -83,8 +92,9 @@ export async function derivePhysics(doc: MapDocument, engine: PhysicsEngine, mod
   return {
     elevation: snap.rasters.elevation, biome,
     features: rec.features, rivers: rec.rivers,
+    warmth: warmth.slice(), wetness: wetness.slice(),
     physics: { edits, baseline, generated: new Set(rec.features.map((f) => f.id)), tombstones: new Map(rec.tombstones.map((t) => [t.id, t])) },
-    report: { heightTiles, biomeTiles, counts, kept: rec.kept, added: rec.added, removed: rec.removed },
+    report: { heightTiles, biomeTiles, climateTiles, counts, kept: rec.kept, added: rec.added, removed: rec.removed },
   };
 }
 
@@ -93,6 +103,7 @@ export function describeReport(r: PhysicsReport): string {
   const bits: string[] = [];
   if (r.heightTiles) bits.push(`${r.heightTiles} tiles reshaped`);
   if (r.biomeTiles) bits.push(`${r.biomeTiles} repainted`);
+  if (r.climateTiles) bits.push(`${r.climateTiles} tiles re-climated`);
   const moved = Object.entries(r.counts).filter(([, [a, b]]) => a !== b).map(([k, [a, b]]) => `${k}s ${a}→${b}`);
   if (moved.length) bits.push(moved.join(', '));
   if (r.added) bits.push(`${r.added} new`);

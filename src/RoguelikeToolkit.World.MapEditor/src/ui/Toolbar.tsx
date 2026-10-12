@@ -1,6 +1,7 @@
-import { HEIGHT_MODES, TOOLS } from '../viewmodels/ToolsViewModel';
+import { CLIMATE_LAYERS, climateModes, HEIGHT_MODES, TOOLS } from '../viewmodels/ToolsViewModel';
 import { useApp, useViewModel } from './hooks';
 import { Section, Select, Slider } from './controls';
+import { TERRAIN_HINTS } from './glossary';
 
 export function Toolbar() {
   const { vms } = useApp();
@@ -24,17 +25,29 @@ export function ToolOptionsPanel() {
   const s = useViewModel(vm);
   const o = s.options;
   const info = TOOLS.find((t) => t.id === s.tool)!;
-  const brush = s.tool === 'terrain' || s.tool === 'biome';
+  const brush = s.tool === 'terrain' || s.tool === 'biome' || s.tool === 'climate';
   return (
     <Section title={info.label}>
       <p className="hint">{info.hint}</p>
-      {brush && <Slider label="Radius" value={o.radius} min={2} max={200} step={1} onChange={(radius) => vm.setOptions({ radius })} />}
+      {brush && <Slider label="Radius" value={o.radius} min={2} max={200} step={1} onChange={(radius) => vm.setOptions({ radius })} hint="Brush size in map units. [ and ] change it from the keyboard." />}
       {s.tool === 'terrain' && (
         <>
-          <Slider label="Strength" value={o.strength} min={0.005} max={0.2} step={0.005} onChange={(strength) => vm.setOptions({ strength })} />
+          <Slider label="Strength" value={o.strength} min={0.005} max={0.2} step={0.005} onChange={(strength) => vm.setOptions({ strength })} hint="Height added per dab at the brush center (raise/lower), or the blend factor for smooth/flatten/roughen." />
           <div className="chips">
-            {HEIGHT_MODES.map((m) => <button key={m.id} className={o.heightMode === m.id ? 'active' : ''} onClick={() => vm.setOptions({ heightMode: m.id })}>{m.label}</button>)}
+            {HEIGHT_MODES.map((m) => <button key={m.id} title={TERRAIN_HINTS[m.id]} className={o.heightMode === m.id ? 'active' : ''} onClick={() => vm.setOptions({ heightMode: m.id })}>{m.label}</button>)}
           </div>
+        </>
+      )}
+      {s.tool === 'climate' && (
+        <>
+          <Slider label="Strength" value={o.strength} min={0.005} max={0.2} step={0.005} onChange={(strength) => vm.setOptions({ strength })} hint="How much one dab adds at the brush center, as a share of full scale. Strokes accumulate." />
+          <div className="chips">
+            {CLIMATE_LAYERS.map((l) => <button key={l.id} className={o.climateLayer === l.id ? 'active' : ''} title={l.hint} onClick={() => vm.setOptions({ climateLayer: l.id })}>{l.label}</button>)}
+          </div>
+          <div className="chips">
+            {climateModes(o.climateLayer).map((m) => <button key={m.id} className={o.climateMode === m.id ? 'active' : ''} title={m.hint} onClick={() => vm.setOptions({ climateMode: m.id })}>{m.label}</button>)}
+          </div>
+          <p className="hint">Red/blue tint: warmer/cooler. Green/ochre: wetter/drier. The offset is local and literal: it is added after winds, orographic rain and ocean currents, so a warm sea patch does not move the gyres.</p>
         </>
       )}
       {s.tool === 'biome' && (
@@ -50,7 +63,7 @@ export function ToolOptionsPanel() {
       {s.tool === 'stamp' && (
         <>
           <Slider label="Scale" value={o.stampScale} min={0.3} max={3} step={0.05} onChange={(stampScale) => vm.setOptions({ stampScale })} />
-          <Slider label="Scatter" value={o.scatter} min={0} max={40} step={1} onChange={(scatter) => vm.setOptions({ scatter })} format={(v) => (v ? `${v} mu` : 'off')} />
+          <Slider label="Scatter" value={o.scatter} min={0} max={40} step={1} onChange={(scatter) => vm.setOptions({ scatter })} format={(v) => (v ? `${v} mu` : 'off')} hint="Spacing of a sprayed run of decals. Off places one decal per click." />
           {o.scatter > 0 && <Slider label="Spray radius" value={o.radius} min={4} max={120} step={1} onChange={(radius) => vm.setOptions({ radius })} />}
           <AssetPalette />
         </>
@@ -72,12 +85,12 @@ function PhysicsControls() {
   const off = !s.physicsReady || s.busy;
   return (
     <div className="physics">
-      <h4>Physics</h4>
+      <h4 title="Physics re-derives climate, erosion, rivers, lakes and biomes from your strokes.">Physics</h4>
       <p className="hint">Strokes only repaint until you apply them. Sculpt lets erosion reshape your terrain; Fix keeps it exactly as drawn. Rivers, lakes and biomes follow.</p>
       <div className="chips">
         <button disabled={off} onClick={() => void vms.tools.applyPhysics('sculpt')} title="Re-derive the world from your strokes; erosion and rain shadows act on them">Apply (sculpt)</button>
         <button disabled={off} onClick={() => void vms.tools.applyPhysics('fix')} title="Re-derive the world, keeping the heights you drew exactly">Apply (fix)</button>
-        <button disabled={off} onClick={() => void vms.tools.applyPhysics('revert')} title="Discard every terrain edit and return to the generated world">Revert</button>
+        <button disabled={off} onClick={() => void vms.tools.applyPhysics('revert')} title="Discard every terrain, biome and climate edit and return to the generated world">Revert</button>
       </div>
       {!s.physicsReady && <p className="hint">Generate a world first: this map has no planet behind it.</p>}
     </div>

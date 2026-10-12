@@ -72,6 +72,7 @@ export class MapRenderer {
     this.stampsDirty = this.riversDirty = true;
     this.unsubscribe = [
       doc.events.on('raster', ({ layer, rect }) => {
+        if (layer !== 'elevation' && layer !== 'biome') return; // climate paint is overlay-only
         this.dirty[layer] = rectUnion(this.dirty[layer], rect);
         this.requestRender();
       }),

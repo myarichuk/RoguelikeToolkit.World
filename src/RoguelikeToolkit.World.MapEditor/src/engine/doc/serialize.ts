@@ -10,11 +10,12 @@ import { DEFAULT_SETTINGS, type DocSettings, type FeatureEntity, type LabelEntit
 
 const MAGIC = 0x50414d57; // "WMAP" little-endian
 // v2 adds `physics` (the hand-edit table); v1 files load as worlds with no recorded edits.
-export const WMAP_VERSION = 2;
+// v3 adds the climate paint rasters (`warmth`, `wetness`) and two columns on the edit rows; older files load with no paint.
+export const WMAP_VERSION = 3;
 
-type BlobName = 'elevation' | 'biome' | 'tile' | 'tilePlate' | 'plateDrift' | 'tileXY';
-type Typed = Float32Array | Uint8Array | Int32Array | Uint32Array | Float64Array;
-const CTORS = { Float32Array, Uint8Array, Int32Array, Uint32Array, Float64Array } as const;
+type BlobName = 'elevation' | 'biome' | 'tile' | 'tilePlate' | 'plateDrift' | 'tileXY' | 'warmth' | 'wetness';
+type Typed = Float32Array | Uint8Array | Int8Array | Int32Array | Uint32Array | Float64Array;
+const CTORS = { Float32Array, Uint8Array, Int8Array, Int32Array, Uint32Array, Float64Array } as const;
 
 interface Header {
   format: 'wmap';
@@ -36,6 +37,7 @@ export function encodeDocument(doc: MapDocument): Uint8Array {
   const arrays: [BlobName, Typed][] = [
     ['elevation', doc.elevation], ['biome', doc.biome], ['tile', doc.world.tile],
     ['tilePlate', doc.world.tilePlate], ['plateDrift', doc.world.plateDrift], ['tileXY', doc.world.tileXY],
+    ['warmth', doc.warmth], ['wetness', doc.wetness],
   ];
   const blobs: Header['blobs'] = [];
   let offset = 0;
@@ -82,11 +84,15 @@ export function decodeDocument(bytes: Uint8Array): MapDocument {
     // Copy out: the decompressed buffer may be unaligned for the type, and the document owns its arrays.
     return new C(bytes.slice(at, at + size).buffer) as T;
   };
+  // Optional: files from before the climate brush carry no paint.
+  const optional = (name: BlobName): Int8Array | null => (header.blobs.some((b) => b.name === name) ? blob<Int8Array>(name) : null);
   const elevation = blob<Float32Array>('elevation'), biome = blob<Uint8Array>('biome');
   if (elevation.length !== MAP_W * MAP_H || biome.length !== MAP_W * MAP_H) throw new Error('.wmap raster size mismatch.');
   const doc = new MapDocument({ ...DEFAULT_SETTINGS, ...header.settings }, elevation, biome, {
     tile: blob('tile'), tilePlate: blob('tilePlate'), plateDrift: blob('plateDrift'), tileXY: blob('tileXY'), styles: header.styles ?? [],
   });
+  const warmth = optional('warmth'), wetness = optional('wetness');
+  if (warmth && wetness && warmth.length === doc.warmth.length && wetness.length === doc.wetness.length) { doc.warmth.set(warmth); doc.wetness.set(wetness); }
   doc.features.reset(header.features ?? []);
   doc.stamps.reset(header.stamps ?? []);
   doc.labels.reset((header.labels ?? []).map(labelIn));

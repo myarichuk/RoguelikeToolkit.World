@@ -5,6 +5,7 @@ import type { FeatureEntity, LabelEntity } from '../doc/types';
 import type { LabelCache } from '../text/LabelCache';
 import type { DepositType } from '../world/protocol';
 import type { Camera } from './Camera';
+import { ClimatePaint } from './ClimatePaint';
 import type { ViewSettings } from './ViewSettings';
 
 /** Color + short symbol per deposit type (chemical-symbol style markers). */
@@ -27,6 +28,9 @@ export type GizmoPainter = (ctx: CanvasRenderingContext2D, cam: Camera) => void;
 export class Overlay {
   readonly ctx: CanvasRenderingContext2D;
   gizmos: GizmoPainter[] = [];
+  /** The climate brush is active: show the paint whatever the layer toggle says. */
+  showClimatePaint = false;
+  readonly climatePaint = new ClimatePaint();
   selection: { labels: Set<string>; stamps: Set<string>; feature: string | null; hoverFeature: string | null } = { labels: new Set(), stamps: new Set(), feature: null, hoverFeature: null };
   private plateArrows: { x: number; y: number; dx: number; dy: number }[] | null = null;
   private plateArrowsFor: MapDocument | null = null;
@@ -50,6 +54,7 @@ export class Overlay {
         const f = fid ? doc.features.get(fid) : undefined;
         if (f?.riverId) this.strokeRiver(doc, f.riverId, theme, cam, fid === this.selection.feature);
       }
+      if (view.layers.climatePaint || this.showClimatePaint) this.drawClimatePaint(doc);
       if (view.layers.labels) this.drawLabels(cam, doc, theme, view, off, vis);
       if (view.layers.resources && view.kinds.deposit) this.drawDeposits(cam, doc, view, off);
       if (view.layers.plateMotion) this.drawPlateMotion(cam, doc);
@@ -69,6 +74,14 @@ export class Overlay {
     if (kind && kind in view.kinds && !view.kinds[kind as keyof typeof view.kinds]) return false;
     const style = theme.labels[l.style];
     return !style?.minZoom || zoom >= style.minZoom || this.selection.labels.has(l.id);
+  }
+
+  private drawClimatePaint(doc: MapDocument): void {
+    const img = this.climatePaint.current();
+    if (!img) return;
+    const ctx = this.ctx;
+    ctx.imageSmoothingEnabled = true;
+    ctx.drawImage(img, 0, 0, doc.width, doc.height);
   }
 
   private drawLabels(cam: Camera, doc: MapDocument, theme: Theme, view: ViewSettings, off: number, vis: { x0: number; y0: number; x1: number; y1: number }): void {

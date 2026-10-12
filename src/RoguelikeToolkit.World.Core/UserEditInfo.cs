@@ -34,8 +34,17 @@ public struct UserEditInfo
     public float PinHeight;
     public BiomeType PinBiome;
     public UserEditFlags Flags;
+    /// <summary>
+    /// Added to the tile's annual-mean temperature at the very end of the climate stage (both passes), in
+    /// <see cref="ClimateInfo.Temperature"/> units (about 55 K per unit), then clamped to [0, 1]. A literal local
+    /// offset: it comes after the ocean currents, so a brushed warm sea does not move the gyres, and it is not
+    /// carried inland by sea air. Biomes and rivers read the result like any other climate.
+    /// </summary>
+    public float TemperatureDelta;
+    /// <summary>Added to the tile's precipitation at the end of the climate stage (both passes), then clamped to [0, 1]; same rules as <see cref="TemperatureDelta"/>.</summary>
+    public float PrecipitationDelta;
 
-    public readonly bool IsEmpty => HeightDelta == 0f && Flags == UserEditFlags.None;
+    public readonly bool IsEmpty => HeightDelta == 0f && Flags == UserEditFlags.None && TemperatureDelta == 0f && PrecipitationDelta == 0f;
 }
 
 public class UserEditLayer : StoreLayer<UserEditInfo>

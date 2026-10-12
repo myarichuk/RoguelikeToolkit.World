@@ -1,11 +1,11 @@
 import { RasterEdit } from '../commands/RasterEdit';
 import type { Camera } from '../render/Camera';
-import { biomeDab, dabRect, heightDab, strokePoints } from './brushes';
+import { biomeDab, climateDab, dabRect, heightDab, strokePoints } from './brushes';
 import type { PointerInput, Tool, ToolContext } from './Tool';
 
 /** Shared stroke handling: dabs at fixed spacing along the pointer path, one undo step per stroke. */
-abstract class RasterBrush<T extends Float32Array | Uint8Array> implements Tool {
-  abstract readonly id: 'terrain' | 'biome';
+abstract class RasterBrush<T extends Float32Array | Uint8Array | Int8Array> implements Tool {
+  abstract readonly id: 'terrain' | 'biome' | 'climate';
   readonly cursor = 'crosshair';
   protected edit: RasterEdit<T> | null = null;
   private last: { x: number; y: number } | null = null;
@@ -93,5 +93,29 @@ export class BiomeTool extends RasterBrush<Uint8Array> {
     const o = ctx.options, doc = ctx.doc;
     const rect = biomeDab(doc.biome, doc.width, doc.height, { x, y, radius: o.radius, strength: Math.min(1, o.strength * 12) }, o.biome, this.seed++);
     doc.target('biome').touched(rect);
+  }
+}
+
+/**
+ * Paints a temperature or rainfall offset. Nothing about the terrain changes until the author applies
+ * physics; then every tile takes the mean of the paint under it, added after the physical climate, and
+ * biomes, rivers and lakes follow. Alt inverts warm/cool (wet/dry).
+ */
+export class ClimateTool extends RasterBrush<Int8Array> {
+  readonly id = 'climate' as const;
+  private layer: 'warmth' | 'wetness' = 'warmth';
+  protected begin(_p: PointerInput, ctx: ToolContext): RasterEdit<Int8Array> | null {
+    if (!ctx.doc.hasWorld) { ctx.status('Climate paint needs a generated world: generate one first.'); return null; }
+    this.layer = ctx.options.climateLayer === 'temperature' ? 'warmth' : 'wetness';
+    const what = this.layer === 'warmth' ? 'temperature' : 'rainfall';
+    return new RasterEdit(`Climate: ${what} ${ctx.options.climateMode}`, ctx.doc.target(this.layer));
+  }
+  protected dab(x: number, y: number, p: PointerInput, ctx: ToolContext): void {
+    const o = ctx.options, doc = ctx.doc;
+    let mode = o.climateMode;
+    if (p.alt && mode === 'raise') mode = 'lower'; else if (p.alt && mode === 'lower') mode = 'raise';
+    const data = this.layer === 'warmth' ? doc.warmth : doc.wetness;
+    const rect = climateDab(data, doc.width, doc.height, { x, y, radius: o.radius, strength: o.strength }, mode);
+    doc.target(this.layer).touched(rect);
   }
 }

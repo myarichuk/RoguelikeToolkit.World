@@ -1,5 +1,6 @@
 import { useApp, useViewModel } from './hooks';
 import { Section, Select, Slider, TextField } from './controls';
+import { FACT_HINTS } from './glossary';
 
 const KIND_TITLE: Record<string, string> = {
   capital: 'Capital', city: 'City', town: 'Town', village: 'Village', river: 'River', lake: 'Lake', sea: 'Sea', ocean: 'Ocean',
@@ -23,7 +24,7 @@ export function Inspector() {
         )}
         {f.culture && f.kind !== 'deposit' && <p className="muted small">Named in the {f.culture} tradition</p>}
         <dl className="details">
-          {f.details.map(([k, v]) => <div key={k}><dt>{k}</dt><dd>{v}</dd></div>)}
+          {f.details.map(([k, v]) => <div key={k}><dt title={FACT_HINTS[k]}>{k}</dt><dd>{v}</dd></div>)}
         </dl>
         <div className="buttons">
           <button onClick={vm.focus}>Zoom to</button>

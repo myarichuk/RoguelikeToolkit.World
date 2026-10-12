@@ -1,12 +1,13 @@
 import type { BaseMode, Layers } from '../engine/render/ViewSettings';
 import { useApp, useViewModel } from './hooks';
 import { Section, Segmented, Slider, Toggle } from './controls';
+import { BASE_HINTS, LAYER_HINTS } from './glossary';
 
 const LAYERS: { key: keyof Layers; label: string }[] = [
   { key: 'hillshade', label: 'Hillshade' }, { key: 'contours', label: 'Contours' }, { key: 'coastline', label: 'Coastline' },
   { key: 'ripples', label: 'Ripples' }, { key: 'rivers', label: 'Rivers' }, { key: 'stamps', label: 'Stamps' },
   { key: 'labels', label: 'Labels' }, { key: 'resources', label: 'Resource markers' }, { key: 'plateBoundaries', label: 'Plate boundaries' },
-  { key: 'plateMotion', label: 'Plate motion' }, { key: 'graticule', label: 'Graticule' },
+  { key: 'plateMotion', label: 'Plate motion' }, { key: 'graticule', label: 'Graticule' }, { key: 'climatePaint', label: 'Climate paint' },
 ];
 
 const BASES: { value: BaseMode; label: string }[] = [
@@ -26,10 +27,10 @@ export function ViewPanel() {
         </div>
       </Section>
       <Section title="Base">
-        <Segmented value={v.base} options={BASES} onChange={vm.setBase} />
+        <Segmented value={v.base} options={BASES.map((b) => ({ ...b, hint: BASE_HINTS[b.value] }))} onChange={vm.setBase} />
         {v.base === 'plates' && <Slider label="Topography" value={v.plateTopo} min={0} max={1} step={0.05} onChange={vm.setPlateTopo} />}
         <div className="toggles">
-          {LAYERS.map((l) => <Toggle key={l.key} label={l.label} on={v.layers[l.key]} onChange={() => vm.toggleLayer(l.key)} />)}
+          {LAYERS.map((l) => <Toggle key={l.key} label={l.label} on={v.layers[l.key]} onChange={() => vm.toggleLayer(l.key)} hint={LAYER_HINTS[l.key]} />)}
         </div>
       </Section>
       <Section title="Features">

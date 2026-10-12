@@ -23,7 +23,7 @@ namespace RoguelikeToolkit.World.Core;
 /// up lake adjacency where a host explicitly orders a second pass.
 /// </summary>
 [Preserve] // created via reflection by WorldGenerationPipeline.Discover; keep it through Unity code stripping
-[WorldGeneratorStage(16, Reads = new[] { typeof(ElevationInfo) }, ReadsOptional = new[] { typeof(HydrologyInfo) }, Writes = new[] { typeof(ClimateInfo) })]
+[WorldGeneratorStage(16, Reads = new[] { typeof(ElevationInfo) }, ReadsOptional = new[] { typeof(HydrologyInfo), typeof(UserEditInfo) }, Writes = new[] { typeof(ClimateInfo) })]
 public class ClimateStage : IWorldGeneratorStage, ISeededStage
 {
     public int Seed { get; set; } = 42;
@@ -141,6 +141,8 @@ public class ClimateStage : IWorldGeneratorStage, ISeededStage
         var vectors = store.GetTileVectors();
 
         var rawTemperature = new double[store.TileCount];
+        bool hasEdits = store.IsLayerRegistered<UserEditInfo>();
+        var edits = hasEdits ? store.GetSpan<UserEditInfo>() : default;
         var moistureOffset = new Vector3D(13.7, -7.3, 5.1);
         Span<int> neighbors = stackalloc int[6];
         var planet = Planet ?? new PlanetParameters();
@@ -284,6 +286,12 @@ public class ClimateStage : IWorldGeneratorStage, ISeededStage
             }
             updated.SeasonalRange = (float)ClimateModel.Continental(ClimateModel.SeasonalAmplitude(vectors[i].Z, planet.ObliquityDegrees), maritime[i]);
             updated.Precipitation = (float)moisture;
+            if (hasEdits)
+            {
+                // The author's brushed offsets are the last word: literal, local, after every physical term.
+                updated.Temperature = Math.Clamp(updated.Temperature + edits[i].TemperatureDelta, 0f, 1f);
+                updated.Precipitation = Math.Clamp(updated.Precipitation + edits[i].PrecipitationDelta, 0f, 1f);
+            }
             climate[i] = updated;
         }
     }

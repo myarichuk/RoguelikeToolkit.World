@@ -15,7 +15,7 @@ type Arr = ArrayLike<number>;
 /** The [JSExport] surface of RoguelikeToolkit.World.MapEditor.Engine.WorldExports. */
 interface EngineApi {
   Generate(seed: number, size: number, plates: number, obliquity: number, flux: number, rotation: number): number;
-  ApplyEdits(tiles: number[], heightDelta: number[], pinHeight: number[], meta: number[]): number;
+  ApplyEdits(tiles: number[], heightDelta: number[], pinHeight: number[], meta: number[], temperature: number[], precipitation: number[]): number;
   TileVectors(): Arr;
   Faces(): Arr;
   Heights(): Arr;
@@ -81,7 +81,7 @@ async function recompute(p: RecomputeParams): Promise<WorldSnapshot> {
   let t = performance.now();
   const tileCount = loaded === worldKey(p) ? -1 : generateWorld(e, p);
   if (tileCount >= 0) loaded = worldKey(p);
-  const n = e.ApplyEdits(Array.from(p.edits.tiles), Array.from(p.edits.delta), Array.from(p.edits.pinHeight), Array.from(p.edits.meta));
+  const n = e.ApplyEdits(Array.from(p.edits.tiles), Array.from(p.edits.delta), Array.from(p.edits.pinHeight), Array.from(p.edits.meta), Array.from(p.edits.temperature), Array.from(p.edits.precipitation));
   timings.recomputeMs = performance.now() - t;
   // Names are the document's business on a recompute: surviving features keep theirs, and the
   // editor asks only for the ones that are new.

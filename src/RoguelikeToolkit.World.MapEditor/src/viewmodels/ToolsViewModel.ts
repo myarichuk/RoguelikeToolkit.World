@@ -1,7 +1,7 @@
 import type { Editor } from '../engine/Editor';
 import type { BiomeDef } from '../engine/content/types';
 import type { PhysicsMode } from '../engine/world/derivePhysics';
-import type { HeightMode } from '../engine/tools/brushes';
+import type { ClimateMode, HeightMode } from '../engine/tools/brushes';
 import type { ToolId, ToolOptions } from '../engine/tools/Tool';
 import { ViewModel } from './ViewModel';
 
@@ -13,6 +13,7 @@ export const TOOLS: ToolInfo[] = [
   { id: 'navigate', label: 'Pan', key: 'H', icon: '✥', hint: 'Drag to pan. Wheel zooms everywhere; middle/right drag or Space+drag pans in every tool.' },
   { id: 'terrain', label: 'Terrain', key: 'B', icon: '⛰', hint: 'Sculpt height: raise, lower, smooth, flatten, roughen; paint land or sea. Alt inverts raise/lower. [ ] brush size.' },
   { id: 'biome', label: 'Biome', key: 'G', icon: '❀', hint: 'Paint biomes. Alt+click picks the biome under the cursor.' },
+  { id: 'climate', label: 'Climate', key: 'C', icon: '☀', hint: 'Paint warmer/cooler or wetter/drier air. Nothing changes until you apply physics; then biomes, rivers and lakes follow. Alt inverts. Tinted while this tool is active.' },
   { id: 'stamp', label: 'Stamp', key: 'S', icon: '♣', hint: 'Place decals. Scatter > 0 paints a spray of variants. Alt+drag erases.' },
   { id: 'text', label: 'Text', key: 'T', icon: 'A', hint: 'Click to add a label named in the local culture; click a label to select it.' },
   { id: 'river', label: 'River', key: 'W', icon: '〰', hint: 'Drag from source to mouth to draw a named river. Alt+click deletes one.' },
@@ -21,6 +22,18 @@ export const TOOLS: ToolInfo[] = [
 export const HEIGHT_MODES: { id: HeightMode; label: string }[] = [
   { id: 'raise', label: 'Raise' }, { id: 'lower', label: 'Lower' }, { id: 'smooth', label: 'Smooth' }, { id: 'flatten', label: 'Flatten' },
   { id: 'roughen', label: 'Roughen' }, { id: 'land', label: 'Paint land' }, { id: 'sea', label: 'Paint sea' },
+];
+
+export const CLIMATE_LAYERS: { id: ToolOptions['climateLayer']; label: string; hint: string }[] = [
+  { id: 'temperature', label: 'Temperature', hint: 'Annual-mean temperature offset. Full strength is about 22 K. Biomes, snow line and evaporation follow it.' },
+  { id: 'rain', label: 'Rainfall', hint: 'Annual precipitation offset. Wetter tiles grow forests and feed rivers and lakes; drier ones turn to steppe and desert.' },
+];
+
+/** Labels follow the layer: raising temperature is "warmer", raising rainfall is "wetter". */
+export const climateModes = (layer: ToolOptions['climateLayer']): { id: ClimateMode; label: string; hint: string }[] => [
+  { id: 'raise', label: layer === 'temperature' ? 'Warmer' : 'Wetter', hint: 'Adds to the offset under the brush; repeat strokes build up.' },
+  { id: 'lower', label: layer === 'temperature' ? 'Cooler' : 'Drier', hint: 'Subtracts from the offset under the brush.' },
+  { id: 'erase', label: 'Erase', hint: 'Fades the offset back toward zero (the generated climate).' },
 ];
 
 export interface AssetOption { id: string; name: string; category: string; thumb: string; }

@@ -157,13 +157,18 @@ world.Edits[other].Flags = UserEditFlags.PinHeight;           // fix: the final 
 world.Edits[other].PinHeight = 0.2f;
 world.Edits[third].Flags = UserEditFlags.PinBiome;            // hydrology cover and the biome stage keep it
 world.Edits[third].PinBiome = BiomeType.Desert;
+world.Edits[fourth].TemperatureDelta = -0.15f;                // climate brush: +/- in Temperature units (~55 K per unit)
+world.Edits[fourth].PrecipitationDelta = 0.2f;                //   and in Precipitation units, both clamped to [0, 1]
 world.Recompute();                                            // elevation -> climate -> erosion -> hydrology -> biomes -> catalogs
 ```
 
 `Recompute()` re-runs the pipeline from the elevation stage (`WorldGenerationPipeline.ExecuteFrom`),
 clears and repopulates the river, water-body, range and deposit catalogs, and rebuilds the spatial
 index. It does not repeat the plate simulation. With no edits it reproduces the generated world bit for
-bit, and repeated calls never erode twice. It is global: hydrology is a whole-world solve, so one
+bit, and repeated calls never erode twice. The climate offsets are added last, in both climate passes and
+after the ocean currents: literal and local, so a painted warm sea patch does not move the gyres and
+sea air does not carry the offset inland (paint the coast too if you want that). Biomes, rivers and
+lakes read the offset climate like any other. It is global: hydrology is a whole-world solve, so one
 raised ridge may redirect a basin far from it.
 
 ## Addresses and seeds: where am I?

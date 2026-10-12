@@ -12,7 +12,7 @@ import { decodeDocument, encodeDocument } from './doc/serialize';
 import type { LabelEntity, StampEntity } from './doc/types';
 import { contour, pathData, shape } from './export/contour';
 import { riverPath } from './export/SvgExporter';
-import { heightDab, strokePoints } from './tools/brushes';
+import { climateDab, heightDab, strokePoints } from './tools/brushes';
 import { BIOME_NAMES } from './world/features';
 
 describe('Mercator map space', () => {
@@ -96,6 +96,41 @@ describe('brushes', () => {
   });
 });
 
+describe('climate brush', () => {
+  const W = 64, H = 64;
+  it('raises and lowers the paint with a falloff, clamped to a signed byte', () => {
+    const data = new Int8Array(W * H);
+    for (let k = 0; k < 400; k++) climateDab(data, W, H, { x: 32, y: 32, radius: 10, strength: 0.2 }, 'raise');
+    expect(data[32 * W + 32]).toBe(127);
+    expect(data[32 * W + 38]).toBeGreaterThan(0);          // inside the brush, off center
+    expect(data[32 * W + 45]).toBe(0);                     // outside the brush
+    for (let k = 0; k < 800; k++) climateDab(data, W, H, { x: 32, y: 32, radius: 10, strength: 0.2 }, 'lower');
+    expect(data[32 * W + 32]).toBe(-127);
+  });
+  it('never rounds a light touch away', () => {
+    const data = new Int8Array(W * H);
+    climateDab(data, W, H, { x: 32, y: 32, radius: 10, strength: 0.0005 }, 'raise');
+    expect(data[32 * W + 32]).toBeGreaterThanOrEqual(1);
+  });
+  it('erase fades the paint back to zero without overshooting', () => {
+    const data = new Int8Array(W * H).fill(-100);
+    for (let k = 0; k < 200; k++) climateDab(data, W, H, { x: 32, y: 32, radius: 10, strength: 0.1 }, 'erase');
+    expect(data[32 * W + 32]).toBe(0);
+    expect(data[0]).toBe(-100);
+  });
+  it('is one undo step per stroke on the paint raster', () => {
+    const doc = MapDocument.empty();
+    const edit = new RasterEdit('Climate', doc.target('warmth'));
+    edit.prepare({ x0: 92, y0: 92, x1: 109, y1: 109 });      // the snapshot comes first, as in a real stroke
+    const rect = climateDab(doc.warmth, doc.width, doc.height, { x: 100, y: 100, radius: 8, strength: 0.1 }, 'raise');
+    doc.target('warmth').touched(rect);
+    expect(edit.commit()).toBe(true);
+    expect(doc.warmth[100 * doc.width + 100]).toBeGreaterThan(0);
+    edit.undo();
+    expect(doc.hasClimatePaint).toBe(false);
+  });
+});
+
 describe('content packs', () => {
   it('accepts the core pack and the example pack', async () => {
     expect(validatePack(corePack).errors).toEqual([]);
@@ -168,6 +203,22 @@ describe('.wmap serialization', () => {
     expect([...back.physics!.generated]).toEqual(['f_lake:5']);
     expect(back.physics!.tombstones.get('f_lake:4')).toEqual(gone);
     expect(back.physics!.baseline).toBeNull();   // a cache: rebuilt from the table on demand
+  });
+  it('round-trips the climate paint, and a file from before the brush reads as unpainted', () => {
+    const doc = MapDocument.empty();
+    doc.warmth[1000] = 90; doc.warmth[2000] = -127; doc.wetness[3000] = -40;
+    doc.physics = { edits: new Map([[4, { dt: 0.2, dr: -0.1 }]]), baseline: null, generated: new Set(), tombstones: new Map() };
+    const bytes = encodeDocument(doc);
+    const back = decodeDocument(bytes);
+    expect([back.warmth[1000], back.warmth[2000], back.wetness[3000], back.warmth[1]]).toEqual([90, -127, -40, 0]);
+    expect(back.physics!.edits.get(4)).toEqual({ dt: 0.2, dr: -0.1 });
+    // Rename the blobs in the header (same length, so every offset still holds): the file now looks pre-brush.
+    const len = new DataView(bytes.buffer, bytes.byteOffset).getUint32(8, true);
+    const head = new TextDecoder().decode(bytes.subarray(12, 12 + len)).replace('"warmth"', '"warmtX"').replace('"wetness"', '"wetnesX"');
+    const old = bytes.slice(); old.set(new TextEncoder().encode(head), 12);
+    const reread = decodeDocument(old);
+    expect(reread.hasClimatePaint).toBe(false);
+    expect(reread.physics!.edits.get(4)).toEqual({ dt: 0.2, dr: -0.1 });
   });
   it('rejects garbage with a readable error', () => {
     expect(() => decodeDocument(new Uint8Array(64))).toThrow(/bad magic/);

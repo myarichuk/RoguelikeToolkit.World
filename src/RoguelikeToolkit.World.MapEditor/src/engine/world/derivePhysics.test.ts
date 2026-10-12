@@ -35,7 +35,7 @@ function fakeEngine(log: RecomputeParams[] = []): PhysicsEngine {
 }
 
 function docFor(engine: PhysicsEngine): Promise<MapDocument> {
-  return engine.recompute({ seed: 1, size: 1, plates: 1, styles: [], edits: { tiles: new Int32Array(0), delta: new Float64Array(0), pinHeight: new Float64Array(0), meta: new Int32Array(0) }, rastersOnly: false }).then((s) => {
+  return engine.recompute({ seed: 1, size: 1, plates: 1, styles: [], edits: { tiles: new Int32Array(0), delta: new Float64Array(0), pinHeight: new Float64Array(0), meta: new Int32Array(0), temperature: new Float64Array(0), precipitation: new Float64Array(0) }, rastersOnly: false }).then((s) => {
     const doc = new MapDocument({ ...DEFAULT_SETTINGS, seed: 1, size: 1, plates: 1, styles: [], title: 't' }, s.rasters.elevation.slice(), s.rasters.biome.slice(),
       { tile, tilePlate: s.tilePlate, plateDrift: s.plateDrift, tileXY: s.tileXY, styles: s.styles });
     doc.features.reset([{ id: 'f_lake:0', kind: 'lake', name: 'Silverfen', x: 1, y: 1, angle: 0, extent: 1, weight: 1, tiles: [0], details: [], culture: '' }]);
@@ -119,6 +119,39 @@ describe('derivePhysics', () => {
     expect(out.biome[0]).toBe(1);
   });
 
+  it('sends the painted climate as per-tile offsets, keeps the paint, and a revert clears it', async () => {
+    const log: RecomputeParams[] = [];
+    const eng = fakeEngine(log);
+    const doc = await docFor(eng);
+    for (let i = 0; i < N; i++) if (tile[i] === 1) { doc.warmth[i] = 127; doc.wetness[i] = -127; }
+    const out = await derivePhysics(doc, eng, 'sculpt');
+    const sent = unpackForTest(log.at(-1)!.edits);
+    expect(sent.get(1)!.dt).toBeCloseTo(0.4, 5);
+    expect(sent.get(1)!.dr).toBeCloseTo(-0.4, 5);
+    expect(sent.has(0)).toBe(false);
+    expect(out.report.climateTiles).toBe(1);
+    expect(out.warmth[N - 1]).toBe(127);
+    expect(describeReport(out.report)).toContain('1 tiles re-climated');
+    const again = await derivePhysics(doc, eng, 'revert');
+    expect(again.warmth.every((v) => v === 0) && again.wetness.every((v) => v === 0)).toBe(true);
+    expect(again.physics.edits.size).toBe(0);
+    expect(doc.warmth[N - 1]).toBe(127);              // derivePhysics does not touch the document; the command swaps frames
+  });
+
+  it('erasing the paint and applying again removes the offset from the table', async () => {
+    const log: RecomputeParams[] = [];
+    const eng = fakeEngine(log);
+    const doc = await docFor(eng);
+    for (let i = 0; i < N; i++) if (tile[i] === 1) doc.warmth[i] = 127;
+    const first = await derivePhysics(doc, eng, 'sculpt');
+    doc.replaceRasters(first.elevation, first.biome);
+    doc.physics = first.physics;
+    doc.warmth.fill(0);
+    const second = await derivePhysics(doc, eng, 'sculpt');
+    expect(second.physics.edits.has(1)).toBe(false);
+    expect(unpackForTest(log.at(-1)!.edits).size).toBe(0);
+  });
+
   it('asks the engine for the world the document was generated on, planet included', async () => {
     const log: RecomputeParams[] = [];
     const eng = fakeEngine(log);
@@ -133,7 +166,7 @@ describe('derivePhysics', () => {
   });
 
   it('describes what moved', () => {
-    expect(describeReport({ heightTiles: 12, biomeTiles: 0, counts: { river: [14, 17], lake: [9, 9] }, kept: 20, added: 3, removed: 0 })).toBe('12 tiles reshaped · rivers 14→17 · 3 new');
-    expect(describeReport({ heightTiles: 0, biomeTiles: 0, counts: {}, kept: 0, added: 0, removed: 0 })).toBe('no change');
+    expect(describeReport({ heightTiles: 12, biomeTiles: 0, climateTiles: 0, counts: { river: [14, 17], lake: [9, 9] }, kept: 20, added: 3, removed: 0 })).toBe('12 tiles reshaped · rivers 14→17 · 3 new');
+    expect(describeReport({ heightTiles: 0, biomeTiles: 0, climateTiles: 0, counts: {}, kept: 0, added: 0, removed: 0 })).toBe('no change');
   });
 });

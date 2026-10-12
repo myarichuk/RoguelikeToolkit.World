@@ -1,5 +1,5 @@
 import { describe, expect, it } from 'vitest';
-import { collectEdits, editsFromRows, editsToRows, MIN_DELTA, packEdits, tilePixelCounts, type Raster, type TileEdits } from './edits';
+import { CLIMATE_RANGE, collectClimate, collectEdits, editsFromRows, editsToRows, MIN_CLIMATE, MIN_DELTA, packEdits, tilePixelCounts, type Raster, type TileEdits } from './edits';
 
 // Four tiles of four pixels each: tile t owns pixels 4t..4t+3.
 const TILES = 4, PX = 16;
@@ -93,5 +93,56 @@ describe('edit table encoding', () => {
 
   it('counts pixels per tile', () => {
     expect([...tilePixelCounts(tile, TILES)]).toEqual([4, 4, 4, 4]);
+  });
+});
+
+describe('collectClimate', () => {
+  const paint = () => ({ warmth: new Int8Array(PX), wetness: new Int8Array(PX) });
+
+  it('turns the mean paint over a tile into a temperature and a rainfall offset', () => {
+    const { warmth, wetness } = paint();
+    warmth.fill(127, 4, 8);                    // tile 1 fully warm
+    wetness.fill(-127, 8, 10);                 // half of tile 2 fully dry
+    const r = collectClimate(warmth, wetness, tile, TILES, new Map());
+    expect(r.edits.get(1)!.dt).toBeCloseTo(CLIMATE_RANGE.temperature, 6);
+    expect(r.edits.get(2)!.dr).toBeCloseTo(-CLIMATE_RANGE.precipitation / 2, 6);
+    expect(r.edits.get(0)).toBeUndefined();
+    expect(r.climateTiles).toBe(2);
+  });
+
+  it('ignores a stray dab and rebuilds from the paint, dropping offsets that were erased', () => {
+    const { warmth, wetness } = paint();
+    warmth[0] = 3;                             // mean 0.75/127 of the range: far below MIN_CLIMATE
+    expect(CLIMATE_RANGE.temperature * (3 / 4) / 127).toBeLessThan(MIN_CLIMATE);
+    const prior: TileEdits = new Map([[3, { dt: 0.2, dh: 0.1 }], [2, { dr: 0.3 }]]);
+    const r = collectClimate(warmth, wetness, tile, TILES, prior);
+    expect(r.edits.get(3)).toEqual({ dh: 0.1 });      // sculpt kept, stale climate dropped
+    expect(r.edits.has(2)).toBe(false);               // nothing left on the tile: no empty entry
+    expect(r.edits.has(0)).toBe(false);
+    expect(prior.get(3)!.dt).toBe(0.2);               // the prior table is not mutated
+  });
+
+  it('skips pixels with no tile', () => {
+    const { warmth, wetness } = paint();
+    warmth.fill(127);
+    expect(collectClimate(warmth, wetness, new Int32Array(PX).fill(-1), TILES, new Map()).edits.size).toBe(0);
+  });
+});
+
+describe('climate offsets on the wire', () => {
+  it('packs them next to the terrain edits, zero where unset', () => {
+    const p = packEdits(new Map([[2, { dt: 0.2 }], [5, { dr: -0.1, dh: 0.5 }]]));
+    expect([...p.tiles]).toEqual([2, 5]);
+    expect(p.temperature[0]).toBeCloseTo(0.2); expect(p.temperature[1]).toBe(0);
+    expect(p.precipitation[0]).toBe(0); expect(p.precipitation[1]).toBeCloseTo(-0.1);
+  });
+  it('reads the four-column rows of a file written before the brush', () => {
+    const back = editsFromRows([[7, 0.5, null, null], [9, null, 0.4, 3]] as never);
+    expect(back.get(7)).toEqual({ dh: 0.5 });
+    expect(back.get(9)).toEqual({ pinH: 0.4, pinBiome: 3 });
+  });
+  it('round-trips the climate columns', () => {
+    const t: TileEdits = new Map([[1, { dt: -0.15, dr: 0.25, dh: 0.1 }]]);
+    expect(editsFromRows(JSON.parse(JSON.stringify(editsToRows(t))))).toEqual(t);
   });
 });

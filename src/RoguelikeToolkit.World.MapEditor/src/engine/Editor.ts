@@ -23,7 +23,7 @@ import { Overlay } from './render/Overlay';
 import { DEFAULT_VIEW, VIEW_PRESETS, type ViewSettings } from './render/ViewSettings';
 import { FontLibrary } from './text/FontLibrary';
 import { LabelCache } from './text/LabelCache';
-import { BiomeTool, TerrainTool } from './tools/BrushTools';
+import { BiomeTool, ClimateTool, TerrainTool } from './tools/BrushTools';
 import { InspectTool } from './tools/InspectTool';
 import { NavigateTool } from './tools/NavigateTool';
 import { RiverTool } from './tools/RiverTool';
@@ -80,7 +80,7 @@ export class Editor implements ToolContext, ToolHost {
   readonly world: WorldService;
   readonly tools: Record<ToolId, Tool> = {
     navigate: new NavigateTool(), inspect: new InspectTool(), select: new SelectTool(), terrain: new TerrainTool(),
-    biome: new BiomeTool(), stamp: new StampTool(), text: new TextTool(), river: new RiverTool(),
+    biome: new BiomeTool(), climate: new ClimateTool(), stamp: new StampTool(), text: new TextTool(), river: new RiverTool(),
   };
 
   private _doc = MapDocument.empty();
@@ -145,6 +145,7 @@ export class Editor implements ToolContext, ToolHost {
     renderer.onAfterFrame = () => this.afterFrame();
     renderer.setView(this._view);
     renderer.attach(this._doc, this.library);
+    overlay.climatePaint.attach(this._doc);
     void this.contentReady.then(() => this.applyTheme());
     this.controller = new ToolController(overlayCanvas, this);
     this.activeTool().activate?.(this);
@@ -177,6 +178,7 @@ export class Editor implements ToolContext, ToolHost {
 
   private afterFrame(): void {
     const r = this.renderer!, o = this.overlay!;
+    o.showClimatePaint = this._tool === 'climate';
     o.gizmos = this.activeTool().gizmo ? [this.activeTool().gizmo!] : [];
     o.draw(r.camera, this._doc, this.theme(), this._view);
     const now = performance.now();
@@ -295,6 +297,7 @@ export class Editor implements ToolContext, ToolHost {
     this.maskKey = '';
     this.undo.clear();
     this.renderer?.attach(doc, this.library);
+    this.overlay?.climatePaint.attach(doc);
     this.renderer?.camera.fit();
     this.events.emit('doc', doc);
     this.requestRender();
@@ -428,6 +431,7 @@ export class Editor implements ToolContext, ToolHost {
         features: [...before.features.filter((f) => !ph.generated.has(f.id)), ...out.features],
         rivers: [...before.rivers.filter((r) => !generatedRivers.has(r.id)), ...out.rivers],
         labels: before.labels.filter((l) => !l.id.startsWith('lb_f_')), stamps: before.stamps.filter((s) => !s.id.startsWith('st_')), physics: out.physics,
+        warmth: out.warmth, wetness: out.wetness,
       };
       // Labels and stamps are placed from the document and dodge what is already there, so it takes
       // the new world with only the hand-made ones in it (the old auto-placed ones must not crowd the new).

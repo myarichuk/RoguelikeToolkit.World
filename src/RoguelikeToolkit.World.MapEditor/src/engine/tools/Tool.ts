@@ -7,9 +7,9 @@ import type { GizmoPainter } from '../render/Overlay';
 import type { ViewSettings } from '../render/ViewSettings';
 import type { LabelCache } from '../text/LabelCache';
 import type { Selection } from './Selection';
-import type { HeightMode } from './brushes';
+import type { ClimateMode, HeightMode } from './brushes';
 
-export type ToolId = 'navigate' | 'inspect' | 'select' | 'terrain' | 'biome' | 'stamp' | 'text' | 'river';
+export type ToolId = 'navigate' | 'inspect' | 'select' | 'terrain' | 'biome' | 'climate' | 'stamp' | 'text' | 'river';
 
 /** Per-tool settings, edited from the tool options panel. */
 export interface ToolOptions {
@@ -17,6 +17,9 @@ export interface ToolOptions {
   strength: number;
   heightMode: HeightMode;
   biome: number;
+  /** Climate brush: which paint layer (temperature or rainfall) and what the stroke does to it. */
+  climateLayer: 'temperature' | 'rain';
+  climateMode: ClimateMode;
   asset: string;
   /** Stamp brush: scatter spacing in map units (0 = single click placement). */
   scatter: number;
@@ -25,7 +28,7 @@ export interface ToolOptions {
 }
 
 export const DEFAULT_TOOL_OPTIONS: ToolOptions = {
-  radius: 18, strength: 0.04, heightMode: 'raise', biome: 3, asset: 'core.mountain', scatter: 0, stampScale: 1, labelStyle: 'town',
+  radius: 18, strength: 0.04, heightMode: 'raise', biome: 3, climateLayer: 'temperature', climateMode: 'raise', asset: 'core.mountain', scatter: 0, stampScale: 1, labelStyle: 'town',
 };
 
 export interface PointerInput {

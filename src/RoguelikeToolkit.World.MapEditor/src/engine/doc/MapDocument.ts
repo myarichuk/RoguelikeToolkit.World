@@ -6,7 +6,7 @@ import type { Raster, TileEdits } from '../world/edits';
 import { EntityStore } from './EntityStore';
 import { DEFAULT_SETTINGS, type DocSettings, type FeatureEntity, type LabelEntity, type RiverEntity, type StampEntity } from './types';
 
-export type RasterLayer = 'elevation' | 'biome';
+export type RasterLayer = 'elevation' | 'biome' | 'warmth' | 'wetness';
 
 /** Read-only reference data from generation: what the planet *is*, as opposed to what was drawn. */
 export interface WorldReference {
@@ -54,6 +54,12 @@ export class MapDocument {
   private featureByTile: Map<number, string[]> | null = null;
   /** Null for hand-made maps (no engine world behind them), so there is nothing to re-derive. */
   physics: PhysicsState | null = null;
+  /**
+   * Climate paint: signed offsets the author brushed, -127..127 per texel (full scale is CLIMATE_RANGE in
+   * world/edits.ts). Inputs, not derived: the physics never overwrites them, only "Revert" clears them.
+   */
+  readonly warmth = new Int8Array(MAP_W * MAP_H);
+  readonly wetness = new Int8Array(MAP_W * MAP_H);
 
   constructor(
     public settings: DocSettings,
@@ -72,8 +78,9 @@ export class MapDocument {
   /** A raster as an undo/redo target that keeps renderers informed. */
   target(layer: 'elevation'): RasterTarget<Float32Array>;
   target(layer: 'biome'): RasterTarget<Uint8Array>;
-  target(layer: RasterLayer): RasterTarget<Float32Array> | RasterTarget<Uint8Array> {
-    const data = layer === 'elevation' ? this.elevation : this.biome;
+  target(layer: 'warmth' | 'wetness'): RasterTarget<Int8Array>;
+  target(layer: RasterLayer): RasterTarget<Float32Array> | RasterTarget<Uint8Array> | RasterTarget<Int8Array> {
+    const data = layer === 'elevation' ? this.elevation : layer === 'biome' ? this.biome : layer === 'warmth' ? this.warmth : this.wetness;
     return { data: data as never, width: this.width, height: this.height, touched: (rect) => this.events.emit('raster', { layer, rect }) };
   }
 
@@ -87,6 +94,21 @@ export class MapDocument {
     const rect = { x0: 0, y0: 0, x1: this.width, y1: this.height };
     this.events.emit('raster', { layer: 'elevation', rect });
     this.events.emit('raster', { layer: 'biome', rect });
+  }
+
+  /** Overwrites the climate paint in place (undo of a revert, file load) and tells the overlay. */
+  replaceClimate(warmth: Int8Array, wetness: Int8Array): void {
+    this.warmth.set(warmth);
+    this.wetness.set(wetness);
+    const rect = { x0: 0, y0: 0, x1: this.width, y1: this.height };
+    this.events.emit('raster', { layer: 'warmth', rect });
+    this.events.emit('raster', { layer: 'wetness', rect });
+  }
+
+  /** True when any texel carries climate paint. */
+  get hasClimatePaint(): boolean {
+    for (let i = 0; i < this.warmth.length; i++) if (this.warmth[i] !== 0 || this.wetness[i] !== 0) return true;
+    return false;
   }
 
   setSettings(patch: Partial<DocSettings>): void {

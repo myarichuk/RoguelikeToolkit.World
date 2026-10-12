@@ -8,6 +8,8 @@ export function unpackForTest(p: PackedEdits): Map<number, TileEdit> {
     if (p.delta[k] !== 0) e.dh = p.delta[k];
     if (p.meta[k] & 1) e.pinH = p.pinHeight[k];
     if (p.meta[k] & 2) e.pinBiome = p.meta[k] >> 8;
+    if (p.temperature[k] !== 0) e.dt = p.temperature[k];
+    if (p.precipitation[k] !== 0) e.dr = p.precipitation[k];
     m.set(p.tiles[k], e);
   }
   return m;
