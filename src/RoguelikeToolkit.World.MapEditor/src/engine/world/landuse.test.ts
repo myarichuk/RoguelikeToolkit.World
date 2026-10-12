@@ -1,5 +1,6 @@
 import { describe, expect, it } from 'vitest';
-import { composeBiomes, migrateLegacyLandUse } from './landuse';
+import { LAND_USES, composeBiomes, migrateLegacyLandUse } from './landuse';
+import { LANDUSE_HINTS } from '../../ui/glossary';
 
 const W = 8;
 
@@ -48,5 +49,16 @@ describe('migrateLegacyLandUse', () => {
     const all = new Uint8Array(4).fill(11), u = new Uint8Array(4);
     migrateLegacyLandUse(all, u, 4);
     expect([...all]).toEqual([1, 1, 1, 1]);
+  });
+});
+
+describe('land-use tooltips', () => {
+  it('give every use its own sentence, and the panel note does not claim Apply physics ignores land use', () => {
+    const hints = LAND_USES.map((u) => u.hint);
+    expect(new Set(hints).size).toBe(hints.length);
+    for (const h of hints) expect(h.length).toBeGreaterThan(20);
+    expect(LANDUSE_HINTS.note).not.toMatch(/Apply physics ignore/i);
+    // The tool tip names every paintable use, so it cannot go stale when one is added.
+    for (const u of LAND_USES) expect(LANDUSE_HINTS.tool.toLowerCase()).toContain(u.name.toLowerCase().replace('-up', ''));
   });
 });

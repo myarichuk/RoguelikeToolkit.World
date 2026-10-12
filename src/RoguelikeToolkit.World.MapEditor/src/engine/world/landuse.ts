@@ -21,9 +21,9 @@ export interface LandUseDef {
  * stroke and a plugin's allocation mean the same thing; `slot` is only the editor's colour slot.
  */
 export const LAND_USES: readonly LandUseDef[] = [
-  { id: 1, name: 'Farmland', slot: 11, hint: 'Tilled fields and pasture. Drawn over whatever biome grows there; the biome underneath is unchanged.' },
-  { id: 2, name: 'Ashlands', slot: 13, hint: 'Burn scars and volcanic waste. Drawn over the biome; the biome underneath is unchanged.' },
-  { id: 3, name: 'Pasture', slot: 17, hint: 'Fenced or sown grazing land. Drawn over the biome; the biome underneath is unchanged.' },
+  { id: 1, name: 'Farmland', slot: 11, hint: 'Tilled fields. Drawn over whatever biome grows there; the biome underneath is unchanged.' },
+  { id: 2, name: 'Ashlands', slot: 13, hint: 'Burn scars and volcanic waste: a consequence, not a use, so nothing is yielded. Drawn over the biome; the biome underneath is unchanged.' },
+  { id: 3, name: 'Pasture', slot: 17, hint: 'Fenced or sown grazing land, as against a nomad\'s open range. Drawn over the biome; the biome underneath is unchanged.' },
   { id: 4, name: 'Built-up', slot: 18, hint: 'Ground under a town or city. Drawn over the biome; the biome underneath is unchanged.' },
 ];
 

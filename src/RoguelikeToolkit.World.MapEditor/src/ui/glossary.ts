@@ -129,10 +129,21 @@ export const BIOME_HINTS: Record<string, string> = {
   Mediterranean: 'Warm-temperate scrub and open woodland with a dry summer: the rain comes in winter (the Wet season layer shows teal) and is too little for forest. Good farmland, with olives and vines. Painting it pins the biome there.',
 };
 
+/**
+ * Land use: what people (or fire) did to the ground, as against what the climate grows on it. It is a decision, not
+ * physics: no climate, erosion or river stage reads it. Apply physics only hands it to the engine as a pin, so games
+ * and plugins that decide land use keep what you painted.
+ */
+export const LANDUSE_HINTS = {
+  tool: 'Paint what people or fire did to the ground (farmland, ashlands, pasture, built-up) over the biome. The biome underneath, the climate and the rivers do not change. Alt+click picks what is under the pointer.',
+  clear: 'Removes land use under the brush; the biome underneath shows again.',
+  note: 'Land use is drawn over the biome and never changes it: the climate, rivers and what the land could carry stay as they were. Apply physics hands your strokes to the engine as pins, so games and plugins that decide land use keep them; Revert keeps them too.',
+} as const;
+
 /** Top bar, status bar and content-pack controls. */
 export const SHELL_HINTS = {
   theme: 'The map\'s look: colours, label styles and stamp inks. Edit the chosen theme in the Theme panel.',
-  cursor: 'Under the pointer: latitude and longitude, height above sea level (sea is 0), biome, the named feature, the climate while a climate layer is on, and the map scale.',
+  cursor: 'Under the pointer: latitude and longitude, height above sea level (sea is 0), biome (with the land use painted over it, in brackets), the named feature, the climate while a climate layer is on, and the map scale.',
   timings: 'How long the last Generate took, split into the world simulation, drawing the map, finding features and naming them. Hover for the exact numbers.',
   packImport: 'Add a content pack (themes, biomes, stamps, fonts) from a file on your computer.',
   packExample: 'Load the example pack that ships with the editor.',

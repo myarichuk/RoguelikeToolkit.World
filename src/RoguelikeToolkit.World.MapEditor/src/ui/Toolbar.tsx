@@ -1,7 +1,7 @@
 import { CLIMATE_LAYERS, climateModes, HEIGHT_MODES, TOOLS } from '../viewmodels/ToolsViewModel';
 import { useApp, useViewModel } from './hooks';
 import { Section, Select, Slider } from './controls';
-import { BIOME_HINTS, TERRAIN_HINTS } from './glossary';
+import { BIOME_HINTS, LANDUSE_HINTS, TERRAIN_HINTS } from './glossary';
 import { LAND_USES } from '../engine/world/landuse';
 
 export function Toolbar() {
@@ -64,7 +64,7 @@ export function ToolOptionsPanel() {
       {s.tool === 'landuse' && (
         <>
           <div className="swatches">
-            <button className={o.landUse === 0 ? 'active' : ''} onClick={() => vm.setOptions({ landUse: 0 })} title="Removes land use under the brush; the biome underneath shows again.">
+            <button className={o.landUse === 0 ? 'active' : ''} onClick={() => vm.setOptions({ landUse: 0 })} title={LANDUSE_HINTS.clear}>
               <i style={{ background: 'transparent' }} /><i style={{ background: 'transparent' }} /><span>Clear</span>
             </button>
             {LAND_USES.map((u) => (
@@ -73,7 +73,7 @@ export function ToolOptionsPanel() {
               </button>
             ))}
           </div>
-          <p className="hint">Land use is drawn over the biome and changes nothing else: climate, rivers and Apply physics ignore it, and it is kept through Revert.</p>
+          <p className="hint">{LANDUSE_HINTS.note}</p>
         </>
       )}
       {brush && <PhysicsControls />}
