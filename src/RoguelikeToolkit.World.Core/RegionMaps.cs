@@ -91,7 +91,7 @@ public static class RegionMaps
             float temp = Math.Clamp(parent.MeanTemperature - Math.Max(0f, h) * 0.35f + (float)grid.Jitter[i] * 0.05f, 0f, 1f);
             float precip = Math.Clamp(parent.MeanPrecipitation + (float)grid.Jitter[i] * 0.08f, 0f, 1f);
             bool water = h < SeaLevel;
-            var (biome, danger) = LocalBiome(h, temp, precip);
+            var (biome, danger) = LocalBiome(h, temp, precip, parent.MeanRainSeasonality, parent.MeanRainPhase);
             if (grid.IsRiver[i]) danger = Math.Max(danger, (byte)1);
             tiles[i] = new LocalTile
             {
@@ -233,6 +233,6 @@ public static class RegionMaps
         return parentBiome == BiomeType.Ocean ? BiomeType.Plains : parentBiome;
     }
 
-    private static (BiomeType Biome, byte Danger) LocalBiome(float height, float temperature, float moisture)
-        => BiomeClassifier.Classify(height, temperature, moisture);
+    private static (BiomeType Biome, byte Danger) LocalBiome(float height, float temperature, float moisture, double rainSeasonality, double rainPhase)
+        => BiomeClassifier.Classify(height, temperature, moisture, default, rainSeasonality, rainPhase);
 }

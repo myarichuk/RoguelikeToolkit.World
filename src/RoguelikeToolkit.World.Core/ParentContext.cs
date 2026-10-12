@@ -14,6 +14,10 @@ public sealed class ParentContext
     public float MeanPrecipitation { get; init; } = 0.5f;
     /// <summary>Moisture mean; currently the precipitation proxy (no dense moisture layer exists).</summary>
     public float MeanMoisture { get; init; } = 0.5f;
+    /// <summary>Mean <see cref="ClimateInfo.RainSeasonality"/> over tile + ring; 0 (even rain, or no data) lets the child ladder grow no savanna or Mediterranean.</summary>
+    public float MeanRainSeasonality { get; init; }
+    /// <summary>Mean <see cref="ClimateInfo.RainPhase"/> over tile + ring, +1 winter rain .. -1 summer rain; 0 when unknown.</summary>
+    public float MeanRainPhase { get; init; }
 
     // Orientation.
     /// <summary>Least-squares elevation gradient, tangent to the sphere at the tile center.</summary>

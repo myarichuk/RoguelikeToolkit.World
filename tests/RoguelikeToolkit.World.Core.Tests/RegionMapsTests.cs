@@ -14,7 +14,7 @@ public class RegionMapsTests
     private static readonly GeoCoord TestCenter = new(20, 30);
     private const double TestRadiusKm = 120.0;
 
-    private static ParentContext TestParent(bool river = false, float flow = 0f)
+    private static ParentContext TestParent(bool river = false, float flow = 0f, float temperature = 0.6f, float precipitation = 0.5f, float season = 0f, float phase = 0f)
     {
         var up = Vector3D.FromGeoCoord(TestCenter);
         double lonR = TestCenter.Longitude * GeoCoord.Deg2Rad;
@@ -24,9 +24,11 @@ public class RegionMapsTests
         {
             MeanElevation = 0.3f,
             DominantBiome = BiomeType.Plains,
-            MeanTemperature = 0.6f,
-            MeanPrecipitation = 0.5f,
+            MeanTemperature = temperature,
+            MeanPrecipitation = precipitation,
             MeanMoisture = 0.5f,
+            MeanRainSeasonality = season,
+            MeanRainPhase = phase,
             ElevationGradient = north * -0.4,
             AspectRadians = 0.0,
             OrogenyStrike = east,
@@ -301,5 +303,66 @@ public class RegionMapsTests
             }
         }
         return null;
+    }
+
+    private static (int Land, int Of) LandTilesOfBiome(ParentContext parent, BiomeType wanted)
+    {
+        var local = RegionMaps.DeriveLocalMap(MapAddress.ForLocal(7, 10, 3, -1), parent, TestCenter, 15.0, MapSeeds.DeriveRegionSeed(7, 10), 16);
+        int land = 0, of = 0;
+        foreach (var t in local.Tiles)
+        {
+            if (t.IsWater || t.Biome == BiomeType.Mountain) continue;
+            land++;
+            if (t.Biome == wanted) of++;
+        }
+        return (land, of);
+    }
+
+    [Fact]
+    public void ALocalMapInsideAWinterWetTile_IsMediterranean_NotForest()
+    {
+        // 0.70 / 0.45 is forest on an even year (the lapse rate and jitter keep it clear of the arid and jungle lines).
+        var (land, med) = LandTilesOfBiome(TestParent(temperature: 0.70f, precipitation: 0.45f, season: 0.8f, phase: 0.8f), BiomeType.Mediterranean);
+        Assert.True(land > 50, "the test map needs land to mean anything");
+        Assert.True(med >= land * 0.8, $"{med} of {land} land tiles are Mediterranean");
+        var (_, plain) = LandTilesOfBiome(TestParent(temperature: 0.70f, precipitation: 0.45f), BiomeType.Mediterranean);
+        Assert.Equal(0, plain);
+    }
+
+    [Fact]
+    public void ALocalMapInsideASummerWetTile_IsSavanna_NotForest()
+    {
+        var (land, sav) = LandTilesOfBiome(TestParent(temperature: 0.80f, precipitation: 0.45f, season: 0.9f, phase: -0.9f), BiomeType.Savanna);
+        Assert.True(land > 50);
+        Assert.True(sav >= land * 0.8, $"{sav} of {land} land tiles are savanna");
+        Assert.Equal(0, LandTilesOfBiome(TestParent(temperature: 0.80f, precipitation: 0.45f), BiomeType.Savanna).Of);
+    }
+
+    [Fact]
+    public void TheSeasonIsHandedDownThroughEveryTier()
+    {
+        // World tile -> region parent: the mean over the tile and its ring of the climate layer's own fields.
+        using var world = new WorldBuilder().WithSize(4).WithSeed(7).Build();
+        var store = world.Map.DataStore;
+        var locals = store.GetSpan<LocalMapInfo>();
+        var climate = store.GetSpan<ClimateInfo>();
+        int tile = -1;
+        for (int i = 0; i < locals.Length && tile < 0; i++)
+            if (locals[i].Biome == BiomeType.Mediterranean && climate[i].RainPhase > 0.7f) tile = i;
+        Assert.True(tile >= 0, "seed 7 size 4 has Mediterranean ground");
+        var parent = TerrainOrientation.Sample(store, tile);
+        // Exactly the mean over the tile and its ring, computed here from the layer rather than from the code under test.
+        Span<int> nb = stackalloc int[6];
+        int adjacent = store.GetAdjacent(tile, nb);
+        double phase = climate[tile].RainPhase, season = climate[tile].RainSeasonality;
+        for (int k = 0; k < adjacent; k++) { phase += climate[nb[k]].RainPhase; season += climate[nb[k]].RainSeasonality; }
+        Assert.Equal(phase / (adjacent + 1), parent.MeanRainPhase, 5);
+        Assert.Equal(season / (adjacent + 1), parent.MeanRainSeasonality, 5);
+        Assert.InRange(parent.MeanRainPhase, 0.5f, 1f);
+        // Region cell -> its child context carries the same season, so a local map in any cell sees it.
+        var region = RegionMaps.DeriveRegionMap(MapAddress.ForRegion(7, 10, -1), TestParent(season: 0.7f, phase: -0.7f), TestCenter, TestRadiusKm, MapSeeds.DeriveRegionSeed(7, 10), 8);
+        var child = RegionMaps.DeriveChildContext(region, 0);
+        Assert.Equal(0.7f, child.MeanRainSeasonality);
+        Assert.Equal(-0.7f, child.MeanRainPhase);
     }
 }

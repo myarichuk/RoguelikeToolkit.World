@@ -1,7 +1,7 @@
 import { CLIMATE_LAYERS, climateModes, HEIGHT_MODES, TOOLS } from '../viewmodels/ToolsViewModel';
 import { useApp, useViewModel } from './hooks';
 import { Section, Select, Slider } from './controls';
-import { TERRAIN_HINTS } from './glossary';
+import { BIOME_HINTS, TERRAIN_HINTS } from './glossary';
 import { LAND_USES } from '../engine/world/landuse';
 
 export function Toolbar() {
@@ -55,7 +55,7 @@ export function ToolOptionsPanel() {
       {s.tool === 'biome' && (
         <div className="swatches">
           {s.biomes.map((b) => (
-            <button key={b.id} className={o.biome === b.id ? 'active' : ''} onClick={() => vm.setOptions({ biome: b.id })} title={b.name}>
+            <button key={b.id} className={o.biome === b.id ? 'active' : ''} onClick={() => vm.setOptions({ biome: b.id })} title={BIOME_HINTS[b.name] ?? b.name}>
               <i style={{ background: s.biomeColors[String(b.id)] ?? b.vivid }} /><i style={{ background: b.vivid }} /><span>{b.name}</span>
             </button>
           ))}

@@ -120,6 +120,15 @@ export const THEME_HINTS: Record<string, string> = {
   chrome: 'Colour of the editor\'s own panels and buttons (not the map).',
 };
 
+/**
+ * Biome swatches whose cause is not obvious from the name; the rest show just their name. Keyed by the biome's pack name.
+ * What grows them is the climate, so painting one is a statement that the climate there is what it is.
+ */
+export const BIOME_HINTS: Record<string, string> = {
+  Savanna: 'Warm grassland with a dry season: hot, not wet enough for forest, and with its rain in summer (the Wet season layer shows brown). Painting it pins the biome there.',
+  Mediterranean: 'Warm-temperate scrub and open woodland with a dry summer: the rain comes in winter (the Wet season layer shows teal) and is too little for forest. Good farmland, with olives and vines. Painting it pins the biome there.',
+};
+
 /** Top bar, status bar and content-pack controls. */
 export const SHELL_HINTS = {
   theme: 'The map\'s look: colours, label styles and stamp inks. Edit the chosen theme in the Theme panel.',
