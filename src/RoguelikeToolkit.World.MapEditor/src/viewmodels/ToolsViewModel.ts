@@ -3,6 +3,7 @@ import type { BiomeDef } from '../engine/content/types';
 import type { PhysicsMode } from '../engine/world/derivePhysics';
 import type { ClimateMode, HeightMode } from '../engine/tools/brushes';
 import type { ToolId, ToolOptions } from '../engine/tools/Tool';
+import { LAND_USE_SLOTS } from '../engine/world/landuse';
 import { ViewModel } from './ViewModel';
 
 export interface ToolInfo { id: ToolId; label: string; key: string; hint: string; icon: string; }
@@ -13,6 +14,7 @@ export const TOOLS: ToolInfo[] = [
   { id: 'navigate', label: 'Pan', key: 'H', icon: '✥', hint: 'Drag to pan. Wheel zooms everywhere; middle/right drag or Space+drag pans in every tool.' },
   { id: 'terrain', label: 'Terrain', key: 'B', icon: '⛰', hint: 'Sculpt height: raise, lower, smooth, flatten, roughen; paint land or sea. Alt inverts raise/lower. [ ] brush size.' },
   { id: 'biome', label: 'Biome', key: 'G', icon: '❀', hint: 'Paint biomes. Alt+click picks the biome under the cursor.' },
+  { id: 'landuse', label: 'Land use', key: 'L', icon: '▦', hint: 'Paint farmland and ashlands over the biome. Decoration only: the biome underneath and the physics are unchanged. Alt+click picks.' },
   { id: 'climate', label: 'Climate', key: 'C', icon: '☀', hint: 'Paint warmer/cooler or wetter/drier air. Nothing changes until you apply physics; then biomes, rivers and lakes follow. Alt inverts. Tinted while this tool is active.' },
   { id: 'stamp', label: 'Stamp', key: 'S', icon: '♣', hint: 'Place decals. Scatter > 0 paints a spray of variants. Alt+drag erases.' },
   { id: 'text', label: 'Text', key: 'T', icon: 'A', hint: 'Click to add a label named in the local culture; click a label to select it.' },
@@ -74,7 +76,7 @@ export class ToolsViewModel extends ViewModel<ToolsState> {
       assets.push({ id: def.id, name: def.name, category: def.category, thumb: `data:image/svg+xml;charset=utf-8,${encodeURIComponent(svg)}` });
     }
     this.set({
-      biomes: ed.packs.biomes().filter((b) => b.id > 0),
+      biomes: ed.packs.biomes().filter((b) => b.id > 0 && !LAND_USE_SLOTS.has(b.id)),
       biomeColors: theme.biomes,
       assets,
       labelStyles: Object.keys(theme.labels),

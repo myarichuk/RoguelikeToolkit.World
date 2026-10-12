@@ -1,3 +1,4 @@
+import { landUseName } from '../engine/world/landuse';
 import type { Editor } from '../engine/Editor';
 import { kmPerMu, mapToLonLatDeg, wrapX } from '../engine/core/geo';
 import type { UndoState } from '../engine/commands/UndoStack';
@@ -67,7 +68,7 @@ export class ShellViewModel extends ViewModel<ShellState> {
       this.set({
         cursor: {
           lon: ll.lon, lat: ll.lat, elevation: doc.elevationAt(q.x, q.y), feature: area?.name ?? '',
-          biome: doc.elevationAt(q.x, q.y) < 0 ? 'Sea' : biomes.find((b) => b.id === doc.biomeAt(q.x, q.y))?.name ?? '',
+          biome: doc.elevationAt(q.x, q.y) < 0 ? 'Sea' : (biomes.find((b) => b.id === doc.biomeAt(q.x, q.y))?.name ?? '') + (doc.landUseAt(q.x, q.y) ? ` (${landUseName(doc.landUseAt(q.x, q.y)) ?? ''})` : ''),
           kmPerPx: kmPerMu(q.y) / this.editor.camera.zoom,
         },
       });

@@ -1,11 +1,12 @@
 import { RasterEdit } from '../commands/RasterEdit';
 import type { Camera } from '../render/Camera';
+import { landUseName } from '../world/landuse';
 import { biomeDab, climateDab, dabRect, heightDab, strokePoints } from './brushes';
 import type { PointerInput, Tool, ToolContext } from './Tool';
 
 /** Shared stroke handling: dabs at fixed spacing along the pointer path, one undo step per stroke. */
 abstract class RasterBrush<T extends Float32Array | Uint8Array | Int8Array> implements Tool {
-  abstract readonly id: 'terrain' | 'biome' | 'climate';
+  abstract readonly id: 'terrain' | 'biome' | 'landuse' | 'climate';
   readonly cursor = 'crosshair';
   protected edit: RasterEdit<T> | null = null;
   private last: { x: number; y: number } | null = null;
@@ -93,6 +94,31 @@ export class BiomeTool extends RasterBrush<Uint8Array> {
     const o = ctx.options, doc = ctx.doc;
     const rect = biomeDab(doc.biome, doc.width, doc.height, { x, y, radius: o.radius, strength: Math.min(1, o.strength * 12) }, o.biome, this.seed++);
     doc.target('biome').touched(rect);
+  }
+}
+
+/**
+ * Paints land use (farmland, ashlands) over the biome. Decoration, not physics: the biome underneath is
+ * untouched, Apply physics ignores it, and choosing "Clear" removes it again. Alt picks the land use
+ * under the cursor.
+ */
+export class LandUseTool extends RasterBrush<Uint8Array> {
+  readonly id = 'landuse' as const;
+  private seed = 11;
+  protected begin(p: PointerInput, ctx: ToolContext): RasterEdit<Uint8Array> | null {
+    if (p.alt) {
+      const use = ctx.doc.landUseAt(p.x, p.y);
+      ctx.setOptions({ landUse: use });
+      ctx.status(use ? `Picked ${landUseName(use) ?? 'land use'}` : 'Picked: clear');
+      return null;
+    }
+    this.seed = (this.seed * 1103515245 + 12345) >>> 0;
+    return new RasterEdit(ctx.options.landUse ? 'Paint land use' : 'Clear land use', ctx.doc.target('landuse'));
+  }
+  protected dab(x: number, y: number, _p: PointerInput, ctx: ToolContext): void {
+    const o = ctx.options, doc = ctx.doc;
+    const rect = biomeDab(doc.landuse, doc.width, doc.height, { x, y, radius: o.radius, strength: Math.min(1, o.strength * 12) }, o.landUse, this.seed++);
+    doc.target('landuse').touched(rect);
   }
 }
 

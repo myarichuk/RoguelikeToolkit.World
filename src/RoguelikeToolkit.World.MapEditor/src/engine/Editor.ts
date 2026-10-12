@@ -23,7 +23,7 @@ import { Overlay } from './render/Overlay';
 import { DEFAULT_VIEW, VIEW_PRESETS, type ViewSettings } from './render/ViewSettings';
 import { FontLibrary } from './text/FontLibrary';
 import { LabelCache } from './text/LabelCache';
-import { BiomeTool, ClimateTool, TerrainTool } from './tools/BrushTools';
+import { BiomeTool, ClimateTool, LandUseTool, TerrainTool } from './tools/BrushTools';
 import { InspectTool } from './tools/InspectTool';
 import { NavigateTool } from './tools/NavigateTool';
 import { RiverTool } from './tools/RiverTool';
@@ -80,7 +80,7 @@ export class Editor implements ToolContext, ToolHost {
   readonly world: WorldService;
   readonly tools: Record<ToolId, Tool> = {
     navigate: new NavigateTool(), inspect: new InspectTool(), select: new SelectTool(), terrain: new TerrainTool(),
-    biome: new BiomeTool(), climate: new ClimateTool(), stamp: new StampTool(), text: new TextTool(), river: new RiverTool(),
+    biome: new BiomeTool(), landuse: new LandUseTool(), climate: new ClimateTool(), stamp: new StampTool(), text: new TextTool(), river: new RiverTool(),
   };
 
   private _doc = MapDocument.empty();

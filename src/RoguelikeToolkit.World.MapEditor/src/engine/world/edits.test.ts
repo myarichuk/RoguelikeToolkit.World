@@ -61,9 +61,9 @@ describe('collectEdits', () => {
     expect(collectEdits(c, b, tile, TILES, new Map(), 'sculpt').edits.size).toBe(0);
   });
 
-  it('keeps editor-only biomes (savanna, farmland, ashlands) out of the physics', () => {
+  it('keeps the editor-only savanna out of the physics', () => {
     const b = base(), c = clone(b);
-    c.biome.fill(10, 0, 4); c.biome.fill(11, 4, 8); c.biome.fill(13, 8, 12);
+    c.biome.fill(10, 0, 4);
     expect(collectEdits(c, b, tile, TILES, new Map(), 'sculpt').edits.size).toBe(0);
   });
 

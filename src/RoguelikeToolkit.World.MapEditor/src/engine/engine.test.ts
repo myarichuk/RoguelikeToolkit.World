@@ -170,7 +170,7 @@ const sameBytes = (a: ArrayBufferView, b: ArrayBufferView) => {
 describe('.wmap serialization', () => {
   it('round-trips rasters, entities and NaN label spacing', () => {
     const doc = MapDocument.empty();
-    doc.elevation[12345] = 0.42; doc.biome[777] = 13;
+    doc.elevation[12345] = 0.42; doc.biome[777] = 12;
     doc.setSettings({ title: 'Test', seed: 99 });
     const label: LabelEntity = { id: 'l1', text: 'Ælfheim', style: 'city', x: 1, y: 2, angle: 0, size: 0, spacing: NaN, curve: 0.2, path: [1, 2, 3, 4] };
     doc.labels.add([label, { ...label, id: 'l2', spacing: 0.1 }]);
@@ -219,6 +219,26 @@ describe('.wmap serialization', () => {
     const reread = decodeDocument(old);
     expect(reread.hasClimatePaint).toBe(false);
     expect(reread.physics!.edits.get(4)).toEqual({ dt: 0.2, dr: -0.1 });
+  });
+  it('round-trips land use, and lifts legacy farmland/ashlands biomes out of an older file', () => {
+    const doc = MapDocument.empty();
+    doc.biome.fill(3);                                   // forest everywhere
+    doc.landuse.fill(1, 10, 14); doc.landuse[50] = 2;
+    const back = decodeDocument(encodeDocument(doc));
+    expect([...back.landuse.subarray(10, 14)]).toEqual([1, 1, 1, 1]);
+    expect([back.landuse[50], back.landuse[9], back.biome[10]]).toEqual([2, 0, 3]);   // the biome underneath is intact
+    // A pre-v4 file: no landuse blob, and the paint sits in the biome raster as ids 11 and 13.
+    const legacy = MapDocument.empty();
+    legacy.biome.fill(3); legacy.biome.fill(11, 100, 104); legacy.biome[300] = 13;
+    const bytes = encodeDocument(legacy);
+    const len = new DataView(bytes.buffer, bytes.byteOffset).getUint32(8, true);
+    const head = new TextDecoder().decode(bytes.subarray(12, 12 + len)).replace('"landuse"', '"landusX"');
+    const old = bytes.slice(); old.set(new TextEncoder().encode(head), 12);
+    const reread = decodeDocument(old);
+    expect([...reread.landuse.subarray(100, 104)]).toEqual([1, 1, 1, 1]);
+    expect(reread.landuse[300]).toBe(2);
+    expect([reread.biome[100], reread.biome[103], reread.biome[300]]).toEqual([3, 3, 3]);   // forest all round: that is what they sat on
+    expect(reread.biome.includes(11) || reread.biome.includes(13)).toBe(false);
   });
   it('rejects garbage with a readable error', () => {
     expect(() => decodeDocument(new Uint8Array(64))).toThrow(/bad magic/);

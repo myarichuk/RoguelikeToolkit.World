@@ -2,6 +2,7 @@ import { CLIMATE_LAYERS, climateModes, HEIGHT_MODES, TOOLS } from '../viewmodels
 import { useApp, useViewModel } from './hooks';
 import { Section, Select, Slider } from './controls';
 import { TERRAIN_HINTS } from './glossary';
+import { LAND_USES } from '../engine/world/landuse';
 
 export function Toolbar() {
   const { vms } = useApp();
@@ -26,10 +27,11 @@ export function ToolOptionsPanel() {
   const o = s.options;
   const info = TOOLS.find((t) => t.id === s.tool)!;
   const brush = s.tool === 'terrain' || s.tool === 'biome' || s.tool === 'climate';
+  const sized = brush || s.tool === 'landuse';
   return (
     <Section title={info.label}>
       <p className="hint">{info.hint}</p>
-      {brush && <Slider label="Radius" value={o.radius} min={2} max={200} step={1} onChange={(radius) => vm.setOptions({ radius })} hint="Brush size in map units. [ and ] change it from the keyboard." />}
+      {sized && <Slider label="Radius" value={o.radius} min={2} max={200} step={1} onChange={(radius) => vm.setOptions({ radius })} hint="Brush size in map units. [ and ] change it from the keyboard." />}
       {s.tool === 'terrain' && (
         <>
           <Slider label="Strength" value={o.strength} min={0.005} max={0.2} step={0.005} onChange={(strength) => vm.setOptions({ strength })} hint="Height added per dab at the brush center (raise/lower), or the blend factor for smooth/flatten/roughen." />
@@ -58,6 +60,21 @@ export function ToolOptionsPanel() {
             </button>
           ))}
         </div>
+      )}
+      {s.tool === 'landuse' && (
+        <>
+          <div className="swatches">
+            <button className={o.landUse === 0 ? 'active' : ''} onClick={() => vm.setOptions({ landUse: 0 })} title="Removes land use under the brush; the biome underneath shows again.">
+              <i style={{ background: 'transparent' }} /><i style={{ background: 'transparent' }} /><span>Clear</span>
+            </button>
+            {LAND_USES.map((u) => (
+              <button key={u.id} className={o.landUse === u.id ? 'active' : ''} onClick={() => vm.setOptions({ landUse: u.id })} title={u.hint}>
+                <i style={{ background: s.biomeColors[String(u.slot)] ?? '#999' }} /><i style={{ background: s.biomeColors[String(u.slot)] ?? '#999' }} /><span>{u.name}</span>
+              </button>
+            ))}
+          </div>
+          <p className="hint">Land use is drawn over the biome and changes nothing else: climate, rivers and Apply physics ignore it, and it is kept through Revert.</p>
+        </>
       )}
       {brush && <PhysicsControls />}
       {s.tool === 'stamp' && (

@@ -66,7 +66,7 @@ export async function derivePhysics(doc: MapDocument, engine: PhysicsEngine, mod
   const snap = await engine.recompute({ ...params, edits: packEdits(edits), rastersOnly: false });
   const baseline: Raster = { elevation: snap.rasters.elevation.slice(), biome: snap.rasters.biome.slice() };
 
-  // Savanna, farmland and ashlands are paint, not climate: the world cannot reproduce them, so they stay where they were drawn.
+  // Savanna is paint, not climate: the world cannot reproduce them, so they stay where they were drawn.
   const biome = snap.rasters.biome;
   if (mode !== 'revert') for (let i = 0; i < biome.length; i++) if (EDITOR_ONLY_BIOMES.has(doc.biome[i])) biome[i] = doc.biome[i];
 

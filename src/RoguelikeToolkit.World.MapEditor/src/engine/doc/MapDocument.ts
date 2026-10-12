@@ -6,7 +6,7 @@ import type { Raster, TileEdits } from '../world/edits';
 import { EntityStore } from './EntityStore';
 import { DEFAULT_SETTINGS, type DocSettings, type FeatureEntity, type LabelEntity, type RiverEntity, type StampEntity } from './types';
 
-export type RasterLayer = 'elevation' | 'biome' | 'warmth' | 'wetness';
+export type RasterLayer = 'elevation' | 'biome' | 'warmth' | 'wetness' | 'landuse';
 
 /** Read-only reference data from generation: what the planet *is*, as opposed to what was drawn. */
 export interface WorldReference {
@@ -60,6 +60,11 @@ export class MapDocument {
    */
   readonly warmth = new Int8Array(MAP_W * MAP_H);
   readonly wetness = new Int8Array(MAP_W * MAP_H);
+  /**
+   * Land use per texel (0 none; ids in world/landuse.ts): farmland, ashlands. Hand-painted decoration over the
+   * biome, not an input to the physics, so it survives Apply and Revert untouched.
+   */
+  readonly landuse = new Uint8Array(MAP_W * MAP_H);
 
   constructor(
     public settings: DocSettings,
@@ -77,10 +82,10 @@ export class MapDocument {
 
   /** A raster as an undo/redo target that keeps renderers informed. */
   target(layer: 'elevation'): RasterTarget<Float32Array>;
-  target(layer: 'biome'): RasterTarget<Uint8Array>;
+  target(layer: 'biome' | 'landuse'): RasterTarget<Uint8Array>;
   target(layer: 'warmth' | 'wetness'): RasterTarget<Int8Array>;
   target(layer: RasterLayer): RasterTarget<Float32Array> | RasterTarget<Uint8Array> | RasterTarget<Int8Array> {
-    const data = layer === 'elevation' ? this.elevation : layer === 'biome' ? this.biome : layer === 'warmth' ? this.warmth : this.wetness;
+    const data = layer === 'elevation' ? this.elevation : layer === 'biome' ? this.biome : layer === 'landuse' ? this.landuse : layer === 'warmth' ? this.warmth : this.wetness;
     return { data: data as never, width: this.width, height: this.height, touched: (rect) => this.events.emit('raster', { layer, rect }) };
   }
 
@@ -141,6 +146,12 @@ export class MapDocument {
   elevationAt(x: number, y: number): number {
     const xi = ((Math.floor(x) % this.width) + this.width) % this.width, yi = Math.max(0, Math.min(this.height - 1, Math.floor(y)));
     return this.elevation[yi * this.width + xi];
+  }
+
+  landUseAt(x: number, y: number): number {
+    const xi = ((Math.floor(x) % this.width) + this.width) % this.width;
+    const yi = Math.min(this.height - 1, Math.max(0, Math.floor(y)));
+    return this.landuse[yi * this.width + xi];
   }
 
   biomeAt(x: number, y: number): number {

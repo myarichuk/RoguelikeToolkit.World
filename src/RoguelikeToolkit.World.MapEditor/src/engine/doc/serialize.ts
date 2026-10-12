@@ -1,5 +1,6 @@
 import { MAP_H, MAP_W } from '../core/geo';
 import { editsFromRows, editsToRows, type EditRow } from '../world/edits';
+import { migrateLegacyLandUse } from '../world/landuse';
 import { isGeneratedFeatureId, MapDocument } from './MapDocument';
 import { DEFAULT_SETTINGS, type DocSettings, type FeatureEntity, type LabelEntity, type RiverEntity, type StampEntity } from './types';
 
@@ -11,9 +12,10 @@ import { DEFAULT_SETTINGS, type DocSettings, type FeatureEntity, type LabelEntit
 const MAGIC = 0x50414d57; // "WMAP" little-endian
 // v2 adds `physics` (the hand-edit table); v1 files load as worlds with no recorded edits.
 // v3 adds the climate paint rasters (`warmth`, `wetness`) and two columns on the edit rows; older files load with no paint.
-export const WMAP_VERSION = 3;
+// v4 adds the land-use raster (`landuse`); farmland and ashlands used to be biome ids 11 and 13 and are migrated out on load.
+export const WMAP_VERSION = 4;
 
-type BlobName = 'elevation' | 'biome' | 'tile' | 'tilePlate' | 'plateDrift' | 'tileXY' | 'warmth' | 'wetness';
+type BlobName = 'elevation' | 'biome' | 'tile' | 'tilePlate' | 'plateDrift' | 'tileXY' | 'warmth' | 'wetness' | 'landuse';
 type Typed = Float32Array | Uint8Array | Int8Array | Int32Array | Uint32Array | Float64Array;
 const CTORS = { Float32Array, Uint8Array, Int8Array, Int32Array, Uint32Array, Float64Array } as const;
 
@@ -37,7 +39,7 @@ export function encodeDocument(doc: MapDocument): Uint8Array {
   const arrays: [BlobName, Typed][] = [
     ['elevation', doc.elevation], ['biome', doc.biome], ['tile', doc.world.tile],
     ['tilePlate', doc.world.tilePlate], ['plateDrift', doc.world.plateDrift], ['tileXY', doc.world.tileXY],
-    ['warmth', doc.warmth], ['wetness', doc.wetness],
+    ['warmth', doc.warmth], ['wetness', doc.wetness], ['landuse', doc.landuse],
   ];
   const blobs: Header['blobs'] = [];
   let offset = 0;
@@ -91,6 +93,12 @@ export function decodeDocument(bytes: Uint8Array): MapDocument {
   const doc = new MapDocument({ ...DEFAULT_SETTINGS, ...header.settings }, elevation, biome, {
     tile: blob('tile'), tilePlate: blob('tilePlate'), plateDrift: blob('plateDrift'), tileXY: blob('tileXY'), styles: header.styles ?? [],
   });
+  // Land use arrived with v4. Older files painted farmland and ashlands as biomes 11 and 13: lift them out.
+  if (header.blobs.some((b) => b.name === 'landuse')) {
+    const landuse = blob<Uint8Array>('landuse');
+    if (landuse.length === doc.landuse.length) doc.landuse.set(landuse);
+  }
+  migrateLegacyLandUse(doc.biome, doc.landuse, doc.width);
   const warmth = optional('warmth'), wetness = optional('wetness');
   if (warmth && wetness && warmth.length === doc.warmth.length && wetness.length === doc.wetness.length) { doc.warmth.set(warmth); doc.wetness.set(wetness); }
   doc.features.reset(header.features ?? []);

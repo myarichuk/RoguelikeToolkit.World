@@ -3,8 +3,11 @@
 // what the user has now and what the engine last produced into a sparse per-tile table, and packs
 // that table for the worker. The table (never the derived rasters) is what a document persists.
 
-/** Biome ids the editor paints that Core has no biome for (savanna, farmland, ashlands): decoration only. */
-export const EDITOR_ONLY_BIOMES: ReadonlySet<number> = new Set([10, 11, 13]);
+/**
+ * Biome ids the editor paints that Core has no biome for (savanna): decoration only. Farmland and
+ * ashlands used to be here; they are land use now (world/landuse.ts), a separate raster.
+ */
+export const EDITOR_ONLY_BIOMES: ReadonlySet<number> = new Set([10]);
 
 /** Mean height change below this (height units; sea level 0, relief about ±1.2) is a stray dab, not an edit. */
 export const MIN_DELTA = 0.02;
