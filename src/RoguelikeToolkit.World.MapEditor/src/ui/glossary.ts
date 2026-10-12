@@ -33,7 +33,7 @@ export const PLANET_HINTS = {
 export const MODEL_HINTS = {
   climateRefresh: 'After erosion reshapes the land, work out the climate again on the new relief, so rain shadows and biome edges follow the mountains you see. Turn it off for the older single-pass climate (drier coasts, fewer inland rivers).',
   meridionalWind: 'How much the wind blows north or south as well as east or west, as the Earth\'s spin turns it. 0 gives purely east-west winds; the default 0.3 gives the diagonal trade winds and westerlies, and slants rain shadows.',
-  windCellBlend: 'Lets the wind die down at the edges of each wind belt (the doldrums and horse latitudes) instead of reversing at full strength. Calm belts lift and shade less, so the world gets a little drier with slightly more desert. 0 keeps the classic abrupt reversal.',
+  windCellBlend: 'Lets the wind die down at the edges of each wind belt (the doldrums and horse latitudes) instead of reversing at full strength. Calm belts lift and shade less, so the world gets a little drier with slightly more desert, and wind erosion builds fewer dunes there. 0 keeps the classic abrupt reversal.',
   oceanHeat: 'How strongly warm and cold sea currents warm or cool the coasts they touch (the Gulf Stream, the Humboldt). 0 switches the temperature effect off; 2 doubles it.',
   oceanRain: 'How strongly those currents change coastal rain: cold currents make fog deserts, warm ones wet coasts. 0 switches it off.',
   aeolian: 'Passes of wind erosion over dry land: it scours basins upwind and piles sand downwind into sand seas. 0 switches it off; more passes make bigger features.',

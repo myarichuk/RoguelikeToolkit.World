@@ -52,6 +52,13 @@ public class ClimateStage : IWorldGeneratorStage, ISeededStage
     /// strongest mid-cell (the trades near 15 degrees, the westerlies near 45), keeping the direction inside
     /// each cell. The wind vector's length is what the orographic gate and the maritime hop weigh, so a calm
     /// belt lifts and shadows less and lets moisture diffuse in every direction.
+    /// <para>
+    /// Off by default because it is not free: the desert and rain calibration was tuned at 0, and wind
+    /// erosion reads the same length (a tile needs 0.15 of wind along an edge to shed sand), so the calm
+    /// belts, which are where the dunes are, shed less. Measured on seven worlds at size 4 and 5, a full
+    /// blend moves 39-56% less sand and a half blend 15-25% less, with a smaller share of it in the 20-40
+    /// degree belt.
+    /// </para>
     /// </summary>
     public double WindCellBlend { get; set; } = 0.0;
     public Vector3D PrevailingWindFallback { get; set; } = new Vector3D(1, 0, 0);
