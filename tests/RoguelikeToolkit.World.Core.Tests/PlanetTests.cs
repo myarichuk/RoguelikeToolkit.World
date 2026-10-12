@@ -236,7 +236,7 @@ public class PlanetTests
         Assert.True(BandMean(lying, 40, 50, c => c.SeasonalRange) > BandMean(earth, 40, 50, c => c.SeasonalRange));
         Assert.True(BandMean(upright, 40, 50, c => c.SeasonalRange) < 0.05, "no tilt, no seasons to speak of");
         Assert.InRange(BandMean(earth, 40, 50, c => c.SeasonalRange), 0.25, 0.45); // deep continental interior, ~40 K swing
-        Assert.Equal(ClimateModel.Continental(0.4, 1.0), 0.4 * 0.25, 9);
+        Assert.Equal(0.4 * 0.25, ClimateModel.Continental(0.4, 1.0), 9);
     }
 
     [Fact]
@@ -271,7 +271,7 @@ public class PlanetTests
                 if (c < -0.9) { anti += climate[i].Temperature; na++; }
                 mean += locked.RelativeInsolation(vectors[i]); n++;
             }
-            Assert.True(sub / ns > anti / na + 0.5, "day side must be far warmer than the far side");
+            Assert.True(sub / ns > anti / na + 0.3, "day side must be far warmer than the far side");
         }
         Assert.Equal(1.0, mean / n, 1);
         Assert.Throws<ArgumentException>(() => new TidallyLockedInsolation(new Vector3D(0, 0, 0)));

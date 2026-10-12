@@ -9,7 +9,7 @@ namespace RoguelikeToolkit.World.Core;
 /// <para>
 /// Normalised units: Earth's mean surface temperature runs 0 (polar) to 1 (equatorial) before the lapse
 /// rate, which is roughly 55 K per unit. Deviations from Earth enter as an insolation anomaly
-/// (<see cref="InsolationAnomaly"/>) scaled by <see cref="SensitivityPerInsolation"/>.
+/// (<see cref="TemperatureAnomaly"/>).
 /// </para>
 /// </summary>
 public static class ClimateModel
@@ -17,11 +17,21 @@ public static class ClimateModel
     public const double DefaultLapseRate = 0.35;
 
     /// <summary>
-    /// Temperature units per unit of relative insolation. A 1% change in flux moves the black-body
-    /// equilibrium by about 0.7 K; 55 K per unit and ice-albedo/water-vapour feedback roughly doubling
-    /// it gives ~0.025 units per 1% flux, i.e. 2.5 per unit of insolation.
+    /// Temperature units per unit of change in the planet-wide mean insolation, i.e. of stellar flux.
+    /// A 1% change in flux moves the black-body equilibrium by ~0.7 K; at ~55 K per unit, with
+    /// ice-albedo and water-vapour feedback roughly doubling it, that is ~0.025 units per 1% flux, or 2.5
+    /// per unit of relative flux. A +-10% flux is therefore a +-0.25 shift everywhere: the habitable range
+    /// is narrow, as it is for Earth.
     /// </summary>
-    public const double SensitivityPerInsolation = 2.5;
+    public const double MeanSensitivity = 2.5;
+
+    /// <summary>
+    /// Temperature units per unit of *redistribution* of insolation between latitudes (what a different
+    /// tilt does, with the same total energy). Smaller than <see cref="MeanSensitivity"/> because winds
+    /// and ocean currents carry heat from where there is a surplus to where there is a deficit and
+    /// flatten the response; without it a tilt of zero would freeze everything beyond 45 degrees.
+    /// </summary>
+    public const double GradientSensitivity = 1.0;
 
     /// <summary>
     /// Annual-mean daily insolation at a latitude, relative to the sphere-wide mean, for a circular
@@ -41,19 +51,24 @@ public static class ClimateModel
     /// <summary>Insolation of the Earth baseline at this latitude.</summary>
     public static double EarthInsolation(double sinLatitude) => AnnualInsolation(sinLatitude, PlanetParameters.EarthObliquityDegrees);
 
-    /// <summary>Insolation anomaly against Earth (relative units, positive = warmer) at a surface point.</summary>
-    public static double InsolationAnomaly(PlanetParameters planet, Vector3D unitPosition)
+    /// <summary>
+    /// Temperature anomaly against Earth (normalised units) at a surface point: the change in the
+    /// planet-wide mean (flux) at <see cref="MeanSensitivity"/> plus the change in the latitude pattern
+    /// (tilt or a custom field, after the flux scaling) at <see cref="GradientSensitivity"/>.
+    /// </summary>
+    public static double TemperatureAnomaly(PlanetParameters planet, Vector3D unitPosition)
     {
         double earth = EarthInsolation(unitPosition.Z);
         double here = planet.Insolation != null
             ? planet.Insolation.RelativeInsolation(unitPosition)
             : AnnualInsolation(unitPosition.Z, planet.ObliquityDegrees);
-        return planet.StellarFlux * here - earth;
+        double pattern = planet.StellarFlux * (here - 1.0) - (earth - 1.0);
+        return MeanSensitivity * (planet.StellarFlux - 1.0) + GradientSensitivity * pattern;
     }
 
     /// <summary>
     /// Annual-mean temperature before clamping: latitude gradient, minus the lapse-rate cooling of
-    /// height, plus the planet's insolation anomaly. The single source for the climate stage, the
+    /// height, plus the planet's temperature anomaly. The single source for the climate stage, the
     /// glacier fallback and the biome stage's no-climate path.
     /// </summary>
     public static double Temperature(Vector3D unitPosition, double absLatitudeDegrees, double height, double lapseRate, PlanetParameters? planet)
@@ -61,7 +76,7 @@ public static class ClimateModel
         double t = 1.0 - absLatitudeDegrees / 90.0;
         t -= Math.Max(0.0, height) * lapseRate;
         if (planet != null && !planet.IsEarthBaseline)
-            t += SensitivityPerInsolation * InsolationAnomaly(planet, unitPosition);
+            t += TemperatureAnomaly(planet, unitPosition);
         return t;
     }
 

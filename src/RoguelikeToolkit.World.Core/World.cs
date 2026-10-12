@@ -286,6 +286,7 @@ public sealed class WorldBuilder
     private Action<ClimateStage>? _climateConfig;
     private Action<HydrologyStage>? _hydrologyConfig;
     private bool _userEdits;
+    private bool _climateRefresh;
 
     /// <summary>
     /// Largest supported planet size (backlog A2, from the Phase 2
@@ -336,6 +337,13 @@ public sealed class WorldBuilder
         var copy = planet.Clone();
         return WithClimate(c => c.Planet = copy);
     }
+
+    /// <summary>
+    /// Re-runs the climate on the eroded relief before hydrology and biomes (see <see cref="ClimateRefreshStage"/>),
+    /// so rain shadows and biome borders follow the mountains the player sees rather than the raw tectonic
+    /// surface. Costs one more climate pass.
+    /// </summary>
+    public WorldBuilder WithClimateRefresh(bool enabled = true) { _climateRefresh = enabled; return this; }
 
     /// <summary>Tweak the default hydrology stage (river threshold, max rivers...).</summary>
     public WorldBuilder WithHydrology(Action<HydrologyStage> configure)
@@ -390,6 +398,7 @@ public sealed class WorldBuilder
             _hydrologyConfig?.Invoke(hydrologyStage);
             riverScale = hydrologyStage.RiverThresholdScale;
             pipeline.AddStage(new ErosionGenerationStage { RiverThresholdScale = riverScale });
+            if (_climateRefresh) pipeline.AddStage(new ClimateRefreshStage(climate)); // ties erosion's order; the stable sort keeps it after
             pipeline.AddStage(hydrologyStage);
             var biomes = new LocalMapGenerationStage(_seed) { RiverThresholdScale = riverScale };
             _biomesConfig?.Invoke(biomes);

@@ -73,7 +73,7 @@ public class ClimateStage : IWorldGeneratorStage, ISeededStage
     public double MaritimeGain { get; set; } = 0.56;
 
     /// <summary>
-    /// Strength of the zonal (Hadley-cell) moisture banding, see <see cref="ZonalFactor"/>:
+    /// Strength of the zonal (Hadley-cell) moisture banding, see <see cref="ZonalFactor(double, double)"/>:
     /// wet equatorial convergence, a dry belt of subtropical highs near 27 degrees, wetter
     /// mid-latitude storm tracks and dry poles. 1 is the calibrated default, 0 turns the banding
     /// off (precipitation then has no latitude structure beyond temperature).
