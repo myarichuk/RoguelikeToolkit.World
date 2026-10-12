@@ -45,6 +45,20 @@ public class WorldExportsLayoutTests
     }
 
     [Fact]
+    public void SeaIce_IsOneByteOfZeroToTwoPerTile_AndNeverOnLand()
+    {
+        int tiles = Tiles();
+        var ice = WorldExports.SeaIce();
+        var heights = WorldExports.Heights();
+        Assert.Equal(tiles, ice.Length);
+        for (int i = 0; i < ice.Length; i++)
+        {
+            Assert.InRange(ice[i], (byte)0, (byte)2);
+            if (heights[i] >= 0.0) Assert.Equal(0, ice[i]);
+        }
+    }
+
+    [Fact]
     public void Climate_IsTheLeadingPairOfClimateField()
     {
         int n = Tiles();

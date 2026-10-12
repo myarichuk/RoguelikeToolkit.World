@@ -6,7 +6,10 @@ import { CLIMATE_RANGE, PAINT_MAX } from './edits';
 // Wind and ocean current arrive from Core as 3D tangent vectors; the editor draws on a flat map, so they are
 // projected once, at the worker boundary, onto the tile's local east and north (north = up the screen).
 
-export type ClimateKind = 'temperature' | 'rainfall' | 'oceanHeat' | 'seasons' | 'rainSeason';
+export type ClimateKind = 'temperature' | 'rainfall' | 'oceanHeat' | 'seasons' | 'rainSeason' | 'seaIce';
+
+/** `ClimateDef.index` of a kind that is not a column of the climate array (sea ice has its own per-tile byte array). */
+export const NOT_A_COLUMN = -1;
 
 /** Floats per tile in the snapshot's `climate` array; the order is `CI`. */
 export const CLIMATE_STRIDE = 9;
@@ -78,6 +81,11 @@ export const CLIMATE_KINDS: readonly ClimateDef[] = [
     key: 'rainSeason', label: 'Wet season', index: CI.rainSeasonality, lo: 0, hi: 1, legend: ['rain all year', 'one wet season'],
     hint: 'How unevenly the year\'s rain falls. The rain belts follow the sun north and south with the seasons, so a place they sweep across gets a wet season and a dry one (monsoons, Mediterranean summers). Warm, seasonal, not-too-wet ground grows savanna.',
     stops: [[0, 237, 248, 251], [0.5, 140, 150, 198], [1, 129, 15, 124]],
+  },
+  {
+    key: 'seaIce', label: 'Sea ice', index: NOT_A_COLUMN, lo: 1, hi: 2, legend: ['frozen in winter', 'frozen all year'],
+    hint: 'Where the sea freezes. Pale: ice in winter that melts in summer. White: the permanent polar pack. A warm current keeps its coast open; a cold one lets the ice creep towards the equator; a bigger axial tilt freezes more of the sea in winter. Open water and land show no tint.',
+    stops: [[0, 150, 190, 225], [0.5, 200, 228, 242], [1, 255, 255, 255]],
   },
 ];
 

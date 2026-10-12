@@ -16,6 +16,7 @@ namespace RoguelikeToolkit.World.Core;
 /// <param name="Saline">The ground holds salt.</param>
 /// <param name="OceanHeat">The ocean-current anomaly (<see cref="ClimateInfo.OceanHeat"/>); negative beside a cold current.</param>
 /// <param name="NextToLand">A neighbour is land, so an ocean tile is on the coast.</param>
+/// <param name="SeaIce">How much of the year the (ocean) tile is frozen over; see <see cref="SeaIce"/>.</param>
 public readonly record struct LandSite(
     BiomeType Biome,
     double Height,
@@ -26,7 +27,8 @@ public readonly record struct LandSite(
     bool OnFreshWater,
     bool Saline,
     double OceanHeat,
-    bool NextToLand);
+    bool NextToLand,
+    SeaIceKind SeaIce = SeaIceKind.None);
 
 /// <summary>
 /// Physical suitability for farming, herding, hunting, logging and fishing, 0 to 255 each. Every product
@@ -102,7 +104,8 @@ public static class LandCapacity
         double shelf = 1 - Ramp(0.05, 0.40, depth);
         double coast = s.NextToLand ? 1.0 : 0.6;
         double upwelling = Ramp(0.0, UpwellingAnomaly, -s.OceanHeat);
-        double polar = 0.4 + 0.6 * Ramp(0.05, 0.20, s.Temperature);      // pack ice shuts the surface
+        // Ice shuts the surface: a seasonal cover halves the catch, the permanent pack all but ends it.
+        double polar = s.SeaIce switch { SeaIceKind.Perennial => 0.1, SeaIceKind.Seasonal => 0.5, _ => 1.0 };
         double tropic = 1 - 0.45 * Ramp(0.60, 0.90, s.Temperature);       // warm water is thin water
         return shelf * coast * (0.35 + 0.65 * upwelling) * polar * tropic;
     }
@@ -226,7 +229,8 @@ public sealed class LandCapacityStage : IWorldGeneratorStage, IDeclaredStage, IS
                 slope, fresh, onFresh,
                 hasHydro && hydro[i].Saline != 0,
                 hasClimate ? climate[i].OceanHeat : 0,
-                nextToLand));
+                nextToLand,
+                hasClimate ? SeaIce.Classify(vectors[i], (float)h, climate[i].Temperature, climate[i].SeasonalRange) : SeaIceKind.None));
         }
     }
 

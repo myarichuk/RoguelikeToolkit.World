@@ -16,7 +16,7 @@ const MAGIC = 0x50414d57; // "WMAP" little-endian
 // v4 adds the land-use raster (`landuse`); farmland and ashlands used to be biome ids 11 and 13 and are migrated out on load.
 export const WMAP_VERSION = 4;
 
-type BlobName = 'elevation' | 'biome' | 'tile' | 'tilePlate' | 'plateDrift' | 'tileXY' | 'warmth' | 'wetness' | 'landuse' | 'capacity' | 'climate';
+type BlobName = 'elevation' | 'biome' | 'tile' | 'tilePlate' | 'plateDrift' | 'tileXY' | 'warmth' | 'wetness' | 'landuse' | 'capacity' | 'seaIce' | 'climate';
 type Typed = Float32Array | Uint8Array | Int8Array | Int32Array | Uint32Array | Float64Array;
 const CTORS = { Float32Array, Uint8Array, Int8Array, Int32Array, Uint32Array, Float64Array } as const;
 
@@ -44,6 +44,7 @@ export function encodeDocument(doc: MapDocument): Uint8Array {
   ];
   // Derived and cached: written so the capacity overlay works straight after opening, never read as an input.
   if (doc.physics?.capacity) arrays.push(['capacity', doc.physics.capacity]);
+  if (doc.physics?.seaIce) arrays.push(['seaIce', doc.physics.seaIce]);
   if (doc.physics?.climate) arrays.push(['climate', doc.physics.climate]);
   const blobs: Header['blobs'] = [];
   let offset = 0;
@@ -112,17 +113,19 @@ export function decodeDocument(bytes: Uint8Array): MapDocument {
   // The cache is only good for the world it was computed on: a length that does not match the tile count is dropped.
   const capacity = header.blobs.some((b) => b.name === 'capacity') ? blob<Uint8Array>('capacity') : undefined;
   const goodCapacity = capacity && capacity.length === (doc.world.tileXY.length / 2) * 5 ? capacity : undefined;
+  const seaIce = header.blobs.some((b) => b.name === 'seaIce') ? blob<Uint8Array>('seaIce') : undefined;
+  const goodSeaIce = seaIce && seaIce.length === doc.world.tileXY.length / 2 ? seaIce : undefined;
   const climate = header.blobs.some((b) => b.name === 'climate') ? blob<Float32Array>('climate') : undefined;
   const goodClimate = climate && climate.length === (doc.world.tileXY.length / 2) * CLIMATE_STRIDE ? climate : undefined;
   if (header.physics) {
     doc.physics = {
       edits: editsFromRows(header.physics.edits), baseline: null,
       generated: new Set(header.physics.generated), tombstones: new Map(header.physics.tombstones.map((f) => [f.id, f])),
-      capacity: goodCapacity, climate: goodClimate,
+      capacity: goodCapacity, seaIce: goodSeaIce, climate: goodClimate,
     };
   } else if (doc.hasWorld) {
     // Pre-physics file: nothing was ever recorded, so the engine's own features are told apart by their key shape.
-    doc.physics = { edits: new Map(), baseline: null, generated: new Set([...doc.features.all()].map((f) => f.id).filter(isGeneratedFeatureId)), tombstones: new Map(), capacity: goodCapacity, climate: goodClimate };
+    doc.physics = { edits: new Map(), baseline: null, generated: new Set([...doc.features.all()].map((f) => f.id).filter(isGeneratedFeatureId)), tombstones: new Map(), capacity: goodCapacity, seaIce: goodSeaIce, climate: goodClimate };
   }
   return doc;
 }

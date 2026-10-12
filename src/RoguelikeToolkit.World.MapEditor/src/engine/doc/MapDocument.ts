@@ -36,6 +36,8 @@ export interface PhysicsState {
   tombstones: Map<string, FeatureEntity>;
   /** Land capacity per tile (world/capacity.ts) as the engine last computed it; absent in files from before it existed. */
   capacity?: Uint8Array;
+  /** Sea ice per tile (0 none, 1 seasonal, 2 perennial) as the engine last computed it; absent in files from before it existed. */
+  seaIce?: Uint8Array;
   /** Climate per tile (world/climate.ts), as the engine last computed it; absent in files from before it existed. */
   climate?: Float32Array;
 }

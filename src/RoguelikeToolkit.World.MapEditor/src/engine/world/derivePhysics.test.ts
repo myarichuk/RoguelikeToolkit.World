@@ -27,7 +27,7 @@ function fakeEngine(log: RecomputeParams[] = []): PhysicsEngine {
       const features = p.rastersOnly ? [] : [{ key: 'lake:0', kind: 'lake' as const, name: '', x: 1, y: 1, angle: 0, extent: 1, weight: 1, style: 0, tiles: Int32Array.from(lake.tiles!), details: [], request: lake.request }];
       return {
         seed: p.seed, size: p.size, plates: p.plates, tileCount: 2, rasters: { width: MAP_W, height: MAP_H, elevation, biome, tile }, tilePlate: new Uint32Array(2),
-        plateDrift: new Float64Array(0), tileXY: new Float32Array(4), capacity: new Uint8Array(10).fill(p.edits.tiles.length + 1), climate: new Float32Array(18).fill(p.edits.tiles.length + 1), features: { features, rivers: [] }, styles: [{ race: 'h', culture: 'c', label: 'Human' }], timings: {},
+        plateDrift: new Float64Array(0), tileXY: new Float32Array(4), capacity: new Uint8Array(10).fill(p.edits.tiles.length + 1), seaIce: new Uint8Array(2).fill(p.edits.tiles.length + 1), climate: new Float32Array(18).fill(p.edits.tiles.length + 1), features: { features, rivers: [] }, styles: [{ race: 'h', culture: 'c', label: 'Human' }], timings: {},
       } as WorldSnapshot;
     },
     async names(reqs) { return reqs.map((_, i) => `Name${i}`); },
@@ -197,6 +197,15 @@ describe('derivePhysics', () => {
     const out = await derivePhysics(doc, eng, 'sculpt');
     expect(out.physics.capacity).toBeDefined();
     expect(out.physics.capacity![0]).toBe(2);                    // one edited tile, so the fake engine said 1 + 1
+  });
+
+  it('carries the engine\'s sea ice into the physics state, so a brushed cold patch can freeze the sea', async () => {
+    const eng = fakeEngine();
+    const doc = await docFor(eng);
+    for (let i = 0; i < N; i++) if (tile[i] === 1) doc.warmth[i] = -127;
+    const out = await derivePhysics(doc, eng, 'sculpt');
+    expect(out.physics.seaIce).toBeDefined();
+    expect(out.physics.seaIce![0]).toBe(2);
   });
 
   it('carries the engine\'s climate into the physics state too, so the overlay follows an apply', async () => {

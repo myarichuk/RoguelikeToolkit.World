@@ -283,6 +283,16 @@ public static partial class WorldExports
         return result;
     }
 
+    /// <summary>Sea ice per tile, one byte each: 0 open water or land, 1 seasonal, 2 perennial (<see cref="SeaIceKind"/>).</summary>
+    [JSExport]
+    public static byte[] SeaIce()
+    {
+        var mask = RoguelikeToolkit.World.Core.SeaIce.Mask(Current.Map.DataStore);
+        var result = new byte[mask.Length];
+        for (int i = 0; i < mask.Length; i++) result[i] = (byte)mask[i];
+        return result;
+    }
+
     /// <summary>What is decided for each tile, three bytes per tile: use, activities, intensity (<see cref="LandUseInfo"/>). Only hand pins unless the host adds allocation stages.</summary>
     [JSExport]
     public static byte[] LandUse()

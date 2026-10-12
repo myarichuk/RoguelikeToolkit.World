@@ -73,6 +73,8 @@ export interface WorldSnapshot {
   tileXY: Float32Array;
   /** Per tile land capacity, five bytes each (world/capacity.ts). */
   capacity: Uint8Array;
+  /** Per tile sea ice, one byte each: 0 none, 1 seasonal, 2 perennial (Core's SeaIceKind). */
+  seaIce: Uint8Array;
   /** Per tile climate, nine floats each (world/climate.ts): temperature, rainfall, wind and current as east/north, ocean heat, seasons. */
   climate: Float32Array;
   features: FeatureSet;
@@ -161,7 +163,7 @@ export type WorkerResponse =
 /** Transferable buffers of a snapshot (zero-copy handoff). */
 export function snapshotTransfer(w: WorldSnapshot): Transferable[] {
   const r = w.rasters;
-  const out: Transferable[] = [r.elevation.buffer, r.biome.buffer, r.tile.buffer, w.tilePlate.buffer, w.plateDrift.buffer, w.tileXY.buffer, w.capacity.buffer, w.climate.buffer];
+  const out: Transferable[] = [r.elevation.buffer, r.biome.buffer, r.tile.buffer, w.tilePlate.buffer, w.plateDrift.buffer, w.tileXY.buffer, w.capacity.buffer, w.seaIce.buffer, w.climate.buffer];
   for (const rv of w.features.rivers) out.push(rv.points.buffer);
   for (const f of w.features.features) if (f.tiles) out.push(f.tiles.buffer);
   return out;

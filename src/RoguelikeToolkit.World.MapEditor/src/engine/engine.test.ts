@@ -198,6 +198,18 @@ describe('.wmap serialization', () => {
     // Five bytes per tile: a cache for a different tile count must not be trusted.
     expect(decodeDocument(encodeDocument(make(3, new Uint8Array(10)))).physics!.capacity).toBeUndefined();
   });
+  it('round-trips the sea-ice cache, and drops one that does not fit the world', () => {
+    const world = (tiles: number) => ({ tile: new Int32Array(MAP_W * MAP_H).fill(-1), tilePlate: new Uint32Array(tiles), plateDrift: new Float64Array(0), tileXY: new Float32Array(tiles * 2), styles: [] });
+    const make = (tiles: number, seaIce: Uint8Array | undefined) => {
+      const doc = new MapDocument({ ...DEFAULT_SETTINGS }, new Float32Array(MAP_W * MAP_H), new Uint8Array(MAP_W * MAP_H), world(tiles));
+      doc.physics = { edits: new Map(), baseline: null, generated: new Set(), tombstones: new Map(), seaIce };
+      return doc;
+    };
+    expect([...decodeDocument(encodeDocument(make(3, Uint8Array.of(0, 1, 2)))).physics!.seaIce!]).toEqual([0, 1, 2]);
+    expect(decodeDocument(encodeDocument(make(3, undefined))).physics!.seaIce).toBeUndefined();
+    // One byte per tile: a cache for a different tile count must not be trusted.
+    expect(decodeDocument(encodeDocument(make(3, new Uint8Array(5)))).physics!.seaIce).toBeUndefined();
+  });
   it('round-trips the planet, and an older file without one reads as Earth', () => {
     const doc = MapDocument.empty();
     doc.setSettings({ obliquity: 71, flux: 0.9, rotation: 0.5 });
