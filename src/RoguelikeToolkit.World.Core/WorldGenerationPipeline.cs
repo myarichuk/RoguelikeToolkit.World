@@ -27,6 +27,11 @@ public class WorldGenerationPipeline : IDisposable
     // never lets a stage observe the previous run's output (e.g. climate seeing
     // stale hydrology), and results depend only on seed and configuration.
     private readonly List<Type> _clearCache = new();
+    // Per-start-order clear lists for ExecuteFrom, built lazily and dropped with the other caches.
+    private readonly Dictionary<int, List<Type>> _clearFromCache = new();
+    // Order of each entry in _orderedCache, resolved once: StageMetadata.GetOrder may reflect, and
+    // the steady-state Execute loop must not (zero-GC guarantee).
+    private readonly List<int> _orderOfCache = new();
     private bool _cacheDirty = true;
 
     public IReadOnlyList<IWorldGeneratorStage> Stages => _stages;
@@ -49,6 +54,8 @@ public class WorldGenerationPipeline : IDisposable
         _orderedCache.Clear();
         _writesCache.Clear();
         _clearCache.Clear();
+        _clearFromCache.Clear();
+        _orderOfCache.Clear();
 #if NET
         foreach (var ctx in _pluginContexts)
         {
@@ -282,7 +289,19 @@ public class WorldGenerationPipeline : IDisposable
         }
     }
 
-    public void Execute(WorldMap map)
+    public void Execute(WorldMap map) => Execute(map, int.MinValue);
+
+    /// <summary>
+    /// Re-runs the pipeline from the first stage whose order is at least <paramref name="fromOrder"/>,
+    /// keeping every layer the skipped stages wrote. This is the incremental path behind
+    /// <see cref="World.Recompute"/>: after a hand edit the expensive plate simulation (order 10) is
+    /// not repeated, only the stages downstream of the changed input. Layers are cleared exactly as a
+    /// full run would clear them, restricted to the stages that run, so the result is identical to a
+    /// full <see cref="Execute(WorldMap)"/> on the same seed and inputs.
+    /// </summary>
+    public void ExecuteFrom(WorldMap map, int fromOrder) => Execute(map, fromOrder);
+
+    private void Execute(WorldMap map, int fromOrder)
     {
         // Fail fast on plugin collisions before mutating anything. Ordering +
         // validation are cached so steady-state Execute stays allocation-free.
@@ -294,9 +313,12 @@ public class WorldGenerationPipeline : IDisposable
             _orderedCache.AddRange(_stages.OrderBy(StageMetadata.GetOrder));
             _writesCache.Clear();
             _clearCache.Clear();
+            _clearFromCache.Clear();
+            _orderOfCache.Clear();
             var written = new HashSet<Type>();
             foreach (var stage in _orderedCache)
             {
+                _orderOfCache.Add(StageMetadata.GetOrder(stage));
                 var stageReads = StageMetadata.GetReads(stage);
                 foreach (var w in StageMetadata.GetWrites(stage))
                 {
@@ -325,12 +347,35 @@ public class WorldGenerationPipeline : IDisposable
                 throw new InvalidOperationException(
                     $"Stage '{stageName}' writes layer '{layer.Name}' but it is not registered. Call RegisterLayer<{layer.Name}>() before Allocate().");
         }
-        foreach (var layer in _clearCache)
+        foreach (var layer in ClearListFor(fromOrder))
             map.DataStore.ClearLayer(layer);
-        foreach (var stage in _orderedCache)
+        for (int i = 0; i < _orderedCache.Count; i++)
         {
-            stage.Execute(map);
+            if (_orderOfCache[i] < fromOrder) continue;
+            _orderedCache[i].Execute(map);
         }
+    }
+
+    // Same rule as the full-run list (a layer is cleared by its first writer that does not read it),
+    // evaluated over only the stages that will run: a layer written by a skipped stage and merely
+    // rewritten downstream (read-modify-write) must survive.
+    private List<Type> ClearListFor(int fromOrder)
+    {
+        if (fromOrder == int.MinValue) return _clearCache;
+        if (_clearFromCache.TryGetValue(fromOrder, out var cached)) return cached;
+        var list = new List<Type>();
+        var written = new HashSet<Type>();
+        for (int i = 0; i < _orderedCache.Count; i++)
+        {
+            if (_orderOfCache[i] < fromOrder) continue;
+            var stage = _orderedCache[i];
+            var stageReads = StageMetadata.GetReads(stage);
+            foreach (var w in StageMetadata.GetWrites(stage))
+                if (written.Add(w) && Array.IndexOf(stageReads, w) < 0)
+                    list.Add(w);
+        }
+        _clearFromCache[fromOrder] = list;
+        return list;
     }
 }
 

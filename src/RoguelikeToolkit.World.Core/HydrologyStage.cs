@@ -17,7 +17,7 @@ namespace RoguelikeToolkit.World.Core;
 /// the sea, a lake, or an inland sink — never mid-slope.
 /// </summary>
 [Preserve] // created via reflection by WorldGenerationPipeline.Discover; keep it through Unity code stripping
-[WorldGeneratorStage(18, Reads = new[] { typeof(ElevationInfo) }, ReadsOptional = new[] { typeof(ClimateInfo) }, Writes = new[] { typeof(HydrologyInfo) })]
+[WorldGeneratorStage(18, Reads = new[] { typeof(ElevationInfo) }, ReadsOptional = new[] { typeof(ClimateInfo), typeof(UserEditInfo) }, Writes = new[] { typeof(HydrologyInfo) })]
 public class HydrologyStage : IWorldGeneratorStage
 {
     public float RiverThresholdScale { get; set; } = 1.0f;
@@ -74,6 +74,14 @@ public class HydrologyStage : IWorldGeneratorStage
             {
                 float relief = CanyonAnalysis.Relief(store, heights, i, reliefScratch);
                 cover[i] = LandCover.Provisional(heights[i], climate[i].Temperature, climate[i].Precipitation, relief);
+            }
+            // A painted biome is the author's statement of what the ground is: it sheds, soaks and
+            // evaporates like that biome, whatever the climate fields would have said.
+            if (store.IsLayerRegistered<UserEditInfo>())
+            {
+                var pins = store.GetSpan<UserEditInfo>();
+                for (int i = 0; i < n; i++)
+                    if ((pins[i].Flags & UserEditFlags.PinBiome) != 0) cover[i] = pins[i].PinBiome;
             }
         }
         else

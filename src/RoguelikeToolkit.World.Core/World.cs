@@ -33,10 +33,60 @@ public sealed class World : IDisposable
     /// <summary>Bucketed nearest-feature index, built after the catalogs are populated.</summary>
     public SpatialIndex Index { get; private set; } = null!;
 
+    // Kept so Recompute can re-run the stages downstream of an edit with the exact configuration
+    // the world was built with.
+    private WorldGenerationPipeline? _pipeline;
+    private int _maxRivers = 64;
+    private float _riverScale = 1f;
+
     internal World(WorldMap map, int seed)
     {
         Map = map;
         Seed = seed;
+    }
+
+    internal void Attach(WorldGenerationPipeline pipeline, int maxRivers, float riverScale)
+    {
+        _pipeline = pipeline;
+        _maxRivers = maxRivers;
+        _riverScale = riverScale;
+    }
+
+    /// <summary>True when the world was built with <see cref="WorldBuilder.WithUserEdits"/>.</summary>
+    public bool Editable => _pipeline != null && Map.DataStore.IsLayerRegistered<UserEditInfo>();
+
+    /// <summary>
+    /// The per-tile hand edits (height sculpt/pin, biome pin). Write here, then call
+    /// <see cref="Recompute"/>. Throws when the world was not built editable.
+    /// </summary>
+    public Span<UserEditInfo> Edits
+        => Editable ? Map.DataStore.GetSpan<UserEditInfo>() : throw new InvalidOperationException("Build the world with WithUserEdits() to edit it.");
+
+    /// <summary>
+    /// Re-derives everything downstream of the hand edits: elevation (with the sculpt added), climate,
+    /// erosion, hydrology and biomes, then the river/lake/range/deposit catalogs. Tectonics is not
+    /// repeated. Pure in (seed, configuration, <see cref="Edits"/>): recomputing with the same edits
+    /// reproduces the same world bit for bit, and with no edits it reproduces the generated one, so
+    /// applying is idempotent and never double-erodes. Hydrology is global (a ridge can redirect a
+    /// river basin away), so this is a whole-world action, not a per-brush-dab one.
+    /// </summary>
+    public void Recompute()
+    {
+        if (!Editable) throw new InvalidOperationException("Build the world with WithUserEdits() to recompute it.");
+        _pipeline!.ExecuteFrom(Map, ElevationGenerationStage.PipelineOrder);
+        Rivers.Rivers.Clear();
+        WaterBodies.Bodies.Clear();
+        Ranges.Features.Clear();
+        Deposits.Deposits.Clear();
+        PopulateFeatureCatalogs();
+        RebuildIndex();
+    }
+
+    internal void PopulateFeatureCatalogs()
+    {
+        HydrologyStage.PopulateCatalogs(Map, Rivers, WaterBodies, _maxRivers);
+        RangeCatalogBuilder.Populate(Map, Ranges, riverThresholdScale: _riverScale);
+        DepositCatalogBuilder.Populate(Map, Deposits, Seed);
     }
 
     /// <summary>(Re)builds the spatial index from the current store and catalogs.</summary>
@@ -212,7 +262,11 @@ public sealed class World : IDisposable
         return GeoWkt.DepositToWkt(Deposits.Deposits[depositId], Map.DataStore);
     }
 
-    public void Dispose() => Map.Dispose();
+    public void Dispose()
+    {
+        _pipeline?.Dispose();
+        Map.Dispose();
+    }
 }
 
 /// <summary>Fluent builder for a fully generated <see cref="World"/>.</summary>
@@ -228,6 +282,7 @@ public sealed class WorldBuilder
     private Action<LocalMapGenerationStage>? _biomesConfig;
     private Action<ClimateStage>? _climateConfig;
     private Action<HydrologyStage>? _hydrologyConfig;
+    private bool _userEdits;
 
     /// <summary>
     /// Largest supported planet size (backlog A2, from the Phase 2
@@ -282,6 +337,12 @@ public sealed class WorldBuilder
         return this;
     }
 
+    /// <summary>
+    /// Registers the <see cref="UserEditInfo"/> input layer so the result supports hand edits and
+    /// <see cref="World.Recompute"/>. Costs 12 bytes per tile; an unedited layer changes nothing.
+    /// </summary>
+    public WorldBuilder WithUserEdits() { _userEdits = true; return this; }
+
     public World Build()
     {
         var map = new WorldMap(_size, _filePath);
@@ -293,6 +354,7 @@ public sealed class WorldBuilder
         map.RegisterLayer<ClimateInfo>(new ClimateLayer(map.DataStore));
         map.RegisterLayer<LocalMapInfo>(new LocalMapLayer(map.DataStore, _seed,
             platesLayer));
+        if (_userEdits) map.RegisterLayer<UserEditInfo>(new UserEditLayer(map.DataStore));
         map.DataStore.Allocate();
 
         var pipeline = new WorldGenerationPipeline();
@@ -321,9 +383,8 @@ public sealed class WorldBuilder
         pipeline.Execute(map);
 
         var world = new World(map, _seed);
-        HydrologyStage.PopulateCatalogs(map, world.Rivers, world.WaterBodies, hydrologyStage?.MaxRivers ?? new HydrologyStage().MaxRivers);
-        RangeCatalogBuilder.Populate(map, world.Ranges, riverThresholdScale: riverScale);
-        DepositCatalogBuilder.Populate(map, world.Deposits, _seed);
+        world.Attach(pipeline, hydrologyStage?.MaxRivers ?? new HydrologyStage().MaxRivers, riverScale);
+        world.PopulateFeatureCatalogs();
         world.RebuildIndex();
         return world;
     }

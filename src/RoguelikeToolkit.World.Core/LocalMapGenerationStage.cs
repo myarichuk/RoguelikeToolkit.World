@@ -3,7 +3,7 @@ using System;
 namespace RoguelikeToolkit.World.Core;
 
 [Preserve] // created via reflection by WorldGenerationPipeline.Discover; keep it through Unity code stripping
-[WorldGeneratorStage(20, Reads = new[] { typeof(ElevationInfo) }, ReadsOptional = new[] { typeof(ClimateInfo), typeof(HydrologyInfo) }, Writes = new[] { typeof(LocalMapInfo) })]
+[WorldGeneratorStage(20, Reads = new[] { typeof(ElevationInfo) }, ReadsOptional = new[] { typeof(ClimateInfo), typeof(HydrologyInfo), typeof(UserEditInfo) }, Writes = new[] { typeof(LocalMapInfo) })]
 public class LocalMapGenerationStage : IWorldGeneratorStage, ISeededStage
 {
     public int Seed { get; set; } = 42;
@@ -42,6 +42,8 @@ public class LocalMapGenerationStage : IWorldGeneratorStage, ISeededStage
         var hydro = hasHydro ? store.GetSpan<HydrologyInfo>() : default;
 
         var vectors = store.GetTileVectors();
+        bool hasPins = store.IsLayerRegistered<UserEditInfo>();
+        var pins = hasPins ? store.GetSpan<UserEditInfo>() : default;
 
         // Fallback moisture field when ClimateStage did not run (backwards
         // compatible with pipelines that only register elevation + local).
@@ -114,10 +116,24 @@ public class LocalMapGenerationStage : IWorldGeneratorStage, ISeededStage
                 Biome = biome,
                 DangerLevel = danger
             };
+            if (hasPins && (pins[i].Flags & UserEditFlags.PinBiome) != 0) ApplyPin(ref span[i], pins[i].PinBiome);
         }
 
         if (SmoothBiomes && SmoothingPasses > 0)
             SmoothMoistureBiomes(store, span, SmoothingPasses);
+
+        // Smoothing votes over whatever it sees, painted ground included; the author's word is final.
+        if (hasPins)
+            for (int i = 0; i < span.Length; i++)
+                if ((pins[i].Flags & UserEditFlags.PinBiome) != 0 && span[i].Biome != pins[i].PinBiome) ApplyPin(ref span[i], pins[i].PinBiome);
+    }
+
+    private static void ApplyPin(ref LocalMapInfo info, BiomeType pinned)
+    {
+        // Re-base the danger the way smoothing does: biome base plus whatever per-tile jitter was rolled.
+        int jitter = Math.Max(0, info.DangerLevel - BiomeClassifier.BaseDanger(info.Biome));
+        info.Biome = pinned;
+        info.DangerLevel = (byte)Math.Min(5, BiomeClassifier.BaseDanger(pinned) + jitter);
     }
 
     // Candidate order doubles as the tie-break, as it always has for the moisture set.

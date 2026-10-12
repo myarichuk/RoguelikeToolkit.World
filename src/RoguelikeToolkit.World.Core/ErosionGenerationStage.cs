@@ -17,7 +17,7 @@ namespace RoguelikeToolkit.World.Core;
 /// deep (canyons); humid ones spread their load (valleys).
 /// </summary>
 [Preserve] // created via reflection by WorldGenerationPipeline.Discover; keep it through Unity code stripping
-[WorldGeneratorStage(17, Reads = new[] { typeof(ElevationInfo) }, ReadsOptional = new[] { typeof(ClimateInfo), typeof(TectonicPlate) }, Writes = new[] { typeof(ElevationInfo) })]
+[WorldGeneratorStage(17, Reads = new[] { typeof(ElevationInfo) }, ReadsOptional = new[] { typeof(ClimateInfo), typeof(TectonicPlate), typeof(UserEditInfo) }, Writes = new[] { typeof(ElevationInfo) })]
 public class ErosionGenerationStage : IWorldGeneratorStage
 {
     public int Iterations { get; set; } = 10;
@@ -185,6 +185,15 @@ public class ErosionGenerationStage : IWorldGeneratorStage
         for (int h = 0; h < HydraulicIterations; h++)
         {
             FluvialPass(store, elev, neighbors, hasClimate, climate);
+        }
+
+        // Fixed ground is restored last: erosion shapes everything around a pin (and may have moved
+        // mass through it), but the pinned tile itself ends exactly where the author drew it.
+        if (store.IsLayerRegistered<UserEditInfo>())
+        {
+            var edits = store.GetSpan<UserEditInfo>();
+            for (int i = 0; i < edits.Length; i++)
+                if ((edits[i].Flags & UserEditFlags.PinHeight) != 0) elev[i].Height = edits[i].PinHeight;
         }
     }
 
