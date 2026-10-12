@@ -14,7 +14,7 @@ export interface ToolHost {
   pointer(x: number, y: number): void;
 }
 
-const TOOL_KEYS: Record<string, ToolId> = { h: 'navigate', i: 'inspect', v: 'select', b: 'terrain', g: 'biome', s: 'stamp', t: 'text', w: 'river' };
+const TOOL_KEYS: Record<string, ToolId> = { h: 'navigate', i: 'inspect', v: 'select', b: 'terrain', g: 'biome', l: 'landuse', c: 'climate', s: 'stamp', t: 'text', w: 'river' };
 
 /**
  * Turns DOM input into tool calls and camera moves. Navigation is universal (wheel zoom,

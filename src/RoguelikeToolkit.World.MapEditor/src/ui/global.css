@@ -1,0 +1,58 @@
+/*
+ * Shared foundation: tokens, element defaults, button variants and a few utilities.
+ * Everything here lives in @layer base, so a component's CSS module (unlayered) always wins over it
+ * regardless of import order or selector weight. Component layout lives next to the component in
+ * *.module.css; do not add component rules here.
+ */
+@layer base {
+  /* Editor chrome. Colors come from the active theme's `ui` block (CSS custom properties). */
+  :root {
+    --bg: #1d1a17; --panel: #26221d; --fg: #e8e0d0; --muted: #a59a88; --accent: #c8a46a; --line: #3a342c;
+    --danger: #c0533f;
+    /* Intentional fixed colors: the map is a canvas, not themed chrome. */
+    --map-bg: #000; --asset-bg: #e9dcbc; --on-color: #fff;
+    /* Scales. Every gap, radius and font size comes from one of these; do not add a new literal. */
+    --s-1: 2px; --s-2: 4px; --s-3: 8px; --s-4: 12px; --s-5: 16px;
+    --r-1: 4px; --r-2: 6px; --r-pill: 999px;
+    --fs-xs: 11px; --fs-sm: 12px; --fs-md: 13px; --fs-lg: 15px;
+    --ctl-h: 26px; --status-h: 24px;
+    color-scheme: dark;
+    font: var(--fs-md)/1.4 system-ui, -apple-system, 'Segoe UI', sans-serif;
+  }
+  * { box-sizing: border-box; }
+  html, body, #root { height: 100%; margin: 0; }
+  body { background: var(--bg); color: var(--fg); overflow: hidden; }
+  button, input, select { font: inherit; color: inherit; }
+  :is(button, input, select, summary, [tabindex]):focus-visible { outline: 2px solid var(--accent); outline-offset: 1px; }
+
+  button {
+    background: color-mix(in srgb, var(--panel) 70%, var(--fg) 8%); border: 1px solid var(--line); border-radius: var(--r-1);
+    padding: var(--s-1) var(--s-3); min-height: var(--ctl-h); cursor: pointer;
+  }
+  button:hover:not(:disabled) { border-color: var(--accent); }
+  button:disabled { opacity: 0.45; cursor: default; }
+  input[type='text'], input[type='number'], input[type='search'], select {
+    background: var(--bg); border: 1px solid var(--line); border-radius: var(--r-1); padding: var(--s-1) var(--s-3); min-height: var(--ctl-h); min-width: 0;
+  }
+  input[type='range'] { accent-color: var(--accent); min-width: 0; }
+  pre { margin: 0; }
+
+  /* Button variants: the vocabulary components share. */
+  button.active { background: var(--accent); color: var(--bg); border-color: var(--accent); }
+  button.primary { background: var(--accent); color: var(--bg); border-color: var(--accent); font-weight: 600; padding: var(--s-3) var(--s-4); }
+  button.danger:hover { border-color: var(--danger); color: var(--danger); }
+  button.wide { width: 100%; margin-top: var(--s-2); }
+  button.mini { padding: 0 var(--s-3); min-height: 0; font-size: var(--fs-xs); }
+  /* Looks like text, behaves like a button: disclosure toggles and dismiss targets. */
+  button.disclosure {
+    border: 0; background: none; padding: 0; min-height: 0; display: flex; gap: var(--s-3); align-items: center;
+    font: inherit; color: inherit; text-align: left; text-transform: inherit; letter-spacing: inherit;
+  }
+  button.dismiss { display: block; width: 100%; text-align: left; border: 0; background: none; padding: 0; }
+
+  /* Utilities. */
+  .muted { color: var(--muted); }
+  .small { font-size: var(--fs-sm); }
+  .grow { flex: 1; min-width: 0; }
+  .hint { margin: 0; color: var(--muted); font-size: var(--fs-sm); }
+}

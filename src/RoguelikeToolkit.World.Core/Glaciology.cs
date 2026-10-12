@@ -86,9 +86,7 @@ public static class Glaciology
     /// </summary>
     public static float EstimateTemperature(Vector3D position, float height)
     {
-        var geo = position.ToGeoCoord();
-        double t = 1.0 - Math.Abs(geo.Latitude) / 90.0;
-        t -= Math.Max(0.0, (double)height) * 0.35;
+        double t = ClimateModel.Temperature(position, Math.Abs(position.ToGeoCoord().Latitude), height, ClimateModel.DefaultLapseRate, null);
         return (float)Math.Clamp(t, 0.0, 1.0);
     }
 
@@ -97,6 +95,17 @@ public static class Glaciology
     {
         // precipitation ~[0..1]; mean weight stays near 1 so flow thresholds behave.
         float weight = 0.3f + 1.4f * precipitation;
+        if (IsGlacierTile(position, height, temperature, precipitation)) weight += (float)MeltBonusWeight;
+        return weight;
+    }
+
+    /// <summary>
+    /// Runoff weight with a land-cover coefficient (see <see cref="LandCover.RunoffCoefficient"/>) on the
+    /// rainfall part only: glacier melt is ice leaving the ground, not rain the ground can absorb.
+    /// </summary>
+    public static float RunoffWeight(Vector3D position, float height, float precipitation, float temperature, float cover)
+    {
+        float weight = (0.3f + 1.4f * precipitation) * cover;
         if (IsGlacierTile(position, height, temperature, precipitation)) weight += (float)MeltBonusWeight;
         return weight;
     }

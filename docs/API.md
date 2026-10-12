@@ -77,6 +77,161 @@ string lakeWkt = world.WaterBodyToWkt(0);
 string depositWkt = world.DepositToWkt(0);
 ```
 
+## The planet: tilt, sun and spin
+
+Climate is a function of three astronomical numbers, all defaulting to Earth. An Earth-like set takes the
+exact legacy arithmetic, so existing worlds are unchanged bit for bit.
+
+```csharp
+var world = new WorldBuilder().WithSize(5).WithSeed(42)
+    .WithPlanet(new PlanetParameters { ObliquityDegrees = 60, StellarFlux = 0.95, RotationRate = 1.5 })
+    .Build();                                                   // world.Planet reports what it was built with
+```
+
+| Parameter | Range | Effect |
+|---|---|---|
+| `ObliquityDegrees` | 0..90 (Earth 23.44) | Latitude distribution of annual-mean insolation (S(x) = 1 + S2·P2(x), S2 = -(5/16)(2 - 3 sin²ε)) and the size of the seasons. 0° freezes the high latitudes; 90° makes the poles out-heat the equator. |
+| `StellarFlux` | 0.3..2.5 (Earth 1) | Raises or lowers every temperature (2.5 temperature units per unit of flux; ±10% is a ±0.25 shift, so useful worlds live in roughly 0.85-1.15). |
+| `RotationRate` | 0.25..4 (Earth 1) | Circulation cells span a latitude ∝ 1/rotation (Held & Hou): the dry belt, storm track and polar desert move with it, and the prevailing wind alternates every 30°/rotation instead of every 30°. |
+| `Insolation` | `IInsolationModel` | Replaces the tilt-driven pattern, e.g. `TidallyLockedInsolation` for a world with a permanent day side. |
+
+Deviations are *differences against Earth*, so the biome thresholds calibrated on Earth's 0..1 temperature field
+stay valid. The redistribution of heat between latitudes (a different tilt) is applied at 1.0 per unit of
+insolation, the change of the mean (flux) at 2.5: winds and currents flatten the former, not the latter.
+All temperature now comes from one function, `ClimateModel.Temperature`.
+
+`ClimateInfo` also carries `SeasonalRange` (half the annual temperature swing, larger inland and towards the poles)
+and `RainSeasonality` (0 even .. 1 monsoon or Mediterranean). They are data for hosts and the inspector; the biome
+rules do not read them yet.
+
+Three climate refinements and one erosion process are on by default, and each can be switched off:
+
+- **Climate refresh** (`WithClimateRefresh(false)` to disable). Erosion runs after the first climate pass and moves the
+  coastline, because sediment fills shallows: a size-4 world gains around 20% more land tiles, and every one of them
+  kept the ocean's 0.55 rainfall floor. `ClimateRefreshStage` (order 17, tied with erosion and placed after it by the
+  stable sort) re-runs the same configured climate on the final relief, so rain shadows, temperature and the
+  maritime-distance term follow the coast and mountains the player sees. Measured over seven worlds (sizes 3-5): land
+  is 0.01-0.04 drier and 0.015-0.033 warmer, jungle drops from 16% to 12% of land, desert rises from 7% to 10%,
+  glacier falls from 13% to 10%, lakes are unchanged. Rivers fell 12%, so `HydrologyStage.RiverThresholdScale`
+  defaults to 0.92 (it was 1) to restore the count; on seven other worlds it landed at -4.7% in aggregate, with the
+  per-world scatter of +/-30% that a river count of 35-120 always has.
+- **Meridional wind** (`WithClimate(c => c.MeridionalWind = 0)` for purely zonal wind). The surface wind blows 0.3 of
+  its strength along the meridian (equatorward in the Hadley and polar cells, poleward in the Ferrel cell), about 17
+  degrees off the parallel. It leaves the mean temperature, rainfall and biome shares within half a point and moves
+  3-6% of tiles to another biome; what it changes is the direction of the rain shadows and maritime plumes.
+
+- **Ocean currents** (`OceanHeatStrength = 0` and `OceanRainGain = 0` on the climate stage to disable). The wind
+  bands already in the model are a wind stress; its curl spins a subtropical gyre at about 30 degrees (anticyclonic)
+  and a subpolar one at 60 (cyclonic), mirrored across the equator and rescaled with the rotation rate like the
+  wind. The stream function solves the Stommel balance on the tile graph with no flow through any shore, and the
+  beta effect (rotation varying with latitude, so a boundary layer of 0.06 rad, about 380 km, whatever the detail
+  level) makes the western side of every basin a narrow, fast, poleward jet and the eastern side a broad, slow,
+  equatorward drift: the Gulf Stream and Kuroshio against the Canary and Humboldt currents. Measured on a rectangular
+  test basin, the western side's mean speed is 1.7-2.2 times the eastern and its peak 3.5-5.3 times (sizes 4-6; the peak keeps sharpening as the layer is better resolved), and with the beta
+  effect removed the two sides are mirror images (a test pins both). A parcel carried along the flow keeps the
+  temperature of where it came from and relaxes to the local equilibrium over 0.45 rad, so poleward flow is warm
+  and equatorward flow cold; the anomaly peaks at about +0.19 / -0.11 temperature units (roughly 10 K and 6 K). Coastal land
+  takes the anomaly of the water its maritime air crossed, weighted by that air (`ClimateInfo.OceanHeat`, already
+  included in `Temperature`), and rainfall follows it (`1 + 2 x anomaly`, clamped to [0.5, 1.4]): cold-current coasts under the
+  subtropical highs get the fog deserts, warm ones the wet east coasts. `ClimateInfo.CurrentX/Y/Z` is the surface
+  current over water. It is solved after erosion only (the first climate pass exists to give erosion its rainfall and
+  temperature, and the refresh overwrites it), on the icosphere's own level hierarchy: a coarse solve, then a
+  fixed number of Gauss-Seidel sweeps per level, so the cost is linear in the tile count (+12 / +28 / +172 ms at sizes
+  4 / 5 / 6) and the stream function agrees with a 20000-sweep flat solve to about 1% (relative L2) and the carried temperature to 1e-3 on average. Over eleven worlds 6.7% of land moves by more
+  than 0.03 temperature units (about 1.6 K), 2.3% by more than 0.05, and 4% of land changes biome; river and lake counts
+  move by 1-2%, and the biome shares by less than half a point. The tidally locked model and sea ice are not covered:
+  the wind bands stay Earth-like and the water never freezes.
+
+- **Wind erosion** (`WithErosion(e => e.AeolianIterations = 0)` to disable). After the fluvial passes the erosion stage
+  lifts loose ground from arid, thawed land (a smooth function of first-pass rainfall and temperature), hops it one tile
+  at a time to the neighbour the wind points at, and drops it where the surface rises, the wind dies, or the ground is
+  vegetated; what is still airborne after the last pass settles where it hangs. It is a Jacobi update on a frozen
+  surface, so tile order cannot matter, every move takes from one tile and gives to another (mass is conserved), a tile
+  cannot lose more than `AeolianMaxDeflation` (0.03) in total, and pinned tiles neither give nor keep anything.
+  A tile is tens to hundreds of km across, so the product is broad deflation basins upwind and sand blankets downwind,
+  not dunes. Measured on seeds 42 and 7 at sizes 3-4: 17-20% of tiles move, the largest change is 0.009-0.013 (4 passes), lakes
+  are unchanged and rivers move by 0-3 of 54-109. `AeolianIterations = 0` skips the pass entirely.
+
+For the previous pipeline use `WithClimateRefresh(false)`, `MeridionalWind = 0`, `OceanHeatStrength = 0`,
+`OceanRainGain = 0`, `RiverThresholdScale = 1` and `AeolianIterations = 0`.
+
+## Editing a world: hand edits as a pipeline input
+
+A world is a pure function of (seed, configuration, hand edits). Build it with `WithUserEdits()` and
+the per-tile `UserEditInfo` layer is an *input* no stage writes:
+
+```csharp
+using var world = new WorldBuilder().WithSize(5).WithSeed(42).WithUserEdits().Build();
+world.Edits[tile].HeightDelta = 0.8f;                         // sculpt: added before climate and erosion
+world.Edits[other].Flags = UserEditFlags.PinHeight;           // fix: the final height, restored after erosion
+world.Edits[other].PinHeight = 0.2f;
+world.Edits[third].Flags = UserEditFlags.PinBiome;            // hydrology cover and the biome stage keep it
+world.Edits[third].PinBiome = BiomeType.Desert;
+world.Edits[fourth].TemperatureDelta = -0.15f;                // climate brush: +/- in Temperature units (~55 K per unit)
+world.Edits[fourth].PrecipitationDelta = 0.2f;                //   and in Precipitation units, both clamped to [0, 1]
+world.Recompute();                                            // elevation -> climate -> erosion -> hydrology -> biomes -> catalogs
+```
+
+`Recompute()` re-runs the pipeline from the elevation stage (`WorldGenerationPipeline.ExecuteFrom`),
+clears and repopulates the river, water-body, range and deposit catalogs, and rebuilds the spatial
+index. It does not repeat the plate simulation. With no edits it reproduces the generated world bit for
+bit, and repeated calls never erode twice. The climate offsets are added last, in both climate passes and
+after the ocean currents: literal and local, so a painted warm sea patch does not move the gyres and
+sea air does not carry the offset inland (paint the coast too if you want that). Biomes, rivers and
+lakes read the offset climate like any other. It is global: hydrology is a whole-world solve, so one
+raised ridge may redirect a basin far from it.
+
+## Land use: what the ground could carry, and what people decide to do with it
+
+A biome is what the climate grows, and the physics reproduces it. Farmland, pasture, a burn scar, a
+hunting range or a fishery are not biomes: they sit on top of one and move nothing. Core therefore keeps
+them in two layers of their own, outside the physics, and leaves the *decision* to plugins:
+
+| Layer | Meaning | Written by |
+|---|---|---|
+| `LandCapacityInfo` | what a tile **could** support, 0-255 each: `Arable`, `Pasture`, `Game`, `Timber`, `Fish` | `LandCapacityStage` (order 25), from biome, climate, slope, fresh water and ocean currents |
+| `LandUseInfo` | what is **decided**: `Use` (an exclusive id), `Activities` (overlapping `LandActivity` flags), `Intensity` | allocation stages you add, orders 26..98 |
+| `UserEditInfo.LandUse` / `LandActivities` + `PinLandUse` | a hand-painted answer that always wins | `LandUseResolveStage` (order 99) |
+
+```csharp
+using var world = new WorldBuilder().WithSize(5).WithSeed(42).WithLandUse()   // implies WithUserEdits()
+    .AddStage(new MyHerdersAndFarmers())                                      // your allocation, order 26..98
+    .Build();
+var use = world.Map.DataStore.GetSpan<LandUseInfo>()[tile];                   // Use, Activities, Intensity
+var cap = world.Map.DataStore.GetSpan<LandCapacityInfo>()[tile];              // what it could carry
+world.Edits[tile].Flags |= UserEditFlags.PinLandUse;                          // the player painted it
+world.Edits[tile].LandUse = LandUseId.Farmland;
+world.Recompute();
+```
+
+The split is deliberate. *Use* is exclusive (a tile is farmland **or** pasture **or** built-up), but
+*activities* overlap (a forest is hunted and logged; a nomad's range crosses pasture), so they are bit
+flags: `Grazing`, `Hunting`, `Foraging`, `Logging`, `Fishing`, with the top three bits free. Use ids 1-4
+are Core (`Farmland`, `Ashlands`, `Pasture`, `Built`) and are persisted, so never renumber them; 5-127
+are reserved; 128-255 belong to games and plugins, whose names and colours travel in their own content
+pack. `LandCapacity.Evaluate(new LandSite(...))` scores a hypothetical tile without a world.
+
+Plugin rules, all from the existing stage contract:
+
+- `LandCapacityStage` is the first writer of `LandUseInfo`, so the pipeline clears it on every run and
+  `Recompute()` never leaves a stale decision behind. Declare `Reads` **and** `Writes` for `LandUseInfo`
+  (refine what earlier stages decided); a blind second writer throws, as for any layer.
+- Nothing in climate, erosion, hydrology or the biome stage reads these layers, so land use cannot move a
+  river or a biome. If you want people to change the land (clear a forest), write that into
+  `UserEditInfo.PinBiome` or a plugin that runs *before* the biome stage; it is a physics decision, not
+  a land-use one.
+- Off by default: a default world carries no people and pays nothing for any of this.
+
+Capacity is calibrated by direction, not precision (like `LandCover` and `SettlementScoring`): every
+product is a product of smooth factors, so a threshold cannot stripe a coast into speckle. Measured on
+seed 42, 14% of land tiles score 128+ for farming at size 4 (27% at size 3, 12.6% at size 5): coarse
+worlds credit more, because a coarse tile averages steep ground away. At this scale a tile is tens to
+hundreds of kilometres across, so "arable" means the best the tile could do, not a field. Fish follow
+shallow shelves and cold currents (the Humboldt and Benguela fisheries), so the ocean-current layer
+feeds the economy. Scripts get the same data: `arable(i)`, `pasture(i)`, `game(i)`, `timber(i)`,
+`fish(i)`, `landUse(i)`, `activities(i)`, `intensity(i)` and the setters `setLandUse`, `setActivities`,
+`setIntensity`, with `LANDUSE.*` and `ACTIVITY.*` constants (`samples/JintScripts/herders-and-farmers.js`).
+
 ## Addresses and seeds: where am I?
 
 Every map in the hierarchy has a stable address. The planet tier uses tile indices; the lower tiers hang off those:

@@ -182,6 +182,16 @@ float shadeOf(sampler2D tex, vec2 uv, vec2 texel, float k) {
   float hy = texture(tex, uv + vec2(0, texel.y)).r - texture(tex, uv - vec2(0, texel.y)).r;
   return clamp(-(hx - hy) * k, -1.0, 1.0);
 }
+// Plates are whole planet tiles, so a raw lookup traces hex edges. Sample them where the coast and biome colours are
+// sampled (the shared warp), plus a finer jitter, so a border wanders like the rest of the map instead of stair-stepping.
+uint plateAt(vec2 q) {
+  ivec2 s = textureSize(uPlate, 0);
+  return texelFetch(uPlate, ivec2(int(floor(mod(q.x, uMap.x))), clamp(int(floor(q.y)), 0, s.y - 1)), 0).r;
+}
+vec2 plateWarp(vec2 mu) {
+  vec3 c = cyl(mu) / 15.0 + vec3(uSeed * 0.053);
+  return warp(mu) + 8.0 * vec2(fbm(c, 4), fbm(c + 11.3, 4));
+}
 float latDeg(float y) { return degrees(2.0 * atan(exp((0.5 - y / uMap.y) * 2.0 * PI * uMap.y / uMap.x)) - PI / 2.0); }
 
 void main() {
@@ -225,7 +235,7 @@ void main() {
     } else if (uMode == 2) {
       col = hypsometric(h);
     } else {
-      uint pl = texelFetch(uPlate, tx, 0).r;
+      uint pl = plateAt(plateWarp(mu));
       vec3 pc = plateColor(pl & 0xffffu);
       col = mix(pc, pc * (0.55 + 0.6 * hypsometric(h)), uPlateTopo);
       if ((pl >> 24 & 1u) == 1u) col *= 0.9;   // oceanic crust a touch darker
@@ -241,12 +251,12 @@ void main() {
     col = mix(col, vec3(0.25, 0.18, 0.12), lineMask(fk, 0.6 * fwidth(h) + 1e-5) * (0.35 + 0.35 * idx));
   }
   if ((uFlags & 4) != 0) {   // plate boundaries, colored by boundary type
-    uint me = texelFetch(uPlate, tx, 0).r;
-    int r = max(1, int(1.2 * px() + 0.5));
+    vec2 pq = plateWarp(mu);   // the warp is smooth, so the taps below ride the same displacement
+    uint me = plateAt(pq);
+    float r = max(1.0, 1.2 * px());
     bool edge = false;
     for (int j = -1; j <= 1; j++) for (int i = -1; i <= 1; i++) {
-      ivec2 q = ivec2((tx.x + i * r + int(uMap.x)) % int(uMap.x), clamp(tx.y + j * r, 0, int(uMap.y) - 1));
-      if ((texelFetch(uPlate, q, 0).r & 0xffffu) != (me & 0xffffu)) edge = true;
+      if ((plateAt(pq + vec2(float(i), float(j)) * r) & 0xffffu) != (me & 0xffffu)) edge = true;
     }
     if (edge) {
       uint bt = (me >> 16) & 0xffu;

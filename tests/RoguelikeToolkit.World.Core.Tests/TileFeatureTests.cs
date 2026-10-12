@@ -28,9 +28,11 @@ public class TileFeatureTests
             Assert.NotEqual(RiverWaterSource.None, f.RiverSource);
             if (f.UpstreamTile >= 0)
             {
-                // Water comes from higher river ground; coords resolve.
+                // Water comes from a higher (or level) water surface; coords resolve. The bed is not
+                // the invariant: a river crossing a marsh (a filled hollow too shallow to be a lake)
+                // flows over a level surface whose bed can dip below the spill tile that follows.
                 Assert.Equal(1, hydro[f.UpstreamTile].IsRiver);
-                Assert.True(elev[f.UpstreamTile].Height > elev[i].Height - 1e-6f);
+                Assert.True(hydro[f.UpstreamTile].Surface > hydro[i].Surface - 1e-6f);
                 Assert.Equal(store.GetGeoCoord(f.UpstreamTile), f.UpstreamCoord);
             }
             if (f.DownstreamTile >= 0)

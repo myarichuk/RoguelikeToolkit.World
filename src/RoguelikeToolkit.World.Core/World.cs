@@ -33,10 +33,63 @@ public sealed class World : IDisposable
     /// <summary>Bucketed nearest-feature index, built after the catalogs are populated.</summary>
     public SpatialIndex Index { get; private set; } = null!;
 
+    // Kept so Recompute can re-run the stages downstream of an edit with the exact configuration
+    // the world was built with.
+    private WorldGenerationPipeline? _pipeline;
+    private int _maxRivers = 64;
+    private float _riverScale = 1f;
+
     internal World(WorldMap map, int seed)
     {
         Map = map;
         Seed = seed;
+    }
+
+    /// <summary>The astronomical parameters the climate was generated with (Earth unless <see cref="WorldBuilder.WithPlanet"/> said otherwise).</summary>
+    public PlanetParameters Planet { get; internal set; } = new PlanetParameters();
+
+    internal void Attach(WorldGenerationPipeline pipeline, int maxRivers, float riverScale)
+    {
+        _pipeline = pipeline;
+        _maxRivers = maxRivers;
+        _riverScale = riverScale;
+    }
+
+    /// <summary>True when the world was built with <see cref="WorldBuilder.WithUserEdits"/>.</summary>
+    public bool Editable => _pipeline != null && Map.DataStore.IsLayerRegistered<UserEditInfo>();
+
+    /// <summary>
+    /// The per-tile hand edits (height sculpt/pin, biome pin). Write here, then call
+    /// <see cref="Recompute"/>. Throws when the world was not built editable.
+    /// </summary>
+    public Span<UserEditInfo> Edits
+        => Editable ? Map.DataStore.GetSpan<UserEditInfo>() : throw new InvalidOperationException("Build the world with WithUserEdits() to edit it.");
+
+    /// <summary>
+    /// Re-derives everything downstream of the hand edits: elevation (with the sculpt added), climate,
+    /// erosion, hydrology and biomes, then the river/lake/range/deposit catalogs. Tectonics is not
+    /// repeated. Pure in (seed, configuration, <see cref="Edits"/>): recomputing with the same edits
+    /// reproduces the same world bit for bit, and with no edits it reproduces the generated one, so
+    /// applying is idempotent and never double-erodes. Hydrology is global (a ridge can redirect a
+    /// river basin away), so this is a whole-world action, not a per-brush-dab one.
+    /// </summary>
+    public void Recompute()
+    {
+        if (!Editable) throw new InvalidOperationException("Build the world with WithUserEdits() to recompute it.");
+        _pipeline!.ExecuteFrom(Map, ElevationGenerationStage.PipelineOrder);
+        Rivers.Rivers.Clear();
+        WaterBodies.Bodies.Clear();
+        Ranges.Features.Clear();
+        Deposits.Deposits.Clear();
+        PopulateFeatureCatalogs();
+        RebuildIndex();
+    }
+
+    internal void PopulateFeatureCatalogs()
+    {
+        HydrologyStage.PopulateCatalogs(Map, Rivers, WaterBodies, _maxRivers);
+        RangeCatalogBuilder.Populate(Map, Ranges, riverThresholdScale: _riverScale);
+        DepositCatalogBuilder.Populate(Map, Deposits, Seed);
     }
 
     /// <summary>(Re)builds the spatial index from the current store and catalogs.</summary>
@@ -212,7 +265,11 @@ public sealed class World : IDisposable
         return GeoWkt.DepositToWkt(Deposits.Deposits[depositId], Map.DataStore);
     }
 
-    public void Dispose() => Map.Dispose();
+    public void Dispose()
+    {
+        _pipeline?.Dispose();
+        Map.Dispose();
+    }
 }
 
 /// <summary>Fluent builder for a fully generated <see cref="World"/>.</summary>
@@ -228,6 +285,10 @@ public sealed class WorldBuilder
     private Action<LocalMapGenerationStage>? _biomesConfig;
     private Action<ClimateStage>? _climateConfig;
     private Action<HydrologyStage>? _hydrologyConfig;
+    private Action<ErosionGenerationStage>? _erosionConfig;
+    private bool _userEdits;
+    private bool _landUse;
+    private bool _climateRefresh = true;
 
     /// <summary>
     /// Largest supported planet size (backlog A2, from the Phase 2
@@ -267,11 +328,45 @@ public sealed class WorldBuilder
         _climateConfig = prev == null ? configure : s => { prev(s); configure(s); };
         return this;
     }
+    /// <summary>
+    /// Sets the planet's axial tilt, stellar flux, spin and (optionally) a custom insolation field; see
+    /// <see cref="PlanetParameters"/>. Earth by default. The parameters are copied, so later changes to
+    /// <paramref name="planet"/> do not affect this builder.
+    /// </summary>
+    public WorldBuilder WithPlanet(PlanetParameters planet)
+    {
+        if (planet == null) throw new ArgumentNullException(nameof(planet));
+        var copy = planet.Clone();
+        return WithClimate(c => c.Planet = copy);
+    }
+
+    /// <summary>
+    /// Re-runs the climate on the eroded relief before hydrology and biomes (see <see cref="ClimateRefreshStage"/>),
+    /// so rain shadows and biome borders follow the mountains the player sees rather than the raw tectonic
+    /// surface. On by default; <c>WithClimateRefresh(false)</c> restores the single-pass pipeline (pair it with
+    /// <c>RiverThresholdScale = 1</c>, which is what that pipeline was calibrated at).
+    /// <para>
+    /// Why it is the default: erosion moves the coastline (sediment fills shallows, so a size-4 world gains
+    /// around 20% more land tiles), and the single pass left every one of those tiles with the ocean's 0.55
+    /// precipitation floor and no maritime-distance correction. The refresh measured on seven worlds: land
+    /// 0.01-0.04 drier, 0.015-0.033 warmer, jungle 16% to 12% of land, desert 7% to 10%, glacier 13% to 10%;
+    /// river count restored by the hydrology scale (0.92), lakes unchanged.
+    /// </para>
+    /// </summary>
+    public WorldBuilder WithClimateRefresh(bool enabled = true) { _climateRefresh = enabled; return this; }
+
     /// <summary>Tweak the default hydrology stage (river threshold, max rivers...).</summary>
     public WorldBuilder WithHydrology(Action<HydrologyStage> configure)
     {
         var prev = _hydrologyConfig;
         _hydrologyConfig = prev == null ? configure : s => { prev(s); configure(s); };
+        return this;
+    }
+    /// <summary>Tweak the default erosion stage (iteration counts, wind erosion...).</summary>
+    public WorldBuilder WithErosion(Action<ErosionGenerationStage> configure)
+    {
+        var prev = _erosionConfig;
+        _erosionConfig = prev == null ? configure : s => { prev(s); configure(s); };
         return this;
     }
     /// <summary>Tweak the default biome stage (smoothing passes...).</summary>
@@ -281,6 +376,22 @@ public sealed class WorldBuilder
         _biomesConfig = prev == null ? configure : s => { prev(s); configure(s); };
         return this;
     }
+
+    /// <summary>
+    /// Registers the <see cref="UserEditInfo"/> input layer so the result supports hand edits and
+    /// <see cref="World.Recompute"/>. Costs 20 bytes per tile; an unedited layer changes nothing.
+    /// </summary>
+    public WorldBuilder WithUserEdits() { _userEdits = true; return this; }
+
+    /// <summary>
+    /// Adds the land-use layers and their two framing stages: <see cref="LandCapacityInfo"/> (what each tile
+    /// could support, order 25) and <see cref="LandUseInfo"/> (what is decided to be done with it), which starts
+    /// empty and is filled by the allocation stages you add with <see cref="AddStage"/> at orders 26..98.
+    /// <see cref="LandUseResolveStage"/> (99) then applies hand-painted pins. Implies <see cref="WithUserEdits"/>.
+    /// Off by default: a default world carries no people, and costs nothing. Land use is never read by the
+    /// climate, erosion, hydrology or biome stages, so it cannot change them.
+    /// </summary>
+    public WorldBuilder WithLandUse() { _landUse = true; _userEdits = true; return this; }
 
     public World Build()
     {
@@ -293,10 +404,17 @@ public sealed class WorldBuilder
         map.RegisterLayer<ClimateInfo>(new ClimateLayer(map.DataStore));
         map.RegisterLayer<LocalMapInfo>(new LocalMapLayer(map.DataStore, _seed,
             platesLayer));
+        if (_userEdits) map.RegisterLayer<UserEditInfo>(new UserEditLayer(map.DataStore));
+        if (_landUse)
+        {
+            map.RegisterLayer<LandCapacityInfo>(new LandCapacityLayer(map.DataStore));
+            map.RegisterLayer<LandUseInfo>(new LandUseLayer(map.DataStore));
+        }
         map.DataStore.Allocate();
 
         var pipeline = new WorldGenerationPipeline();
         HydrologyStage? hydrologyStage = null;
+        PlanetParameters planet = new PlanetParameters();
         float riverScale = 1f;
         if (_useDefaults)
         {
@@ -306,24 +424,30 @@ public sealed class WorldBuilder
             pipeline.AddStage(new ElevationGenerationStage(_seed));
             var climate = new ClimateStage(_seed);
             _climateConfig?.Invoke(climate);
+            climate.CurrentsInRefreshPassOnly = _climateRefresh;
+            planet = climate.Planet ?? planet;
             pipeline.AddStage(climate);
             hydrologyStage = new HydrologyStage();
             _hydrologyConfig?.Invoke(hydrologyStage);
             riverScale = hydrologyStage.RiverThresholdScale;
-            pipeline.AddStage(new ErosionGenerationStage { RiverThresholdScale = riverScale });
+            var erosion = new ErosionGenerationStage { RiverThresholdScale = riverScale };
+            _erosionConfig?.Invoke(erosion);
+            pipeline.AddStage(erosion);
+            if (_climateRefresh) pipeline.AddStage(new ClimateRefreshStage(climate)); // ties erosion's order; the stable sort keeps it after
             pipeline.AddStage(hydrologyStage);
             var biomes = new LocalMapGenerationStage(_seed) { RiverThresholdScale = riverScale };
             _biomesConfig?.Invoke(biomes);
             pipeline.AddStage(biomes);
         }
+        if (_landUse) pipeline.AddStage(new LandCapacityStage());
         foreach (var s in _extraStages) pipeline.AddStage(s);
+        if (_landUse) pipeline.AddStage(new LandUseResolveStage());
 
         pipeline.Execute(map);
 
-        var world = new World(map, _seed);
-        HydrologyStage.PopulateCatalogs(map, world.Rivers, world.WaterBodies, hydrologyStage?.MaxRivers ?? new HydrologyStage().MaxRivers);
-        RangeCatalogBuilder.Populate(map, world.Ranges, riverThresholdScale: riverScale);
-        DepositCatalogBuilder.Populate(map, world.Deposits, _seed);
+        var world = new World(map, _seed) { Planet = planet };
+        world.Attach(pipeline, hydrologyStage?.MaxRivers ?? new HydrologyStage().MaxRivers, riverScale);
+        world.PopulateFeatureCatalogs();
         world.RebuildIndex();
         return world;
     }

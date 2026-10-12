@@ -4,7 +4,7 @@ import { Editor } from './engine/Editor';
 import { App } from './ui/App';
 import { browserFiles } from './ui/files';
 import { AppContext } from './ui/hooks';
-import './ui/styles.css';
+import './ui/global.css';
 import { createViewModels } from './viewmodels';
 
 // Composition root: one Editor (engine facade), one set of view models, one React tree.

@@ -23,6 +23,7 @@ public static class DepositPalette
         DepositType.Oil => new Vector3(0.75f, 0.45f, 0.95f),
         DepositType.Gas => new Vector3(0.40f, 0.90f, 0.90f),
         DepositType.Salt => new Vector3(1.00f, 1.00f, 1.00f),
+        DepositType.Gypsum => new Vector3(0.95f, 0.88f, 0.60f),
         DepositType.Gems => new Vector3(1.00f, 0.30f, 0.80f),
         DepositType.Bauxite => new Vector3(0.85f, 0.30f, 0.25f),
         _ => new Vector3(0.50f, 0.50f, 0.50f),

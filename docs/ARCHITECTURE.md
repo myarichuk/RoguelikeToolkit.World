@@ -63,7 +63,7 @@ flowchart LR
     subgraph store["WorldDataStore (memory-mapped, blittable structs)"]
         T["TectonicPlate<br/>crust, boundary,<br/>continentality, orogeny"]
         E["ElevationInfo<br/>height"]
-        C["ClimateInfo<br/>temp, precip, wind"]
+        C["ClimateInfo<br/>temp, precip, wind, ocean currents"]
         H["HydrologyInfo<br/>flow, rivers,<br/>lakes, routing"]
         B["LocalMapInfo<br/>biome, danger"]
     end

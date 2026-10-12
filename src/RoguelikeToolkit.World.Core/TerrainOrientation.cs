@@ -59,7 +59,7 @@ public static class TerrainOrientation
 
         // Ring + means.
         var ring = new float[count];
-        double sumElev = Height(elev, hasElev, tileIndex), sumTemp = 0, sumPrecip = 0;
+        double sumElev = Height(elev, hasElev, tileIndex), sumTemp = 0, sumPrecip = 0, sumSeason = 0, sumPhase = 0;
         double windX = 0, windY = 0, windZ = 0;
         var biomeVotes = new Dictionary<BiomeType, int>();
 
@@ -69,6 +69,8 @@ public static class TerrainOrientation
         {
             sumTemp = climate[tileIndex].Temperature;
             sumPrecip = climate[tileIndex].Precipitation;
+            sumSeason = climate[tileIndex].RainSeasonality;
+            sumPhase = climate[tileIndex].RainPhase;
             windX = climate[tileIndex].WindX; windY = climate[tileIndex].WindY; windZ = climate[tileIndex].WindZ;
         }
         else
@@ -86,6 +88,8 @@ public static class TerrainOrientation
             {
                 sumTemp += climate[j].Temperature;
                 sumPrecip += climate[j].Precipitation;
+                sumSeason += climate[j].RainSeasonality;
+                sumPhase += climate[j].RainPhase;
                 windX += climate[j].WindX; windY += climate[j].WindY; windZ += climate[j].WindZ;
             }
             else
@@ -177,6 +181,8 @@ public static class TerrainOrientation
             MeanTemperature = (float)(sumTemp / n),
             MeanPrecipitation = (float)(sumPrecip / n),
             MeanMoisture = (float)(sumPrecip / n),
+            MeanRainSeasonality = (float)(sumSeason / n),
+            MeanRainPhase = (float)(sumPhase / n),
             ElevationGradient = gradient,
             AspectRadians = aspect,
             OrogenyStrike = strike,

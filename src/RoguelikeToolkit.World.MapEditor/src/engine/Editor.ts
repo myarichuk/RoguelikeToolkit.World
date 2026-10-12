@@ -1,5 +1,6 @@
 import { CompositeCommand, type Command } from './commands/Command';
 import { AddEntities, RemoveEntities, SetValue, UpdateEntities } from './commands/EntityCommands';
+import { applyFrame, captureFrame, PhysicsApply, type PhysicsFrame } from './commands/PhysicsApply';
 import { UndoStack } from './commands/UndoStack';
 import { AssetLibrary } from './content/AssetLibrary';
 import corePack from './content/core-pack.json';
@@ -13,6 +14,8 @@ import { loadDocument, saveDocument } from './doc/serialize';
 import type { DocSettings, Entity, FeatureEntity, LabelEntity, RiverEntity, StampEntity } from './doc/types';
 import type { EntityStore } from './doc/EntityStore';
 import { exportSvg, type SvgExportOptions } from './export/SvgExporter';
+import { exportWkt } from './export/WktExporter';
+import { deleteFeatureCommand } from './features/deleteFeature';
 import { placeLabels } from './features/placeLabels';
 import { populate } from './features/populate';
 import { Camera } from './render/Camera';
@@ -21,7 +24,7 @@ import { Overlay } from './render/Overlay';
 import { DEFAULT_VIEW, VIEW_PRESETS, type ViewSettings } from './render/ViewSettings';
 import { FontLibrary } from './text/FontLibrary';
 import { LabelCache } from './text/LabelCache';
-import { BiomeTool, TerrainTool } from './tools/BrushTools';
+import { BiomeTool, ClimateTool, LandUseTool, TerrainTool } from './tools/BrushTools';
 import { InspectTool } from './tools/InspectTool';
 import { NavigateTool } from './tools/NavigateTool';
 import { RiverTool } from './tools/RiverTool';
@@ -31,8 +34,9 @@ import { StampTool } from './tools/StampTool';
 import { TextTool } from './tools/TextTool';
 import { DEFAULT_TOOL_OPTIONS, type Tool, type ToolContext, type ToolId, type ToolOptions } from './tools/Tool';
 import { ToolController, type ToolHost } from './tools/ToolController';
+import { derivePhysics, describeReport, type PhysicsMode } from './world/derivePhysics';
 import { styleIndexForPlate } from './world/features';
-import { NameCtx, type GenerateParams, type NameRequest, type NameStyle } from './world/protocol';
+import { CLIMATE_MODEL_DEFAULTS, EARTH, NameCtx, type GenerateParams, type NameRequest, type NameStyle } from './world/protocol';
 import { WorldService } from './world/WorldService';
 
 export interface GenerateRequest extends GenerateParams { title?: string; density?: number; }
@@ -77,7 +81,7 @@ export class Editor implements ToolContext, ToolHost {
   readonly world: WorldService;
   readonly tools: Record<ToolId, Tool> = {
     navigate: new NavigateTool(), inspect: new InspectTool(), select: new SelectTool(), terrain: new TerrainTool(),
-    biome: new BiomeTool(), stamp: new StampTool(), text: new TextTool(), river: new RiverTool(),
+    biome: new BiomeTool(), landuse: new LandUseTool(), climate: new ClimateTool(), stamp: new StampTool(), text: new TextTool(), river: new RiverTool(),
   };
 
   private _doc = MapDocument.empty();
@@ -96,6 +100,7 @@ export class Editor implements ToolContext, ToolHost {
   private contentTimer = 0;
   private lastFrameEmit = 0;
   private nameNonce = 1;
+  private density = 1;
   private maskKey = '';
   /** Resolves when fonts and the atlas for the current theme are ready. */
   contentReady: Promise<void> = Promise.resolve();
@@ -141,6 +146,7 @@ export class Editor implements ToolContext, ToolHost {
     renderer.onAfterFrame = () => this.afterFrame();
     renderer.setView(this._view);
     renderer.attach(this._doc, this.library);
+    overlay.climatePaint.attach(this._doc);
     void this.contentReady.then(() => this.applyTheme());
     this.controller = new ToolController(overlayCanvas, this);
     this.activeTool().activate?.(this);
@@ -173,6 +179,7 @@ export class Editor implements ToolContext, ToolHost {
 
   private afterFrame(): void {
     const r = this.renderer!, o = this.overlay!;
+    o.showClimatePaint = this._tool === 'climate';
     o.gizmos = this.activeTool().gizmo ? [this.activeTool().gizmo!] : [];
     o.draw(r.camera, this._doc, this.theme(), this._view);
     const now = performance.now();
@@ -291,6 +298,7 @@ export class Editor implements ToolContext, ToolHost {
     this.maskKey = '';
     this.undo.clear();
     this.renderer?.attach(doc, this.library);
+    this.overlay?.climatePaint.attach(doc);
     this.renderer?.camera.fit();
     this.events.emit('doc', doc);
     this.requestRender();
@@ -299,8 +307,11 @@ export class Editor implements ToolContext, ToolHost {
   async generate(req: GenerateRequest): Promise<void> {
     await this.busy('Generating world…', async () => {
       const t0 = performance.now();
-      const snap = await this.world.generate({ seed: req.seed >>> 0, size: req.size, plates: req.plates, styles: req.styles });
-      const doc = documentFromWorld(snap, { title: req.title ?? `World ${req.seed}`, styles: req.styles });
+      const planet = { ...EARTH, ...req.planet };
+      const model = { ...CLIMATE_MODEL_DEFAULTS, ...req.model };
+      const snap = await this.world.generate({ seed: req.seed >>> 0, size: req.size, plates: req.plates, styles: req.styles, planet, model });
+      const doc = documentFromWorld(snap, { title: req.title ?? `World ${req.seed}`, styles: req.styles, ...planet, ...model });
+      this.density = req.density ?? 1;
       await this.contentReady;
       let t = performance.now();
       doc.stamps.reset(this.autoStamps(doc, req.density));
@@ -342,6 +353,11 @@ export class Editor implements ToolContext, ToolHost {
       this.status(`SVG: ${(r.svg.length / 1e6).toFixed(1)} MB in ${Math.round(Object.values(r.timings).reduce((a, b) => a + b, 0))} ms`);
       return new Blob([r.svg], { type: 'image/svg+xml' });
     });
+  }
+
+  /** Rivers, settlements, deposits and area anchors as WKT CSV (lon/lat), exactly as the map shows them. */
+  exportWkt(): Blob {
+    return new Blob([exportWkt(this._doc)], { type: 'text/csv' });
   }
 
   /** PNG of what is on screen (map + overlay), at device resolution. */
@@ -400,16 +416,57 @@ export class Editor implements ToolContext, ToolHost {
     ]);
   }
 
+  /**
+   * Re-derives the world from the author's hand work. The brush strokes since the last apply are
+   * folded into per-tile edits (sculpt: erosion still shapes them; fix: the ground stays as drawn),
+   * the engine recomputes climate, erosion, hydrology and biomes from them, and rivers, lakes,
+   * ranges and deposits follow. Names, deletions and hand-made features are carried across. One
+   * undo step. Not run per dab: hydrology is global, a ridge can send a river basin elsewhere.
+   */
+  async applyPhysics(mode: PhysicsMode): Promise<void> {
+    const doc = this._doc;
+    if (!doc.physics || !doc.hasWorld) { this.status('This map has no generated world behind it: generate one to re-derive its rivers and climate.'); return; }
+    await this.busy(mode === 'revert' ? 'Reverting to the generated world…' : 'Applying physics…', async () => {
+      const t0 = performance.now();
+      const out = await derivePhysics(doc, this.world, mode);
+      if (doc !== this._doc) return; // another map was opened while the engine worked
+      await this.contentReady;
+      const before = captureFrame(doc), ph = doc.physics!;
+      const generatedRivers = new Set(before.features.filter((f) => ph.generated.has(f.id) && f.riverId).map((f) => f.riverId!));
+      const shell: PhysicsFrame = {
+        elevation: out.elevation, biome: out.biome,
+        features: [...before.features.filter((f) => !ph.generated.has(f.id)), ...out.features],
+        rivers: [...before.rivers.filter((r) => !generatedRivers.has(r.id)), ...out.rivers],
+        labels: before.labels.filter((l) => !l.id.startsWith('lb_f_')), stamps: before.stamps.filter((s) => !s.id.startsWith('st_')), physics: out.physics,
+        warmth: out.warmth, wetness: out.wetness,
+      };
+      // Labels and stamps are placed from the document and dodge what is already there, so it takes
+      // the new world with only the hand-made ones in it (the old auto-placed ones must not crowd the new).
+      applyFrame(doc, shell);
+      // Same order as generation (stamps first, labels dodge them), so reverting reproduces the generated map.
+      const stamps = [...shell.stamps, ...this.autoStamps(doc, this.density)];
+      doc.stamps.reset(stamps);
+      const labels = [...shell.labels, ...placeLabels(doc, this.theme(), this.fonts, doc.settings.seed)];
+      this.selection.clear();
+      this.selection.set({ hoverFeature: null });
+      this.undo.execute(new PhysicsApply(mode === 'revert' ? 'Revert to generated world' : 'Apply physics', doc, before, { ...shell, labels, stamps }));
+      this.status(`${mode === 'revert' ? 'Reverted' : 'Physics applied'} in ${Math.round(performance.now() - t0)} ms — ${describeReport(out.report)}`);
+    });
+  }
+
   /** Deletes a feature with everything drawn for it (label, river ribbon, settlement marker). */
   deleteFeature(id: string): void {
     const doc = this._doc, f = doc.features.get(id);
-    if (!f) return;
-    const parts: Command[] = [new RemoveEntities('feature', doc.features, [id])];
-    if (doc.labels.get(`lb_${id}`)) parts.push(new RemoveEntities('label', doc.labels, [`lb_${id}`]));
-    if (f.riverId && doc.rivers.get(f.riverId)) parts.push(new RemoveEntities('river', doc.rivers, [f.riverId]));
-    if (doc.stamps.get(`st_${id}`)) parts.push(new RemoveEntities('marker', doc.stamps, [`st_${id}`]));
+    const del = f && deleteFeatureCommand(doc, id);
+    if (!f || !del) return;
+    // A re-derived world proposes engine features again; the tombstone is how it knows this one was refused.
+    if (doc.physics?.generated.has(id)) doc.physics.tombstones.set(id, f);
     this.selection.set({ feature: null, hoverFeature: null });
-    this.undo.execute(new CompositeCommand(`Delete ${f.name || f.kind}`, parts));
+    this.undo.execute(del.command);
+    const name = f.name || f.kind;
+    this.status(del.removed.length
+      ? `Deleted ${name} and its ${del.removed.join(', ')}`
+      : `Deleted ${name} (its terrain stays; reshape it with the terrain and biome brushes)`);
   }
 
   updateLabels(ids: string[], patch: Partial<LabelEntity>, key?: string): void {
@@ -426,6 +483,7 @@ export class Editor implements ToolContext, ToolHost {
     this.undo.execute(new UpdateEntities(label, store, before, before.map((e) => ({ ...e, ...patch })), key));
   }
 
+  /** Deletes whatever is selected: stamps and labels, or else the inspected map feature. */
   deleteSelected(): void {
     const s = this.selection.state, doc = this._doc;
     const parts: Command[] = [];

@@ -1,6 +1,6 @@
 import { MAP_W } from '../core/geo';
 import { CompositeCommand } from '../commands/Command';
-import { RemoveEntities, UpdateEntities } from '../commands/EntityCommands';
+import { UpdateEntities } from '../commands/EntityCommands';
 import type { LabelEntity, StampEntity } from '../doc/types';
 import type { Camera } from '../render/Camera';
 import { pickLabel, pickStamp, stampBounds } from './pick';
@@ -87,7 +87,11 @@ export class SelectTool implements Tool {
     const sel = ctx.selection.state;
     const stamps = [...sel.stamps].map((id) => ctx.doc.stamps.get(id)!).filter(Boolean);
     const labels = [...sel.labels].map((id) => ctx.doc.labels.get(id)!).filter(Boolean);
-    if (!stamps.length && !labels.length) return false;
+    if (!stamps.length && !labels.length) {
+      // A feature picked with Inspect stays selected when switching tools; Delete still applies to it.
+      if (sel.feature && (e.key === 'Delete' || e.key === 'Backspace')) { ctx.deleteSelected(); return true; }
+      return false;
+    }
     const upd = (label: string, fs: (s: StampEntity) => StampEntity, fl: (l: LabelEntity) => LabelEntity, key?: string) => {
       const parts = [];
       if (stamps.length) parts.push(new UpdateEntities(label, ctx.doc.stamps, stamps, stamps.map(fs), key && `${key}:s`));
@@ -95,14 +99,9 @@ export class SelectTool implements Tool {
       ctx.undo.execute(new CompositeCommand(label, parts));
     };
     switch (e.key) {
-      case 'Delete': case 'Backspace': {
-        ctx.undo.execute(new CompositeCommand('Delete', [
-          new RemoveEntities('Delete stamps', ctx.doc.stamps, stamps.map((s) => s.id)),
-          new RemoveEntities('Delete labels', ctx.doc.labels, labels.map((l) => l.id)),
-        ]));
-        ctx.selection.set({ stamps: new Set(), labels: new Set() });
+      case 'Delete': case 'Backspace':
+        ctx.deleteSelected();
         return true;
-      }
       case 'r': case 'R': {
         const a = (e.shiftKey ? -1 : 1) * Math.PI / 24;
         upd('Rotate', (s) => ({ ...s, rotation: s.rotation + a }), (l) => ({ ...l, angle: l.angle + a }));

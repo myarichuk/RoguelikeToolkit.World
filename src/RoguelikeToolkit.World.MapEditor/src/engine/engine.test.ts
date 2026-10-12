@@ -8,11 +8,13 @@ import { PackRegistry } from './content/PackRegistry';
 import { validatePack } from './content/validate';
 import { MAP_H, MAP_W, latOfY, lonLatToMap, lonOfX, vecToMap } from './core/geo';
 import { MapDocument } from './doc/MapDocument';
+import { DEFAULT_SETTINGS } from './doc/types';
 import { decodeDocument, encodeDocument } from './doc/serialize';
 import type { LabelEntity, StampEntity } from './doc/types';
 import { contour, pathData, shape } from './export/contour';
 import { riverPath } from './export/SvgExporter';
-import { heightDab, strokePoints } from './tools/brushes';
+import { climateDab, heightDab, strokePoints } from './tools/brushes';
+import { BIOME_NAMES } from './world/features';
 
 describe('Mercator map space', () => {
   it('round-trips lon/lat through map units', () => {
@@ -95,6 +97,41 @@ describe('brushes', () => {
   });
 });
 
+describe('climate brush', () => {
+  const W = 64, H = 64;
+  it('raises and lowers the paint with a falloff, clamped to a signed byte', () => {
+    const data = new Int8Array(W * H);
+    for (let k = 0; k < 400; k++) climateDab(data, W, H, { x: 32, y: 32, radius: 10, strength: 0.2 }, 'raise');
+    expect(data[32 * W + 32]).toBe(127);
+    expect(data[32 * W + 38]).toBeGreaterThan(0);          // inside the brush, off center
+    expect(data[32 * W + 45]).toBe(0);                     // outside the brush
+    for (let k = 0; k < 800; k++) climateDab(data, W, H, { x: 32, y: 32, radius: 10, strength: 0.2 }, 'lower');
+    expect(data[32 * W + 32]).toBe(-127);
+  });
+  it('never rounds a light touch away', () => {
+    const data = new Int8Array(W * H);
+    climateDab(data, W, H, { x: 32, y: 32, radius: 10, strength: 0.0005 }, 'raise');
+    expect(data[32 * W + 32]).toBeGreaterThanOrEqual(1);
+  });
+  it('erase fades the paint back to zero without overshooting', () => {
+    const data = new Int8Array(W * H).fill(-100);
+    for (let k = 0; k < 200; k++) climateDab(data, W, H, { x: 32, y: 32, radius: 10, strength: 0.1 }, 'erase');
+    expect(data[32 * W + 32]).toBe(0);
+    expect(data[0]).toBe(-100);
+  });
+  it('is one undo step per stroke on the paint raster', () => {
+    const doc = MapDocument.empty();
+    const edit = new RasterEdit('Climate', doc.target('warmth'));
+    edit.prepare({ x0: 92, y0: 92, x1: 109, y1: 109 });      // the snapshot comes first, as in a real stroke
+    const rect = climateDab(doc.warmth, doc.width, doc.height, { x: 100, y: 100, radius: 8, strength: 0.1 }, 'raise');
+    doc.target('warmth').touched(rect);
+    expect(edit.commit()).toBe(true);
+    expect(doc.warmth[100 * doc.width + 100]).toBeGreaterThan(0);
+    edit.undo();
+    expect(doc.hasClimatePaint).toBe(false);
+  });
+});
+
 describe('content packs', () => {
   it('accepts the core pack and the example pack', async () => {
     expect(validatePack(corePack).errors).toEqual([]);
@@ -134,7 +171,7 @@ const sameBytes = (a: ArrayBufferView, b: ArrayBufferView) => {
 describe('.wmap serialization', () => {
   it('round-trips rasters, entities and NaN label spacing', () => {
     const doc = MapDocument.empty();
-    doc.elevation[12345] = 0.42; doc.biome[777] = 13;
+    doc.elevation[12345] = 0.42; doc.biome[777] = 12;
     doc.setSettings({ title: 'Test', seed: 99 });
     const label: LabelEntity = { id: 'l1', text: 'Ælfheim', style: 'city', x: 1, y: 2, angle: 0, size: 0, spacing: NaN, curve: 0.2, path: [1, 2, 3, 4] };
     doc.labels.add([label, { ...label, id: 'l2', spacing: 0.1 }]);
@@ -147,6 +184,87 @@ describe('.wmap serialization', () => {
     expect(back.labels.get('l2')!.spacing).toBe(0.1);
     expect(back.labels.get('l1')!.text).toBe('Ælfheim');
     expect(back.stamps.get('s')).toEqual(doc.stamps.get('s'));
+  });
+  it('round-trips the land-capacity cache, and drops one that does not fit the world', () => {
+    const world = (tiles: number) => ({ tile: new Int32Array(MAP_W * MAP_H).fill(-1), tilePlate: new Uint32Array(tiles), plateDrift: new Float64Array(0), tileXY: new Float32Array(tiles * 2), styles: [] });
+    const make = (tiles: number, capacity: Uint8Array | undefined) => {
+      const doc = new MapDocument({ ...DEFAULT_SETTINGS }, new Float32Array(MAP_W * MAP_H), new Uint8Array(MAP_W * MAP_H), world(tiles));
+      doc.physics = { edits: new Map(), baseline: null, generated: new Set(), tombstones: new Map(), capacity };
+      return doc;
+    };
+    const cap = Uint8Array.from({ length: 15 }, (_, i) => i * 10);
+    expect([...decodeDocument(encodeDocument(make(3, cap))).physics!.capacity!]).toEqual([...cap]);
+    expect(decodeDocument(encodeDocument(make(3, undefined))).physics!.capacity).toBeUndefined();
+    // Five bytes per tile: a cache for a different tile count must not be trusted.
+    expect(decodeDocument(encodeDocument(make(3, new Uint8Array(10)))).physics!.capacity).toBeUndefined();
+  });
+  it('round-trips the sea-ice cache, and drops one that does not fit the world', () => {
+    const world = (tiles: number) => ({ tile: new Int32Array(MAP_W * MAP_H).fill(-1), tilePlate: new Uint32Array(tiles), plateDrift: new Float64Array(0), tileXY: new Float32Array(tiles * 2), styles: [] });
+    const make = (tiles: number, seaIce: Uint8Array | undefined) => {
+      const doc = new MapDocument({ ...DEFAULT_SETTINGS }, new Float32Array(MAP_W * MAP_H), new Uint8Array(MAP_W * MAP_H), world(tiles));
+      doc.physics = { edits: new Map(), baseline: null, generated: new Set(), tombstones: new Map(), seaIce };
+      return doc;
+    };
+    expect([...decodeDocument(encodeDocument(make(3, Uint8Array.of(0, 1, 2)))).physics!.seaIce!]).toEqual([0, 1, 2]);
+    expect(decodeDocument(encodeDocument(make(3, undefined))).physics!.seaIce).toBeUndefined();
+    // One byte per tile: a cache for a different tile count must not be trusted.
+    expect(decodeDocument(encodeDocument(make(3, new Uint8Array(5)))).physics!.seaIce).toBeUndefined();
+  });
+  it('round-trips the planet, and an older file without one reads as Earth', () => {
+    const doc = MapDocument.empty();
+    doc.setSettings({ obliquity: 71, flux: 0.9, rotation: 0.5 });
+    const back = decodeDocument(encodeDocument(doc));
+    expect([back.settings.obliquity, back.settings.flux, back.settings.rotation]).toEqual([71, 0.9, 0.5]);
+    const old = MapDocument.empty();
+    for (const k of ['obliquity', 'flux', 'rotation'] as const) delete (old.settings as Partial<typeof old.settings>)[k];
+    const reread = decodeDocument(encodeDocument(old));
+    expect([reread.settings.obliquity, reread.settings.flux, reread.settings.rotation]).toEqual([23.44, 1, 1]);
+  });
+  it('round-trips the hand-edit table, the generated-feature ids and the tombstones', () => {
+    const doc = MapDocument.empty();
+    const gone = { id: 'f_lake:4', kind: 'lake' as const, name: 'Gone', x: 1, y: 2, angle: 0, extent: 1, weight: 1, tiles: [1, 2], details: [] as [string, string][], culture: '' };
+    doc.physics = { edits: new Map([[3, { dh: 0.25 }], [9, { pinH: 0.5, pinBiome: 12 }]]), baseline: null, generated: new Set(['f_lake:5']), tombstones: new Map([[gone.id, gone]]) };
+    const back = decodeDocument(encodeDocument(doc));
+    expect([...back.physics!.edits]).toEqual([[3, { dh: 0.25 }], [9, { pinH: 0.5, pinBiome: 12 }]]);
+    expect([...back.physics!.generated]).toEqual(['f_lake:5']);
+    expect(back.physics!.tombstones.get('f_lake:4')).toEqual(gone);
+    expect(back.physics!.baseline).toBeNull();   // a cache: rebuilt from the table on demand
+  });
+  it('round-trips the climate paint, and a file from before the brush reads as unpainted', () => {
+    const doc = MapDocument.empty();
+    doc.warmth[1000] = 90; doc.warmth[2000] = -127; doc.wetness[3000] = -40;
+    doc.physics = { edits: new Map([[4, { dt: 0.2, dr: -0.1 }]]), baseline: null, generated: new Set(), tombstones: new Map() };
+    const bytes = encodeDocument(doc);
+    const back = decodeDocument(bytes);
+    expect([back.warmth[1000], back.warmth[2000], back.wetness[3000], back.warmth[1]]).toEqual([90, -127, -40, 0]);
+    expect(back.physics!.edits.get(4)).toEqual({ dt: 0.2, dr: -0.1 });
+    // Rename the blobs in the header (same length, so every offset still holds): the file now looks pre-brush.
+    const len = new DataView(bytes.buffer, bytes.byteOffset).getUint32(8, true);
+    const head = new TextDecoder().decode(bytes.subarray(12, 12 + len)).replace('"warmth"', '"warmtX"').replace('"wetness"', '"wetnesX"');
+    const old = bytes.slice(); old.set(new TextEncoder().encode(head), 12);
+    const reread = decodeDocument(old);
+    expect(reread.hasClimatePaint).toBe(false);
+    expect(reread.physics!.edits.get(4)).toEqual({ dt: 0.2, dr: -0.1 });
+  });
+  it('round-trips land use, and lifts legacy farmland/ashlands biomes out of an older file', () => {
+    const doc = MapDocument.empty();
+    doc.biome.fill(3);                                   // forest everywhere
+    doc.landuse.fill(1, 10, 14); doc.landuse[50] = 2;
+    const back = decodeDocument(encodeDocument(doc));
+    expect([...back.landuse.subarray(10, 14)]).toEqual([1, 1, 1, 1]);
+    expect([back.landuse[50], back.landuse[9], back.biome[10]]).toEqual([2, 0, 3]);   // the biome underneath is intact
+    // A pre-v4 file: no landuse blob, and the paint sits in the biome raster as ids 11 and 13.
+    const legacy = MapDocument.empty();
+    legacy.biome.fill(3); legacy.biome.fill(11, 100, 104); legacy.biome[300] = 13;
+    const bytes = encodeDocument(legacy);
+    const len = new DataView(bytes.buffer, bytes.byteOffset).getUint32(8, true);
+    const head = new TextDecoder().decode(bytes.subarray(12, 12 + len)).replace('"landuse"', '"landusX"');
+    const old = bytes.slice(); old.set(new TextEncoder().encode(head), 12);
+    const reread = decodeDocument(old);
+    expect([...reread.landuse.subarray(100, 104)]).toEqual([1, 1, 1, 1]);
+    expect(reread.landuse[300]).toBe(2);
+    expect([reread.biome[100], reread.biome[103], reread.biome[300]]).toEqual([3, 3, 3]);   // forest all round: that is what they sat on
+    expect(reread.biome.includes(11) || reread.biome.includes(13)).toBe(false);
   });
   it('rejects garbage with a readable error', () => {
     expect(() => decodeDocument(new Uint8Array(64))).toThrow(/bad magic/);
@@ -173,5 +291,22 @@ describe('vector export geometry', () => {
     expect(d.startsWith('M')).toBe(true);
     expect(d.endsWith('Z')).toBe(true);
     expect(d.split('L').length).toBe(6);
+  });
+});
+
+describe('Core biome ids in the core pack', () => {
+  // The BiomeType ids the generator can emit (LocalMapInfo.cs): 0-9, plus the desert family at 12 and 14-16.
+  const CORE_IDS = [0, 1, 2, 3, 4, 5, 6, 7, 8, 9, 12, 14, 15, 16];
+  const pack = corePack as unknown as { biomes: { id: number; name: string }[]; themes: { biomes: Record<string, string> }[]; rules: { id: string; biomes?: number[] }[] };
+  it('defines a biome entry, a name and a color in every theme for every id', () => {
+    for (const id of CORE_IDS) {
+      expect(pack.biomes.some((b) => b.id === id), `biome ${id}`).toBe(true);
+      expect(BIOME_NAMES[id], `name ${id}`).toBeTruthy();
+      for (const t of pack.themes) expect(t.biomes[String(id)], `theme color ${id}`).toMatch(/^#[0-9a-f]{6}$/i);
+    }
+  });
+  it('dresses every desert type with stamps', () => {
+    const covered = new Set(pack.rules.flatMap((r) => r.biomes ?? []));
+    for (const id of [2, 12, 14, 16]) expect(covered.has(id), `rule for biome ${id}`).toBe(true);
   });
 });

@@ -2,6 +2,7 @@ import { MAP_H, MAP_W, rectUnion, type Rect } from '../core/geo';
 import type { AssetLibrary } from '../content/AssetLibrary';
 import type { BiomeDef, Theme } from '../content/types';
 import type { MapDocument } from '../doc/MapDocument';
+import { composeBiomes } from '../world/landuse';
 import { Camera } from './Camera';
 import { FULLSCREEN_VS, bind, compile, rgb, texture, type Program } from './gl';
 import { RiverLayer } from './RiverLayer';
@@ -35,6 +36,8 @@ export class MapRenderer {
   private lib: AssetLibrary | null = null;
   private theme: Theme | null = null;
   private view: ViewSettings = DEFAULT_VIEW;
+  /** What the GPU draws: the biome raster with land use composited on top (the document keeps them apart). */
+  private readonly drawn = new Uint8Array(MAP_W * MAP_H);
   private dirty: { elevation: Rect | null; biome: Rect | null; color: boolean; full: boolean } = { elevation: null, biome: null, color: false, full: false };
   private stampsDirty = true;
   private riversDirty = true;
@@ -65,14 +68,17 @@ export class MapRenderer {
     this.doc = doc; this.lib = lib;
     this.terrain.params = { warp: doc.settings.warp, detail: doc.settings.detail, seed: doc.settings.seed };
     this.terrain.uploadElevation(doc.elevation);
-    this.terrain.uploadBiome(doc.biome);
+    composeBiomes(doc.biome, doc.landuse, this.drawn, MAP_W);
+    this.terrain.uploadBiome(this.drawn);
     this.uploadPlates(doc);
     this.clearMask();
     this.dirty = { elevation: null, biome: null, color: true, full: true };
     this.stampsDirty = this.riversDirty = true;
     this.unsubscribe = [
       doc.events.on('raster', ({ layer, rect }) => {
-        this.dirty[layer] = rectUnion(this.dirty[layer], rect);
+        if (layer !== 'elevation' && layer !== 'biome' && layer !== 'landuse') return; // climate paint is overlay-only
+        const key = layer === 'elevation' ? 'elevation' : 'biome'; // land use rides the biome texture
+        this.dirty[key] = rectUnion(this.dirty[key], rect);
         this.requestRender();
       }),
       doc.events.on('settings', (s) => {
@@ -166,7 +172,7 @@ export class MapRenderer {
     gl.bindVertexArray(this.vao);
     bind(gl, this.display, {
       uMap: [MAP_W, MAP_H], uCanvas: [cam.width, cam.height], uCenter: [cam.cx, cam.cy], uZoom: cam.zoom,
-      uFieldSize: [this.terrain.fw, this.terrain.fh], uWarp: 0, uSeed: 0,
+      uFieldSize: [this.terrain.fw, this.terrain.fh], uWarp: this.terrain.params.warp, uSeed: this.terrain.params.seed % 1000,
       uMode: { i: BASE_MODE_INDEX[v.base] }, uFlags: { i: displayFlags(v, this.hasMask) }, uPlateTopo: v.plateTopo,
       uPaper: rgb(th.paper), uSea: rgb(th.sea), uShallow: rgb(th.shallow), uSeaInk: rgb(th.seaInk), uLandInk: rgb(th.landInk),
       uFrame: rgb(th.frame), uAccent: rgb(this.theme.ui?.['--accent'] ?? '#d08a2a'),
@@ -191,7 +197,7 @@ export class MapRenderer {
       this.terrain.rebuild();
     } else {
       if (d.elevation) { this.terrain.uploadElevation(doc.elevation, d.elevation); this.terrain.rebuild(d.elevation, { field: true, color: false }); }
-      if (d.biome) { this.terrain.uploadBiome(doc.biome, d.biome); this.terrain.rebuild(d.biome, { field: false, color: true }); }
+      if (d.biome) { composeBiomes(doc.biome, doc.landuse, this.drawn, MAP_W, d.biome); this.terrain.uploadBiome(this.drawn, d.biome); this.terrain.rebuild(d.biome, { field: false, color: true }); }
       if (d.color && !d.biome) this.terrain.rebuild(undefined, { field: false, color: true });
     }
     this.dirty = { elevation: null, biome: null, color: false, full: false };

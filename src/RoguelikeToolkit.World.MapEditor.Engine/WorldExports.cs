@@ -22,15 +22,66 @@ public static partial class WorldExports
     private static TriangleIndices[]? _faces;
 
     [JSExport]
-    public static int Generate(int seed, int size, int plates)
+    public static int Generate(int seed, int size, int plates, double obliquity, double flux, double rotation,
+        bool climateRefresh, double meridionalWind, double windCellBlend, double oceanHeat, double oceanRain, int aeolian)
     {
+        // Validate before disposing: a bad request must not leave the editor with no world behind it.
+        // Written as !(in range) so NaN is rejected too (every comparison with NaN is false).
+        if (!(windCellBlend >= 0 && windCellBlend <= 1))
+            throw new ArgumentOutOfRangeException(nameof(windCellBlend), "Wind cell blend must be within 0..1.");
+        if (!(meridionalWind >= 0) || !(oceanHeat >= 0) || !(oceanRain >= 0) || aeolian < 0)
+            throw new ArgumentOutOfRangeException(nameof(meridionalWind), "Climate model strengths cannot be negative.");
+        var planet = new PlanetParameters { ObliquityDegrees = obliquity, StellarFlux = flux, RotationRate = rotation };
         _world?.Dispose();
-        var builder = new WorldBuilder().WithSize(size).WithSeed(seed);
+        var builder = new WorldBuilder().WithSize(size).WithSeed(seed).WithUserEdits().WithLandUse().WithPlanet(planet)
+            .WithClimateRefresh(climateRefresh)
+            .WithClimate(c => { c.MeridionalWind = meridionalWind; c.WindCellBlend = windCellBlend; c.OceanHeatStrength = oceanHeat; c.OceanRainGain = oceanRain; })
+            .WithErosion(e => e.AeolianIterations = aeolian);
+        // The unrefreshed pipeline was calibrated at a river threshold of 1; 0.92 is for the refreshed climate (see WithClimateRefresh).
+        if (!climateRefresh) builder.WithHydrology(h => h.RiverThresholdScale = 1f);
         if (plates > 0) builder.WithPlateCount(plates);
         _world = builder.Build();
         // The store discards faces after deriving adjacency; regenerate them (deterministic, same vertex order).
         IcosphereGenerator.Generate(size, out _, out _faces);
         return _world.TileCount;
+    }
+
+    /// <summary>
+    /// Replaces the world's hand edits wholesale and re-derives everything downstream (see
+    /// <see cref="CoreWorld.Recompute"/>). The table is sparse and absolute, so the call is
+    /// idempotent: the engine keeps no history, the document owns the edits. <paramref name="meta"/>
+    /// packs <see cref="UserEditFlags"/> in bits 0-7, the pinned <see cref="BiomeType"/> in 8-15, the pinned
+    /// <see cref="LandUseInfo.Use"/> in 16-23 and its <see cref="LandUseInfo.Activities"/> in 24-31.
+    /// <paramref name="temperature"/> and <paramref name="precipitation"/> are the brushed climate offsets
+    /// (<see cref="UserEditInfo.TemperatureDelta"/>, <see cref="UserEditInfo.PrecipitationDelta"/>).
+    /// </summary>
+    [JSExport]
+    public static int ApplyEdits(int[] tiles, double[] heightDelta, double[] pinHeight, int[] meta, double[] temperature, double[] precipitation)
+    {
+        var world = Current;
+        if (tiles.Length != heightDelta.Length || tiles.Length != pinHeight.Length || tiles.Length != meta.Length
+            || tiles.Length != temperature.Length || tiles.Length != precipitation.Length)
+            throw new ArgumentException("Edit arrays must have equal lengths.");
+        var edits = world.Edits;
+        edits.Clear();
+        for (int k = 0; k < tiles.Length; k++)
+        {
+            int t = tiles[k];
+            if ((uint)t >= (uint)edits.Length) throw new ArgumentOutOfRangeException(nameof(tiles), t, "Tile index out of range.");
+            edits[t] = new UserEditInfo
+            {
+                HeightDelta = (float)heightDelta[k],
+                PinHeight = (float)pinHeight[k],
+                Flags = (UserEditFlags)(meta[k] & 0xff),
+                PinBiome = (BiomeType)((meta[k] >> 8) & 0xff),
+                LandUse = (byte)((meta[k] >> 16) & 0xff),
+                LandActivities = (byte)((meta[k] >> 24) & 0xff),
+                TemperatureDelta = (float)temperature[k],
+                PrecipitationDelta = (float)precipitation[k],
+            };
+        }
+        world.Recompute();
+        return world.TileCount;
     }
 
     /// <summary>Unit vectors of tile centers, xyz interleaved.</summary>
@@ -195,19 +246,99 @@ public static partial class WorldExports
     }
 
     /// <summary>
+    /// The whole climate layer, twelve doubles per tile: temperature, precipitation, wind x y z, seasonal range,
+    /// rain seasonality, ocean heat, current x y z, rain phase (<see cref="ClimateInfo"/>). Wind and current are 3D tangent
+    /// vectors; the host projects them onto east/north with its own tile vectors.
+    /// </summary>
+    [JSExport]
+    public static double[] ClimateField()
+    {
+        var c = Current.Map.DataStore.GetSpan<ClimateInfo>();
+        var result = new double[c.Length * 12];
+        for (int i = 0; i < c.Length; i++)
+        {
+            int o = i * 12;
+            result[o] = c[i].Temperature; result[o + 1] = c[i].Precipitation;
+            result[o + 2] = c[i].WindX; result[o + 3] = c[i].WindY; result[o + 4] = c[i].WindZ;
+            result[o + 5] = c[i].SeasonalRange; result[o + 6] = c[i].RainSeasonality; result[o + 7] = c[i].OceanHeat;
+            result[o + 8] = c[i].CurrentX; result[o + 9] = c[i].CurrentY; result[o + 10] = c[i].CurrentZ;
+            result[o + 11] = c[i].RainPhase;
+        }
+        return result;
+    }
+
+    /// <summary>
+    /// What each tile could carry, five bytes per tile interleaved: arable, pasture, game, timber, fish
+    /// (<see cref="LandCapacityInfo"/>).
+    /// </summary>
+    [JSExport]
+    public static byte[] LandCapacity()
+    {
+        var c = Current.Map.DataStore.GetSpan<LandCapacityInfo>();
+        var result = new byte[c.Length * 5];
+        for (int i = 0; i < c.Length; i++)
+        {
+            result[i * 5] = c[i].Arable; result[i * 5 + 1] = c[i].Pasture; result[i * 5 + 2] = c[i].Game;
+            result[i * 5 + 3] = c[i].Timber; result[i * 5 + 4] = c[i].Fish;
+        }
+        return result;
+    }
+
+    /// <summary>Sea ice per tile, one byte each: 0 open water or land, 1 seasonal, 2 perennial (<see cref="SeaIceKind"/>).</summary>
+    [JSExport]
+    public static byte[] SeaIce()
+    {
+        var mask = RoguelikeToolkit.World.Core.SeaIce.Mask(Current.Map.DataStore);
+        var result = new byte[mask.Length];
+        for (int i = 0; i < mask.Length; i++) result[i] = (byte)mask[i];
+        return result;
+    }
+
+    /// <summary>What is decided for each tile, three bytes per tile: use, activities, intensity (<see cref="LandUseInfo"/>). Only hand pins unless the host adds allocation stages.</summary>
+    [JSExport]
+    public static byte[] LandUse()
+    {
+        var u = Current.Map.DataStore.GetSpan<LandUseInfo>();
+        var result = new byte[u.Length * 3];
+        for (int i = 0; i < u.Length; i++)
+        {
+            result[i * 3] = u[i].Use; result[i * 3 + 1] = u[i].Activities; result[i * 3 + 2] = u[i].Intensity;
+        }
+        return result;
+    }
+
+    // The editor's one site search: both exports below must ask the same question or their arrays stop lining up.
+    private static List<CitySiteScore> SiteSearch(int max)
+        => Current.ScoreCitySites(new CitySiteFilter { TopN = max, FreshWaterRadiusKm = 400 });
+
+    /// <summary>
     /// Every viable settlement tile with its score, best first: <c>[tile, score*1000]</c> pairs.
     /// Spacing and the city/town/village hierarchy are a cartographic decision, made by the editor.
     /// </summary>
     [JSExport]
     public static int[] CitySites(int max)
     {
-        var sites = Current.ScoreCitySites(new CitySiteFilter { TopN = max, FreshWaterRadiusKm = 400 });
+        var sites = SiteSearch(max);
         var result = new int[sites.Count * 2];
         for (int i = 0; i < sites.Count; i++)
         {
             result[i * 2] = sites[i].TileIndex;
             result[i * 2 + 1] = (int)Math.Round(sites[i].Score * 1000);
         }
+        return result;
+    }
+
+    /// <summary>
+    /// Why each site scored what it did: one comma-joined list of <see cref="SettlementScoring"/> terms per site (<c>"water,fertile"</c>),
+    /// in the same order as the pairs <see cref="CitySites"/> returns, so entry <c>i</c> explains pair <c>i</c>. The search runs again
+    /// rather than being cached (no mutable statics); it is a single pass over the land tiles.
+    /// </summary>
+    [JSExport]
+    public static string[] CitySiteReasons(int max)
+    {
+        var sites = SiteSearch(max);
+        var result = new string[sites.Count];
+        for (int i = 0; i < sites.Count; i++) result[i] = sites[i].Reasons;
         return result;
     }
 

@@ -72,6 +72,27 @@ export function biomeDab(data: Uint8Array, W: number, H: number, d: Dab, biome: 
   return dabRect(d);
 }
 
+export type ClimateMode = 'raise' | 'lower' | 'erase';
+
+/**
+ * One climate-paint dab on a signed byte raster (-127..127). Strength is the share of full scale added at
+ * the center per dab, so a stroke builds up like raising terrain; erase pulls the paint back to zero.
+ */
+export function climateDab(data: Int8Array, W: number, H: number, d: Dab, mode: ClimateMode): Rect {
+  const s = d.strength;
+  forEach(W, H, d, (i, w) => {
+    const v = data[i];
+    if (mode === 'erase') data[i] = Math.round(v * (1 - Math.min(1, s * 6 * w)));
+    else {
+      const next = v + (mode === 'raise' ? 1 : -1) * s * w * 127;
+      // Always move at least one step where the brush reaches, so a light touch is never rounded away.
+      const step = Math.round(next) === v && w > 0.05 ? v + (mode === 'raise' ? 1 : -1) : Math.round(next);
+      data[i] = Math.max(-127, Math.min(127, step));
+    }
+  });
+  return dabRect(d);
+}
+
 /** Points along a stroke segment spaced by `spacing` (dab emission independent of pointer rate). */
 export function strokePoints(ax: number, ay: number, bx: number, by: number, spacing: number, carry: number): { pts: [number, number][]; carry: number } {
   const len = Math.hypot(bx - ax, by - ay);

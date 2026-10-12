@@ -3,10 +3,11 @@
 // .NET runtime; the editor only ever sees plain data (protocol.ts). Rasterization and feature
 // extraction run here too, in V8 — measurably faster than the Mono interpreter for per-pixel loops.
 import { MAP_H, MAP_W, vecToMap } from '../engine/core/geo';
+import { projectClimate } from '../engine/world/climate';
 import { extractFeatures } from '../engine/world/features';
 import {
-  DEFAULT_STYLES, snapshotTransfer, styleKey,
-  type GenerateParams, type NameRequest, type NameStyle, type WorkerRequest, type WorkerResponse, type WorldSnapshot,
+  CLIMATE_MODEL_DEFAULTS, DEFAULT_STYLES, EARTH, snapshotTransfer, styleKey,
+  type GenerateParams, type NameRequest, type NameStyle, type RecomputeParams, type WorkerRequest, type WorkerResponse, type WorldSnapshot,
 } from '../engine/world/protocol';
 import { rasterize } from '../engine/world/rasterize';
 
@@ -14,7 +15,9 @@ type Arr = ArrayLike<number>;
 
 /** The [JSExport] surface of RoguelikeToolkit.World.MapEditor.Engine.WorldExports. */
 interface EngineApi {
-  Generate(seed: number, size: number, plates: number): number;
+  Generate(seed: number, size: number, plates: number, obliquity: number, flux: number, rotation: number,
+    climateRefresh: boolean, meridionalWind: number, windCellBlend: number, oceanHeat: number, oceanRain: number, aeolian: number): number;
+  ApplyEdits(tiles: number[], heightDelta: number[], pinHeight: number[], meta: number[], temperature: number[], precipitation: number[]): number;
   TileVectors(): Arr;
   Faces(): Arr;
   Heights(): Arr;
@@ -23,11 +26,15 @@ interface EngineApi {
   PlateDrift(): Arr;
   Flow(): Arr;
   Climate(): Arr;
+  LandCapacity(): Arr;
+  SeaIce(): Arr;
+  ClimateField(): Arr;
   Rivers(): Arr;
   WaterBodies(): Arr;
   Ranges(): Arr;
   Deposits(): Arr;
   CitySites(max: number): Arr;
+  CitySiteReasons(max: number): string[];
   NameStyles(): string[];
   NamePlaces(kinds: string[], seeds: number[], races: string[], cultures: string[], context: number[]): string[];
 }
@@ -58,14 +65,44 @@ function names(e: EngineApi, reqs: NameRequest[]): string[] {
     reqs.map((r) => r.culture), reqs.map((r) => r.context));
 }
 
+/** Which world the engine currently holds; recompute regenerates when the document asks for another. */
+let loaded = '';
+const planetOf = (p: GenerateParams) => ({ ...EARTH, ...p.planet });
+const modelOf = (p: GenerateParams) => ({ ...CLIMATE_MODEL_DEFAULTS, ...p.model });
+const worldKey = (p: GenerateParams): string => {
+  const w = planetOf(p), m = modelOf(p);
+  return `${p.seed}|${p.size}|${p.plates}|${w.obliquity}|${w.flux}|${w.rotation}|${m.climateRefresh}|${m.meridionalWind}|${m.windCellBlend}|${m.oceanHeat}|${m.oceanRain}|${m.aeolian}`;
+};
+const generateWorld = (e: EngineApi, p: GenerateParams): number => {
+  const w = planetOf(p), m = modelOf(p);
+  return e.Generate(p.seed, p.size, p.plates, w.obliquity, w.flux, w.rotation, m.climateRefresh, m.meridionalWind, m.windCellBlend, m.oceanHeat, m.oceanRain, m.aeolian);
+};
+
 async function generate(p: GenerateParams): Promise<WorldSnapshot> {
   const e = await api();
   const timings: Record<string, number> = { bootMs };
-  let t = performance.now();
-  const tileCount = e.Generate(p.seed, p.size, p.plates);
+  const t = performance.now();
+  const tileCount = generateWorld(e, p);
+  loaded = worldKey(p);
   timings.generateMs = performance.now() - t;
+  return pull(e, p, tileCount, timings, { features: true, names: true });
+}
 
-  t = performance.now();
+async function recompute(p: RecomputeParams): Promise<WorldSnapshot> {
+  const e = await api();
+  const timings: Record<string, number> = { bootMs };
+  let t = performance.now();
+  const tileCount = loaded === worldKey(p) ? -1 : generateWorld(e, p);
+  if (tileCount >= 0) loaded = worldKey(p);
+  const n = e.ApplyEdits(Array.from(p.edits.tiles), Array.from(p.edits.delta), Array.from(p.edits.pinHeight), Array.from(p.edits.meta), Array.from(p.edits.temperature), Array.from(p.edits.precipitation));
+  timings.recomputeMs = performance.now() - t;
+  // Names are the document's business on a recompute: surviving features keep theirs, and the
+  // editor asks only for the ones that are new.
+  return pull(e, p, n, timings, { features: !p.rastersOnly, names: false });
+}
+
+function pull(e: EngineApi, p: GenerateParams, tileCount: number, timings: Record<string, number>, want: { features: boolean; names: boolean }): WorldSnapshot {
+  let t = performance.now();
   const vectors = Float64Array.from(e.TileVectors());
   const faces = Int32Array.from(e.Faces());
   const heights = Float64Array.from(e.Heights());
@@ -74,10 +111,13 @@ async function generate(p: GenerateParams): Promise<WorldSnapshot> {
   const plateDrift = Float64Array.from(e.PlateDrift());
   const flow = Float64Array.from(e.Flow());
   const climate = Float64Array.from(e.Climate());
+  const capacity = Uint8Array.from(e.LandCapacity());
+  const seaIce = Uint8Array.from(e.SeaIce());
+  const climateField = projectClimate(e.ClimateField(), vectors, tileCount);
   const catalogs = {
     rivers: Int32Array.from(e.Rivers()), waterBodies: Int32Array.from(e.WaterBodies()),
     ranges: Int32Array.from(e.Ranges()), deposits: Int32Array.from(e.Deposits()),
-    citySites: Int32Array.from(e.CitySites(4000)),
+    citySites: Int32Array.from(e.CitySites(4000)), citySiteReasons: e.CitySiteReasons(4000),
   };
   const all = styles(e);
   const wanted = p.styles.length ? p.styles : DEFAULT_STYLES;
@@ -89,22 +129,27 @@ async function generate(p: GenerateParams): Promise<WorldSnapshot> {
   const rasters = rasterize({ vectors, faces, heights, biomes }, MAP_W, MAP_H);
   timings.rasterMs = performance.now() - t;
 
-  t = performance.now();
-  const features = extractFeatures({ seed: p.seed, vectors, faces, heights, biomes, flow, climate, tilePlate, ...catalogs, styles: chosen });
-  timings.featuresMs = performance.now() - t;
+  let features: WorldSnapshot['features'] = { features: [], rivers: [] };
+  if (want.features) {
+    t = performance.now();
+    features = extractFeatures({ seed: p.seed, vectors, faces, heights, biomes, flow, climate, tilePlate, ...catalogs, styles: chosen });
+    timings.featuresMs = performance.now() - t;
+  }
 
-  t = performance.now();
-  const named = features.features.filter((f) => f.request);
-  const placeNames = names(e, named.map((f) => f.request!));
-  named.forEach((f, i) => { f.name = placeNames[i]; });
-  timings.namesMs = performance.now() - t;
+  if (want.names) {
+    t = performance.now();
+    const named = features.features.filter((f) => f.request);
+    const placeNames = names(e, named.map((f) => f.request!));
+    named.forEach((f, i) => { f.name = placeNames[i]; });
+    timings.namesMs = performance.now() - t;
+  }
 
   const tileXY = new Float32Array(tileCount * 2);
   for (let i = 0; i < tileCount; i++) {
     const q = vecToMap(vectors[i * 3], vectors[i * 3 + 1], vectors[i * 3 + 2]);
     tileXY[i * 2] = q.x; tileXY[i * 2 + 1] = q.y;
   }
-  return { seed: p.seed, size: p.size, plates: p.plates, tileCount, rasters, tilePlate, plateDrift, tileXY, features, styles: chosen, timings };
+  return { seed: p.seed, size: p.size, plates: p.plates, tileCount, rasters, tilePlate, plateDrift, tileXY, capacity, seaIce, climate: climateField, features, styles: chosen, timings };
 }
 
 const post = (msg: WorkerResponse, transfer: Transferable[] = []) => (self as unknown as DedicatedWorkerGlobalScope).postMessage(msg, transfer);
@@ -123,6 +168,11 @@ self.addEventListener('message', async (ev: MessageEvent<WorkerRequest>) => {
       case 'generate': {
         const world = await generate(req.params);
         post({ id: req.id, ok: true, type: 'generate', world }, snapshotTransfer(world));
+        break;
+      }
+      case 'recompute': {
+        const world = await recompute(req.params);
+        post({ id: req.id, ok: true, type: 'recompute', world }, snapshotTransfer(world));
         break;
       }
       case 'names':

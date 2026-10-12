@@ -1,0 +1,5 @@
+.toggles { display: grid; grid-template-columns: 1fr 1fr; gap: var(--s-1) var(--s-3); }
+.dep { display: inline-grid; place-items: center; min-width: 20px; height: 16px; border-radius: var(--r-1); font: 600 var(--fs-xs)/1 system-ui; color: var(--on-color); font-style: normal; padding: 0 3px; }
+.legend { display: grid; grid-template-columns: 1fr 1fr; gap: var(--s-1) var(--s-3); font-size: var(--fs-xs); color: var(--muted); margin-top: var(--s-3); }
+.legend i { grid-column: 1 / -1; height: var(--s-3); border-radius: var(--r-1); border: 1px solid rgba(128, 128, 128, 0.35); }
+.legend span:last-child { text-align: right; }

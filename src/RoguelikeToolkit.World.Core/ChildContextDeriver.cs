@@ -71,6 +71,8 @@ internal static class ChildContextDeriver
             DominantBiome = cell.Biome,
             MeanTemperature = parent.MeanTemperature,
             MeanPrecipitation = parent.MeanPrecipitation,
+            MeanRainSeasonality = parent.MeanRainSeasonality,
+            MeanRainPhase = parent.MeanRainPhase,
             MeanMoisture = cell.Moisture,
             ElevationGradient = gradient,
             AspectRadians = aspect,

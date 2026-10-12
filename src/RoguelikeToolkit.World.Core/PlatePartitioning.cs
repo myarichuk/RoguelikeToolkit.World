@@ -8,7 +8,7 @@ namespace RoguelikeToolkit.World.Core;
 /// (<see cref="VoronoiPlatePartitioner"/>): exact, but its great-circle
 /// bisectors read as unnaturally straight plate borders. The default is now
 /// <see cref="NoisyFloodFillPlatePartitioner"/>, which grows plates at
-/// per-plate speeds over a noisy cost field so borders come out fractal.
+/// per-plate speeds through a fractally warped space so borders come out tortuous.
 /// </summary>
 public interface IPlatePartitioner
 {
@@ -91,23 +91,37 @@ public sealed class VoronoiPlatePartitioner : IPlatePartitioner
 }
 
 /// <summary>
-/// Default partitioner: simultaneous multi-source Dijkstra growth. Each plate
-/// spreads from its seed tile at its own speed over a per-plate noise cost
-/// field, so borders wiggle organically instead of following great circles.
-/// Ties resolve toward the lower plate ordinal, and heap order breaks
-/// remaining ties by tile index, keeping output deterministic.
+/// Default partitioner: simultaneous multi-source Dijkstra growth in a <em>warped</em> space. Each plate spreads
+/// from its seed tile at its own speed, and a step costs the chord between the two tiles' warped positions, where
+/// the warp is a fractal displacement field shared by every plate. The border between two plates is where their
+/// warped distances tie, i.e. a smooth bisector pulled back through the displacement, so it wanders at every
+/// scale of the noise: tortuous, jogged and non-convex, but each plate is still one connected region because it
+/// is a graph search.
+/// <para>
+/// Why the warp and not noise on the step cost (the earlier design): a front's distance is a sum of ~20 step
+/// costs, and a sum of independent noise averages out. Measured at size 4 over eight seeds, per-plate cost
+/// wobble made the border only 3% longer than a plain Voronoi bisector, i.e. the borders were straight. Thin
+/// "barrier" ridges did not help either (fronts walk round a ridge segment). A warp is coherent: every front that
+/// crosses a stretched area sees the same stretch, so it does not average away.
+/// </para>
+/// Ties resolve toward the lower plate ordinal, and heap order breaks remaining ties by tile index, keeping
+/// output deterministic.
 /// </summary>
 public sealed class NoisyFloodFillPlatePartitioner : IPlatePartitioner
 {
-    /// <summary>Border wiggle amplitude. 0 collapses to speed-weighted Voronoi.</summary>
-    public double Roughness { get; set; } = 1.6;
+    /// <summary>Warp amplitude, in unit-sphere lengths (one tile is about 0.045 at size 4). 0 collapses to speed-weighted Voronoi.</summary>
+    public double Warp { get; set; } = 0.8;
 
-    /// <summary>Spatial frequency of the border noise (unit-sphere vectors).</summary>
-    public double NoiseFrequency { get; set; } = 4.5;
+    /// <summary>Spatial frequency of the coarsest warp octave (unit-sphere vectors). Higher means more, smaller wiggles.</summary>
+    public double NoiseFrequency { get; set; } = 1.5;
+
+    /// <summary>Warp octaves. Each adds a finer scale of wiggle at half the amplitude (fractal borders).</summary>
+    public int Octaves { get; set; } = 6;
 
     // Cached scratch: allocated once per tile-count shape so repeated
     // Execute calls stay allocation-free (steady-state zero-GC).
     private double[] _speeds = Array.Empty<double>();
+    private Vector3D[] _warped = Array.Empty<Vector3D>();
     private double[] _dist = Array.Empty<double>();
     private int[] _owner = Array.Empty<int>();
     private double[] _hDist = Array.Empty<double>();
@@ -128,6 +142,7 @@ public sealed class NoisyFloodFillPlatePartitioner : IPlatePartitioner
         if (_dist.Length < n)
         {
             _dist = new double[n];
+            _warped = new Vector3D[n];
             _owner = new int[n];
             _hDist = new double[Math.Max(16, n * 2)];
             _hTile = new int[_hDist.Length];
@@ -140,7 +155,11 @@ public sealed class NoisyFloodFillPlatePartitioner : IPlatePartitioner
 
         var dist = _dist;
         var owner = _owner;
+        var warped = _warped;
         for (int i = 0; i < n; i++) { dist[i] = double.PositiveInfinity; owner[i] = -1; }
+
+        // One shared displacement field, evaluated once per tile (the old per-plate wobble evaluated noise per edge).
+        for (int i = 0; i < n; i++) warped[i] = WarpedPosition(positions[i], seed);
 
         // Seed tiles: nearest tile to each seed position. Later seeds skip
         // tiles already taken so no plate starts orphaned.
@@ -171,8 +190,6 @@ public sealed class NoisyFloodFillPlatePartitioner : IPlatePartitioner
         }
 
         Span<int> neighbors = stackalloc int[6];
-        double roughness = Math.Max(0.0, Roughness);
-        double freq = NoiseFrequency;
 
         while (heapCount > 0)
         {
@@ -187,15 +204,11 @@ public sealed class NoisyFloodFillPlatePartitioner : IPlatePartitioner
             int plate = owner[cur];
 
             int adjacent = store.GetAdjacent(cur, neighbors);
-            // Every step costs at least 1/speed (wobble >= 0), so a neighbor already
-            // settled cheaper than that bound can neither improve nor tie: skip the
-            // noise evaluation entirely.
-            double minStep = 1.0 / Math.Max(0.05, _speeds[plate]);
+            double invSpeed = 1.0 / Math.Max(0.05, _speeds[plate]);
             for (int k = 0; k < adjacent; k++)
             {
                 int nb = neighbors[k];
-                if (curDist + minStep > dist[nb] + 1e-12) continue;
-                double step = EntryCost(positions[nb], plate, _speeds[plate], seed, roughness, freq);
+                double step = (warped[nb] - warped[cur]).Length * invSpeed;
                 double nd = curDist + step;
                 double od = dist[nb];
                 if (nd < od - 1e-12 || (Math.Abs(nd - od) <= 1e-12 && plate < owner[nb]))
@@ -215,17 +228,16 @@ public sealed class NoisyFloodFillPlatePartitioner : IPlatePartitioner
         _hTile = hTile;
     }
 
-    private static double EntryCost(Vector3D pos, int plate, double speed, int seed, double roughness, double freq)
+    /// <summary>Position plus a fractal vector displacement. Pure function of position and seed.</summary>
+    private Vector3D WarpedPosition(Vector3D pos, int seed)
     {
-        double wobble = 0.0;
-        if (roughness > 0.0)
-        {
-            // Per-plate noise field so neighboring plates disagree about the
-            // cheapest path and the border between them wanders.
-            double noise = SphereNoise.Fbm(pos * freq, seed + 6000 + plate * 131) * 0.5 + 0.5;
-            wobble = roughness * noise;
-        }
-        return (1.0 + wobble) / Math.Max(0.05, speed);
+        if (Warp <= 0.0) return pos;
+        var q = pos * NoiseFrequency;
+        int oct = Math.Max(1, Octaves);
+        double dx = SphereNoise.Fbm(q, seed + 6100, oct);
+        double dy = SphereNoise.Fbm(q, seed + 6200, oct);
+        double dz = SphereNoise.Fbm(q, seed + 6300, oct);
+        return new Vector3D(pos.X + dx * Warp, pos.Y + dy * Warp, pos.Z + dz * Warp);
     }
 
     private static void Push(ref double[] hDist, ref int[] hTile, ref int count, double d, int tile)

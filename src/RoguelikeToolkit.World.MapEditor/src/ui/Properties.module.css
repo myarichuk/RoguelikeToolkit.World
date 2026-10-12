@@ -1,0 +1,10 @@
+.right { grid-area: right; background: var(--panel); border-left: 1px solid var(--line); display: flex; flex-direction: column; min-height: 0; }
+.body { overflow-y: auto; flex: 1; min-height: 0; }
+.sheetHandle { display: none; }
+
+@media (max-width: 900px) {
+  /* Properties becomes a bottom sheet over the panels, above the status bar, instead of vanishing. */
+  .right { position: fixed; left: 0; right: 0; bottom: var(--status-h); z-index: 5; max-height: 55vh; border-left: 0; border-top: 1px solid var(--line); box-shadow: 0 -6px 24px rgba(0, 0, 0, 0.4); }
+  .right:not(.open) .body { display: none; }
+  .sheetHandle { display: flex; align-items: center; gap: var(--s-3); width: 100%; border: 0; border-radius: 0; background: var(--panel); min-height: 36px; padding: var(--s-2) var(--s-4); }
+}

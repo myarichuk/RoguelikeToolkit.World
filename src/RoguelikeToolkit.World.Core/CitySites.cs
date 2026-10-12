@@ -46,9 +46,14 @@ public static class CitySiteScorer
         foreach (var r in rivers.Rivers)
             foreach (var t in r.Path) riverTiles.Add(t);
 
+        // Sea ice is a pure function of the climate (no climate layer: all None). The polar pack never thaws, so it
+        // is not water a settlement can use (no harbour, no boats, no fishing); seasonal ice is, but closes the coast
+        // for part of the year (see SettlementScoring.WinterIce).
+        var ice = SeaIce.Mask(store);
         var waterTiles = new HashSet<int>(riverTiles);
         for (int w = 0; w < store.TileCount; w++)
         {
+            if (ice[w] == SeaIceKind.Perennial) continue;
             if (hasHydro && hydro[w].WaterBodyId >= 0) waterTiles.Add(w);
             else if (hasElev && elev[w].Height < 0f) waterTiles.Add(w);
         }
@@ -93,14 +98,21 @@ public static class CitySiteScorer
             // Fresh water: water on tile/neighbor, else any water within FreshWaterRadiusKm.
             bool water = waterTiles.Contains(i);
             // Tile-level hydro/sea membership is already in waterTiles.
+            bool touchesSeasonalIce = false, touchesOtherWater = water;
             if (!water)
             {
                 int adj = store.GetAdjacent(i, neighbors);
-                for (int k = 0; k < adj && !water; k++)
+                for (int k = 0; k < adj; k++)
                 {
-                    if (waterTiles.Contains(neighbors[k])) water = true;
+                    int n = neighbors[k];
+                    if (!waterTiles.Contains(n)) continue;
+                    water = true;
+                    if (ice[n] == SeaIceKind.Seasonal) touchesSeasonalIce = true;
+                    else touchesOtherWater = true;
                 }
             }
+            // Winter-bound only when ice is all the water there is: one open sea tile, river or lake keeps the harbour.
+            bool winterIce = touchesSeasonalIce && !touchesOtherWater;
             if (!water && waterTiles.Count > 0)
             {
                 if (radiusCoversGlobe) water = true;
@@ -113,7 +125,7 @@ public static class CitySiteScorer
             if (filter.RequireFreshWater && !water) continue;
 
             var reasons = new List<string>();
-            double score = SettlementScoring.Score(water, biome, h, effDanger, habDelta, reasons);
+            double score = SettlementScoring.Score(water, biome, h, effDanger, habDelta, reasons, winterIce);
             if (habDelta != 0) reasons.Add("history");
             if (dangerDelta != 0) reasons.Add("past-events");
 

@@ -1,0 +1,24 @@
+/* The shell grid. Each region's component claims its own `grid-area` (topbar, tools, right, status). */
+.app {
+  display: grid; height: 100%;
+  grid-template-columns: 64px 300px 1fr 320px;
+  grid-template-rows: auto 1fr auto;
+  grid-template-areas: 'top top top top' 'tools left center right' 'status status status status';
+}
+.left { grid-area: left; background: var(--panel); border-right: 1px solid var(--line); display: flex; flex-direction: column; min-height: 0; }
+.center { grid-area: center; position: relative; min-width: 0; min-height: 0; }
+
+.tabs { display: flex; border-bottom: 1px solid var(--line); }
+.tab { flex: 1; border: 0; border-radius: 0; background: transparent; padding: var(--s-3) 0; color: var(--muted); }
+.tab[aria-selected='true'] { color: var(--fg); box-shadow: inset 0 -2px var(--accent); }
+.tabpanel { flex: 1; min-height: 0; display: flex; flex-direction: column; }
+.scroll { overflow-y: auto; flex: 1; min-height: 0; }
+
+.toast { text-align: left; font: inherit; color: inherit; position: fixed; right: 16px; bottom: 36px; max-width: 520px; background: var(--panel); border: 1px solid var(--danger); border-radius: var(--r-2); padding: var(--s-3) var(--s-4); cursor: pointer; z-index: 10; box-shadow: 0 6px 24px rgba(0, 0, 0, 0.4); }
+.toast pre { white-space: pre-wrap; max-height: 240px; overflow: auto; font-size: var(--fs-sm); margin: var(--s-3) 0; }
+
+@media (max-width: 900px) {
+  .app { grid-template-columns: 52px 1fr; grid-template-rows: auto 1fr 40vh auto; grid-template-areas: 'top top' 'tools center' 'left left' 'status status'; }
+  /* The Properties sheet handle floats over the bottom of this panel; keep the footer clear of it. */
+  .left { padding-bottom: 36px; }
+}

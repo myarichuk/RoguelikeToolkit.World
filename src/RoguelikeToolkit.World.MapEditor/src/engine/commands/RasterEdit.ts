@@ -1,7 +1,7 @@
 import type { Rect } from '../core/geo';
 import type { Command } from './Command';
 
-type Raster = Float32Array | Uint8Array;
+type Raster = Float32Array | Uint8Array | Int8Array;
 
 /** Block size for copy-on-write snapshots: 64x64 texels (16 KB of Float32). */
 export const BLOCK = 64;

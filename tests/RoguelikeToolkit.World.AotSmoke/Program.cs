@@ -39,12 +39,51 @@ using (var world = new WorldBuilder().WithSize(3).WithSeed(42).Build())
     Mix((ulong)world.Rivers.Rivers.Count);
     Mix((ulong)world.WaterBodies.Bodies.Count);
 
+    // Ocean currents (stream-function hierarchy, heat relaxation): the climate layer carries their heat and flow.
+    var climateLayer = world.Map.DataStore.GetSpan<ClimateInfo>();
+    double currentHeat = 0;
+    for (int i = 0; i < climateLayer.Length; i++)
+    {
+        Mix((ulong)BitConverter.SingleToInt32Bits(climateLayer[i].OceanHeat));
+        Mix((ulong)BitConverter.SingleToInt32Bits(climateLayer[i].CurrentX));
+        currentHeat += Math.Abs(climateLayer[i].OceanHeat);
+    }
+    Check(currentHeat > 0, "ocean currents warmed or cooled some coast");
+
     // 2. Lazy zoom: region -> local.
     var region = world.GetRegion(world.Resolve(vienna).TileIndex);
     var local = region.GetLocal(0);
     Check(region.Cells.Length > 0 && local.Tiles.Length > 0, "region/local zoom");
     Mix((ulong)region.Cells.Length);
     Mix((ulong)local.Tiles.Length);
+}
+
+// 2b. Planet parameters (tilt, flux, spin, custom insolation) and hand edits re-derived by Recompute: the
+// climate refresh pass, meridional wind, ClimateModel and the edit layer all run under the AOT compiler too.
+foreach (var planet in new[]
+{
+    new PlanetParameters { ObliquityDegrees = 60, StellarFlux = 1.1, RotationRate = 2 },
+    new PlanetParameters { Insolation = new TidallyLockedInsolation(new Vector3D(1, 0, 0)) },
+})
+{
+    using var tilted = new WorldBuilder().WithSize(3).WithSeed(7).WithPlanet(planet).WithUserEdits().Build();
+    var tClimate = tilted.Map.DataStore.GetSpan<ClimateInfo>();
+    for (int i = 0; i < tClimate.Length; i++)
+    {
+        Mix((ulong)BitConverter.SingleToInt32Bits(tClimate[i].Temperature));
+        Mix((ulong)BitConverter.SingleToInt32Bits(tClimate[i].RainSeasonality));
+        Mix((ulong)BitConverter.SingleToInt32Bits(tClimate[i].RainPhase));
+    }
+    Check(tilted.Editable, "editable world");
+    tilted.Edits[tilted.TileCount / 2] = new UserEditInfo { HeightDelta = 0.2f };
+    tilted.Edits[tilted.TileCount / 3] = new UserEditInfo { TemperatureDelta = 0.15f, PrecipitationDelta = -0.1f };
+    tilted.Recompute();
+    var tClimate2 = tilted.Map.DataStore.GetSpan<ClimateInfo>();
+    Mix((ulong)BitConverter.SingleToInt32Bits(tClimate2[tilted.TileCount / 3].Temperature));
+    Mix((ulong)BitConverter.SingleToInt32Bits(tClimate2[tilted.TileCount / 3].Precipitation));
+    var tHeights = tilted.Map.DataStore.GetSpan<ElevationInfo>();
+    Mix((ulong)BitConverter.SingleToInt32Bits(tHeights[tilted.TileCount / 2].Height));
+    Mix((ulong)tilted.Rivers.Rivers.Count);
 }
 
 // 3. Pipeline discovery (reflection over Core's stage types) + contract validation.

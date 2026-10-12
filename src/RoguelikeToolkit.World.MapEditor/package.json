@@ -9,6 +9,7 @@
     "build": "tsc --noEmit && vite build",
     "typecheck": "tsc --noEmit",
     "test": "vitest run",
+    "e2e": "node e2e/run-all.cjs",
     "preview": "vite preview"
   },
   "dependencies": {

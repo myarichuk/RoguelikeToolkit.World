@@ -5,7 +5,7 @@ A browser map editor in the style of Inkarnate, built on `RoguelikeToolkit.World
 - **Generate:** Core generates the planet in the browser (.NET → WebAssembly, in a worker).
 - **Draw:** the editor turns the planet into a hand-drawn map.
 - **Edit:** you sculpt terrain, paint biomes, place stamps, write labels and draw rivers.
-- **Export:** vector SVG.
+- **Export:** vector SVG, PNG, and WKT (a CSV of rivers, towns, deposits and area anchors in lon/lat, for GIS tools).
 
 ![editor](docs/editor-map.jpg)
 
@@ -31,6 +31,7 @@ npm run dev              # http://localhost:5173
 On Windows, use `build.ps1` with `-EngineOnly` / `-Aot`. Other scripts:
 
 - `npm test`: vitest, engine logic, no browser.
+- `npm run e2e`: browser checks against the real engine (headless Chromium + Playwright); see [`e2e/README.md`](e2e/README.md).
 - `npm run typecheck`
 
 Requirements: a WebGL2 browser with `EXT_color_buffer_float`. That covers every current desktop browser.
@@ -43,11 +44,11 @@ Requirements: a WebGL2 browser with `EXT_color_buffer_float`. That covers every 
 | Features | Rivers, lakes, seas and oceans, mountain ranges, valleys and canyons, forests, a settlement hierarchy (capital, city, town, village) and 13 resource-deposit types. Features are extracted from Core's catalogs and named by Core's `NameGenerator`. "Sea" is a new place kind. |
 | Inspect | Hover and click any feature to see its facts: area, length, discharge, climate, biome mix, deposits, culture. Rename it, re-roll its name in its own culture, zoom to it, or delete it. Delete also removes its label, river and marker, as one undo step. |
 | Filters | View presets: Map, Plates, Plates + topography, Topography, Biomes, Resources. There are also per-layer toggles and per-kind and per-deposit filters (coal, iron, gems…). Hidden features cannot be picked. |
-| Edit | Terrain brush (raise, lower, smooth, flatten, roughen, paint land, paint sea). Biome brush. Stamps: place, scatter or erase. Select, move, rotate, scale, flip and delete stamps and labels. Text tool: new labels are named in the local culture. River tool. Every edit is undoable. |
+| Edit | Terrain brush (raise, lower, smooth, flatten, roughen, paint land, paint sea). Biome brush. Land-use brush (farmland, ashlands, pasture, built-up: drawn over the biome, never changing it). Climate brush (temperature and rainfall offsets, tinted while active). Stamps: place, scatter or erase. Select, move, rotate, scale, flip and delete stamps and labels. Text tool: new labels are named in the local culture. River tool. Every edit is undoable. |
 | Text | All labels are vector glyph outlines (opentype.js). Baselines can be straight, arched, or follow a river. The same path data is drawn on screen and written to SVG. |
 | Content | Packs carry themes, biomes, assets (procedural generator presets or authored SVG with palette tokens), placement rules and fonts. Packs layer by id. Try **Packs → Example**: `public/packs/example-pack.json`. |
 | Theming | The live theme editor covers map colors, line weights, biome colors, stamp inks, typography per label kind, and the editor chrome. Edits go to a "My edits" overlay pack: non-destructive, resettable, exportable as a pack. |
-| Files | `.wmap` (gzip; JSON header + raw typed-array rasters); SVG with Inkscape layers; PNG of the current view. |
+| Files | `.wmap` (gzip; JSON header + raw typed-array rasters); SVG with Inkscape layers; PNG of the current view; `.wkt.csv` (columns `wkt,layer,kind,name,id,attrs`, EPSG:4326, rivers cut at the antimeridian; areas are their label anchor because the document stores them as tiles, not outlines). |
 
 Keys:
 
@@ -103,6 +104,18 @@ The map is **Mercator, clipped at ±79.17°**, giving a 2048×1536 map-unit (mu)
 | colorize | 1× | biome ids → theme palette with an 8-tap blend |
 | display | screen | per frame; mode (styled, biomes, elevation, plates) and layer flags in one shader |
 
+- **Brush strokes become physics on demand.** A stroke only repaints pixels; **Apply physics** (terrain and biome panels) makes it count:
+  - The pixel difference against what the engine last produced is averaged per icosphere tile into a sparse edit table. Sculpt edits are added to the tectonic relief *before* climate and erosion, so a drawn ridge casts a rain shadow, sheds talus and drains like any mountain. Fix edits pin the final height instead. A repainted biome (covering 40% of a tile) pins that tile's biome: hydrology classifies its cover from it and the biome stage keeps it.
+  - **Climate paint** is a pair of signed-byte rasters (`warmth`, `wetness`, full scale ±0.4 temperature / precipitation units) kept in the document and saved in the `.wmap` (v3+; older files read as unpainted). Unlike height and biome strokes it is not diffed against a baseline: it is an input, re-read whole on every apply, and each tile takes the mean paint under it (below 0.01 it counts as a stray dab). The engine adds the offset last, so winds, rain shadows and ocean currents are untouched elsewhere. Revert clears it; undo restores it.
+  - **Land use** (farmland, ashlands) is its own byte raster (`landuse`, `.wmap` v4), drawn over the biome by the renderer. A biome is what the climate grows; farmland is what people did to it, so it sits on Plains, Forest or Savanna without destroying them, and the physics neither reads nor rewrites it (Apply and Revert leave it alone; Clear removes it). Its ids 1-4 are Core's `LandUseId`, and on Apply each land tile that is at least 40% one painted use becomes a `PinLandUse` pin in the edit table (the raster stays the authority: erase the paint and the pin goes; water is never pinned). Core never reads a pin back into the physics, so this changes nothing visible by itself; it is what a host's allocation plugins see as "the author decided this" (`docs/API.md`, *Land use*). Plugin-allocated land use is deliberately **not** composited into this raster: it would then look like hand paint and be re-pinned on the next Apply.
+  - **Climate** (View > Climate, with Temp / Rain / Currents / Seasons and a legend; presets *Climate* and *Winds & currents*) colours the whole map by what Core's climate stage produced, and **Wind arrows** / **Current arrows** draw the prevailing wind and the sea currents (red = warms the coast, blue = cools it; spacing follows the zoom). While any of them is on, the status bar reads out the tile under the cursor: temperature and rain index, wind and current direction and strength, the seasonal swing in K, and any painted offset from the Climate tool. Like capacity it is derived: Apply refreshes it, undo restores it, `.wmap` stores it as an optional `climate` blob (nine floats per tile; older files show nothing until the next Apply). Temperature is the engine's 0..1 index, not a thermometer: one unit is about 55 K, and the latitude profile is linear, so mid-latitudes read colder than Earth's.
+  - **Land capacity** (View > Land capacity, with a Farming/Grazing/Game/Timber/Fish selector and a hover readout in the status bar) tints each tile by what it could carry, from Core's `LandCapacityStage`. It is derived, so it lives with the physics state: Apply refreshes it, undo restores it, and `.wmap` stores it as an optional `capacity` blob (older files simply show nothing until the next Apply). Coarse worlds over-credit farmland (see `docs/API.md`). Files saved before v4 painted these as biome ids 11 and 13: on load those pixels move into the land-use layer and the biome takes the nearest ordinary biome, so old maps open looking the same.
+  - The planet (axial tilt, stellar flux, spin) is set in the Generate panel, stored in the `.wmap` settings (an older file reads as Earth) and handed to the engine on every apply, so re-deriving a tilted world keeps it tilted.
+  - The climate model has its own Generate-panel section: re-run climate after erosion, diagonal (Coriolis) wind, sea-current warmth and rain, and wind-erosion passes. They are stored in the `.wmap` settings (an older file reads as the calibrated defaults), handed to the engine on every apply, and switching refresh off also restores the river threshold that single-pass climate was calibrated at.
+  - `WorldExports.ApplyEdits` (tiles, sculpt deltas, pinned heights, flag/biome words, temperature and precipitation offsets) replaces the engine's edit table and runs `World.Recompute()`: elevation, climate, erosion, hydrology, biomes and the river, lake, range and deposit catalogs, never the plate simulation. The call is pure in (seed, edits), so it is idempotent and never double-erodes. It is global (a ridge can send a river basin elsewhere), which is why it is a button and not part of the dab.
+  - Identity survives. New features are matched to old ones by shared tiles or shared riverbed (`world/reconcile.ts`), not by ordinal id, so names carry over; deleted engine features are tombstoned and stay deleted; hand-made rivers, stamps and labels are untouched; land use (below) is never touched. Savanna and Mediterranean are Core biomes (warm ground with a summer wet season, and temperate ground with a winter one and a dry summer; the climate layer's "Wet season" shows which, brown for summer rain and teal for winter rain), so painted savanna or Mediterranean is pinned like any other biome; a map saved before savanna was a Core biome, with savanna painted, pins it on its next Apply. A cached climate array from before the rain phase existed is widened on load (the season reads as unknown until the next Apply physics).
+  - One undo step swaps terrain, biomes, features, rivers, labels, stamps and the edit table together. **Revert** drops the table and reproduces the generated world exactly. A `.wmap` stores the sparse table (never the derived rasters); on opening, the baseline is rebuilt from it deterministically.
+  - Sub-tile detail is the price: the table is per tile, so the applied raster is the engine's, not your pixels.
 - **Edits are incremental.** A brush dab dirties a rect D:
   - The flood runs on D ⊕ 2·reach.
   - Only D ⊕ reach is committed.
@@ -157,7 +170,7 @@ The rest is SwiftShader GPU work, not editor cost:
 - **Projection, not shader tuning, fixed the polar distortion.** Once styling is computed in map space on a conformal projection, coastal waves look the same at 70° as at the equator.
 - **Feature extraction belongs in JS, not Core.**
   - Core already exposes rivers, water bodies, ranges, deposits and city sites as catalogs.
-  - The cartographic layer (sea or ocean split, settlement hierarchy, label anchors, details text) is presentation. It runs in about 30 ms in V8.
+  - The cartographic layer (ocean divided into basins at its straits, settlement hierarchy, label anchors, details text) is presentation. It runs in about 30 ms in V8.
   - Naming stays in Core, batched into one interop call.
 - **Labels as outlines, not text:**
   - The SVG looks the same everywhere, with no font installation.

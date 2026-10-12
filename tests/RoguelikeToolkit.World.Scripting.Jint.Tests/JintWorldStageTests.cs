@@ -15,6 +15,8 @@ public class JintWorldStageTests
         map.RegisterLayer<ElevationInfo>(new ElevationLayer(map.DataStore));
         map.RegisterLayer<ClimateInfo>(new ClimateLayer(map.DataStore));
         map.RegisterLayer<LocalMapInfo>(new LocalMapLayer(map.DataStore, 42, new TectonicPlateLayer(map.DataStore, 4, 42)));
+        map.RegisterLayer<LandCapacityInfo>(new LandCapacityLayer(map.DataStore));
+        map.RegisterLayer<LandUseInfo>(new LandUseLayer(map.DataStore));
         map.DataStore.Allocate();
         return map;
     }
@@ -171,6 +173,28 @@ public class JintWorldStageTests
     }
 
     [Fact]
+    public void SetBiome_AcceptsTheDesertFamily_AndRejectsUnknownIds()
+    {
+        JintWorldStage Stage(string body) => new(new JintStageSpec
+        {
+            Name = "biome-js", Order = 21, Source = body,
+            Reads = new[] { typeof(LocalMapInfo) }, Writes = new[] { typeof(LocalMapInfo) },
+        });
+
+        using var map = TinyMap();
+        Stage("function execute() { setBiome(0, BIOME.Badlands); setBiome(1, BIOME.RockDesert); setBiome(2, BIOME.SaltFlat); setBiome(3, BIOME.ColdDesert); }").Execute(map);
+        var span = map.DataStore.GetSpan<LocalMapInfo>();
+        Assert.Equal(BiomeType.Badlands, span[0].Biome);
+        Assert.Equal(BiomeType.RockDesert, span[1].Biome);
+        Assert.Equal(BiomeType.SaltFlat, span[2].Biome);
+        Assert.Equal(BiomeType.ColdDesert, span[3].Biome);
+
+        // 10, 11 and 13 are editor-only paint biomes; Core never emits them.
+        Assert.ThrowsAny<System.Exception>(() => Stage("function execute() { setBiome(0, 13); }").Execute(map));
+        Assert.ThrowsAny<System.Exception>(() => Stage("function execute() { setBiome(0, 300); }").Execute(map));
+    }
+
+    [Fact]
     public void NoClrAccess()
     {
         using var map = TinyMap();
@@ -229,8 +253,8 @@ public class JintWorldStageTests
                 Name = Path.GetFileName(file),
                 Order = 21,
                 Source = File.ReadAllText(file),
-                Reads = new[] { typeof(ClimateInfo), typeof(LocalMapInfo) },
-                Writes = new[] { typeof(ClimateInfo), typeof(LocalMapInfo) },
+                Reads = new[] { typeof(ClimateInfo), typeof(LocalMapInfo), typeof(LandCapacityInfo), typeof(LandUseInfo) },
+                Writes = new[] { typeof(ClimateInfo), typeof(LocalMapInfo), typeof(LandUseInfo) },
             });
 
             stage.Execute(map); // must not throw
