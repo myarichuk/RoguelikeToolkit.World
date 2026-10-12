@@ -73,6 +73,93 @@ public class PlatePartitionTests
             $"Flood-fill should perturb borders, only {differing}/{flood.Length} tiles differ.");
     }
 
+    private static readonly int[] MeanderSeeds = { 1, 7, 11, 42, 3, 99, 123, 2024 };
+
+    /// <summary>Components beyond one per plate: 0 means every plate is a single connected region.</summary>
+    private static int ExtraFragments(WorldDataStore store, int[] ids, int plates)
+    {
+        var seen = new bool[ids.Length];
+        var present = new HashSet<int>();
+        var stack = new Stack<int>();
+        var nb = new int[6];
+        int components = 0;
+        for (int i = 0; i < ids.Length; i++)
+        {
+            present.Add(ids[i]);
+            if (seen[i]) continue;
+            components++;
+            seen[i] = true;
+            stack.Push(i);
+            while (stack.Count > 0)
+            {
+                int c = stack.Pop();
+                int adjacent = store.GetAdjacent(c, nb);
+                for (int k = 0; k < adjacent; k++)
+                {
+                    int j = nb[k];
+                    if (!seen[j] && ids[j] == ids[i]) { seen[j] = true; stack.Push(j); }
+                }
+            }
+        }
+        return components - present.Count;
+    }
+
+    [Fact]
+    public void FloodFill_EveryPlateIsOneConnectedRegion()
+    {
+        // The warp bends the metric, never the graph: a plate is a Dijkstra tree, so it cannot split. Pinned because a
+        // displacement-based approach (warp the lookup, then argmin) would silently leave enclaves and islands.
+        foreach (int seed in MeanderSeeds)
+        {
+            using var store = new WorldDataStore(3);
+            var ids = new int[store.TileCount];
+            new NoisyFloodFillPlatePartitioner().Partition(store, store.GetTileVectors(), MakeSeeds(seed, 12), ids, seed);
+            Assert.Equal(0, ExtraFragments(store, ids, 12));
+        }
+    }
+
+    // Mean over the border tiles of |dot(tile, own seed) - dot(tile, best rival seed)|: 0 on a plain Voronoi bisector.
+    private static double BisectorDeparture(IPlatePartitioner partitioner, int seed)
+    {
+        using var store = new WorldDataStore(4);
+        var pos = store.GetTileVectors();
+        var seeds = MakeSeeds(seed, 12);
+        var ids = new int[store.TileCount];
+        partitioner.Partition(store, pos, seeds, ids, seed);
+        var nb = new int[6];
+        double sum = 0;
+        int borders = 0;
+        for (int i = 0; i < ids.Length; i++)
+        {
+            int adjacent = store.GetAdjacent(i, nb);
+            bool border = false;
+            for (int k = 0; k < adjacent; k++) if (ids[nb[k]] != ids[i]) { border = true; break; }
+            if (!border) continue;
+            double own = Vector3D.Dot(pos[i], seeds[ids[i]]);
+            double rival = double.NegativeInfinity;
+            for (int s = 0; s < seeds.Length; s++) if (s != ids[i]) rival = Math.Max(rival, Vector3D.Dot(pos[i], seeds[s]));
+            sum += Math.Abs(own - rival);
+            borders++;
+        }
+        return borders == 0 ? 0 : sum / borders;
+    }
+
+    [Fact]
+    public void FloodFill_BordersWanderOffTheBisector_MoreThanWithoutTheWarp()
+    {
+        // Per-plate noise on the step cost used to leave borders ~3% longer than a Voronoi bisector (it sums out over
+        // a path). The shared warp has to put borders measurably further from the bisector than the same growth with
+        // the warp off. Measured over these eight size-4 worlds: 0.133 with the warp, 0.122 without. This is a regression guard
+        // (it fails with Warp = 0), not a realism score: it cannot tell a meander from a plate that is merely less circular.
+        double warped = 0, flat = 0;
+        foreach (int seed in MeanderSeeds)
+        {
+            warped += BisectorDeparture(new NoisyFloodFillPlatePartitioner(), seed);
+            flat += BisectorDeparture(new NoisyFloodFillPlatePartitioner { Warp = 0.0 }, seed);
+        }
+        Assert.True(warped > flat * 1.05, $"warped {warped / MeanderSeeds.Length:F3} vs flat {flat / MeanderSeeds.Length:F3}");
+    }
+
     [Fact]
     public void Voronoi_IsDeterministic()
     {
