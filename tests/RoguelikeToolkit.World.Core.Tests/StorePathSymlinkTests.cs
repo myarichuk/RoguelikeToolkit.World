@@ -1,3 +1,5 @@
+using System.Reflection;
+using System.Runtime.Versioning;
 using RoguelikeToolkit.World.Core.Storage;
 
 namespace RoguelikeToolkit.World.Core.Tests;
@@ -22,6 +24,13 @@ public sealed class StorePathSymlinkTests : IDisposable
         try { Directory.Delete(_outside, true); } catch (IOException) { }
     }
 
+    // CI also runs this suite against the netstandard2.1 build of Core (-p:CoreTargetFramework=netstandard2.1, the Unity
+    // target). That API surface has no way to read a link target, so it keeps the lexical containment check by design
+    // (see WorldDataStore.ResolveStorePath); the escape tests only apply to builds that can follow links.
+    private static readonly bool CoreFollowsLinks =
+        !(typeof(WorldDataStore).Assembly.GetCustomAttribute<TargetFrameworkAttribute>()?.FrameworkName ?? string.Empty)
+            .StartsWith(".NETStandard", StringComparison.Ordinal);
+
     private static void Allocate(string path)
     {
         using var store = new WorldDataStore(1, path);
@@ -39,6 +48,7 @@ public sealed class StorePathSymlinkTests : IDisposable
     [Fact]
     public void ADirectoryLinkPointingOutside_IsRejected()
     {
+        if (!CoreFollowsLinks) return;
         var link = Path.Combine(_inside, "escape");
         if (!TryLinkDirectory(link, _outside)) return;
 
@@ -49,6 +59,7 @@ public sealed class StorePathSymlinkTests : IDisposable
     [Fact]
     public void AFileLinkPointingOutside_IsRejected()
     {
+        if (!CoreFollowsLinks) return;
         var target = Path.Combine(_outside, "victim.bin");
         File.WriteAllBytes(target, new byte[16]);
         var link = Path.Combine(_inside, "store.bin");
@@ -62,6 +73,7 @@ public sealed class StorePathSymlinkTests : IDisposable
     [Fact]
     public void AChainOfLinks_IsFollowedToItsEnd()
     {
+        if (!CoreFollowsLinks) return;
         var hop = Path.Combine(_inside, "hop");
         var escape = Path.Combine(_inside, "escape");
         if (!TryLinkDirectory(escape, _outside) || !TryLinkDirectory(hop, escape)) return;
