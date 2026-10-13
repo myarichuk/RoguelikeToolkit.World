@@ -1,5 +1,14 @@
 # Changelog
 
+## [2.0.1](https://github.com/myarichuk/RoguelikeToolkit.World/compare/v2.0.0...v2.0.1) (2026-10-13)
+
+
+### Bug Fixes
+
+* **core:** resolve symlinks in the file-store path check, validate stage knobs, document threading ([2fa7de2](https://github.com/myarichuk/RoguelikeToolkit.World/commit/2fa7de2166cc153db179dc5cbd82a31386bd6679))
+* **core:** validate entity snapshot/delta free lists and bound header-driven allocation ([a43fc5f](https://github.com/myarichuk/RoguelikeToolkit.World/commit/a43fc5f70506e557201b657ea2ad171388c6d2fb))
+* **editor,jint:** make regeneration, edits and script writes fail safely ([3c2f480](https://github.com/myarichuk/RoguelikeToolkit.World/commit/3c2f480d2622b2076142723902413f0e00e1e378))
+
 ## [2.0.0](https://github.com/myarichuk/RoguelikeToolkit.World/compare/v1.2.0...v2.0.0) (2026-10-13)
 
 
