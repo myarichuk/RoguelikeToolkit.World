@@ -1,64 +1,58 @@
 Key: catfolk
 DisplayName: "Catfolk"
-EpithetChance: 50
-CompoundChance: 40
+EpithetChance: 10 # was 50 - that's why you got Mothwhisper Nightsinger double titles
+CompoundChance: 20 # was 40 - cats are short names
 LineageDefault: Matrilineal
-Provenance: original wandering tale-keepers; a single road-name plus an earned deed-title, no parent-names or clans
+Provenance: original wandering tale-keepers; one short true-name, pride known by mother's name, deed-names only for elders
 Patronymic: false
-Banned: [tabaxi, milk, mice, mouse]
+Banned: [tabaxi, milk, mice, mouse, cloud, quest, whisper, chaser, singer, star]
+
 GivenStems:
-  - {Form: Dusk, Gloss: dusk-hunter}
-  - {Form: Hush, Gloss: silent-step}
-  - {Form: Drift, Gloss: drifter}
-  - {Form: Quest, Gloss: curiosity-seeker}
-  - {Form: Tale, Gloss: tale-keeper}
-  - {Form: Taji, Gloss: striped one}
-  - {Form: Prowl, Gloss: prowler}
-  - {Form: Roam, Gloss: roamer}
-  - {Form: Cloud, Gloss: cloud-walker}
-  - {Form: Slink, Gloss: slinker}
-  - {Form: Fern, Gloss: fern-path finder}
-  - {Form: Moth, Gloss: moth-chaser}
-  - {Form: Reed, Gloss: reed-wader}
-  - {Form: Sorrel, Gloss: sorrel-step}
-  - {Form: Ash, Gloss: ash-treader}
-  - {Form: Flint, Gloss: flint-eyed}
-  - {Form: Cinder, Gloss: cinder-sleeper}
-  - {Form: Ember, Gloss: ember-watcher}
-  - {Form: Juniper, Gloss: juniper-leaper}
-  - {Form: Rowan, Gloss: rowan-climber}
-  - {Form: Sage, Gloss: sage-sniffer}
-  - {Form: Willow, Gloss: willow-shade lover}
-  - {Form: Alder, Gloss: alder-percher}
-  - {Form: Wren, Gloss: wren-friend}
+    - {Form: Mi, Gloss: soft}
+    - {Form: Sha, Gloss: shadow}
+    - {Form: Ri, Gloss: quick}
+    - {Form: Su, Gloss: quiet}
+    - {Form: Sa, Gloss: sand-pale}
+    - {Form: Na, Gloss: night-eye}
+    - {Form: Nya, Gloss: mew}
+    - {Form: Ma, Gloss: warm}
+    - {Form: Shi, Gloss: whisker}
+    - {Form: Willow, Gloss: willow-shade lover}
+    - {Form: Alder, Gloss: alder-percher}
+    - {Form: Fern, Gloss: fern-path}
+    - {Form: Wren, Gloss: wren-friend}
+    - {Form: Sorrel, Gloss: sorrel-step}
+    - {Form: Rowan, Gloss: rowan-climber}
+    - {Form: Juniper, Gloss: juniper-leaper}
+    - {Form: Moth, Gloss: moth-eyed} # keep 2-3 English ones but short
+
 SecondStems:
-  - {Form: song, Gloss: song-bearer}
-  - {Form: tale, Gloss: tale-bearer}
-  - {Form: road, Gloss: road-wise}
-  - {Form: moon, Gloss: moon-watcher}
-  - {Form: whisper, Gloss: soft-whisper}
-  - {Form: dusk, Gloss: dusk-born}
-  - {Form: star, Gloss: star-reader}
-  - {Form: wind, Gloss: wind-follower}
+    - {Form: ri, Gloss: little}
+    - {Form: ra, Gloss: purr}
+    - {Form: shi, Gloss: whisker}
+    - {Form: shu, Gloss: soft-tail}
+    - {Form: nu, Gloss: dusk}
+    - {Form: na, Gloss: night}
+    - {Form: mu, Gloss: warm}
+    - {Form: li, Gloss: light-step}
+    - {Form: ya, Gloss: eye}
+
 FamilyAffixes: []
 Clans: []
+
+# Deed-names only for elders - not for everyone
 Epithets:
-  - {Form: Farwalker, Gloss: who treads far lands}
-  - {Form: Taleteller, Gloss: who tells the road tales}
-  - {Form: Moonreader, Gloss: who reads the moon}
-  - {Form: Duskwatcher, Gloss: who watches the dusk}
-  - {Form: Pathfinder, Gloss: who finds the path}
-  - {Form: Nightsinger, Gloss: who sings to the night}
-  - {Form: Cloudchaser, Gloss: who chases the clouds}
-  - {Form: Emberkeeper, Gloss: who keeps the ember}
-  - {Form: Starwatcher, Gloss: who watches the stars}
-  - {Form: Softstep, Gloss: whose step is soft}
+    - {Form: Far-Tread, Gloss: who has walked far}
+    - {Form: Moon-Eye, Gloss: who sees in dark}
+    - {Form: Soft-Tread, Gloss: whose tread is soft}
+    - {Form: Tale-Keeper, Gloss: who keeps the road tales}
+
 Descriptors:
-  - {Form: Moonlit, Gloss: moonlit, Tags: [dark, high]}
-  - {Form: Dappled, Gloss: dappled, Tags: [forest]}
-  - {Form: Prowling, Gloss: prowl-haunted, Tags: [forest, danger]}
-  - {Form: Wandering, Gloss: much-wandered, Tags: [valley]}
+    - {Form: Moonlit, Gloss: moonlit, Tags: [dark, high]}
+    - {Form: Dappled, Gloss: dappled, Tags: [forest]}
+    - {Form: Prowled, Gloss: prowled, Tags: [forest, danger]}
+    - {Form: Warm, Gloss: warm, Tags: [valley]}
 Nouns:
-  - {Form: perch, Gloss: high perch, Tags: [hill, village]}
-  - {Form: den, Gloss: warm den, Tags: [village, valley]}
-  - {Form: shade, Gloss: cool shade, Tags: [forest]}
+    - {Form: perch, Gloss: high perch, Tags: [hill, village]}
+    - {Form: den, Gloss: warm den, Tags: [village, valley]}
+    - {Form: shade, Gloss: cool shade, Tags: [forest]}
