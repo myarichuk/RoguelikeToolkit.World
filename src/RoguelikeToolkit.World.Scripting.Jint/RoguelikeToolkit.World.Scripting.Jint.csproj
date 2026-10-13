@@ -29,7 +29,7 @@
 
   <ItemGroup Condition="'$(TargetFramework)' == 'netstandard2.1'">
     <!-- records/init on netstandard2.1 (Unity): same internal polyfills Core compiles in -->
-    <Compile Include="..\RoguelikeToolkit.World.Core\Compat\CompilerPolyfills.cs" Link="Compat\CompilerPolyfills.cs"/>
+    <Compile Include="..\RoguelikeToolkit.World.Core\Internal\Compat\CompilerPolyfills.cs" Link="Compat\CompilerPolyfills.cs"/>
   </ItemGroup>
 
   <ItemGroup>

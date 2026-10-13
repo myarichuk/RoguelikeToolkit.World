@@ -63,7 +63,7 @@ Core/                               RoguelikeToolkit.World.Core            the 8
   Topology/                         .Core.Topology                         the sphere + hex grids
   Storage/                          .Core.Storage                          dense per-tile layers
   Generation/                       .Core.Generation                       pipeline + stage contracts (no domain knowledge)
-  Tectonics/  Elevation/  Climate/  Hydrology/  Biomes/  Geology/  Settlement/   one namespace each
+  Tectonics/  Elevation/  Climate/  Hydrology/  Biomes/  Lithosphere/  Settlement/   one namespace each
   Features/                         .Core.Features                         sparse per-tile features, WKT
   Hierarchy/                        .Core.Hierarchy                        planet to region to local derivation
   Sites/                            .Core.Sites                            injector pipeline + built-in injectors
@@ -111,7 +111,7 @@ that the folder move merely reveals, not creates.
 | `Climate/` | `ClimateInfo` (+`ClimateLayer`), `ClimateModel`, `ClimateStage`, `ClimateRefreshStage`, `OceanCurrents` (internal), `SeaIce`, `Glaciology` |
 | `Hydrology/` | `HydrologyInfo` (+`HydrologyLayer`), `HydrologyStage`, `Hydrography`, `Lake`/`LakeSolution`/`LakeSolver` (split from `Hydrography.cs`), `River`, `RiverTerminal`, `WaterBody`, `WaterBodyKind`, `RiverCatalog`, `WaterBodyCatalog` (all split from `FeatureCatalog.cs`), `CanyonAnalysis` |
 | `Biomes/` | `BiomeType`, **`BiomeInfo`/`BiomeLayer`/`BiomeGenerationStage`** (renamed from `LocalMapInfo`/`LocalMapLayer`/`LocalMapGenerationStage`), `BiomeClassifier` (+`AridSite`), `LandCover` |
-| `Geology/` | `Geology`, `CrustalProvince`, `Deposits` (split: type, size, `Deposit`, catalog, builder), `RangeKind`/`RangeFeature`/`RangeCatalog`/`RangeCatalogBuilder`, `IslandChains` (options, chain, detector), `IslandChainStage` |
+| `Lithosphere/` | (was `Geology/`; a namespace `Core.Geology` would be ambiguous with the `Geology` class) `Geology`, `CrustalProvince`, `Deposits` (split: type, size, `Deposit`, catalog, builder), `RangeKind`/`RangeFeature`/`RangeCatalog`/`RangeCatalogBuilder`, `IslandChains` (options, chain, detector), `IslandChainStage` |
 | `Settlement/` | `CitySites` (filter, score, scorer), `SettlementScoring`, `LandCapacity` (+`LandSite`), `LandCapacityStage`, `LandUseResolveStage` (split into two files), `LandUse` (id, activity, infos, layers) |
 | `Features/` | `TileFeatures`, `TileFeatureInfo`, `RiverWaterSource`, `GeoWkt` |
 | `Hierarchy/` | `MapAddresses` (split: `MapTier`, `PlanetHex`, `RegionRef`, `LocalRef`, `MapAddress`, `MapSeeds`), `MapBounds`, `ParentContext`, `TerrainOrientation`, `ChildContextDeriver`, `ChildGridBuilder`, `RegionMaps`, `RegionHandle` (+`RegionCell`), `LocalMapHandle` (+`LocalTile`), `GridMapHandle`, `RegionDetailOptions` |
@@ -238,6 +238,16 @@ uses release-please, so the `!` drives the 2.0.0 bump).
 
 Suggested PR sequence: P0 | P1 | P2 | P3 | P4 (n small PRs) | P5 (one PR per giant) | P6 per slice. Phases 1 and 2 could land in a single
 afternoon; Phase 3 is the first one that touches downstream code.
+
+## Progress log
+
+- **Phase 0 done:** `GoldenWorldTests` pins SHA-256 fingerprints for (42,3), (7,4) and a tidally-locked (42,3). Baseline suite: 538 pass, 2 fail
+  (`NameQualityTests.PersonNames_HaveVariety`, `Catfolk_AreSingleStoryNames_WithAnOptionalDeed`; both fail before any refactor).
+  PublicApiAnalyzers baseline is deferred to the start of Phase 3 (it would add ~750 RS0016 noise warnings now).
+- **Phase 1 done:** all root files moved into slice folders with `git mv`, namespaces untouched. Lesson: `Scripting.Jint.csproj` compiles
+  `Compat/CompilerPolyfills.cs` straight out of Core by path, so csproj path links are a second place to check (fixed).
+  Still pending from the plan: the `Names/Data` and `Localization` YAML stay put (resource names).
+  `docs/PLANET_SCALE_BACKLOG.md` has absolute `C:/projects/...` file links that were already non-portable; they will be refreshed in Phase 6.
 
 ## 8. Risks / things I have not verified yet
 
