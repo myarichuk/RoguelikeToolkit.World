@@ -159,6 +159,11 @@ internal static class IslandChainDetector
             }
             var tiles = chain.TileArray;
             var positions = chain.PositionArray;
+            if (options.BridgeReach > 0)
+            {
+                // Extend the chain with the land beside it, each tile inheriting the ring of the member that reached it first.
+                (tiles, positions) = AddBridges(store, elevation, chain, options.BridgeReach);
+            }
             for (int m = 0; m < tiles.Length; m++)
             {
                 if (keep[positions[m]]) continue;
@@ -168,6 +173,38 @@ internal static class IslandChainDetector
             }
         }
         return drowned;
+    }
+
+    /// <summary>The chain's tiles plus the land within <paramref name="reach"/> rings of them, each extra tile carrying the ring position of the chain tile nearest it (lowest position on ties).</summary>
+    private static (int[] Tiles, int[] Positions) AddBridges(
+        WorldDataStore store, Span<ElevationInfo> elevation, IslandChain chain, int reach)
+    {
+        var tiles = new List<int>(chain.TileArray);
+        var positions = new List<int>(chain.PositionArray);
+        var seen = new HashSet<int>(chain.TileArray);
+        var frontier = new List<(int Tile, int Pos)>();
+        for (int m = 0; m < chain.TileArray.Length; m++) frontier.Add((chain.TileArray[m], chain.PositionArray[m]));
+        Span<int> nb = stackalloc int[6];
+        for (int ring = 0; ring < reach; ring++)
+        {
+            frontier.Sort((a, b) => a.Pos != b.Pos ? a.Pos.CompareTo(b.Pos) : a.Tile.CompareTo(b.Tile));
+            var next = new List<(int Tile, int Pos)>();
+            foreach (var (tile, pos) in frontier)
+            {
+                int a = store.GetAdjacent(tile, nb);
+                for (int k = 0; k < a; k++)
+                {
+                    int j = nb[k];
+                    if (seen.Contains(j) || elevation[j].Height <= ElevationGenerationStage.SeaLevel) continue;
+                    seen.Add(j);
+                    tiles.Add(j);
+                    positions.Add(pos);
+                    next.Add((j, pos));
+                }
+            }
+            frontier = next;
+        }
+        return (tiles.ToArray(), positions.ToArray());
     }
 
     private static bool IsHandEdited(in UserEditInfo e)

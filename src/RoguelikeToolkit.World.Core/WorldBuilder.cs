@@ -29,6 +29,7 @@ public sealed class WorldBuilder
     private bool _landUse;
     private bool _climateRefresh = true;
     private bool _islandChains = true;
+    private bool _balancedPlates = true;
     private Action<IslandChainStage>? _islandChainsConfig;
 
     /// <summary>
@@ -68,28 +69,39 @@ public sealed class WorldBuilder
         return this;
     }
     /// <summary>
-    /// Applies the balanced plate preset: seeds spread over the sphere (not crowded at the poles), plate growth speeds
-    /// within a factor of 1.6 so no plate swallows the globe, and a crust field whose coastline is displaced and blurred
-    /// off the plate outlines instead of tracing them. Measured over 12 seeds at size 6 against the defaults: the largest
-    /// plate is 2.7 times the smallest (was 65), plates that are all land or all sea fall from 69% to 17%, and coastline
-    /// tiles on a plate border from 71% to 48% (14% of all tiles sit there). Land share stays near 38%. Off by default
-    /// because it changes every seed's world; the individual knobs are on <see cref="TectonicPlateGenerationStage"/> and
-    /// <see cref="NoisyFloodFillPlatePartitioner"/>, and later <see cref="WithTectonics"/> calls override the preset.
+    /// Selects the balanced plate preset, which is <b>on by default</b>: seeds spread over the sphere (not crowded at the
+    /// poles), plate growth speeds within a factor of 1.6 so no plate swallows the globe, and a crust field whose coastline
+    /// is displaced and blurred off the plate outlines instead of tracing them, with its spread restored so relief and sea
+    /// depth match the legacy worlds. Measured over 12 seeds at size 6 against the legacy generator: the largest plate is
+    /// 2.7 times the smallest (was 65), plates that are all land or all sea fall from 69% to 32%, and coastline tiles on a
+    /// plate border from 71% to 45% (14% of all tiles sit there). Land share stays near 36% (legacy 38%) and varies far
+    /// less between seeds. Land share still falls with world size, as it always has, because erosion moves a fixed height
+    /// per tile and coarse worlds fill their shallows: at size 3 and 4 expect noticeably more land than at size 6.
+    /// It also sets <see cref="IslandChainOptions.BridgeReach"/> to 2 so the island-chain repair cuts the land that bridges
+    /// its straits. The preset is applied before <see cref="WithTectonics"/>, so later calls override its individual knobs; pass
+    /// <c>false</c> (or call <see cref="WithLegacyPlates"/>) to get the pre-balanced worlds back bit for bit.
     /// </summary>
-    public WorldBuilder WithBalancedPlates()
-        => WithTectonics(t =>
+    /// <param name="enabled">True (the default) applies the preset; false leaves the tectonics stage at its own defaults.</param>
+    public WorldBuilder WithBalancedPlates(bool enabled = true) { _balancedPlates = enabled; return this; }
+
+    /// <summary>Restores the pre-balanced plate generator: uniform-latitude seeds, a 0.6 to 2.0 growth-speed spread and plate-offset-dominated crust. The same seed then produces the same world as before the balanced preset became the default.</summary>
+    public WorldBuilder WithLegacyPlates() => WithBalancedPlates(false);
+
+    private static void ApplyBalancedPlates(TectonicPlateGenerationStage t)
+    {
+        t.BalancedSeeding = true;
+        t.PlateOffsetWeight = 0.6;
+        t.LandFraction = 0.28;
+        t.CrustContrast = 2.0;
+        t.CrustWarp = 0.5;
+        t.CrustBlurPasses = 3;
+        if (t.Partitioner is NoisyFloodFillPlatePartitioner flood)
         {
-            t.BalancedSeeding = true;
-            t.PlateOffsetWeight = 0.6;
-            t.LandFraction = 0.25;
-            t.CrustWarp = 0.5;
-            t.CrustBlurPasses = 3;
-            if (t.Partitioner is NoisyFloodFillPlatePartitioner flood)
-            {
-                flood.MinSpeed = 0.85;
-                flood.SpeedRange = 0.5;
-            }
-        });
+            flood.MinSpeed = 0.85;
+            flood.SpeedRange = 0.5;
+        }
+    }
+
     /// <summary>Tweak the island-chain repair stage (see <see cref="IslandChainDetector"/>).</summary>
     public WorldBuilder WithIslandChains(Action<IslandChainStage> configure)
     {
@@ -201,6 +213,7 @@ public sealed class WorldBuilder
         if (_useDefaults)
         {
             var tectonics = new TectonicPlateGenerationStage(_seedCount, _seed);
+            if (_balancedPlates) ApplyBalancedPlates(tectonics);
             _tectonicsConfig?.Invoke(tectonics);
             pipeline.AddStage(tectonics);
             pipeline.AddStage(new ElevationGenerationStage(_seed));
@@ -218,6 +231,7 @@ public sealed class WorldBuilder
             if (_islandChains) // ties erosion's order; the stable sort keeps it after erosion and ahead of the refresh
             {
                 var chains = new IslandChainStage(_seed);
+                if (_balancedPlates) chains.Options.BridgeReach = 2; // balanced plates leave wider land beside each ribbon, which bridges the straits
                 _islandChainsConfig?.Invoke(chains);
                 pipeline.AddStage(chains);
             }

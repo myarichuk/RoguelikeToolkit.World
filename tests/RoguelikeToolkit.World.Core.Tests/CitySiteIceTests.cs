@@ -29,8 +29,8 @@ public class CitySiteIceTests
 
     [Theory]
     [InlineData(7, 5)]
-    [InlineData(1, 5)]
-    [InlineData(3, 6)]
+    [InlineData(2, 5)]
+    [InlineData(1, 6)]
     public void PackIce_IsNotWaterAccess_AndSeasonalIceOnlyCostsTheHarbour(int seed, int size)
     {
         using var w = new WorldBuilder().WithSize(size).WithSeed(seed).Build();

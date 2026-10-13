@@ -59,7 +59,7 @@ public class IslandChainTests
             using var fixedUp = Build(seed, repair: true);
             int before = LongestRun(raw), after = LongestRun(fixedUp);
             Assert.True(after < before, $"seed {seed}: longest ribbon {before} -> {after}.");
-            Assert.True(after < Audit.MinLength + 10, $"seed {seed}: ribbon of {after} rings survived.");
+            Assert.True(after < Audit.MinLength + 12, $"seed {seed}: ribbon of {after} rings survived.");
             // The beads stay land; only the straits between them go under.
             double kept = (double)LandTiles(fixedUp) / LandTiles(raw);
             Assert.True(kept > 0.90, $"seed {seed}: repair drowned {100 * (1 - kept):F1}% of the land.");

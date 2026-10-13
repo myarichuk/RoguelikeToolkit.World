@@ -4,7 +4,7 @@ using RoguelikeToolkit.World.Core.Tectonics;
 
 namespace RoguelikeToolkit.World.Core.Tests;
 
-/// <summary>The opt-in balanced-plate options: defaults must not move any world, and the preset must deliver what it claims.</summary>
+/// <summary>The balanced-plate preset is the builder default and <c>WithLegacyPlates()</c> opts out: the stage's own defaults must stay legacy, and the preset must deliver what it claims.</summary>
 public class BalancedPlatesTests
 {
     private static (int[] Area, float[] Continentality, int Land) Run(int seed, Action<WorldBuilder> configure, int size = 4)
@@ -28,10 +28,11 @@ public class BalancedPlatesTests
     }
 
     [Fact]
-    public void NewOptionsDefaultToTheLegacyBehaviour()
+    public void WithLegacyPlates_MatchesTheStageOwnDefaults()
     {
-        var plain = Run(42, _ => { });
-        var explicitDefaults = Run(42, b => b.WithTectonics(t =>
+        // The stage and partitioner defaults are the legacy generator; the builder preset is what changes them.
+        var plain = Run(42, b => b.WithLegacyPlates());
+        var explicitDefaults = Run(42, b => b.WithLegacyPlates().WithTectonics(t =>
         {
             t.BalancedSeeding = false;
             t.PlateOffsetWeight = 1.2;
@@ -47,8 +48,8 @@ public class BalancedPlatesTests
     [Fact]
     public void BalancedPlates_AreDeterministic()
     {
-        var a = Run(7, b => b.WithBalancedPlates());
-        var b2 = Run(7, b => b.WithBalancedPlates());
+        var a = Run(7, _ => { });
+        var b2 = Run(7, _ => { });
         Assert.Equal(a.Continentality, b2.Continentality);
         Assert.Equal(a.Area, b2.Area);
     }
@@ -58,8 +59,8 @@ public class BalancedPlatesTests
     {
         foreach (int seed in new[] { 1, 2, 3, 42 })
         {
-            var legacy = Run(seed, _ => { }, size: 5).Area.Skip(1).ToArray();
-            var balanced = Run(seed, b => b.WithBalancedPlates(), size: 5).Area.Skip(1).ToArray();
+            var legacy = Run(seed, b => b.WithLegacyPlates(), size: 5).Area.Skip(1).ToArray();
+            var balanced = Run(seed, _ => { }, size: 5).Area.Skip(1).ToArray();
             double legacyRatio = (double)legacy.Max() / Math.Max(1, legacy.Min());
             double balancedRatio = (double)balanced.Max() / Math.Max(1, balanced.Min());
             Assert.True(balanced.Min() > 0, $"seed {seed}: a plate vanished");
@@ -75,7 +76,7 @@ public class BalancedPlatesTests
         int polar = 0, total = 0;
         foreach (int seed in Enumerable.Range(100, 40))
         {
-            using var world = new WorldBuilder().WithSize(3).WithSeed(seed).WithBalancedPlates().Build();
+            using var world = new WorldBuilder().WithSize(3).WithSeed(seed).Build();
             var store = world.Map.DataStore;
             var plates = store.GetSpan<TectonicPlate>();
             var vec = store.GetTileVectors();
@@ -110,8 +111,8 @@ public class BalancedPlatesTests
         int[] seeds = { 1, 2, 3, 4, 5, 6 };
         foreach (int seed in seeds)
         {
-            var l = Run(seed, _ => { }, size: 5);
-            var b = Run(seed, bb => bb.WithBalancedPlates(), size: 5);
+            var l = Run(seed, bb => bb.WithLegacyPlates(), size: 5);
+            var b = Run(seed, _ => { }, size: 5);
             legacy += l.Land / (double)l.Continentality.Length;
             balanced += b.Land / (double)b.Continentality.Length;
         }
@@ -127,5 +128,39 @@ public class BalancedPlatesTests
         Assert.Throws<ArgumentOutOfRangeException>(() => stage.CrustWarp = double.NaN);
         Assert.Throws<ArgumentOutOfRangeException>(() => stage.CrustBlurPasses = -1);
         Assert.Throws<ArgumentOutOfRangeException>(() => new NoisyFloodFillPlatePartitioner().SpeedRange = -1);
+    }
+
+    [Fact]
+    public void BalancedPlates_KeepLegacyRelief()
+    {
+        // A narrower crust field flattens continents and parks the sea floor near sea level where erosion fills it;
+        // CrustContrast restores the spread. Compare the share of land at or above 0.3 and the median land height.
+        double LandShareHigh(Func<WorldBuilder, WorldBuilder> configure, out double median)
+        {
+            var heights = new List<float>();
+            // Ten seeds: the legacy share of high land swings between 23% and 38% from seed to seed, so a handful is noise.
+            foreach (int seed in new[] { 42, 7, 1, 2, 3, 4, 5, 1234, 99, 100 })
+            {
+                using var world = configure(new WorldBuilder().WithSize(5).WithSeed(seed)).Build();
+                foreach (var e in world.Map.DataStore.GetSpan<ElevationInfo>())
+                    if (e.Height >= ElevationGenerationStage.SeaLevel) heights.Add(e.Height);
+            }
+            heights.Sort();
+            median = heights[heights.Count / 2];
+            return heights.Count(h => h >= 0.3f) / (double)heights.Count;
+        }
+
+        double legacyHigh = LandShareHigh(b => b.WithLegacyPlates(), out double legacyMedian);
+        double balancedHigh = LandShareHigh(b => b, out double balancedMedian);
+        Assert.InRange(balancedHigh, legacyHigh - 0.08, legacyHigh + 0.08);
+        Assert.InRange(balancedMedian, legacyMedian - 0.05, legacyMedian + 0.05);
+    }
+
+    [Fact]
+    public void WithBalancedPlatesFalse_IsTheSameAsWithLegacyPlates()
+    {
+        var a = Run(9, b => b.WithBalancedPlates(false));
+        var b2 = Run(9, b => b.WithLegacyPlates());
+        Assert.Equal(a.Continentality, b2.Continentality);
     }
 }

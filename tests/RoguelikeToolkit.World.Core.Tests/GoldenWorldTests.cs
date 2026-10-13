@@ -13,9 +13,10 @@ namespace RoguelikeToolkit.World.Core.Tests;
 /// </summary>
 public class GoldenWorldTests
 {
-    private static string Fingerprint(int seed, int size, bool tidallyLocked)
+    private static string Fingerprint(int seed, int size, bool tidallyLocked, bool legacyPlates = false)
     {
         var builder = new WorldBuilder().WithSize(size).WithSeed(seed);
+        if (legacyPlates) builder.WithLegacyPlates();
         if (tidallyLocked)
             builder.WithPlanet(new PlanetParameters { Insolation = new TidallyLockedInsolation(new Vector3D(1, 0, 0)) });
         using var world = builder.Build();
@@ -76,10 +77,23 @@ public class GoldenWorldTests
         }
     }
 
+    // The pre-balanced generator, pinned with the hashes it had before balanced plates became the default:
+    // WithLegacyPlates() must keep reproducing those worlds bit for bit.
     [Theory]
     [InlineData(42, 3, false, "B58259095A40915CD3F166D4E2A5F62D3AC7965347FA5A2A201A477083925AFE")]
     [InlineData(7, 4, false, "DCEC3714CDC1FCFEA955C563D1CE43A904D990C61554EA66003E56E11CEB1DFC")]
     [InlineData(42, 3, true, "10A2C0D257D29B3F226AE7DC25AB275AA8DD70BF71AB3107BD98204CFC86C192")]
+    public void LegacyPlates_AreBitStable(int seed, int size, bool tidallyLocked, string expected)
+    {
+        var actual = Fingerprint(seed, size, tidallyLocked, legacyPlates: true);
+        Assert.True(expected == actual, $"legacy golden mismatch seed={seed} size={size} locked={tidallyLocked}: actual {actual}");
+    }
+
+    // The default generator (balanced plates). Re-pin deliberately, in its own commit, when generation changes on purpose.
+    [Theory]
+    [InlineData(42, 3, false, "BA567416C34AD6B7544178E799ED0591B9600AA8C4B43A3FACBB001631080906")]
+    [InlineData(7, 4, false, "03AB7E3C2E0B3386145D43D9A67514BEDCEA29E6C997DFA76DC3FF0043BF0898")]
+    [InlineData(42, 3, true, "0802B346D5FE24A5B97E92BC71BA77D78783C6793E9684FD8F893E749761177D")]
     public void Output_IsBitStable(int seed, int size, bool tidallyLocked, string expected)
     {
         var actual = Fingerprint(seed, size, tidallyLocked);

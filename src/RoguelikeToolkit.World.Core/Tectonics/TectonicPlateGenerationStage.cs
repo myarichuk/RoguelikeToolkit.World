@@ -118,6 +118,15 @@ public class TectonicPlateGenerationStage : IWorldGeneratorStage, ISeededStage, 
     }
     private double _landFraction;
 
+    /// <summary>
+    /// Stretches the calibrated crust field away from <see cref="CrustThreshold"/>: continental tiles ride higher and
+    /// oceanic tiles sit deeper by this factor, and the continental share is unchanged. Needed because a smaller
+    /// <see cref="PlateOffsetWeight"/> narrows the field (std 0.33 to 0.19), which flattens continents and parks the sea
+    /// floor near sea level where erosion fills it. Default 1 (no change).
+    /// </summary>
+    public double CrustContrast { get => _crustContrast; set => _crustContrast = StageKnob.Finite(value, nameof(CrustContrast)); }
+    private double _crustContrast = 1.0;
+
     // Cached scratch so repeated Execute calls stay allocation-free: buffers grow
     // to the largest map/plate count seen and are reused (never shrunk) after that.
     private int[] _plateIds = Array.Empty<int>();
@@ -258,6 +267,7 @@ public class TectonicPlateGenerationStage : IWorldGeneratorStage, ISeededStage, 
         for (int i = 0; i < store.TileCount; i++)
         {
             float c = span[i].Continentality - shift;
+            if (CrustContrast != 1.0) c = (float)(CrustThreshold + (c - CrustThreshold) * CrustContrast);
             span[i].Continentality = c;
             span[i].Crust = c > CrustThreshold ? CrustType.Continental : CrustType.Oceanic;
         }
