@@ -218,49 +218,49 @@ public sealed class JintWorldStage : IWorldGeneratorStage, IDeclaredStage, IStag
         void WriteLandUse(int i, double v)
         {
             RequireWrite(typeof(LandUseInfo), stageName, _writes);
-            store.GetRef<LandUseInfo>(CheckIndex(i, tileCount)).Use = CheckByte((int)v, "Land use id");
+            store.GetRef<LandUseInfo>(CheckIndex(i, tileCount)).Use = CheckByte(Whole(v, "Land use id"), "Land use id");
         }
 
         void WriteActivities(int i, double v)
         {
             RequireWrite(typeof(LandUseInfo), stageName, _writes);
-            store.GetRef<LandUseInfo>(CheckIndex(i, tileCount)).Activities = CheckByte((int)v, "Activities");
+            store.GetRef<LandUseInfo>(CheckIndex(i, tileCount)).Activities = CheckByte(Whole(v, "Activities"), "Activities");
         }
 
         void WriteIntensity(int i, double v)
         {
             RequireWrite(typeof(LandUseInfo), stageName, _writes);
-            store.GetRef<LandUseInfo>(CheckIndex(i, tileCount)).Intensity = CheckByte((int)v, "Intensity");
+            store.GetRef<LandUseInfo>(CheckIndex(i, tileCount)).Intensity = CheckByte(Whole(v, "Intensity"), "Intensity");
         }
 
         void WriteHeight(int i, double v)
         {
             RequireWrite(typeof(ElevationInfo), stageName, _writes);
-            store.GetRef<ElevationInfo>(CheckIndex(i, tileCount)).Height = (float)v;
+            store.GetRef<ElevationInfo>(CheckIndex(i, tileCount)).Height = CheckFinite(v, "Height");
         }
 
         void WriteTemp(int i, double v)
         {
             RequireWrite(typeof(ClimateInfo), stageName, _writes);
-            store.GetRef<ClimateInfo>(CheckIndex(i, tileCount)).Temperature = (float)v;
+            store.GetRef<ClimateInfo>(CheckIndex(i, tileCount)).Temperature = CheckFinite(v, "Temperature");
         }
 
         void WritePrecip(int i, double v)
         {
             RequireWrite(typeof(ClimateInfo), stageName, _writes);
-            store.GetRef<ClimateInfo>(CheckIndex(i, tileCount)).Precipitation = (float)v;
+            store.GetRef<ClimateInfo>(CheckIndex(i, tileCount)).Precipitation = CheckFinite(v, "Precipitation");
         }
 
         void WriteBiome(int i, double v)
         {
             RequireWrite(typeof(BiomeInfo), stageName, _writes);
-            store.GetRef<BiomeInfo>(CheckIndex(i, tileCount)).Biome = (BiomeType)CheckBiome((int)v);
+            store.GetRef<BiomeInfo>(CheckIndex(i, tileCount)).Biome = (BiomeType)CheckBiome(Whole(v, "Biome"));
         }
 
         void WriteDanger(int i, double v)
         {
             RequireWrite(typeof(BiomeInfo), stageName, _writes);
-            store.GetRef<BiomeInfo>(CheckIndex(i, tileCount)).DangerLevel = (byte)CheckDanger((int)v);
+            store.GetRef<BiomeInfo>(CheckIndex(i, tileCount)).DangerLevel = (byte)CheckDanger(Whole(v, "Danger"));
         }
 
         double Rand01(int tile, int salt)
@@ -390,6 +390,24 @@ public sealed class JintWorldStage : IWorldGeneratorStage, IDeclaredStage, IStag
         if ((uint)i >= (uint)tileCount)
             throw new InvalidOperationException($"Tile index {i} is out of range (0..{tileCount - 1}).");
         return i;
+    }
+
+    // A script double that is NaN, infinite or too large for float would poison every downstream stage
+    // (climate, erosion, biome classification) without a single error, so it is rejected at the write.
+    private static float CheckFinite(double v, string what)
+    {
+        float f = (float)v;
+        if (!float.IsFinite(f))
+            throw new InvalidOperationException($"{what} value {v} is not a finite number.");
+        return f;
+    }
+
+    // (int)NaN is 0, which would silently write biome 0 / land use 0; fail loudly instead.
+    private static int Whole(double v, string what)
+    {
+        if (!double.IsFinite(v))
+            throw new InvalidOperationException($"{what} value {v} is not a finite number.");
+        return (int)v;
     }
 
     private static int CheckBiome(int v)

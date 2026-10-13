@@ -1,5 +1,6 @@
 using RoguelikeToolkit.World.Core.Primitives;
 using RoguelikeToolkit.World.Core.Storage;
+using RoguelikeToolkit.World.Core.Generation;
 
 namespace RoguelikeToolkit.World.Core.Tectonics;
 
@@ -23,13 +24,16 @@ namespace RoguelikeToolkit.World.Core.Tectonics;
 public sealed class NoisyFloodFillPlatePartitioner : IPlatePartitioner
 {
     /// <summary>Warp amplitude, in unit-sphere lengths (one tile is about 0.045 at size 4). 0 collapses to speed-weighted Voronoi.</summary>
-    public double Warp { get; set; } = 0.8;
+    public double Warp { get => _warp; set => _warp = StageKnob.Finite(value, nameof(Warp)); }
+    private double _warp = 0.8;
 
     /// <summary>Spatial frequency of the coarsest warp octave (unit-sphere vectors). Higher means more, smaller wiggles.</summary>
-    public double NoiseFrequency { get; set; } = 1.5;
+    public double NoiseFrequency { get => _noiseFrequency; set => _noiseFrequency = StageKnob.Finite(value, nameof(NoiseFrequency)); }
+    private double _noiseFrequency = 1.5;
 
     /// <summary>Warp octaves. Each adds a finer scale of wiggle at half the amplitude (fractal borders).</summary>
-    public int Octaves { get; set; } = 6;
+    public int Octaves { get => _octaves; set => _octaves = StageKnob.NonNegative(value, nameof(Octaves)); }
+    private int _octaves = 6;
 
     // Cached scratch: allocated once per tile-count shape so repeated
     // Execute calls stay allocation-free (steady-state zero-GC).

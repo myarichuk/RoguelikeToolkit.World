@@ -34,10 +34,12 @@ public class BiomeGenerationStage : IWorldGeneratorStage, ISeededStage
     public bool SmoothBiomes { get; set; } = true;
 
     /// <summary>Majority-vote cleanup passes over the moisture biome set.</summary>
-    public int SmoothingPasses { get; set; } = 2;
+    public int SmoothingPasses { get => _smoothingPasses; set => _smoothingPasses = StageKnob.NonNegative(value, nameof(SmoothingPasses)); }
+    private int _smoothingPasses = 2;
 
     /// <summary>Must match <see cref="HydrologyStage.RiverThresholdScale"/> so canyon biomes agree with rivers (WorldBuilder wires it).</summary>
-    public float RiverThresholdScale { get; set; } = 1f;
+    public float RiverThresholdScale { get => _riverThresholdScale; set => _riverThresholdScale = StageKnob.Finite(value, nameof(RiverThresholdScale)); }
+    private float _riverThresholdScale = 1f;
 
     /// <summary>Creates a stage with the default <see cref="Seed"/> (42); this is the constructor <see cref="WorldGenerationPipeline.Discover(string?, Action{StageDiscoveryDiagnostic}?)"/> uses.</summary>
     public BiomeGenerationStage()

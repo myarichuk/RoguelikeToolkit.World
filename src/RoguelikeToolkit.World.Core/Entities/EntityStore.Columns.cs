@@ -72,13 +72,14 @@ public sealed partial class EntityStore
 
         internal override Array ReadChunks(Stream stream, int chunks, int highWater)
         {
-            var staged = new T[chunks][];
+            var staged = new List<T[]>();   // grown as data arrives; the count comes from an untrusted header
             for (int k = 0; k < chunks; k++)
             {
-                staged[k] = new T[ChunkSize];
-                stream.ReadExactly(MemoryMarshal.AsBytes(staged[k].AsSpan(0, UsedInChunk(k, highWater))));
+                var chunk = new T[ChunkSize];
+                stream.ReadExactly(MemoryMarshal.AsBytes(chunk.AsSpan(0, UsedInChunk(k, highWater))));
+                staged.Add(chunk);
             }
-            return staged;
+            return staged.ToArray();
         }
 
         internal override void Adopt(Array chunks)

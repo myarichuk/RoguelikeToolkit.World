@@ -34,7 +34,8 @@ public class ClimateStage : IWorldGeneratorStage, ISeededStage
     /// <summary>Seeds the base precipitation noise. Default 42.</summary>
     public int Seed { get; set; } = 42;
     /// <summary>Temperature lost per unit of height above sea level, in normalised temperature units. Default <see cref="ClimateModel.DefaultLapseRate"/>.</summary>
-    public double LapseRate { get; set; } = ClimateModel.DefaultLapseRate;
+    public double LapseRate { get => _lapseRate; set => _lapseRate = StageKnob.Finite(value, nameof(LapseRate)); }
+    private double _lapseRate = ClimateModel.DefaultLapseRate;
 
     /// <summary>
     /// Axial tilt, stellar flux and spin of the planet (see <see cref="PlanetParameters"/>). The default is
@@ -50,7 +51,8 @@ public class ClimateStage : IWorldGeneratorStage, ISeededStage
     /// worlds it leaves mean temperature, rainfall and the biome shares within half a point, and turns the
     /// rain shadows and maritime plumes diagonal as they are on Earth.
     /// </summary>
-    public double MeridionalWind { get; set; } = 0.3;
+    public double MeridionalWind { get => _meridionalWind; set => _meridionalWind = StageKnob.Finite(value, nameof(MeridionalWind)); }
+    private double _meridionalWind = 0.3;
 
     /// <summary>
     /// How far the wind speed fades to a calm at the cell boundaries (the horse latitudes near 30 degrees,
@@ -67,7 +69,8 @@ public class ClimateStage : IWorldGeneratorStage, ISeededStage
     /// degree belt.
     /// </para>
     /// </summary>
-    public double WindCellBlend { get; set; } = 0.0;
+    public double WindCellBlend { get => _windCellBlend; set => _windCellBlend = StageKnob.Finite(value, nameof(WindCellBlend)); }
+    private double _windCellBlend = 0.0;
     /// <summary>Wind direction fallback, default due east (+X).</summary>
     /// <remarks>Not currently read anywhere in this assembly: the wind field is computed from the zonal cells alone.</remarks>
     public Vector3D PrevailingWindFallback { get; set; } = new Vector3D(1, 0, 0);
@@ -82,23 +85,28 @@ public class ClimateStage : IWorldGeneratorStage, ISeededStage
     /// NOTE: smoothing shifts the precip distribution DryPolarGate was
     /// calibrated against — re-measure the biome matrix after changing this.
     /// </summary>
-    public int PrecipSmoothingPasses { get; set; } = 1;
+    public int PrecipSmoothingPasses { get => _precipSmoothingPasses; set => _precipSmoothingPasses = StageKnob.NonNegative(value, nameof(PrecipSmoothingPasses)); }
+    private int _precipSmoothingPasses = 1;
 
     /// <summary>
     /// E-folding distance of maritime air over land, in radians of arc (about 5700 km on an
     /// Earth-sized planet) along the wind. Angular, so the same world reads the same at any
     /// icosphere size.
     /// </summary>
-    public double MoistureReach { get; set; } = 0.9;
+    public double MoistureReach { get => _moistureReach; set => _moistureReach = StageKnob.Finite(value, nameof(MoistureReach)); }
+    private double _moistureReach = 0.9;
 
     /// <summary>Moisture surviving a climb: factor = exp(-ClimbLoss * rise). 0 disables the extra orographic loss.</summary>
-    public double ClimbLoss { get; set; } = 2.5;
+    public double ClimbLoss { get => _climbLoss; set => _climbLoss = StageKnob.Finite(value, nameof(ClimbLoss)); }
+    private double _climbLoss = 2.5;
 
     /// <summary>Precipitation multiplier in dead-still continental air (maritime = 0).</summary>
-    public double InteriorFactor { get; set; } = 0.76;
+    public double InteriorFactor { get => _interiorFactor; set => _interiorFactor = StageKnob.Finite(value, nameof(InteriorFactor)); }
+    private double _interiorFactor = 0.76;
 
     /// <summary>Extra multiplier gained at full maritime influence (factor = Interior + Gain * maritime).</summary>
-    public double MaritimeGain { get; set; } = 0.56;
+    public double MaritimeGain { get => _maritimeGain; set => _maritimeGain = StageKnob.Finite(value, nameof(MaritimeGain)); }
+    private double _maritimeGain = 0.56;
 
     /// <summary>
     /// Strength of the zonal (Hadley-cell) moisture banding, see <see cref="ZonalFactor(double, double)"/>:
@@ -106,7 +114,8 @@ public class ClimateStage : IWorldGeneratorStage, ISeededStage
     /// mid-latitude storm tracks and dry poles. 1 is the calibrated default, 0 turns the banding
     /// off (precipitation then has no latitude structure beyond temperature).
     /// </summary>
-    public double ZonalStrength { get; set; } = 1.0;
+    public double ZonalStrength { get => _zonalStrength; set => _zonalStrength = StageKnob.Finite(value, nameof(ZonalStrength)); }
+    private double _zonalStrength = 1.0;
 
     /// <summary>
     /// How much of the sea-surface temperature anomaly the ocean currents carry (see <see cref="OceanCurrents"/>) is added to
@@ -114,7 +123,8 @@ public class ClimateStage : IWorldGeneratorStage, ISeededStage
     /// current mellows the coast it runs along (north-west Europe), a cold one chills it. 1 is the calibrated
     /// strength (peaks of about 0.15 units, 8 K, along the strongest boundary currents); 0 turns the heat off.
     /// </summary>
-    public double OceanHeatStrength { get; set; } = 1.0;
+    public double OceanHeatStrength { get => _oceanHeatStrength; set => _oceanHeatStrength = StageKnob.Finite(value, nameof(OceanHeatStrength)); }
+    private double _oceanHeatStrength = 1.0;
 
     /// <summary>
     /// Rainfall response to the current's temperature at the coast: the multiplier is 1 + gain * maritime * anomaly,
@@ -122,7 +132,8 @@ public class ClimateStage : IWorldGeneratorStage, ISeededStage
     /// Namib) and warm ones the wet east coasts. 0 turns it off; with <see cref="OceanHeatStrength"/> also 0 no
     /// current is solved at all.
     /// </summary>
-    public double OceanRainGain { get; set; } = 2.0;
+    public double OceanRainGain { get => _oceanRainGain; set => _oceanRainGain = StageKnob.Finite(value, nameof(OceanRainGain)); }
+    private double _oceanRainGain = 2.0;
 
     /// <summary>Upwindness weight ramps 0 at/below Lo, 1 at/above Hi.</summary>
     private const double UpwindGateLo = 0.05;
