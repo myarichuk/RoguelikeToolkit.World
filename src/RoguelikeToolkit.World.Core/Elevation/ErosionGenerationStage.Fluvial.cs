@@ -39,17 +39,16 @@ public partial class ErosionGenerationStage
         var depth = new int[n];
         Hydrography.ComputeReceivers(store, filled, receiver, depth);
         var flow = new float[n];
-        Hydrography.AccumulateFlow(store, filled, receiver, runoff, flow, default, loss, depth);
+        // Donors before receivers, flats included: sediment is carried in `load`
+        // and handed to the receiver, so a receiver processed before its donor
+        // would silently lose mass. One sort serves the accumulation and the transport walk.
+        var order = Hydrography.DrainageOrder(filled, depth);
+        Hydrography.AccumulateFlow(store, order, receiver, runoff, flow, default, loss);
 
         float riverThreshold = Hydrography.RiverThreshold(n, RiverThresholdScale);
         double channelOnset = Math.Max(1.0, riverThreshold * ChannelOnset);
         bool hasPlates = store.IsLayerRegistered<TectonicPlate>();
         var plates = hasPlates ? store.GetSpan<TectonicPlate>() : default;
-
-        // Donors before receivers, flats included: sediment is carried in `load`
-        // and handed to the receiver, so a receiver processed before its donor
-        // would silently lose mass.
-        var order = Hydrography.DrainageOrder(filled, depth);
 
         // Transport-limited stream power. Each tile receives the sediment its
         // catchment shed upstream and can carry Kc·Q^m·S^n of it. Spare
