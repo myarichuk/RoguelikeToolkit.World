@@ -46,8 +46,10 @@ public class ClimateRefreshStageTests
         // Erosion fills shallows, so the coastline moves after the first climate pass. Without the refresh every
         // tile that turned from sea into land kept the ocean's 0.55 precipitation floor.
         const int seed = 42;
-        using var staged = new WorldBuilder().WithSize(4).WithSeed(seed).WithoutDefaultStages()
-            .AddStage(new TectonicPlateGenerationStage(12, seed)).AddStage(new ElevationGenerationStage(seed)).AddStage(new ClimateStage(seed)).Build();
+        // The first pass is the same world with erosion switched off and no refresh, so the tiles that "turn into land"
+        // are the ones this world's own erosion fills, not the difference between two different plate layouts.
+        using var staged = new WorldBuilder().WithSize(4).WithSeed(seed).WithClimateRefresh(false)
+            .WithErosion(e => { e.Iterations = 0; e.HydraulicIterations = 0; e.AeolianIterations = 0; e.DiffusionIterations = 0; e.GlacialIterations = 0; }).Build();
         var rawElev = staged.Map.DataStore.GetSpan<ElevationInfo>().ToArray();
         var rawRain = staged.Map.DataStore.GetSpan<ClimateInfo>().ToArray();
 
@@ -67,7 +69,7 @@ public class ClimateRefreshStageTests
             sumWithout += without[i].Precipitation;
         }
         Assert.True(born > 50, $"only {born} tiles turned into land; the premise needs a real coastline shift");
-        Assert.True(sumWith / born < sumWithout / born - 0.01, $"refreshed {sumWith / born:F3} vs stale {sumWithout / born:F3}");
+        Assert.True(sumWith / born < sumWithout / born - 0.02, $"refreshed {sumWith / born:F3} vs stale {sumWithout / born:F3}");
     }
 
     [Fact]

@@ -142,12 +142,18 @@ tiles on a border from 71% to about 50%, and land is 31% (legacy 36%). A belt is
 grid the volcanic arcs on oceanic crust covered a large part of the globe (22% of all tiles at size 3, against 4.6% at size
 6) and small worlds came out mostly land; the preset sets `ElevationGenerationStage.ReferenceTileCount` to the size-6 tile
 count, which scales arc height by `sqrt(tiles / reference)` below it, and land is now 28-32% at every size from 2 to 7
-(size 2 was 86%, size 3 58%, size 4 45%; size 6 and up are unchanged). `WithElevation` configures that stage. All knobs are on
+(size 2 was 86%, size 3 58%, size 4 45%; size 6 and up are unchanged; oceanic polarity has since taken a few points off the small sizes). `WithElevation` configures that stage. All knobs are on
 `TectonicPlateGenerationStage` and `NoisyFloodFillPlatePartitioner`; later `WithTectonics` calls override the preset. The
 preset also sets the island-chain repair's `BridgeReach` to 2, so a strait also cuts the wider land that would bridge it. It turns on
 `ErosionGenerationStage.OrderIndependent`: hillslope diffusion and the glacial pass then relax against the surface as it stood at the
 start of each sweep instead of sweeping in tile-index order, so the result no longer depends on how the mesh happens to be numbered
 (legacy worlds keep the in-place sweep and their exact output).
+It also turns on `TectonicPlateGenerationStage.ShearTransform` and `OceanicPolarity`. The first classifies a border on the whole
+relative motion, so plates sliding along a border give a transform fault however large the small across-border component is, and
+blends the driver in from the transform value between `ConvergenceThreshold` and three times that instead of jumping from a 0.12 ridge
+to a -0.55 rift across one threshold. The second makes one side of an oceanic-oceanic collision dive (the plate with the lower base
+elevation draw takes the trench) while the other keeps the island arc, where both sides used to raise the same arc: over 12 seeds at
+size 6 the land standing on oceanic arcs falls from about 520 to 150 tiles per world and the longest raw ribbon from 66 to 48 rings.
 
 Three climate refinements and one erosion process are on by default, and each can be switched off:
 

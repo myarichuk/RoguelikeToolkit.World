@@ -91,9 +91,9 @@ public class GoldenWorldTests
 
     // The default generator (balanced plates). Re-pin deliberately, in its own commit, when generation changes on purpose.
     [Theory]
-    [InlineData(42, 3, false, "45505782F00ACDF7ED48594141984EDF9E6AE65AE636FE40508E81C117B0538E")]
-    [InlineData(7, 4, false, "41CAE358D4FE13087232853510E28AB630253196EF2B9D4581EDFE9DC51EE41E")]
-    [InlineData(42, 3, true, "00185B29A94C5A7EE895F10D2753775F6B08E09D7D406C50727924A12D74A0AD")]
+    [InlineData(42, 3, false, "8DA7A4EA7205376702DD009DF0352D07C732E53B32C9EE4B68E7B7EDCE58B731")]
+    [InlineData(7, 4, false, "16FC9C5D4ACEC020B2B6013B25448901F5A1C6CD5859EFE5F556FABE13FA61F1")]
+    [InlineData(42, 3, true, "00CB7C2EAF9799795488F5A058333508A0D32026353A2989983B3C535169BD7A")]
     public void Output_IsBitStable(int seed, int size, bool tidallyLocked, string expected)
     {
         var actual = Fingerprint(seed, size, tidallyLocked);

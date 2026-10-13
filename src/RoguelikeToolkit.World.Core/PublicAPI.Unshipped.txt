@@ -1666,3 +1666,7 @@ RoguelikeToolkit.World.Core.Elevation.ElevationGenerationStage.ReferenceTileCoun
 RoguelikeToolkit.World.Core.WorldBuilder.WithElevation(System.Action<RoguelikeToolkit.World.Core.Elevation.ElevationGenerationStage!>! configure) -> RoguelikeToolkit.World.Core.WorldBuilder!
 RoguelikeToolkit.World.Core.Elevation.ErosionGenerationStage.OrderIndependent.get -> bool
 RoguelikeToolkit.World.Core.Elevation.ErosionGenerationStage.OrderIndependent.set -> void
+RoguelikeToolkit.World.Core.Tectonics.TectonicPlateGenerationStage.OceanicPolarity.get -> bool
+RoguelikeToolkit.World.Core.Tectonics.TectonicPlateGenerationStage.OceanicPolarity.set -> void
+RoguelikeToolkit.World.Core.Tectonics.TectonicPlateGenerationStage.ShearTransform.get -> bool
+RoguelikeToolkit.World.Core.Tectonics.TectonicPlateGenerationStage.ShearTransform.set -> void

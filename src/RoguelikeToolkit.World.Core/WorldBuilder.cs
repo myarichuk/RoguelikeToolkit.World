@@ -99,6 +99,8 @@ public sealed class WorldBuilder
         t.DisperseContinents = true;
         t.CrustContrast = 0.8;
         t.OceanContrast = 2.0;
+        t.ShearTransform = true;
+        t.OceanicPolarity = true;
         if (t.Partitioner is NoisyFloodFillPlatePartitioner flood)
         {
             flood.MinSpeed = 0.85;

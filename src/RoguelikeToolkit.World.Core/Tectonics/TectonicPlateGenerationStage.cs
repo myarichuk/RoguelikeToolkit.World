@@ -22,6 +22,24 @@ public class TectonicPlateGenerationStage : IWorldGeneratorStage, ISeededStage, 
     public double ConvergenceThreshold { get; set; } = 0.08;
 
     /// <summary>
+    /// When true, boundaries are classified on the whole relative motion rather than on its component across the border
+    /// alone, and the switch between boundary kinds is a ramp instead of a step. A boundary whose plates mostly slide past
+    /// one another (shear well above the across-border motion) is a transform fault however large its small convergent
+    /// component is, and two plates that barely move relative to each other leave only a faint scar instead of the full
+    /// fault ridge. The driver blends from the transform value to the convergent or divergent one over
+    /// <see cref="ConvergenceThreshold"/> to three times that, where the legacy classification jumps from a ridge of 0.12
+    /// to a rift valley of -0.55 across a single threshold. Off by default: it moves every boundary's relief.
+    /// </summary>
+    public bool ShearTransform { get; set; }
+
+    /// <summary>
+    /// When true, the colliding plates of an oceanic-oceanic boundary get a polarity instead of the same arc on both sides:
+    /// the plate with the lower base elevation draw (the older, denser one; the lower plate id on a tie) dives and takes the
+    /// trench, the other keeps the island arc. Off by default: it moves the relief of every oceanic convergent border.
+    /// </summary>
+    public bool OceanicPolarity { get; set; }
+
+    /// <summary>
     /// BFS cap for the boundary-distance field, in neighbor rings. Kept small
     /// on purpose: a plate at the default 12-plate density is only ~4 rings in
     /// radius, so a wider cap lets every boundary's uplift apron meet in the
@@ -485,8 +503,10 @@ public class TectonicPlateGenerationStage : IWorldGeneratorStage, ISeededStage, 
             bool hasForeign = false;
             double maxConvergence = double.NegativeInfinity;
             double minConvergence = double.PositiveInfinity;
+            double maxShear = 0.0, minShear = 0.0;
             // Winning convergent pair (for subduction polarity + belt width).
             CrustType acrossCrust = plate.Crust;
+            int acrossPlate = plate.Id;
             for (int k = 0; k < adjacent; k++)
             {
                 int j = neighbors[k];
@@ -499,18 +519,24 @@ public class TectonicPlateGenerationStage : IWorldGeneratorStage, ISeededStage, 
                 double relY = theirs.DriftY * theirs.DriftSpeed - mine.DriftY * mine.DriftSpeed;
                 double relZ = theirs.DriftZ * theirs.DriftSpeed - mine.DriftZ * mine.DriftSpeed;
                 double convergence = -(relX * dir.X + relY * dir.Y + relZ * dir.Z);
-                if (convergence > maxConvergence) { maxConvergence = convergence; acrossCrust = other.Crust; }
-                if (convergence < minConvergence) minConvergence = convergence;
+                double shear = ShearTransform ? ShearComponent(relX, relY, relZ, positions[i], convergence) : 0.0;
+                if (convergence > maxConvergence) { maxConvergence = convergence; maxShear = shear; acrossCrust = other.Crust; acrossPlate = other.Id; }
+                if (convergence < minConvergence) { minConvergence = convergence; minShear = shear; }
             }
             if (!hasForeign)
             {
                 plate.Boundary = PlateBoundaryType.None;
                 plate.Orogeny = 0f;
             }
+            else if (ShearTransform)
+            {
+                ClassifySheared(ref plate, mine, table[acrossPlate - 1], acrossPlate, acrossCrust, positions[i], threshold,
+                    maxConvergence, maxShear, minConvergence, minShear);
+            }
             else if (maxConvergence > threshold)
             {
                 plate.Boundary = PlateBoundaryType.Convergent;
-                plate.Orogeny = (float)(ConvergentDriver(plate.Crust, acrossCrust, maxConvergence) * SegmentFactor(positions[i]));
+                plate.Orogeny = (float)(ConvergentDriver(plate.Crust, acrossCrust, maxConvergence, Subducts(plate, plate.Id, acrossCrust, acrossPlate, mine, table)) * SegmentFactor(positions[i]));
             }
             else if (minConvergence < -threshold)
             {
@@ -527,12 +553,92 @@ public class TectonicPlateGenerationStage : IWorldGeneratorStage, ISeededStage, 
         }
     }
 
+    private const float TransformDriver = 0.12f;
+
+    /// <summary>
+    /// Boundary kind and driver on the whole relative motion (see <see cref="ShearTransform"/>). The across-border
+    /// component is weighed against the shear along the border, and the boundary driver is blended in from the transform
+    /// value as the motion grows past <paramref name="threshold"/>, so no kind starts at full strength.
+    /// </summary>
+    private void ClassifySheared(
+        ref TectonicPlate plate, in PlateInfo mine, in PlateInfo across, int acrossId, CrustType acrossCrust, Vector3D position, double threshold,
+        double maxConvergence, double maxShear, double minConvergence, double minShear)
+    {
+        // The stronger of the two signed motions decides, as the legacy code lets convergence win over divergence.
+        bool converging = maxConvergence > threshold && maxConvergence >= -minConvergence;
+        bool diverging = !converging && minConvergence < -threshold;
+        double motion = converging ? maxConvergence : diverging ? -minConvergence : 0.0;
+        double shear = converging ? maxShear : minShear;
+
+        // Share of the relative motion that goes across the border: the weight of a convergent or divergent kind.
+        double across01 = motion + shear > 1e-9 ? motion / (motion + shear) : 0.0;
+        double gate = Smooth((motion - threshold) / (2.0 * threshold)) * Smooth((across01 - 0.2) / 0.25);
+        double speed = Math.Sqrt(motion * motion + shear * shear);
+
+        if ((!converging && !diverging) || gate < 0.5)
+        {
+            plate.Boundary = PlateBoundaryType.Transform;
+            // A pair that barely moves relative to each other leaves only a faint scar, not a full fault ridge.
+            plate.Orogeny = (float)(TransformDriver * Smooth(speed / 0.3));
+            return;
+        }
+
+        double target;
+        if (converging)
+        {
+            plate.Boundary = PlateBoundaryType.Convergent;
+            target = ConvergentDriver(plate.Crust, acrossCrust, maxConvergence, SubductsPair(plate.Crust, acrossCrust, plate.Id, acrossId, mine, across)) * SegmentFactor(position);
+        }
+        else
+        {
+            plate.Boundary = PlateBoundaryType.Divergent;
+            target = plate.Crust == CrustType.Oceanic ? 0.5 : -0.55;
+        }
+        plate.Orogeny = (float)(TransformDriver + (target - TransformDriver) * gate);
+    }
+
+    // Smoothstep on [0, 1], clamped.
+    private static double Smooth(double t)
+    {
+        t = Math.Clamp(t, 0.0, 1.0);
+        return t * t * (3.0 - 2.0 * t);
+    }
+
+    /// <summary>
+    /// Magnitude of the relative motion along the border: what is left of the surface-tangent part of
+    /// <c>rel</c> once the across-border component <paramref name="convergence"/> is taken out.
+    /// </summary>
+    private static double ShearComponent(double relX, double relY, double relZ, Vector3D position, double convergence)
+    {
+        var n = position.Normalize();
+        double radial = relX * n.X + relY * n.Y + relZ * n.Z;
+        double tangentSq = relX * relX + relY * relY + relZ * relZ - radial * radial;
+        return Math.Sqrt(Math.Max(0.0, tangentSq - convergence * convergence));
+    }
+
+    private bool Subducts(in TectonicPlate plate, int plateId, CrustType acrossCrust, int acrossPlateId, in PlateInfo mine, ReadOnlySpan<PlateInfo> table)
+        => SubductsPair(plate.Crust, acrossCrust, plateId, acrossPlateId, mine, table[acrossPlateId - 1]);
+
+    /// <summary>
+    /// True when this side of an oceanic-oceanic convergent border is the plate that dives (see
+    /// <see cref="OceanicPolarity"/>). Always false for any other pair, and with the option off.
+    /// </summary>
+    private bool SubductsPair(CrustType mine, CrustType across, int mineId, int acrossId, in PlateInfo mineInfo, in PlateInfo acrossInfo)
+    {
+        if (!OceanicPolarity || mine != CrustType.Oceanic || across != CrustType.Oceanic) return false;
+        // The lower base elevation is the older, denser plate. Ties fall to the lower id, so exactly one side dives.
+        if (mineInfo.Elevation != acrossInfo.Elevation) return mineInfo.Elevation < acrossInfo.Elevation;
+        return mineId < acrossId;
+    }
+
     /// <summary>
     /// Signed convergent driver with subduction polarity: the oceanic side dives
     /// (trench, negative) while the overriding side piles up (arc/orogen, positive).
     /// </summary>
-    internal static double ConvergentDriver(CrustType mine, CrustType across, double convergence)
+    internal static double ConvergentDriver(CrustType mine, CrustType across, double convergence, bool subducting = false)
     {
+        if (subducting)
+            return -convergence * 1.0; // the diving side of an oceanic-oceanic border: trench
         if (mine == CrustType.Continental && across == CrustType.Oceanic)
             return convergence * 1.8; // Andes-style arc
         if (mine == CrustType.Oceanic && across == CrustType.Continental)

@@ -241,8 +241,9 @@ public class BalancedPlatesTests
         double small = Land(3, _ => { });
         double reference = Land(6, _ => { });
         Assert.InRange(small, reference - 0.08, reference + 0.08);
-        // Non-vacuity: without the scaling the small world is far above the reference.
-        Assert.True(Land(3, b => b.WithElevation(e => e.ReferenceTileCount = 0)) > reference + 0.12);
+        // Non-vacuity: without the scaling the small world falls outside the band asserted above (it is about +0.11 now;
+        // it was +0.25 before oceanic-oceanic polarity took half of the arcs off the sea floor).
+        Assert.True(Land(3, b => b.WithElevation(e => e.ReferenceTileCount = 0)) > reference + 0.08);
     }
 
     [Fact]
