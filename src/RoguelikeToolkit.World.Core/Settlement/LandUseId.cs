@@ -8,6 +8,7 @@ namespace RoguelikeToolkit.World.Core.Settlement;
 /// </summary>
 public static class LandUseId
 {
+    /// <summary>Nothing decided for the tile.</summary>
     public const byte None = 0;
     /// <summary>Tilled fields. Draws on <see cref="LandCapacityInfo.Arable"/>.</summary>
     public const byte Farmland = 1;
@@ -17,5 +18,6 @@ public static class LandUseId
     public const byte Pasture = 3;
     /// <summary>Built-up ground: a town or a city's footprint.</summary>
     public const byte Built = 4;
+    /// <summary>First id available to plugins and games; 128 to 255 are theirs.</summary>
     public const byte FirstPluginId = 128;
 }

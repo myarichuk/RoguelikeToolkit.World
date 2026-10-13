@@ -11,12 +11,19 @@ namespace RoguelikeToolkit.World.Core.Settlement;
 /// </summary>
 public static class SettlementScoring
 {
+    /// <summary>Score every tile starts from.</summary>
     public const double Base = 1.0;
+    /// <summary>Bonus when water is on or beside the tile, or within the scorer's search radius.</summary>
     public const double FreshWater = 1.0;
+    /// <summary>Bonus for plains, forest, savanna and Mediterranean biomes.</summary>
     public const double Fertile = 0.5;
+    /// <summary>Penalty (negative) for tundra, mountain, canyon and desert biomes.</summary>
     public const double Harsh = -0.5;
+    /// <summary>Penalty (negative) when the elevation is above <see cref="HighGroundHeight"/>.</summary>
     public const double HighGround = -0.3;
+    /// <summary>Height, in <c>ElevationInfo.Height</c> units, above which (strictly) <see cref="HighGround"/> applies.</summary>
     public const float HighGroundHeight = 0.35f;
+    /// <summary>Score subtracted per point of effective danger level.</summary>
     public const double PerDanger = 0.2;
     /// <summary>
     /// A harbour that the sea closes for part of the year: every sea tile it touches is <see cref="SeaIceKind.Seasonal"/>

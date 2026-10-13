@@ -20,26 +20,35 @@ namespace RoguelikeToolkit.World.Core.Lithosphere;
 [Preserve]
 public sealed class IslandChainStage : IWorldGeneratorStage, IDeclaredStage, IStageNamed, ISeededStage
 {
+    /// <summary>Seed for the random bead and gap lengths along each chain; the result is deterministic for a given world and seed. Defaults to 42.</summary>
     public int Seed { get; set; } = 42;
 
     /// <summary>Detection and repair tuning.</summary>
     public IslandChainOptions Options { get; set; } = new();
 
+    /// <summary>Creates the stage with seed 42 and default <see cref="Options"/>.</summary>
     public IslandChainStage()
     {
     }
 
+    /// <summary>Creates the stage with the given <paramref name="seed"/> and default <see cref="Options"/>.</summary>
     public IslandChainStage(int seed)
     {
         Seed = seed;
     }
 
+    /// <summary>Diagnostic name, <c>IslandChains</c>.</summary>
     public string Name => "IslandChains";
+    /// <summary><see cref="Generation.StageOrder.Erosion"/>: ties with erosion and runs after it when added later.</summary>
     public int Order => StageOrder.Erosion;
+    /// <summary>Elevation and plate layers, which must be registered.</summary>
     public Type[] Reads => new[] { typeof(ElevationInfo), typeof(TectonicPlate) };
+    /// <summary>Hand edits: sculpted or height-pinned tiles are never drowned.</summary>
     public Type[] ReadsOptional => new[] { typeof(UserEditInfo) };
+    /// <summary>Elevation, lowered on the strait tiles.</summary>
     public Type[] Writes => new[] { typeof(ElevationInfo) };
 
+    /// <summary>Detects island chains and drowns the strait tiles between beads by lowering them to the gap floor below sea level (see <see cref="IslandChainDetector.Break"/>).</summary>
     public void Execute(WorldMap map)
     {
         var store = map.DataStore;

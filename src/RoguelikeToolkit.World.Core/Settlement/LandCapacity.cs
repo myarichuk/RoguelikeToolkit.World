@@ -29,6 +29,11 @@ public static class LandCapacity
 
     private static byte ToByte(double v) => v <= 0 ? (byte)0 : v >= 1 ? (byte)255 : (byte)(v * 255 + 0.5);
 
+    /// <summary>Computes how much of each product the described tile can support.</summary>
+    /// <remarks>
+    /// Pure and deterministic. An ocean tile gets only <see cref="LandCapacityInfo.Fish"/>; any other tile gets arable, pasture, game and timber,
+    /// and fish (at most half scale) only when <see cref="LandSite.OnFreshWater"/> is set.
+    /// </remarks>
     public static LandCapacityInfo Evaluate(in LandSite s)
     {
         var result = new LandCapacityInfo();

@@ -17,6 +17,22 @@ namespace RoguelikeToolkit.World.Core.Features;
 /// </summary>
 public static class TileFeatures
 {
+    /// <summary>Gathers everything known about one tile into a <see cref="TileFeatureInfo"/>.</summary>
+    /// <remarks>
+    /// Layers that are not registered leave their <c>Has*</c> flag false, and omitted catalogs leave their fields at the
+    /// empty defaults. Each catalog lookup is a linear scan, so this suits single-tile queries, not whole-map scans.
+    /// The result is a pure function of the arguments.
+    /// </remarks>
+    /// <param name="store">Source of the dense field layers.</param>
+    /// <param name="tileIndex">Tile to describe.</param>
+    /// <param name="rivers">Catalog used to fill <see cref="TileFeatureInfo.RiverId"/>.</param>
+    /// <param name="bodies">Catalog used to fill <see cref="TileFeatureInfo.BodyKind"/>.</param>
+    /// <param name="ranges">Catalog used to fill the <c>InMountainRange</c>, <c>InValley</c>, <c>InCanyon</c> and <c>InPlaya</c> flags.</param>
+    /// <param name="deposits">Catalog used to fill <see cref="TileFeatureInfo.Deposits"/>.</param>
+    /// <param name="sites">Catalog used to fill <see cref="TileFeatureInfo.Sites"/> (matched on cell index <paramref name="tileIndex"/>).</param>
+    /// <param name="address">Echoed into <see cref="TileFeatureInfo.Address"/>; when null, a planet-tier address with world seed 0 is used.</param>
+    /// <param name="tileOverride">Optional biome and danger override applied last, over the stored values.</param>
+    /// <exception cref="IndexOutOfRangeException"><paramref name="tileIndex"/> is negative or not below the store's tile count.</exception>
     public static TileFeatureInfo Query(
         WorldDataStore store,
         int tileIndex,
