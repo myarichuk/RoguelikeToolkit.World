@@ -1,4 +1,5 @@
 using System.Runtime.InteropServices;
+using RoguelikeToolkit.World.Core.Primitives;
 
 namespace RoguelikeToolkit.World.Core.Entities;
 
@@ -23,9 +24,9 @@ public sealed class EntityStore
     private const int ChunkMask = ChunkSize - 1;
 
     private const uint SnapshotMagic = 0x32544E45u; // "ENT2"
-    private const int SnapshotVersion = 3;
+    private const int SnapshotVersion = 4;
     private const uint DeltaMagic = 0x44544E45u; // "ENTD"
-    private const int DeltaVersion = 1;
+    private const int DeltaVersion = 2;
 
     // Process-wide dense id per column type so lookups index an array.
     private static class ColumnSlot<T> where T : unmanaged
@@ -507,7 +508,7 @@ public sealed class EntityStore
             return ref _chunks[slot >> ChunkShift][slot & ChunkMask];
         }
 
-        internal override ulong TypeHash => Fnv(typeof(T).FullName ?? typeof(T).Name);
+        internal override ulong TypeHash => StableTypeId.Hash(typeof(T));
         internal override unsafe int Stride => sizeof(T);
         internal override string Name => typeof(T).Name;
 
@@ -561,13 +562,6 @@ public sealed class EntityStore
         {
             var data = (T[][])staged;
             for (int j = 0; j < indices.Length; j++) _chunks[indices[j]] = data[j];
-        }
-
-        private static ulong Fnv(string s)
-        {
-            ulong hash = 14695981039346656037ul;
-            foreach (char ch in s) { hash ^= (byte)ch; hash *= 1099511628211ul; }
-            return hash;
         }
     }
 }

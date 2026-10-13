@@ -65,7 +65,7 @@ public unsafe class WorldDataStore : IDisposable
     private long _dataOffset = 0;
 
     private const uint FileMagic = 0x31445357u; // "WDS1" little-endian
-    private const int FileVersion = 3;
+    private const int FileVersion = 4; // 4: layer ids are namespace-independent (StableTypeId)
     // v2 header: room for 32 field layers (dense per-tile structs).
     // v3: an entry's reserved word holds the row count for fixed-length tables
     // (0 = per-tile layer), so per-plate data need not be repeated on every tile.
@@ -252,19 +252,7 @@ public unsafe class WorldDataStore : IDisposable
         }
     }
 
-    private static ulong LayerNameHash(Type type)
-    {
-        // FNV-1a 64 over the type name: fixed width, no truncation ambiguity for
-        // nested/generic names, collision chance negligible for a count check.
-        ulong hash = 14695981039346656037ul;
-        string name = type.FullName ?? type.Name;
-        for (int i = 0; i < name.Length; i++)
-        {
-            hash ^= (byte)name[i];
-            hash *= 1099511628211ul;
-        }
-        return hash;
-    }
+    private static ulong LayerNameHash(Type type) => StableTypeId.Hash(type);
 
     private void ValidateFileHeader()
     {
