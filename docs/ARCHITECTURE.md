@@ -65,7 +65,7 @@ flowchart LR
         E["ElevationInfo<br/>height"]
         C["ClimateInfo<br/>temp, precip, wind, ocean currents"]
         H["HydrologyInfo<br/>flow, rivers,<br/>lakes, routing"]
-        B["LocalMapInfo<br/>biome, danger"]
+        B["BiomeInfo<br/>biome, danger"]
     end
     subgraph cats["Managed catalogs (on World)"]
         RC["RiverCatalog"]
@@ -193,9 +193,9 @@ If you ever find two runs disagreeing, it's a bug — the test suite has determi
 |---|---|
 | Facade + builder | `World.cs` |
 | Planet store + topology | `WorldDataStore.cs`, `WorldMap.cs`, `IcosphereGenerator.cs` |
-| Generation stages | `TectonicPlateGenerationStage.cs`, `ElevationGenerationStage.cs`, `ClimateStage.cs`, `ErosionGenerationStage.cs`, `HydrologyStage.cs`, `LocalMapGenerationStage.cs` |
+| Generation stages | `TectonicPlateGenerationStage.cs`, `ElevationGenerationStage.cs`, `ClimateStage.cs`, `ErosionGenerationStage.cs`, `HydrologyStage.cs`, `BiomeGenerationStage.cs` |
 | Pipeline + contracts | `WorldGenerationPipeline.cs`, `IWorldGeneratorStage.cs`, `WorldGeneratorStageAttribute.cs`, `StageContractValidator.cs`, `ISeededStage.cs` |
-| Field layers | `TectonicPlateLayer.cs`, `ElevationLayer.cs`, `ClimateInfo.cs`, `HydrologyInfo.cs`, `LocalMapInfo.cs`, `ElevationInfo.cs`, `IMapOverlay.cs`, `IMapLayer` bits |
+| Field layers | `TectonicPlateLayer.cs`, `ElevationLayer.cs`, `ClimateInfo.cs`, `HydrologyInfo.cs`, `BiomeInfo.cs`, `ElevationInfo.cs`, `IMapOverlay.cs`, `IMapLayer` bits |
 | Hierarchy + derivation | `MapAddresses.cs`, `MapBounds.cs`, `ParentContext.cs`, `TerrainOrientation.cs`, `RegionMaps.cs`, `IHexMap.cs` |
 | Sites | `SiteInjectors.cs` |
 | Queries | `SpatialIndex.cs`, `TileFeatures.cs`, `CitySites.cs`, `Deposits.cs`, `FeatureCatalog.cs`, `Hydrography.cs`, `CanyonAnalysis.cs` |

@@ -9,8 +9,8 @@ using RoguelikeToolkit.World.Core.Topology;
 namespace RoguelikeToolkit.World.Core.Biomes;
 
 [Preserve] // created via reflection by WorldGenerationPipeline.Discover; keep it through Unity code stripping
-[WorldGeneratorStage(20, Reads = new[] { typeof(ElevationInfo) }, ReadsOptional = new[] { typeof(ClimateInfo), typeof(HydrologyInfo), typeof(UserEditInfo) }, Writes = new[] { typeof(LocalMapInfo) })]
-public class LocalMapGenerationStage : IWorldGeneratorStage, ISeededStage
+[WorldGeneratorStage(20, Reads = new[] { typeof(ElevationInfo) }, ReadsOptional = new[] { typeof(ClimateInfo), typeof(HydrologyInfo), typeof(UserEditInfo) }, Writes = new[] { typeof(BiomeInfo) })]
+public class BiomeGenerationStage : IWorldGeneratorStage, ISeededStage
 {
     public int Seed { get; set; } = 42;
 
@@ -28,11 +28,11 @@ public class LocalMapGenerationStage : IWorldGeneratorStage, ISeededStage
     /// <summary>Must match <see cref="HydrologyStage.RiverThresholdScale"/> so canyon biomes agree with rivers (WorldBuilder wires it).</summary>
     public float RiverThresholdScale { get; set; } = 1f;
 
-    public LocalMapGenerationStage()
+    public BiomeGenerationStage()
     {
     }
 
-    public LocalMapGenerationStage(int seed = 42)
+    public BiomeGenerationStage(int seed = 42)
     {
         Seed = seed;
     }
@@ -40,7 +40,7 @@ public class LocalMapGenerationStage : IWorldGeneratorStage, ISeededStage
     public void Execute(WorldMap map)
     {
         var store = map.DataStore;
-        var span = store.GetSpan<LocalMapInfo>();
+        var span = store.GetSpan<BiomeInfo>();
         var elev = store.GetSpan<ElevationInfo>();
         bool hasClimate = store.IsLayerRegistered<ClimateInfo>();
         var climate = hasClimate ? store.GetSpan<ClimateInfo>() : default;
@@ -118,7 +118,7 @@ public class LocalMapGenerationStage : IWorldGeneratorStage, ISeededStage
 
             // The per-tile seed is not stored: it is a pure function of (world seed,
             // tile index). See World.TileSeed / Rng.DeriveTileSeed.
-            span[i] = new LocalMapInfo
+            span[i] = new BiomeInfo
             {
                 Biome = biome,
                 DangerLevel = danger
@@ -135,7 +135,7 @@ public class LocalMapGenerationStage : IWorldGeneratorStage, ISeededStage
                 if ((pins[i].Flags & UserEditFlags.PinBiome) != 0 && span[i].Biome != pins[i].PinBiome) ApplyPin(ref span[i], pins[i].PinBiome);
     }
 
-    private static void ApplyPin(ref LocalMapInfo info, BiomeType pinned)
+    private static void ApplyPin(ref BiomeInfo info, BiomeType pinned)
     {
         // Re-base the danger the way smoothing does: biome base plus whatever per-tile jitter was rolled.
         int jitter = Math.Max(0, info.DangerLevel - BiomeClassifier.BaseDanger(info.Biome));
@@ -161,7 +161,7 @@ public class LocalMapGenerationStage : IWorldGeneratorStage, ISeededStage
     /// 4+ neighbors agree on it; each pass reads from a snapshot so the result is independent of
     /// tile iteration order.
     /// </summary>
-    public static void SmoothMoistureBiomes(WorldDataStore store, Span<LocalMapInfo> span, int passes)
+    public static void SmoothMoistureBiomes(WorldDataStore store, Span<BiomeInfo> span, int passes)
     {
         var current = new BiomeType[span.Length];
         for (int i = 0; i < span.Length; i++) current[i] = span[i].Biome;

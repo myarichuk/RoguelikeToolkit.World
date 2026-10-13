@@ -15,7 +15,7 @@ public class JintWorldStageTests
         var map = new WorldMap(0);
         map.RegisterLayer<ElevationInfo>(new ElevationLayer(map.DataStore));
         map.RegisterLayer<ClimateInfo>(new ClimateLayer(map.DataStore));
-        map.RegisterLayer<LocalMapInfo>(new LocalMapLayer(map.DataStore, 42, new TectonicPlateLayer(map.DataStore, 4, 42)));
+        map.RegisterLayer<BiomeInfo>(new BiomeLayer(map.DataStore, 42, new TectonicPlateLayer(map.DataStore, 4, 42)));
         map.RegisterLayer<LandCapacityInfo>(new LandCapacityLayer(map.DataStore));
         map.RegisterLayer<LandUseInfo>(new LandUseLayer(map.DataStore));
         map.DataStore.Allocate();
@@ -179,12 +179,12 @@ public class JintWorldStageTests
         JintWorldStage Stage(string body) => new(new JintStageSpec
         {
             Name = "biome-js", Order = 21, Source = body,
-            Reads = new[] { typeof(LocalMapInfo) }, Writes = new[] { typeof(LocalMapInfo) },
+            Reads = new[] { typeof(BiomeInfo) }, Writes = new[] { typeof(BiomeInfo) },
         });
 
         using var map = TinyMap();
         Stage("function execute() { setBiome(0, BIOME.Badlands); setBiome(1, BIOME.RockDesert); setBiome(2, BIOME.SaltFlat); setBiome(3, BIOME.ColdDesert); }").Execute(map);
-        var span = map.DataStore.GetSpan<LocalMapInfo>();
+        var span = map.DataStore.GetSpan<BiomeInfo>();
         Assert.Equal(BiomeType.Badlands, span[0].Biome);
         Assert.Equal(BiomeType.RockDesert, span[1].Biome);
         Assert.Equal(BiomeType.SaltFlat, span[2].Biome);
@@ -245,17 +245,17 @@ public class JintWorldStageTests
             var climate = map.DataStore.GetSpan<ClimateInfo>();
             for (int i = 0; i < climate.Length; i++)
                 climate[i] = new ClimateInfo { Temperature = 0.7f, Precipitation = 0.8f };
-            var locals = map.DataStore.GetSpan<LocalMapInfo>();
+            var locals = map.DataStore.GetSpan<BiomeInfo>();
             for (int i = 0; i < locals.Length; i++)
-                locals[i] = new LocalMapInfo { Biome = BiomeType.Plains, DangerLevel = 1 };
+                locals[i] = new BiomeInfo { Biome = BiomeType.Plains, DangerLevel = 1 };
 
             var stage = new JintWorldStage(new JintStageSpec
             {
                 Name = Path.GetFileName(file),
                 Order = 21,
                 Source = File.ReadAllText(file),
-                Reads = new[] { typeof(ClimateInfo), typeof(LocalMapInfo), typeof(LandCapacityInfo), typeof(LandUseInfo) },
-                Writes = new[] { typeof(ClimateInfo), typeof(LocalMapInfo), typeof(LandUseInfo) },
+                Reads = new[] { typeof(ClimateInfo), typeof(BiomeInfo), typeof(LandCapacityInfo), typeof(LandUseInfo) },
+                Writes = new[] { typeof(ClimateInfo), typeof(BiomeInfo), typeof(LandUseInfo) },
             });
 
             stage.Execute(map); // must not throw

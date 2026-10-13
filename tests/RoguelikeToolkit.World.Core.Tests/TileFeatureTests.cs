@@ -22,7 +22,7 @@ public class TileFeatureTests
             var f = world.GetTileFeatures(i);
             Assert.Equal(i, f.TileIndex);
             Assert.True(f.HasBiome && f.HasElevation && f.HasHydrology);
-            Assert.Equal(store.GetSpan<LocalMapInfo>()[i].Biome, f.Biome);
+            Assert.Equal(store.GetSpan<BiomeInfo>()[i].Biome, f.Biome);
             if (hydro[i].IsRiver != 1) continue;
             rivers++;
 

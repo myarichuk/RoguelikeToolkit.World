@@ -9,14 +9,14 @@ namespace RoguelikeToolkit.World.Core.Tests;
 
 public class DeterminismTests
 {
-    private static (TectonicPlate[] Plates, PlateInfo[] PlateTable, ElevationInfo[] Elev, LocalMapInfo[] Locals) Generate(int size, int seed, int seedCount)
+    private static (TectonicPlate[] Plates, PlateInfo[] PlateTable, ElevationInfo[] Elev, BiomeInfo[] Locals) Generate(int size, int seed, int seedCount)
     {
         using var map = new WorldMap(size);
         using var tectonicLayer = new TectonicPlateLayer(map.DataStore, seedCount);
         map.RegisterLayer(tectonicLayer);
         using var elevationLayer = new ElevationLayer(map.DataStore);
         map.RegisterLayer(elevationLayer);
-        using var localLayer = new LocalMapLayer(map.DataStore, seed, tectonicLayer);
+        using var localLayer = new BiomeLayer(map.DataStore, seed, tectonicLayer);
         map.RegisterLayer(localLayer);
         map.DataStore.Allocate();
 
@@ -24,13 +24,13 @@ public class DeterminismTests
         pipeline.AddStage(new TectonicPlateGenerationStage(seedCount, seed));
         pipeline.AddStage(new ElevationGenerationStage(seed));
         pipeline.AddStage(new ErosionGenerationStage());
-        pipeline.AddStage(new LocalMapGenerationStage(seed));
+        pipeline.AddStage(new BiomeGenerationStage(seed));
         pipeline.Execute(map);
 
         return (map.DataStore.GetSpan<TectonicPlate>().ToArray(),
                 map.DataStore.GetTable<PlateInfo>().ToArray(),
                 map.DataStore.GetSpan<ElevationInfo>().ToArray(),
-                map.DataStore.GetSpan<LocalMapInfo>().ToArray());
+                map.DataStore.GetSpan<BiomeInfo>().ToArray());
     }
 
     [Fact]

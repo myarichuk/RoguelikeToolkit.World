@@ -240,7 +240,7 @@ namespace RoguelikeToolkit.World.App
 
                 if (txtBiome != null && txtDanger != null && tileIndex >= 0)
                 {
-                    var localInfo = GlView.LocalLayer?.Store.GetRef<RoguelikeToolkit.World.Core.Biomes.LocalMapInfo>(tileIndex);
+                    var localInfo = GlView.LocalLayer?.Store.GetRef<RoguelikeToolkit.World.Core.Biomes.BiomeInfo>(tileIndex);
                     if (localInfo.HasValue)
                     {
                         txtBiome.Text = $"Biome: {localInfo.Value.Biome}";

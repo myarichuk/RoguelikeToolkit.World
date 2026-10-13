@@ -21,7 +21,7 @@ public sealed class WorldBuilder
     private readonly List<IWorldGeneratorStage> _extraStages = new();
     private bool _useDefaults = true;
     private Action<TectonicPlateGenerationStage>? _tectonicsConfig;
-    private Action<LocalMapGenerationStage>? _biomesConfig;
+    private Action<BiomeGenerationStage>? _biomesConfig;
     private Action<ClimateStage>? _climateConfig;
     private Action<HydrologyStage>? _hydrologyConfig;
     private Action<ErosionGenerationStage>? _erosionConfig;
@@ -123,7 +123,7 @@ public sealed class WorldBuilder
         return this;
     }
     /// <summary>Tweak the default biome stage (smoothing passes...).</summary>
-    public WorldBuilder WithBiomes(Action<LocalMapGenerationStage> configure)
+    public WorldBuilder WithBiomes(Action<BiomeGenerationStage> configure)
     {
         var prev = _biomesConfig;
         _biomesConfig = prev == null ? configure : s => { prev(s); configure(s); };
@@ -155,7 +155,7 @@ public sealed class WorldBuilder
         map.RegisterLayer<ElevationInfo>(new ElevationLayer(map.DataStore));
         map.RegisterLayer<HydrologyInfo>(new HydrologyLayer(map.DataStore));
         map.RegisterLayer<ClimateInfo>(new ClimateLayer(map.DataStore));
-        map.RegisterLayer<LocalMapInfo>(new LocalMapLayer(map.DataStore, _seed,
+        map.RegisterLayer<BiomeInfo>(new BiomeLayer(map.DataStore, _seed,
             platesLayer));
         if (_userEdits) map.RegisterLayer<UserEditInfo>(new UserEditLayer(map.DataStore));
         if (_landUse)
@@ -194,7 +194,7 @@ public sealed class WorldBuilder
             }
             if (_climateRefresh) pipeline.AddStage(new ClimateRefreshStage(climate)); // ties erosion's order; the stable sort keeps it after
             pipeline.AddStage(hydrologyStage);
-            var biomes = new LocalMapGenerationStage(_seed) { RiverThresholdScale = riverScale };
+            var biomes = new BiomeGenerationStage(_seed) { RiverThresholdScale = riverScale };
             _biomesConfig?.Invoke(biomes);
             pipeline.AddStage(biomes);
         }

@@ -26,7 +26,7 @@ public sealed class LandCapacityStage : IWorldGeneratorStage, IDeclaredStage, IS
 
     public string Name => "LandCapacity";
     public int Order => StageOrder;
-    public Type[] Reads => new[] { typeof(ElevationInfo), typeof(LocalMapInfo) };
+    public Type[] Reads => new[] { typeof(ElevationInfo), typeof(BiomeInfo) };
     public Type[] ReadsOptional => new[] { typeof(ClimateInfo), typeof(HydrologyInfo) };
     public Type[] Writes => new[] { typeof(LandCapacityInfo), typeof(LandUseInfo) };
 
@@ -34,7 +34,7 @@ public sealed class LandCapacityStage : IWorldGeneratorStage, IDeclaredStage, IS
     {
         var store = map.DataStore;
         var elev = store.GetSpan<ElevationInfo>();
-        var local = store.GetSpan<LocalMapInfo>();
+        var local = store.GetSpan<BiomeInfo>();
         var capacity = store.GetSpan<LandCapacityInfo>();
         var use = store.GetSpan<LandUseInfo>();
         bool hasClimate = store.IsLayerRegistered<ClimateInfo>();

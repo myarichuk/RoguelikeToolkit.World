@@ -162,7 +162,7 @@ should form dry interiors.
 Glacier snowline `0.15 + 0.11·p` (up to 0.26) sits *above* the Tundra
 threshold `temp < 0.18`, and the dry-polar gate needs `p < 0.20` while
 measured global precip minima are 0.17–0.24 ([Glaciology.cs](/C:/projects/RoguelikeToolkit.World/src/RoguelikeToolkit.World.Core/Glaciology.cs:58),
-[LocalMapGenerationStage.cs](/C:/projects/RoguelikeToolkit.World/src/RoguelikeToolkit.World.Core/LocalMapGenerationStage.cs:69)).
+[BiomeGenerationStage.cs](/C:/projects/RoguelikeToolkit.World/src/RoguelikeToolkit.World.Core/BiomeGenerationStage.cs:69)).
 Result: **Tundra 0–1 tiles in all 8 full builds**; cold land is glacier or
 nothing. Deserts are suppressed by the same dry-tail compression (4–183
 tiles vs thousands of forests/jungles).

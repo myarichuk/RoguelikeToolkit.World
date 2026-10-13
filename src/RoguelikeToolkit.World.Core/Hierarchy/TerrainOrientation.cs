@@ -26,13 +26,13 @@ public static class TerrainOrientation
 
         bool hasElev = store.IsLayerRegistered<ElevationInfo>();
         bool hasClimate = store.IsLayerRegistered<ClimateInfo>();
-        bool hasLocal = store.IsLayerRegistered<LocalMapInfo>();
+        bool hasLocal = store.IsLayerRegistered<BiomeInfo>();
         bool hasHydro = store.IsLayerRegistered<HydrologyInfo>();
         bool hasPlates = store.IsLayerRegistered<TectonicPlate>();
 
         var elev = hasElev ? store.GetSpan<ElevationInfo>() : default;
         var climate = hasClimate ? store.GetSpan<ClimateInfo>() : default;
-        var locals = hasLocal ? store.GetSpan<LocalMapInfo>() : default;
+        var locals = hasLocal ? store.GetSpan<BiomeInfo>() : default;
         var hydro = hasHydro ? store.GetSpan<HydrologyInfo>() : default;
         var plates = hasPlates ? store.GetSpan<TectonicPlate>() : default;
         if (hasHydro)

@@ -273,13 +273,13 @@ public class PlatePartitionTests
         }
     }
 
-    private static LocalMapInfo[] RunBiomes(int size, int seed, int plates, bool smooth)
+    private static BiomeInfo[] RunBiomes(int size, int seed, int plates, bool smooth)
     {
         using var world = new WorldBuilder()
             .WithSize(size).WithSeed(seed).WithPlateCount(plates)
             .WithBiomes(b => { b.SmoothBiomes = smooth; })
             .Build();
-        return world.Map.DataStore.GetSpan<LocalMapInfo>().ToArray();
+        return world.Map.DataStore.GetSpan<BiomeInfo>().ToArray();
     }
 
     [Fact]
@@ -316,7 +316,7 @@ public class PlatePartitionTests
         => biome == BiomeType.Plains || biome == BiomeType.Forest
             || biome == BiomeType.Jungle || biome == BiomeType.Swamp || biome == BiomeType.Savanna || biome == BiomeType.Mediterranean;
 
-    private static int CountEnclaves(int seed, LocalMapInfo[] locals)
+    private static int CountEnclaves(int seed, BiomeInfo[] locals)
     {
         // Enclave: a moisture-biome tile with no same-biome neighbor.
         using var store = new WorldDataStore(2);

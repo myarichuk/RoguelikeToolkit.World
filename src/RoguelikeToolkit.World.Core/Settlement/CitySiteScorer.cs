@@ -22,10 +22,10 @@ public static class CitySiteScorer
         int worldSeed = 0)
     {
         var elev = store.IsLayerRegistered<ElevationInfo>() ? store.GetSpan<ElevationInfo>() : default;
-        var locals = store.IsLayerRegistered<LocalMapInfo>() ? store.GetSpan<LocalMapInfo>() : default;
+        var locals = store.IsLayerRegistered<BiomeInfo>() ? store.GetSpan<BiomeInfo>() : default;
         var hydro = store.IsLayerRegistered<HydrologyInfo>() ? store.GetSpan<HydrologyInfo>() : default;
         bool hasElev = store.IsLayerRegistered<ElevationInfo>();
-        bool hasLocals = store.IsLayerRegistered<LocalMapInfo>();
+        bool hasLocals = store.IsLayerRegistered<BiomeInfo>();
         bool hasHydro = store.IsLayerRegistered<HydrologyInfo>();
 
         var riverTiles = new HashSet<int>();

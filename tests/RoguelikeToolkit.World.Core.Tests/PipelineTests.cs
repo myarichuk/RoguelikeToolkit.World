@@ -18,7 +18,7 @@ public class PipelineTests
         Assert.True(stages.Count >= 2);
 
         var tectonicStage = stages.OfType<TectonicPlateGenerationStage>().FirstOrDefault();
-        var localMapStage = stages.OfType<LocalMapGenerationStage>().FirstOrDefault();
+        var localMapStage = stages.OfType<BiomeGenerationStage>().FirstOrDefault();
 
         Assert.NotNull(tectonicStage);
         Assert.NotNull(localMapStage);

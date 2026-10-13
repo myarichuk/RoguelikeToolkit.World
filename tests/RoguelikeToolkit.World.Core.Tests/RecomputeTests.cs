@@ -24,7 +24,7 @@ public class RecomputeTests
         var s = w.Map.DataStore;
         var e = s.GetSpan<ElevationInfo>();
         var c = s.GetSpan<ClimateInfo>();
-        var l = s.GetSpan<LocalMapInfo>();
+        var l = s.GetSpan<BiomeInfo>();
         var h = s.GetSpan<HydrologyInfo>();
         int n = s.TileCount;
         var height = new float[n]; var temp = new float[n]; var rain = new float[n]; var flow = new float[n];
@@ -148,14 +148,14 @@ public class RecomputeTests
         using var w = Editable();
         var s = w.Map.DataStore;
         int t = InlandTile(w);
-        var climateBiome = s.GetSpan<LocalMapInfo>()[t].Biome;
+        var climateBiome = s.GetSpan<BiomeInfo>()[t].Biome;
         var pinned = climateBiome == BiomeType.SaltFlat ? BiomeType.Forest : BiomeType.SaltFlat;
         w.Edits[t].Flags = UserEditFlags.PinBiome;
         w.Edits[t].PinBiome = pinned;
         w.Recompute();
-        Assert.Equal(pinned, s.GetSpan<LocalMapInfo>()[t].Biome);
+        Assert.Equal(pinned, s.GetSpan<BiomeInfo>()[t].Biome);
         // Neighbours are untouched by the pin itself (only the pinned tile is forced).
-        Assert.Equal(s.TileCount, s.GetSpan<LocalMapInfo>().Length);
+        Assert.Equal(s.TileCount, s.GetSpan<BiomeInfo>().Length);
     }
 
     [Fact]

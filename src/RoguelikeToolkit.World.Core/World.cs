@@ -114,7 +114,7 @@ public sealed class World : IDisposable
     public (BiomeType Biome, int Danger) SampleBiome(GeoCoord coord, QueryOptions? options = null)
     {
         int i = Map.DataStore.GetTileIndex(coord);
-        var info = Map.DataStore.GetRef<LocalMapInfo>(i);
+        var info = Map.DataStore.GetRef<BiomeInfo>(i);
         var biome = info.Biome;
         int danger = info.DangerLevel;
         if (options?.History != null && options.History.TryGetTileModifier(i, out var mod))
@@ -142,9 +142,9 @@ public sealed class World : IDisposable
     {
         var store = Map.DataStore;
         bool hasElev = store.IsLayerRegistered<ElevationInfo>();
-        bool hasLocals = store.IsLayerRegistered<LocalMapInfo>();
+        bool hasLocals = store.IsLayerRegistered<BiomeInfo>();
         var elev = hasElev ? store.GetSpan<ElevationInfo>() : default;
-        var locals = hasLocals ? store.GetSpan<LocalMapInfo>() : default;
+        var locals = hasLocals ? store.GetSpan<BiomeInfo>() : default;
 
         // Compare dot products against cos(radius/R); only hits pay for Acos.
         var vectors = store.GetTileVectors();

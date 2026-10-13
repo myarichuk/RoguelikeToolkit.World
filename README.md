@@ -65,7 +65,7 @@ build from the finished tectonics + climate + hydrology.
   (16 bytes per tile: `Crust` + `Boundary`, continentality, boundary rings, a
   signed orogeny driver, and a plate `Id` into the per-plate `PlateInfo` table), `ElevationInfo`, `HydrologyInfo` (discharge,
   water-body id, river flag, routing surface, lake depth, playa, endorheic and saline flags),
-  `ClimateInfo` (temperature, precipitation, wind), `LocalMapInfo` (biome,
+  `ClimateInfo` (temperature, precipitation, wind), `BiomeInfo` (biome,
   danger, seed). File-backed stores use the v3 header (up to 32 field
   layers and tables); old v1/v2 files are rejected with `InvalidDataException` by design.
 - **Feature catalogs** (sparse, managed, on `World`): `RiverCatalog` (rivers
@@ -173,7 +173,7 @@ public class MyBiomeGenerationStage : IWorldGeneratorStage
 {
     public void Execute(WorldMap map)
     {
-        var localSpan = map.DataStore.GetSpan<LocalMapInfo>();
+        var localSpan = map.DataStore.GetSpan<BiomeInfo>();
         var tectonicSpan = map.DataStore.GetSpan<TectonicPlate>();
 
         for (int i = 0; i < localSpan.Length; i++)
@@ -215,7 +215,7 @@ The `RoguelikeToolkit.World.Core` library relies on two primary pillars to achie
 
 ### 1. Centralized Data Storage: `WorldDataStore`
 The hex sphere data structure is backed by a single contiguous native block (a memory-mapped file on `net10.0`, `Marshal.AllocHGlobal` for in-memory stores on `netstandard2.1`), represented by the `WorldDataStore` class. This store serves as the single source of truth for all queryable tile data in the world grid.
-- All layer data (such as `TectonicPlate` and `LocalMapInfo`) are unmanaged blittable structs.
+- All layer data (such as `TectonicPlate` and `BiomeInfo`) are unmanaged blittable structs.
 - Layers are registered with the `WorldDataStore` prior to allocation (`DataStore.RegisterLayer<T>()`). The store dynamically calculates byte offsets for all registered layers to store them contiguously.
 - When `Allocate()` is called, that single block is created, so lookups afterwards are allocation-free and cache-friendly.
 - Tile topology (tile center coordinates + adjacency) is precomputed once per world size and stored in contiguous arrays indexed by tile id. `GetTileIndex`, `GetGeoCoord`, and `GetAdjacent` all read from this canonical topology table.

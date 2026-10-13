@@ -25,7 +25,7 @@ public class PipelineLayerTests
         var plates = new TectonicPlateLayer(map.DataStore, 4, seed: 42);
         map.RegisterLayer(plates);
         map.RegisterLayer<ElevationInfo>(new ElevationLayer(map.DataStore));
-        map.RegisterLayer<LocalMapInfo>(new LocalMapLayer(map.DataStore, 42, plates));
+        map.RegisterLayer<BiomeInfo>(new BiomeLayer(map.DataStore, 42, plates));
         map.DataStore.Allocate();
         return map;
     }
@@ -38,7 +38,7 @@ public class PipelineLayerTests
         map.RegisterLayer<ElevationInfo>(new ElevationLayer(map.DataStore));
         map.RegisterLayer<HydrologyInfo>(new HydrologyLayer(map.DataStore));
         map.RegisterLayer<ClimateInfo>(new ClimateLayer(map.DataStore));
-        map.RegisterLayer<LocalMapInfo>(new LocalMapLayer(map.DataStore, seed, plates));
+        map.RegisterLayer<BiomeInfo>(new BiomeLayer(map.DataStore, seed, plates));
         map.DataStore.Allocate();
         return map;
     }
@@ -76,22 +76,22 @@ public class PipelineLayerTests
     [Fact]
     public void Execute_OptionalReadsMissing_StillRuns()
     {
-        // LocalMapGenerationStage declares ClimateInfo as an optional read with
+        // BiomeGenerationStage declares ClimateInfo as an optional read with
         // a built-in moisture fallback; absence of the layer must stay legal.
         using var map = new WorldMap(1);
         var plates = new TectonicPlateLayer(map.DataStore, 4, seed: 42);
         map.RegisterLayer(plates);
         map.RegisterLayer<ElevationInfo>(new ElevationLayer(map.DataStore));
-        map.RegisterLayer<LocalMapInfo>(new LocalMapLayer(map.DataStore, 42, plates));
+        map.RegisterLayer<BiomeInfo>(new BiomeLayer(map.DataStore, 42, plates));
         map.DataStore.Allocate();
 
         var pipeline = new WorldGenerationPipeline();
         pipeline.AddStage(new TectonicPlateGenerationStage(4, 42));
         pipeline.AddStage(new ElevationGenerationStage(42));
-        pipeline.AddStage(new LocalMapGenerationStage(42));
+        pipeline.AddStage(new BiomeGenerationStage(42));
 
         pipeline.Execute(map);
-        Assert.NotEmpty(map.DataStore.GetSpan<LocalMapInfo>().ToArray());
+        Assert.NotEmpty(map.DataStore.GetSpan<BiomeInfo>().ToArray());
     }
 
     [Fact]

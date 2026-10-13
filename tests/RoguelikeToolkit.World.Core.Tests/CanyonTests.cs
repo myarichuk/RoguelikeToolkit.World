@@ -31,7 +31,7 @@ public class CanyonTests
     {
         using var world = new WorldBuilder().WithSize(3).WithSeed(12).Build();
         var store = world.Map.DataStore;
-        var locals = store.GetSpan<LocalMapInfo>();
+        var locals = store.GetSpan<BiomeInfo>();
 
         var canyonTiles = new System.Collections.Generic.HashSet<int>();
         foreach (var f in world.Ranges.Features)

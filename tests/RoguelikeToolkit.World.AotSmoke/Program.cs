@@ -29,7 +29,7 @@ void Mix(ulong v)
 using (var world = new WorldBuilder().WithSize(3).WithSeed(42).Build())
 {
     var heights = world.Map.DataStore.GetSpan<ElevationInfo>();
-    var biomes = world.Map.DataStore.GetSpan<LocalMapInfo>();
+    var biomes = world.Map.DataStore.GetSpan<BiomeInfo>();
     Check(heights.Length == world.TileCount && heights.Length > 0, "elevation layer");
     for (int i = 0; i < heights.Length; i++)
     {

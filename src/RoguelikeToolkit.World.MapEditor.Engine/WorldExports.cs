@@ -138,7 +138,7 @@ public static partial class WorldExports
     [JSExport]
     public static byte[] Biomes()
     {
-        var b = Current.Map.DataStore.GetSpan<LocalMapInfo>();
+        var b = Current.Map.DataStore.GetSpan<BiomeInfo>();
         var result = new byte[b.Length];
         for (int i = 0; i < b.Length; i++) result[i] = (byte)b[i].Biome;
         return result;

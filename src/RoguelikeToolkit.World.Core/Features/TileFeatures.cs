@@ -42,9 +42,9 @@ public static class TileFeatures
             Sites = Array.Empty<PlacedSite>()
         };
 
-        if (store.IsLayerRegistered<LocalMapInfo>())
+        if (store.IsLayerRegistered<BiomeInfo>())
         {
-            var local = store.GetSpan<LocalMapInfo>()[tileIndex];
+            var local = store.GetSpan<BiomeInfo>()[tileIndex];
             info.HasBiome = true;
             info.Biome = local.Biome;
             info.DangerLevel = local.DangerLevel;

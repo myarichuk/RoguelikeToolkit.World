@@ -36,7 +36,7 @@ public class StageBenchmarks
         map.RegisterLayer<ElevationInfo>(new ElevationLayer(map.DataStore));
         map.RegisterLayer<HydrologyInfo>(new HydrologyLayer(map.DataStore));
         map.RegisterLayer<ClimateInfo>(new ClimateLayer(map.DataStore));
-        map.RegisterLayer<LocalMapInfo>(new LocalMapLayer(map.DataStore, Seed, plates));
+        map.RegisterLayer<BiomeInfo>(new BiomeLayer(map.DataStore, Seed, plates));
         map.DataStore.Allocate();
         return map;
     }
@@ -121,7 +121,7 @@ public class StageBenchmarks
     [Benchmark(Description = "Biomes")]
     public int Biomes()
     {
-        new LocalMapGenerationStage(Seed).Execute(_biomesMap);
+        new BiomeGenerationStage(Seed).Execute(_biomesMap);
         return _biomesMap.DataStore.TileCount;
     }
 }

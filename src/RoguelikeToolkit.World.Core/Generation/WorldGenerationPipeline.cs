@@ -164,7 +164,7 @@ public class WorldGenerationPipeline : IDisposable
     [System.Diagnostics.CodeAnalysis.DynamicDependency(System.Diagnostics.CodeAnalysis.DynamicallyAccessedMemberTypes.PublicParameterlessConstructor, typeof(ClimateStage))]
     [System.Diagnostics.CodeAnalysis.DynamicDependency(System.Diagnostics.CodeAnalysis.DynamicallyAccessedMemberTypes.PublicParameterlessConstructor, typeof(ErosionGenerationStage))]
     [System.Diagnostics.CodeAnalysis.DynamicDependency(System.Diagnostics.CodeAnalysis.DynamicallyAccessedMemberTypes.PublicParameterlessConstructor, typeof(HydrologyStage))]
-    [System.Diagnostics.CodeAnalysis.DynamicDependency(System.Diagnostics.CodeAnalysis.DynamicallyAccessedMemberTypes.PublicParameterlessConstructor, typeof(LocalMapGenerationStage))]
+    [System.Diagnostics.CodeAnalysis.DynamicDependency(System.Diagnostics.CodeAnalysis.DynamicallyAccessedMemberTypes.PublicParameterlessConstructor, typeof(BiomeGenerationStage))]
     private void DiscoverCore(List<Assembly> assemblies, List<StageDiscoveryDiagnostic> diagnostics, Action<StageDiscoveryDiagnostic>? onDiagnostic)
     {
         var stageTypes = assemblies

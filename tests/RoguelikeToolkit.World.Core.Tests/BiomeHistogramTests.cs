@@ -23,7 +23,7 @@ public class BiomeHistogramTests
     private static Dictionary<BiomeType, int> Histogram(World world)
     {
         var hist = new Dictionary<BiomeType, int>();
-        var locals = world.Map.DataStore.GetSpan<LocalMapInfo>();
+        var locals = world.Map.DataStore.GetSpan<BiomeInfo>();
         for (int i = 0; i < locals.Length; i++)
         {
             var b = locals[i].Biome;
@@ -61,7 +61,7 @@ public class BiomeHistogramTests
         {
             using var world = new WorldBuilder().WithSize(size).WithSeed(seed).Build();
             var store = world.Map.DataStore;
-            var locals = store.GetSpan<LocalMapInfo>();
+            var locals = store.GetSpan<BiomeInfo>();
             var climate = store.GetSpan<ClimateInfo>();
             bool hasClimate = store.IsLayerRegistered<ClimateInfo>();
             int glaciers = 0;
@@ -101,7 +101,7 @@ public class BiomeHistogramTests
             using var world = new WorldBuilder().WithSize(5).WithSeed(seed).Build();
             var store = world.Map.DataStore;
             var elev = store.GetSpan<ElevationInfo>();
-            var locals = store.GetSpan<LocalMapInfo>();
+            var locals = store.GetSpan<BiomeInfo>();
             var vectors = store.GetTileVectors();
             for (int i = 0; i < store.TileCount; i++)
             {
@@ -189,7 +189,7 @@ public class BiomeHistogramTests
         {
             using var world = new WorldBuilder().WithSize(5).WithSeed(seed).Build();
             var store = world.Map.DataStore;
-            var locals = store.GetSpan<LocalMapInfo>();
+            var locals = store.GetSpan<BiomeInfo>();
             var hydro = store.GetSpan<HydrologyInfo>();
             var climate = store.GetSpan<ClimateInfo>();
             for (int i = 0; i < store.TileCount; i++)
@@ -207,27 +207,27 @@ public class BiomeHistogramTests
     {
         using var world = new WorldBuilder().WithSize(3).WithSeed(5).Build();
         var store = world.Map.DataStore;
-        var span = store.GetSpan<LocalMapInfo>();
+        var span = store.GetSpan<BiomeInfo>();
         var neighbors = new int[6];
         int centre = 100;
         int n = store.GetAdjacent(centre, neighbors);
-        for (int i = 0; i < span.Length; i++) span[i] = new LocalMapInfo { Biome = BiomeType.Ocean, DangerLevel = 0 };
-        span[centre] = new LocalMapInfo { Biome = BiomeType.Desert, DangerLevel = 2 };
-        for (int k = 0; k < n; k++) span[neighbors[k]] = new LocalMapInfo { Biome = BiomeType.Badlands, DangerLevel = 3 };
-        LocalMapGenerationStage.SmoothMoistureBiomes(store, span, 1);
+        for (int i = 0; i < span.Length; i++) span[i] = new BiomeInfo { Biome = BiomeType.Ocean, DangerLevel = 0 };
+        span[centre] = new BiomeInfo { Biome = BiomeType.Desert, DangerLevel = 2 };
+        for (int k = 0; k < n; k++) span[neighbors[k]] = new BiomeInfo { Biome = BiomeType.Badlands, DangerLevel = 3 };
+        BiomeGenerationStage.SmoothMoistureBiomes(store, span, 1);
         Assert.Equal(BiomeType.Badlands, span[centre].Biome);
         Assert.Equal(3, span[centre].DangerLevel); // re-based from the desert's 2 to badlands' 3
 
         // A sand tile ringed by plains stays sand: the families never mix.
-        span[centre] = new LocalMapInfo { Biome = BiomeType.Desert, DangerLevel = 2 };
-        for (int k = 0; k < n; k++) span[neighbors[k]] = new LocalMapInfo { Biome = BiomeType.Plains, DangerLevel = 0 };
-        LocalMapGenerationStage.SmoothMoistureBiomes(store, span, 1);
+        span[centre] = new BiomeInfo { Biome = BiomeType.Desert, DangerLevel = 2 };
+        for (int k = 0; k < n; k++) span[neighbors[k]] = new BiomeInfo { Biome = BiomeType.Plains, DangerLevel = 0 };
+        BiomeGenerationStage.SmoothMoistureBiomes(store, span, 1);
         Assert.Equal(BiomeType.Desert, span[centre].Biome);
 
         // Salt flats and cold desert are never smoothed away.
-        span[centre] = new LocalMapInfo { Biome = BiomeType.SaltFlat, DangerLevel = 2 };
-        for (int k = 0; k < n; k++) span[neighbors[k]] = new LocalMapInfo { Biome = BiomeType.Desert, DangerLevel = 2 };
-        LocalMapGenerationStage.SmoothMoistureBiomes(store, span, 1);
+        span[centre] = new BiomeInfo { Biome = BiomeType.SaltFlat, DangerLevel = 2 };
+        for (int k = 0; k < n; k++) span[neighbors[k]] = new BiomeInfo { Biome = BiomeType.Desert, DangerLevel = 2 };
+        BiomeGenerationStage.SmoothMoistureBiomes(store, span, 1);
         Assert.Equal(BiomeType.SaltFlat, span[centre].Biome);
     }
 
@@ -259,7 +259,7 @@ public class BiomeHistogramTests
         foreach (var (size, seed, _) in Matrix)
         {
             using var world = new WorldBuilder().WithSize(size).WithSeed(seed).Build();
-            var locals = world.Map.DataStore.GetSpan<LocalMapInfo>();
+            var locals = world.Map.DataStore.GetSpan<BiomeInfo>();
             var climate = world.Map.DataStore.GetSpan<ClimateInfo>();
             int savanna = 0, qualifying = 0;
             for (int i = 0; i < locals.Length; i++)
@@ -393,7 +393,7 @@ public class BiomeHistogramTests
         {
             using var world = new WorldBuilder().WithSize(size).WithSeed(seed).Build();
             var store = world.Map.DataStore;
-            var locals = store.GetSpan<LocalMapInfo>();
+            var locals = store.GetSpan<BiomeInfo>();
             var climate = store.GetSpan<ClimateInfo>();
             var vectors = store.GetTileVectors();
             int med = 0, qualifying = 0;
@@ -432,10 +432,10 @@ public class BiomeHistogramTests
     {
         using var world = new WorldBuilder().WithSize(2).WithSeed(1).Build();
         var store = world.Map.DataStore;
-        var span = new LocalMapInfo[store.TileCount];
-        for (int i = 0; i < span.Length; i++) span[i] = new LocalMapInfo { Biome = BiomeType.Mediterranean, DangerLevel = 1 };
-        span[0] = new LocalMapInfo { Biome = BiomeType.Plains, DangerLevel = 0 };
-        LocalMapGenerationStage.SmoothMoistureBiomes(store, span, 1);
+        var span = new BiomeInfo[store.TileCount];
+        for (int i = 0; i < span.Length; i++) span[i] = new BiomeInfo { Biome = BiomeType.Mediterranean, DangerLevel = 1 };
+        span[0] = new BiomeInfo { Biome = BiomeType.Plains, DangerLevel = 0 };
+        BiomeGenerationStage.SmoothMoistureBiomes(store, span, 1);
         Assert.Equal(BiomeType.Mediterranean, span[0].Biome);
         Assert.Equal(1, span[0].DangerLevel);
     }
@@ -445,11 +445,11 @@ public class BiomeHistogramTests
     {
         using var world = new WorldBuilder().WithSize(2).WithSeed(1).Build();
         var store = world.Map.DataStore;
-        var span = new LocalMapInfo[store.TileCount];
-        for (int i = 0; i < span.Length; i++) span[i] = new LocalMapInfo { Biome = BiomeType.Savanna, DangerLevel = 1 };
+        var span = new BiomeInfo[store.TileCount];
+        for (int i = 0; i < span.Length; i++) span[i] = new BiomeInfo { Biome = BiomeType.Savanna, DangerLevel = 1 };
         int centre = 0;
-        span[centre] = new LocalMapInfo { Biome = BiomeType.Plains, DangerLevel = 0 };
-        LocalMapGenerationStage.SmoothMoistureBiomes(store, span, 1);
+        span[centre] = new BiomeInfo { Biome = BiomeType.Plains, DangerLevel = 0 };
+        BiomeGenerationStage.SmoothMoistureBiomes(store, span, 1);
         Assert.Equal(BiomeType.Savanna, span[centre].Biome);
         Assert.Equal(1, span[centre].DangerLevel);
     }

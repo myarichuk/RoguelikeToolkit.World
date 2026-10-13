@@ -90,7 +90,7 @@ public class GlaciologyTests
         using var world = new WorldBuilder().WithSize(3).WithSeed(42).Build();
         var store = world.Map.DataStore;
         var elev = store.GetSpan<ElevationInfo>();
-        var locals = store.GetSpan<LocalMapInfo>();
+        var locals = store.GetSpan<BiomeInfo>();
 
         int glaciers = 0;
         for (int i = 0; i < store.TileCount; i++)
