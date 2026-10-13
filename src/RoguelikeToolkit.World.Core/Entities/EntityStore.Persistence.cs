@@ -73,22 +73,25 @@ public sealed partial class EntityStore
         int columnCount = BitConverter.ToInt32(head.Slice(20, 4));
         ulong chainId = BitConverter.ToUInt64(head.Slice(24, 8));
         ulong sequence = BitConverter.ToUInt64(head.Slice(32, 8));
-        if (highWater < 0 || freeCount < 0 || freeCount > highWater || alive < 0 || alive > highWater)
+        if (highWater < 0 || freeCount < 0 || freeCount > highWater || alive < 0 || alive > highWater
+            || (long)alive + freeCount != highWater)
             throw new InvalidDataException("Corrupt entity snapshot header.");
         if (columnCount != _columns.Count)
             throw new InvalidDataException($"Snapshot has {columnCount} columns but {_columns.Count} are registered.");
 
         // Read into temporaries first so a bad snapshot cannot half-overwrite the store.
+        // Nothing is sized from the header alone: every allocation below is followed by a read that
+        // fails on a short stream, so a forged header cannot cost more than the bytes actually supplied.
         int chunks = (highWater + ChunkSize - 1) >> ChunkShift;
-        var gens = new List<uint[]>(chunks);
+        var gens = new List<uint[]>();
         for (int k = 0; k < chunks; k++)
         {
             var g = new uint[ChunkSize];
             stream.ReadExactly(MemoryMarshal.AsBytes(g.AsSpan(0, UsedInChunk(k, highWater))));
             gens.Add(g);
         }
-        var free = new int[Math.Max(freeCount, 256)];
-        stream.ReadExactly(MemoryMarshal.AsBytes(free.AsSpan(0, freeCount)));
+        var free = ReadFreeList(stream, freeCount);
+        ValidateSlots(free, freeCount, highWater, alive, gens.ToArray(), "snapshot");
         var staged = new Array[_columns.Count];
         Span<byte> ch = stackalloc byte[12];
         for (int i = 0; i < _columns.Count; i++)
@@ -204,14 +207,17 @@ public sealed partial class EntityStore
             throw new InvalidDataException("Delta belongs to a different snapshot chain.");
         if (baseSeq != _sequence)
             throw new InvalidDataException($"Delta applies after step {baseSeq} but the store is at step {_sequence}.");
-        if (highWater < _highWater || freeCount < 0 || freeCount > highWater || alive < 0 || alive > highWater)
+        if (newSeq != unchecked(baseSeq + 1))
+            throw new InvalidDataException($"Delta step {newSeq} does not follow step {baseSeq}.");
+        if (highWater < _highWater || freeCount < 0 || freeCount > highWater || alive < 0 || alive > highWater
+            || (long)alive + freeCount != highWater)
             throw new InvalidDataException("Corrupt entity delta header.");
         if (columnCount != _columns.Count)
             throw new InvalidDataException($"Delta has {columnCount} columns but {_columns.Count} are registered.");
 
         int chunks = (highWater + ChunkSize - 1) >> ChunkShift;
-        var free = new int[Math.Max(freeCount, 256)];
-        stream.ReadExactly(MemoryMarshal.AsBytes(free.AsSpan(0, freeCount)));
+        int firstNewChunk = UsedChunks;
+        var free = ReadFreeList(stream, freeCount);
 
         int genCount = ReadCount(stream, chunks);
         var genIdx = new int[genCount];
@@ -235,8 +241,17 @@ public sealed partial class EntityStore
             colIdx[i] = new int[n];
             for (int j = 0; j < n; j++) colIdx[i][j] = -1;
             colData[i] = c.ReadDirty(stream, colIdx[i], chunks, highWater);
+            RequireNewChunks(colIdx[i], firstNewChunk, chunks);
         }
+        RequireNewChunks(genIdx, firstNewChunk, chunks);
 
+        // The free list must describe the generations as they will be after this delta applies.
+        var view = new uint[chunks][];
+        for (int k = 0; k < chunks; k++) view[k] = k < _generations.Count ? _generations[k] : ZeroChunk;
+        for (int j = 0; j < genCount; j++) view[genIdx[j]] = genData[j];
+        ValidateSlots(free, freeCount, highWater, alive, view, "delta");
+
+        // Every new chunk is present in the payload (RequireNewChunks), so this allocates no more than the delta carried.
         while (_generations.Count < chunks) AddChunk();
         for (int j = 0; j < genCount; j++) _generations[genIdx[j]] = genData[j];
         for (int i = 0; i < _columns.Count; i++) _columns[i].ApplyDirty(colIdx[i], colData[i]);
@@ -262,6 +277,70 @@ public sealed partial class EntityStore
         for (int k = 0; k < chunks; k++)
             h[k] = Hash(MemoryMarshal.AsBytes(_generations[k].AsSpan(0, UsedInChunk(k, _highWater))));
         return h;
+    }
+
+    private static readonly uint[] ZeroChunk = new uint[ChunkSize];
+    private const int FreeReadBlock = 1 << 14;
+
+    /// <summary>
+    /// Reads <paramref name="count"/> free-list entries, growing the array as bytes arrive instead of sizing it
+    /// from the (untrusted) header. The result always has room for at least 256 entries so <see cref="Destroy"/> can double it.
+    /// </summary>
+    private static int[] ReadFreeList(Stream stream, int count)
+    {
+        int cap = Math.Max(count, 256);
+        var free = new int[Math.Max(Math.Min(count, FreeReadBlock), 256)];
+        int read = 0;
+        while (read < count)
+        {
+            int n = Math.Min(count - read, FreeReadBlock);
+            if (read + n > free.Length)
+                Array.Resize(ref free, (int)Math.Min(Math.Max(free.Length * 2L, read + n), cap));
+            stream.ReadExactly(MemoryMarshal.AsBytes(free.AsSpan(read, n)));
+            read += n;
+        }
+        return free;
+    }
+
+    /// <summary>
+    /// Proves the free list and generations describe one consistent store: every slot below
+    /// <paramref name="highWater"/> is either alive (odd generation) or on the free list exactly once (even generation),
+    /// and the odd count equals <paramref name="alive"/>. Without this a forged list lets <see cref="Create"/> hand the
+    /// same slot to two live entities, or index outside the generation table.
+    /// </summary>
+    private static void ValidateSlots(int[] free, int freeCount, int highWater, int alive, uint[][] view, string what)
+    {
+        var seen = new ulong[(highWater + 63) >> 6];
+        for (int i = 0; i < freeCount; i++)
+        {
+            int slot = free[i];
+            if ((uint)slot >= (uint)highWater)
+                throw new InvalidDataException($"Corrupt entity {what}: free slot {slot} is outside 0..{highWater}.");
+            if ((view[slot >> ChunkShift][slot & ChunkMask] & 1) != 0)
+                throw new InvalidDataException($"Corrupt entity {what}: free slot {slot} is marked alive.");
+            ref ulong word = ref seen[slot >> 6];
+            ulong bit = 1ul << (slot & 63);
+            if ((word & bit) != 0)
+                throw new InvalidDataException($"Corrupt entity {what}: free slot {slot} is listed twice.");
+            word |= bit;
+        }
+        long odd = 0;
+        for (int k = 0; k < view.Length; k++)
+        {
+            var g = view[k];
+            for (int i = 0, n = UsedInChunk(k, highWater); i < n; i++) odd += g[i] & 1;
+        }
+        if (odd != alive)
+            throw new InvalidDataException($"Corrupt entity {what}: {odd} live generations but the header says {alive}.");
+    }
+
+    /// <summary>A valid delta carries every chunk past the store's current end (a grown chunk always hashes differently).</summary>
+    private static void RequireNewChunks(int[] indices, int firstNew, int chunks)
+    {
+        int present = 0;
+        foreach (int k in indices) if (k >= firstNew) present++;
+        if (present != chunks - firstNew)
+            throw new InvalidDataException("Corrupt entity delta: chunks beyond the current high water are missing.");
     }
 
     private static int[] DirtyChunks(ulong[] baseline, ulong[] current)
