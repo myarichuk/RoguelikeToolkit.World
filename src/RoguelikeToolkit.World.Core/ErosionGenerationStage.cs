@@ -17,9 +17,12 @@ namespace RoguelikeToolkit.World.Core;
 /// deep (canyons); humid ones spread their load (valleys).
 /// </summary>
 [Preserve] // created via reflection by WorldGenerationPipeline.Discover; keep it through Unity code stripping
-[WorldGeneratorStage(17, Reads = new[] { typeof(ElevationInfo) }, ReadsOptional = new[] { typeof(ClimateInfo), typeof(TectonicPlate), typeof(UserEditInfo) }, Writes = new[] { typeof(ElevationInfo) })]
+[WorldGeneratorStage(PipelineOrder, Reads = new[] { typeof(ElevationInfo) }, ReadsOptional = new[] { typeof(ClimateInfo), typeof(TectonicPlate), typeof(UserEditInfo) }, Writes = new[] { typeof(ElevationInfo) })]
 public class ErosionGenerationStage : IWorldGeneratorStage
 {
+    /// <summary>The stage's pipeline order; the climate refresh and island-chain repair tie with it.</summary>
+    public const int PipelineOrder = 17;
+
     public int Iterations { get; set; } = 10;
     public double Talus { get; set; } = 0.03;
 

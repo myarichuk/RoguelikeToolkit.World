@@ -18,6 +18,7 @@ public class ReviewFixesTests
         float scale = hydrology.RiverThresholdScale; // the builder wires one scale through erosion, hydrology and biomes
         p.AddStage(climate);
         p.AddStage(new ErosionGenerationStage { RiverThresholdScale = scale });
+        p.AddStage(new IslandChainStage(seed));
         p.AddStage(new ClimateRefreshStage(climate));
         p.AddStage(hydrology);
         p.AddStage(new LocalMapGenerationStage(seed) { RiverThresholdScale = scale });
