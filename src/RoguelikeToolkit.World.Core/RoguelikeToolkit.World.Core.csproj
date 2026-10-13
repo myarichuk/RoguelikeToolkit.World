@@ -7,7 +7,9 @@
     <Nullable>enable</Nullable>
     <AllowUnsafeBlocks>true</AllowUnsafeBlocks>
     <GenerateDocumentationFile>true</GenerateDocumentationFile>
-    <NoWarn>$(NoWarn)</NoWarn>
+    <!-- RS0026/RS0027: PublicApiAnalyzers backcompat guidance about optional-parameter overloads (World.GetRegion/GetLocal, SpatialIndex.NearestDeposit, ...).
+         Those shapes predate the baseline and changing them is an API redesign, not a docs fix. -->
+    <NoWarn>$(NoWarn);RS0026;RS0027</NoWarn>
     <PackageId>RoguelikeToolkit.World.Core</PackageId>
     <Version>1.2.0</Version>
     <Authors>RoguelikeToolkit</Authors>
@@ -20,21 +22,25 @@
   </PropertyGroup>
 
   <ItemGroup>
-    <None Include="..\..\LICENSE" Pack="true" PackagePath="\" Visible="false"/>
-    <None Include="..\..\LICENSE-COMMERCIAL.md" Pack="true" PackagePath="\" Visible="false"/>
+    <None Include="..\..\LICENSE" Pack="true" PackagePath="\" Visible="false" />
+    <None Include="..\..\LICENSE-COMMERCIAL.md" Pack="true" PackagePath="\" Visible="false" />
   </ItemGroup>
 
   <ItemGroup>
-    <PackageReference Include="YamlDotNet" Version="18.1.0"/>
+    <PackageReference Include="Microsoft.CodeAnalysis.PublicApiAnalyzers" Version="3.3.4">
+      <IncludeAssets>runtime; build; native; contentfiles; analyzers; buildtransitive</IncludeAssets>
+      <PrivateAssets>all</PrivateAssets>
+    </PackageReference>
+    <PackageReference Include="YamlDotNet" Version="18.1.0" />
   </ItemGroup>
 
   <ItemGroup>
-    <InternalsVisibleTo Include="RoguelikeToolkit.World.Core.Tests"/>
+    <InternalsVisibleTo Include="RoguelikeToolkit.World.Core.Tests" />
   </ItemGroup>
 
   <ItemGroup>
-    <EmbeddedResource Include="Names\Data\*.yaml"/>
-    <EmbeddedResource Include="Localization\*.yaml"/>
+    <EmbeddedResource Include="Names\Data\*.yaml" />
+    <EmbeddedResource Include="Localization\*.yaml" />
   </ItemGroup>
 
 </Project>
