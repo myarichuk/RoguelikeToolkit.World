@@ -7,6 +7,8 @@
     <Nullable>enable</Nullable>
     <AllowUnsafeBlocks>true</AllowUnsafeBlocks>
     <GenerateDocumentationFile>true</GenerateDocumentationFile>
+    <!-- Documentation ratchet: every public member is documented and every cref resolves; regressions fail the build. -->
+    <WarningsAsErrors>$(WarningsAsErrors);CS1591;CS1574;CS1570;CS1572;CS1573;CS1587</WarningsAsErrors>
     <!-- RS0026/RS0027: PublicApiAnalyzers backcompat guidance about optional-parameter overloads (World.GetRegion/GetLocal, SpatialIndex.NearestDeposit, ...).
          Those shapes predate the baseline and changing them is an API redesign, not a docs fix. -->
     <NoWarn>$(NoWarn);RS0026;RS0027</NoWarn>

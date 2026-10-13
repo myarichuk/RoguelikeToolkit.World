@@ -151,6 +151,9 @@ public sealed class World : IDisposable
     }
 
     /// <summary>All tiles within radiusKm of center, sorted by distance.</summary>
+    /// <param name="center">Query centre.</param>
+    /// <param name="radiusKm">Great-circle radius in kilometres.</param>
+    /// <param name="options">Currently ignored: history and materialized overrides are <b>not</b> applied to <see cref="TileHit.Biome"/> here (unlike <c>SampleBiome</c> and <c>ScoreCitySites</c>).</param>
     public List<TileHit> QueryRadius(GeoCoord center, double radiusKm, QueryOptions? options = null)
     {
         var store = Map.DataStore;
