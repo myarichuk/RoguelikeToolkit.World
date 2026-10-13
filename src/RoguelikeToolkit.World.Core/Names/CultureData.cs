@@ -1,8 +1,13 @@
 namespace RoguelikeToolkit.World.Core.Names;
 
+/// <summary>
+/// One YAML name table, either a folk (dwarven, orcish) or a human culture: the morpheme lists plus the chances and rules for assembling person and place names from them.
+/// Loaded and validated by <see cref="NameDataStore"/>.
+/// </summary>
 [Preserve] // populated by YamlDotNet through reflection
 public sealed class CultureData
 {
+    /// <summary>Table key, which must match the file name (case-insensitive) and is how races, cultures and aliases resolve to this table.</summary>
     public string Key { get; set; } = string.Empty;
     /// <summary>Human-readable label for pickers ("Human · Hebrew"). Blank falls back to a title-cased Key.</summary>
     public string DisplayName { get; set; } = string.Empty;
@@ -59,19 +64,32 @@ public sealed class CultureData
     /// Hebrew sets this true.
     /// </summary>
     public bool FamilyReplacesPatronymic { get; set; } = false;
+    /// <summary>Whose line the name follows when the caller does not choose: <c>Patrilineal</c>, <c>Matrilineal</c> or <c>Bilineal</c> (validated at load, case-insensitive). See <see cref="Lineages"/>.</summary>
     public string LineageDefault { get; set; } = "Patrilineal";
+    /// <summary>Free-text note on where this table's material comes from; copied into <see cref="NameProvenance.Note"/> of every name it generates.</summary>
     public string Provenance { get; set; } = "original";
+    /// <summary>Given-name stems; required (at least one). Also supply the parent name of a patronymic and the carrier stem of a fused family suffix, so they set the given-name vocabulary of the whole table.</summary>
     public List<MorphemeYaml> GivenStems { get; set; } = new();
+    /// <summary>Optional endings fused onto a given stem to make a compound given name; taken with probability <see cref="CompoundChance"/> (always for stems tagged <c>bound</c>).</summary>
     public List<MorphemeYaml> SecondStems { get; set; } = new();
+    /// <summary>Family or house names, or suffixes that fuse onto a stem when <see cref="FamilySuffix"/> is true; taken with probability <see cref="FamilyChance"/> when no clan was chosen.</summary>
     public List<MorphemeYaml> FamilyAffixes { get; set; } = new();
+    /// <summary>Clan, warband or house names; taken with probability <see cref="ClanChance"/>. They become the <see cref="NamePartRoles.Family"/> part for humans and <see cref="NamePartRoles.Clan"/> for other folk.</summary>
     public List<MorphemeYaml> Clans { get; set; } = new();
+    /// <summary>Epithets such as deed-names, appended with probability <see cref="EpithetChance"/> when the name has fewer than three parts.</summary>
     public List<MorphemeYaml> Epithets { get; set; } = new();
+    /// <summary>Place-name descriptors (the "Clear" of Clearford); tagged ones are weighted by how well the tags fit the place kind and <see cref="PlaceContext"/>.</summary>
     public List<MorphemeYaml> Descriptors { get; set; } = new();
+    /// <summary>Place-name nouns (the "ford" of Clearford), tagged by the <see cref="PlaceKinds"/> they suit; an empty list falls back to the shared <c>fantasy_common</c> nouns.</summary>
     public List<MorphemeYaml> Nouns { get; set; } = new();
+    /// <summary>Patronymic marker for a son, fused after the parent name or written before it per <see cref="PatronymicPrefix"/>; must be non-blank when <see cref="Patronymic"/> is true.</summary>
     public string PatronymicSon { get; set; } = "son";
+    /// <summary>Patronymic marker for a daughter; must be non-blank when <see cref="Patronymic"/> is true.</summary>
     public string PatronymicDaughter { get; set; } = "dottir";
     /// <summary>Latin transliterations of the patronymic markers (Russian ovich/ovna); blank falls back to the markers above.</summary>
     public string PatronymicSonLatin { get; set; } = string.Empty;
+    /// <summary>Latin transliteration of <see cref="PatronymicDaughter"/>; blank falls back to the marker itself.</summary>
     public string PatronymicDaughterLatin { get; set; } = string.Empty;
+    /// <summary>Forbidden words (case-insensitive substrings). A generated name containing one, or one from <c>fantasy_common</c>, is rerolled; in the Hebrew and Cyrillic scripts the transliterated ban applies too.</summary>
     public List<string> Banned { get; set; } = new();
 }

@@ -10,8 +10,12 @@ namespace RoguelikeToolkit.World.Core.Names;
 /// </summary>
 public enum NameScript
 {
+    /// <summary>The table's authored forms as written (Cyrillic or Hebrew where the table is in those scripts).</summary>
     Native,
+    /// <summary>Latin letters: the authored Latin transliteration where provided, else the form itself.</summary>
     Latin,
+    /// <summary>Hebrew script, machine-transliterated from Latin forms where needed.</summary>
     Hebrew,
+    /// <summary>Cyrillic script, machine-transliterated from Latin forms where needed.</summary>
     Cyrillic,
 }

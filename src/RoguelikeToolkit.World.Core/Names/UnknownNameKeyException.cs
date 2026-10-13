@@ -3,11 +3,16 @@ namespace RoguelikeToolkit.World.Core.Names;
 /// <summary>Thrown when a race/culture key has no table. Carries the available keys plus a closest match.</summary>
 public sealed class UnknownNameKeyException : Exception
 {
+    /// <summary>The key that was looked up.</summary>
     public string Key { get; }
+    /// <summary>What kind of key it was (<c>race</c>, <c>culture</c> or <c>table</c>).</summary>
     public string Kind { get; }
+    /// <summary>All valid keys and aliases, sorted case-insensitively.</summary>
     public IReadOnlyList<string> Available { get; }
+    /// <summary>The closest available key by edit distance, or null when nothing is close enough.</summary>
     public string? Suggestion { get; }
 
+    /// <summary>Creates the exception; the message lists the available keys and, when one is close, a suggestion.</summary>
     public UnknownNameKeyException(string kind, string key, IEnumerable<string> available)
         : base(BuildMessage(kind, key, available, out var suggestion, out var avail))
     {
