@@ -12,9 +12,13 @@ namespace RoguelikeToolkit.World.Core.Biomes;
 /// </summary>
 public static class BiomeClassifier
 {
+    /// <summary>Height (<see cref="ElevationInfo.Height"/>) above which land is <see cref="BiomeType.Mountain"/>; strict, and tested right after the ocean cut-off.</summary>
     public const double MountainHeight = 0.5;
+    /// <summary>Normalised temperature (0 polar .. 1 equatorial) below which land is <see cref="BiomeType.Tundra"/>; strict. Also the inclusive lower edge of the cold-desert band (<see cref="IsColdArid"/>).</summary>
     public const double TundraMaxTemperature = 0.18;
+    /// <summary>Normalised moisture (0..1) ceiling for hot desert at <see cref="DesertMinTemperature"/>; the effective ceiling climbs with heat by <see cref="DesertHeatGain"/> (see <see cref="IsArid"/>).</summary>
     public const double DesertMaxMoisture = 0.32;
+    /// <summary>Normalised temperature above which (strict) ground can be hot desert; also the inclusive upper edge of the cold-desert band (<see cref="IsColdArid"/>).</summary>
     public const double DesertMinTemperature = 0.55;
 
     /// <summary>
@@ -23,10 +27,15 @@ public static class BiomeClassifier
     /// feeds steppe at 40 degrees latitude is desert at 20. 0 restores the old flat threshold.
     /// </summary>
     public const double DesertHeatGain = 0.15;
+    /// <summary>Normalised temperature above which (strict) wet ground is <see cref="BiomeType.Jungle"/>.</summary>
     public const double JungleMinTemperature = 0.72;
+    /// <summary>Normalised moisture above which (strict) hot ground is <see cref="BiomeType.Jungle"/>.</summary>
     public const double JungleMinMoisture = 0.55;
+    /// <summary>Normalised moisture above which (strict) warm ground is <see cref="BiomeType.Swamp"/>; tested after jungle, Mediterranean and savanna.</summary>
     public const double SwampMinMoisture = 0.65;
+    /// <summary>Normalised temperature above which (strict) very wet ground is <see cref="BiomeType.Swamp"/> rather than forest.</summary>
     public const double SwampMinTemperature = 0.35;
+    /// <summary>Normalised moisture above which (strict) ground no earlier rule claimed is <see cref="BiomeType.Forest"/>; drier ground is <see cref="BiomeType.Plains"/>.</summary>
     public const double ForestMinMoisture = 0.42;
 
     /// <summary>Savanna: warm enough that the dry season is a drought, not a winter.</summary>
@@ -50,6 +59,7 @@ public static class BiomeClassifier
 
     /// <summary>Mediterranean: wetter than this and the same winter rain feeds temperate forest instead of scrub.</summary>
     public const double MediterraneanMaxMoisture = 0.55;
+    /// <summary>Height below which (strict) ocean is deep: base danger 2 instead of 0 in <see cref="Classify"/>.</summary>
     public const double DeepOceanHeight = -0.6;
 
     /// <summary>A saline site is a salt flat in any climate drier than this (a sump that stays dry is arid by definition).</summary>

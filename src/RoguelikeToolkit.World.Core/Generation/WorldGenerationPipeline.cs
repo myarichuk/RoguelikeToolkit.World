@@ -8,6 +8,12 @@ using RoguelikeToolkit.World.Core.Topology;
 
 namespace RoguelikeToolkit.World.Core.Generation;
 
+/// <summary>
+/// An ordered list of <see cref="IWorldGeneratorStage"/>s that generates a world. Stages sort by their declared order
+/// (undeclared stages run last) and their layer contracts are validated; at the start of a run, layers whose first writer
+/// does not read them are cleared, so a re-run never sees the previous run's output.
+/// </summary>
+/// <remarks>Not thread-safe: the ordering and validation caches are rebuilt unsynchronised. Disposing it disposes stages that implement <see cref="IDisposable"/> and unloads plugin contexts.</remarks>
 public class WorldGenerationPipeline : IDisposable
 {
     private readonly List<IWorldGeneratorStage> _stages = new();
@@ -36,14 +42,18 @@ public class WorldGenerationPipeline : IDisposable
     private readonly List<int> _orderOfCache = new();
     private bool _cacheDirty = true;
 
+    /// <summary>The registered stages in registration order (not execution order).</summary>
     public IReadOnlyList<IWorldGeneratorStage> Stages => _stages;
 
+    /// <summary>Appends <paramref name="stage"/>; the next run re-sorts and re-validates.</summary>
+    /// <param name="stage">Stage to add. Its order comes from its attribute or <see cref="IDeclaredStage"/>.</param>
     public void AddStage(IWorldGeneratorStage stage)
     {
         _stages.Add(stage);
         _cacheDirty = true;
     }
 
+    /// <summary>Removes every stage, disposing those that are <see cref="IDisposable"/>, and unloads plugin assembly contexts (.NET only; unloading is best-effort).</summary>
     public void ResetStages()
     {
         foreach (var stage in _stages.OfType<IDisposable>())
@@ -249,6 +259,9 @@ public class WorldGenerationPipeline : IDisposable
         }
     }
 
+    /// <summary>Calls <see cref="ResetStages"/> then <see cref="Discover(string?, Action{StageDiscoveryDiagnostic}?)"/>: replaces every registered stage, including hand-added ones, with the discovered set.</summary>
+    /// <param name="pluginDirectory">Directory searched recursively for plugin DLLs, or <see langword="null"/> for built-in stages only.</param>
+    /// <param name="onDiagnostic">Receives load failures; when <see langword="null"/> they are thrown as an <see cref="AggregateException"/>.</param>
     public void DiscoverAndReplace(string? pluginDirectory = null, Action<StageDiscoveryDiagnostic>? onDiagnostic = null)
     {
         ResetStages();
@@ -256,6 +269,7 @@ public class WorldGenerationPipeline : IDisposable
     }
 
 
+    /// <summary>Same as <see cref="ResetStages"/>.</summary>
     public void Dispose()
     {
         ResetStages();
@@ -291,6 +305,9 @@ public class WorldGenerationPipeline : IDisposable
         }
     }
 
+    /// <summary>Runs every stage in order against <paramref name="map"/> after validating contracts and clearing layers.</summary>
+    /// <param name="map">Map whose store has every declared layer registered.</param>
+    /// <exception cref="InvalidOperationException">A contract conflict, or a declared layer that is not registered in the map's store.</exception>
     public void Execute(WorldMap map) => Execute(map, int.MinValue);
 
     /// <summary>

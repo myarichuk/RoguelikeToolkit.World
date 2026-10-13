@@ -32,6 +32,7 @@ public partial class HydrologyStage : IWorldGeneratorStage
     /// get the pre-refresh pipeline back.
     /// </summary>
     public float RiverThresholdScale { get; set; } = 0.92f;
+    /// <summary>Cap on the number of rivers kept in the river catalog, applied when <see cref="World"/> calls <see cref="PopulateCatalogs"/>. Does not affect the per-tile <see cref="HydrologyInfo.IsRiver"/> flags.</summary>
     public int MaxRivers { get; set; } = 256;
 
     /// <summary>
@@ -57,6 +58,7 @@ public partial class HydrologyStage : IWorldGeneratorStage
     /// </summary>
     public bool UseLandCover { get; set; } = true;
 
+    /// <summary>Routes water over the eroded surface, solves lakes, and writes <see cref="HydrologyInfo"/> for every tile of <paramref name="map"/>.</summary>
     public void Execute(WorldMap map)
     {
         var store = map.DataStore;

@@ -5,11 +5,14 @@ using RoguelikeToolkit.World.Core.Topology;
 
 namespace RoguelikeToolkit.World.Core.Tectonics;
 
+/// <summary>Generates the plate layout: partitions the sphere into plates with random drift, assigns continentality and crust, classifies plate boundaries by relative drift, and propagates the orogeny driver outwards from them. Writes <see cref="TectonicPlate"/> and fills the <see cref="PlateInfo"/> table.</summary>
 [Preserve] // created via reflection by WorldGenerationPipeline.Discover; keep it through Unity code stripping
 [WorldGeneratorStage(StageOrder.Tectonics, Writes = new[] { typeof(TectonicPlate) })]
 public class TectonicPlateGenerationStage : IWorldGeneratorStage, ISeededStage, IDisposable
 {
+    /// <summary>Number of plates, 1 .. <see cref="TectonicPlate.MaxPlates"/>; must not exceed the rows reserved by <see cref="TectonicPlateLayer"/>. Default 12.</summary>
     public int SeedCount { get; set; } = 12;
+    /// <summary>Seeds plate positions, drift, partitioning and noise; per-plate draws depend only on the seed and the plate's ordinal. Default 42.</summary>
     public int Seed { get; set; } = 42;
 
     /// <summary>Continentality above this is continental crust, else oceanic.</summary>
@@ -65,22 +68,32 @@ public class TectonicPlateGenerationStage : IWorldGeneratorStage, ISeededStage, 
     private readonly OrogenyScratch _orogeny = new();
     private static readonly VoronoiPlatePartitioner FallbackPartitioner = new();
 
+    /// <summary>Creates a stage with the default 12 plates and seed 42; this is the constructor <see cref="WorldGenerationPipeline.Discover(string?, Action{StageDiscoveryDiagnostic}?)"/> uses.</summary>
     public TectonicPlateGenerationStage()
     {
     }
 
+    /// <summary>Creates a stage with the given plate count and seed.</summary>
+    /// <param name="seedCount">Value for <see cref="SeedCount"/>.</param>
+    /// <param name="seed">Value for <see cref="Seed"/>.</param>
     public TectonicPlateGenerationStage(int seedCount, int seed = 42)
     {
         SeedCount = seedCount;
         Seed = seed;
     }
 
+    /// <summary>Creates a stage with the given plate count, seed and partitioner.</summary>
+    /// <param name="seedCount">Value for <see cref="SeedCount"/>.</param>
+    /// <param name="seed">Value for <see cref="Seed"/>.</param>
+    /// <param name="partitioner">Value for <see cref="Partitioner"/>.</param>
     public TectonicPlateGenerationStage(int seedCount, int seed, IPlatePartitioner partitioner)
         : this(seedCount, seed)
     {
         Partitioner = partitioner;
     }
 
+    /// <summary>Regenerates the plate table and the <see cref="TectonicPlate"/> layer of <paramref name="map"/>.</summary>
+    /// <exception cref="InvalidOperationException">The store has no <see cref="PlateInfo"/> table with at least <see cref="SeedCount"/> rows, or <see cref="SeedCount"/> is outside 1 .. <see cref="TectonicPlate.MaxPlates"/>.</exception>
     public void Execute(WorldMap map)
     {
         var store = map.DataStore;

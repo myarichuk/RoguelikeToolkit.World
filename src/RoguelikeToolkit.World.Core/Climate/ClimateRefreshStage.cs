@@ -26,16 +26,25 @@ public sealed class ClimateRefreshStage : IWorldGeneratorStage, IDeclaredStage, 
 {
     private readonly ClimateStage _climate;
 
+    /// <summary>Creates a refresh pass that re-runs <paramref name="climate"/> on the eroded relief.</summary>
+    /// <param name="climate">The configured first-pass stage; shared, not copied, so both passes use the same seed and tunables.</param>
+    /// <exception cref="ArgumentNullException"><paramref name="climate"/> is <see langword="null"/>.</exception>
     public ClimateRefreshStage(ClimateStage climate)
     {
         _climate = climate ?? throw new ArgumentNullException(nameof(climate));
     }
 
+    /// <summary>Stage name for logs and diagnostics.</summary>
     public string Name => "ClimateRefresh";
+    /// <summary><see cref="StageOrder.ClimateRefresh"/>: ties with erosion, so a stable sort runs it after erosion and before hydrology when added in that order.</summary>
     public int Order => StageOrder.ClimateRefresh;
+    /// <summary>Layers read: the eroded <see cref="ElevationInfo"/> and the first-pass <see cref="ClimateInfo"/>.</summary>
     public Type[] Reads => new[] { typeof(ElevationInfo), typeof(ClimateInfo) };
+    /// <summary>Optional layers: <see cref="UserEditInfo"/> (temperature and precipitation brush offsets).</summary>
     public Type[] ReadsOptional => new[] { typeof(UserEditInfo) };
+    /// <summary>Layer written: <see cref="ClimateInfo"/>, overwritten wholesale.</summary>
     public Type[] Writes => new[] { typeof(ClimateInfo) };
 
+    /// <summary>Recomputes the climate layer of <paramref name="map"/> from the current elevation, including the ocean-current solve.</summary>
     public void Execute(WorldMap map) => _climate.ExecuteRefresh(map);
 }

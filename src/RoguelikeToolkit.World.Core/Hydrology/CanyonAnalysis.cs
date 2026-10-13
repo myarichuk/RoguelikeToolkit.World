@@ -22,6 +22,12 @@ public static class CanyonAnalysis
     /// <summary>Minimum channel slope on the routing surface.</summary>
     public const double MinSlope = 0.01;
 
+    /// <summary>True when a river tile qualifies as a canyon: strong flow, a dry climate, enough local relief and enough channel slope.</summary>
+    /// <param name="flow">Discharge accumulated at the tile; must reach <see cref="FlowMultiple"/> times <paramref name="riverThreshold"/>.</param>
+    /// <param name="riverThreshold">Discharge at which a tile counts as a river, for the world's tile count and river-threshold scale.</param>
+    /// <param name="precipitation">Normalised precipitation (0..1); at most <see cref="MaxPrecipitation"/>.</param>
+    /// <param name="relief">Neighbourhood height range, see <see cref="Relief"/>; at least <see cref="MinRelief"/>.</param>
+    /// <param name="slope">Descent to the lowest neighbour on the routing surface; at least <see cref="MinSlope"/>.</param>
     public static bool IsCanyonTile(double flow, double riverThreshold, double precipitation, double relief, double slope)
         => flow >= riverThreshold * FlowMultiple
             && precipitation <= MaxPrecipitation

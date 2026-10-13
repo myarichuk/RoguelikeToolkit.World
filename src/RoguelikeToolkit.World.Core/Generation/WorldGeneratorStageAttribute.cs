@@ -12,6 +12,7 @@ namespace RoguelikeToolkit.World.Core.Generation;
 [AttributeUsage(AttributeTargets.Class, Inherited = false, AllowMultiple = false)]
 public sealed class WorldGeneratorStageAttribute : Attribute
 {
+    /// <summary>Execution order; stages run in ascending order (see <see cref="StageOrder"/>). Discovery rejects two attributed stages sharing a value.</summary>
     public int Order { get; }
 
     /// <summary>Field-layer types this stage reads. Empty means "undeclared, skip validation".</summary>
@@ -28,6 +29,8 @@ public sealed class WorldGeneratorStageAttribute : Attribute
     /// <summary>Field-layer types this stage mutates. Empty means "undeclared, skip validation".</summary>
     public Type[] Writes { get; set; } = Array.Empty<Type>();
 
+    /// <summary>Declares a stage's execution order.</summary>
+    /// <param name="order">Execution order; prefer a <see cref="StageOrder"/> constant plus an offset over a bare literal.</param>
     public WorldGeneratorStageAttribute(int order)
     {
         Order = order;

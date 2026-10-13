@@ -8,10 +8,21 @@ using RoguelikeToolkit.World.Core.Topology;
 
 namespace RoguelikeToolkit.World.Core.Biomes;
 
+/// <summary>
+/// Classifies every tile into a <see cref="BiomeType"/> and a danger level, writing <see cref="BiomeInfo"/>.
+/// Each tile goes through <see cref="BiomeClassifier.Classify"/> on its height, temperature and moisture (climate
+/// precipitation), then glacier and canyon overrides apply to land, a deterministic 0 or 1 is added to the danger,
+/// neighbour-majority smoothing cleans speckle (<see cref="SmoothBiomes"/>), and finally painted biome pins are re-applied.
+/// </summary>
+/// <remarks>
+/// Without a climate layer, temperature falls back to <see cref="ClimateModel.Temperature"/> and moisture to seeded noise, and
+/// without hydrology there are no salt flats or canyons. Output depends only on the seed, the input layers and the settings.
+/// </remarks>
 [Preserve] // created via reflection by WorldGenerationPipeline.Discover; keep it through Unity code stripping
 [WorldGeneratorStage(StageOrder.Biomes, Reads = new[] { typeof(ElevationInfo) }, ReadsOptional = new[] { typeof(ClimateInfo), typeof(HydrologyInfo), typeof(UserEditInfo) }, Writes = new[] { typeof(BiomeInfo) })]
 public class BiomeGenerationStage : IWorldGeneratorStage, ISeededStage
 {
+    /// <summary>Seeds the per-tile danger jitter and, when no climate layer is registered, the fallback moisture noise. Default 42.</summary>
     public int Seed { get; set; } = 42;
 
     /// <summary>
@@ -28,15 +39,20 @@ public class BiomeGenerationStage : IWorldGeneratorStage, ISeededStage
     /// <summary>Must match <see cref="HydrologyStage.RiverThresholdScale"/> so canyon biomes agree with rivers (WorldBuilder wires it).</summary>
     public float RiverThresholdScale { get; set; } = 1f;
 
+    /// <summary>Creates a stage with the default <see cref="Seed"/> (42); this is the constructor <see cref="WorldGenerationPipeline.Discover(string?, Action{StageDiscoveryDiagnostic}?)"/> uses.</summary>
     public BiomeGenerationStage()
     {
     }
 
+    /// <summary>Creates a stage with the given <see cref="Seed"/>.</summary>
+    /// <param name="seed">Seed for danger jitter and the no-climate moisture fallback.</param>
     public BiomeGenerationStage(int seed = 42)
     {
         Seed = seed;
     }
 
+    /// <summary>Fills the <see cref="BiomeInfo"/> layer for every tile of <paramref name="map"/>, replacing its previous contents.</summary>
+    /// <remarks>Requires the <see cref="ElevationInfo"/> and <see cref="BiomeInfo"/> layers to be registered; climate, hydrology and user-edit layers are used only when present.</remarks>
     public void Execute(WorldMap map)
     {
         var store = map.DataStore;
