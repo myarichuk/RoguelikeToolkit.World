@@ -1,5 +1,6 @@
-using RoguelikeToolkit.World.Core;
-using Xunit;
+using RoguelikeToolkit.World.Core.Climate;
+using RoguelikeToolkit.World.Core.Elevation;
+using RoguelikeToolkit.World.Core.Primitives;
 
 namespace RoguelikeToolkit.World.Core.Tests;
 

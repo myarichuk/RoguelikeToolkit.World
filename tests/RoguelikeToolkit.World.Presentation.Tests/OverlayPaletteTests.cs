@@ -1,6 +1,5 @@
 using Xunit;
-using RoguelikeToolkit.World.Core;
-using RoguelikeToolkit.World.Presentation;
+using RoguelikeToolkit.World.Core.Lithosphere;
 
 namespace RoguelikeToolkit.World.Presentation.Tests;
 

@@ -1,36 +1,8 @@
 using System.Buffers.Binary;
 using System.Runtime.InteropServices;
+using RoguelikeToolkit.World.Core.Primitives;
 
 namespace RoguelikeToolkit.World.Core.Entities;
-
-/// <summary>Hex adjacency for <see cref="PopulationGrid.Step{TPolicy,TAdj}"/>. Implement as a struct so the call inlines.</summary>
-public interface IAdjacency
-{
-    /// <summary>Writes the neighbouring cells of <paramref name="cell"/> (at most 8) and returns how many.</summary>
-    int GetAdjacent(int cell, Span<int> neighbors);
-}
-
-/// <summary>Adjacency over a planet's tile graph.</summary>
-public readonly struct WorldAdjacency(WorldDataStore store) : IAdjacency
-{
-    public int GetAdjacent(int cell, Span<int> neighbors) => store.GetAdjacent(cell, neighbors);
-}
-
-/// <summary>
-/// The game's rules for aggregate population change. All rates are per tick and are clamped to [0, 1]
-/// by the grid. Implement as a struct so the calls inline.
-/// </summary>
-public interface IPopulationPolicy
-{
-    double BirthRate(int cell, int group, uint count);
-    double DeathRate(int cell, int group, uint count);
-
-    /// <summary>Fraction of the group that leaves the cell this tick.</summary>
-    double MigrationRate(int cell, int group, uint count);
-
-    /// <summary>How appealing <paramref name="cell"/> is as a destination for <paramref name="group"/>; zero or less = never.</summary>
-    double Attraction(int cell, int group);
-}
 
 /// <summary>
 /// Aggregate (non-individual) population: a head count per (cell, group), where a group is whatever the
@@ -59,6 +31,8 @@ public sealed class PopulationGrid
     private uint[] _counts;
     private uint[] _next;
 
+    /// <summary>Creates an empty grid (all counts zero, <see cref="Tick"/> 0) with two <c>cellCount * groupCount</c> buffers, one of them the scratch for <c>Step</c>.</summary>
+    /// <exception cref="ArgumentOutOfRangeException"><paramref name="cellCount"/> is negative, <paramref name="groupCount"/> is not positive, or their product exceeds <c>Array.MaxLength</c>.</exception>
     public PopulationGrid(int cellCount, int groupCount)
     {
         if (cellCount < 0) throw new ArgumentOutOfRangeException(nameof(cellCount));
@@ -70,7 +44,9 @@ public sealed class PopulationGrid
         _next = new uint[cellCount * groupCount];
     }
 
+    /// <summary>Number of cells (typically planet tiles); valid cell ids are <c>0..CellCount-1</c>.</summary>
     public int CellCount { get; }
+    /// <summary>Number of population groups tracked per cell; valid group ids are <c>0..GroupCount-1</c>.</summary>
     public int GroupCount => _groups;
 
     /// <summary>Ticks simulated so far; part of the per-cell random stream, so it is saved with the counts.</summary>
@@ -83,6 +59,7 @@ public sealed class PopulationGrid
         return _counts.AsSpan(cell * _groups, _groups);
     }
 
+    /// <summary>Head count of one group in one cell. Throws <see cref="ArgumentOutOfRangeException"/> for an invalid cell or group.</summary>
     public uint Get(int cell, int group) => Cell(cell)[CheckGroup(group)];
 
     /// <summary>Adds people (saturating at <see cref="uint.MaxValue"/>); returns how many actually fit.</summary>
@@ -103,6 +80,7 @@ public sealed class PopulationGrid
         return taken;
     }
 
+    /// <summary>Head count across every cell and group. A <see cref="long"/> so the sum of <see cref="uint"/> counts cannot overflow.</summary>
     public long Total()
     {
         long sum = 0;
@@ -110,6 +88,7 @@ public sealed class PopulationGrid
         return sum;
     }
 
+    /// <summary>Head count of one group across every cell. Throws <see cref="ArgumentOutOfRangeException"/> for an invalid group.</summary>
     public long Total(int group)
     {
         CheckGroup(group);

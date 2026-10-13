@@ -1,7 +1,5 @@
-using Xunit;
-using RoguelikeToolkit.World.Core;
-using System;
-using System.Collections.Generic;
+using RoguelikeToolkit.World.Core.Primitives;
+using RoguelikeToolkit.World.Core.Storage;
 
 namespace RoguelikeToolkit.World.Core.Tests;
 

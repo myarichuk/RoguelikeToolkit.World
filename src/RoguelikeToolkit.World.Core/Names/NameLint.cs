@@ -37,7 +37,7 @@ public static class NameLint
 
         for (int i = 0; i < name.Parts.Count; i++)
             for (int j = i + 1; j < name.Parts.Count; j++)
-                if (FantasyNameGenerator.SharesRoot(Root(name.Parts[i]), Root(name.Parts[j])))
+                if (NameText.SharesRoot(Root(name.Parts[i]), Root(name.Parts[j])))
                     problems.Add($"'{name.Parts[i].Form}' and '{name.Parts[j].Form}' repeat a root");
         return problems;
     }

@@ -1,17 +1,19 @@
-using System;
-using System.Collections.Generic;
+using RoguelikeToolkit.World.Core.Biomes;
+using RoguelikeToolkit.World.Core.Elevation;
+using RoguelikeToolkit.World.Core.Features;
+using RoguelikeToolkit.World.Core.Generation;
+using RoguelikeToolkit.World.Core.Hierarchy;
+using RoguelikeToolkit.World.Core.Hydrology;
+using RoguelikeToolkit.World.Core.Integration;
+using RoguelikeToolkit.World.Core.Lithosphere;
+using RoguelikeToolkit.World.Core.Primitives;
+using RoguelikeToolkit.World.Core.Queries;
+using RoguelikeToolkit.World.Core.Settlement;
+using RoguelikeToolkit.World.Core.Sites;
+using RoguelikeToolkit.World.Core.Storage;
+using RoguelikeToolkit.World.Core.Topology;
 
 namespace RoguelikeToolkit.World.Core;
-
-/// <summary>One tile hit from a spatial query.</summary>
-public struct TileHit
-{
-    public int TileIndex;
-    public GeoCoord Coord;
-    public float Elevation;
-    public BiomeType Biome;
-    public double DistanceKm;
-}
 
 /// <summary>
 /// Public library facade over <see cref="WorldMap"/> plus managed feature
@@ -20,15 +22,24 @@ public struct TileHit
 /// </summary>
 public sealed class World : IDisposable
 {
+    /// <summary>Planet radius in kilometres used by every distance and radius in the library. It is fixed and independent of <see cref="PlanetParameters"/>.</summary>
     public const double EarthRadiusKm = 6371.0;
 
+    /// <summary>The tile store and layer views holding all per-tile generated data.</summary>
     public WorldMap Map { get; }
+    /// <summary>The seed the world was built with; with the build configuration it fully determines the generated world.</summary>
     public int Seed { get; }
+    /// <summary>Subdivision level of the planet's tile grid; see <see cref="WorldDataStore.Size"/>.</summary>
     public int Size => Map.DataStore.Size;
+    /// <summary>Number of planet tiles, <c>10 * 4^Size + 2</c>.</summary>
     public int TileCount => Map.DataStore.TileCount;
+    /// <summary>Rivers found by hydrology; filled at build time and refilled in place by <see cref="Recompute"/>.</summary>
     public RiverCatalog Rivers { get; } = new();
+    /// <summary>Oceans and lakes found by hydrology; refilled in place by <see cref="Recompute"/>.</summary>
     public WaterBodyCatalog WaterBodies { get; } = new();
+    /// <summary>Mountain ranges; refilled in place by <see cref="Recompute"/>.</summary>
     public RangeCatalog Ranges { get; } = new();
+    /// <summary>Resource deposits, derived from the world seed and terrain; refilled in place by <see cref="Recompute"/>.</summary>
     public DepositCatalog Deposits { get; } = new();
     /// <summary>Bucketed nearest-feature index, built after the catalogs are populated.</summary>
     public SpatialIndex Index { get; private set; } = null!;
@@ -76,7 +87,7 @@ public sealed class World : IDisposable
     public void Recompute()
     {
         if (!Editable) throw new InvalidOperationException("Build the world with WithUserEdits() to recompute it.");
-        _pipeline!.ExecuteFrom(Map, ElevationGenerationStage.PipelineOrder);
+        _pipeline!.ExecuteFrom(Map, StageOrder.Elevation);
         Rivers.Rivers.Clear();
         WaterBodies.Bodies.Clear();
         Ranges.Features.Clear();
@@ -104,16 +115,18 @@ public sealed class World : IDisposable
     /// </summary>
     public uint TileSeed(int tileIndex) => Rng.DeriveTileSeed(Seed, tileIndex);
 
+    /// <summary>Surface height of the tile nearest to <paramref name="coord"/>, in the dimensionless <see cref="Elevation.ElevationInfo.Height"/> scale (below <see cref="Elevation.ElevationGenerationStage.SeaLevel"/> is ocean). Throws <see cref="ArgumentOutOfRangeException"/> for a non-finite coordinate.</summary>
     public float SampleElevation(GeoCoord coord)
     {
         int i = Map.DataStore.GetTileIndex(coord);
         return Map.DataStore.GetRef<ElevationInfo>(i).Height;
     }
 
+    /// <summary>Biome and danger level of the tile nearest to <paramref name="coord"/>. With <paramref name="options"/>, history modifiers adjust the danger and materialized overrides replace the biome and/or danger; the returned danger is never negative.</summary>
     public (BiomeType Biome, int Danger) SampleBiome(GeoCoord coord, QueryOptions? options = null)
     {
         int i = Map.DataStore.GetTileIndex(coord);
-        var info = Map.DataStore.GetRef<LocalMapInfo>(i);
+        var info = Map.DataStore.GetRef<BiomeInfo>(i);
         var biome = info.Biome;
         int danger = info.DangerLevel;
         if (options?.History != null && options.History.TryGetTileModifier(i, out var mod))
@@ -128,6 +141,7 @@ public sealed class World : IDisposable
         return (biome, Math.Max(0, danger));
     }
 
+    /// <summary>Great-circle distance in kilometres between two coordinates, on a sphere of radius <see cref="EarthRadiusKm"/> (at most half its circumference). Deterministic across platforms; derived from the angle's cosine, so very small distances are coarse.</summary>
     public static double DistanceKm(GeoCoord a, GeoCoord b)
     {
         var va = Vector3D.FromGeoCoord(a);
@@ -137,19 +151,23 @@ public sealed class World : IDisposable
     }
 
     /// <summary>All tiles within radiusKm of center, sorted by distance.</summary>
+    /// <param name="center">Query centre.</param>
+    /// <param name="radiusKm">Great-circle radius in kilometres.</param>
+    /// <param name="options">When it carries a <see cref="QueryOptions.Materialized"/> store, a tile override's biome replaces <see cref="TileHit.Biome"/> (as in <c>SampleBiome</c>). <see cref="QueryOptions.History"/> only adjusts danger, which a <see cref="TileHit"/> does not carry.</param>
     public List<TileHit> QueryRadius(GeoCoord center, double radiusKm, QueryOptions? options = null)
     {
         var store = Map.DataStore;
         bool hasElev = store.IsLayerRegistered<ElevationInfo>();
-        bool hasLocals = store.IsLayerRegistered<LocalMapInfo>();
+        bool hasLocals = store.IsLayerRegistered<BiomeInfo>();
         var elev = hasElev ? store.GetSpan<ElevationInfo>() : default;
-        var locals = hasLocals ? store.GetSpan<LocalMapInfo>() : default;
+        var locals = hasLocals ? store.GetSpan<BiomeInfo>() : default;
 
         // Compare dot products against cos(radius/R); only hits pay for Acos.
         var vectors = store.GetTileVectors();
         var target = Vector3D.FromGeoCoord(center);
         double angle = radiusKm / EarthRadiusKm;
         double minDot = angle >= Math.PI ? -2.0 : DetMath.Cos(angle);
+        var materialized = options?.Materialized;
         var result = new List<TileHit>();
         for (int i = 0; i < vectors.Length; i++)
         {
@@ -157,12 +175,17 @@ public sealed class World : IDisposable
             if (dot < minDot) continue;
             double d = DetMath.Acos(Math.Clamp(dot, -1.0, 1.0)) * EarthRadiusKm;
             if (d > radiusKm) continue;
+            var biome = hasLocals ? locals[i].Biome : BiomeType.Plains;
+            if (materialized != null
+                && materialized.TryGetOverride(MapAddress.ForPlanet(Seed, i), out var tileOverride)
+                && tileOverride?.Biome is { } overridden)
+                biome = overridden;
             result.Add(new TileHit
             {
                 TileIndex = i,
                 Coord = store.GetGeoCoord(i),
                 Elevation = hasElev ? elev[i].Height : 0f,
-                Biome = hasLocals ? locals[i].Biome : BiomeType.Plains,
+                Biome = biome,
                 DistanceKm = d
             });
         }
@@ -199,9 +222,13 @@ public sealed class World : IDisposable
     public PlanetHex Resolve(GeoCoord coord)
         => new(Seed, Map.DataStore.GetTileIndex(coord));
 
+    /// <summary>The region map of one planet tile, derived on demand (not cached) from the tile's data and the world seed. Throws <see cref="IndexOutOfRangeException"/> for a tile index outside <c>0..TileCount-1</c>.</summary>
+    /// <param name="worldTileIndex">Planet tile to expand.</param>
+    /// <param name="regionSize">Side of the square region patch, in cells.</param>
     public RegionHandle GetRegion(int worldTileIndex, int regionSize = RegionMaps.DefaultRegionSize)
         => GetRegion(new PlanetHex(Seed, worldTileIndex), regionSize);
 
+    /// <summary>As <see cref="GetRegion(int, int)"/> for an already-resolved hex. Throws <see cref="ArgumentException"/> when <paramref name="hex"/> was issued by a world with a different seed.</summary>
     public RegionHandle GetRegion(PlanetHex hex, int regionSize = RegionMaps.DefaultRegionSize)
     {
         if (hex.WorldSeed != Seed) throw new ArgumentException("Planet hex belongs to a different world.", nameof(hex));
@@ -226,6 +253,7 @@ public sealed class World : IDisposable
         return GetRegion(new PlanetHex(Seed, region.WorldTileIndex), regionSize).GetLocal(region.RegionCellIndex, localSize);
     }
 
+    /// <summary>Ranks candidate settlement tiles that pass <paramref name="filter"/> (default filter when null), best first. Ties are broken by ascending tile index, so the order is deterministic, and the list is cut to the filter's <c>TopN</c>.</summary>
     public List<CitySiteScore> ScoreCitySites(CitySiteFilter? filter = null, QueryOptions? options = null)
         => CitySiteScorer.Score(Map.DataStore, Rivers, WaterBodies, filter ?? new CitySiteFilter(), options, Seed);
 
@@ -243,6 +271,7 @@ public sealed class World : IDisposable
     public TileFeatureInfo GetTileFeatures(GeoCoord coord, QueryOptions? options = null, SiteCatalog? sites = null)
         => GetTileFeatures(Map.DataStore.GetTileIndex(coord), options, sites);
 
+    /// <summary>WKT <c>LINESTRING</c> (longitude latitude order) following the river's tile path. <paramref name="riverId"/> indexes <see cref="Rivers"/>; throws <see cref="ArgumentOutOfRangeException"/> for an unknown id.</summary>
     public string RiverToWkt(int riverId)
     {
         if ((uint)riverId >= (uint)Rivers.Rivers.Count)
@@ -258,6 +287,7 @@ public sealed class World : IDisposable
         }
         throw new ArgumentOutOfRangeException(nameof(bodyId), bodyId, $"Unknown water-body id {bodyId}.");
     }
+    /// <summary>WKT <c>POINT</c> (longitude latitude order) at the centre of the deposit's tile. <paramref name="depositId"/> indexes the deposit list; throws <see cref="ArgumentOutOfRangeException"/> for an unknown id.</summary>
     public string DepositToWkt(int depositId)
     {
         if ((uint)depositId >= (uint)Deposits.Deposits.Count)
@@ -265,210 +295,10 @@ public sealed class World : IDisposable
         return GeoWkt.DepositToWkt(Deposits.Deposits[depositId], Map.DataStore);
     }
 
+    /// <summary>Disposes the generation pipeline and the map (and so the store). Spans, references and handles obtained from the world must not be used afterwards.</summary>
     public void Dispose()
     {
         _pipeline?.Dispose();
         Map.Dispose();
-    }
-}
-
-/// <summary>Fluent builder for a fully generated <see cref="World"/>.</summary>
-public sealed class WorldBuilder
-{
-    private int _size = 3;
-    private int _seed = 42;
-    private int _seedCount = 12;
-    private string? _filePath;
-    private readonly List<IWorldGeneratorStage> _extraStages = new();
-    private bool _useDefaults = true;
-    private Action<TectonicPlateGenerationStage>? _tectonicsConfig;
-    private Action<LocalMapGenerationStage>? _biomesConfig;
-    private Action<ClimateStage>? _climateConfig;
-    private Action<HydrologyStage>? _hydrologyConfig;
-    private Action<ErosionGenerationStage>? _erosionConfig;
-    private bool _userEdits;
-    private bool _landUse;
-    private bool _climateRefresh = true;
-    private bool _islandChains = true;
-    private Action<IslandChainStage>? _islandChainsConfig;
-
-    /// <summary>
-    /// Largest supported planet size (backlog A2, from the Phase 2
-    /// benchmarks: size 7 builds in ~2s; size 8 extrapolates to ~20-30s and
-    /// ~3.9M-vert meshes, so it stays batch-only and unsupported).
-    /// </summary>
-    public const int MaxSupportedSize = 7;
-
-    public WorldBuilder WithSize(int size)
-    {
-        if (size < 0 || size > MaxSupportedSize)
-            throw new ArgumentOutOfRangeException(nameof(size), size,
-                $"Planet size must be 0..{MaxSupportedSize} (size 8+ is unsupported; see docs/ARCHITECTURE.md).");
-        _size = size;
-        return this;
-    }
-    public WorldBuilder WithSeed(int seed) { _seed = seed; return this; }
-    public WorldBuilder WithPlateCount(int seedCount) { _seedCount = seedCount; return this; }
-    public WorldBuilder WithFilePath(string? path) { _filePath = path; return this; }
-    public WorldBuilder AddStage(IWorldGeneratorStage stage) { _extraStages.Add(stage); return this; }
-    /// <summary>Skip the default stage set; only <see cref="AddStage"/> stages run.</summary>
-    public WorldBuilder WithoutDefaultStages() { _useDefaults = false; return this; }
-    /// <summary>Select the plate area strategy (default: noisy flood-fill).</summary>
-    public WorldBuilder WithPartitioner(IPlatePartitioner partitioner)
-        => WithTectonics(t => t.Partitioner = partitioner);
-    /// <summary>Tweak the default tectonics stage (partitioner, segmentation...).</summary>
-    public WorldBuilder WithTectonics(Action<TectonicPlateGenerationStage> configure)
-    {
-        var prev = _tectonicsConfig;
-        _tectonicsConfig = prev == null ? configure : s => { prev(s); configure(s); };
-        return this;
-    }
-    /// <summary>Tweak the island-chain repair stage (see <see cref="IslandChainDetector"/>).</summary>
-    public WorldBuilder WithIslandChains(Action<IslandChainStage> configure)
-    {
-        var prev = _islandChainsConfig;
-        _islandChainsConfig = prev == null ? configure : s => { prev(s); configure(s); };
-        _islandChains = true;
-        return this;
-    }
-
-    /// <summary>Keep plate-boundary land ribbons as the tectonics drew them instead of breaking them into islands.</summary>
-    public WorldBuilder WithoutIslandChains() { _islandChains = false; return this; }
-
-    /// <summary>Tweak the default climate stage (smoothing passes...).</summary>
-    public WorldBuilder WithClimate(Action<ClimateStage> configure)
-    {
-        var prev = _climateConfig;
-        _climateConfig = prev == null ? configure : s => { prev(s); configure(s); };
-        return this;
-    }
-    /// <summary>
-    /// Sets the planet's axial tilt, stellar flux, spin and (optionally) a custom insolation field; see
-    /// <see cref="PlanetParameters"/>. Earth by default. The parameters are copied, so later changes to
-    /// <paramref name="planet"/> do not affect this builder.
-    /// </summary>
-    public WorldBuilder WithPlanet(PlanetParameters planet)
-    {
-        if (planet == null) throw new ArgumentNullException(nameof(planet));
-        var copy = planet.Clone();
-        return WithClimate(c => c.Planet = copy);
-    }
-
-    /// <summary>
-    /// Re-runs the climate on the eroded relief before hydrology and biomes (see <see cref="ClimateRefreshStage"/>),
-    /// so rain shadows and biome borders follow the mountains the player sees rather than the raw tectonic
-    /// surface. On by default; <c>WithClimateRefresh(false)</c> restores the single-pass pipeline (pair it with
-    /// <c>RiverThresholdScale = 1</c>, which is what that pipeline was calibrated at).
-    /// <para>
-    /// Why it is the default: erosion moves the coastline (sediment fills shallows, so a size-4 world gains
-    /// around 20% more land tiles), and the single pass left every one of those tiles with the ocean's 0.55
-    /// precipitation floor and no maritime-distance correction. The refresh measured on seven worlds: land
-    /// 0.01-0.04 drier, 0.015-0.033 warmer, jungle 16% to 12% of land, desert 7% to 10%, glacier 13% to 10%;
-    /// river count restored by the hydrology scale (0.92), lakes unchanged.
-    /// </para>
-    /// </summary>
-    public WorldBuilder WithClimateRefresh(bool enabled = true) { _climateRefresh = enabled; return this; }
-
-    /// <summary>Tweak the default hydrology stage (river threshold, max rivers...).</summary>
-    public WorldBuilder WithHydrology(Action<HydrologyStage> configure)
-    {
-        var prev = _hydrologyConfig;
-        _hydrologyConfig = prev == null ? configure : s => { prev(s); configure(s); };
-        return this;
-    }
-    /// <summary>Tweak the default erosion stage (iteration counts, wind erosion...).</summary>
-    public WorldBuilder WithErosion(Action<ErosionGenerationStage> configure)
-    {
-        var prev = _erosionConfig;
-        _erosionConfig = prev == null ? configure : s => { prev(s); configure(s); };
-        return this;
-    }
-    /// <summary>Tweak the default biome stage (smoothing passes...).</summary>
-    public WorldBuilder WithBiomes(Action<LocalMapGenerationStage> configure)
-    {
-        var prev = _biomesConfig;
-        _biomesConfig = prev == null ? configure : s => { prev(s); configure(s); };
-        return this;
-    }
-
-    /// <summary>
-    /// Registers the <see cref="UserEditInfo"/> input layer so the result supports hand edits and
-    /// <see cref="World.Recompute"/>. Costs 20 bytes per tile; an unedited layer changes nothing.
-    /// </summary>
-    public WorldBuilder WithUserEdits() { _userEdits = true; return this; }
-
-    /// <summary>
-    /// Adds the land-use layers and their two framing stages: <see cref="LandCapacityInfo"/> (what each tile
-    /// could support, order 25) and <see cref="LandUseInfo"/> (what is decided to be done with it), which starts
-    /// empty and is filled by the allocation stages you add with <see cref="AddStage"/> at orders 26..98.
-    /// <see cref="LandUseResolveStage"/> (99) then applies hand-painted pins. Implies <see cref="WithUserEdits"/>.
-    /// Off by default: a default world carries no people, and costs nothing. Land use is never read by the
-    /// climate, erosion, hydrology or biome stages, so it cannot change them.
-    /// </summary>
-    public WorldBuilder WithLandUse() { _landUse = true; _userEdits = true; return this; }
-
-    public World Build()
-    {
-        var map = new WorldMap(_size, _filePath);
-        // Field layers (dense, in-store). Feature catalogs attach to World, not the store.
-        var platesLayer = new TectonicPlateLayer(map.DataStore, _seedCount, _seed);
-        map.RegisterLayer<TectonicPlate>(platesLayer);
-        map.RegisterLayer<ElevationInfo>(new ElevationLayer(map.DataStore));
-        map.RegisterLayer<HydrologyInfo>(new HydrologyLayer(map.DataStore));
-        map.RegisterLayer<ClimateInfo>(new ClimateLayer(map.DataStore));
-        map.RegisterLayer<LocalMapInfo>(new LocalMapLayer(map.DataStore, _seed,
-            platesLayer));
-        if (_userEdits) map.RegisterLayer<UserEditInfo>(new UserEditLayer(map.DataStore));
-        if (_landUse)
-        {
-            map.RegisterLayer<LandCapacityInfo>(new LandCapacityLayer(map.DataStore));
-            map.RegisterLayer<LandUseInfo>(new LandUseLayer(map.DataStore));
-        }
-        map.DataStore.Allocate();
-
-        var pipeline = new WorldGenerationPipeline();
-        HydrologyStage? hydrologyStage = null;
-        PlanetParameters planet = new PlanetParameters();
-        float riverScale = 1f;
-        if (_useDefaults)
-        {
-            var tectonics = new TectonicPlateGenerationStage(_seedCount, _seed);
-            _tectonicsConfig?.Invoke(tectonics);
-            pipeline.AddStage(tectonics);
-            pipeline.AddStage(new ElevationGenerationStage(_seed));
-            var climate = new ClimateStage(_seed);
-            _climateConfig?.Invoke(climate);
-            climate.CurrentsInRefreshPassOnly = _climateRefresh;
-            planet = climate.Planet ?? planet;
-            pipeline.AddStage(climate);
-            hydrologyStage = new HydrologyStage();
-            _hydrologyConfig?.Invoke(hydrologyStage);
-            riverScale = hydrologyStage.RiverThresholdScale;
-            var erosion = new ErosionGenerationStage { RiverThresholdScale = riverScale };
-            _erosionConfig?.Invoke(erosion);
-            pipeline.AddStage(erosion);
-            if (_islandChains) // ties erosion's order; the stable sort keeps it after erosion and ahead of the refresh
-            {
-                var chains = new IslandChainStage(_seed);
-                _islandChainsConfig?.Invoke(chains);
-                pipeline.AddStage(chains);
-            }
-            if (_climateRefresh) pipeline.AddStage(new ClimateRefreshStage(climate)); // ties erosion's order; the stable sort keeps it after
-            pipeline.AddStage(hydrologyStage);
-            var biomes = new LocalMapGenerationStage(_seed) { RiverThresholdScale = riverScale };
-            _biomesConfig?.Invoke(biomes);
-            pipeline.AddStage(biomes);
-        }
-        if (_landUse) pipeline.AddStage(new LandCapacityStage());
-        foreach (var s in _extraStages) pipeline.AddStage(s);
-        if (_landUse) pipeline.AddStage(new LandUseResolveStage());
-
-        pipeline.Execute(map);
-
-        var world = new World(map, _seed) { Planet = planet };
-        world.Attach(pipeline, hydrologyStage?.MaxRivers ?? new HydrologyStage().MaxRivers, riverScale);
-        world.PopulateFeatureCatalogs();
-        world.RebuildIndex();
-        return world;
     }
 }

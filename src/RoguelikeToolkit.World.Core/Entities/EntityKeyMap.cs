@@ -11,7 +11,7 @@ namespace RoguelikeToolkit.World.Core.Entities;
 /// if (!map.TryGetLive(store, key, out var id)) { id = store.Create(); map.Set(key, id); /* fill columns from the seed */ }
 /// </code>
 /// </example>
-public sealed class EntityKeyMap
+internal sealed class EntityKeyMap
 {
     private struct Entry { public ulong Key; public int Index; public uint Generation; }   // Generation 0 = empty
 

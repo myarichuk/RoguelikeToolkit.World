@@ -1,5 +1,5 @@
 // Highland danger rebalance: mountain biomes get +1 danger, ocean stays 0.
-// Runs after biomes (order 21). Reads LocalMapInfo, refines LocalMapInfo.
+// Runs after biomes (order 21). Reads BiomeInfo, refines BiomeInfo.
 
 function execute() {
     for (var i = 0; i < TILE_COUNT; i++) {

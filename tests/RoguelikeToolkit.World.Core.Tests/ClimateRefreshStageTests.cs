@@ -1,6 +1,9 @@
-using System;
-using RoguelikeToolkit.World.Core;
-using Xunit;
+using RoguelikeToolkit.World.Core.Biomes;
+using RoguelikeToolkit.World.Core.Climate;
+using RoguelikeToolkit.World.Core.Elevation;
+using RoguelikeToolkit.World.Core.Generation;
+using RoguelikeToolkit.World.Core.Hydrology;
+using RoguelikeToolkit.World.Core.Tectonics;
 
 namespace RoguelikeToolkit.World.Core.Tests;
 
@@ -107,8 +110,8 @@ public class ClimateRefreshStageTests
         var fe = fresh.Map.DataStore.GetSpan<ElevationInfo>();
         // Erosion reads the first-pass climate in both, so the relief is identical; only what is derived from the second pass moves.
         for (int i = 0; i < pe.Length; i++) Assert.Equal(pe[i].Height, fe[i].Height);
-        var pl = plain.Map.DataStore.GetSpan<LocalMapInfo>();
-        var fl = fresh.Map.DataStore.GetSpan<LocalMapInfo>();
+        var pl = plain.Map.DataStore.GetSpan<BiomeInfo>();
+        var fl = fresh.Map.DataStore.GetSpan<BiomeInfo>();
         int diff = 0;
         for (int i = 0; i < pl.Length; i++) if (pl[i].Biome != fl[i].Biome) diff++;
         Assert.True(diff > 0);

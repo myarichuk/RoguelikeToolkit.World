@@ -1,5 +1,5 @@
-using RoguelikeToolkit.World.Core;
-using Xunit;
+using RoguelikeToolkit.World.Core.Biomes;
+using RoguelikeToolkit.World.Core.Elevation;
 
 namespace RoguelikeToolkit.World.Core.Tests;
 
@@ -14,7 +14,7 @@ public class ScaleTests
     {
         var store = world.Map.DataStore;
         var elev = store.GetSpan<ElevationInfo>();
-        var locals = store.GetSpan<LocalMapInfo>();
+        var locals = store.GetSpan<BiomeInfo>();
         var heights = new float[store.TileCount];
         var biomes = new BiomeType[store.TileCount];
         for (int i = 0; i < store.TileCount; i++)

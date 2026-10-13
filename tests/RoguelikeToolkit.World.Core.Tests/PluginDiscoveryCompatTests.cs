@@ -1,9 +1,4 @@
-using System;
-using System.Collections.Generic;
-using System.IO;
-using System.Linq;
-using RoguelikeToolkit.World.Core;
-using Xunit;
+using RoguelikeToolkit.World.Core.Generation;
 
 namespace RoguelikeToolkit.World.Core.Tests;
 

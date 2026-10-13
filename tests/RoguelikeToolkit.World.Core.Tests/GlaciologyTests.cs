@@ -1,6 +1,8 @@
-using System;
-using RoguelikeToolkit.World.Core;
-using Xunit;
+using RoguelikeToolkit.World.Core.Biomes;
+using RoguelikeToolkit.World.Core.Climate;
+using RoguelikeToolkit.World.Core.Elevation;
+using RoguelikeToolkit.World.Core.Hydrology;
+using RoguelikeToolkit.World.Core.Primitives;
 
 namespace RoguelikeToolkit.World.Core.Tests;
 
@@ -88,7 +90,7 @@ public class GlaciologyTests
         using var world = new WorldBuilder().WithSize(3).WithSeed(42).Build();
         var store = world.Map.DataStore;
         var elev = store.GetSpan<ElevationInfo>();
-        var locals = store.GetSpan<LocalMapInfo>();
+        var locals = store.GetSpan<BiomeInfo>();
 
         int glaciers = 0;
         for (int i = 0; i < store.TileCount; i++)

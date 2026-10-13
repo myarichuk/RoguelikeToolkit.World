@@ -295,7 +295,7 @@ describe('vector export geometry', () => {
 });
 
 describe('Core biome ids in the core pack', () => {
-  // The BiomeType ids the generator can emit (LocalMapInfo.cs): 0-9, plus the desert family at 12 and 14-16.
+  // The BiomeType ids the generator can emit (BiomeInfo.cs): 0-9, plus the desert family at 12 and 14-16.
   const CORE_IDS = [0, 1, 2, 3, 4, 5, 6, 7, 8, 9, 12, 14, 15, 16];
   const pack = corePack as unknown as { biomes: { id: number; name: string }[]; themes: { biomes: Record<string, string> }[]; rules: { id: string; biomes?: number[] }[] };
   it('defines a biome entry, a name and a color in every theme for every id', () => {

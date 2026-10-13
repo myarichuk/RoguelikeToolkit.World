@@ -1,8 +1,8 @@
-using System;
-using System.IO;
-using System.Linq;
-using RoguelikeToolkit.World.Core;
-using Xunit;
+using RoguelikeToolkit.World.Core.Biomes;
+using RoguelikeToolkit.World.Core.Generation;
+using RoguelikeToolkit.World.Core.Hierarchy;
+using RoguelikeToolkit.World.Core.Primitives;
+using RoguelikeToolkit.World.Core.Storage;
 
 namespace RoguelikeToolkit.World.Core.Tests;
 
@@ -49,15 +49,15 @@ public class ReviewFixesRound2Tests
     public void Smoothing_RebasesDanger_ToTheNewBiome()
     {
         using var store = new WorldDataStore(2);
-        store.RegisterLayer<LocalMapInfo>();
+        store.RegisterLayer<BiomeInfo>();
         store.Allocate();
-        var span = store.GetSpan<LocalMapInfo>();
+        var span = store.GetSpan<BiomeInfo>();
         for (int i = 0; i < span.Length; i++)
-            span[i] = new LocalMapInfo { Biome = BiomeType.Plains, DangerLevel = 0 };
+            span[i] = new BiomeInfo { Biome = BiomeType.Plains, DangerLevel = 0 };
 
         // One Jungle tile (base 2, jitter +1) ringed by Plains must become Plains with base 0 + jitter 1.
-        span[5] = new LocalMapInfo { Biome = BiomeType.Jungle, DangerLevel = 3 };
-        LocalMapGenerationStage.SmoothMoistureBiomes(store, span, 1);
+        span[5] = new BiomeInfo { Biome = BiomeType.Jungle, DangerLevel = 3 };
+        BiomeGenerationStage.SmoothMoistureBiomes(store, span, 1);
 
         Assert.Equal(BiomeType.Plains, span[5].Biome);
         Assert.Equal(1, span[5].DangerLevel);

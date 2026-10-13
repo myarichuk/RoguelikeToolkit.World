@@ -13,7 +13,7 @@ namespace RoguelikeToolkit.World.Core.Names;
 /// Hand-authored <see cref="MorphemeYaml.Latin"/> fields always win over this;
 /// text already in the target script passes through untouched.
 /// </summary>
-public static class Transliterator
+internal static class Transliterator
 {
     private static readonly Dictionary<string, string> HebrewPairs = new(StringComparer.Ordinal)
     {

@@ -1,5 +1,5 @@
 using System.Numerics;
-using RoguelikeToolkit.World.Core;
+using RoguelikeToolkit.World.Core.Lithosphere;
 
 namespace RoguelikeToolkit.World.Presentation;
 

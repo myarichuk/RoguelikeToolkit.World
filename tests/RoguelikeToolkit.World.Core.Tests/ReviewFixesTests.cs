@@ -1,7 +1,16 @@
-using System;
-using System.Linq;
-using RoguelikeToolkit.World.Core;
-using Xunit;
+using RoguelikeToolkit.World.Core.Biomes;
+using RoguelikeToolkit.World.Core.Climate;
+using RoguelikeToolkit.World.Core.Elevation;
+using RoguelikeToolkit.World.Core.Features;
+using RoguelikeToolkit.World.Core.Generation;
+using RoguelikeToolkit.World.Core.Hydrology;
+using RoguelikeToolkit.World.Core.Lithosphere;
+using RoguelikeToolkit.World.Core.Primitives;
+using RoguelikeToolkit.World.Core.Queries;
+using RoguelikeToolkit.World.Core.Settlement;
+using RoguelikeToolkit.World.Core.Storage;
+using RoguelikeToolkit.World.Core.Tectonics;
+using RoguelikeToolkit.World.Core.Topology;
 
 namespace RoguelikeToolkit.World.Core.Tests;
 
@@ -21,7 +30,7 @@ public class ReviewFixesTests
         p.AddStage(new IslandChainStage(seed));
         p.AddStage(new ClimateRefreshStage(climate));
         p.AddStage(hydrology);
-        p.AddStage(new LocalMapGenerationStage(seed) { RiverThresholdScale = scale });
+        p.AddStage(new BiomeGenerationStage(seed) { RiverThresholdScale = scale });
         return p;
     }
 
@@ -34,14 +43,14 @@ public class ReviewFixesTests
         var climate = store.GetSpan<ClimateInfo>().ToArray();
         var elev = store.GetSpan<ElevationInfo>().ToArray();
         var hydro = store.GetSpan<HydrologyInfo>().ToArray();
-        var local = store.GetSpan<LocalMapInfo>().ToArray();
+        var local = store.GetSpan<BiomeInfo>().ToArray();
 
         DefaultPipeline(7).Execute(world.Map);
 
         var c2 = store.GetSpan<ClimateInfo>();
         var e2 = store.GetSpan<ElevationInfo>();
         var h2 = store.GetSpan<HydrologyInfo>();
-        var l2 = store.GetSpan<LocalMapInfo>();
+        var l2 = store.GetSpan<BiomeInfo>();
         for (int i = 0; i < climate.Length; i++)
         {
             Assert.Equal(climate[i].Precipitation, c2[i].Precipitation);

@@ -1,7 +1,3 @@
-using System;
-using RoguelikeToolkit.World.Core;
-using Xunit;
-
 namespace RoguelikeToolkit.World.Core.Tests;
 
 /// <summary>

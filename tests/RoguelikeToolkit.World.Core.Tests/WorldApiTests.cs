@@ -1,7 +1,8 @@
-using System;
-using System.Collections.Generic;
-using RoguelikeToolkit.World.Core;
-using Xunit;
+using RoguelikeToolkit.World.Core.Biomes;
+using RoguelikeToolkit.World.Core.Elevation;
+using RoguelikeToolkit.World.Core.Integration;
+using RoguelikeToolkit.World.Core.Primitives;
+using RoguelikeToolkit.World.Core.Settlement;
 
 namespace RoguelikeToolkit.World.Core.Tests;
 
@@ -61,7 +62,7 @@ public class WorldApiTests
         Assert.Equal(store.GetSpan<ElevationInfo>()[10].Height, world.SampleElevation(coord));
 
         var (biome, _) = world.SampleBiome(coord);
-        Assert.Equal(store.GetSpan<LocalMapInfo>()[10].Biome, biome);
+        Assert.Equal(store.GetSpan<BiomeInfo>()[10].Biome, biome);
 
         var hits = world.QueryRadius(coord, 1500.0);
         Assert.NotEmpty(hits);

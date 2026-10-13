@@ -210,7 +210,7 @@ with `foreach (int j in surface.Neighbors(i))` / indexed span loops.
 Call sites (33):
 `ClimateStage.cs:118,179` · `ErosionGenerationStage.cs:73,113,181,310` ·
 `HydrologyStage.cs:112,221,246,371,422,449,464` ·
-`LocalMapGenerationStage.cs:128,191` ·
+`BiomeGenerationStage.cs:128,191` ·
 `TectonicPlateGenerationStage.cs:205,328,365` ·
 `Hydrography.cs:25,139,191,218,241,256,438,476,555` ·
 `PlatePartitioning.cs:189` · `Deposits.cs:133` · `TileFeatures.cs:214` ·
@@ -386,7 +386,7 @@ What carries over from B3 unchanged:
 - **Reuse as-is:** injectors + `SiteCatalog`, `IMaterializationStore`
   bindings, `SpatialIndex` query shapes, `CanyonAnalysis`, `Glaciology`,
   deposit prospecting — pure functions of position/height/climate.
-- **Port, don't reuse blindly:** `HydrologyStage` / `LocalMapGenerationStage`
+- **Port, don't reuse blindly:** `HydrologyStage` / `BiomeGenerationStage`
   index through store topology — now addressed by Phases 2 and 5.
 - **Calibration is the long pole** — planet biome gates took two retune
   cycles against measured matrices; expect the same (Phase 7).

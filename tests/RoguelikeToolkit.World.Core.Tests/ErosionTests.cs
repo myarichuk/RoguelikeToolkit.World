@@ -1,5 +1,7 @@
-using Xunit;
-using RoguelikeToolkit.World.Core;
+using RoguelikeToolkit.World.Core.Elevation;
+using RoguelikeToolkit.World.Core.Generation;
+using RoguelikeToolkit.World.Core.Tectonics;
+using RoguelikeToolkit.World.Core.Topology;
 
 namespace RoguelikeToolkit.World.Core.Tests;
 

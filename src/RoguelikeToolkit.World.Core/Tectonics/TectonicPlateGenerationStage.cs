@@ -1,0 +1,426 @@
+using RoguelikeToolkit.World.Core.Generation;
+using RoguelikeToolkit.World.Core.Primitives;
+using RoguelikeToolkit.World.Core.Storage;
+using RoguelikeToolkit.World.Core.Topology;
+
+namespace RoguelikeToolkit.World.Core.Tectonics;
+
+/// <summary>Generates the plate layout: partitions the sphere into plates with random drift, assigns continentality and crust, classifies plate boundaries by relative drift, and propagates the orogeny driver outwards from them. Writes <see cref="TectonicPlate"/> and fills the <see cref="PlateInfo"/> table.</summary>
+[Preserve] // created via reflection by WorldGenerationPipeline.Discover; keep it through Unity code stripping
+[WorldGeneratorStage(StageOrder.Tectonics, Writes = new[] { typeof(TectonicPlate) })]
+public class TectonicPlateGenerationStage : IWorldGeneratorStage, ISeededStage, IDisposable
+{
+    /// <summary>Number of plates, 1 .. <see cref="TectonicPlate.MaxPlates"/>; must not exceed the rows reserved by <see cref="TectonicPlateLayer"/>. Default 12.</summary>
+    public int SeedCount { get; set; } = 12;
+    /// <summary>Seeds plate positions, drift, partitioning and noise; per-plate draws depend only on the seed and the plate's ordinal. Default 42.</summary>
+    public int Seed { get; set; } = 42;
+
+    /// <summary>Continentality above this is continental crust, else oceanic.</summary>
+    public double CrustThreshold { get; set; } = 0.12;
+
+    /// <summary>Convergence above this (in drift-velocity units) is convergent.</summary>
+    public double ConvergenceThreshold { get; set; } = 0.08;
+
+    /// <summary>
+    /// BFS cap for the boundary-distance field, in neighbor rings. Kept small
+    /// on purpose: a plate at the default 12-plate density is only ~4 rings in
+    /// radius, so a wider cap lets every boundary's uplift apron meet in the
+    /// plate interior and paints whole plates as mountain belts.
+    /// </summary>
+    public int MaxBoundaryDistance { get; set; } = 4;
+
+    /// <summary>
+    /// Plate area strategy. Defaults to noisy flood-fill growth (organic
+    /// borders); set to <see cref="VoronoiPlatePartitioner"/> for the legacy
+    /// straight-edged Lloyd-relaxed Voronoi layout.
+    /// </summary>
+    public IPlatePartitioner Partitioner { get; set; } = new NoisyFloodFillPlatePartitioner();
+
+    /// <summary>
+    /// When true, the convergent uplift driver is modulated along strike by a
+    /// seamless noise field, breaking uniform mountain walls into peaks and
+    /// gaps. Disable for the legacy uniform-belt behavior.
+    /// </summary>
+    public bool SegmentOrogeny { get; set; } = true;
+
+    /// <summary>Spatial frequency of the along-strike orogeny modulation.</summary>
+    public double SegmentationFrequency { get; set; } = 2.6;
+
+    /// <summary>
+    /// Along-strike modulation depth: the driver scales by [1-S, 1+S].
+    /// </summary>
+    public double SegmentationStrength { get; set; } = 0.65;
+
+    /// <summary>
+    /// Strike-gap floor: when the along-strike noise field falls below this
+    /// (in [0,1] field units), the convergent driver is set to exactly zero
+    /// instead of merely weakening. Without true zeros a modulated wall is
+    /// still a wall — one connected mountain blurb along the whole boundary.
+    /// Gaps break it into discrete ranges with passes between them.
+    /// </summary>
+    public double SegmentGapFloor { get; set; } = 0.25;
+
+    // Cached scratch so repeated Execute calls stay allocation-free: buffers grow
+    // to the largest map/plate count seen and are reused (never shrunk) after that.
+    private int[] _plateIds = Array.Empty<int>();
+    private Vector3D[] _seedCopy = Array.Empty<Vector3D>();
+    private double[] _seedElevations = Array.Empty<double>();
+    private readonly OrogenyScratch _orogeny = new();
+    private static readonly VoronoiPlatePartitioner FallbackPartitioner = new();
+
+    /// <summary>Creates a stage with the default 12 plates and seed 42; this is the constructor <see cref="WorldGenerationPipeline.Discover(string?, Action{StageDiscoveryDiagnostic}?)"/> uses.</summary>
+    public TectonicPlateGenerationStage()
+    {
+    }
+
+    /// <summary>Creates a stage with the given plate count and seed.</summary>
+    /// <param name="seedCount">Value for <see cref="SeedCount"/>.</param>
+    /// <param name="seed">Value for <see cref="Seed"/>.</param>
+    public TectonicPlateGenerationStage(int seedCount, int seed = 42)
+    {
+        SeedCount = seedCount;
+        Seed = seed;
+    }
+
+    /// <summary>Creates a stage with the given plate count, seed and partitioner.</summary>
+    /// <param name="seedCount">Value for <see cref="SeedCount"/>.</param>
+    /// <param name="seed">Value for <see cref="Seed"/>.</param>
+    /// <param name="partitioner">Value for <see cref="Partitioner"/>.</param>
+    public TectonicPlateGenerationStage(int seedCount, int seed, IPlatePartitioner partitioner)
+        : this(seedCount, seed)
+    {
+        Partitioner = partitioner;
+    }
+
+    /// <summary>Regenerates the plate table and the <see cref="TectonicPlate"/> layer of <paramref name="map"/>.</summary>
+    /// <exception cref="InvalidOperationException">The store has no <see cref="PlateInfo"/> table with at least <see cref="SeedCount"/> rows, or <see cref="SeedCount"/> is outside 1 .. <see cref="TectonicPlate.MaxPlates"/>.</exception>
+    public void Execute(WorldMap map)
+    {
+        var store = map.DataStore;
+        var span = store.GetSpan<TectonicPlate>();
+        if (!store.IsTableRegistered<PlateInfo>() || store.GetTable<PlateInfo>().Length < SeedCount)
+            throw new InvalidOperationException(
+                $"The store has no plate table for {SeedCount} plates. Create the TectonicPlateLayer (reserves max(seedCount, 256) rows) before Allocate().");
+        if (SeedCount is < 1 or > TectonicPlate.MaxPlates)
+            throw new InvalidOperationException($"SeedCount must be 1..{TectonicPlate.MaxPlates}.");
+        var table = store.GetTable<PlateInfo>();
+        table.Clear();
+        span.Clear();
+
+        Grow(ref _seedCopy, SeedCount);
+        Grow(ref _seedElevations, SeedCount);
+        var seeds = _seedCopy;
+        var seedElevations = _seedElevations;
+
+        // Per-plate sub-streams: each plate's parameters depend only on (Seed, plate
+        // ordinal), never on iteration order, so output is reproducible on demand.
+        for (int i = 0; i < SeedCount; i++)
+        {
+            var r = Rng.Create(Seed, i);
+            double lat = r.NextDouble() * 180.0 - 90.0;
+            double lon = r.NextDouble() * 360.0 - 180.0;
+            seeds[i] = Vector3D.FromGeoCoord(new GeoCoord(lat, lon));
+            seedElevations[i] = r.NextDouble();
+            double driftSpeed = r.NextDouble();
+
+            // Uniform random unit vector (drawn after the legacy parameters so the
+            // first four draws — and therefore existing plate layouts — are unchanged).
+            double u = r.NextDouble() * 2.0 - 1.0;
+            double theta = r.NextDouble() * 2.0 * Math.PI;
+            double s = Math.Sqrt(Math.Max(0.0, 1.0 - u * u));
+            var dir = new Vector3D(s * DetMath.Cos(theta), s * DetMath.Sin(theta), u);
+            table[i] = new PlateInfo
+            {
+                Elevation = seedElevations[i],
+                DriftSpeed = driftSpeed,
+                DriftX = dir.X,
+                DriftY = dir.Y,
+                DriftZ = dir.Z,
+            };
+        }
+
+        ReadOnlySpan<Vector3D> tilePositions = store.GetTileVectors();
+
+        // Plate areas come from the configured partition strategy (default:
+        // noisy flood-fill growth for organic borders). The strategy writes
+        // 0-based seed ordinals; per-plate parameters below stay pure
+        // functions of (Seed, plate ordinal) for reproducibility.
+        Grow(ref _plateIds, store.TileCount);
+        var plateIds = _plateIds;
+        var seedSpan = new ReadOnlySpan<Vector3D>(seeds, 0, SeedCount);
+        var idSpan = new Span<int>(plateIds, 0, store.TileCount);
+        (Partitioner ?? (IPlatePartitioner)FallbackPartitioner).Partition(store, tilePositions, seedSpan, idSpan, Seed);
+
+        for (int i = 0; i < store.TileCount; i++)
+        {
+            int bestSeed = Math.Clamp(plateIds[i], 0, SeedCount - 1);
+            // Mixed plates: a plate-scale offset plus broad seamless swells, so
+            // each plate carries both continental and oceanic tiles like Earth.
+            double continentality = (seedElevations[bestSeed] - 0.45) * 1.2
+                + SphereNoise.Fbm(tilePositions[i] * 1.6, Seed + 77) * 0.55;
+            span[i] = new TectonicPlate
+            {
+                Id = (ushort)(bestSeed + 1),
+                Crust = continentality > CrustThreshold ? CrustType.Continental : CrustType.Oceanic,
+                Boundary = PlateBoundaryType.None,
+                Continentality = (float)continentality,
+                BoundaryRings = byte.MaxValue,
+                NearestBoundary = PlateBoundaryType.None,
+                Orogeny = 0f
+            };
+        }
+
+        // Hypsometric calibration: plate offsets are arbitrary, so recenter the
+        // field to a fixed mean. Land fraction then stays Earth-like for every
+        // seed instead of swinging with the plate draw.
+        double contMean = 0;
+        for (int i = 0; i < store.TileCount; i++) contMean += span[i].Continentality;
+        contMean /= store.TileCount;
+        float shift = (float)(contMean - (-0.10));
+        for (int i = 0; i < store.TileCount; i++)
+        {
+            float c = span[i].Continentality - shift;
+            span[i].Continentality = c;
+            span[i].Crust = c > CrustThreshold ? CrustType.Continental : CrustType.Oceanic;
+        }
+
+        ClassifyBoundaries(store, span, table, tilePositions, ConvergenceThreshold);
+        PropagateOrogeny(store, span, table, _orogeny, MaxBoundaryDistance);
+    }
+
+    /// <summary>
+    /// Along-strike modulation: the [0,1] noise field below
+    /// <see cref="SegmentGapFloor"/> maps to exactly 0 (a pass with no
+    /// uplift), the remainder rescales to [1-S, 1+S] (peaks and saddles).
+    /// Pure function of position and seed.
+    /// </summary>
+    internal double SegmentFactor(Vector3D pos)
+    {
+        if (!SegmentOrogeny) return 1.0;
+        double strength = Math.Clamp(SegmentationStrength, 0.0, 1.0);
+        double floor = Math.Clamp(SegmentGapFloor, 0.0, 0.9);
+        double x = SphereNoise.Fbm(pos * SegmentationFrequency, Seed + 4242) * 0.5 + 0.5;
+        if (x < floor) return 0.0;
+        double t = (x - floor) / (1.0 - floor);
+        return (1.0 - strength) + t * 2.0 * strength;
+    }
+
+    private void ClassifyBoundaries(
+        WorldDataStore store, Span<TectonicPlate> span, ReadOnlySpan<PlateInfo> table, ReadOnlySpan<Vector3D> positions, double threshold)
+    {
+        Span<int> neighbors = stackalloc int[6];
+        for (int i = 0; i < store.TileCount; i++)
+        {
+            var plate = span[i];
+            var mine = table[plate.Id - 1];
+            int adjacent = store.GetAdjacent(i, neighbors);
+            bool hasForeign = false;
+            double maxConvergence = double.NegativeInfinity;
+            double minConvergence = double.PositiveInfinity;
+            // Winning convergent pair (for subduction polarity + belt width).
+            CrustType acrossCrust = plate.Crust;
+            for (int k = 0; k < adjacent; k++)
+            {
+                int j = neighbors[k];
+                var other = span[j];
+                if (other.Id == plate.Id) continue;
+                hasForeign = true;
+                var theirs = table[other.Id - 1];
+                var dir = (positions[j] - positions[i]).Normalize();
+                double relX = theirs.DriftX * theirs.DriftSpeed - mine.DriftX * mine.DriftSpeed;
+                double relY = theirs.DriftY * theirs.DriftSpeed - mine.DriftY * mine.DriftSpeed;
+                double relZ = theirs.DriftZ * theirs.DriftSpeed - mine.DriftZ * mine.DriftSpeed;
+                double convergence = -(relX * dir.X + relY * dir.Y + relZ * dir.Z);
+                if (convergence > maxConvergence) { maxConvergence = convergence; acrossCrust = other.Crust; }
+                if (convergence < minConvergence) minConvergence = convergence;
+            }
+            if (!hasForeign)
+            {
+                plate.Boundary = PlateBoundaryType.None;
+                plate.Orogeny = 0f;
+            }
+            else if (maxConvergence > threshold)
+            {
+                plate.Boundary = PlateBoundaryType.Convergent;
+                plate.Orogeny = (float)(ConvergentDriver(plate.Crust, acrossCrust, maxConvergence) * SegmentFactor(positions[i]));
+            }
+            else if (minConvergence < -threshold)
+            {
+                plate.Boundary = PlateBoundaryType.Divergent;
+                // Mid-ocean ridge (mostly submarine) vs continental rift valley.
+                plate.Orogeny = plate.Crust == CrustType.Oceanic ? 0.5f : -0.55f;
+            }
+            else
+            {
+                plate.Boundary = PlateBoundaryType.Transform;
+                plate.Orogeny = 0.12f;
+            }
+            span[i] = plate;
+        }
+    }
+
+    /// <summary>
+    /// Signed convergent driver with subduction polarity: the oceanic side dives
+    /// (trench, negative) while the overriding side piles up (arc/orogen, positive).
+    /// </summary>
+    internal static double ConvergentDriver(CrustType mine, CrustType across, double convergence)
+    {
+        if (mine == CrustType.Continental && across == CrustType.Oceanic)
+            return convergence * 1.8; // Andes-style arc
+        if (mine == CrustType.Oceanic && across == CrustType.Continental)
+            return -convergence * 1.0; // trench side dives
+        if (mine == CrustType.Continental && across == CrustType.Continental)
+            return convergence * 2.4; // Himalaya-style fold belt
+        return convergence * 1.4; // island arc
+    }
+
+    /// <summary>
+    /// Orogenic belt width in neighbor rings: continent-continent collision builds
+    /// the widest plateaus, trenches and transforms stay narrow. Widths stay near
+    /// ~1 ring so the exp(-d/w) apron fades within 2 rings of the boundary line —
+    /// wider values paint whole plate interiors as uplift (mountain blurbs).
+    /// </summary>
+    internal static double BeltWidth(PlateBoundaryType boundary, float driver, CrustType mine, CrustType across)
+    {
+        return boundary switch
+        {
+            PlateBoundaryType.Convergent when driver < 0 => 0.6, // trench: narrow, deep
+            PlateBoundaryType.Convergent when mine == CrustType.Continental && across == CrustType.Continental => 1.2,
+            PlateBoundaryType.Convergent when mine == CrustType.Continental => 1.0, // Andean arc
+            PlateBoundaryType.Convergent => 0.8, // island arc
+            PlateBoundaryType.Divergent when driver < 0 => 0.9, // rift valley
+            PlateBoundaryType.Divergent => 0.7, // mid-ocean ridge
+            PlateBoundaryType.Transform => 0.6,
+            _ => 1.0,
+        };
+    }
+
+    /// <summary>
+    /// Multi-source BFS from every boundary tile: each tile learns its distance to
+    /// the nearest boundary, that boundary's type, and the orogeny driver decayed
+    /// by exp(-d/w). Deterministic (index-ordered seeding, sorted neighbors) and
+    /// allocation-free once warm (all scratch lives in the stage's reused buffers).
+    /// </summary>
+    private static void PropagateOrogeny(
+        WorldDataStore store, Span<TectonicPlate> span, ReadOnlySpan<PlateInfo> table, OrogenyScratch scratch, int maxDistance)
+    {
+        int n = store.TileCount;
+        scratch.EnsureCapacity(n);
+        // Spans sliced to n: the buffers may be larger after a bigger map ran on this stage.
+        var dist = scratch.Dist.AsSpan(0, n);
+        var srcDriver = scratch.SrcDriver.AsSpan(0, n);
+        var srcWidth = scratch.SrcWidth.AsSpan(0, n);
+        var srcType = scratch.SrcType.AsSpan(0, n);
+        // Each tile enters the queue at most once (dist is set before enqueue), so n slots suffice.
+        var queue = scratch.Queue.AsSpan(0, n);
+        int tail = 0;
+        dist.Fill(-1);
+        srcDriver.Clear();
+        srcWidth.Fill(1f);
+        srcType.Fill((byte)PlateBoundaryType.None);
+
+        // Seed in index order so ties resolve deterministically.
+        Span<int> neighbors = stackalloc int[6];
+        for (int i = 0; i < n; i++)
+        {
+            if (span[i].Boundary == PlateBoundaryType.None) continue;
+            dist[i] = 0;
+            srcDriver[i] = span[i].Orogeny;
+            srcType[i] = (byte)span[i].Boundary;
+            srcWidth[i] = (float)SourceWidth(store, span, table, i, neighbors);
+            queue[tail++] = i;
+        }
+
+        int head = 0;
+        while (head < tail)
+        {
+            int cur = queue[head++];
+            int nd = dist[cur] + 1;
+            if (nd > maxDistance) continue;
+            int adjacent = store.GetAdjacent(cur, neighbors);
+            for (int k = 0; k < adjacent; k++)
+            {
+                int nb = neighbors[k];
+                if (dist[nb] >= 0) continue;
+                dist[nb] = nd;
+                srcDriver[nb] = srcDriver[cur];
+                srcWidth[nb] = srcWidth[cur];
+                srcType[nb] = srcType[cur];
+                queue[tail++] = nb;
+            }
+        }
+
+        for (int i = 0; i < n; i++)
+        {
+            if (dist[i] < 0)
+            {
+                span[i].BoundaryRings = byte.MaxValue;
+                span[i].NearestBoundary = PlateBoundaryType.None;
+                span[i].Orogeny = 0f;
+                continue;
+            }
+            double decay = DetMath.Exp(-dist[i] / Math.Max(0.25, (double)srcWidth[i]));
+            span[i].BoundaryRings = (byte)dist[i];
+            span[i].NearestBoundary = (PlateBoundaryType)srcType[i];
+            span[i].Orogeny = (float)(srcDriver[i] * decay);
+        }
+    }
+
+    private static double SourceWidth(WorldDataStore store, Span<TectonicPlate> span, ReadOnlySpan<PlateInfo> table, int i, Span<int> neighbors)
+    {
+        var plate = span[i];
+        var mine = table[plate.Id - 1];
+        if (plate.Boundary != PlateBoundaryType.Convergent)
+            return BeltWidth(plate.Boundary, plate.Orogeny, plate.Crust, plate.Crust);
+        // Convergent width needs the across-strike crust; reuse the winning pair
+        // convention from classification (first max-convergence foreign neighbor).
+        int adjacent = store.GetAdjacent(i, neighbors);
+        CrustType across = plate.Crust;
+        double best = double.NegativeInfinity;
+        for (int k = 0; k < adjacent; k++)
+        {
+            int j = neighbors[k];
+            var other = span[j];
+            if (other.Id == plate.Id) continue;
+            var theirs = table[other.Id - 1];
+            // Recompute convergence cheaply from stored drift (positions cancel out
+            // of the argmax only if directions align; use the true projection).
+            var dir = (store.GetTileVectors()[j] - store.GetTileVectors()[i]).Normalize();
+            double relX = theirs.DriftX * theirs.DriftSpeed - mine.DriftX * mine.DriftSpeed;
+            double relY = theirs.DriftY * theirs.DriftSpeed - mine.DriftY * mine.DriftSpeed;
+            double relZ = theirs.DriftZ * theirs.DriftSpeed - mine.DriftZ * mine.DriftSpeed;
+            double convergence = -(relX * dir.X + relY * dir.Y + relZ * dir.Z);
+            if (convergence > best) { best = convergence; across = other.Crust; }
+        }
+        return BeltWidth(plate.Boundary, plate.Orogeny, plate.Crust, across);
+    }
+
+    /// <summary>Nothing unmanaged is held any more; kept so existing <c>using</c> sites compile.</summary>
+    public void Dispose()
+    {
+    }
+
+    private static void Grow<T>(ref T[] buffer, int length)
+    {
+        if (buffer.Length < length) buffer = new T[length];
+    }
+
+    /// <summary>Per-tile BFS scratch for <see cref="PropagateOrogeny"/>, owned by one stage instance.</summary>
+    private sealed class OrogenyScratch
+    {
+        public int[] Dist = Array.Empty<int>();
+        public float[] SrcDriver = Array.Empty<float>();
+        public float[] SrcWidth = Array.Empty<float>();
+        public byte[] SrcType = Array.Empty<byte>();
+        public int[] Queue = Array.Empty<int>();
+
+        public void EnsureCapacity(int n)
+        {
+            Grow(ref Dist, n);
+            Grow(ref SrcDriver, n);
+            Grow(ref SrcWidth, n);
+            Grow(ref SrcType, n);
+            Grow(ref Queue, n);
+        }
+    }
+}

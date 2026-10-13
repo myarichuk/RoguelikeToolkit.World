@@ -3,12 +3,20 @@ using System.Diagnostics;
 using System.Linq;
 using System.Runtime.InteropServices;
 using System.Numerics;
-using Avalonia;
-using Avalonia.Input;
 using Avalonia.OpenGL;
 using Avalonia.OpenGL.Controls;
 using Avalonia.Threading;
-using RoguelikeToolkit.World.Core;
+using RoguelikeToolkit.World.Core.Biomes;
+using RoguelikeToolkit.World.Core.Climate;
+using RoguelikeToolkit.World.Core.Elevation;
+using RoguelikeToolkit.World.Core.Features;
+using RoguelikeToolkit.World.Core.Generation;
+using RoguelikeToolkit.World.Core.Hierarchy;
+using RoguelikeToolkit.World.Core.Hydrology;
+using RoguelikeToolkit.World.Core.Lithosphere;
+using RoguelikeToolkit.World.Core.Primitives;
+using RoguelikeToolkit.World.Core.Tectonics;
+using RoguelikeToolkit.World.Core.Topology;
 using RoguelikeToolkit.World.Presentation;
 
 namespace RoguelikeToolkit.World.App
@@ -62,7 +70,7 @@ namespace RoguelikeToolkit.World.App
 
         public WorldMap Map => _map;
         public TectonicPlateLayer PlateLayer => _plateLayer;
-        public LocalMapLayer LocalLayer => _localLayer;
+        public BiomeLayer LocalLayer => _localLayer;
         public ElevationLayer ElevationLayer => _elevLayer;
 
         public int WorldSeed { get; private set; } = 42;
@@ -101,7 +109,7 @@ namespace RoguelikeToolkit.World.App
         private ElevationLayer _elevLayer = null!;
         private HydrologyLayer _hydroLayer = null!;
         private ClimateLayer _climateLayer = null!;
-        private LocalMapLayer _localLayer = null!;
+        private BiomeLayer _localLayer = null!;
         private WorldGenerationPipeline _pipeline = null!;
 
         // Sparse catalogs + per-tile classifications, rebuilt after every
@@ -138,7 +146,7 @@ namespace RoguelikeToolkit.World.App
             public ElevationLayer ElevLayer = null!;
             public HydrologyLayer HydroLayer = null!;
             public ClimateLayer ClimateLayer = null!;
-            public LocalMapLayer LocalLayer = null!;
+            public BiomeLayer LocalLayer = null!;
             public RiverCatalog Rivers = new();
             public WaterBodyCatalog Bodies = new();
             public RangeCatalog Ranges = new();
@@ -174,7 +182,7 @@ namespace RoguelikeToolkit.World.App
                 g.Map.RegisterLayer(g.HydroLayer);
                 g.ClimateLayer = new ClimateLayer(g.Map.DataStore);
                 g.Map.RegisterLayer(g.ClimateLayer);
-                g.LocalLayer = new LocalMapLayer(g.Map.DataStore, seed, g.PlateLayer);
+                g.LocalLayer = new BiomeLayer(g.Map.DataStore, seed, g.PlateLayer);
                 g.Map.RegisterLayer(g.LocalLayer);
                 g.Map.DataStore.Allocate();
 
@@ -338,7 +346,7 @@ namespace RoguelikeToolkit.World.App
         }
 
         public TileFeatureInfo GetTileFeatures(int tileIndex)
-            => TileFeatures.Query(_map.DataStore, tileIndex, _rivers, _bodies, _ranges, _deposits);
+            => TileFeatures.Query(_map.DataStore, tileIndex, _rivers, _bodies, _ranges, _deposits, address: MapAddress.ForPlanet(WorldSeed, tileIndex));
 
         public void SetRecursionLevel(int level)
         {
@@ -433,7 +441,7 @@ namespace RoguelikeToolkit.World.App
                 return;
             }
 
-            var locals = _localLayer.Store.GetSpan<LocalMapInfo>();
+            var locals = _localLayer.Store.GetSpan<BiomeInfo>();
             var heights = _elevLayer.Store.GetSpan<ElevationInfo>();
 
             // Per-tile recolor with zero lookups via the stored vertex->tile map.
@@ -517,7 +525,7 @@ namespace RoguelikeToolkit.World.App
         /// <summary>Textured terrain color for one tile (Terrain view).</summary>
         private System.Numerics.Vector3 TileTerrainColor(int tile)
         {
-            var locals = _localLayer.Store.GetSpan<LocalMapInfo>();
+            var locals = _localLayer.Store.GetSpan<BiomeInfo>();
             var heights = _elevLayer.Store.GetSpan<ElevationInfo>();
             var hydro = _hydroLayer.Store.GetSpan<HydrologyInfo>();
             var climate = _climateLayer.Store.GetSpan<ClimateInfo>();
@@ -758,7 +766,7 @@ namespace RoguelikeToolkit.World.App
 
             // Indexed generation: face corners ARE tile indices, so coloring needs
             // no per-vertex store lookups and no project->inverse roundtrips.
-            IcosphereGenerator.Generate(_map.DataStore.Size, out RoguelikeToolkit.World.Core.Vector3D[] tileVerts, out TriangleIndices[] faces);
+            IcosphereGenerator.Generate(_map.DataStore.Size, out RoguelikeToolkit.World.Core.Primitives.Vector3D[] tileVerts, out TriangleIndices[] faces);
             int tileCount = tileVerts.Length;
 
             IProjection? projectionObj = ProjectionMode switch
@@ -778,7 +786,7 @@ namespace RoguelikeToolkit.World.App
             var tileColor = new System.Numerics.Vector3[tileCount];
 
             var plates = _plateLayer.Store.GetSpan<TectonicPlate>();
-            var locals = _localLayer.Store.GetSpan<LocalMapInfo>();
+            var locals = _localLayer.Store.GetSpan<BiomeInfo>();
             var heights = _elevLayer.Store.GetSpan<ElevationInfo>();
             for (int t = 0; t < tileCount; t++)
             {
@@ -1114,7 +1122,7 @@ namespace RoguelikeToolkit.World.App
             tileIndex = pick.TileIndex;
 
             // Snap the highlight to the true tile center.
-            var centerVec = RoguelikeToolkit.World.Core.Vector3D.FromGeoCoord(_map.DataStore.GetGeoCoord(tileIndex));
+            var centerVec = RoguelikeToolkit.World.Core.Primitives.Vector3D.FromGeoCoord(_map.DataStore.GetGeoCoord(tileIndex));
             SelectedHexCenter = new System.Numerics.Vector3((float)centerVec.X, (float)centerVec.Y, (float)centerVec.Z);
             if (ViewMode == ViewMode.Terrain && tileIndex >= 0)
                 SelectedHexCenter *= TileTerrainRadius(tileIndex);

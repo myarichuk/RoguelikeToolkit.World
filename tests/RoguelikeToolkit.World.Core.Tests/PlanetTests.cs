@@ -1,6 +1,8 @@
-using System;
-using RoguelikeToolkit.World.Core;
-using Xunit;
+using RoguelikeToolkit.World.Core.Biomes;
+using RoguelikeToolkit.World.Core.Climate;
+using RoguelikeToolkit.World.Core.Elevation;
+using RoguelikeToolkit.World.Core.Primitives;
+using RoguelikeToolkit.World.Core.Topology;
 
 namespace RoguelikeToolkit.World.Core.Tests;
 
@@ -337,8 +339,8 @@ public class PlanetTests
 
         var ca = a.Map.DataStore.GetSpan<ClimateInfo>();
         var cb = b.Map.DataStore.GetSpan<ClimateInfo>();
-        var la = a.Map.DataStore.GetSpan<LocalMapInfo>();
-        var lb = b.Map.DataStore.GetSpan<LocalMapInfo>();
+        var la = a.Map.DataStore.GetSpan<BiomeInfo>();
+        var lb = b.Map.DataStore.GetSpan<BiomeInfo>();
         for (int i = 0; i < ca.Length; i++)
         {
             Assert.Equal(ca[i], cb[i]);
@@ -359,8 +361,8 @@ public class PlanetTests
         })
         {
             using var w = new WorldBuilder().WithSize(3).WithSeed(5).WithPlanet(p).Build();
-            var locals = w.Map.DataStore.GetSpan<LocalMapInfo>();
-            var base_ = earth.Map.DataStore.GetSpan<LocalMapInfo>();
+            var locals = w.Map.DataStore.GetSpan<BiomeInfo>();
+            var base_ = earth.Map.DataStore.GetSpan<BiomeInfo>();
             int diff = 0;
             for (int i = 0; i < locals.Length; i++) if (locals[i].Biome != base_[i].Biome) diff++;
             Assert.True(diff > 0, "a different planet must make a different world");

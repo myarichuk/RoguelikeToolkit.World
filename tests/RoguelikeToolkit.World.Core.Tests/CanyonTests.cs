@@ -1,5 +1,7 @@
-using RoguelikeToolkit.World.Core;
-using Xunit;
+using RoguelikeToolkit.World.Core.Biomes;
+using RoguelikeToolkit.World.Core.Climate;
+using RoguelikeToolkit.World.Core.Features;
+using RoguelikeToolkit.World.Core.Hydrology;
 
 namespace RoguelikeToolkit.World.Core.Tests;
 
@@ -29,7 +31,7 @@ public class CanyonTests
     {
         using var world = new WorldBuilder().WithSize(3).WithSeed(12).Build();
         var store = world.Map.DataStore;
-        var locals = store.GetSpan<LocalMapInfo>();
+        var locals = store.GetSpan<BiomeInfo>();
 
         var canyonTiles = new System.Collections.Generic.HashSet<int>();
         foreach (var f in world.Ranges.Features)

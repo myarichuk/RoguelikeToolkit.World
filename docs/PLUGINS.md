@@ -109,7 +109,7 @@ The default pipeline also has a second climate pass (`ClimateRefreshStage`, `Wit
    | `height(i)` / `setHeight(i, v)` | `ElevationInfo.Height` |
    | `temp(i)` / `setTemp(i, v)`, `precip(i)` / `setPrecip(i, v)` | `ClimateInfo` fields |
    | `flow(i)`, `surface(i)` | `HydrologyInfo` (read-only in v1) |
-   | `biome(i)` / `setBiome(i, id)`, `danger(i)` / `setDanger(i, n)` | `LocalMapInfo` fields |
+   | `biome(i)` / `setBiome(i, id)`, `danger(i)` / `setDanger(i, n)` | `BiomeInfo` fields |
    | `arable(i)`, `pasture(i)`, `game(i)`, `timber(i)`, `fish(i)` | `LandCapacityInfo` (0-255, read-only; needs `WithLandUse()`) |
    | `landUse(i)` / `setLandUse(i, id)`, `activities(i)` / `setActivities(i, flags)`, `intensity(i)` / `setIntensity(i, n)` | `LandUseInfo`; constants `LANDUSE.*`, `ACTIVITY.*` |
    | `rand01(tile, salt)` | deterministic `[0,1)` from `(seed, tile, salt)` |

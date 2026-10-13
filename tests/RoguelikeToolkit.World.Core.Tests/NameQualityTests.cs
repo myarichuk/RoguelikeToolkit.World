@@ -190,11 +190,11 @@ public sealed class NameQualityTests
     [Fact]
     public void Fuse_DropsOnlyDoubledBoundaryVowels()
     {
-        Assert.Equal("Shanning", FantasyNameGenerator.Fuse("Shan", "ning", dedupe: true));
-        Assert.Equal("Freddochter", FantasyNameGenerator.Fuse("Fred", "dochter", dedupe: true));
-        Assert.Equal("Eliel", FantasyNameGenerator.Fuse("Eli", "iel", dedupe: true));
-        Assert.Equal("Dobrovich", FantasyNameGenerator.Fuse("Dobro", "ovich", dedupe: true));
-        Assert.Equal("Thornnic", FantasyNameGenerator.Fuse("Thorn", "nic", dedupe: true));
+        Assert.Equal("Shanning", NameText.Fuse("Shan", "ning", dedupe: true));
+        Assert.Equal("Freddochter", NameText.Fuse("Fred", "dochter", dedupe: true));
+        Assert.Equal("Eliel", NameText.Fuse("Eli", "iel", dedupe: true));
+        Assert.Equal("Dobrovich", NameText.Fuse("Dobro", "ovich", dedupe: true));
+        Assert.Equal("Thornnic", NameText.Fuse("Thorn", "nic", dedupe: true));
     }
 
     [Fact]
@@ -229,7 +229,7 @@ public sealed class NameQualityTests
         // ("Spark" next to "-spark"/"-sparkess") can never be picked: dead data.
         foreach (var (key, table) in FantasyNameGenerator.Shared.Tables)
             foreach (var m in table.GivenStems.Concat(table.SecondStems))
-                Assert.False(FantasyNameGenerator.BlockedByMarker(table, m, false) && FantasyNameGenerator.BlockedByMarker(table, m, true),
+                Assert.False(MorphemePicker.BlockedByMarker(table, m, false) && MorphemePicker.BlockedByMarker(table, m, true),
                     $"{key}: '{m.Form}' repeats the patronymic marker and is never used.");
     }
 
@@ -343,7 +343,9 @@ public sealed class NameQualityTests
                 int distinct = Enumerable.Range(1, 200)
                     .Select(seed => FantasyNameGenerator.GeneratePerson(s.Race, s.Culture, seed, feminine: feminine).Text)
                     .Distinct().Count();
-                Assert.True(distinct >= 150, $"{s.Label} (feminine={feminine}): only {distinct} distinct names in 200 rolls.");
+                // Catfolk are deliberately single, short road-names with an occasional deed-title, so their pool is intentionally small.
+                int floor = s.Race == FantasyRaces.Catfolk ? 50 : 150;
+                Assert.True(distinct >= floor, $"{s.Label} (feminine={feminine}): only {distinct} distinct names in 200 rolls.");
             }
     }
 
@@ -433,9 +435,9 @@ public sealed class NameQualityTests
         Assert.Equal("אל-קמר", Transliterator.Render(qamar, NameScript.Hebrew));
 
         // The particle is grammar, not a root: "ash-Shams" does not repeat "Rashid".
-        Assert.False(FantasyNameGenerator.SharesRoot("ash-Shams", "Rashid"));
-        Assert.False(FantasyNameGenerator.SharesRoot("аль-Бахр", "Альберт"));
-        Assert.True(FantasyNameGenerator.SharesRoot("ash-Shams", "Shamsi"));
+        Assert.False(NameText.SharesRoot("ash-Shams", "Rashid"));
+        Assert.False(NameText.SharesRoot("аль-Бахр", "Альберт"));
+        Assert.True(NameText.SharesRoot("ash-Shams", "Shamsi"));
 
         foreach (var script in Enum.GetValues<NameScript>())
             for (int seed = 1; seed <= 150; seed++)
@@ -471,7 +473,7 @@ public sealed class NameQualityTests
     [InlineData("ffraeth", "Llan", "ffraeth")]
     [InlineData("Bran", "Llan", "Fran")]       // capitalization is kept
     public void SoftMutation_FollowsWelsh(string word, string after, string expected)
-        => Assert.Equal(expected, FantasyNameGenerator.SoftMutate(word, after));
+        => Assert.Equal(expected, NameText.SoftMutate(word, after));
 
     [Fact]
     public void WelshPlaces_MutateAfterFeminineNouns_Only()
@@ -488,7 +490,7 @@ public sealed class NameQualityTests
                 var desc = descs.Single(d => d.Gloss == p.Parts[1].Gloss);
                 bool fem = noun.Tags.Contains("fem");
                 var form = fem && desc.FemForm.Length > 0 ? desc.FemForm : desc.Form;
-                var expect = fem ? FantasyNameGenerator.SoftMutate(form, noun.Form) : form;
+                var expect = fem ? NameText.SoftMutate(form, noun.Form) : form;
                 Assert.Equal(expect, p.Parts[1].Form, ignoreCase: true);
                 if (!expect.Equals(desc.Form, StringComparison.OrdinalIgnoreCase)) mutated++;
                 Assert.DoesNotMatch(@"(\p{L})\1\1", p.Text);   // "Rhyd-ddu", not "Rhydddu" or "Rhyddu"
@@ -577,7 +579,7 @@ public sealed class NameQualityTests
             Assert.True(n.Parts.Count <= 2, $"'{n.Text}' has {n.Parts.Count} parts.");
             if (n.Parts.Any(p => p.Role == NamePartRoles.Epithet)) withDeed++;
         }
-        Assert.True(withDeed > 20, $"only {withDeed}/120 catfolk carry a deed-title.");
+        Assert.True(withDeed is > 0 and < 60, $"{withDeed}/120 catfolk carry a deed-title; it should be present but occasional.");
     }
 
     [Fact]

@@ -1,6 +1,6 @@
 using Xunit;
-using RoguelikeToolkit.World.Core;
-using RoguelikeToolkit.World.Presentation;
+using RoguelikeToolkit.World.Core.Biomes;
+using RoguelikeToolkit.World.Core.Features;
 
 namespace RoguelikeToolkit.World.Presentation.Tests;
 

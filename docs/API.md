@@ -18,6 +18,7 @@ Contents:
 
 ```csharp
 using RoguelikeToolkit.World.Core;
+using RoguelikeToolkit.World.Core.Primitives;
 
 using var world = new WorldBuilder().WithSize(3).WithSeed(42).Build();
 
@@ -27,6 +28,26 @@ var (biome, danger) = world.SampleBiome(coord);
 ```
 
 `World` is the facade you'll use 95% of the time. It owns the generated `WorldMap` plus the sparse feature catalogs (rivers, water bodies, ranges, deposits). `WorldBuilder` runs the default generation pipeline - tectonics -> elevation -> climate -> erosion -> hydrology -> biomes - and wires up the catalogs. `WithSize` is the icosphere subdivision level (tile count is `10 * 4^size + 2`, so size 3 is 642 tiles); `WithSeed` makes the whole thing reproducible.
+
+### Where the types live
+
+`RoguelikeToolkit.World.Core` itself holds only the facade (`World`, `WorldBuilder`, `TileHit`, `PlanetParameters`,
+`IInsolationModel`). Everything else sits in a namespace that matches its folder, so the snippets below add the
+`using` for whichever slice they touch:
+
+| Namespace (`RoguelikeToolkit.World.Core.`) | What you find there |
+|---|---|
+| `Primitives` | `GeoCoord`, `Vector2D`/`Vector3D`, `Rng`, `DetMath` |
+| `Topology` | `WorldMap`, `IHexMap`, `CubeCoord`, icosphere, addresses (`MapAddress`, `MapTier`) and `MapBounds` |
+| `Queries` | `SpatialIndex`, `FeatureKind` |
+| `Storage` | `WorldDataStore`, `IMapLayer`, `StoreLayer`, user-edit layer |
+| `Generation` | `WorldGenerationPipeline`, `IWorldGeneratorStage`, `[WorldGeneratorStage]` |
+| `Tectonics` / `Elevation` / `Climate` / `Hydrology` / `Biomes` / `Lithosphere` / `Settlement` | one domain slice each: layer struct, algorithm, stage, catalog |
+| `Features` | sparse per-tile features (`TileFeatureInfo`, WKT) |
+| `Hierarchy` | planet -> region -> local derivation (`RegionHandle`, `LocalMapHandle`, `RegionMaps`) |
+| `Sites` | injector pipeline and the built-in injectors |
+| `Integration` | game-side seams (`IHistoricalContext`, `QueryOptions`, materialization) |
+| `Entities` / `Names` / `Localization` | unchanged from 1.x |
 
 ## The planet tier: build, sample, query
 

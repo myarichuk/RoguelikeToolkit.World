@@ -1,0 +1,1633 @@
+abstract RoguelikeToolkit.World.Core.Hierarchy.GridMapHandle<TTile>.GetTile(int index) -> TTile
+abstract RoguelikeToolkit.World.Core.Sites.SiteInjectorBase.Inject(RoguelikeToolkit.World.Core.Sites.SiteInjectionContext! context) -> System.Collections.Generic.IReadOnlyList<RoguelikeToolkit.World.Core.Sites.PlacedSite!>!
+const RoguelikeToolkit.World.Core.Biomes.BiomeClassifier.BadlandsRelief = 0.12 -> double
+const RoguelikeToolkit.World.Core.Biomes.BiomeClassifier.ColdDesertMaxMoisture = 0.22 -> double
+const RoguelikeToolkit.World.Core.Biomes.BiomeClassifier.DeepOceanHeight = -0.6 -> double
+const RoguelikeToolkit.World.Core.Biomes.BiomeClassifier.DesertHeatGain = 0.15 -> double
+const RoguelikeToolkit.World.Core.Biomes.BiomeClassifier.DesertMaxMoisture = 0.32 -> double
+const RoguelikeToolkit.World.Core.Biomes.BiomeClassifier.DesertMinTemperature = 0.55 -> double
+const RoguelikeToolkit.World.Core.Biomes.BiomeClassifier.ForestMinMoisture = 0.42 -> double
+const RoguelikeToolkit.World.Core.Biomes.BiomeClassifier.JungleMinMoisture = 0.55 -> double
+const RoguelikeToolkit.World.Core.Biomes.BiomeClassifier.JungleMinTemperature = 0.72 -> double
+const RoguelikeToolkit.World.Core.Biomes.BiomeClassifier.MediterraneanMaxMoisture = 0.55 -> double
+const RoguelikeToolkit.World.Core.Biomes.BiomeClassifier.MediterraneanMinPhase = 0.6 -> double
+const RoguelikeToolkit.World.Core.Biomes.BiomeClassifier.MediterraneanMinTemperature = 0.5 -> double
+const RoguelikeToolkit.World.Core.Biomes.BiomeClassifier.MountainHeight = 0.5 -> double
+const RoguelikeToolkit.World.Core.Biomes.BiomeClassifier.PlayaMaxMoisture = 0.5 -> double
+const RoguelikeToolkit.World.Core.Biomes.BiomeClassifier.RockDesertHeight = 0.3 -> double
+const RoguelikeToolkit.World.Core.Biomes.BiomeClassifier.SavannaMaxMoisture = 0.6 -> double
+const RoguelikeToolkit.World.Core.Biomes.BiomeClassifier.SavannaMinSeasonality = 0.6 -> double
+const RoguelikeToolkit.World.Core.Biomes.BiomeClassifier.SavannaMinTemperature = 0.62 -> double
+const RoguelikeToolkit.World.Core.Biomes.BiomeClassifier.SwampMinMoisture = 0.65 -> double
+const RoguelikeToolkit.World.Core.Biomes.BiomeClassifier.SwampMinTemperature = 0.35 -> double
+const RoguelikeToolkit.World.Core.Biomes.BiomeClassifier.TundraMaxTemperature = 0.18 -> double
+const RoguelikeToolkit.World.Core.Climate.ClimateModel.DefaultLapseRate = 0.35 -> double
+const RoguelikeToolkit.World.Core.Climate.ClimateModel.GradientSensitivity = 1 -> double
+const RoguelikeToolkit.World.Core.Climate.ClimateModel.MeanSensitivity = 2.5 -> double
+const RoguelikeToolkit.World.Core.Climate.Glaciology.DryPolarGate = 0.4 -> double
+const RoguelikeToolkit.World.Core.Climate.Glaciology.MeltBonusWeight = 2 -> double
+const RoguelikeToolkit.World.Core.Climate.SeaIce.FreezeTemperature = 0.2 -> double
+const RoguelikeToolkit.World.Core.Climate.SeaIce.PerennialTemperature = 0.28 -> double
+const RoguelikeToolkit.World.Core.Elevation.ElevationGenerationStage.SeaLevel = 0 -> double
+const RoguelikeToolkit.World.Core.Entities.EntityStore.ChunkShift = 10 -> int
+const RoguelikeToolkit.World.Core.Entities.EntityStore.ChunkSize = 1024 -> int
+const RoguelikeToolkit.World.Core.Generation.StageOrder.Biomes = 20 -> int
+const RoguelikeToolkit.World.Core.Generation.StageOrder.Climate = 16 -> int
+const RoguelikeToolkit.World.Core.Generation.StageOrder.ClimateRefresh = 17 -> int
+const RoguelikeToolkit.World.Core.Generation.StageOrder.Elevation = 15 -> int
+const RoguelikeToolkit.World.Core.Generation.StageOrder.Erosion = 17 -> int
+const RoguelikeToolkit.World.Core.Generation.StageOrder.Hydrology = 18 -> int
+const RoguelikeToolkit.World.Core.Generation.StageOrder.LandCapacity = 25 -> int
+const RoguelikeToolkit.World.Core.Generation.StageOrder.LandUse = 99 -> int
+const RoguelikeToolkit.World.Core.Generation.StageOrder.Tectonics = 10 -> int
+const RoguelikeToolkit.World.Core.Hierarchy.MapSeeds.LocalSalt = 1296126003 -> int
+const RoguelikeToolkit.World.Core.Hierarchy.MapSeeds.LocalTileSalt = 1296126004 -> int
+const RoguelikeToolkit.World.Core.Hierarchy.MapSeeds.RegionCellSalt = 1296126002 -> int
+const RoguelikeToolkit.World.Core.Hierarchy.MapSeeds.RegionSalt = 1296126001 -> int
+const RoguelikeToolkit.World.Core.Hierarchy.RegionMaps.DefaultLocalSize = 16 -> int
+const RoguelikeToolkit.World.Core.Hierarchy.RegionMaps.DefaultRegionSize = 8 -> int
+const RoguelikeToolkit.World.Core.Hierarchy.RegionMaps.LocalRiverMark = 0.025 -> float
+const RoguelikeToolkit.World.Core.Hydrology.CanyonAnalysis.FlowMultiple = 1.5 -> double
+const RoguelikeToolkit.World.Core.Hydrology.CanyonAnalysis.MaxPrecipitation = 0.5 -> double
+const RoguelikeToolkit.World.Core.Hydrology.CanyonAnalysis.MinRelief = 0.12 -> double
+const RoguelikeToolkit.World.Core.Hydrology.CanyonAnalysis.MinSlope = 0.01 -> double
+const RoguelikeToolkit.World.Core.Hydrology.Lake.SalineConcentration = 3 -> float
+const RoguelikeToolkit.World.Core.Lithosphere.DepositCatalogBuilder.EvaporiteMaxHeight = 0.3 -> float
+const RoguelikeToolkit.World.Core.Lithosphere.DepositCatalogBuilder.GypsumMarginRings = 3 -> int
+const RoguelikeToolkit.World.Core.Lithosphere.Geology.CratonMinAge = 0.55 -> float
+const RoguelikeToolkit.World.Core.Lithosphere.Geology.InteriorRings = 3 -> int
+const RoguelikeToolkit.World.Core.Lithosphere.Geology.QuietOrogeny = 0.05 -> float
+const RoguelikeToolkit.World.Core.Names.Cultures.Arabic = "human_arabic" -> string!
+const RoguelikeToolkit.World.Core.Names.Cultures.Chinese = "human_chinese" -> string!
+const RoguelikeToolkit.World.Core.Names.Cultures.EasternEuropean = "human_eastern" -> string!
+const RoguelikeToolkit.World.Core.Names.Cultures.English = "human_english" -> string!
+const RoguelikeToolkit.World.Core.Names.Cultures.FantasyCommon = "fantasy_common" -> string!
+const RoguelikeToolkit.World.Core.Names.Cultures.Hebrew = "human_hebrew" -> string!
+const RoguelikeToolkit.World.Core.Names.Cultures.Irish = "human_irish" -> string!
+const RoguelikeToolkit.World.Core.Names.Cultures.Japanese = "human_japanese" -> string!
+const RoguelikeToolkit.World.Core.Names.Cultures.Russian = "human_russian" -> string!
+const RoguelikeToolkit.World.Core.Names.Cultures.Welsh = "human_welsh" -> string!
+const RoguelikeToolkit.World.Core.Names.Cultures.WesternEuropean = "human_western" -> string!
+const RoguelikeToolkit.World.Core.Names.FantasyRaces.Angel = "angel" -> string!
+const RoguelikeToolkit.World.Core.Names.FantasyRaces.Catfolk = "catfolk" -> string!
+const RoguelikeToolkit.World.Core.Names.FantasyRaces.Demon = "demon" -> string!
+const RoguelikeToolkit.World.Core.Names.FantasyRaces.Dogfolk = "dogfolk" -> string!
+const RoguelikeToolkit.World.Core.Names.FantasyRaces.Dragonfolk = "dragonfolk" -> string!
+const RoguelikeToolkit.World.Core.Names.FantasyRaces.Dwarf = "dwarf" -> string!
+const RoguelikeToolkit.World.Core.Names.FantasyRaces.ElementalAir = "elemental_air" -> string!
+const RoguelikeToolkit.World.Core.Names.FantasyRaces.ElementalEarth = "elemental_earth" -> string!
+const RoguelikeToolkit.World.Core.Names.FantasyRaces.ElementalFire = "elemental_fire" -> string!
+const RoguelikeToolkit.World.Core.Names.FantasyRaces.ElementalWater = "elemental_water" -> string!
+const RoguelikeToolkit.World.Core.Names.FantasyRaces.ElfDark = "elf_dark" -> string!
+const RoguelikeToolkit.World.Core.Names.FantasyRaces.ElfHigh = "elf_high" -> string!
+const RoguelikeToolkit.World.Core.Names.FantasyRaces.ElfWood = "elf_wood" -> string!
+const RoguelikeToolkit.World.Core.Names.FantasyRaces.Gnome = "gnome" -> string!
+const RoguelikeToolkit.World.Core.Names.FantasyRaces.HalfElf = "half_elf" -> string!
+const RoguelikeToolkit.World.Core.Names.FantasyRaces.Halfling = "halfling" -> string!
+const RoguelikeToolkit.World.Core.Names.FantasyRaces.HalfOrc = "half_orc" -> string!
+const RoguelikeToolkit.World.Core.Names.FantasyRaces.Human = "human" -> string!
+const RoguelikeToolkit.World.Core.Names.FantasyRaces.Lizardfolk = "lizardfolk" -> string!
+const RoguelikeToolkit.World.Core.Names.FantasyRaces.Orc = "orc" -> string!
+const RoguelikeToolkit.World.Core.Names.Lineages.Bilineal = "bilineal" -> string!
+const RoguelikeToolkit.World.Core.Names.Lineages.Matrilineal = "matrilineal" -> string!
+const RoguelikeToolkit.World.Core.Names.Lineages.Patrilineal = "patrilineal" -> string!
+const RoguelikeToolkit.World.Core.Names.NamePartRoles.Clan = "clan" -> string!
+const RoguelikeToolkit.World.Core.Names.NamePartRoles.Descriptor = "descriptor" -> string!
+const RoguelikeToolkit.World.Core.Names.NamePartRoles.Epithet = "epithet" -> string!
+const RoguelikeToolkit.World.Core.Names.NamePartRoles.Family = "family" -> string!
+const RoguelikeToolkit.World.Core.Names.NamePartRoles.Geography = "geography" -> string!
+const RoguelikeToolkit.World.Core.Names.NamePartRoles.Given = "given" -> string!
+const RoguelikeToolkit.World.Core.Names.NamePartRoles.Matronymic = "matronymic" -> string!
+const RoguelikeToolkit.World.Core.Names.NamePartRoles.Patronymic = "patronymic" -> string!
+const RoguelikeToolkit.World.Core.Names.PlaceKinds.Camp = "camp" -> string!
+const RoguelikeToolkit.World.Core.Names.PlaceKinds.City = "city" -> string!
+const RoguelikeToolkit.World.Core.Names.PlaceKinds.Forest = "forest" -> string!
+const RoguelikeToolkit.World.Core.Names.PlaceKinds.Hill = "hill" -> string!
+const RoguelikeToolkit.World.Core.Names.PlaceKinds.Hold = "hold" -> string!
+const RoguelikeToolkit.World.Core.Names.PlaceKinds.Lake = "lake" -> string!
+const RoguelikeToolkit.World.Core.Names.PlaceKinds.Mountain = "mountain" -> string!
+const RoguelikeToolkit.World.Core.Names.PlaceKinds.River = "river" -> string!
+const RoguelikeToolkit.World.Core.Names.PlaceKinds.Sea = "sea" -> string!
+const RoguelikeToolkit.World.Core.Names.PlaceKinds.Town = "town" -> string!
+const RoguelikeToolkit.World.Core.Names.PlaceKinds.Valley = "valley" -> string!
+const RoguelikeToolkit.World.Core.Names.PlaceKinds.Village = "village" -> string!
+const RoguelikeToolkit.World.Core.PlanetParameters.EarthObliquityDegrees = 23.44 -> double
+const RoguelikeToolkit.World.Core.PlanetParameters.MaxFlux = 2.5 -> double
+const RoguelikeToolkit.World.Core.PlanetParameters.MaxRotation = 4 -> double
+const RoguelikeToolkit.World.Core.PlanetParameters.MinFlux = 0.3 -> double
+const RoguelikeToolkit.World.Core.PlanetParameters.MinRotation = 0.25 -> double
+const RoguelikeToolkit.World.Core.Primitives.GeoCoord.Deg2Rad = 0.017453292519943295 -> double
+const RoguelikeToolkit.World.Core.Primitives.GeoCoord.Rad2Deg = 57.29577951308232 -> double
+const RoguelikeToolkit.World.Core.Settlement.LandCapacity.UpwellingAnomaly = 0.04 -> double
+const RoguelikeToolkit.World.Core.Settlement.LandUseId.Ashlands = 2 -> byte
+const RoguelikeToolkit.World.Core.Settlement.LandUseId.Built = 4 -> byte
+const RoguelikeToolkit.World.Core.Settlement.LandUseId.Farmland = 1 -> byte
+const RoguelikeToolkit.World.Core.Settlement.LandUseId.FirstPluginId = 128 -> byte
+const RoguelikeToolkit.World.Core.Settlement.LandUseId.None = 0 -> byte
+const RoguelikeToolkit.World.Core.Settlement.LandUseId.Pasture = 3 -> byte
+const RoguelikeToolkit.World.Core.Settlement.SettlementScoring.Base = 1 -> double
+const RoguelikeToolkit.World.Core.Settlement.SettlementScoring.Fertile = 0.5 -> double
+const RoguelikeToolkit.World.Core.Settlement.SettlementScoring.FreshWater = 1 -> double
+const RoguelikeToolkit.World.Core.Settlement.SettlementScoring.Harsh = -0.5 -> double
+const RoguelikeToolkit.World.Core.Settlement.SettlementScoring.HighGround = -0.3 -> double
+const RoguelikeToolkit.World.Core.Settlement.SettlementScoring.HighGroundHeight = 0.35 -> float
+const RoguelikeToolkit.World.Core.Settlement.SettlementScoring.PerDanger = 0.2 -> double
+const RoguelikeToolkit.World.Core.Settlement.SettlementScoring.WinterIce = -0.25 -> double
+const RoguelikeToolkit.World.Core.Tectonics.TectonicPlate.MaxPlates = 65534 -> int
+const RoguelikeToolkit.World.Core.Tectonics.TectonicPlateLayer.MinPlateCapacity = 256 -> int
+const RoguelikeToolkit.World.Core.World.EarthRadiusKm = 6371 -> double
+const RoguelikeToolkit.World.Core.WorldBuilder.MaxSupportedSize = 7 -> int
+override RoguelikeToolkit.World.Core.Entities.EntityId.ToString() -> string!
+override RoguelikeToolkit.World.Core.Hierarchy.LocalMapHandle.GetTile(int index) -> RoguelikeToolkit.World.Core.Hierarchy.LocalTile
+override RoguelikeToolkit.World.Core.Hierarchy.RegionHandle.GetTile(int index) -> RoguelikeToolkit.World.Core.Hierarchy.RegionCell
+override RoguelikeToolkit.World.Core.Names.GeneratedName.ToString() -> string!
+override RoguelikeToolkit.World.Core.Sites.LandmarkInjector.Inject(RoguelikeToolkit.World.Core.Sites.SiteInjectionContext! context) -> System.Collections.Generic.IReadOnlyList<RoguelikeToolkit.World.Core.Sites.PlacedSite!>!
+override RoguelikeToolkit.World.Core.Sites.MineInjector.Inject(RoguelikeToolkit.World.Core.Sites.SiteInjectionContext! context) -> System.Collections.Generic.IReadOnlyList<RoguelikeToolkit.World.Core.Sites.PlacedSite!>!
+override RoguelikeToolkit.World.Core.Sites.RuinInjector.Inject(RoguelikeToolkit.World.Core.Sites.SiteInjectionContext! context) -> System.Collections.Generic.IReadOnlyList<RoguelikeToolkit.World.Core.Sites.PlacedSite!>!
+override RoguelikeToolkit.World.Core.Sites.SettlementInjector.Inject(RoguelikeToolkit.World.Core.Sites.SiteInjectionContext! context) -> System.Collections.Generic.IReadOnlyList<RoguelikeToolkit.World.Core.Sites.PlacedSite!>!
+override RoguelikeToolkit.World.Core.Topology.MapBounds.GetHashCode() -> int
+RoguelikeToolkit.World.Core.Biomes.BiomeClassifier
+RoguelikeToolkit.World.Core.Biomes.BiomeClassifier.AridSite
+RoguelikeToolkit.World.Core.Biomes.BiomeClassifier.AridSite.AridSite() -> void
+RoguelikeToolkit.World.Core.Biomes.BiomeClassifier.AridSite.AridSite(double Relief, bool Saline) -> void
+RoguelikeToolkit.World.Core.Biomes.BiomeClassifier.AridSite.Relief.get -> double
+RoguelikeToolkit.World.Core.Biomes.BiomeClassifier.AridSite.Relief.init -> void
+RoguelikeToolkit.World.Core.Biomes.BiomeClassifier.AridSite.Saline.get -> bool
+RoguelikeToolkit.World.Core.Biomes.BiomeClassifier.AridSite.Saline.init -> void
+RoguelikeToolkit.World.Core.Biomes.BiomeGenerationStage
+RoguelikeToolkit.World.Core.Biomes.BiomeGenerationStage.BiomeGenerationStage() -> void
+RoguelikeToolkit.World.Core.Biomes.BiomeGenerationStage.BiomeGenerationStage(int seed = 42) -> void
+RoguelikeToolkit.World.Core.Biomes.BiomeGenerationStage.Execute(RoguelikeToolkit.World.Core.Topology.WorldMap! map) -> void
+RoguelikeToolkit.World.Core.Biomes.BiomeGenerationStage.RiverThresholdScale.get -> float
+RoguelikeToolkit.World.Core.Biomes.BiomeGenerationStage.RiverThresholdScale.set -> void
+RoguelikeToolkit.World.Core.Biomes.BiomeGenerationStage.Seed.get -> int
+RoguelikeToolkit.World.Core.Biomes.BiomeGenerationStage.Seed.set -> void
+RoguelikeToolkit.World.Core.Biomes.BiomeGenerationStage.SmoothBiomes.get -> bool
+RoguelikeToolkit.World.Core.Biomes.BiomeGenerationStage.SmoothBiomes.set -> void
+RoguelikeToolkit.World.Core.Biomes.BiomeGenerationStage.SmoothingPasses.get -> int
+RoguelikeToolkit.World.Core.Biomes.BiomeGenerationStage.SmoothingPasses.set -> void
+RoguelikeToolkit.World.Core.Biomes.BiomeInfo
+RoguelikeToolkit.World.Core.Biomes.BiomeInfo.Biome -> RoguelikeToolkit.World.Core.Biomes.BiomeType
+RoguelikeToolkit.World.Core.Biomes.BiomeInfo.BiomeInfo() -> void
+RoguelikeToolkit.World.Core.Biomes.BiomeInfo.DangerLevel -> byte
+RoguelikeToolkit.World.Core.Biomes.BiomeLayer
+RoguelikeToolkit.World.Core.Biomes.BiomeLayer.BiomeLayer(RoguelikeToolkit.World.Core.Storage.WorldDataStore! store, int seed, RoguelikeToolkit.World.Core.Tectonics.TectonicPlateLayer! tectonicLayer) -> void
+RoguelikeToolkit.World.Core.Biomes.BiomeType
+RoguelikeToolkit.World.Core.Biomes.BiomeType.Badlands = 12 -> RoguelikeToolkit.World.Core.Biomes.BiomeType
+RoguelikeToolkit.World.Core.Biomes.BiomeType.Canyon = 9 -> RoguelikeToolkit.World.Core.Biomes.BiomeType
+RoguelikeToolkit.World.Core.Biomes.BiomeType.ColdDesert = 16 -> RoguelikeToolkit.World.Core.Biomes.BiomeType
+RoguelikeToolkit.World.Core.Biomes.BiomeType.Desert = 2 -> RoguelikeToolkit.World.Core.Biomes.BiomeType
+RoguelikeToolkit.World.Core.Biomes.BiomeType.Forest = 3 -> RoguelikeToolkit.World.Core.Biomes.BiomeType
+RoguelikeToolkit.World.Core.Biomes.BiomeType.Glacier = 8 -> RoguelikeToolkit.World.Core.Biomes.BiomeType
+RoguelikeToolkit.World.Core.Biomes.BiomeType.Jungle = 6 -> RoguelikeToolkit.World.Core.Biomes.BiomeType
+RoguelikeToolkit.World.Core.Biomes.BiomeType.Mediterranean = 19 -> RoguelikeToolkit.World.Core.Biomes.BiomeType
+RoguelikeToolkit.World.Core.Biomes.BiomeType.Mountain = 4 -> RoguelikeToolkit.World.Core.Biomes.BiomeType
+RoguelikeToolkit.World.Core.Biomes.BiomeType.Ocean = 0 -> RoguelikeToolkit.World.Core.Biomes.BiomeType
+RoguelikeToolkit.World.Core.Biomes.BiomeType.Plains = 1 -> RoguelikeToolkit.World.Core.Biomes.BiomeType
+RoguelikeToolkit.World.Core.Biomes.BiomeType.RockDesert = 14 -> RoguelikeToolkit.World.Core.Biomes.BiomeType
+RoguelikeToolkit.World.Core.Biomes.BiomeType.SaltFlat = 15 -> RoguelikeToolkit.World.Core.Biomes.BiomeType
+RoguelikeToolkit.World.Core.Biomes.BiomeType.Savanna = 10 -> RoguelikeToolkit.World.Core.Biomes.BiomeType
+RoguelikeToolkit.World.Core.Biomes.BiomeType.Swamp = 7 -> RoguelikeToolkit.World.Core.Biomes.BiomeType
+RoguelikeToolkit.World.Core.Biomes.BiomeType.Tundra = 5 -> RoguelikeToolkit.World.Core.Biomes.BiomeType
+RoguelikeToolkit.World.Core.Biomes.LandCover
+RoguelikeToolkit.World.Core.Climate.ClimateInfo
+RoguelikeToolkit.World.Core.Climate.ClimateInfo.ClimateInfo() -> void
+RoguelikeToolkit.World.Core.Climate.ClimateInfo.CurrentX -> float
+RoguelikeToolkit.World.Core.Climate.ClimateInfo.CurrentY -> float
+RoguelikeToolkit.World.Core.Climate.ClimateInfo.CurrentZ -> float
+RoguelikeToolkit.World.Core.Climate.ClimateInfo.OceanHeat -> float
+RoguelikeToolkit.World.Core.Climate.ClimateInfo.Precipitation -> float
+RoguelikeToolkit.World.Core.Climate.ClimateInfo.RainPhase -> float
+RoguelikeToolkit.World.Core.Climate.ClimateInfo.RainSeasonality -> float
+RoguelikeToolkit.World.Core.Climate.ClimateInfo.SeasonalRange -> float
+RoguelikeToolkit.World.Core.Climate.ClimateInfo.Temperature -> float
+RoguelikeToolkit.World.Core.Climate.ClimateInfo.WindX -> float
+RoguelikeToolkit.World.Core.Climate.ClimateInfo.WindY -> float
+RoguelikeToolkit.World.Core.Climate.ClimateInfo.WindZ -> float
+RoguelikeToolkit.World.Core.Climate.ClimateLayer
+RoguelikeToolkit.World.Core.Climate.ClimateLayer.ClimateLayer(RoguelikeToolkit.World.Core.Storage.WorldDataStore! store) -> void
+RoguelikeToolkit.World.Core.Climate.ClimateModel
+RoguelikeToolkit.World.Core.Climate.ClimateRefreshStage
+RoguelikeToolkit.World.Core.Climate.ClimateRefreshStage.ClimateRefreshStage(RoguelikeToolkit.World.Core.Climate.ClimateStage! climate) -> void
+RoguelikeToolkit.World.Core.Climate.ClimateRefreshStage.Execute(RoguelikeToolkit.World.Core.Topology.WorldMap! map) -> void
+RoguelikeToolkit.World.Core.Climate.ClimateRefreshStage.Name.get -> string!
+RoguelikeToolkit.World.Core.Climate.ClimateRefreshStage.Order.get -> int
+RoguelikeToolkit.World.Core.Climate.ClimateRefreshStage.Reads.get -> System.Type![]!
+RoguelikeToolkit.World.Core.Climate.ClimateRefreshStage.ReadsOptional.get -> System.Type![]!
+RoguelikeToolkit.World.Core.Climate.ClimateRefreshStage.Writes.get -> System.Type![]!
+RoguelikeToolkit.World.Core.Climate.ClimateStage
+RoguelikeToolkit.World.Core.Climate.ClimateStage.ClimateStage() -> void
+RoguelikeToolkit.World.Core.Climate.ClimateStage.ClimateStage(int seed = 42) -> void
+RoguelikeToolkit.World.Core.Climate.ClimateStage.ClimbLoss.get -> double
+RoguelikeToolkit.World.Core.Climate.ClimateStage.ClimbLoss.set -> void
+RoguelikeToolkit.World.Core.Climate.ClimateStage.Execute(RoguelikeToolkit.World.Core.Topology.WorldMap! map) -> void
+RoguelikeToolkit.World.Core.Climate.ClimateStage.InteriorFactor.get -> double
+RoguelikeToolkit.World.Core.Climate.ClimateStage.InteriorFactor.set -> void
+RoguelikeToolkit.World.Core.Climate.ClimateStage.LapseRate.get -> double
+RoguelikeToolkit.World.Core.Climate.ClimateStage.LapseRate.set -> void
+RoguelikeToolkit.World.Core.Climate.ClimateStage.MaritimeGain.get -> double
+RoguelikeToolkit.World.Core.Climate.ClimateStage.MaritimeGain.set -> void
+RoguelikeToolkit.World.Core.Climate.ClimateStage.MeridionalWind.get -> double
+RoguelikeToolkit.World.Core.Climate.ClimateStage.MeridionalWind.set -> void
+RoguelikeToolkit.World.Core.Climate.ClimateStage.MoistureReach.get -> double
+RoguelikeToolkit.World.Core.Climate.ClimateStage.MoistureReach.set -> void
+RoguelikeToolkit.World.Core.Climate.ClimateStage.OceanHeatStrength.get -> double
+RoguelikeToolkit.World.Core.Climate.ClimateStage.OceanHeatStrength.set -> void
+RoguelikeToolkit.World.Core.Climate.ClimateStage.OceanRainGain.get -> double
+RoguelikeToolkit.World.Core.Climate.ClimateStage.OceanRainGain.set -> void
+RoguelikeToolkit.World.Core.Climate.ClimateStage.Planet.get -> RoguelikeToolkit.World.Core.PlanetParameters!
+RoguelikeToolkit.World.Core.Climate.ClimateStage.Planet.set -> void
+RoguelikeToolkit.World.Core.Climate.ClimateStage.PrecipSmoothingPasses.get -> int
+RoguelikeToolkit.World.Core.Climate.ClimateStage.PrecipSmoothingPasses.set -> void
+RoguelikeToolkit.World.Core.Climate.ClimateStage.PrevailingWindFallback.get -> RoguelikeToolkit.World.Core.Primitives.Vector3D
+RoguelikeToolkit.World.Core.Climate.ClimateStage.PrevailingWindFallback.set -> void
+RoguelikeToolkit.World.Core.Climate.ClimateStage.Seed.get -> int
+RoguelikeToolkit.World.Core.Climate.ClimateStage.Seed.set -> void
+RoguelikeToolkit.World.Core.Climate.ClimateStage.WindCellBlend.get -> double
+RoguelikeToolkit.World.Core.Climate.ClimateStage.WindCellBlend.set -> void
+RoguelikeToolkit.World.Core.Climate.ClimateStage.ZonalStrength.get -> double
+RoguelikeToolkit.World.Core.Climate.ClimateStage.ZonalStrength.set -> void
+RoguelikeToolkit.World.Core.Climate.Glaciology
+RoguelikeToolkit.World.Core.Climate.SeaIce
+RoguelikeToolkit.World.Core.Climate.SeaIceKind
+RoguelikeToolkit.World.Core.Climate.SeaIceKind.None = 0 -> RoguelikeToolkit.World.Core.Climate.SeaIceKind
+RoguelikeToolkit.World.Core.Climate.SeaIceKind.Perennial = 2 -> RoguelikeToolkit.World.Core.Climate.SeaIceKind
+RoguelikeToolkit.World.Core.Climate.SeaIceKind.Seasonal = 1 -> RoguelikeToolkit.World.Core.Climate.SeaIceKind
+RoguelikeToolkit.World.Core.Elevation.ElevationGenerationStage
+RoguelikeToolkit.World.Core.Elevation.ElevationGenerationStage.BoundaryUplift.get -> double
+RoguelikeToolkit.World.Core.Elevation.ElevationGenerationStage.BoundaryUplift.set -> void
+RoguelikeToolkit.World.Core.Elevation.ElevationGenerationStage.ElevationGenerationStage() -> void
+RoguelikeToolkit.World.Core.Elevation.ElevationGenerationStage.ElevationGenerationStage(int seed = 42) -> void
+RoguelikeToolkit.World.Core.Elevation.ElevationGenerationStage.Execute(RoguelikeToolkit.World.Core.Topology.WorldMap! map) -> void
+RoguelikeToolkit.World.Core.Elevation.ElevationGenerationStage.HillAmplitude.get -> double
+RoguelikeToolkit.World.Core.Elevation.ElevationGenerationStage.HillAmplitude.set -> void
+RoguelikeToolkit.World.Core.Elevation.ElevationGenerationStage.HotspotAmplitude.get -> double
+RoguelikeToolkit.World.Core.Elevation.ElevationGenerationStage.HotspotAmplitude.set -> void
+RoguelikeToolkit.World.Core.Elevation.ElevationGenerationStage.HotspotCount.get -> int
+RoguelikeToolkit.World.Core.Elevation.ElevationGenerationStage.HotspotCount.set -> void
+RoguelikeToolkit.World.Core.Elevation.ElevationGenerationStage.NoiseAmplitude.get -> double
+RoguelikeToolkit.World.Core.Elevation.ElevationGenerationStage.NoiseAmplitude.set -> void
+RoguelikeToolkit.World.Core.Elevation.ElevationGenerationStage.NoiseFrequency.get -> double
+RoguelikeToolkit.World.Core.Elevation.ElevationGenerationStage.NoiseFrequency.set -> void
+RoguelikeToolkit.World.Core.Elevation.ElevationGenerationStage.RidgeAmplitude.get -> double
+RoguelikeToolkit.World.Core.Elevation.ElevationGenerationStage.RidgeAmplitude.set -> void
+RoguelikeToolkit.World.Core.Elevation.ElevationGenerationStage.Seed.get -> int
+RoguelikeToolkit.World.Core.Elevation.ElevationGenerationStage.Seed.set -> void
+RoguelikeToolkit.World.Core.Elevation.ElevationInfo
+RoguelikeToolkit.World.Core.Elevation.ElevationInfo.ElevationInfo() -> void
+RoguelikeToolkit.World.Core.Elevation.ElevationInfo.Height -> float
+RoguelikeToolkit.World.Core.Elevation.ElevationLayer
+RoguelikeToolkit.World.Core.Elevation.ElevationLayer.ElevationLayer(RoguelikeToolkit.World.Core.Storage.WorldDataStore! store) -> void
+RoguelikeToolkit.World.Core.Elevation.ErosionGenerationStage
+RoguelikeToolkit.World.Core.Elevation.ErosionGenerationStage.AeolianDeposit.get -> double
+RoguelikeToolkit.World.Core.Elevation.ErosionGenerationStage.AeolianDeposit.set -> void
+RoguelikeToolkit.World.Core.Elevation.ErosionGenerationStage.AeolianIterations.get -> int
+RoguelikeToolkit.World.Core.Elevation.ErosionGenerationStage.AeolianIterations.set -> void
+RoguelikeToolkit.World.Core.Elevation.ErosionGenerationStage.AeolianMaxDeflation.get -> double
+RoguelikeToolkit.World.Core.Elevation.ErosionGenerationStage.AeolianMaxDeflation.set -> void
+RoguelikeToolkit.World.Core.Elevation.ErosionGenerationStage.AeolianRate.get -> double
+RoguelikeToolkit.World.Core.Elevation.ErosionGenerationStage.AeolianRate.set -> void
+RoguelikeToolkit.World.Core.Elevation.ErosionGenerationStage.CanyonBoost.get -> double
+RoguelikeToolkit.World.Core.Elevation.ErosionGenerationStage.CanyonBoost.set -> void
+RoguelikeToolkit.World.Core.Elevation.ErosionGenerationStage.ChannelOnset.get -> double
+RoguelikeToolkit.World.Core.Elevation.ErosionGenerationStage.ChannelOnset.set -> void
+RoguelikeToolkit.World.Core.Elevation.ErosionGenerationStage.DepositFraction.get -> double
+RoguelikeToolkit.World.Core.Elevation.ErosionGenerationStage.DepositFraction.set -> void
+RoguelikeToolkit.World.Core.Elevation.ErosionGenerationStage.DiffusionIterations.get -> int
+RoguelikeToolkit.World.Core.Elevation.ErosionGenerationStage.DiffusionIterations.set -> void
+RoguelikeToolkit.World.Core.Elevation.ErosionGenerationStage.DiffusionRate.get -> double
+RoguelikeToolkit.World.Core.Elevation.ErosionGenerationStage.DiffusionRate.set -> void
+RoguelikeToolkit.World.Core.Elevation.ErosionGenerationStage.ErosionGenerationStage() -> void
+RoguelikeToolkit.World.Core.Elevation.ErosionGenerationStage.ErosionGenerationStage(int iterations = 10) -> void
+RoguelikeToolkit.World.Core.Elevation.ErosionGenerationStage.Execute(RoguelikeToolkit.World.Core.Topology.WorldMap! map) -> void
+RoguelikeToolkit.World.Core.Elevation.ErosionGenerationStage.GlacialIterations.get -> int
+RoguelikeToolkit.World.Core.Elevation.ErosionGenerationStage.GlacialIterations.set -> void
+RoguelikeToolkit.World.Core.Elevation.ErosionGenerationStage.GlacialRate.get -> double
+RoguelikeToolkit.World.Core.Elevation.ErosionGenerationStage.GlacialRate.set -> void
+RoguelikeToolkit.World.Core.Elevation.ErosionGenerationStage.HardRockResistance.get -> double
+RoguelikeToolkit.World.Core.Elevation.ErosionGenerationStage.HardRockResistance.set -> void
+RoguelikeToolkit.World.Core.Elevation.ErosionGenerationStage.HardRockTalus.get -> double
+RoguelikeToolkit.World.Core.Elevation.ErosionGenerationStage.HardRockTalus.set -> void
+RoguelikeToolkit.World.Core.Elevation.ErosionGenerationStage.HydraulicIterations.get -> int
+RoguelikeToolkit.World.Core.Elevation.ErosionGenerationStage.HydraulicIterations.set -> void
+RoguelikeToolkit.World.Core.Elevation.ErosionGenerationStage.HydraulicRate.get -> double
+RoguelikeToolkit.World.Core.Elevation.ErosionGenerationStage.HydraulicRate.set -> void
+RoguelikeToolkit.World.Core.Elevation.ErosionGenerationStage.Enabled.get -> bool
+RoguelikeToolkit.World.Core.Elevation.ErosionGenerationStage.Enabled.set -> void
+RoguelikeToolkit.World.Core.Elevation.ErosionGenerationStage.Iterations.get -> int
+RoguelikeToolkit.World.Core.Elevation.ErosionGenerationStage.Iterations.set -> void
+RoguelikeToolkit.World.Core.Elevation.ErosionGenerationStage.Rate.get -> double
+RoguelikeToolkit.World.Core.Elevation.ErosionGenerationStage.Rate.set -> void
+RoguelikeToolkit.World.Core.Elevation.ErosionGenerationStage.RiverThresholdScale.get -> float
+RoguelikeToolkit.World.Core.Elevation.ErosionGenerationStage.RiverThresholdScale.set -> void
+RoguelikeToolkit.World.Core.Elevation.ErosionGenerationStage.StreamPowerM.get -> double
+RoguelikeToolkit.World.Core.Elevation.ErosionGenerationStage.StreamPowerM.set -> void
+RoguelikeToolkit.World.Core.Elevation.ErosionGenerationStage.StreamPowerN.get -> double
+RoguelikeToolkit.World.Core.Elevation.ErosionGenerationStage.StreamPowerN.set -> void
+RoguelikeToolkit.World.Core.Elevation.ErosionGenerationStage.Talus.get -> double
+RoguelikeToolkit.World.Core.Elevation.ErosionGenerationStage.Talus.set -> void
+RoguelikeToolkit.World.Core.Elevation.ErosionGenerationStage.TransportCapacity.get -> double
+RoguelikeToolkit.World.Core.Elevation.ErosionGenerationStage.TransportCapacity.set -> void
+RoguelikeToolkit.World.Core.Entities.CellIndex
+RoguelikeToolkit.World.Core.Entities.CellIndex.CellCount.get -> int
+RoguelikeToolkit.World.Core.Entities.CellIndex.CellIndex() -> void
+RoguelikeToolkit.World.Core.Entities.CellIndex.Count.get -> int
+RoguelikeToolkit.World.Core.Entities.CellIndex.InCell(int cell) -> System.ReadOnlySpan<int>
+RoguelikeToolkit.World.Core.Entities.CellIndex.Rebuild(int cellCount, System.ReadOnlySpan<int> cellBySlot) -> void
+RoguelikeToolkit.World.Core.Entities.CellIndex.Rebuild<T, TSel>(int cellCount, RoguelikeToolkit.World.Core.Entities.EntityStore! store, RoguelikeToolkit.World.Core.Entities.EntityStore.Column<T>! column, TSel selector) -> void
+RoguelikeToolkit.World.Core.Entities.EntityId
+RoguelikeToolkit.World.Core.Entities.EntityId.EntityId() -> void
+RoguelikeToolkit.World.Core.Entities.EntityId.EntityId(int Index, uint Generation) -> void
+RoguelikeToolkit.World.Core.Entities.EntityId.Generation.get -> uint
+RoguelikeToolkit.World.Core.Entities.EntityId.Generation.init -> void
+RoguelikeToolkit.World.Core.Entities.EntityId.Index.get -> int
+RoguelikeToolkit.World.Core.Entities.EntityId.Index.init -> void
+RoguelikeToolkit.World.Core.Entities.EntityId.IsNone.get -> bool
+RoguelikeToolkit.World.Core.Entities.EntityStore
+RoguelikeToolkit.World.Core.Entities.EntityStore.AddColumn<T>() -> RoguelikeToolkit.World.Core.Entities.EntityStore.Column<T>!
+RoguelikeToolkit.World.Core.Entities.EntityStore.CanSaveDelta.get -> bool
+RoguelikeToolkit.World.Core.Entities.EntityStore.Capacity.get -> int
+RoguelikeToolkit.World.Core.Entities.EntityStore.Column<T>
+RoguelikeToolkit.World.Core.Entities.EntityStore.Column<T>.At(int slot) -> T
+RoguelikeToolkit.World.Core.Entities.EntityStore.Column<T>.Chunk(int chunk) -> System.Span<T>
+RoguelikeToolkit.World.Core.Entities.EntityStore.Column<T>.ChunkCount.get -> int
+RoguelikeToolkit.World.Core.Entities.EntityStore.Column<T>.this[RoguelikeToolkit.World.Core.Entities.EntityId id].get -> T
+RoguelikeToolkit.World.Core.Entities.EntityStore.ColumnBase
+RoguelikeToolkit.World.Core.Entities.EntityStore.ColumnBase.ColumnBase() -> void
+RoguelikeToolkit.World.Core.Entities.EntityStore.Count.get -> int
+RoguelikeToolkit.World.Core.Entities.EntityStore.Create() -> RoguelikeToolkit.World.Core.Entities.EntityId
+RoguelikeToolkit.World.Core.Entities.EntityStore.Destroy(RoguelikeToolkit.World.Core.Entities.EntityId id) -> bool
+RoguelikeToolkit.World.Core.Entities.EntityStore.EntityStore(int initialCapacity = 1024) -> void
+RoguelikeToolkit.World.Core.Entities.EntityStore.GetColumn<T>() -> RoguelikeToolkit.World.Core.Entities.EntityStore.Column<T>!
+RoguelikeToolkit.World.Core.Entities.EntityStore.HandleOf(int slot) -> RoguelikeToolkit.World.Core.Entities.EntityId
+RoguelikeToolkit.World.Core.Entities.EntityStore.HighWater.get -> int
+RoguelikeToolkit.World.Core.Entities.EntityStore.IsAlive(RoguelikeToolkit.World.Core.Entities.EntityId id) -> bool
+RoguelikeToolkit.World.Core.Entities.EntityStore.IsAliveSlot(int slot) -> bool
+RoguelikeToolkit.World.Core.Entities.EntityStore.Load(System.IO.Stream! stream) -> void
+RoguelikeToolkit.World.Core.Entities.EntityStore.LoadDelta(System.IO.Stream! stream) -> void
+RoguelikeToolkit.World.Core.Entities.EntityStore.Reserve(int slots) -> void
+RoguelikeToolkit.World.Core.Entities.EntityStore.Save(System.IO.Stream! stream) -> void
+RoguelikeToolkit.World.Core.Entities.EntityStore.SaveDelta(System.IO.Stream! stream) -> void
+RoguelikeToolkit.World.Core.Entities.IAdjacency
+RoguelikeToolkit.World.Core.Entities.IAdjacency.GetAdjacent(int cell, System.Span<int> neighbors) -> int
+RoguelikeToolkit.World.Core.Entities.ICellOf<T>
+RoguelikeToolkit.World.Core.Entities.ICellOf<T>.Cell(in T value) -> int
+RoguelikeToolkit.World.Core.Entities.IPopulationPolicy
+RoguelikeToolkit.World.Core.Entities.IPopulationPolicy.Attraction(int cell, int group) -> double
+RoguelikeToolkit.World.Core.Entities.IPopulationPolicy.BirthRate(int cell, int group, uint count) -> double
+RoguelikeToolkit.World.Core.Entities.IPopulationPolicy.DeathRate(int cell, int group, uint count) -> double
+RoguelikeToolkit.World.Core.Entities.IPopulationPolicy.MigrationRate(int cell, int group, uint count) -> double
+RoguelikeToolkit.World.Core.Entities.PopulationGrid
+RoguelikeToolkit.World.Core.Entities.PopulationGrid.Cell(int cell) -> System.Span<uint>
+RoguelikeToolkit.World.Core.Entities.PopulationGrid.CellCount.get -> int
+RoguelikeToolkit.World.Core.Entities.PopulationGrid.Get(int cell, int group) -> uint
+RoguelikeToolkit.World.Core.Entities.PopulationGrid.Give(int cell, int group, uint amount) -> uint
+RoguelikeToolkit.World.Core.Entities.PopulationGrid.GroupCount.get -> int
+RoguelikeToolkit.World.Core.Entities.PopulationGrid.Load(System.IO.Stream! stream) -> void
+RoguelikeToolkit.World.Core.Entities.PopulationGrid.PopulationGrid(int cellCount, int groupCount) -> void
+RoguelikeToolkit.World.Core.Entities.PopulationGrid.Save(System.IO.Stream! stream) -> void
+RoguelikeToolkit.World.Core.Entities.PopulationGrid.Step<TPolicy, TAdj>(in TPolicy policy, in TAdj adjacency, int seed, System.ReadOnlySpan<int> cells = default(System.ReadOnlySpan<int>)) -> void
+RoguelikeToolkit.World.Core.Entities.PopulationGrid.Take(int cell, int group, uint amount) -> uint
+RoguelikeToolkit.World.Core.Entities.PopulationGrid.Tick.get -> uint
+RoguelikeToolkit.World.Core.Entities.PopulationGrid.Total() -> long
+RoguelikeToolkit.World.Core.Entities.PopulationGrid.Total(int group) -> long
+RoguelikeToolkit.World.Core.Features.GeoWkt
+RoguelikeToolkit.World.Core.Features.RangeCatalog
+RoguelikeToolkit.World.Core.Features.RangeCatalog.Features.get -> System.Collections.Generic.List<RoguelikeToolkit.World.Core.Features.RangeFeature!>!
+RoguelikeToolkit.World.Core.Features.RangeCatalog.RangeCatalog() -> void
+RoguelikeToolkit.World.Core.Features.RangeFeature
+RoguelikeToolkit.World.Core.Features.RangeFeature.Id.get -> int
+RoguelikeToolkit.World.Core.Features.RangeFeature.Kind.get -> RoguelikeToolkit.World.Core.Features.RangeKind
+RoguelikeToolkit.World.Core.Features.RangeFeature.RangeFeature(int id, RoguelikeToolkit.World.Core.Features.RangeKind kind) -> void
+RoguelikeToolkit.World.Core.Features.RangeFeature.Tiles.get -> System.Collections.Generic.List<int>!
+RoguelikeToolkit.World.Core.Features.RangeKind
+RoguelikeToolkit.World.Core.Features.RangeKind.Canyon = 2 -> RoguelikeToolkit.World.Core.Features.RangeKind
+RoguelikeToolkit.World.Core.Features.RangeKind.MountainRange = 0 -> RoguelikeToolkit.World.Core.Features.RangeKind
+RoguelikeToolkit.World.Core.Features.RangeKind.Playa = 3 -> RoguelikeToolkit.World.Core.Features.RangeKind
+RoguelikeToolkit.World.Core.Features.RangeKind.Valley = 1 -> RoguelikeToolkit.World.Core.Features.RangeKind
+RoguelikeToolkit.World.Core.Features.River
+RoguelikeToolkit.World.Core.Features.River.Id.get -> int
+RoguelikeToolkit.World.Core.Features.River.MouthFlow.get -> float
+RoguelikeToolkit.World.Core.Features.River.MouthFlow.set -> void
+RoguelikeToolkit.World.Core.Features.River.Path.get -> System.Collections.Generic.List<int>!
+RoguelikeToolkit.World.Core.Features.River.River(int id) -> void
+RoguelikeToolkit.World.Core.Features.River.Terminal.get -> RoguelikeToolkit.World.Core.Features.RiverTerminal
+RoguelikeToolkit.World.Core.Features.River.Terminal.set -> void
+RoguelikeToolkit.World.Core.Features.River.TerminalBody.get -> int
+RoguelikeToolkit.World.Core.Features.River.TerminalBody.set -> void
+RoguelikeToolkit.World.Core.Features.RiverCatalog
+RoguelikeToolkit.World.Core.Features.RiverCatalog.RiverCatalog() -> void
+RoguelikeToolkit.World.Core.Features.RiverCatalog.Rivers.get -> System.Collections.Generic.List<RoguelikeToolkit.World.Core.Features.River!>!
+RoguelikeToolkit.World.Core.Features.RiverTerminal
+RoguelikeToolkit.World.Core.Features.RiverTerminal.Lake = 1 -> RoguelikeToolkit.World.Core.Features.RiverTerminal
+RoguelikeToolkit.World.Core.Features.RiverTerminal.Sea = 0 -> RoguelikeToolkit.World.Core.Features.RiverTerminal
+RoguelikeToolkit.World.Core.Features.RiverTerminal.Sink = 2 -> RoguelikeToolkit.World.Core.Features.RiverTerminal
+RoguelikeToolkit.World.Core.Features.RiverWaterSource
+RoguelikeToolkit.World.Core.Features.RiverWaterSource.GlacierMelt = 2 -> RoguelikeToolkit.World.Core.Features.RiverWaterSource
+RoguelikeToolkit.World.Core.Features.RiverWaterSource.None = 0 -> RoguelikeToolkit.World.Core.Features.RiverWaterSource
+RoguelikeToolkit.World.Core.Features.RiverWaterSource.Spring = 1 -> RoguelikeToolkit.World.Core.Features.RiverWaterSource
+RoguelikeToolkit.World.Core.Features.TileFeatureInfo
+RoguelikeToolkit.World.Core.Features.TileFeatureInfo.Address -> RoguelikeToolkit.World.Core.Topology.MapAddress
+RoguelikeToolkit.World.Core.Features.TileFeatureInfo.Biome -> RoguelikeToolkit.World.Core.Biomes.BiomeType
+RoguelikeToolkit.World.Core.Features.TileFeatureInfo.BodyKind -> RoguelikeToolkit.World.Core.Features.WaterBodyKind?
+RoguelikeToolkit.World.Core.Features.TileFeatureInfo.Coord -> RoguelikeToolkit.World.Core.Primitives.GeoCoord
+RoguelikeToolkit.World.Core.Features.TileFeatureInfo.DangerLevel -> byte
+RoguelikeToolkit.World.Core.Features.TileFeatureInfo.Deposits -> RoguelikeToolkit.World.Core.Lithosphere.DepositType[]!
+RoguelikeToolkit.World.Core.Features.TileFeatureInfo.DownstreamCoord -> RoguelikeToolkit.World.Core.Primitives.GeoCoord
+RoguelikeToolkit.World.Core.Features.TileFeatureInfo.DownstreamTile -> int
+RoguelikeToolkit.World.Core.Features.TileFeatureInfo.Elevation -> float
+RoguelikeToolkit.World.Core.Features.TileFeatureInfo.Flow -> float
+RoguelikeToolkit.World.Core.Features.TileFeatureInfo.HasBiome -> bool
+RoguelikeToolkit.World.Core.Features.TileFeatureInfo.HasElevation -> bool
+RoguelikeToolkit.World.Core.Features.TileFeatureInfo.HasHydrology -> bool
+RoguelikeToolkit.World.Core.Features.TileFeatureInfo.InCanyon -> bool
+RoguelikeToolkit.World.Core.Features.TileFeatureInfo.InMountainRange -> bool
+RoguelikeToolkit.World.Core.Features.TileFeatureInfo.InPlaya -> bool
+RoguelikeToolkit.World.Core.Features.TileFeatureInfo.InValley -> bool
+RoguelikeToolkit.World.Core.Features.TileFeatureInfo.IsGlacier -> bool
+RoguelikeToolkit.World.Core.Features.TileFeatureInfo.IsRiver -> bool
+RoguelikeToolkit.World.Core.Features.TileFeatureInfo.LakeDepth -> float
+RoguelikeToolkit.World.Core.Features.TileFeatureInfo.RiverId -> int
+RoguelikeToolkit.World.Core.Features.TileFeatureInfo.RiverSource -> RoguelikeToolkit.World.Core.Features.RiverWaterSource
+RoguelikeToolkit.World.Core.Features.TileFeatureInfo.Sites -> RoguelikeToolkit.World.Core.Sites.PlacedSite![]!
+RoguelikeToolkit.World.Core.Features.TileFeatureInfo.TileFeatureInfo() -> void
+RoguelikeToolkit.World.Core.Features.TileFeatureInfo.TileIndex -> int
+RoguelikeToolkit.World.Core.Features.TileFeatureInfo.UpstreamCoord -> RoguelikeToolkit.World.Core.Primitives.GeoCoord
+RoguelikeToolkit.World.Core.Features.TileFeatureInfo.UpstreamTile -> int
+RoguelikeToolkit.World.Core.Features.TileFeatureInfo.WaterBodyId -> int
+RoguelikeToolkit.World.Core.Features.TileFeatures
+RoguelikeToolkit.World.Core.Features.WaterBody
+RoguelikeToolkit.World.Core.Features.WaterBody.Boundary.get -> System.Collections.Generic.List<int>!
+RoguelikeToolkit.World.Core.Features.WaterBody.Id.get -> int
+RoguelikeToolkit.World.Core.Features.WaterBody.Kind.get -> RoguelikeToolkit.World.Core.Features.WaterBodyKind
+RoguelikeToolkit.World.Core.Features.WaterBody.Tiles.get -> System.Collections.Generic.List<int>!
+RoguelikeToolkit.World.Core.Features.WaterBody.WaterBody(int id, RoguelikeToolkit.World.Core.Features.WaterBodyKind kind) -> void
+RoguelikeToolkit.World.Core.Features.WaterBodyCatalog
+RoguelikeToolkit.World.Core.Features.WaterBodyCatalog.Bodies.get -> System.Collections.Generic.List<RoguelikeToolkit.World.Core.Features.WaterBody!>!
+RoguelikeToolkit.World.Core.Features.WaterBodyCatalog.FindByTile(int tileIndex, RoguelikeToolkit.World.Core.Hydrology.HydrologyInfo[]? fields = null) -> RoguelikeToolkit.World.Core.Features.WaterBody?
+RoguelikeToolkit.World.Core.Features.WaterBodyCatalog.WaterBodyCatalog() -> void
+RoguelikeToolkit.World.Core.Features.WaterBodyKind
+RoguelikeToolkit.World.Core.Features.WaterBodyKind.Lake = 0 -> RoguelikeToolkit.World.Core.Features.WaterBodyKind
+RoguelikeToolkit.World.Core.Features.WaterBodyKind.Ocean = 2 -> RoguelikeToolkit.World.Core.Features.WaterBodyKind
+RoguelikeToolkit.World.Core.Features.WaterBodyKind.Sea = 1 -> RoguelikeToolkit.World.Core.Features.WaterBodyKind
+RoguelikeToolkit.World.Core.Generation.IDeclaredStage
+RoguelikeToolkit.World.Core.Generation.IDeclaredStage.Order.get -> int
+RoguelikeToolkit.World.Core.Generation.IDeclaredStage.Reads.get -> System.Type![]!
+RoguelikeToolkit.World.Core.Generation.IDeclaredStage.ReadsOptional.get -> System.Type![]!
+RoguelikeToolkit.World.Core.Generation.IDeclaredStage.Writes.get -> System.Type![]!
+RoguelikeToolkit.World.Core.Generation.ISeededStage
+RoguelikeToolkit.World.Core.Generation.ISeededStage.Seed.get -> int
+RoguelikeToolkit.World.Core.Generation.ISeededStage.Seed.set -> void
+RoguelikeToolkit.World.Core.Generation.IStageNamed
+RoguelikeToolkit.World.Core.Generation.IStageNamed.Name.get -> string!
+RoguelikeToolkit.World.Core.Generation.IWorldGeneratorStage
+RoguelikeToolkit.World.Core.Generation.IWorldGeneratorStage.Execute(RoguelikeToolkit.World.Core.Topology.WorldMap! map) -> void
+RoguelikeToolkit.World.Core.Generation.StageDiscoveryDiagnostic
+RoguelikeToolkit.World.Core.Generation.StageDiscoveryDiagnostic.Exception.get -> System.Exception!
+RoguelikeToolkit.World.Core.Generation.StageDiscoveryDiagnostic.Message.get -> string!
+RoguelikeToolkit.World.Core.Generation.StageDiscoveryDiagnostic.StageDiscoveryDiagnostic(string! message, System.Exception! exception) -> void
+RoguelikeToolkit.World.Core.Generation.StageOrder
+RoguelikeToolkit.World.Core.Generation.WorldGenerationPipeline
+RoguelikeToolkit.World.Core.Generation.WorldGenerationPipeline.AddStage(RoguelikeToolkit.World.Core.Generation.IWorldGeneratorStage! stage) -> void
+RoguelikeToolkit.World.Core.Generation.WorldGenerationPipeline.Discover(string? pluginDirectory = null, System.Action<RoguelikeToolkit.World.Core.Generation.StageDiscoveryDiagnostic!>? onDiagnostic = null) -> void
+RoguelikeToolkit.World.Core.Generation.WorldGenerationPipeline.DiscoverAndReplace(string? pluginDirectory = null, System.Action<RoguelikeToolkit.World.Core.Generation.StageDiscoveryDiagnostic!>? onDiagnostic = null) -> void
+RoguelikeToolkit.World.Core.Generation.WorldGenerationPipeline.DiscoverFrom(System.Collections.Generic.IEnumerable<System.Reflection.Assembly!>! pluginAssemblies, System.Action<RoguelikeToolkit.World.Core.Generation.StageDiscoveryDiagnostic!>? onDiagnostic = null) -> void
+RoguelikeToolkit.World.Core.Generation.WorldGenerationPipeline.Dispose() -> void
+RoguelikeToolkit.World.Core.Generation.WorldGenerationPipeline.Execute(RoguelikeToolkit.World.Core.Topology.WorldMap! map) -> void
+RoguelikeToolkit.World.Core.Generation.WorldGenerationPipeline.ExecuteFrom(RoguelikeToolkit.World.Core.Topology.WorldMap! map, int fromOrder) -> void
+RoguelikeToolkit.World.Core.Generation.WorldGenerationPipeline.ResetStages() -> void
+RoguelikeToolkit.World.Core.Generation.WorldGenerationPipeline.Stages.get -> System.Collections.Generic.IReadOnlyList<RoguelikeToolkit.World.Core.Generation.IWorldGeneratorStage!>!
+RoguelikeToolkit.World.Core.Generation.WorldGenerationPipeline.ValidateContracts() -> void
+RoguelikeToolkit.World.Core.Generation.WorldGenerationPipeline.ValidateContracts(RoguelikeToolkit.World.Core.Topology.WorldMap! map) -> void
+RoguelikeToolkit.World.Core.Generation.WorldGenerationPipeline.WorldGenerationPipeline() -> void
+RoguelikeToolkit.World.Core.Generation.WorldGeneratorStageAttribute
+RoguelikeToolkit.World.Core.Generation.WorldGeneratorStageAttribute.Order.get -> int
+RoguelikeToolkit.World.Core.Generation.WorldGeneratorStageAttribute.Reads.get -> System.Type![]!
+RoguelikeToolkit.World.Core.Generation.WorldGeneratorStageAttribute.Reads.set -> void
+RoguelikeToolkit.World.Core.Generation.WorldGeneratorStageAttribute.ReadsOptional.get -> System.Type![]!
+RoguelikeToolkit.World.Core.Generation.WorldGeneratorStageAttribute.ReadsOptional.set -> void
+RoguelikeToolkit.World.Core.Generation.WorldGeneratorStageAttribute.WorldGeneratorStageAttribute(int order) -> void
+RoguelikeToolkit.World.Core.Generation.WorldGeneratorStageAttribute.Writes.get -> System.Type![]!
+RoguelikeToolkit.World.Core.Generation.WorldGeneratorStageAttribute.Writes.set -> void
+RoguelikeToolkit.World.Core.Hierarchy.GridMapHandle<TTile>
+RoguelikeToolkit.World.Core.Hierarchy.GridMapHandle<TTile>.Address.get -> RoguelikeToolkit.World.Core.Topology.MapAddress
+RoguelikeToolkit.World.Core.Hierarchy.GridMapHandle<TTile>.Bounds.get -> RoguelikeToolkit.World.Core.Topology.MapBounds
+RoguelikeToolkit.World.Core.Hierarchy.GridMapHandle<TTile>.GetAdjacent(int index, System.Span<int> neighbors) -> int
+RoguelikeToolkit.World.Core.Hierarchy.GridMapHandle<TTile>.GetTileAt(int q, int r) -> int
+RoguelikeToolkit.World.Core.Hierarchy.GridMapHandle<TTile>.GetTileAt(RoguelikeToolkit.World.Core.Topology.CubeCoord cube) -> int
+RoguelikeToolkit.World.Core.Hierarchy.GridMapHandle<TTile>.HasRiver.get -> bool
+RoguelikeToolkit.World.Core.Hierarchy.GridMapHandle<TTile>.Parent.get -> RoguelikeToolkit.World.Core.Hierarchy.ParentContext!
+RoguelikeToolkit.World.Core.Hierarchy.GridMapHandle<TTile>.RiverEntryCell.get -> int
+RoguelikeToolkit.World.Core.Hierarchy.GridMapHandle<TTile>.RiverExitCell.get -> int
+RoguelikeToolkit.World.Core.Hierarchy.GridMapHandle<TTile>.RootAddress.get -> RoguelikeToolkit.World.Core.Topology.MapAddress
+RoguelikeToolkit.World.Core.Hierarchy.GridMapHandle<TTile>.Seed.get -> uint
+RoguelikeToolkit.World.Core.Hierarchy.GridMapHandle<TTile>.Size.get -> int
+RoguelikeToolkit.World.Core.Hierarchy.GridMapHandle<TTile>.TileCount.get -> int
+RoguelikeToolkit.World.Core.Hierarchy.LocalMapHandle
+RoguelikeToolkit.World.Core.Hierarchy.LocalMapHandle.RegionCellIndex.get -> int
+RoguelikeToolkit.World.Core.Hierarchy.LocalMapHandle.TileAt(RoguelikeToolkit.World.Core.Primitives.GeoCoord coord) -> int
+RoguelikeToolkit.World.Core.Hierarchy.LocalMapHandle.TileCenter(int tileIndex) -> RoguelikeToolkit.World.Core.Primitives.GeoCoord
+RoguelikeToolkit.World.Core.Hierarchy.LocalMapHandle.Tiles.get -> RoguelikeToolkit.World.Core.Hierarchy.LocalTile[]!
+RoguelikeToolkit.World.Core.Hierarchy.LocalMapHandle.WithInjectors(System.Collections.Generic.IEnumerable<RoguelikeToolkit.World.Core.Sites.ISiteInjector!>! injectors) -> RoguelikeToolkit.World.Core.Sites.SiteCatalog!
+RoguelikeToolkit.World.Core.Hierarchy.LocalMapHandle.WorldTileIndex.get -> int
+RoguelikeToolkit.World.Core.Hierarchy.LocalTile
+RoguelikeToolkit.World.Core.Hierarchy.LocalTile.Biome -> RoguelikeToolkit.World.Core.Biomes.BiomeType
+RoguelikeToolkit.World.Core.Hierarchy.LocalTile.Danger -> byte
+RoguelikeToolkit.World.Core.Hierarchy.LocalTile.Height -> float
+RoguelikeToolkit.World.Core.Hierarchy.LocalTile.Index -> int
+RoguelikeToolkit.World.Core.Hierarchy.LocalTile.IsWater -> bool
+RoguelikeToolkit.World.Core.Hierarchy.LocalTile.LocalTile() -> void
+RoguelikeToolkit.World.Core.Hierarchy.LocalTile.ParentBiome -> RoguelikeToolkit.World.Core.Biomes.BiomeType
+RoguelikeToolkit.World.Core.Hierarchy.LocalTile.Precipitation -> float
+RoguelikeToolkit.World.Core.Hierarchy.LocalTile.Temperature -> float
+RoguelikeToolkit.World.Core.Hierarchy.LocalTile.WaterDepth -> float
+RoguelikeToolkit.World.Core.Hierarchy.MapSeeds
+RoguelikeToolkit.World.Core.Hierarchy.ParentContext
+RoguelikeToolkit.World.Core.Hierarchy.ParentContext.AspectRadians.get -> double
+RoguelikeToolkit.World.Core.Hierarchy.ParentContext.AspectRadians.init -> void
+RoguelikeToolkit.World.Core.Hierarchy.ParentContext.DominantBiome.get -> RoguelikeToolkit.World.Core.Biomes.BiomeType
+RoguelikeToolkit.World.Core.Hierarchy.ParentContext.DominantBiome.init -> void
+RoguelikeToolkit.World.Core.Hierarchy.ParentContext.ElevationGradient.get -> RoguelikeToolkit.World.Core.Primitives.Vector3D
+RoguelikeToolkit.World.Core.Hierarchy.ParentContext.ElevationGradient.init -> void
+RoguelikeToolkit.World.Core.Hierarchy.ParentContext.Flow.get -> float
+RoguelikeToolkit.World.Core.Hierarchy.ParentContext.Flow.init -> void
+RoguelikeToolkit.World.Core.Hierarchy.ParentContext.FlowEntryTile.get -> int
+RoguelikeToolkit.World.Core.Hierarchy.ParentContext.FlowEntryTile.init -> void
+RoguelikeToolkit.World.Core.Hierarchy.ParentContext.FlowExitTile.get -> int
+RoguelikeToolkit.World.Core.Hierarchy.ParentContext.FlowExitTile.init -> void
+RoguelikeToolkit.World.Core.Hierarchy.ParentContext.IsRiver.get -> bool
+RoguelikeToolkit.World.Core.Hierarchy.ParentContext.IsRiver.init -> void
+RoguelikeToolkit.World.Core.Hierarchy.ParentContext.MeanElevation.get -> float
+RoguelikeToolkit.World.Core.Hierarchy.ParentContext.MeanElevation.init -> void
+RoguelikeToolkit.World.Core.Hierarchy.ParentContext.MeanMoisture.get -> float
+RoguelikeToolkit.World.Core.Hierarchy.ParentContext.MeanMoisture.init -> void
+RoguelikeToolkit.World.Core.Hierarchy.ParentContext.MeanPrecipitation.get -> float
+RoguelikeToolkit.World.Core.Hierarchy.ParentContext.MeanPrecipitation.init -> void
+RoguelikeToolkit.World.Core.Hierarchy.ParentContext.MeanRainPhase.get -> float
+RoguelikeToolkit.World.Core.Hierarchy.ParentContext.MeanRainPhase.init -> void
+RoguelikeToolkit.World.Core.Hierarchy.ParentContext.MeanRainSeasonality.get -> float
+RoguelikeToolkit.World.Core.Hierarchy.ParentContext.MeanRainSeasonality.init -> void
+RoguelikeToolkit.World.Core.Hierarchy.ParentContext.MeanTemperature.get -> float
+RoguelikeToolkit.World.Core.Hierarchy.ParentContext.MeanTemperature.init -> void
+RoguelikeToolkit.World.Core.Hierarchy.ParentContext.NeighborHeights.get -> float[]!
+RoguelikeToolkit.World.Core.Hierarchy.ParentContext.NeighborHeights.init -> void
+RoguelikeToolkit.World.Core.Hierarchy.ParentContext.OrogenyStrike.get -> RoguelikeToolkit.World.Core.Primitives.Vector3D
+RoguelikeToolkit.World.Core.Hierarchy.ParentContext.OrogenyStrike.init -> void
+RoguelikeToolkit.World.Core.Hierarchy.ParentContext.ParentContext() -> void
+RoguelikeToolkit.World.Core.Hierarchy.ParentContext.Wind.get -> RoguelikeToolkit.World.Core.Primitives.Vector3D
+RoguelikeToolkit.World.Core.Hierarchy.ParentContext.Wind.init -> void
+RoguelikeToolkit.World.Core.Hierarchy.RegionCell
+RoguelikeToolkit.World.Core.Hierarchy.RegionCell.Biome -> RoguelikeToolkit.World.Core.Biomes.BiomeType
+RoguelikeToolkit.World.Core.Hierarchy.RegionCell.CellIndex -> int
+RoguelikeToolkit.World.Core.Hierarchy.RegionCell.Elevation -> float
+RoguelikeToolkit.World.Core.Hierarchy.RegionCell.Flow -> float
+RoguelikeToolkit.World.Core.Hierarchy.RegionCell.IsRiver -> bool
+RoguelikeToolkit.World.Core.Hierarchy.RegionCell.Moisture -> float
+RoguelikeToolkit.World.Core.Hierarchy.RegionCell.RegionCell() -> void
+RoguelikeToolkit.World.Core.Hierarchy.RegionCell.Seed -> uint
+RoguelikeToolkit.World.Core.Hierarchy.RegionCell.WaterDepth -> float
+RoguelikeToolkit.World.Core.Hierarchy.RegionDetailOptions
+RoguelikeToolkit.World.Core.Hierarchy.RegionDetailOptions.AcrossStrikeScale.get -> double
+RoguelikeToolkit.World.Core.Hierarchy.RegionDetailOptions.AcrossStrikeScale.set -> void
+RoguelikeToolkit.World.Core.Hierarchy.RegionDetailOptions.AlongStrikeScale.get -> double
+RoguelikeToolkit.World.Core.Hierarchy.RegionDetailOptions.AlongStrikeScale.set -> void
+RoguelikeToolkit.World.Core.Hierarchy.RegionDetailOptions.DetailAmplitude.get -> float
+RoguelikeToolkit.World.Core.Hierarchy.RegionDetailOptions.DetailAmplitude.set -> void
+RoguelikeToolkit.World.Core.Hierarchy.RegionDetailOptions.DetailFrequency.get -> double
+RoguelikeToolkit.World.Core.Hierarchy.RegionDetailOptions.DetailFrequency.set -> void
+RoguelikeToolkit.World.Core.Hierarchy.RegionDetailOptions.DetailGain.get -> double
+RoguelikeToolkit.World.Core.Hierarchy.RegionDetailOptions.DetailGain.set -> void
+RoguelikeToolkit.World.Core.Hierarchy.RegionDetailOptions.EdgePinCells.get -> double
+RoguelikeToolkit.World.Core.Hierarchy.RegionDetailOptions.EdgePinCells.set -> void
+RoguelikeToolkit.World.Core.Hierarchy.RegionDetailOptions.NoiseOctaves.get -> int
+RoguelikeToolkit.World.Core.Hierarchy.RegionDetailOptions.NoiseOctaves.set -> void
+RoguelikeToolkit.World.Core.Hierarchy.RegionDetailOptions.RegionDetailOptions() -> void
+RoguelikeToolkit.World.Core.Hierarchy.RegionDetailOptions.RiverCarveDepth.get -> float
+RoguelikeToolkit.World.Core.Hierarchy.RegionDetailOptions.RiverCarveDepth.set -> void
+RoguelikeToolkit.World.Core.Hierarchy.RegionDetailOptions.RiverFlowThreshold.get -> float
+RoguelikeToolkit.World.Core.Hierarchy.RegionDetailOptions.RiverFlowThreshold.set -> void
+RoguelikeToolkit.World.Core.Hierarchy.RegionHandle
+RoguelikeToolkit.World.Core.Hierarchy.RegionHandle.CellAt(RoguelikeToolkit.World.Core.Primitives.GeoCoord coord) -> int
+RoguelikeToolkit.World.Core.Hierarchy.RegionHandle.CellCenter(int cellIndex) -> RoguelikeToolkit.World.Core.Primitives.GeoCoord
+RoguelikeToolkit.World.Core.Hierarchy.RegionHandle.Cells.get -> RoguelikeToolkit.World.Core.Hierarchy.RegionCell[]!
+RoguelikeToolkit.World.Core.Hierarchy.RegionHandle.GetLocal(int cellIndex, int localSize = 16) -> RoguelikeToolkit.World.Core.Hierarchy.LocalMapHandle!
+RoguelikeToolkit.World.Core.Hierarchy.RegionHandle.WithInjectors(System.Collections.Generic.IEnumerable<RoguelikeToolkit.World.Core.Sites.ISiteInjector!>! injectors) -> RoguelikeToolkit.World.Core.Sites.SiteCatalog!
+RoguelikeToolkit.World.Core.Hierarchy.RegionHandle.WorldTileIndex.get -> int
+RoguelikeToolkit.World.Core.Hierarchy.RegionMaps
+RoguelikeToolkit.World.Core.Hierarchy.TerrainOrientation
+RoguelikeToolkit.World.Core.Hydrology.CanyonAnalysis
+RoguelikeToolkit.World.Core.Hydrology.HydrologyInfo
+RoguelikeToolkit.World.Core.Hydrology.HydrologyInfo.Endorheic -> byte
+RoguelikeToolkit.World.Core.Hydrology.HydrologyInfo.Flow -> float
+RoguelikeToolkit.World.Core.Hydrology.HydrologyInfo.HydrologyInfo() -> void
+RoguelikeToolkit.World.Core.Hydrology.HydrologyInfo.IsPlaya -> byte
+RoguelikeToolkit.World.Core.Hydrology.HydrologyInfo.IsRiver -> byte
+RoguelikeToolkit.World.Core.Hydrology.HydrologyInfo.LakeDepth -> float
+RoguelikeToolkit.World.Core.Hydrology.HydrologyInfo.Saline -> byte
+RoguelikeToolkit.World.Core.Hydrology.HydrologyInfo.Surface -> float
+RoguelikeToolkit.World.Core.Hydrology.HydrologyInfo.WaterBodyId -> int
+RoguelikeToolkit.World.Core.Hydrology.HydrologyLayer
+RoguelikeToolkit.World.Core.Hydrology.HydrologyLayer.HydrologyLayer(RoguelikeToolkit.World.Core.Storage.WorldDataStore! store) -> void
+RoguelikeToolkit.World.Core.Hydrology.HydrologyStage
+RoguelikeToolkit.World.Core.Hydrology.HydrologyStage.Execute(RoguelikeToolkit.World.Core.Topology.WorldMap! map) -> void
+RoguelikeToolkit.World.Core.Hydrology.HydrologyStage.HydrologyStage() -> void
+RoguelikeToolkit.World.Core.Hydrology.HydrologyStage.LossFactor.get -> float
+RoguelikeToolkit.World.Core.Hydrology.HydrologyStage.LossFactor.set -> void
+RoguelikeToolkit.World.Core.Hydrology.HydrologyStage.MaxRivers.get -> int
+RoguelikeToolkit.World.Core.Hydrology.HydrologyStage.MaxRivers.set -> void
+RoguelikeToolkit.World.Core.Hydrology.HydrologyStage.RiverThresholdScale.get -> float
+RoguelikeToolkit.World.Core.Hydrology.HydrologyStage.RiverThresholdScale.set -> void
+RoguelikeToolkit.World.Core.Hydrology.HydrologyStage.SteepBoost.get -> float
+RoguelikeToolkit.World.Core.Hydrology.HydrologyStage.SteepBoost.set -> void
+RoguelikeToolkit.World.Core.Hydrology.HydrologyStage.SteepSlope.get -> float
+RoguelikeToolkit.World.Core.Hydrology.HydrologyStage.SteepSlope.set -> void
+RoguelikeToolkit.World.Core.Hydrology.HydrologyStage.UseLandCover.get -> bool
+RoguelikeToolkit.World.Core.Hydrology.HydrologyStage.UseLandCover.set -> void
+RoguelikeToolkit.World.Core.Hydrology.Lake
+RoguelikeToolkit.World.Core.Hydrology.Lake.EvapTotal.get -> float
+RoguelikeToolkit.World.Core.Hydrology.Lake.EvapTotal.set -> void
+RoguelikeToolkit.World.Core.Hydrology.Lake.Flushing.get -> float
+RoguelikeToolkit.World.Core.Hydrology.Lake.Id.get -> int
+RoguelikeToolkit.World.Core.Hydrology.Lake.IsOpen.get -> bool
+RoguelikeToolkit.World.Core.Hydrology.Lake.IsOpen.set -> void
+RoguelikeToolkit.World.Core.Hydrology.Lake.IsSaline.get -> bool
+RoguelikeToolkit.World.Core.Hydrology.Lake.Lake(int id) -> void
+RoguelikeToolkit.World.Core.Hydrology.Lake.Outlet.get -> int
+RoguelikeToolkit.World.Core.Hydrology.Lake.Outlet.set -> void
+RoguelikeToolkit.World.Core.Hydrology.Lake.Supply.get -> float
+RoguelikeToolkit.World.Core.Hydrology.Lake.Supply.set -> void
+RoguelikeToolkit.World.Core.Hydrology.Lake.Surface.get -> float
+RoguelikeToolkit.World.Core.Hydrology.Lake.Surface.set -> void
+RoguelikeToolkit.World.Core.Hydrology.Lake.Tiles.get -> System.Collections.Generic.List<int>!
+RoguelikeToolkit.World.Core.Hydrology.RangeCatalogBuilder
+RoguelikeToolkit.World.Core.IInsolationModel
+RoguelikeToolkit.World.Core.IInsolationModel.RelativeInsolation(RoguelikeToolkit.World.Core.Primitives.Vector3D unitPosition) -> double
+RoguelikeToolkit.World.Core.Integration.HistoricSite
+RoguelikeToolkit.World.Core.Integration.HistoricSite.DangerDelta.get -> float
+RoguelikeToolkit.World.Core.Integration.HistoricSite.DangerDelta.init -> void
+RoguelikeToolkit.World.Core.Integration.HistoricSite.HabitabilityDelta.get -> float
+RoguelikeToolkit.World.Core.Integration.HistoricSite.HabitabilityDelta.init -> void
+RoguelikeToolkit.World.Core.Integration.HistoricSite.HistoricSite() -> void
+RoguelikeToolkit.World.Core.Integration.HistoricSite.Id.get -> string!
+RoguelikeToolkit.World.Core.Integration.HistoricSite.Id.init -> void
+RoguelikeToolkit.World.Core.Integration.HistoricSite.Kind.get -> RoguelikeToolkit.World.Core.Integration.HistoricSiteKind
+RoguelikeToolkit.World.Core.Integration.HistoricSite.Kind.init -> void
+RoguelikeToolkit.World.Core.Integration.HistoricSite.Metadata.get -> System.Collections.Generic.Dictionary<string!, string!>!
+RoguelikeToolkit.World.Core.Integration.HistoricSite.Position.get -> RoguelikeToolkit.World.Core.Primitives.GeoCoord
+RoguelikeToolkit.World.Core.Integration.HistoricSite.Position.init -> void
+RoguelikeToolkit.World.Core.Integration.HistoricSite.TileIndex.get -> int
+RoguelikeToolkit.World.Core.Integration.HistoricSite.TileIndex.init -> void
+RoguelikeToolkit.World.Core.Integration.HistoricSiteIndex
+RoguelikeToolkit.World.Core.Integration.HistoricSiteIndex.Add(RoguelikeToolkit.World.Core.Integration.HistoricSite! site) -> void
+RoguelikeToolkit.World.Core.Integration.HistoricSiteIndex.All.get -> System.Collections.Generic.IReadOnlyList<RoguelikeToolkit.World.Core.Integration.HistoricSite!>!
+RoguelikeToolkit.World.Core.Integration.HistoricSiteIndex.HistoricSiteIndex() -> void
+RoguelikeToolkit.World.Core.Integration.HistoricSiteIndex.SitesOnTile(int tileIndex) -> System.Collections.Generic.IEnumerable<RoguelikeToolkit.World.Core.Integration.HistoricSite!>!
+RoguelikeToolkit.World.Core.Integration.HistoricSiteKind
+RoguelikeToolkit.World.Core.Integration.HistoricSiteKind.Battlefield = 2 -> RoguelikeToolkit.World.Core.Integration.HistoricSiteKind
+RoguelikeToolkit.World.Core.Integration.HistoricSiteKind.Other = 255 -> RoguelikeToolkit.World.Core.Integration.HistoricSiteKind
+RoguelikeToolkit.World.Core.Integration.HistoricSiteKind.Ruin = 1 -> RoguelikeToolkit.World.Core.Integration.HistoricSiteKind
+RoguelikeToolkit.World.Core.Integration.HistoricSiteKind.Settlement = 0 -> RoguelikeToolkit.World.Core.Integration.HistoricSiteKind
+RoguelikeToolkit.World.Core.Integration.HistoricSiteKind.Shrine = 3 -> RoguelikeToolkit.World.Core.Integration.HistoricSiteKind
+RoguelikeToolkit.World.Core.Integration.IHistoricalContext
+RoguelikeToolkit.World.Core.Integration.IHistoricalContext.GetSitesNear(RoguelikeToolkit.World.Core.Primitives.GeoCoord position, double radiusKm) -> System.Collections.Generic.IEnumerable<RoguelikeToolkit.World.Core.Integration.HistoricSite!>!
+RoguelikeToolkit.World.Core.Integration.IHistoricalContext.TryGetTileModifier(int worldTileIndex, out RoguelikeToolkit.World.Core.Integration.TileHistoryModifier modifier) -> bool
+RoguelikeToolkit.World.Core.Integration.IMaterializationStore
+RoguelikeToolkit.World.Core.Integration.IMaterializationStore.BindLocation(RoguelikeToolkit.World.Core.Topology.MapAddress address, string! locationId) -> void
+RoguelikeToolkit.World.Core.Integration.IMaterializationStore.GetBoundLocationId(RoguelikeToolkit.World.Core.Topology.MapAddress address) -> string?
+RoguelikeToolkit.World.Core.Integration.IMaterializationStore.SetOverride(RoguelikeToolkit.World.Core.Topology.MapAddress address, RoguelikeToolkit.World.Core.Integration.TileOverride! tileOverride) -> void
+RoguelikeToolkit.World.Core.Integration.IMaterializationStore.TryGetOverride(RoguelikeToolkit.World.Core.Topology.MapAddress address, out RoguelikeToolkit.World.Core.Integration.TileOverride? tileOverride) -> bool
+RoguelikeToolkit.World.Core.Integration.MaterializationStore
+RoguelikeToolkit.World.Core.Integration.MaterializationStore.BindLocation(RoguelikeToolkit.World.Core.Topology.MapAddress address, string! locationId) -> void
+RoguelikeToolkit.World.Core.Integration.MaterializationStore.GetBoundLocationId(RoguelikeToolkit.World.Core.Topology.MapAddress address) -> string?
+RoguelikeToolkit.World.Core.Integration.MaterializationStore.MaterializationStore() -> void
+RoguelikeToolkit.World.Core.Integration.MaterializationStore.SetOverride(RoguelikeToolkit.World.Core.Topology.MapAddress address, RoguelikeToolkit.World.Core.Integration.TileOverride! tileOverride) -> void
+RoguelikeToolkit.World.Core.Integration.MaterializationStore.TryGetOverride(RoguelikeToolkit.World.Core.Topology.MapAddress address, out RoguelikeToolkit.World.Core.Integration.TileOverride? tileOverride) -> bool
+RoguelikeToolkit.World.Core.Integration.QueryOptions
+RoguelikeToolkit.World.Core.Integration.QueryOptions.History.get -> RoguelikeToolkit.World.Core.Integration.IHistoricalContext?
+RoguelikeToolkit.World.Core.Integration.QueryOptions.History.init -> void
+RoguelikeToolkit.World.Core.Integration.QueryOptions.Materialized.get -> RoguelikeToolkit.World.Core.Integration.IMaterializationStore?
+RoguelikeToolkit.World.Core.Integration.QueryOptions.Materialized.init -> void
+RoguelikeToolkit.World.Core.Integration.QueryOptions.QueryOptions() -> void
+RoguelikeToolkit.World.Core.Integration.TileHistoryModifier
+RoguelikeToolkit.World.Core.Integration.TileHistoryModifier.DangerDelta -> float
+RoguelikeToolkit.World.Core.Integration.TileHistoryModifier.HabitabilityDelta -> float
+RoguelikeToolkit.World.Core.Integration.TileHistoryModifier.TileHistoryModifier() -> void
+RoguelikeToolkit.World.Core.Integration.TileOverride
+RoguelikeToolkit.World.Core.Integration.TileOverride.Biome.get -> RoguelikeToolkit.World.Core.Biomes.BiomeType?
+RoguelikeToolkit.World.Core.Integration.TileOverride.Biome.init -> void
+RoguelikeToolkit.World.Core.Integration.TileOverride.DangerLevel.get -> int?
+RoguelikeToolkit.World.Core.Integration.TileOverride.DangerLevel.init -> void
+RoguelikeToolkit.World.Core.Integration.TileOverride.TileOverride() -> void
+RoguelikeToolkit.World.Core.Lithosphere.CrustalProvince
+RoguelikeToolkit.World.Core.Lithosphere.CrustalProvince.Craton = 3 -> RoguelikeToolkit.World.Core.Lithosphere.CrustalProvince
+RoguelikeToolkit.World.Core.Lithosphere.CrustalProvince.OceanBasin = 0 -> RoguelikeToolkit.World.Core.Lithosphere.CrustalProvince
+RoguelikeToolkit.World.Core.Lithosphere.CrustalProvince.Orogen = 4 -> RoguelikeToolkit.World.Core.Lithosphere.CrustalProvince
+RoguelikeToolkit.World.Core.Lithosphere.CrustalProvince.Platform = 6 -> RoguelikeToolkit.World.Core.Lithosphere.CrustalProvince
+RoguelikeToolkit.World.Core.Lithosphere.CrustalProvince.Rift = 5 -> RoguelikeToolkit.World.Core.Lithosphere.CrustalProvince
+RoguelikeToolkit.World.Core.Lithosphere.CrustalProvince.SpreadingRidge = 1 -> RoguelikeToolkit.World.Core.Lithosphere.CrustalProvince
+RoguelikeToolkit.World.Core.Lithosphere.CrustalProvince.Subduction = 2 -> RoguelikeToolkit.World.Core.Lithosphere.CrustalProvince
+RoguelikeToolkit.World.Core.Lithosphere.Deposit
+RoguelikeToolkit.World.Core.Lithosphere.Deposit.Deposit(int id, RoguelikeToolkit.World.Core.Lithosphere.DepositType type, int tileIndex, float richness) -> void
+RoguelikeToolkit.World.Core.Lithosphere.Deposit.Id.get -> int
+RoguelikeToolkit.World.Core.Lithosphere.Deposit.Richness.get -> float
+RoguelikeToolkit.World.Core.Lithosphere.Deposit.Size.get -> RoguelikeToolkit.World.Core.Lithosphere.DepositSize
+RoguelikeToolkit.World.Core.Lithosphere.Deposit.TileIndex.get -> int
+RoguelikeToolkit.World.Core.Lithosphere.Deposit.Type.get -> RoguelikeToolkit.World.Core.Lithosphere.DepositType
+RoguelikeToolkit.World.Core.Lithosphere.DepositCatalog
+RoguelikeToolkit.World.Core.Lithosphere.DepositCatalog.AtTile(int tileIndex) -> System.Collections.Generic.List<RoguelikeToolkit.World.Core.Lithosphere.Deposit!>!
+RoguelikeToolkit.World.Core.Lithosphere.DepositCatalog.DepositCatalog() -> void
+RoguelikeToolkit.World.Core.Lithosphere.DepositCatalog.Deposits.get -> System.Collections.Generic.List<RoguelikeToolkit.World.Core.Lithosphere.Deposit!>!
+RoguelikeToolkit.World.Core.Lithosphere.DepositCatalogBuilder
+RoguelikeToolkit.World.Core.Lithosphere.DepositSize
+RoguelikeToolkit.World.Core.Lithosphere.DepositSize.Large = 2 -> RoguelikeToolkit.World.Core.Lithosphere.DepositSize
+RoguelikeToolkit.World.Core.Lithosphere.DepositSize.Medium = 1 -> RoguelikeToolkit.World.Core.Lithosphere.DepositSize
+RoguelikeToolkit.World.Core.Lithosphere.DepositSize.Rich = 3 -> RoguelikeToolkit.World.Core.Lithosphere.DepositSize
+RoguelikeToolkit.World.Core.Lithosphere.DepositSize.Small = 0 -> RoguelikeToolkit.World.Core.Lithosphere.DepositSize
+RoguelikeToolkit.World.Core.Lithosphere.DepositType
+RoguelikeToolkit.World.Core.Lithosphere.DepositType.Bauxite = 12 -> RoguelikeToolkit.World.Core.Lithosphere.DepositType
+RoguelikeToolkit.World.Core.Lithosphere.DepositType.Coal = 7 -> RoguelikeToolkit.World.Core.Lithosphere.DepositType
+RoguelikeToolkit.World.Core.Lithosphere.DepositType.Copper = 1 -> RoguelikeToolkit.World.Core.Lithosphere.DepositType
+RoguelikeToolkit.World.Core.Lithosphere.DepositType.Gas = 9 -> RoguelikeToolkit.World.Core.Lithosphere.DepositType
+RoguelikeToolkit.World.Core.Lithosphere.DepositType.Gems = 11 -> RoguelikeToolkit.World.Core.Lithosphere.DepositType
+RoguelikeToolkit.World.Core.Lithosphere.DepositType.Gold = 2 -> RoguelikeToolkit.World.Core.Lithosphere.DepositType
+RoguelikeToolkit.World.Core.Lithosphere.DepositType.Gypsum = 13 -> RoguelikeToolkit.World.Core.Lithosphere.DepositType
+RoguelikeToolkit.World.Core.Lithosphere.DepositType.Iron = 0 -> RoguelikeToolkit.World.Core.Lithosphere.DepositType
+RoguelikeToolkit.World.Core.Lithosphere.DepositType.LeadZinc = 5 -> RoguelikeToolkit.World.Core.Lithosphere.DepositType
+RoguelikeToolkit.World.Core.Lithosphere.DepositType.Oil = 8 -> RoguelikeToolkit.World.Core.Lithosphere.DepositType
+RoguelikeToolkit.World.Core.Lithosphere.DepositType.Salt = 10 -> RoguelikeToolkit.World.Core.Lithosphere.DepositType
+RoguelikeToolkit.World.Core.Lithosphere.DepositType.Silver = 3 -> RoguelikeToolkit.World.Core.Lithosphere.DepositType
+RoguelikeToolkit.World.Core.Lithosphere.DepositType.Tin = 4 -> RoguelikeToolkit.World.Core.Lithosphere.DepositType
+RoguelikeToolkit.World.Core.Lithosphere.DepositType.Uranium = 6 -> RoguelikeToolkit.World.Core.Lithosphere.DepositType
+RoguelikeToolkit.World.Core.Lithosphere.Geology
+RoguelikeToolkit.World.Core.Lithosphere.IslandChain
+RoguelikeToolkit.World.Core.Lithosphere.IslandChain.Anchor.get -> int
+RoguelikeToolkit.World.Core.Lithosphere.IslandChain.Length.get -> int
+RoguelikeToolkit.World.Core.Lithosphere.IslandChain.Positions.get -> System.Collections.Generic.IReadOnlyList<int>!
+RoguelikeToolkit.World.Core.Lithosphere.IslandChain.Tiles.get -> System.Collections.Generic.IReadOnlyList<int>!
+RoguelikeToolkit.World.Core.Lithosphere.IslandChainOptions
+RoguelikeToolkit.World.Core.Lithosphere.IslandChainOptions.BoundaryRings.get -> int
+RoguelikeToolkit.World.Core.Lithosphere.IslandChainOptions.BoundaryRings.set -> void
+RoguelikeToolkit.World.Core.Lithosphere.IslandChainOptions.DeepDepth.get -> int
+RoguelikeToolkit.World.Core.Lithosphere.IslandChainOptions.DeepDepth.set -> void
+RoguelikeToolkit.World.Core.Lithosphere.IslandChainOptions.DeepReach.get -> int
+RoguelikeToolkit.World.Core.Lithosphere.IslandChainOptions.DeepReach.set -> void
+RoguelikeToolkit.World.Core.Lithosphere.IslandChainOptions.GapDepth.get -> double
+RoguelikeToolkit.World.Core.Lithosphere.IslandChainOptions.GapDepth.set -> void
+RoguelikeToolkit.World.Core.Lithosphere.IslandChainOptions.IslandChainOptions() -> void
+RoguelikeToolkit.World.Core.Lithosphere.IslandChainOptions.MaxBead.get -> int
+RoguelikeToolkit.World.Core.Lithosphere.IslandChainOptions.MaxBead.set -> void
+RoguelikeToolkit.World.Core.Lithosphere.IslandChainOptions.MaxGap.get -> int
+RoguelikeToolkit.World.Core.Lithosphere.IslandChainOptions.MaxGap.set -> void
+RoguelikeToolkit.World.Core.Lithosphere.IslandChainOptions.MinBead.get -> int
+RoguelikeToolkit.World.Core.Lithosphere.IslandChainOptions.MinBead.set -> void
+RoguelikeToolkit.World.Core.Lithosphere.IslandChainOptions.MinGap.get -> int
+RoguelikeToolkit.World.Core.Lithosphere.IslandChainOptions.MinGap.set -> void
+RoguelikeToolkit.World.Core.Lithosphere.IslandChainOptions.MinLength.get -> int
+RoguelikeToolkit.World.Core.Lithosphere.IslandChainOptions.MinLength.set -> void
+RoguelikeToolkit.World.Core.Lithosphere.IslandChainOptions.MinTileCount.get -> int
+RoguelikeToolkit.World.Core.Lithosphere.IslandChainOptions.MinTileCount.set -> void
+RoguelikeToolkit.World.Core.Lithosphere.IslandChainStage
+RoguelikeToolkit.World.Core.Lithosphere.IslandChainStage.Execute(RoguelikeToolkit.World.Core.Topology.WorldMap! map) -> void
+RoguelikeToolkit.World.Core.Lithosphere.IslandChainStage.IslandChainStage() -> void
+RoguelikeToolkit.World.Core.Lithosphere.IslandChainStage.IslandChainStage(int seed) -> void
+RoguelikeToolkit.World.Core.Lithosphere.IslandChainStage.Name.get -> string!
+RoguelikeToolkit.World.Core.Lithosphere.IslandChainStage.Options.get -> RoguelikeToolkit.World.Core.Lithosphere.IslandChainOptions!
+RoguelikeToolkit.World.Core.Lithosphere.IslandChainStage.Options.set -> void
+RoguelikeToolkit.World.Core.Lithosphere.IslandChainStage.Order.get -> int
+RoguelikeToolkit.World.Core.Lithosphere.IslandChainStage.Reads.get -> System.Type![]!
+RoguelikeToolkit.World.Core.Lithosphere.IslandChainStage.ReadsOptional.get -> System.Type![]!
+RoguelikeToolkit.World.Core.Lithosphere.IslandChainStage.Seed.get -> int
+RoguelikeToolkit.World.Core.Lithosphere.IslandChainStage.Seed.set -> void
+RoguelikeToolkit.World.Core.Lithosphere.IslandChainStage.Writes.get -> System.Type![]!
+RoguelikeToolkit.World.Core.Localization.LocaleDataException
+RoguelikeToolkit.World.Core.Localization.LocaleDataException.LocaleDataException(string! message) -> void
+RoguelikeToolkit.World.Core.Localization.LocaleStore
+RoguelikeToolkit.World.Core.Localization.LocaleStore.DisplayName.get -> string!
+RoguelikeToolkit.World.Core.Localization.LocaleStore.Get(string! key) -> string!
+RoguelikeToolkit.World.Core.Localization.LocaleStore.Language.get -> string!
+RoguelikeToolkit.World.Core.Localization.LocaleStore.RightToLeft.get -> bool
+RoguelikeToolkit.World.Core.Names.CultureData
+RoguelikeToolkit.World.Core.Names.CultureData.Aliases.get -> System.Collections.Generic.List<string!>!
+RoguelikeToolkit.World.Core.Names.CultureData.Aliases.set -> void
+RoguelikeToolkit.World.Core.Names.CultureData.Banned.get -> System.Collections.Generic.List<string!>!
+RoguelikeToolkit.World.Core.Names.CultureData.Banned.set -> void
+RoguelikeToolkit.World.Core.Names.CultureData.ClanChance.get -> int
+RoguelikeToolkit.World.Core.Names.CultureData.ClanChance.set -> void
+RoguelikeToolkit.World.Core.Names.CultureData.Clans.get -> System.Collections.Generic.List<RoguelikeToolkit.World.Core.Names.MorphemeYaml!>!
+RoguelikeToolkit.World.Core.Names.CultureData.Clans.set -> void
+RoguelikeToolkit.World.Core.Names.CultureData.CompoundChance.get -> int
+RoguelikeToolkit.World.Core.Names.CultureData.CompoundChance.set -> void
+RoguelikeToolkit.World.Core.Names.CultureData.CultureData() -> void
+RoguelikeToolkit.World.Core.Names.CultureData.Descriptors.get -> System.Collections.Generic.List<RoguelikeToolkit.World.Core.Names.MorphemeYaml!>!
+RoguelikeToolkit.World.Core.Names.CultureData.Descriptors.set -> void
+RoguelikeToolkit.World.Core.Names.CultureData.DisplayName.get -> string!
+RoguelikeToolkit.World.Core.Names.CultureData.DisplayName.set -> void
+RoguelikeToolkit.World.Core.Names.CultureData.EpithetChance.get -> int
+RoguelikeToolkit.World.Core.Names.CultureData.EpithetChance.set -> void
+RoguelikeToolkit.World.Core.Names.CultureData.Epithets.get -> System.Collections.Generic.List<RoguelikeToolkit.World.Core.Names.MorphemeYaml!>!
+RoguelikeToolkit.World.Core.Names.CultureData.Epithets.set -> void
+RoguelikeToolkit.World.Core.Names.CultureData.FamilyAffixes.get -> System.Collections.Generic.List<RoguelikeToolkit.World.Core.Names.MorphemeYaml!>!
+RoguelikeToolkit.World.Core.Names.CultureData.FamilyAffixes.set -> void
+RoguelikeToolkit.World.Core.Names.CultureData.FamilyChance.get -> int
+RoguelikeToolkit.World.Core.Names.CultureData.FamilyChance.set -> void
+RoguelikeToolkit.World.Core.Names.CultureData.FamilyFirst.get -> bool
+RoguelikeToolkit.World.Core.Names.CultureData.FamilyFirst.set -> void
+RoguelikeToolkit.World.Core.Names.CultureData.FamilyReplacesPatronymic.get -> bool
+RoguelikeToolkit.World.Core.Names.CultureData.FamilyReplacesPatronymic.set -> void
+RoguelikeToolkit.World.Core.Names.CultureData.FamilySuffix.get -> bool
+RoguelikeToolkit.World.Core.Names.CultureData.FamilySuffix.set -> void
+RoguelikeToolkit.World.Core.Names.CultureData.GivenStems.get -> System.Collections.Generic.List<RoguelikeToolkit.World.Core.Names.MorphemeYaml!>!
+RoguelikeToolkit.World.Core.Names.CultureData.GivenStems.set -> void
+RoguelikeToolkit.World.Core.Names.CultureData.Key.get -> string!
+RoguelikeToolkit.World.Core.Names.CultureData.Key.set -> void
+RoguelikeToolkit.World.Core.Names.CultureData.LineageDefault.get -> string!
+RoguelikeToolkit.World.Core.Names.CultureData.LineageDefault.set -> void
+RoguelikeToolkit.World.Core.Names.CultureData.Nouns.get -> System.Collections.Generic.List<RoguelikeToolkit.World.Core.Names.MorphemeYaml!>!
+RoguelikeToolkit.World.Core.Names.CultureData.Nouns.set -> void
+RoguelikeToolkit.World.Core.Names.CultureData.Patronymic.get -> bool
+RoguelikeToolkit.World.Core.Names.CultureData.Patronymic.set -> void
+RoguelikeToolkit.World.Core.Names.CultureData.PatronymicDaughter.get -> string!
+RoguelikeToolkit.World.Core.Names.CultureData.PatronymicDaughter.set -> void
+RoguelikeToolkit.World.Core.Names.CultureData.PatronymicDaughterLatin.get -> string!
+RoguelikeToolkit.World.Core.Names.CultureData.PatronymicDaughterLatin.set -> void
+RoguelikeToolkit.World.Core.Names.CultureData.PatronymicPrefix.get -> bool
+RoguelikeToolkit.World.Core.Names.CultureData.PatronymicPrefix.set -> void
+RoguelikeToolkit.World.Core.Names.CultureData.PatronymicSon.get -> string!
+RoguelikeToolkit.World.Core.Names.CultureData.PatronymicSon.set -> void
+RoguelikeToolkit.World.Core.Names.CultureData.PatronymicSonLatin.get -> string!
+RoguelikeToolkit.World.Core.Names.CultureData.PatronymicSonLatin.set -> void
+RoguelikeToolkit.World.Core.Names.CultureData.PlaceFallback.get -> bool
+RoguelikeToolkit.World.Core.Names.CultureData.PlaceFallback.set -> void
+RoguelikeToolkit.World.Core.Names.CultureData.PlaceJoin.get -> string!
+RoguelikeToolkit.World.Core.Names.CultureData.PlaceJoin.set -> void
+RoguelikeToolkit.World.Core.Names.CultureData.PlaceMutation.get -> string!
+RoguelikeToolkit.World.Core.Names.CultureData.PlaceMutation.set -> void
+RoguelikeToolkit.World.Core.Names.CultureData.PlaceOrder.get -> string!
+RoguelikeToolkit.World.Core.Names.CultureData.PlaceOrder.set -> void
+RoguelikeToolkit.World.Core.Names.CultureData.Provenance.get -> string!
+RoguelikeToolkit.World.Core.Names.CultureData.Provenance.set -> void
+RoguelikeToolkit.World.Core.Names.CultureData.SecondStems.get -> System.Collections.Generic.List<RoguelikeToolkit.World.Core.Names.MorphemeYaml!>!
+RoguelikeToolkit.World.Core.Names.CultureData.SecondStems.set -> void
+RoguelikeToolkit.World.Core.Names.Cultures
+RoguelikeToolkit.World.Core.Names.FantasyNameGenerator
+RoguelikeToolkit.World.Core.Names.FantasyRaces
+RoguelikeToolkit.World.Core.Names.GeneratedName
+RoguelikeToolkit.World.Core.Names.GeneratedName.Culture.get -> string!
+RoguelikeToolkit.World.Core.Names.GeneratedName.Culture.init -> void
+RoguelikeToolkit.World.Core.Names.GeneratedName.GeneratedName() -> void
+RoguelikeToolkit.World.Core.Names.GeneratedName.Gloss.get -> string!
+RoguelikeToolkit.World.Core.Names.GeneratedName.Inspirations.get -> System.Collections.Generic.IReadOnlyList<string!>!
+RoguelikeToolkit.World.Core.Names.GeneratedName.Inspirations.init -> void
+RoguelikeToolkit.World.Core.Names.GeneratedName.Lineage.get -> string!
+RoguelikeToolkit.World.Core.Names.GeneratedName.Lineage.init -> void
+RoguelikeToolkit.World.Core.Names.GeneratedName.Parts.get -> System.Collections.Generic.IReadOnlyList<RoguelikeToolkit.World.Core.Names.NamePart!>!
+RoguelikeToolkit.World.Core.Names.GeneratedName.Parts.init -> void
+RoguelikeToolkit.World.Core.Names.GeneratedName.Provenance.get -> RoguelikeToolkit.World.Core.Names.NameProvenance!
+RoguelikeToolkit.World.Core.Names.GeneratedName.Provenance.init -> void
+RoguelikeToolkit.World.Core.Names.GeneratedName.Race.get -> string!
+RoguelikeToolkit.World.Core.Names.GeneratedName.Race.init -> void
+RoguelikeToolkit.World.Core.Names.GeneratedName.Seed.get -> int
+RoguelikeToolkit.World.Core.Names.GeneratedName.Seed.init -> void
+RoguelikeToolkit.World.Core.Names.GeneratedName.Text.get -> string!
+RoguelikeToolkit.World.Core.Names.GeneratedName.Text.init -> void
+RoguelikeToolkit.World.Core.Names.Lineages
+RoguelikeToolkit.World.Core.Names.MorphemeYaml
+RoguelikeToolkit.World.Core.Names.MorphemeYaml.Base.get -> string!
+RoguelikeToolkit.World.Core.Names.MorphemeYaml.Base.set -> void
+RoguelikeToolkit.World.Core.Names.MorphemeYaml.BaseLatin.get -> string!
+RoguelikeToolkit.World.Core.Names.MorphemeYaml.BaseLatin.set -> void
+RoguelikeToolkit.World.Core.Names.MorphemeYaml.FemForm.get -> string!
+RoguelikeToolkit.World.Core.Names.MorphemeYaml.FemForm.set -> void
+RoguelikeToolkit.World.Core.Names.MorphemeYaml.Form.get -> string!
+RoguelikeToolkit.World.Core.Names.MorphemeYaml.Form.set -> void
+RoguelikeToolkit.World.Core.Names.MorphemeYaml.Gloss.get -> string!
+RoguelikeToolkit.World.Core.Names.MorphemeYaml.Gloss.set -> void
+RoguelikeToolkit.World.Core.Names.MorphemeYaml.Latin.get -> string!
+RoguelikeToolkit.World.Core.Names.MorphemeYaml.Latin.set -> void
+RoguelikeToolkit.World.Core.Names.MorphemeYaml.MorphemeYaml() -> void
+RoguelikeToolkit.World.Core.Names.MorphemeYaml.Tags.get -> System.Collections.Generic.List<string!>!
+RoguelikeToolkit.World.Core.Names.MorphemeYaml.Tags.set -> void
+RoguelikeToolkit.World.Core.Names.NameDataException
+RoguelikeToolkit.World.Core.Names.NameDataException.NameDataException(System.Collections.Generic.IEnumerable<string!>! problems) -> void
+RoguelikeToolkit.World.Core.Names.NameDataException.Problems.get -> System.Collections.Generic.IReadOnlyList<string!>!
+RoguelikeToolkit.World.Core.Names.NameDataStore
+RoguelikeToolkit.World.Core.Names.NameDataStore.Aliases.get -> System.Collections.Generic.Dictionary<string!, string!>!
+RoguelikeToolkit.World.Core.Names.NameDataStore.Get(string! key, string! kind = "table", System.Collections.Generic.IEnumerable<string!>? extraAvailable = null) -> RoguelikeToolkit.World.Core.Names.CultureData!
+RoguelikeToolkit.World.Core.Names.NameDataStore.NameDataStore() -> void
+RoguelikeToolkit.World.Core.Names.NameDataStore.ResolveCulture(string! culture, System.Collections.Generic.IEnumerable<string!>? extraAvailable = null) -> RoguelikeToolkit.World.Core.Names.CultureData!
+RoguelikeToolkit.World.Core.Names.NameDataStore.ResolveRace(string! race, System.Collections.Generic.IEnumerable<string!>? extraAvailable = null) -> RoguelikeToolkit.World.Core.Names.CultureData!
+RoguelikeToolkit.World.Core.Names.NameDataStore.Tables.get -> System.Collections.Generic.Dictionary<string!, RoguelikeToolkit.World.Core.Names.CultureData!>!
+RoguelikeToolkit.World.Core.Names.NameLint
+RoguelikeToolkit.World.Core.Names.NamePart
+RoguelikeToolkit.World.Core.Names.NamePart.Form.get -> string!
+RoguelikeToolkit.World.Core.Names.NamePart.Form.init -> void
+RoguelikeToolkit.World.Core.Names.NamePart.Gloss.get -> string!
+RoguelikeToolkit.World.Core.Names.NamePart.Gloss.init -> void
+RoguelikeToolkit.World.Core.Names.NamePart.NamePart() -> void
+RoguelikeToolkit.World.Core.Names.NamePart.Role.get -> string!
+RoguelikeToolkit.World.Core.Names.NamePart.Role.init -> void
+RoguelikeToolkit.World.Core.Names.NamePartRoles
+RoguelikeToolkit.World.Core.Names.NameProvenance
+RoguelikeToolkit.World.Core.Names.NameProvenance.Inspiration.get -> string!
+RoguelikeToolkit.World.Core.Names.NameProvenance.Inspiration.init -> void
+RoguelikeToolkit.World.Core.Names.NameProvenance.NameProvenance() -> void
+RoguelikeToolkit.World.Core.Names.NameProvenance.Note.get -> string!
+RoguelikeToolkit.World.Core.Names.NameProvenance.Note.init -> void
+RoguelikeToolkit.World.Core.Names.NameScript
+RoguelikeToolkit.World.Core.Names.NameScript.Cyrillic = 3 -> RoguelikeToolkit.World.Core.Names.NameScript
+RoguelikeToolkit.World.Core.Names.NameScript.Hebrew = 2 -> RoguelikeToolkit.World.Core.Names.NameScript
+RoguelikeToolkit.World.Core.Names.NameScript.Latin = 1 -> RoguelikeToolkit.World.Core.Names.NameScript
+RoguelikeToolkit.World.Core.Names.NameScript.Native = 0 -> RoguelikeToolkit.World.Core.Names.NameScript
+RoguelikeToolkit.World.Core.Names.NameStyle
+RoguelikeToolkit.World.Core.Names.NameStyle.Culture.get -> string!
+RoguelikeToolkit.World.Core.Names.NameStyle.Culture.init -> void
+RoguelikeToolkit.World.Core.Names.NameStyle.Label.get -> string!
+RoguelikeToolkit.World.Core.Names.NameStyle.Label.init -> void
+RoguelikeToolkit.World.Core.Names.NameStyle.NameStyle(string! Race, string! Culture, string! TableKey, string! Label) -> void
+RoguelikeToolkit.World.Core.Names.NameStyle.Race.get -> string!
+RoguelikeToolkit.World.Core.Names.NameStyle.Race.init -> void
+RoguelikeToolkit.World.Core.Names.NameStyle.TableKey.get -> string!
+RoguelikeToolkit.World.Core.Names.NameStyle.TableKey.init -> void
+RoguelikeToolkit.World.Core.Names.NameThemes
+RoguelikeToolkit.World.Core.Names.PlaceContext
+RoguelikeToolkit.World.Core.Names.PlaceContext.Dangerous.get -> bool
+RoguelikeToolkit.World.Core.Names.PlaceContext.Dangerous.init -> void
+RoguelikeToolkit.World.Core.Names.PlaceContext.DarkForest.get -> bool
+RoguelikeToolkit.World.Core.Names.PlaceContext.DarkForest.init -> void
+RoguelikeToolkit.World.Core.Names.PlaceContext.HasDeposit.get -> bool
+RoguelikeToolkit.World.Core.Names.PlaceContext.HasDeposit.init -> void
+RoguelikeToolkit.World.Core.Names.PlaceContext.Highland.get -> bool
+RoguelikeToolkit.World.Core.Names.PlaceContext.Highland.init -> void
+RoguelikeToolkit.World.Core.Names.PlaceContext.Kind.get -> string!
+RoguelikeToolkit.World.Core.Names.PlaceContext.Kind.init -> void
+RoguelikeToolkit.World.Core.Names.PlaceContext.NearForest.get -> bool
+RoguelikeToolkit.World.Core.Names.PlaceContext.NearForest.init -> void
+RoguelikeToolkit.World.Core.Names.PlaceContext.NearWater.get -> bool
+RoguelikeToolkit.World.Core.Names.PlaceContext.NearWater.init -> void
+RoguelikeToolkit.World.Core.Names.PlaceContext.PlaceContext() -> void
+RoguelikeToolkit.World.Core.Names.PlaceContext.Valley.get -> bool
+RoguelikeToolkit.World.Core.Names.PlaceContext.Valley.init -> void
+RoguelikeToolkit.World.Core.Names.PlaceKinds
+RoguelikeToolkit.World.Core.Names.UnknownNameKeyException
+RoguelikeToolkit.World.Core.Names.UnknownNameKeyException.Available.get -> System.Collections.Generic.IReadOnlyList<string!>!
+RoguelikeToolkit.World.Core.Names.UnknownNameKeyException.Key.get -> string!
+RoguelikeToolkit.World.Core.Names.UnknownNameKeyException.Kind.get -> string!
+RoguelikeToolkit.World.Core.Names.UnknownNameKeyException.Suggestion.get -> string?
+RoguelikeToolkit.World.Core.Names.UnknownNameKeyException.UnknownNameKeyException(string! kind, string! key, System.Collections.Generic.IEnumerable<string!>! available) -> void
+RoguelikeToolkit.World.Core.PlanetParameters
+RoguelikeToolkit.World.Core.PlanetParameters.BandScale.get -> double
+RoguelikeToolkit.World.Core.PlanetParameters.Clone() -> RoguelikeToolkit.World.Core.PlanetParameters!
+RoguelikeToolkit.World.Core.PlanetParameters.Insolation.get -> RoguelikeToolkit.World.Core.IInsolationModel?
+RoguelikeToolkit.World.Core.PlanetParameters.Insolation.set -> void
+RoguelikeToolkit.World.Core.PlanetParameters.IsEarthBaseline.get -> bool
+RoguelikeToolkit.World.Core.PlanetParameters.ObliquityDegrees.get -> double
+RoguelikeToolkit.World.Core.PlanetParameters.ObliquityDegrees.set -> void
+RoguelikeToolkit.World.Core.PlanetParameters.PlanetParameters() -> void
+RoguelikeToolkit.World.Core.PlanetParameters.RotationRate.get -> double
+RoguelikeToolkit.World.Core.PlanetParameters.RotationRate.set -> void
+RoguelikeToolkit.World.Core.PlanetParameters.StellarFlux.get -> double
+RoguelikeToolkit.World.Core.PlanetParameters.StellarFlux.set -> void
+RoguelikeToolkit.World.Core.Primitives.DetMath
+RoguelikeToolkit.World.Core.Primitives.GeoCoord
+RoguelikeToolkit.World.Core.Primitives.GeoCoord.GeoCoord() -> void
+RoguelikeToolkit.World.Core.Primitives.GeoCoord.GeoCoord(double Latitude, double Longitude) -> void
+RoguelikeToolkit.World.Core.Primitives.GeoCoord.Latitude.get -> double
+RoguelikeToolkit.World.Core.Primitives.GeoCoord.Latitude.init -> void
+RoguelikeToolkit.World.Core.Primitives.GeoCoord.LatitudeRad.get -> double
+RoguelikeToolkit.World.Core.Primitives.GeoCoord.Longitude.get -> double
+RoguelikeToolkit.World.Core.Primitives.GeoCoord.Longitude.init -> void
+RoguelikeToolkit.World.Core.Primitives.GeoCoord.LongitudeRad.get -> double
+RoguelikeToolkit.World.Core.Primitives.Rng
+RoguelikeToolkit.World.Core.Primitives.Rng.Derive(int salt) -> RoguelikeToolkit.World.Core.Primitives.Rng
+RoguelikeToolkit.World.Core.Primitives.Rng.NextDouble() -> double
+RoguelikeToolkit.World.Core.Primitives.Rng.NextUInt() -> uint
+RoguelikeToolkit.World.Core.Primitives.Rng.NextUInt(uint max) -> uint
+RoguelikeToolkit.World.Core.Primitives.Rng.NextULong() -> ulong
+RoguelikeToolkit.World.Core.Primitives.Rng.Rng() -> void
+RoguelikeToolkit.World.Core.Primitives.Rng.Rng(ulong state) -> void
+RoguelikeToolkit.World.Core.Primitives.SphereNoise
+RoguelikeToolkit.World.Core.Primitives.TileOrdering
+RoguelikeToolkit.World.Core.Primitives.Vector2D
+RoguelikeToolkit.World.Core.Primitives.Vector2D.Vector2D() -> void
+RoguelikeToolkit.World.Core.Primitives.Vector2D.Vector2D(double X, double Y) -> void
+RoguelikeToolkit.World.Core.Primitives.Vector2D.X.get -> double
+RoguelikeToolkit.World.Core.Primitives.Vector2D.X.init -> void
+RoguelikeToolkit.World.Core.Primitives.Vector2D.Y.get -> double
+RoguelikeToolkit.World.Core.Primitives.Vector2D.Y.init -> void
+RoguelikeToolkit.World.Core.Primitives.Vector3D
+RoguelikeToolkit.World.Core.Primitives.Vector3D.Length.get -> double
+RoguelikeToolkit.World.Core.Primitives.Vector3D.Normalize() -> RoguelikeToolkit.World.Core.Primitives.Vector3D
+RoguelikeToolkit.World.Core.Primitives.Vector3D.ToGeoCoord() -> RoguelikeToolkit.World.Core.Primitives.GeoCoord
+RoguelikeToolkit.World.Core.Primitives.Vector3D.Vector3D() -> void
+RoguelikeToolkit.World.Core.Primitives.Vector3D.Vector3D(double X, double Y, double Z) -> void
+RoguelikeToolkit.World.Core.Primitives.Vector3D.X.get -> double
+RoguelikeToolkit.World.Core.Primitives.Vector3D.X.init -> void
+RoguelikeToolkit.World.Core.Primitives.Vector3D.Y.get -> double
+RoguelikeToolkit.World.Core.Primitives.Vector3D.Y.init -> void
+RoguelikeToolkit.World.Core.Primitives.Vector3D.Z.get -> double
+RoguelikeToolkit.World.Core.Primitives.Vector3D.Z.init -> void
+RoguelikeToolkit.World.Core.Queries.FeatureKind
+RoguelikeToolkit.World.Core.Queries.FeatureKind.Deposit = 4 -> RoguelikeToolkit.World.Core.Queries.FeatureKind
+RoguelikeToolkit.World.Core.Queries.FeatureKind.Glacier = 3 -> RoguelikeToolkit.World.Core.Queries.FeatureKind
+RoguelikeToolkit.World.Core.Queries.FeatureKind.Range = 2 -> RoguelikeToolkit.World.Core.Queries.FeatureKind
+RoguelikeToolkit.World.Core.Queries.FeatureKind.River = 0 -> RoguelikeToolkit.World.Core.Queries.FeatureKind
+RoguelikeToolkit.World.Core.Queries.FeatureKind.Site = 5 -> RoguelikeToolkit.World.Core.Queries.FeatureKind
+RoguelikeToolkit.World.Core.Queries.FeatureKind.WaterBody = 1 -> RoguelikeToolkit.World.Core.Queries.FeatureKind
+RoguelikeToolkit.World.Core.Queries.SpatialIndex
+RoguelikeToolkit.World.Core.Queries.SpatialIndex.AnyWithin(RoguelikeToolkit.World.Core.Primitives.Vector3D from, RoguelikeToolkit.World.Core.Queries.FeatureKind kind, double cosThreshold, int exceptTile = -1) -> bool
+RoguelikeToolkit.World.Core.Queries.SpatialIndex.NearestDeposit(RoguelikeToolkit.World.Core.Primitives.GeoCoord from, RoguelikeToolkit.World.Core.Lithosphere.DepositType? type = null) -> (int TileIndex, double DistanceKm)?
+RoguelikeToolkit.World.Core.Queries.SpatialIndex.NearestDeposit(RoguelikeToolkit.World.Core.Topology.MapAddress address, RoguelikeToolkit.World.Core.Lithosphere.DepositType? type = null) -> (int TileIndex, double DistanceKm)?
+RoguelikeToolkit.World.Core.Queries.SpatialIndex.NearestFeature(RoguelikeToolkit.World.Core.Primitives.GeoCoord from, RoguelikeToolkit.World.Core.Queries.FeatureKind kind) -> (int TileIndex, double DistanceKm)?
+RoguelikeToolkit.World.Core.Queries.SpatialIndex.NearestFeature(RoguelikeToolkit.World.Core.Topology.MapAddress address, RoguelikeToolkit.World.Core.Queries.FeatureKind kind) -> (int TileIndex, double DistanceKm)?
+RoguelikeToolkit.World.Core.Queries.SpatialIndex.NearestSite(RoguelikeToolkit.World.Core.Primitives.GeoCoord from, RoguelikeToolkit.World.Core.Sites.SiteKind kind) -> (RoguelikeToolkit.World.Core.Sites.PlacedSite! Site, double DistanceKm)?
+RoguelikeToolkit.World.Core.Queries.SpatialIndex.NearestSite(RoguelikeToolkit.World.Core.Topology.MapAddress address, RoguelikeToolkit.World.Core.Sites.SiteKind kind) -> (RoguelikeToolkit.World.Core.Sites.PlacedSite! Site, double DistanceKm)?
+RoguelikeToolkit.World.Core.Queries.SpatialIndex.SpatialIndex(RoguelikeToolkit.World.Core.Storage.WorldDataStore! store, RoguelikeToolkit.World.Core.Features.RiverCatalog? rivers = null, RoguelikeToolkit.World.Core.Features.WaterBodyCatalog? bodies = null, RoguelikeToolkit.World.Core.Features.RangeCatalog? ranges = null, RoguelikeToolkit.World.Core.Lithosphere.DepositCatalog? deposits = null, RoguelikeToolkit.World.Core.Sites.SiteCatalog? sites = null, System.Func<int, bool>? isWater = null, System.Func<int, bool>? isGlacier = null) -> void
+RoguelikeToolkit.World.Core.Queries.SpatialIndex.Store.get -> RoguelikeToolkit.World.Core.Storage.WorldDataStore!
+RoguelikeToolkit.World.Core.Queries.SpatialIndex.TilesOfKind(RoguelikeToolkit.World.Core.Queries.FeatureKind kind) -> System.Collections.Generic.IReadOnlyList<int>!
+RoguelikeToolkit.World.Core.Settlement.CitySiteFilter
+RoguelikeToolkit.World.Core.Settlement.CitySiteFilter.AllowedBiomes.get -> System.Collections.Generic.HashSet<RoguelikeToolkit.World.Core.Biomes.BiomeType>?
+RoguelikeToolkit.World.Core.Settlement.CitySiteFilter.AllowedBiomes.init -> void
+RoguelikeToolkit.World.Core.Settlement.CitySiteFilter.CitySiteFilter() -> void
+RoguelikeToolkit.World.Core.Settlement.CitySiteFilter.FreshWaterRadiusKm.get -> double
+RoguelikeToolkit.World.Core.Settlement.CitySiteFilter.FreshWaterRadiusKm.init -> void
+RoguelikeToolkit.World.Core.Settlement.CitySiteFilter.MaxDanger.get -> byte
+RoguelikeToolkit.World.Core.Settlement.CitySiteFilter.MaxDanger.init -> void
+RoguelikeToolkit.World.Core.Settlement.CitySiteFilter.MaxElevation.get -> float
+RoguelikeToolkit.World.Core.Settlement.CitySiteFilter.MaxElevation.init -> void
+RoguelikeToolkit.World.Core.Settlement.CitySiteFilter.MinElevation.get -> float
+RoguelikeToolkit.World.Core.Settlement.CitySiteFilter.MinElevation.init -> void
+RoguelikeToolkit.World.Core.Settlement.CitySiteFilter.RequireFreshWater.get -> bool
+RoguelikeToolkit.World.Core.Settlement.CitySiteFilter.RequireFreshWater.init -> void
+RoguelikeToolkit.World.Core.Settlement.CitySiteFilter.TopN.get -> int
+RoguelikeToolkit.World.Core.Settlement.CitySiteFilter.TopN.init -> void
+RoguelikeToolkit.World.Core.Settlement.CitySiteScore
+RoguelikeToolkit.World.Core.Settlement.CitySiteScore.Biome.get -> RoguelikeToolkit.World.Core.Biomes.BiomeType
+RoguelikeToolkit.World.Core.Settlement.CitySiteScore.Biome.init -> void
+RoguelikeToolkit.World.Core.Settlement.CitySiteScore.CitySiteScore() -> void
+RoguelikeToolkit.World.Core.Settlement.CitySiteScore.Coord.get -> RoguelikeToolkit.World.Core.Primitives.GeoCoord
+RoguelikeToolkit.World.Core.Settlement.CitySiteScore.Coord.init -> void
+RoguelikeToolkit.World.Core.Settlement.CitySiteScore.Elevation.get -> float
+RoguelikeToolkit.World.Core.Settlement.CitySiteScore.Elevation.init -> void
+RoguelikeToolkit.World.Core.Settlement.CitySiteScore.Reasons.get -> string!
+RoguelikeToolkit.World.Core.Settlement.CitySiteScore.Reasons.init -> void
+RoguelikeToolkit.World.Core.Settlement.CitySiteScore.Score.get -> double
+RoguelikeToolkit.World.Core.Settlement.CitySiteScore.Score.init -> void
+RoguelikeToolkit.World.Core.Settlement.CitySiteScore.TileIndex.get -> int
+RoguelikeToolkit.World.Core.Settlement.CitySiteScore.TileIndex.init -> void
+RoguelikeToolkit.World.Core.Settlement.CitySiteScorer
+RoguelikeToolkit.World.Core.Settlement.LandActivity
+RoguelikeToolkit.World.Core.Settlement.LandActivity.Fishing = 16 -> RoguelikeToolkit.World.Core.Settlement.LandActivity
+RoguelikeToolkit.World.Core.Settlement.LandActivity.Foraging = 4 -> RoguelikeToolkit.World.Core.Settlement.LandActivity
+RoguelikeToolkit.World.Core.Settlement.LandActivity.Grazing = 1 -> RoguelikeToolkit.World.Core.Settlement.LandActivity
+RoguelikeToolkit.World.Core.Settlement.LandActivity.Hunting = 2 -> RoguelikeToolkit.World.Core.Settlement.LandActivity
+RoguelikeToolkit.World.Core.Settlement.LandActivity.Logging = 8 -> RoguelikeToolkit.World.Core.Settlement.LandActivity
+RoguelikeToolkit.World.Core.Settlement.LandActivity.None = 0 -> RoguelikeToolkit.World.Core.Settlement.LandActivity
+RoguelikeToolkit.World.Core.Settlement.LandCapacity
+RoguelikeToolkit.World.Core.Settlement.LandCapacityInfo
+RoguelikeToolkit.World.Core.Settlement.LandCapacityInfo.Arable -> byte
+RoguelikeToolkit.World.Core.Settlement.LandCapacityInfo.Fish -> byte
+RoguelikeToolkit.World.Core.Settlement.LandCapacityInfo.Game -> byte
+RoguelikeToolkit.World.Core.Settlement.LandCapacityInfo.LandCapacityInfo() -> void
+RoguelikeToolkit.World.Core.Settlement.LandCapacityInfo.Pasture -> byte
+RoguelikeToolkit.World.Core.Settlement.LandCapacityInfo.Timber -> byte
+RoguelikeToolkit.World.Core.Settlement.LandCapacityLayer
+RoguelikeToolkit.World.Core.Settlement.LandCapacityLayer.LandCapacityLayer(RoguelikeToolkit.World.Core.Storage.WorldDataStore! store) -> void
+RoguelikeToolkit.World.Core.Settlement.LandCapacityStage
+RoguelikeToolkit.World.Core.Settlement.LandCapacityStage.Execute(RoguelikeToolkit.World.Core.Topology.WorldMap! map) -> void
+RoguelikeToolkit.World.Core.Settlement.LandCapacityStage.LandCapacityStage() -> void
+RoguelikeToolkit.World.Core.Settlement.LandCapacityStage.Name.get -> string!
+RoguelikeToolkit.World.Core.Settlement.LandCapacityStage.Order.get -> int
+RoguelikeToolkit.World.Core.Settlement.LandCapacityStage.Reads.get -> System.Type![]!
+RoguelikeToolkit.World.Core.Settlement.LandCapacityStage.ReadsOptional.get -> System.Type![]!
+RoguelikeToolkit.World.Core.Settlement.LandCapacityStage.Writes.get -> System.Type![]!
+RoguelikeToolkit.World.Core.Settlement.LandSite
+RoguelikeToolkit.World.Core.Settlement.LandSite.Biome.get -> RoguelikeToolkit.World.Core.Biomes.BiomeType
+RoguelikeToolkit.World.Core.Settlement.LandSite.Biome.init -> void
+RoguelikeToolkit.World.Core.Settlement.LandSite.FreshWater.get -> bool
+RoguelikeToolkit.World.Core.Settlement.LandSite.FreshWater.init -> void
+RoguelikeToolkit.World.Core.Settlement.LandSite.Height.get -> double
+RoguelikeToolkit.World.Core.Settlement.LandSite.Height.init -> void
+RoguelikeToolkit.World.Core.Settlement.LandSite.LandSite() -> void
+RoguelikeToolkit.World.Core.Settlement.LandSite.LandSite(RoguelikeToolkit.World.Core.Biomes.BiomeType Biome, double Height, double Temperature, double Precipitation, double Slope, bool FreshWater, bool OnFreshWater, bool Saline, double OceanHeat, bool NextToLand, RoguelikeToolkit.World.Core.Climate.SeaIceKind SeaIce = RoguelikeToolkit.World.Core.Climate.SeaIceKind.None) -> void
+RoguelikeToolkit.World.Core.Settlement.LandSite.NextToLand.get -> bool
+RoguelikeToolkit.World.Core.Settlement.LandSite.NextToLand.init -> void
+RoguelikeToolkit.World.Core.Settlement.LandSite.OceanHeat.get -> double
+RoguelikeToolkit.World.Core.Settlement.LandSite.OceanHeat.init -> void
+RoguelikeToolkit.World.Core.Settlement.LandSite.OnFreshWater.get -> bool
+RoguelikeToolkit.World.Core.Settlement.LandSite.OnFreshWater.init -> void
+RoguelikeToolkit.World.Core.Settlement.LandSite.Precipitation.get -> double
+RoguelikeToolkit.World.Core.Settlement.LandSite.Precipitation.init -> void
+RoguelikeToolkit.World.Core.Settlement.LandSite.Saline.get -> bool
+RoguelikeToolkit.World.Core.Settlement.LandSite.Saline.init -> void
+RoguelikeToolkit.World.Core.Settlement.LandSite.SeaIce.get -> RoguelikeToolkit.World.Core.Climate.SeaIceKind
+RoguelikeToolkit.World.Core.Settlement.LandSite.SeaIce.init -> void
+RoguelikeToolkit.World.Core.Settlement.LandSite.Slope.get -> double
+RoguelikeToolkit.World.Core.Settlement.LandSite.Slope.init -> void
+RoguelikeToolkit.World.Core.Settlement.LandSite.Temperature.get -> double
+RoguelikeToolkit.World.Core.Settlement.LandSite.Temperature.init -> void
+RoguelikeToolkit.World.Core.Settlement.LandUseId
+RoguelikeToolkit.World.Core.Settlement.LandUseInfo
+RoguelikeToolkit.World.Core.Settlement.LandUseInfo.Activities -> byte
+RoguelikeToolkit.World.Core.Settlement.LandUseInfo.Intensity -> byte
+RoguelikeToolkit.World.Core.Settlement.LandUseInfo.LandUseInfo() -> void
+RoguelikeToolkit.World.Core.Settlement.LandUseInfo.Use -> byte
+RoguelikeToolkit.World.Core.Settlement.LandUseLayer
+RoguelikeToolkit.World.Core.Settlement.LandUseLayer.LandUseLayer(RoguelikeToolkit.World.Core.Storage.WorldDataStore! store) -> void
+RoguelikeToolkit.World.Core.Settlement.LandUseResolveStage
+RoguelikeToolkit.World.Core.Settlement.LandUseResolveStage.Execute(RoguelikeToolkit.World.Core.Topology.WorldMap! map) -> void
+RoguelikeToolkit.World.Core.Settlement.LandUseResolveStage.LandUseResolveStage() -> void
+RoguelikeToolkit.World.Core.Settlement.LandUseResolveStage.Name.get -> string!
+RoguelikeToolkit.World.Core.Settlement.LandUseResolveStage.Order.get -> int
+RoguelikeToolkit.World.Core.Settlement.LandUseResolveStage.Reads.get -> System.Type![]!
+RoguelikeToolkit.World.Core.Settlement.LandUseResolveStage.ReadsOptional.get -> System.Type![]!
+RoguelikeToolkit.World.Core.Settlement.LandUseResolveStage.Writes.get -> System.Type![]!
+RoguelikeToolkit.World.Core.Settlement.SettlementScoring
+RoguelikeToolkit.World.Core.Sites.ISiteInjector
+RoguelikeToolkit.World.Core.Sites.ISiteInjector.Id.get -> string!
+RoguelikeToolkit.World.Core.Sites.ISiteInjector.Inject(RoguelikeToolkit.World.Core.Sites.SiteInjectionContext! context) -> System.Collections.Generic.IReadOnlyList<RoguelikeToolkit.World.Core.Sites.PlacedSite!>!
+RoguelikeToolkit.World.Core.Sites.ISiteInjector.Order.get -> int
+RoguelikeToolkit.World.Core.Sites.ISiteInjector.Tier.get -> RoguelikeToolkit.World.Core.Sites.SiteTier
+RoguelikeToolkit.World.Core.Sites.LandmarkInjector
+RoguelikeToolkit.World.Core.Sites.LandmarkInjector.LandmarkInjector(int maxSites = 1, int order = 30, RoguelikeToolkit.World.Core.Sites.SiteTier tier = RoguelikeToolkit.World.Core.Sites.SiteTier.Both, string? id = null) -> void
+RoguelikeToolkit.World.Core.Sites.MineInjector
+RoguelikeToolkit.World.Core.Sites.MineInjector.Deposits.get -> RoguelikeToolkit.World.Core.Lithosphere.DepositCatalog!
+RoguelikeToolkit.World.Core.Sites.MineInjector.MineInjector(RoguelikeToolkit.World.Core.Lithosphere.DepositCatalog! deposits, int maxSites = 2, int order = 20, RoguelikeToolkit.World.Core.Sites.SiteTier tier = RoguelikeToolkit.World.Core.Sites.SiteTier.Both, string? id = null) -> void
+RoguelikeToolkit.World.Core.Sites.PlacedSite
+RoguelikeToolkit.World.Core.Sites.PlacedSite.CellIndex.get -> int
+RoguelikeToolkit.World.Core.Sites.PlacedSite.CellIndex.init -> void
+RoguelikeToolkit.World.Core.Sites.PlacedSite.DangerDelta.get -> float
+RoguelikeToolkit.World.Core.Sites.PlacedSite.DangerDelta.init -> void
+RoguelikeToolkit.World.Core.Sites.PlacedSite.FootprintRadius.get -> int
+RoguelikeToolkit.World.Core.Sites.PlacedSite.FootprintRadius.init -> void
+RoguelikeToolkit.World.Core.Sites.PlacedSite.HabitabilityDelta.get -> float
+RoguelikeToolkit.World.Core.Sites.PlacedSite.HabitabilityDelta.init -> void
+RoguelikeToolkit.World.Core.Sites.PlacedSite.InjectorId.get -> string!
+RoguelikeToolkit.World.Core.Sites.PlacedSite.InjectorId.init -> void
+RoguelikeToolkit.World.Core.Sites.PlacedSite.Kind.get -> RoguelikeToolkit.World.Core.Sites.SiteKind
+RoguelikeToolkit.World.Core.Sites.PlacedSite.Kind.init -> void
+RoguelikeToolkit.World.Core.Sites.PlacedSite.NameSeed.get -> uint
+RoguelikeToolkit.World.Core.Sites.PlacedSite.NameSeed.init -> void
+RoguelikeToolkit.World.Core.Sites.PlacedSite.PlacedSite() -> void
+RoguelikeToolkit.World.Core.Sites.PlacedSite.Tags.get -> System.Collections.Generic.IReadOnlyList<string!>!
+RoguelikeToolkit.World.Core.Sites.PlacedSite.Tags.init -> void
+RoguelikeToolkit.World.Core.Sites.PlacedSite.TileIndex.get -> int
+RoguelikeToolkit.World.Core.Sites.PlacedSite.WithInjector(string! injectorId) -> RoguelikeToolkit.World.Core.Sites.PlacedSite!
+RoguelikeToolkit.World.Core.Sites.RuinInjector
+RoguelikeToolkit.World.Core.Sites.RuinInjector.RuinInjector(int maxSites = 2, int order = 10, RoguelikeToolkit.World.Core.Sites.SiteTier tier = RoguelikeToolkit.World.Core.Sites.SiteTier.Both, string? id = null) -> void
+RoguelikeToolkit.World.Core.Sites.SettlementInjector
+RoguelikeToolkit.World.Core.Sites.SettlementInjector.SettlementInjector(int maxSites = 3, int order = 0, RoguelikeToolkit.World.Core.Sites.SiteTier tier = RoguelikeToolkit.World.Core.Sites.SiteTier.Both, string? id = null) -> void
+RoguelikeToolkit.World.Core.Sites.SiteCatalog
+RoguelikeToolkit.World.Core.Sites.SiteCatalog.Add(RoguelikeToolkit.World.Core.Sites.PlacedSite! site) -> void
+RoguelikeToolkit.World.Core.Sites.SiteCatalog.AtCell(int cellIndex) -> System.Collections.Generic.IReadOnlyList<RoguelikeToolkit.World.Core.Sites.PlacedSite!>!
+RoguelikeToolkit.World.Core.Sites.SiteCatalog.GetCellModifier(int cellIndex) -> (float DangerDelta, float HabitabilityDelta)
+RoguelikeToolkit.World.Core.Sites.SiteCatalog.OfKind(RoguelikeToolkit.World.Core.Sites.SiteKind kind) -> System.Collections.Generic.IReadOnlyList<RoguelikeToolkit.World.Core.Sites.PlacedSite!>!
+RoguelikeToolkit.World.Core.Sites.SiteCatalog.SiteCatalog() -> void
+RoguelikeToolkit.World.Core.Sites.SiteCatalog.Sites.get -> System.Collections.Generic.List<RoguelikeToolkit.World.Core.Sites.PlacedSite!>!
+RoguelikeToolkit.World.Core.Sites.SiteInjectionContext
+RoguelikeToolkit.World.Core.Sites.SiteInjectionContext.Address.get -> RoguelikeToolkit.World.Core.Topology.MapAddress
+RoguelikeToolkit.World.Core.Sites.SiteInjectionContext.Bounds.get -> RoguelikeToolkit.World.Core.Topology.MapBounds
+RoguelikeToolkit.World.Core.Sites.SiteInjectionContext.CellCount.get -> int
+RoguelikeToolkit.World.Core.Sites.SiteInjectionContext.ExistingSites.get -> System.Collections.Generic.IReadOnlyList<RoguelikeToolkit.World.Core.Sites.PlacedSite!>!
+RoguelikeToolkit.World.Core.Sites.SiteInjectionContext.GetAdjacent(int cell, System.Span<int> neighbors) -> int
+RoguelikeToolkit.World.Core.Sites.SiteInjectionContext.GetBiome(int cell) -> RoguelikeToolkit.World.Core.Biomes.BiomeType
+RoguelikeToolkit.World.Core.Sites.SiteInjectionContext.GetDanger(int cell) -> byte
+RoguelikeToolkit.World.Core.Sites.SiteInjectionContext.GetElevation(int cell) -> float
+RoguelikeToolkit.World.Core.Sites.SiteInjectionContext.GetMoisture(int cell) -> float
+RoguelikeToolkit.World.Core.Sites.SiteInjectionContext.IsRiverChannel(int cell) -> bool
+RoguelikeToolkit.World.Core.Sites.SiteInjectionContext.IsWater(int cell) -> bool
+RoguelikeToolkit.World.Core.Sites.SiteInjectionContext.LandCellsByElevationDescending() -> int[]!
+RoguelikeToolkit.World.Core.Sites.SiteInjectionContext.Local.get -> RoguelikeToolkit.World.Core.Hierarchy.LocalMapHandle?
+RoguelikeToolkit.World.Core.Sites.SiteInjectionContext.Parent.get -> RoguelikeToolkit.World.Core.Hierarchy.ParentContext!
+RoguelikeToolkit.World.Core.Sites.SiteInjectionContext.Region.get -> RoguelikeToolkit.World.Core.Hierarchy.RegionHandle?
+RoguelikeToolkit.World.Core.Sites.SiteInjectionContext.Rng -> RoguelikeToolkit.World.Core.Primitives.Rng
+RoguelikeToolkit.World.Core.Sites.SiteInjectionContext.SiteInjectionContext(RoguelikeToolkit.World.Core.Topology.MapAddress address, RoguelikeToolkit.World.Core.Sites.SiteTier tier, RoguelikeToolkit.World.Core.Hierarchy.ParentContext! parent, RoguelikeToolkit.World.Core.Topology.MapBounds bounds, RoguelikeToolkit.World.Core.Hierarchy.RegionHandle? region, RoguelikeToolkit.World.Core.Hierarchy.LocalMapHandle? local, System.Collections.Generic.IReadOnlyList<RoguelikeToolkit.World.Core.Sites.PlacedSite!>! existingSites, RoguelikeToolkit.World.Core.Primitives.Rng rng) -> void
+RoguelikeToolkit.World.Core.Sites.SiteInjectionContext.Tier.get -> RoguelikeToolkit.World.Core.Sites.SiteTier
+RoguelikeToolkit.World.Core.Sites.SiteInjectorBase
+RoguelikeToolkit.World.Core.Sites.SiteInjectorBase.Id.get -> string!
+RoguelikeToolkit.World.Core.Sites.SiteInjectorBase.MaxSites.get -> int
+RoguelikeToolkit.World.Core.Sites.SiteInjectorBase.Order.get -> int
+RoguelikeToolkit.World.Core.Sites.SiteInjectorBase.SiteInjectorBase(string? id, string! defaultId, int order, RoguelikeToolkit.World.Core.Sites.SiteTier tier, int maxSites) -> void
+RoguelikeToolkit.World.Core.Sites.SiteInjectorBase.Tier.get -> RoguelikeToolkit.World.Core.Sites.SiteTier
+RoguelikeToolkit.World.Core.Sites.SiteInjectorPipeline
+RoguelikeToolkit.World.Core.Sites.SiteKind
+RoguelikeToolkit.World.Core.Sites.SiteKind.City = 1 -> RoguelikeToolkit.World.Core.Sites.SiteKind
+RoguelikeToolkit.World.Core.Sites.SiteKind.Landmark = 3 -> RoguelikeToolkit.World.Core.Sites.SiteKind
+RoguelikeToolkit.World.Core.Sites.SiteKind.Mine = 2 -> RoguelikeToolkit.World.Core.Sites.SiteKind
+RoguelikeToolkit.World.Core.Sites.SiteKind.Ruin = 0 -> RoguelikeToolkit.World.Core.Sites.SiteKind
+RoguelikeToolkit.World.Core.Sites.SiteTier
+RoguelikeToolkit.World.Core.Sites.SiteTier.Both = 2 -> RoguelikeToolkit.World.Core.Sites.SiteTier
+RoguelikeToolkit.World.Core.Sites.SiteTier.Local = 1 -> RoguelikeToolkit.World.Core.Sites.SiteTier
+RoguelikeToolkit.World.Core.Sites.SiteTier.Region = 0 -> RoguelikeToolkit.World.Core.Sites.SiteTier
+RoguelikeToolkit.World.Core.Storage.IMapLayer<T>
+RoguelikeToolkit.World.Core.Storage.IMapLayer<T>.GetValue(RoguelikeToolkit.World.Core.Primitives.GeoCoord coord) -> T
+RoguelikeToolkit.World.Core.Storage.IMapLayer<T>.Store.get -> RoguelikeToolkit.World.Core.Storage.WorldDataStore!
+RoguelikeToolkit.World.Core.Storage.StoreLayer<T>
+RoguelikeToolkit.World.Core.Storage.StoreLayer<T>.Dispose() -> void
+RoguelikeToolkit.World.Core.Storage.StoreLayer<T>.GetValue(RoguelikeToolkit.World.Core.Primitives.GeoCoord coord) -> T
+RoguelikeToolkit.World.Core.Storage.StoreLayer<T>.Store.get -> RoguelikeToolkit.World.Core.Storage.WorldDataStore!
+RoguelikeToolkit.World.Core.Storage.StoreLayer<T>.StoreLayer(RoguelikeToolkit.World.Core.Storage.WorldDataStore! store) -> void
+RoguelikeToolkit.World.Core.Storage.UserEditFlags
+RoguelikeToolkit.World.Core.Storage.UserEditFlags.None = 0 -> RoguelikeToolkit.World.Core.Storage.UserEditFlags
+RoguelikeToolkit.World.Core.Storage.UserEditFlags.PinBiome = 2 -> RoguelikeToolkit.World.Core.Storage.UserEditFlags
+RoguelikeToolkit.World.Core.Storage.UserEditFlags.PinHeight = 1 -> RoguelikeToolkit.World.Core.Storage.UserEditFlags
+RoguelikeToolkit.World.Core.Storage.UserEditFlags.PinLandUse = 4 -> RoguelikeToolkit.World.Core.Storage.UserEditFlags
+RoguelikeToolkit.World.Core.Storage.UserEditInfo
+RoguelikeToolkit.World.Core.Storage.UserEditInfo.Flags -> RoguelikeToolkit.World.Core.Storage.UserEditFlags
+RoguelikeToolkit.World.Core.Storage.UserEditInfo.HeightDelta -> float
+RoguelikeToolkit.World.Core.Storage.UserEditInfo.IsEmpty.get -> bool
+RoguelikeToolkit.World.Core.Storage.UserEditInfo.LandActivities -> byte
+RoguelikeToolkit.World.Core.Storage.UserEditInfo.LandUse -> byte
+RoguelikeToolkit.World.Core.Storage.UserEditInfo.PinBiome -> RoguelikeToolkit.World.Core.Biomes.BiomeType
+RoguelikeToolkit.World.Core.Storage.UserEditInfo.PinHeight -> float
+RoguelikeToolkit.World.Core.Storage.UserEditInfo.PrecipitationDelta -> float
+RoguelikeToolkit.World.Core.Storage.UserEditInfo.TemperatureDelta -> float
+RoguelikeToolkit.World.Core.Storage.UserEditInfo.UserEditInfo() -> void
+RoguelikeToolkit.World.Core.Storage.UserEditLayer
+RoguelikeToolkit.World.Core.Storage.UserEditLayer.UserEditLayer(RoguelikeToolkit.World.Core.Storage.WorldDataStore! store) -> void
+RoguelikeToolkit.World.Core.Storage.WorldDataStore
+RoguelikeToolkit.World.Core.Storage.WorldDataStore.Allocate() -> void
+RoguelikeToolkit.World.Core.Storage.WorldDataStore.ClearLayer(System.Type! type) -> void
+RoguelikeToolkit.World.Core.Storage.WorldDataStore.Dispose() -> void
+RoguelikeToolkit.World.Core.Storage.WorldDataStore.GetAdjacent(int index, System.Span<int> neighbors) -> int
+RoguelikeToolkit.World.Core.Storage.WorldDataStore.GetGeoCoord(int index) -> RoguelikeToolkit.World.Core.Primitives.GeoCoord
+RoguelikeToolkit.World.Core.Storage.WorldDataStore.GetRef<T>(int index) -> T
+RoguelikeToolkit.World.Core.Storage.WorldDataStore.GetSpan<T>() -> System.Span<T>
+RoguelikeToolkit.World.Core.Storage.WorldDataStore.GetTable<T>() -> System.Span<T>
+RoguelikeToolkit.World.Core.Storage.WorldDataStore.GetTileIndex(RoguelikeToolkit.World.Core.Primitives.GeoCoord coord) -> int
+RoguelikeToolkit.World.Core.Storage.WorldDataStore.GetTileIndexExact(RoguelikeToolkit.World.Core.Primitives.GeoCoord coord) -> int
+RoguelikeToolkit.World.Core.Storage.WorldDataStore.GetTileVectors() -> System.ReadOnlySpan<RoguelikeToolkit.World.Core.Primitives.Vector3D>
+RoguelikeToolkit.World.Core.Storage.WorldDataStore.IsLayerRegistered(System.Type! type) -> bool
+RoguelikeToolkit.World.Core.Storage.WorldDataStore.IsLayerRegistered<T>() -> bool
+RoguelikeToolkit.World.Core.Storage.WorldDataStore.IsTableRegistered<T>() -> bool
+RoguelikeToolkit.World.Core.Storage.WorldDataStore.RegisterLayer<T>() -> void
+RoguelikeToolkit.World.Core.Storage.WorldDataStore.RegisterTable<T>(int length) -> void
+RoguelikeToolkit.World.Core.Storage.WorldDataStore.Size.get -> int
+RoguelikeToolkit.World.Core.Storage.WorldDataStore.TileCount.get -> int
+RoguelikeToolkit.World.Core.Storage.WorldDataStore.WorldDataStore(int size, string? filePath = null) -> void
+RoguelikeToolkit.World.Core.Tectonics.CrustType
+RoguelikeToolkit.World.Core.Tectonics.CrustType.Continental = 0 -> RoguelikeToolkit.World.Core.Tectonics.CrustType
+RoguelikeToolkit.World.Core.Tectonics.CrustType.Oceanic = 1 -> RoguelikeToolkit.World.Core.Tectonics.CrustType
+RoguelikeToolkit.World.Core.Tectonics.IPlatePartitioner
+RoguelikeToolkit.World.Core.Tectonics.IPlatePartitioner.Partition(RoguelikeToolkit.World.Core.Storage.WorldDataStore! store, System.ReadOnlySpan<RoguelikeToolkit.World.Core.Primitives.Vector3D> positions, System.ReadOnlySpan<RoguelikeToolkit.World.Core.Primitives.Vector3D> seeds, System.Span<int> plateIds, int seed) -> void
+RoguelikeToolkit.World.Core.Tectonics.NoisyFloodFillPlatePartitioner
+RoguelikeToolkit.World.Core.Tectonics.NoisyFloodFillPlatePartitioner.NoiseFrequency.get -> double
+RoguelikeToolkit.World.Core.Tectonics.NoisyFloodFillPlatePartitioner.NoiseFrequency.set -> void
+RoguelikeToolkit.World.Core.Tectonics.NoisyFloodFillPlatePartitioner.NoisyFloodFillPlatePartitioner() -> void
+RoguelikeToolkit.World.Core.Tectonics.NoisyFloodFillPlatePartitioner.Octaves.get -> int
+RoguelikeToolkit.World.Core.Tectonics.NoisyFloodFillPlatePartitioner.Octaves.set -> void
+RoguelikeToolkit.World.Core.Tectonics.NoisyFloodFillPlatePartitioner.Partition(RoguelikeToolkit.World.Core.Storage.WorldDataStore! store, System.ReadOnlySpan<RoguelikeToolkit.World.Core.Primitives.Vector3D> positions, System.ReadOnlySpan<RoguelikeToolkit.World.Core.Primitives.Vector3D> seeds, System.Span<int> plateIds, int seed) -> void
+RoguelikeToolkit.World.Core.Tectonics.NoisyFloodFillPlatePartitioner.Warp.get -> double
+RoguelikeToolkit.World.Core.Tectonics.NoisyFloodFillPlatePartitioner.Warp.set -> void
+RoguelikeToolkit.World.Core.Tectonics.PlateBoundaryType
+RoguelikeToolkit.World.Core.Tectonics.PlateBoundaryType.Convergent = 1 -> RoguelikeToolkit.World.Core.Tectonics.PlateBoundaryType
+RoguelikeToolkit.World.Core.Tectonics.PlateBoundaryType.Divergent = 2 -> RoguelikeToolkit.World.Core.Tectonics.PlateBoundaryType
+RoguelikeToolkit.World.Core.Tectonics.PlateBoundaryType.None = 0 -> RoguelikeToolkit.World.Core.Tectonics.PlateBoundaryType
+RoguelikeToolkit.World.Core.Tectonics.PlateBoundaryType.Transform = 3 -> RoguelikeToolkit.World.Core.Tectonics.PlateBoundaryType
+RoguelikeToolkit.World.Core.Tectonics.PlateInfo
+RoguelikeToolkit.World.Core.Tectonics.PlateInfo.DriftSpeed -> double
+RoguelikeToolkit.World.Core.Tectonics.PlateInfo.DriftX -> double
+RoguelikeToolkit.World.Core.Tectonics.PlateInfo.DriftY -> double
+RoguelikeToolkit.World.Core.Tectonics.PlateInfo.DriftZ -> double
+RoguelikeToolkit.World.Core.Tectonics.PlateInfo.Elevation -> double
+RoguelikeToolkit.World.Core.Tectonics.PlateInfo.PlateInfo() -> void
+RoguelikeToolkit.World.Core.Tectonics.TectonicPlate
+RoguelikeToolkit.World.Core.Tectonics.TectonicPlate.Boundary -> RoguelikeToolkit.World.Core.Tectonics.PlateBoundaryType
+RoguelikeToolkit.World.Core.Tectonics.TectonicPlate.BoundaryDistance.get -> float
+RoguelikeToolkit.World.Core.Tectonics.TectonicPlate.BoundaryRings -> byte
+RoguelikeToolkit.World.Core.Tectonics.TectonicPlate.Continentality -> float
+RoguelikeToolkit.World.Core.Tectonics.TectonicPlate.Crust -> RoguelikeToolkit.World.Core.Tectonics.CrustType
+RoguelikeToolkit.World.Core.Tectonics.TectonicPlate.Id -> ushort
+RoguelikeToolkit.World.Core.Tectonics.TectonicPlate.NearestBoundary -> RoguelikeToolkit.World.Core.Tectonics.PlateBoundaryType
+RoguelikeToolkit.World.Core.Tectonics.TectonicPlate.Orogeny -> float
+RoguelikeToolkit.World.Core.Tectonics.TectonicPlate.TectonicPlate() -> void
+RoguelikeToolkit.World.Core.Tectonics.TectonicPlateGenerationStage
+RoguelikeToolkit.World.Core.Tectonics.TectonicPlateGenerationStage.ConvergenceThreshold.get -> double
+RoguelikeToolkit.World.Core.Tectonics.TectonicPlateGenerationStage.ConvergenceThreshold.set -> void
+RoguelikeToolkit.World.Core.Tectonics.TectonicPlateGenerationStage.CrustThreshold.get -> double
+RoguelikeToolkit.World.Core.Tectonics.TectonicPlateGenerationStage.CrustThreshold.set -> void
+RoguelikeToolkit.World.Core.Tectonics.TectonicPlateGenerationStage.Dispose() -> void
+RoguelikeToolkit.World.Core.Tectonics.TectonicPlateGenerationStage.Execute(RoguelikeToolkit.World.Core.Topology.WorldMap! map) -> void
+RoguelikeToolkit.World.Core.Tectonics.TectonicPlateGenerationStage.MaxBoundaryDistance.get -> int
+RoguelikeToolkit.World.Core.Tectonics.TectonicPlateGenerationStage.MaxBoundaryDistance.set -> void
+RoguelikeToolkit.World.Core.Tectonics.TectonicPlateGenerationStage.Partitioner.get -> RoguelikeToolkit.World.Core.Tectonics.IPlatePartitioner!
+RoguelikeToolkit.World.Core.Tectonics.TectonicPlateGenerationStage.Partitioner.set -> void
+RoguelikeToolkit.World.Core.Tectonics.TectonicPlateGenerationStage.Seed.get -> int
+RoguelikeToolkit.World.Core.Tectonics.TectonicPlateGenerationStage.Seed.set -> void
+RoguelikeToolkit.World.Core.Tectonics.TectonicPlateGenerationStage.SeedCount.get -> int
+RoguelikeToolkit.World.Core.Tectonics.TectonicPlateGenerationStage.SeedCount.set -> void
+RoguelikeToolkit.World.Core.Tectonics.TectonicPlateGenerationStage.SegmentationFrequency.get -> double
+RoguelikeToolkit.World.Core.Tectonics.TectonicPlateGenerationStage.SegmentationFrequency.set -> void
+RoguelikeToolkit.World.Core.Tectonics.TectonicPlateGenerationStage.SegmentationStrength.get -> double
+RoguelikeToolkit.World.Core.Tectonics.TectonicPlateGenerationStage.SegmentationStrength.set -> void
+RoguelikeToolkit.World.Core.Tectonics.TectonicPlateGenerationStage.SegmentGapFloor.get -> double
+RoguelikeToolkit.World.Core.Tectonics.TectonicPlateGenerationStage.SegmentGapFloor.set -> void
+RoguelikeToolkit.World.Core.Tectonics.TectonicPlateGenerationStage.SegmentOrogeny.get -> bool
+RoguelikeToolkit.World.Core.Tectonics.TectonicPlateGenerationStage.SegmentOrogeny.set -> void
+RoguelikeToolkit.World.Core.Tectonics.TectonicPlateGenerationStage.TectonicPlateGenerationStage() -> void
+RoguelikeToolkit.World.Core.Tectonics.TectonicPlateGenerationStage.TectonicPlateGenerationStage(int seedCount, int seed = 42) -> void
+RoguelikeToolkit.World.Core.Tectonics.TectonicPlateGenerationStage.TectonicPlateGenerationStage(int seedCount, int seed, RoguelikeToolkit.World.Core.Tectonics.IPlatePartitioner! partitioner) -> void
+RoguelikeToolkit.World.Core.Tectonics.TectonicPlateLayer
+RoguelikeToolkit.World.Core.Tectonics.TectonicPlateLayer.Seed.get -> int
+RoguelikeToolkit.World.Core.Tectonics.TectonicPlateLayer.SeedCount.get -> int
+RoguelikeToolkit.World.Core.Tectonics.TectonicPlateLayer.SeedCount.set -> void
+RoguelikeToolkit.World.Core.Tectonics.TectonicPlateLayer.TectonicPlateLayer(RoguelikeToolkit.World.Core.Storage.WorldDataStore! store, int seedCount, int seed = 42) -> void
+RoguelikeToolkit.World.Core.Tectonics.VoronoiPlatePartitioner
+RoguelikeToolkit.World.Core.Tectonics.VoronoiPlatePartitioner.LloydIterations.get -> int
+RoguelikeToolkit.World.Core.Tectonics.VoronoiPlatePartitioner.LloydIterations.set -> void
+RoguelikeToolkit.World.Core.Tectonics.VoronoiPlatePartitioner.Partition(RoguelikeToolkit.World.Core.Storage.WorldDataStore! store, System.ReadOnlySpan<RoguelikeToolkit.World.Core.Primitives.Vector3D> positions, System.ReadOnlySpan<RoguelikeToolkit.World.Core.Primitives.Vector3D> seeds, System.Span<int> plateIds, int seed) -> void
+RoguelikeToolkit.World.Core.Tectonics.VoronoiPlatePartitioner.VoronoiPlatePartitioner() -> void
+RoguelikeToolkit.World.Core.TidallyLockedInsolation
+RoguelikeToolkit.World.Core.TidallyLockedInsolation.NightFloor.get -> double
+RoguelikeToolkit.World.Core.TidallyLockedInsolation.RelativeInsolation(RoguelikeToolkit.World.Core.Primitives.Vector3D unitPosition) -> double
+RoguelikeToolkit.World.Core.TidallyLockedInsolation.Substellar.get -> RoguelikeToolkit.World.Core.Primitives.Vector3D
+RoguelikeToolkit.World.Core.TidallyLockedInsolation.TidallyLockedInsolation(RoguelikeToolkit.World.Core.Primitives.Vector3D substellarDirection, double nightFloor = 0.35) -> void
+RoguelikeToolkit.World.Core.TileHit
+RoguelikeToolkit.World.Core.TileHit.Biome -> RoguelikeToolkit.World.Core.Biomes.BiomeType
+RoguelikeToolkit.World.Core.TileHit.Coord -> RoguelikeToolkit.World.Core.Primitives.GeoCoord
+RoguelikeToolkit.World.Core.TileHit.DistanceKm -> double
+RoguelikeToolkit.World.Core.TileHit.Elevation -> float
+RoguelikeToolkit.World.Core.TileHit.TileHit() -> void
+RoguelikeToolkit.World.Core.TileHit.TileIndex -> int
+RoguelikeToolkit.World.Core.Topology.CubeCoord
+RoguelikeToolkit.World.Core.Topology.CubeCoord.CubeCoord() -> void
+RoguelikeToolkit.World.Core.Topology.CubeCoord.CubeCoord(int X, int Y, int Z) -> void
+RoguelikeToolkit.World.Core.Topology.CubeCoord.IsValid.get -> bool
+RoguelikeToolkit.World.Core.Topology.CubeCoord.ToAxial() -> (int Q, int R)
+RoguelikeToolkit.World.Core.Topology.CubeCoord.X.get -> int
+RoguelikeToolkit.World.Core.Topology.CubeCoord.X.init -> void
+RoguelikeToolkit.World.Core.Topology.CubeCoord.Y.get -> int
+RoguelikeToolkit.World.Core.Topology.CubeCoord.Y.init -> void
+RoguelikeToolkit.World.Core.Topology.CubeCoord.Z.get -> int
+RoguelikeToolkit.World.Core.Topology.CubeCoord.Z.init -> void
+RoguelikeToolkit.World.Core.Topology.IcosphereGenerator
+RoguelikeToolkit.World.Core.Topology.IHexMap<TTile>
+RoguelikeToolkit.World.Core.Topology.IHexMap<TTile>.Bounds.get -> RoguelikeToolkit.World.Core.Topology.MapBounds
+RoguelikeToolkit.World.Core.Topology.IHexMap<TTile>.GetAdjacent(int index, System.Span<int> neighbors) -> int
+RoguelikeToolkit.World.Core.Topology.IHexMap<TTile>.GetTile(int index) -> TTile
+RoguelikeToolkit.World.Core.Topology.IHexMap<TTile>.GetTileAt(int q, int r) -> int
+RoguelikeToolkit.World.Core.Topology.IHexMap<TTile>.GetTileAt(RoguelikeToolkit.World.Core.Topology.CubeCoord cube) -> int
+RoguelikeToolkit.World.Core.Topology.IHexMap<TTile>.RootAddress.get -> RoguelikeToolkit.World.Core.Topology.MapAddress
+RoguelikeToolkit.World.Core.Topology.IHexMap<TTile>.Size.get -> int
+RoguelikeToolkit.World.Core.Topology.IHexMap<TTile>.TileCount.get -> int
+RoguelikeToolkit.World.Core.Topology.LocalRef
+RoguelikeToolkit.World.Core.Topology.LocalRef.LocalRef() -> void
+RoguelikeToolkit.World.Core.Topology.LocalRef.LocalRef(int WorldSeed, int WorldTileIndex, int RegionCellIndex, int LocalTileIndex) -> void
+RoguelikeToolkit.World.Core.Topology.LocalRef.LocalTileIndex.get -> int
+RoguelikeToolkit.World.Core.Topology.LocalRef.LocalTileIndex.init -> void
+RoguelikeToolkit.World.Core.Topology.LocalRef.RegionCellIndex.get -> int
+RoguelikeToolkit.World.Core.Topology.LocalRef.RegionCellIndex.init -> void
+RoguelikeToolkit.World.Core.Topology.LocalRef.WorldSeed.get -> int
+RoguelikeToolkit.World.Core.Topology.LocalRef.WorldSeed.init -> void
+RoguelikeToolkit.World.Core.Topology.LocalRef.WorldTileIndex.get -> int
+RoguelikeToolkit.World.Core.Topology.LocalRef.WorldTileIndex.init -> void
+RoguelikeToolkit.World.Core.Topology.MapAddress
+RoguelikeToolkit.World.Core.Topology.MapAddress.LocalTileIndex.get -> int
+RoguelikeToolkit.World.Core.Topology.MapAddress.LocalTileIndex.init -> void
+RoguelikeToolkit.World.Core.Topology.MapAddress.MapAddress() -> void
+RoguelikeToolkit.World.Core.Topology.MapAddress.MapAddress(RoguelikeToolkit.World.Core.Topology.MapTier Tier, int WorldSeed, int WorldTileIndex, int RegionCellIndex, int LocalTileIndex) -> void
+RoguelikeToolkit.World.Core.Topology.MapAddress.RegionCellIndex.get -> int
+RoguelikeToolkit.World.Core.Topology.MapAddress.RegionCellIndex.init -> void
+RoguelikeToolkit.World.Core.Topology.MapAddress.Tier.get -> RoguelikeToolkit.World.Core.Topology.MapTier
+RoguelikeToolkit.World.Core.Topology.MapAddress.Tier.init -> void
+RoguelikeToolkit.World.Core.Topology.MapAddress.ToLocal() -> RoguelikeToolkit.World.Core.Topology.LocalRef
+RoguelikeToolkit.World.Core.Topology.MapAddress.ToPlanet() -> RoguelikeToolkit.World.Core.Topology.PlanetHex
+RoguelikeToolkit.World.Core.Topology.MapAddress.ToRegion() -> RoguelikeToolkit.World.Core.Topology.RegionRef
+RoguelikeToolkit.World.Core.Topology.MapAddress.WorldSeed.get -> int
+RoguelikeToolkit.World.Core.Topology.MapAddress.WorldSeed.init -> void
+RoguelikeToolkit.World.Core.Topology.MapAddress.WorldTileIndex.get -> int
+RoguelikeToolkit.World.Core.Topology.MapAddress.WorldTileIndex.init -> void
+RoguelikeToolkit.World.Core.Topology.MapBounds
+RoguelikeToolkit.World.Core.Topology.MapBounds.Center.get -> RoguelikeToolkit.World.Core.Primitives.GeoCoord
+RoguelikeToolkit.World.Core.Topology.MapBounds.Center.init -> void
+RoguelikeToolkit.World.Core.Topology.MapBounds.EdgeTiles.get -> int[]!
+RoguelikeToolkit.World.Core.Topology.MapBounds.EdgeTiles.init -> void
+RoguelikeToolkit.World.Core.Topology.MapBounds.Equals(RoguelikeToolkit.World.Core.Topology.MapBounds other) -> bool
+RoguelikeToolkit.World.Core.Topology.MapBounds.MapBounds() -> void
+RoguelikeToolkit.World.Core.Topology.MapBounds.MapBounds(RoguelikeToolkit.World.Core.Primitives.GeoCoord Center, double RadiusKm, int[]! EdgeTiles) -> void
+RoguelikeToolkit.World.Core.Topology.MapBounds.RadiusKm.get -> double
+RoguelikeToolkit.World.Core.Topology.MapBounds.RadiusKm.init -> void
+RoguelikeToolkit.World.Core.Topology.MapTier
+RoguelikeToolkit.World.Core.Topology.MapTier.Local = 2 -> RoguelikeToolkit.World.Core.Topology.MapTier
+RoguelikeToolkit.World.Core.Topology.MapTier.Planet = 0 -> RoguelikeToolkit.World.Core.Topology.MapTier
+RoguelikeToolkit.World.Core.Topology.MapTier.Region = 1 -> RoguelikeToolkit.World.Core.Topology.MapTier
+RoguelikeToolkit.World.Core.Topology.OffsetGrid
+RoguelikeToolkit.World.Core.Topology.PlanetHex
+RoguelikeToolkit.World.Core.Topology.PlanetHex.PlanetHex() -> void
+RoguelikeToolkit.World.Core.Topology.PlanetHex.PlanetHex(int WorldSeed, int TileIndex) -> void
+RoguelikeToolkit.World.Core.Topology.PlanetHex.TileIndex.get -> int
+RoguelikeToolkit.World.Core.Topology.PlanetHex.TileIndex.init -> void
+RoguelikeToolkit.World.Core.Topology.PlanetHex.WorldSeed.get -> int
+RoguelikeToolkit.World.Core.Topology.PlanetHex.WorldSeed.init -> void
+RoguelikeToolkit.World.Core.Topology.RegionRef
+RoguelikeToolkit.World.Core.Topology.RegionRef.RegionCellIndex.get -> int
+RoguelikeToolkit.World.Core.Topology.RegionRef.RegionCellIndex.init -> void
+RoguelikeToolkit.World.Core.Topology.RegionRef.RegionRef() -> void
+RoguelikeToolkit.World.Core.Topology.RegionRef.RegionRef(int WorldSeed, int WorldTileIndex, int RegionCellIndex) -> void
+RoguelikeToolkit.World.Core.Topology.RegionRef.WorldSeed.get -> int
+RoguelikeToolkit.World.Core.Topology.RegionRef.WorldSeed.init -> void
+RoguelikeToolkit.World.Core.Topology.RegionRef.WorldTileIndex.get -> int
+RoguelikeToolkit.World.Core.Topology.RegionRef.WorldTileIndex.init -> void
+RoguelikeToolkit.World.Core.Topology.TriangleIndices
+RoguelikeToolkit.World.Core.Topology.TriangleIndices.TriangleIndices() -> void
+RoguelikeToolkit.World.Core.Topology.TriangleIndices.TriangleIndices(int v1, int v2, int v3) -> void
+RoguelikeToolkit.World.Core.Topology.TriangleIndices.v1 -> int
+RoguelikeToolkit.World.Core.Topology.TriangleIndices.v2 -> int
+RoguelikeToolkit.World.Core.Topology.TriangleIndices.v3 -> int
+RoguelikeToolkit.World.Core.Topology.WorldMap
+RoguelikeToolkit.World.Core.Topology.WorldMap.DataStore.get -> RoguelikeToolkit.World.Core.Storage.WorldDataStore!
+RoguelikeToolkit.World.Core.Topology.WorldMap.Dispose() -> void
+RoguelikeToolkit.World.Core.Topology.WorldMap.GetLayer<T>() -> RoguelikeToolkit.World.Core.Storage.IMapLayer<T>?
+RoguelikeToolkit.World.Core.Topology.WorldMap.RegisterLayer<T>(RoguelikeToolkit.World.Core.Storage.IMapLayer<T>! layer) -> void
+RoguelikeToolkit.World.Core.Topology.WorldMap.WorldMap(int size, string? filePath = null) -> void
+RoguelikeToolkit.World.Core.World
+RoguelikeToolkit.World.Core.World.Deposits.get -> RoguelikeToolkit.World.Core.Lithosphere.DepositCatalog!
+RoguelikeToolkit.World.Core.World.DepositToWkt(int depositId) -> string!
+RoguelikeToolkit.World.Core.World.Dispose() -> void
+RoguelikeToolkit.World.Core.World.Editable.get -> bool
+RoguelikeToolkit.World.Core.World.Edits.get -> System.Span<RoguelikeToolkit.World.Core.Storage.UserEditInfo>
+RoguelikeToolkit.World.Core.World.GetDeposits(int worldTileIndex) -> System.Collections.Generic.List<RoguelikeToolkit.World.Core.Lithosphere.Deposit!>!
+RoguelikeToolkit.World.Core.World.GetLocal(RoguelikeToolkit.World.Core.Topology.PlanetHex hex, int regionCellIndex, int localSize = 16, int regionSize = 8) -> RoguelikeToolkit.World.Core.Hierarchy.LocalMapHandle!
+RoguelikeToolkit.World.Core.World.GetLocal(RoguelikeToolkit.World.Core.Topology.RegionRef region, int localSize = 16, int regionSize = 8) -> RoguelikeToolkit.World.Core.Hierarchy.LocalMapHandle!
+RoguelikeToolkit.World.Core.World.GetRegion(int worldTileIndex, int regionSize = 8) -> RoguelikeToolkit.World.Core.Hierarchy.RegionHandle!
+RoguelikeToolkit.World.Core.World.GetRegion(RoguelikeToolkit.World.Core.Topology.PlanetHex hex, int regionSize = 8) -> RoguelikeToolkit.World.Core.Hierarchy.RegionHandle!
+RoguelikeToolkit.World.Core.World.GetTileFeatures(int worldTileIndex, RoguelikeToolkit.World.Core.Integration.QueryOptions? options = null, RoguelikeToolkit.World.Core.Sites.SiteCatalog? sites = null) -> RoguelikeToolkit.World.Core.Features.TileFeatureInfo
+RoguelikeToolkit.World.Core.World.GetTileFeatures(RoguelikeToolkit.World.Core.Primitives.GeoCoord coord, RoguelikeToolkit.World.Core.Integration.QueryOptions? options = null, RoguelikeToolkit.World.Core.Sites.SiteCatalog? sites = null) -> RoguelikeToolkit.World.Core.Features.TileFeatureInfo
+RoguelikeToolkit.World.Core.World.Index.get -> RoguelikeToolkit.World.Core.Queries.SpatialIndex!
+RoguelikeToolkit.World.Core.World.Map.get -> RoguelikeToolkit.World.Core.Topology.WorldMap!
+RoguelikeToolkit.World.Core.World.NearestDeposit(RoguelikeToolkit.World.Core.Primitives.GeoCoord from, RoguelikeToolkit.World.Core.Lithosphere.DepositType? type = null) -> (RoguelikeToolkit.World.Core.Lithosphere.Deposit! Deposit, double DistanceKm)?
+RoguelikeToolkit.World.Core.World.NearestRiver(RoguelikeToolkit.World.Core.Primitives.GeoCoord from) -> (int TileIndex, double DistanceKm)?
+RoguelikeToolkit.World.Core.World.NearestWater(RoguelikeToolkit.World.Core.Primitives.GeoCoord from) -> (int TileIndex, double DistanceKm)?
+RoguelikeToolkit.World.Core.World.Planet.get -> RoguelikeToolkit.World.Core.PlanetParameters!
+RoguelikeToolkit.World.Core.World.QueryRadius(RoguelikeToolkit.World.Core.Primitives.GeoCoord center, double radiusKm, RoguelikeToolkit.World.Core.Integration.QueryOptions? options = null) -> System.Collections.Generic.List<RoguelikeToolkit.World.Core.TileHit>!
+RoguelikeToolkit.World.Core.World.Ranges.get -> RoguelikeToolkit.World.Core.Features.RangeCatalog!
+RoguelikeToolkit.World.Core.World.Recompute() -> void
+RoguelikeToolkit.World.Core.World.Resolve(RoguelikeToolkit.World.Core.Primitives.GeoCoord coord) -> RoguelikeToolkit.World.Core.Topology.PlanetHex
+RoguelikeToolkit.World.Core.World.Rivers.get -> RoguelikeToolkit.World.Core.Features.RiverCatalog!
+RoguelikeToolkit.World.Core.World.RiverToWkt(int riverId) -> string!
+RoguelikeToolkit.World.Core.World.SampleBiome(RoguelikeToolkit.World.Core.Primitives.GeoCoord coord, RoguelikeToolkit.World.Core.Integration.QueryOptions? options = null) -> (RoguelikeToolkit.World.Core.Biomes.BiomeType Biome, int Danger)
+RoguelikeToolkit.World.Core.World.SampleElevation(RoguelikeToolkit.World.Core.Primitives.GeoCoord coord) -> float
+RoguelikeToolkit.World.Core.World.ScoreCitySites(RoguelikeToolkit.World.Core.Settlement.CitySiteFilter? filter = null, RoguelikeToolkit.World.Core.Integration.QueryOptions? options = null) -> System.Collections.Generic.List<RoguelikeToolkit.World.Core.Settlement.CitySiteScore!>!
+RoguelikeToolkit.World.Core.World.Seed.get -> int
+RoguelikeToolkit.World.Core.World.Size.get -> int
+RoguelikeToolkit.World.Core.World.TileCount.get -> int
+RoguelikeToolkit.World.Core.World.TileSeed(int tileIndex) -> uint
+RoguelikeToolkit.World.Core.World.WaterBodies.get -> RoguelikeToolkit.World.Core.Features.WaterBodyCatalog!
+RoguelikeToolkit.World.Core.World.WaterBodyToWkt(int bodyId) -> string!
+RoguelikeToolkit.World.Core.WorldBuilder
+RoguelikeToolkit.World.Core.WorldBuilder.AddStage(RoguelikeToolkit.World.Core.Generation.IWorldGeneratorStage! stage) -> RoguelikeToolkit.World.Core.WorldBuilder!
+RoguelikeToolkit.World.Core.WorldBuilder.Build() -> RoguelikeToolkit.World.Core.World!
+RoguelikeToolkit.World.Core.WorldBuilder.WithBiomes(System.Action<RoguelikeToolkit.World.Core.Biomes.BiomeGenerationStage!>! configure) -> RoguelikeToolkit.World.Core.WorldBuilder!
+RoguelikeToolkit.World.Core.WorldBuilder.WithClimate(System.Action<RoguelikeToolkit.World.Core.Climate.ClimateStage!>! configure) -> RoguelikeToolkit.World.Core.WorldBuilder!
+RoguelikeToolkit.World.Core.WorldBuilder.WithClimateRefresh(bool enabled = true) -> RoguelikeToolkit.World.Core.WorldBuilder!
+RoguelikeToolkit.World.Core.WorldBuilder.WithErosion(System.Action<RoguelikeToolkit.World.Core.Elevation.ErosionGenerationStage!>! configure) -> RoguelikeToolkit.World.Core.WorldBuilder!
+RoguelikeToolkit.World.Core.WorldBuilder.WithFilePath(string? path) -> RoguelikeToolkit.World.Core.WorldBuilder!
+RoguelikeToolkit.World.Core.WorldBuilder.WithHydrology(System.Action<RoguelikeToolkit.World.Core.Hydrology.HydrologyStage!>! configure) -> RoguelikeToolkit.World.Core.WorldBuilder!
+RoguelikeToolkit.World.Core.WorldBuilder.WithIslandChains(System.Action<RoguelikeToolkit.World.Core.Lithosphere.IslandChainStage!>! configure) -> RoguelikeToolkit.World.Core.WorldBuilder!
+RoguelikeToolkit.World.Core.WorldBuilder.WithLandUse() -> RoguelikeToolkit.World.Core.WorldBuilder!
+RoguelikeToolkit.World.Core.WorldBuilder.WithoutDefaultStages() -> RoguelikeToolkit.World.Core.WorldBuilder!
+RoguelikeToolkit.World.Core.WorldBuilder.WithoutIslandChains() -> RoguelikeToolkit.World.Core.WorldBuilder!
+RoguelikeToolkit.World.Core.WorldBuilder.WithPartitioner(RoguelikeToolkit.World.Core.Tectonics.IPlatePartitioner! partitioner) -> RoguelikeToolkit.World.Core.WorldBuilder!
+RoguelikeToolkit.World.Core.WorldBuilder.WithPlanet(RoguelikeToolkit.World.Core.PlanetParameters! planet) -> RoguelikeToolkit.World.Core.WorldBuilder!
+RoguelikeToolkit.World.Core.WorldBuilder.WithPlateCount(int seedCount) -> RoguelikeToolkit.World.Core.WorldBuilder!
+RoguelikeToolkit.World.Core.WorldBuilder.WithSeed(int seed) -> RoguelikeToolkit.World.Core.WorldBuilder!
+RoguelikeToolkit.World.Core.WorldBuilder.WithSize(int size) -> RoguelikeToolkit.World.Core.WorldBuilder!
+RoguelikeToolkit.World.Core.WorldBuilder.WithTectonics(System.Action<RoguelikeToolkit.World.Core.Tectonics.TectonicPlateGenerationStage!>! configure) -> RoguelikeToolkit.World.Core.WorldBuilder!
+RoguelikeToolkit.World.Core.WorldBuilder.WithUserEdits() -> RoguelikeToolkit.World.Core.WorldBuilder!
+RoguelikeToolkit.World.Core.WorldBuilder.WorldBuilder() -> void
+static readonly RoguelikeToolkit.World.Core.Names.Cultures.All -> System.Collections.Generic.IReadOnlyList<string!>!
+static readonly RoguelikeToolkit.World.Core.Names.FantasyRaces.All -> System.Collections.Generic.IReadOnlyList<string!>!
+static readonly RoguelikeToolkit.World.Core.Names.NameThemes.All -> System.Collections.Generic.IReadOnlyList<string!>!
+static readonly RoguelikeToolkit.World.Core.Names.PlaceKinds.All -> System.Collections.Generic.IReadOnlyList<string!>!
+static RoguelikeToolkit.World.Core.Biomes.BiomeClassifier.AridBiomeDanger(RoguelikeToolkit.World.Core.Biomes.BiomeType biome) -> byte
+static RoguelikeToolkit.World.Core.Biomes.BiomeClassifier.AridType(double height, bool hot, RoguelikeToolkit.World.Core.Biomes.BiomeClassifier.AridSite site) -> RoguelikeToolkit.World.Core.Biomes.BiomeType
+static RoguelikeToolkit.World.Core.Biomes.BiomeClassifier.BaseDanger(RoguelikeToolkit.World.Core.Biomes.BiomeType biome) -> byte
+static RoguelikeToolkit.World.Core.Biomes.BiomeClassifier.Classify(double height, double temperature, double moisture, RoguelikeToolkit.World.Core.Biomes.BiomeClassifier.AridSite site = default(RoguelikeToolkit.World.Core.Biomes.BiomeClassifier.AridSite), double rainSeasonality = 0, double rainPhase = 0) -> (RoguelikeToolkit.World.Core.Biomes.BiomeType Biome, byte Danger)
+static RoguelikeToolkit.World.Core.Biomes.BiomeClassifier.IsArid(double temperature, double moisture) -> bool
+static RoguelikeToolkit.World.Core.Biomes.BiomeClassifier.IsColdArid(double temperature, double moisture) -> bool
+static RoguelikeToolkit.World.Core.Biomes.BiomeClassifier.IsDesert(RoguelikeToolkit.World.Core.Biomes.BiomeType biome) -> bool
+static RoguelikeToolkit.World.Core.Biomes.BiomeClassifier.IsMediterranean(double temperature, double moisture, double rainPhase) -> bool
+static RoguelikeToolkit.World.Core.Biomes.BiomeClassifier.IsSavanna(double temperature, double moisture, double rainSeasonality, double rainPhase = 0) -> bool
+static RoguelikeToolkit.World.Core.Biomes.BiomeClassifier.MoistureBiomeDanger(RoguelikeToolkit.World.Core.Biomes.BiomeType biome) -> byte
+static RoguelikeToolkit.World.Core.Biomes.BiomeGenerationStage.SmoothMoistureBiomes(RoguelikeToolkit.World.Core.Storage.WorldDataStore! store, System.Span<RoguelikeToolkit.World.Core.Biomes.BiomeInfo> span, int passes) -> void
+static RoguelikeToolkit.World.Core.Biomes.LandCover.EvaporationFactor(RoguelikeToolkit.World.Core.Biomes.BiomeType biome) -> float
+static RoguelikeToolkit.World.Core.Biomes.LandCover.MinDepthScale(RoguelikeToolkit.World.Core.Biomes.BiomeType biome) -> float
+static RoguelikeToolkit.World.Core.Biomes.LandCover.Provisional(double height, double temperature, double precipitation, double relief, double rainSeasonality = 0, double rainPhase = 0) -> RoguelikeToolkit.World.Core.Biomes.BiomeType
+static RoguelikeToolkit.World.Core.Biomes.LandCover.RunoffCoefficient(RoguelikeToolkit.World.Core.Biomes.BiomeType biome) -> float
+static RoguelikeToolkit.World.Core.Biomes.LandCover.Seepage(RoguelikeToolkit.World.Core.Biomes.BiomeType biome) -> float
+static RoguelikeToolkit.World.Core.Climate.ClimateModel.AnnualInsolation(double sinLatitude, double obliquityDegrees) -> double
+static RoguelikeToolkit.World.Core.Climate.ClimateModel.Continental(double amplitude, double maritime) -> double
+static RoguelikeToolkit.World.Core.Climate.ClimateModel.EarthInsolation(double sinLatitude) -> double
+static RoguelikeToolkit.World.Core.Climate.ClimateModel.RainPhase(double signedLatitudeDegrees, double obliquityDegrees, double zonalStrength, double bandScale) -> double
+static RoguelikeToolkit.World.Core.Climate.ClimateModel.RainSeasonality(double signedLatitudeDegrees, double obliquityDegrees, double zonalStrength, double bandScale) -> double
+static RoguelikeToolkit.World.Core.Climate.ClimateModel.SeasonalAmplitude(double sinLatitude, double obliquityDegrees) -> double
+static RoguelikeToolkit.World.Core.Climate.ClimateModel.Temperature(RoguelikeToolkit.World.Core.Primitives.Vector3D unitPosition, double absLatitudeDegrees, double height, double lapseRate, RoguelikeToolkit.World.Core.PlanetParameters? planet) -> double
+static RoguelikeToolkit.World.Core.Climate.ClimateModel.TemperatureAnomaly(RoguelikeToolkit.World.Core.PlanetParameters! planet, RoguelikeToolkit.World.Core.Primitives.Vector3D unitPosition) -> double
+static RoguelikeToolkit.World.Core.Climate.ClimateStage.ZonalFactor(double absLatitude, double strength = 1) -> double
+static RoguelikeToolkit.World.Core.Climate.ClimateStage.ZonalFactor(double absLatitude, double strength, double bandScale) -> double
+static RoguelikeToolkit.World.Core.Climate.Glaciology.EstimateTemperature(RoguelikeToolkit.World.Core.Primitives.Vector3D position, float height) -> float
+static RoguelikeToolkit.World.Core.Climate.Glaciology.IsGlacierTile(RoguelikeToolkit.World.Core.Primitives.Vector3D position, float height) -> bool
+static RoguelikeToolkit.World.Core.Climate.Glaciology.IsGlacierTile(RoguelikeToolkit.World.Core.Primitives.Vector3D position, float height, float temperature, float precipitation) -> bool
+static RoguelikeToolkit.World.Core.Climate.Glaciology.RunoffWeight(RoguelikeToolkit.World.Core.Primitives.Vector3D position, float height) -> float
+static RoguelikeToolkit.World.Core.Climate.Glaciology.RunoffWeight(RoguelikeToolkit.World.Core.Primitives.Vector3D position, float height, float precipitation) -> float
+static RoguelikeToolkit.World.Core.Climate.Glaciology.RunoffWeight(RoguelikeToolkit.World.Core.Primitives.Vector3D position, float height, float precipitation, float temperature) -> float
+static RoguelikeToolkit.World.Core.Climate.Glaciology.RunoffWeight(RoguelikeToolkit.World.Core.Primitives.Vector3D position, float height, float precipitation, float temperature, float cover) -> float
+static RoguelikeToolkit.World.Core.Climate.SeaIce.Classify(RoguelikeToolkit.World.Core.Primitives.Vector3D position, float height, float temperature, float seasonalRange) -> RoguelikeToolkit.World.Core.Climate.SeaIceKind
+static RoguelikeToolkit.World.Core.Climate.SeaIce.Mask(RoguelikeToolkit.World.Core.Storage.WorldDataStore! store) -> RoguelikeToolkit.World.Core.Climate.SeaIceKind[]!
+static RoguelikeToolkit.World.Core.Entities.EntityId.None.get -> RoguelikeToolkit.World.Core.Entities.EntityId
+static RoguelikeToolkit.World.Core.Features.GeoWkt.DepositToWkt(RoguelikeToolkit.World.Core.Lithosphere.Deposit! deposit, RoguelikeToolkit.World.Core.Storage.WorldDataStore! store) -> string!
+static RoguelikeToolkit.World.Core.Features.GeoWkt.RangeToWkt(RoguelikeToolkit.World.Core.Features.RangeFeature! range, RoguelikeToolkit.World.Core.Storage.WorldDataStore! store) -> string!
+static RoguelikeToolkit.World.Core.Features.GeoWkt.RiverToWkt(RoguelikeToolkit.World.Core.Features.River! river, RoguelikeToolkit.World.Core.Storage.WorldDataStore! store) -> string!
+static RoguelikeToolkit.World.Core.Features.GeoWkt.WaterBodyToWkt(RoguelikeToolkit.World.Core.Features.WaterBody! body, RoguelikeToolkit.World.Core.Storage.WorldDataStore! store) -> string!
+static RoguelikeToolkit.World.Core.Features.TileFeatures.Query(RoguelikeToolkit.World.Core.Storage.WorldDataStore! store, int tileIndex, RoguelikeToolkit.World.Core.Features.RiverCatalog? rivers = null, RoguelikeToolkit.World.Core.Features.WaterBodyCatalog? bodies = null, RoguelikeToolkit.World.Core.Features.RangeCatalog? ranges = null, RoguelikeToolkit.World.Core.Lithosphere.DepositCatalog? deposits = null, RoguelikeToolkit.World.Core.Sites.SiteCatalog? sites = null, RoguelikeToolkit.World.Core.Topology.MapAddress? address = null, RoguelikeToolkit.World.Core.Integration.TileOverride? tileOverride = null) -> RoguelikeToolkit.World.Core.Features.TileFeatureInfo
+static RoguelikeToolkit.World.Core.Hierarchy.MapSeeds.DeriveLocalSeed(int worldSeed, int worldTileIndex, int regionCellIndex) -> uint
+static RoguelikeToolkit.World.Core.Hierarchy.MapSeeds.DeriveLocalTileSeed(int worldSeed, int worldTileIndex, int regionCellIndex, int localTileIndex) -> uint
+static RoguelikeToolkit.World.Core.Hierarchy.MapSeeds.DeriveRegionCellSeed(int worldSeed, int worldTileIndex, int regionCellIndex) -> uint
+static RoguelikeToolkit.World.Core.Hierarchy.MapSeeds.DeriveRegionSeed(int worldSeed, int worldTileIndex) -> uint
+static RoguelikeToolkit.World.Core.Hierarchy.RegionDetailOptions.LocalDefault.get -> RoguelikeToolkit.World.Core.Hierarchy.RegionDetailOptions!
+static RoguelikeToolkit.World.Core.Hierarchy.RegionDetailOptions.RegionDefault.get -> RoguelikeToolkit.World.Core.Hierarchy.RegionDetailOptions!
+static RoguelikeToolkit.World.Core.Hierarchy.RegionMaps.CellUV(int q, int r, int size) -> (double U, double V)
+static RoguelikeToolkit.World.Core.Hierarchy.RegionMaps.DeriveChildContext(RoguelikeToolkit.World.Core.Hierarchy.RegionHandle! region, int cellIndex) -> RoguelikeToolkit.World.Core.Hierarchy.ParentContext!
+static RoguelikeToolkit.World.Core.Hierarchy.RegionMaps.DeriveLocal(int worldTileIndex, int regionCellIndex, uint regionCellSeed, int size = 16) -> RoguelikeToolkit.World.Core.Hierarchy.LocalMapHandle!
+static RoguelikeToolkit.World.Core.Hierarchy.RegionMaps.DeriveLocalMap(RoguelikeToolkit.World.Core.Topology.MapAddress address, RoguelikeToolkit.World.Core.Hierarchy.ParentContext! parent, RoguelikeToolkit.World.Core.Primitives.GeoCoord center, double radiusKm, uint seed, int size = 16, RoguelikeToolkit.World.Core.Hierarchy.RegionDetailOptions? options = null) -> RoguelikeToolkit.World.Core.Hierarchy.LocalMapHandle!
+static RoguelikeToolkit.World.Core.Hierarchy.RegionMaps.DeriveLocalMapForCell(RoguelikeToolkit.World.Core.Hierarchy.RegionHandle! region, int cellIndex, int localSize = 16) -> RoguelikeToolkit.World.Core.Hierarchy.LocalMapHandle!
+static RoguelikeToolkit.World.Core.Hierarchy.RegionMaps.DeriveRegion(int worldSeed, int worldTileIndex, float baseElevation, RoguelikeToolkit.World.Core.Biomes.BiomeType baseBiome, float baseMoisture, int size = 8) -> RoguelikeToolkit.World.Core.Hierarchy.RegionHandle!
+static RoguelikeToolkit.World.Core.Hierarchy.RegionMaps.DeriveRegionMap(RoguelikeToolkit.World.Core.Topology.MapAddress address, RoguelikeToolkit.World.Core.Hierarchy.ParentContext! parent, RoguelikeToolkit.World.Core.Primitives.GeoCoord center, double radiusKm, uint seed, int size = 8, RoguelikeToolkit.World.Core.Hierarchy.RegionDetailOptions? options = null) -> RoguelikeToolkit.World.Core.Hierarchy.RegionHandle!
+static RoguelikeToolkit.World.Core.Hierarchy.RegionMaps.GetHexAdjacent(int index, int size, System.Span<int> neighbors) -> int
+static RoguelikeToolkit.World.Core.Hierarchy.RegionMaps.GridCellAt(RoguelikeToolkit.World.Core.Primitives.GeoCoord mapCenter, double radiusKm, int size, RoguelikeToolkit.World.Core.Primitives.GeoCoord coord) -> int
+static RoguelikeToolkit.World.Core.Hierarchy.RegionMaps.GridCellAtExact(RoguelikeToolkit.World.Core.Primitives.GeoCoord mapCenter, double radiusKm, int size, RoguelikeToolkit.World.Core.Primitives.GeoCoord coord) -> int
+static RoguelikeToolkit.World.Core.Hierarchy.RegionMaps.GridCellCenter(RoguelikeToolkit.World.Core.Primitives.GeoCoord mapCenter, double radiusKm, int size, int index) -> RoguelikeToolkit.World.Core.Primitives.GeoCoord
+static RoguelikeToolkit.World.Core.Hierarchy.RegionMaps.ParentBaseElevation(RoguelikeToolkit.World.Core.Hierarchy.ParentContext! parent, RoguelikeToolkit.World.Core.Primitives.GeoCoord center, double radiusKm, double u, double v) -> double
+static RoguelikeToolkit.World.Core.Hierarchy.TerrainOrientation.Sample(RoguelikeToolkit.World.Core.Storage.WorldDataStore! store, int tileIndex) -> RoguelikeToolkit.World.Core.Hierarchy.ParentContext!
+static RoguelikeToolkit.World.Core.Hydrology.CanyonAnalysis.IsCanyonTile(double flow, double riverThreshold, double precipitation, double relief, double slope) -> bool
+static RoguelikeToolkit.World.Core.Hydrology.CanyonAnalysis.Relief(RoguelikeToolkit.World.Core.Storage.WorldDataStore! store, System.ReadOnlySpan<float> heights, int tile, System.Span<int> scratch) -> float
+static RoguelikeToolkit.World.Core.Hydrology.HydrologyStage.PopulateCatalogs(RoguelikeToolkit.World.Core.Topology.WorldMap! map, RoguelikeToolkit.World.Core.Features.RiverCatalog! rivers, RoguelikeToolkit.World.Core.Features.WaterBodyCatalog! bodies, int maxRivers = 64) -> void
+static RoguelikeToolkit.World.Core.Hydrology.RangeCatalogBuilder.Populate(RoguelikeToolkit.World.Core.Topology.WorldMap! map, RoguelikeToolkit.World.Core.Features.RangeCatalog! catalog, float mountainThreshold = 0.5, float riverThresholdScale = 1) -> void
+static RoguelikeToolkit.World.Core.Integration.HistoricSiteIndex.FromContext(RoguelikeToolkit.World.Core.Integration.IHistoricalContext! context, RoguelikeToolkit.World.Core.Storage.WorldDataStore! store, double radiusKm = 400) -> RoguelikeToolkit.World.Core.Integration.HistoricSiteIndex!
+static RoguelikeToolkit.World.Core.Integration.QueryOptions.Default.get -> RoguelikeToolkit.World.Core.Integration.QueryOptions!
+static RoguelikeToolkit.World.Core.Lithosphere.DepositCatalogBuilder.Populate(RoguelikeToolkit.World.Core.Topology.WorldMap! map, RoguelikeToolkit.World.Core.Lithosphere.DepositCatalog! catalog, int seed) -> void
+static RoguelikeToolkit.World.Core.Lithosphere.Geology.BasementAge(int seed, ushort plateId, RoguelikeToolkit.World.Core.Primitives.Vector3D position) -> float
+static RoguelikeToolkit.World.Core.Lithosphere.Geology.Classify(in RoguelikeToolkit.World.Core.Tectonics.TectonicPlate plate, float age) -> RoguelikeToolkit.World.Core.Lithosphere.CrustalProvince
+static RoguelikeToolkit.World.Core.Localization.LocaleStore.AvailableLanguages() -> System.Collections.Generic.IReadOnlyList<(string! Language, string! DisplayName)>!
+static RoguelikeToolkit.World.Core.Localization.LocaleStore.Load(string! language) -> RoguelikeToolkit.World.Core.Localization.LocaleStore!
+static RoguelikeToolkit.World.Core.Names.FantasyNameGenerator.AvailableCultures(RoguelikeToolkit.World.Core.Names.NameDataStore? store = null) -> System.Collections.Generic.IEnumerable<string!>!
+static RoguelikeToolkit.World.Core.Names.FantasyNameGenerator.AvailableRaces(RoguelikeToolkit.World.Core.Names.NameDataStore? store = null) -> System.Collections.Generic.IEnumerable<string!>!
+static RoguelikeToolkit.World.Core.Names.FantasyNameGenerator.Configure(RoguelikeToolkit.World.Core.Names.NameDataStore! store) -> void
+static RoguelikeToolkit.World.Core.Names.FantasyNameGenerator.DefaultLineage(string! race, string! culture, RoguelikeToolkit.World.Core.Names.NameDataStore? store = null) -> string!
+static RoguelikeToolkit.World.Core.Names.FantasyNameGenerator.GeneratePerson(string! race, string! culture, int seed, string? lineage = null, bool feminine = false, int salt = 0, string? overrideDir = null, System.Collections.Generic.IEnumerable<string!>? inspiredBy = null, RoguelikeToolkit.World.Core.Names.NameScript script = RoguelikeToolkit.World.Core.Names.NameScript.Native) -> RoguelikeToolkit.World.Core.Names.GeneratedName!
+static RoguelikeToolkit.World.Core.Names.FantasyNameGenerator.GeneratePlace(string! kind, RoguelikeToolkit.World.Core.Names.PlaceContext! ctx, string! race, string! culture, int seed, int salt = 0, string? overrideDir = null, System.Collections.Generic.IEnumerable<string!>? inspiredBy = null, RoguelikeToolkit.World.Core.Names.NameScript script = RoguelikeToolkit.World.Core.Names.NameScript.Native) -> RoguelikeToolkit.World.Core.Names.GeneratedName!
+static RoguelikeToolkit.World.Core.Names.FantasyNameGenerator.NormalizeLineage(string? lineage) -> string!
+static RoguelikeToolkit.World.Core.Names.FantasyNameGenerator.PersonThemes(string! race, string! culture, RoguelikeToolkit.World.Core.Names.NameDataStore? store = null, bool? feminine = null) -> System.Collections.Generic.IReadOnlyList<string!>!
+static RoguelikeToolkit.World.Core.Names.FantasyNameGenerator.PlaceThemes(string! race, string! culture, RoguelikeToolkit.World.Core.Names.NameDataStore? store = null) -> System.Collections.Generic.IReadOnlyList<string!>!
+static RoguelikeToolkit.World.Core.Names.FantasyNameGenerator.RegisterRaceTable(string! race, string! tableKey) -> void
+static RoguelikeToolkit.World.Core.Names.FantasyNameGenerator.Shared.get -> RoguelikeToolkit.World.Core.Names.NameDataStore!
+static RoguelikeToolkit.World.Core.Names.FantasyNameGenerator.Styles(RoguelikeToolkit.World.Core.Names.NameDataStore? store = null) -> System.Collections.Generic.IReadOnlyList<RoguelikeToolkit.World.Core.Names.NameStyle!>!
+static RoguelikeToolkit.World.Core.Names.FantasyNameGenerator.TableKey(string! race, string! culture, RoguelikeToolkit.World.Core.Names.NameDataStore? store = null) -> string!
+static RoguelikeToolkit.World.Core.Names.NameDataStore.DefaultDirectory.get -> string!
+static RoguelikeToolkit.World.Core.Names.NameDataStore.EnsureExtracted(string? dir = null) -> string!
+static RoguelikeToolkit.World.Core.Names.NameDataStore.Load(string? overrideDir = null) -> RoguelikeToolkit.World.Core.Names.NameDataStore!
+static RoguelikeToolkit.World.Core.Names.NameDataStore.LoadLenient(string? overrideDir, out System.Collections.Generic.IReadOnlyList<string!>! problems) -> RoguelikeToolkit.World.Core.Names.NameDataStore!
+static RoguelikeToolkit.World.Core.Names.NameLint.Check(RoguelikeToolkit.World.Core.Names.GeneratedName! name) -> System.Collections.Generic.IReadOnlyList<string!>!
+static RoguelikeToolkit.World.Core.Names.NameThemes.ForPeople(RoguelikeToolkit.World.Core.Names.CultureData! table, bool? feminine = null, bool borrowsHumanFamily = false) -> System.Collections.Generic.IReadOnlyList<string!>!
+static RoguelikeToolkit.World.Core.Names.NameThemes.ForPlaces(RoguelikeToolkit.World.Core.Names.CultureData! table, RoguelikeToolkit.World.Core.Names.CultureData? common = null) -> System.Collections.Generic.IReadOnlyList<string!>!
+static RoguelikeToolkit.World.Core.Names.NameThemes.Tokenize(System.Collections.Generic.IEnumerable<string!>? inspirations) -> System.Collections.Generic.HashSet<string!>!
+static RoguelikeToolkit.World.Core.Primitives.DetMath.Acos(double x) -> double
+static RoguelikeToolkit.World.Core.Primitives.DetMath.Asin(double x) -> double
+static RoguelikeToolkit.World.Core.Primitives.DetMath.Atan(double x) -> double
+static RoguelikeToolkit.World.Core.Primitives.DetMath.Atan2(double y, double x) -> double
+static RoguelikeToolkit.World.Core.Primitives.DetMath.Cos(double x) -> double
+static RoguelikeToolkit.World.Core.Primitives.DetMath.Exp(double x) -> double
+static RoguelikeToolkit.World.Core.Primitives.DetMath.Log(double x) -> double
+static RoguelikeToolkit.World.Core.Primitives.DetMath.Pow(double x, double y) -> double
+static RoguelikeToolkit.World.Core.Primitives.DetMath.Sin(double x) -> double
+static RoguelikeToolkit.World.Core.Primitives.GeoCoord.FromRadians(double latRad, double lonRad) -> RoguelikeToolkit.World.Core.Primitives.GeoCoord
+static RoguelikeToolkit.World.Core.Primitives.Rng.Create(int worldSeed, int salt = 0) -> RoguelikeToolkit.World.Core.Primitives.Rng
+static RoguelikeToolkit.World.Core.Primitives.Rng.DeriveTileSeed(int worldSeed, int tileIndex) -> uint
+static RoguelikeToolkit.World.Core.Primitives.SphereNoise.Fbm(RoguelikeToolkit.World.Core.Primitives.Vector3D p, int seed, int octaves = 4, double lacunarity = 2, double gain = 0.5) -> double
+static RoguelikeToolkit.World.Core.Primitives.SphereNoise.RidgedFbm(RoguelikeToolkit.World.Core.Primitives.Vector3D p, int seed, int octaves = 4, double lacunarity = 2.1, double gain = 0.5) -> double
+static RoguelikeToolkit.World.Core.Primitives.SphereNoise.Value(RoguelikeToolkit.World.Core.Primitives.Vector3D p, int seed) -> double
+static RoguelikeToolkit.World.Core.Primitives.TileOrdering.DescendingByValue(System.ReadOnlySpan<float> values) -> int[]!
+static RoguelikeToolkit.World.Core.Primitives.Vector3D.Cross(RoguelikeToolkit.World.Core.Primitives.Vector3D a, RoguelikeToolkit.World.Core.Primitives.Vector3D b) -> RoguelikeToolkit.World.Core.Primitives.Vector3D
+static RoguelikeToolkit.World.Core.Primitives.Vector3D.Dot(RoguelikeToolkit.World.Core.Primitives.Vector3D a, RoguelikeToolkit.World.Core.Primitives.Vector3D b) -> double
+static RoguelikeToolkit.World.Core.Primitives.Vector3D.FromGeoCoord(RoguelikeToolkit.World.Core.Primitives.GeoCoord geo) -> RoguelikeToolkit.World.Core.Primitives.Vector3D
+static RoguelikeToolkit.World.Core.Primitives.Vector3D.operator *(RoguelikeToolkit.World.Core.Primitives.Vector3D a, double b) -> RoguelikeToolkit.World.Core.Primitives.Vector3D
+static RoguelikeToolkit.World.Core.Primitives.Vector3D.operator +(RoguelikeToolkit.World.Core.Primitives.Vector3D a, RoguelikeToolkit.World.Core.Primitives.Vector3D b) -> RoguelikeToolkit.World.Core.Primitives.Vector3D
+static RoguelikeToolkit.World.Core.Primitives.Vector3D.operator -(RoguelikeToolkit.World.Core.Primitives.Vector3D a, RoguelikeToolkit.World.Core.Primitives.Vector3D b) -> RoguelikeToolkit.World.Core.Primitives.Vector3D
+static RoguelikeToolkit.World.Core.Primitives.Vector3D.operator /(RoguelikeToolkit.World.Core.Primitives.Vector3D a, double b) -> RoguelikeToolkit.World.Core.Primitives.Vector3D
+static RoguelikeToolkit.World.Core.Settlement.CitySiteScorer.Score(RoguelikeToolkit.World.Core.Storage.WorldDataStore! store, RoguelikeToolkit.World.Core.Features.RiverCatalog! rivers, RoguelikeToolkit.World.Core.Features.WaterBodyCatalog! waters, RoguelikeToolkit.World.Core.Settlement.CitySiteFilter! filter, RoguelikeToolkit.World.Core.Integration.QueryOptions? options = null, int worldSeed = 0) -> System.Collections.Generic.List<RoguelikeToolkit.World.Core.Settlement.CitySiteScore!>!
+static RoguelikeToolkit.World.Core.Settlement.LandCapacity.Evaluate(in RoguelikeToolkit.World.Core.Settlement.LandSite s) -> RoguelikeToolkit.World.Core.Settlement.LandCapacityInfo
+static RoguelikeToolkit.World.Core.Settlement.SettlementScoring.Score(bool water, RoguelikeToolkit.World.Core.Biomes.BiomeType biome, float elevation, int effectiveDanger, float habitabilityDelta, System.Collections.Generic.List<string!>? reasons = null, bool winterIce = false) -> double
+static RoguelikeToolkit.World.Core.Sites.SiteInjectorPipeline.DeriveInjectorRng(RoguelikeToolkit.World.Core.Topology.MapAddress address, string! injectorId) -> RoguelikeToolkit.World.Core.Primitives.Rng
+static RoguelikeToolkit.World.Core.Sites.SiteInjectorPipeline.MaterializeLocal(RoguelikeToolkit.World.Core.Hierarchy.LocalMapHandle! local, System.Collections.Generic.IEnumerable<RoguelikeToolkit.World.Core.Sites.ISiteInjector!>! injectors) -> RoguelikeToolkit.World.Core.Sites.SiteCatalog!
+static RoguelikeToolkit.World.Core.Sites.SiteInjectorPipeline.MaterializeRegion(RoguelikeToolkit.World.Core.Hierarchy.RegionHandle! region, System.Collections.Generic.IEnumerable<RoguelikeToolkit.World.Core.Sites.ISiteInjector!>! injectors) -> RoguelikeToolkit.World.Core.Sites.SiteCatalog!
+static RoguelikeToolkit.World.Core.Storage.WorldDataStore.GetTileCount(int size) -> int
+static RoguelikeToolkit.World.Core.Topology.CubeCoord.FromAxial(int q, int r) -> RoguelikeToolkit.World.Core.Topology.CubeCoord
+static RoguelikeToolkit.World.Core.Topology.IcosphereGenerator.Generate(int recursionLevel, out RoguelikeToolkit.World.Core.Primitives.Vector3D[]! outVertices, out RoguelikeToolkit.World.Core.Topology.TriangleIndices[]! outFaces) -> void
+static RoguelikeToolkit.World.Core.Topology.IcosphereGenerator.GenerateFlat(int recursionLevel, out System.Numerics.Vector3[]! outVertices, out System.Numerics.Vector3[]! outNormals, out System.Numerics.Vector3[]! outBarycentric) -> void
+static RoguelikeToolkit.World.Core.Topology.MapAddress.ForLocal(int worldSeed, int worldTileIndex, int regionCellIndex, int localTileIndex) -> RoguelikeToolkit.World.Core.Topology.MapAddress
+static RoguelikeToolkit.World.Core.Topology.MapAddress.ForPlanet(int worldSeed, int worldTileIndex) -> RoguelikeToolkit.World.Core.Topology.MapAddress
+static RoguelikeToolkit.World.Core.Topology.MapAddress.ForRegion(int worldSeed, int worldTileIndex, int regionCellIndex) -> RoguelikeToolkit.World.Core.Topology.MapAddress
+static RoguelikeToolkit.World.Core.Topology.MapBounds.ForGrid(RoguelikeToolkit.World.Core.Primitives.GeoCoord center, double radiusKm, int size) -> RoguelikeToolkit.World.Core.Topology.MapBounds
+static RoguelikeToolkit.World.Core.Topology.MapBounds.ForPlanetTile(RoguelikeToolkit.World.Core.Storage.WorldDataStore! store, int tileIndex) -> RoguelikeToolkit.World.Core.Topology.MapBounds
+static RoguelikeToolkit.World.Core.Topology.OffsetGrid.FromIndex(int index, int size) -> (int Q, int R)
+static RoguelikeToolkit.World.Core.Topology.OffsetGrid.ToIndex(int q, int r, int size) -> int
+static RoguelikeToolkit.World.Core.World.DistanceKm(RoguelikeToolkit.World.Core.Primitives.GeoCoord a, RoguelikeToolkit.World.Core.Primitives.GeoCoord b) -> double

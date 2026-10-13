@@ -1,9 +1,7 @@
-using System;
-using System.Collections.Generic;
-using System.IO;
-using System.Linq;
-using RoguelikeToolkit.World.Core;
-using Xunit;
+using RoguelikeToolkit.World.Core.Biomes;
+using RoguelikeToolkit.World.Core.Generation;
+using RoguelikeToolkit.World.Core.Tectonics;
+using RoguelikeToolkit.World.Core.Topology;
 
 namespace RoguelikeToolkit.World.Core.Tests;
 
@@ -20,7 +18,7 @@ public class PipelineTests
         Assert.True(stages.Count >= 2);
 
         var tectonicStage = stages.OfType<TectonicPlateGenerationStage>().FirstOrDefault();
-        var localMapStage = stages.OfType<LocalMapGenerationStage>().FirstOrDefault();
+        var localMapStage = stages.OfType<BiomeGenerationStage>().FirstOrDefault();
 
         Assert.NotNull(tectonicStage);
         Assert.NotNull(localMapStage);

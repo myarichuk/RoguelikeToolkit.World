@@ -1,7 +1,8 @@
-using System;
-using System.Collections.Generic;
-using Xunit;
-using RoguelikeToolkit.World.Core;
+using RoguelikeToolkit.World.Core.Biomes;
+using RoguelikeToolkit.World.Core.Climate;
+using RoguelikeToolkit.World.Core.Hierarchy;
+using RoguelikeToolkit.World.Core.Primitives;
+using RoguelikeToolkit.World.Core.Topology;
 
 namespace RoguelikeToolkit.World.Core.Tests;
 
@@ -344,7 +345,7 @@ public class RegionMapsTests
         // World tile -> region parent: the mean over the tile and its ring of the climate layer's own fields.
         using var world = new WorldBuilder().WithSize(4).WithSeed(7).Build();
         var store = world.Map.DataStore;
-        var locals = store.GetSpan<LocalMapInfo>();
+        var locals = store.GetSpan<BiomeInfo>();
         var climate = store.GetSpan<ClimateInfo>();
         int tile = -1;
         for (int i = 0; i < locals.Length && tile < 0; i++)

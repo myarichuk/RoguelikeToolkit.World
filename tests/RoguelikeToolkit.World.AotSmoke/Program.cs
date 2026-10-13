@@ -1,6 +1,13 @@
 using RoguelikeToolkit.World.Core;
+using RoguelikeToolkit.World.Core.Biomes;
+using RoguelikeToolkit.World.Core.Climate;
+using RoguelikeToolkit.World.Core.Elevation;
 using RoguelikeToolkit.World.Core.Entities;
+using RoguelikeToolkit.World.Core.Generation;
 using RoguelikeToolkit.World.Core.Names;
+using RoguelikeToolkit.World.Core.Primitives;
+using RoguelikeToolkit.World.Core.Settlement;
+using RoguelikeToolkit.World.Core.Storage;
 
 var failures = new List<string>();
 void Check(bool ok, string what)
@@ -22,7 +29,7 @@ void Mix(ulong v)
 using (var world = new WorldBuilder().WithSize(3).WithSeed(42).Build())
 {
     var heights = world.Map.DataStore.GetSpan<ElevationInfo>();
-    var biomes = world.Map.DataStore.GetSpan<LocalMapInfo>();
+    var biomes = world.Map.DataStore.GetSpan<BiomeInfo>();
     Check(heights.Length == world.TileCount && heights.Length > 0, "elevation layer");
     for (int i = 0; i < heights.Length; i++)
     {

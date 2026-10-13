@@ -1,5 +1,4 @@
 using Xunit;
-using RoguelikeToolkit.World.Presentation;
 
 namespace RoguelikeToolkit.World.Presentation.Tests;
 

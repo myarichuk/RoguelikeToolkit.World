@@ -1,7 +1,9 @@
 using System;
 using System.Collections.Generic;
 using System.Numerics;
-using RoguelikeToolkit.World.Core;
+using RoguelikeToolkit.World.Core.Hierarchy;
+using RoguelikeToolkit.World.Core.Primitives;
+using RoguelikeToolkit.World.Core.Topology;
 
 namespace RoguelikeToolkit.World.Presentation;
 

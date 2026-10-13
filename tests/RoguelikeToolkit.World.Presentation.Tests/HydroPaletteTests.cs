@@ -1,6 +1,5 @@
 using System.Numerics;
-using RoguelikeToolkit.World.Core;
-using RoguelikeToolkit.World.Presentation;
+using RoguelikeToolkit.World.Core.Features;
 using Xunit;
 
 namespace RoguelikeToolkit.World.Presentation.Tests;

@@ -1,9 +1,15 @@
-using System;
-using System.Collections.Generic;
 using System.Dynamic;
-using System.Threading;
 using Jint;
-using RoguelikeToolkit.World.Core;
+using RoguelikeToolkit.World.Core.Biomes;
+using RoguelikeToolkit.World.Core.Climate;
+using RoguelikeToolkit.World.Core.Elevation;
+using RoguelikeToolkit.World.Core.Generation;
+using RoguelikeToolkit.World.Core.Hydrology;
+using RoguelikeToolkit.World.Core.Primitives;
+using RoguelikeToolkit.World.Core.Settlement;
+using RoguelikeToolkit.World.Core.Storage;
+using RoguelikeToolkit.World.Core.Tectonics;
+using RoguelikeToolkit.World.Core.Topology;
 
 namespace RoguelikeToolkit.World.Scripting.Jint;
 
@@ -149,7 +155,7 @@ public sealed class JintWorldStage : IWorldGeneratorStage, IDeclaredStage, IStag
         var modeElevationInfo = ResolveRead(store, typeof(ElevationInfo), _reads, _readsOptional);
         var modeClimateInfo = ResolveRead(store, typeof(ClimateInfo), _reads, _readsOptional);
         var modeHydrologyInfo = ResolveRead(store, typeof(HydrologyInfo), _reads, _readsOptional);
-        var modeLocalMapInfo = ResolveRead(store, typeof(LocalMapInfo), _reads, _readsOptional);
+        var modeBiomeInfo = ResolveRead(store, typeof(BiomeInfo), _reads, _readsOptional);
         var modeCapacity = ResolveRead(store, typeof(LandCapacityInfo), _reads, _readsOptional);
         var modeLandUse = ResolveRead(store, typeof(LandUseInfo), _reads, _readsOptional);
 
@@ -191,12 +197,12 @@ public sealed class JintWorldStage : IWorldGeneratorStage, IDeclaredStage, IStag
         double ReadBiome(int i)
         {
             int t = CheckIndex(i, tileCount);
-            return modeLocalMapInfo == ReadMode.Direct ? (double)store.GetRef<LocalMapInfo>(t).Biome : ReadFallback(modeLocalMapInfo, typeof(LocalMapInfo), stageName);
+            return modeBiomeInfo == ReadMode.Direct ? (double)store.GetRef<BiomeInfo>(t).Biome : ReadFallback(modeBiomeInfo, typeof(BiomeInfo), stageName);
         }
         double ReadDanger(int i)
         {
             int t = CheckIndex(i, tileCount);
-            return modeLocalMapInfo == ReadMode.Direct ? store.GetRef<LocalMapInfo>(t).DangerLevel : ReadFallback(modeLocalMapInfo, typeof(LocalMapInfo), stageName);
+            return modeBiomeInfo == ReadMode.Direct ? store.GetRef<BiomeInfo>(t).DangerLevel : ReadFallback(modeBiomeInfo, typeof(BiomeInfo), stageName);
         }
 
         double Capacity(int i, Func<LandCapacityInfo, byte> pick)
@@ -247,14 +253,14 @@ public sealed class JintWorldStage : IWorldGeneratorStage, IDeclaredStage, IStag
 
         void WriteBiome(int i, double v)
         {
-            RequireWrite(typeof(LocalMapInfo), stageName, _writes);
-            store.GetRef<LocalMapInfo>(CheckIndex(i, tileCount)).Biome = (BiomeType)CheckBiome((int)v);
+            RequireWrite(typeof(BiomeInfo), stageName, _writes);
+            store.GetRef<BiomeInfo>(CheckIndex(i, tileCount)).Biome = (BiomeType)CheckBiome((int)v);
         }
 
         void WriteDanger(int i, double v)
         {
-            RequireWrite(typeof(LocalMapInfo), stageName, _writes);
-            store.GetRef<LocalMapInfo>(CheckIndex(i, tileCount)).DangerLevel = (byte)CheckDanger((int)v);
+            RequireWrite(typeof(BiomeInfo), stageName, _writes);
+            store.GetRef<BiomeInfo>(CheckIndex(i, tileCount)).DangerLevel = (byte)CheckDanger((int)v);
         }
 
         double Rand01(int tile, int salt)

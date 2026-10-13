@@ -1,24 +1,7 @@
 using System.Reflection;
 using YamlDotNet.Serialization;
-using YamlDotNet.Serialization.NamingConventions;
 
 namespace RoguelikeToolkit.World.Core.Localization;
-
-/// <summary>One UI language table (flat key/value strings plus layout direction).</summary>
-[Preserve] // populated by YamlDotNet through reflection
-public sealed class LocaleData
-{
-    public string Language { get; set; } = string.Empty;
-    public string DisplayName { get; set; } = string.Empty;
-    public bool RightToLeft { get; set; }
-    public Dictionary<string, string> Strings { get; set; } = new(StringComparer.OrdinalIgnoreCase);
-}
-
-/// <summary>Thrown when locale tables fail validation (missing keys, bad YAML).</summary>
-public sealed class LocaleDataException : Exception
-{
-    public LocaleDataException(string message) : base(message) { }
-}
 
 /// <summary>
 /// Data-driven UI strings. Locale tables ship as embedded YAML
@@ -31,8 +14,11 @@ public sealed class LocaleStore
     private readonly Dictionary<string, string> _strings;
     private readonly LocaleData _english;
 
+    /// <summary>Language code of this table as declared in its YAML (for example <c>en</c>, <c>ru</c>, <c>he</c>).</summary>
     public string Language { get; }
+    /// <summary>Name of the language written in that language, suitable for a language picker.</summary>
     public string DisplayName { get; }
+    /// <summary>Whether the UI should lay out right-to-left for this language.</summary>
     public bool RightToLeft { get; }
 
     private LocaleStore(LocaleData data, LocaleData english)
@@ -44,6 +30,9 @@ public sealed class LocaleStore
         _strings = new Dictionary<string, string>(data.Strings, StringComparer.OrdinalIgnoreCase);
     }
 
+    /// <summary>
+    /// Returns the string for <paramref name="key"/> (case-insensitive), falling back to the English table, then to the literal <c>!key!</c> marker. Never throws for an unknown key.
+    /// </summary>
     public string Get(string key)
     {
         if (_strings.TryGetValue(key, out var s)) return s;
@@ -51,6 +40,11 @@ public sealed class LocaleStore
         return $"!{key}!";
     }
 
+    /// <summary>
+    /// Lists every embedded locale table as (language code, display name), ordered by resource name.
+    /// A blank display name falls back to the language code; tables with a blank <c>Language</c> are skipped.
+    /// </summary>
+    /// <remarks>Unlike <see cref="Load"/> this does not validate key sets, and malformed YAML surfaces as the deserializer's own exception rather than <see cref="LocaleDataException"/>.</remarks>
     public static IReadOnlyList<(string Language, string DisplayName)> AvailableLanguages()
     {
         var asm = typeof(LocaleStore).Assembly;
@@ -69,6 +63,8 @@ public sealed class LocaleStore
         return list;
     }
 
+    /// <summary>Loads the embedded table for <paramref name="language"/> (case-insensitive code) after checking that it carries exactly the English key set.</summary>
+    /// <exception cref="LocaleDataException">The language is unknown, the English table is missing, a table is malformed, or the key set differs from English (missing or extra keys).</exception>
     public static LocaleStore Load(string language)
     {
         var all = LoadAll();

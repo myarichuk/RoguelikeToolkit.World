@@ -1,11 +1,5 @@
 namespace RoguelikeToolkit.World.Core.Entities;
 
-/// <summary>Maps a column value to the cell it occupies (negative = unplaced). Implement as a struct so the call inlines.</summary>
-public interface ICellOf<T> where T : unmanaged
-{
-    int Cell(in T value);
-}
-
 /// <summary>
 /// Counting-sort spatial bucket index: maps a cell (typically a planet tile index) to the
 /// entity slots inside it as one contiguous span. Rebuilt in O(entities + cells) from a
@@ -19,6 +13,7 @@ public sealed class CellIndex
     private int[] _items = Array.Empty<int>();
     private int _cellCount;
 
+    /// <summary>Number of cells in the most recent <c>Rebuild</c> (valid cell ids are <c>0..CellCount-1</c>); 0 before the first rebuild.</summary>
     public int CellCount => _cellCount;
 
     /// <summary>Slots currently indexed.</summary>

@@ -1,10 +1,6 @@
-using System;
-using System.Collections.Generic;
-using System.IO;
-using System.Linq;
 using RoguelikeToolkit.World.Core;
-using RoguelikeToolkit.World.Scripting.Jint;
-using Xunit;
+using RoguelikeToolkit.World.Core.Settlement;
+using RoguelikeToolkit.World.Core.Storage;
 
 namespace RoguelikeToolkit.World.Scripting.Jint.Tests;
 

@@ -1,7 +1,11 @@
-using System;
-using System.Linq;
-using RoguelikeToolkit.World.Core;
-using Xunit;
+using RoguelikeToolkit.World.Core.Biomes;
+using RoguelikeToolkit.World.Core.Climate;
+using RoguelikeToolkit.World.Core.Elevation;
+using RoguelikeToolkit.World.Core.Generation;
+using RoguelikeToolkit.World.Core.Hydrology;
+using RoguelikeToolkit.World.Core.Settlement;
+using RoguelikeToolkit.World.Core.Storage;
+using RoguelikeToolkit.World.Core.Topology;
 
 namespace RoguelikeToolkit.World.Core.Tests;
 
@@ -126,9 +130,9 @@ public class LandUseTests
         using var plain = new WorldBuilder().WithSize(Size).WithSeed(Seed).WithUserEdits().Build();
         using var land = Build();
         var pe = plain.Map.DataStore.GetSpan<ElevationInfo>(); var pc = plain.Map.DataStore.GetSpan<ClimateInfo>();
-        var pl = plain.Map.DataStore.GetSpan<LocalMapInfo>(); var ph = plain.Map.DataStore.GetSpan<HydrologyInfo>();
+        var pl = plain.Map.DataStore.GetSpan<BiomeInfo>(); var ph = plain.Map.DataStore.GetSpan<HydrologyInfo>();
         var le = land.Map.DataStore.GetSpan<ElevationInfo>(); var lc = land.Map.DataStore.GetSpan<ClimateInfo>();
-        var ll = land.Map.DataStore.GetSpan<LocalMapInfo>(); var lh = land.Map.DataStore.GetSpan<HydrologyInfo>();
+        var ll = land.Map.DataStore.GetSpan<BiomeInfo>(); var lh = land.Map.DataStore.GetSpan<HydrologyInfo>();
         for (int i = 0; i < pe.Length; i++)
         {
             Assert.Equal(pe[i].Height, le[i].Height);
@@ -147,7 +151,7 @@ public class LandUseTests
         var s = w.Map.DataStore;
         var use = s.GetSpan<LandUseInfo>();
         var cap = s.GetSpan<LandCapacityInfo>();
-        var biome = s.GetSpan<LocalMapInfo>();
+        var biome = s.GetSpan<BiomeInfo>();
         Assert.All(use.ToArray(), u => Assert.Equal(default, u));
 
         int arable = 0, fish = 0, oceanWithLandCapacity = 0;
@@ -178,7 +182,7 @@ public class LandUseTests
         // The Humboldt/Benguela effect, through the real pipeline: ocean tiles with a cold anomaly out-fish the warm ones.
         using var w = Build();
         var s = w.Map.DataStore;
-        var cap = s.GetSpan<LandCapacityInfo>(); var cl = s.GetSpan<ClimateInfo>(); var loc = s.GetSpan<LocalMapInfo>();
+        var cap = s.GetSpan<LandCapacityInfo>(); var cl = s.GetSpan<ClimateInfo>(); var loc = s.GetSpan<BiomeInfo>();
         double cold = 0, warm = 0; int nc = 0, nw = 0;
         for (int i = 0; i < cap.Length; i++)
         {
@@ -277,12 +281,12 @@ public class LandUseTests
     public void LandUsePins_DoNotChangeThePhysics()
     {
         using var w = Build();
-        var snap = w.Map.DataStore.GetSpan<LocalMapInfo>().ToArray();
+        var snap = w.Map.DataStore.GetSpan<BiomeInfo>().ToArray();
         var flow = w.Map.DataStore.GetSpan<HydrologyInfo>().ToArray().Select(h => h.Flow).ToArray();
         int t = AnyTile(w, i => snap[i].Biome == BiomeType.Plains);
         w.Edits[t].Flags |= UserEditFlags.PinLandUse; w.Edits[t].LandUse = LandUseId.Farmland;
         w.Recompute();
-        Assert.Equal(snap, w.Map.DataStore.GetSpan<LocalMapInfo>().ToArray());
+        Assert.Equal(snap, w.Map.DataStore.GetSpan<BiomeInfo>().ToArray());
         Assert.Equal(flow, w.Map.DataStore.GetSpan<HydrologyInfo>().ToArray().Select(h => h.Flow).ToArray());
         Assert.False(w.Edits[t].IsEmpty);
     }
