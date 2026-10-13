@@ -1,6 +1,7 @@
-using System;
+using RoguelikeToolkit.World.Core.Storage;
+using RoguelikeToolkit.World.Core.Tectonics;
 
-namespace RoguelikeToolkit.World.Core;
+namespace RoguelikeToolkit.World.Core.Biomes;
 
 public class LocalMapLayer : StoreLayer<LocalMapInfo>
 {

@@ -1,6 +1,7 @@
-using System;
+using RoguelikeToolkit.World.Core.Primitives;
+using RoguelikeToolkit.World.Core.Topology;
 
-namespace RoguelikeToolkit.World.Core;
+namespace RoguelikeToolkit.World.Core.Storage;
 
 /// <summary>
 /// Coordinate-addressed view over one dense layer of a <see cref="WorldDataStore"/>.

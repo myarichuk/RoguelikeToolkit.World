@@ -1,7 +1,4 @@
-using System;
-using System.Collections.Generic;
-
-namespace RoguelikeToolkit.World.Core;
+namespace RoguelikeToolkit.World.Core.Lithosphere;
 
 /// <summary>Tuning for <see cref="IslandChainDetector"/>.</summary>
 public sealed class IslandChainOptions

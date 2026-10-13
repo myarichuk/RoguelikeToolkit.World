@@ -1,3 +1,5 @@
+using RoguelikeToolkit.World.Core.Primitives;
+
 namespace RoguelikeToolkit.World.Core.Names;
 
 /// <summary>Deterministic fantasy/human name generators over YAML data tables.</summary>

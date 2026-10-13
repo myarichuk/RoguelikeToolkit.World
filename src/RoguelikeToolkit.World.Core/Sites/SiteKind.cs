@@ -1,7 +1,4 @@
-using System;
-using System.Collections.Generic;
-
-namespace RoguelikeToolkit.World.Core;
+namespace RoguelikeToolkit.World.Core.Sites;
 
 /// <summary>Kind of a placed site.</summary>
 public enum SiteKind : byte

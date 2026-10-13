@@ -1,7 +1,7 @@
-using System;
-using System.Collections.Generic;
+using RoguelikeToolkit.World.Core.Primitives;
+using RoguelikeToolkit.World.Core.Sites;
 
-namespace RoguelikeToolkit.World.Core;
+namespace RoguelikeToolkit.World.Core.Hierarchy;
 
 /// <summary>Lazy hierarchical detail: one world hex expands to a region grid.</summary>
 public sealed class RegionHandle : GridMapHandle<RegionCell>

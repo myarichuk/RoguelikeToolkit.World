@@ -1,7 +1,4 @@
-using System;
-using System.Collections.Generic;
-
-namespace RoguelikeToolkit.World.Core;
+namespace RoguelikeToolkit.World.Core.Lithosphere;
 
 /// <summary>
 /// A thin, elongated run of land tracing a plate boundary through the open ocean:

@@ -1,6 +1,7 @@
-using System;
+using RoguelikeToolkit.World.Core.Primitives;
+using RoguelikeToolkit.World.Core.Topology;
 
-namespace RoguelikeToolkit.World.Core;
+namespace RoguelikeToolkit.World.Core.Hierarchy;
 
 /// <summary>
 /// State and hex-grid behavior shared by the region and local handles: both are

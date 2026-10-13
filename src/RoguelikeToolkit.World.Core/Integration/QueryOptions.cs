@@ -1,7 +1,4 @@
-using System;
-using System.Collections.Generic;
-
-namespace RoguelikeToolkit.World.Core;
+namespace RoguelikeToolkit.World.Core.Integration;
 
 /// <summary>Query-time options. Null History means pure geography.</summary>
 public sealed class QueryOptions

@@ -1,10 +1,4 @@
-using System;
-using System.Collections.Generic;
-using System.IO;
-using System.Linq;
-using System.Reflection;
-
-namespace RoguelikeToolkit.World.Core;
+namespace RoguelikeToolkit.World.Core.Generation;
 
 public sealed class StageDiscoveryDiagnostic
 {

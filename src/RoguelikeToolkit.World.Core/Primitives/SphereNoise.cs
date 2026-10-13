@@ -1,6 +1,4 @@
-using System;
-
-namespace RoguelikeToolkit.World.Core;
+namespace RoguelikeToolkit.World.Core.Primitives;
 
 /// <summary>
 /// Seamless 3D value noise over unit-sphere positions. Operating on 3D vectors

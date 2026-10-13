@@ -163,7 +163,10 @@ Create a new class that implements the interface. Implement your generation logi
 Decorate your class with the `[WorldGeneratorStage(Order = N)]` attribute to specify its execution order. Lower numbers execute earlier in the pipeline. Note that assigning duplicate order values to multiple stages will throw an `InvalidOperationException` upon discovery.
 
 ```csharp
-using RoguelikeToolkit.World.Core;
+using RoguelikeToolkit.World.Core.Biomes;
+using RoguelikeToolkit.World.Core.Generation;
+using RoguelikeToolkit.World.Core.Tectonics;
+using RoguelikeToolkit.World.Core.Topology;
 
 [WorldGeneratorStage(30)]
 public class MyBiomeGenerationStage : IWorldGeneratorStage
@@ -191,6 +194,10 @@ Stages that read or write dense field layers should declare them so plugin
 collisions fail fast instead of silently last-write-wins:
 
 ```csharp
+using RoguelikeToolkit.World.Core.Climate;
+using RoguelikeToolkit.World.Core.Elevation;
+using RoguelikeToolkit.World.Core.Generation;
+
 [WorldGeneratorStage(42, Reads = new[] { typeof(ElevationInfo) }, Writes = new[] { typeof(ClimateInfo) })]
 public class MyClimateTweak : IWorldGeneratorStage { ... }
 ```

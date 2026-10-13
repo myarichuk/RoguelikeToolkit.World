@@ -1,7 +1,6 @@
-using System;
-using System.Collections.Generic;
+using RoguelikeToolkit.World.Core.Biomes;
 
-namespace RoguelikeToolkit.World.Core;
+namespace RoguelikeToolkit.World.Core.Sites;
 
 /// <summary>Read-only per-cell view of one materialized tier map; removes the region/local branch from every accessor.</summary>
 internal interface ITierSurface

@@ -1,6 +1,6 @@
-using System;
+using RoguelikeToolkit.World.Core.Storage;
 
-namespace RoguelikeToolkit.World.Core;
+namespace RoguelikeToolkit.World.Core.Generation;
 
 /// <summary>
 /// Declares a pipeline stage's execution order plus the field-layer contracts

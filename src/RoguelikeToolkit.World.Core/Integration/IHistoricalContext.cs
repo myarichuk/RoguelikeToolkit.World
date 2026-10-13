@@ -1,7 +1,6 @@
-using System;
-using System.Collections.Generic;
+using RoguelikeToolkit.World.Core.Primitives;
 
-namespace RoguelikeToolkit.World.Core;
+namespace RoguelikeToolkit.World.Core.Integration;
 
 /// <summary>
 /// Hook surface for Caves-of-Qud-style history integration. Implemented by the

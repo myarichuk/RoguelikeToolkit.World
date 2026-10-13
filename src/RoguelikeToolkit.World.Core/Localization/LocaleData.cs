@@ -1,7 +1,3 @@
-using System.Reflection;
-using YamlDotNet.Serialization;
-using YamlDotNet.Serialization.NamingConventions;
-
 namespace RoguelikeToolkit.World.Core.Localization;
 
 /// <summary>One UI language table (flat key/value strings plus layout direction).</summary>

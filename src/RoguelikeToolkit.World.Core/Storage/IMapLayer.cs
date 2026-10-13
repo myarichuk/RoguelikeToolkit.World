@@ -1,7 +1,6 @@
-using System;
-using System.Collections.Generic;
+using RoguelikeToolkit.World.Core.Primitives;
 
-namespace RoguelikeToolkit.World.Core;
+namespace RoguelikeToolkit.World.Core.Storage;
 
 public interface IMapLayer<T> where T : unmanaged
 {

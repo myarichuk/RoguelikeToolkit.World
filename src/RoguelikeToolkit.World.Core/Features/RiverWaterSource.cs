@@ -1,7 +1,4 @@
-using System;
-using System.Collections.Generic;
-
-namespace RoguelikeToolkit.World.Core;
+namespace RoguelikeToolkit.World.Core.Features;
 
 /// <summary>Where a river tile's water comes from (head classification).</summary>
 public enum RiverWaterSource : byte

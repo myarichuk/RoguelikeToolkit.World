@@ -1,7 +1,4 @@
-using System;
-using System.Collections.Generic;
-
-namespace RoguelikeToolkit.World.Core;
+namespace RoguelikeToolkit.World.Core.Lithosphere;
 
 /// <summary>Deposit richness class, derived from prospectivity score.</summary>
 public enum DepositSize : byte

@@ -1,7 +1,7 @@
-using System;
-using System.Collections.Generic;
+using RoguelikeToolkit.World.Core.Primitives;
+using RoguelikeToolkit.World.Core.Topology;
 
-namespace RoguelikeToolkit.World.Core;
+namespace RoguelikeToolkit.World.Core.Hierarchy;
 
 /// <summary>
 /// Derives the surface of a child map from its <see cref="ParentContext"/> in

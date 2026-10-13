@@ -1,7 +1,4 @@
-using System;
-using System.Collections.Generic;
-
-namespace RoguelikeToolkit.World.Core;
+namespace RoguelikeToolkit.World.Core.Integration;
 
 /// <summary>Per-tile history modifier resolved from an <see cref="IHistoricalContext"/>.</summary>
 public struct TileHistoryModifier

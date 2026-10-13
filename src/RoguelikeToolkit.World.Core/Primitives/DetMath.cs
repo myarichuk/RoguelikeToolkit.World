@@ -1,6 +1,4 @@
-using System;
-
-namespace RoguelikeToolkit.World.Core;
+namespace RoguelikeToolkit.World.Core.Primitives;
 
 /// <summary>
 /// Transcendental functions built only from IEEE-754 operations whose results

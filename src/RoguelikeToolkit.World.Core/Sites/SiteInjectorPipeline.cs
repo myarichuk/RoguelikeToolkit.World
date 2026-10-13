@@ -1,7 +1,7 @@
-using System;
-using System.Collections.Generic;
+using RoguelikeToolkit.World.Core.Hierarchy;
+using RoguelikeToolkit.World.Core.Primitives;
 
-namespace RoguelikeToolkit.World.Core;
+namespace RoguelikeToolkit.World.Core.Sites;
 
 /// <summary>
 /// Order-based site injector pipeline shared by the region/local handle

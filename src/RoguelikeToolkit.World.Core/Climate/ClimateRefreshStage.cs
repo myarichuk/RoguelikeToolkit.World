@@ -1,6 +1,9 @@
-using System;
+using RoguelikeToolkit.World.Core.Elevation;
+using RoguelikeToolkit.World.Core.Generation;
+using RoguelikeToolkit.World.Core.Storage;
+using RoguelikeToolkit.World.Core.Topology;
 
-namespace RoguelikeToolkit.World.Core;
+namespace RoguelikeToolkit.World.Core.Climate;
 
 /// <summary>
 /// Runs the climate model a second time, on the *eroded* relief. The first pass has to precede erosion

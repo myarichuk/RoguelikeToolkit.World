@@ -1,7 +1,9 @@
-using System;
-using System.Collections.Generic;
+using RoguelikeToolkit.World.Core.Elevation;
+using RoguelikeToolkit.World.Core.Primitives;
+using RoguelikeToolkit.World.Core.Storage;
+using RoguelikeToolkit.World.Core.Tectonics;
 
-namespace RoguelikeToolkit.World.Core;
+namespace RoguelikeToolkit.World.Core.Lithosphere;
 
 /// <summary>
 /// Heuristics for the ribbon-of-land artefact along plate boundaries, and the repair

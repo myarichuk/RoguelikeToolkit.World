@@ -1,7 +1,4 @@
-using System;
-using System.Collections.Generic;
-
-namespace RoguelikeToolkit.World.Core;
+namespace RoguelikeToolkit.World.Core.Sites;
 
 /// <summary>Scatters ruins on random land cells via the injector's own stream.</summary>
 public sealed class RuinInjector : SiteInjectorBase

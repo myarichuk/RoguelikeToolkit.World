@@ -1,7 +1,7 @@
-using System;
-using System.Collections.Generic;
+using RoguelikeToolkit.World.Core.Biomes;
+using RoguelikeToolkit.World.Core.Primitives;
 
-namespace RoguelikeToolkit.World.Core;
+namespace RoguelikeToolkit.World.Core.Settlement;
 
 public sealed class CitySiteScore
 {

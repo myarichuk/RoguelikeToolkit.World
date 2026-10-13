@@ -1,6 +1,4 @@
-using System;
-
-namespace RoguelikeToolkit.World.Core;
+namespace RoguelikeToolkit.World.Core.Climate;
 
 /// <summary>
 /// Dense per-tile climate field. Temperature is ~[0..1] (0 polar, 1 equatorial

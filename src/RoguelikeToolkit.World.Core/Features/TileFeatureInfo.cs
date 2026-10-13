@@ -1,7 +1,10 @@
-using System;
-using System.Collections.Generic;
+using RoguelikeToolkit.World.Core.Biomes;
+using RoguelikeToolkit.World.Core.Hierarchy;
+using RoguelikeToolkit.World.Core.Lithosphere;
+using RoguelikeToolkit.World.Core.Primitives;
+using RoguelikeToolkit.World.Core.Sites;
 
-namespace RoguelikeToolkit.World.Core;
+namespace RoguelikeToolkit.World.Core.Features;
 
 /// <summary>
 /// Everything attached to one hex: biome, river reach with from/to neighbors,

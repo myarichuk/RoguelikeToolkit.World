@@ -1,14 +1,13 @@
 using Avalonia.Controls;
 using Avalonia.Controls.Primitives;
 using Avalonia.Input;
-using Avalonia.Interactivity;
 using System;
 using System.Collections.Generic;
 using Avalonia;
 using Avalonia.Media;
 using Avalonia.Controls.Shapes;
-using RoguelikeToolkit.World.Core;
 using RoguelikeToolkit.World.Presentation;
+using RoguelikeToolkit.World.Core.Hierarchy;
 
 namespace RoguelikeToolkit.World.App
 {
@@ -215,7 +214,7 @@ namespace RoguelikeToolkit.World.App
 
                 if (txtPlate != null && tileIndex >= 0)
                 {
-                    var plate = GlView.PlateLayer?.Store.GetRef<RoguelikeToolkit.World.Core.TectonicPlate>(tileIndex);
+                    var plate = GlView.PlateLayer?.Store.GetRef<RoguelikeToolkit.World.Core.Tectonics.TectonicPlate>(tileIndex);
                     if (plate.HasValue)
                     {
                         txtPlate.Text = $"Plate ID: {plate.Value.Id}";
@@ -228,7 +227,7 @@ namespace RoguelikeToolkit.World.App
 
                 if (txtElev != null && tileIndex >= 0)
                 {
-                    var elev = GlView.ElevationLayer?.Store.GetRef<RoguelikeToolkit.World.Core.ElevationInfo>(tileIndex);
+                    var elev = GlView.ElevationLayer?.Store.GetRef<RoguelikeToolkit.World.Core.Elevation.ElevationInfo>(tileIndex);
                     if (elev.HasValue)
                     {
                         txtElev.Text = $"Elev: {elev.Value.Height:F2}";
@@ -241,7 +240,7 @@ namespace RoguelikeToolkit.World.App
 
                 if (txtBiome != null && txtDanger != null && tileIndex >= 0)
                 {
-                    var localInfo = GlView.LocalLayer?.Store.GetRef<RoguelikeToolkit.World.Core.LocalMapInfo>(tileIndex);
+                    var localInfo = GlView.LocalLayer?.Store.GetRef<RoguelikeToolkit.World.Core.Biomes.LocalMapInfo>(tileIndex);
                     if (localInfo.HasValue)
                     {
                         txtBiome.Text = $"Biome: {localInfo.Value.Biome}";

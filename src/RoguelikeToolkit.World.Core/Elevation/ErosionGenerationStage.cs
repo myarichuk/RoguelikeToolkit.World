@@ -1,6 +1,12 @@
-using System;
+using RoguelikeToolkit.World.Core.Climate;
+using RoguelikeToolkit.World.Core.Generation;
+using RoguelikeToolkit.World.Core.Hydrology;
+using RoguelikeToolkit.World.Core.Primitives;
+using RoguelikeToolkit.World.Core.Storage;
+using RoguelikeToolkit.World.Core.Tectonics;
+using RoguelikeToolkit.World.Core.Topology;
 
-namespace RoguelikeToolkit.World.Core;
+namespace RoguelikeToolkit.World.Core.Elevation;
 
 /// <summary>
 /// Thermal (talus) + hillslope diffusion + glacial U-valley carving + fluvial

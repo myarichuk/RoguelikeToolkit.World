@@ -1,7 +1,7 @@
-using System;
-using System.Collections.Generic;
+using RoguelikeToolkit.World.Core.Biomes;
+using RoguelikeToolkit.World.Core.Storage;
 
-namespace RoguelikeToolkit.World.Core;
+namespace RoguelikeToolkit.World.Core.Hydrology;
 
 /// <summary>
 /// Fills depressions according to water balance: inflow (runoff caught by the

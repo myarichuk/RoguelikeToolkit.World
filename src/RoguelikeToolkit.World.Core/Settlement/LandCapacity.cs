@@ -1,6 +1,8 @@
-using System;
+using RoguelikeToolkit.World.Core.Biomes;
+using RoguelikeToolkit.World.Core.Climate;
+using RoguelikeToolkit.World.Core.Elevation;
 
-namespace RoguelikeToolkit.World.Core;
+namespace RoguelikeToolkit.World.Core.Settlement;
 
 /// <summary>
 /// Physical suitability for farming, herding, hunting, logging and fishing, 0 to 255 each. Every product

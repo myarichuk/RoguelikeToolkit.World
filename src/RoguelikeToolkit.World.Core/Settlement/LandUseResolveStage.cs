@@ -1,6 +1,8 @@
-using System;
+using RoguelikeToolkit.World.Core.Generation;
+using RoguelikeToolkit.World.Core.Storage;
+using RoguelikeToolkit.World.Core.Topology;
 
-namespace RoguelikeToolkit.World.Core;
+namespace RoguelikeToolkit.World.Core.Settlement;
 
 /// <summary>
 /// The last stage of a land-use pipeline: applies hand-painted pins (<see cref="UserEditFlags.PinLandUse"/>)

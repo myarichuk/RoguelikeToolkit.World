@@ -1,4 +1,7 @@
-namespace RoguelikeToolkit.World.Core;
+using RoguelikeToolkit.World.Core.Climate;
+using RoguelikeToolkit.World.Core.Elevation;
+
+namespace RoguelikeToolkit.World.Core.Biomes;
 
 /// <summary>
 /// The single biome decision ladder shared by the planet biome stage and the

@@ -1,6 +1,7 @@
-using System;
+using RoguelikeToolkit.World.Core.Biomes;
+using RoguelikeToolkit.World.Core.Climate;
 
-namespace RoguelikeToolkit.World.Core;
+namespace RoguelikeToolkit.World.Core.Settlement;
 
 /// <summary>
 /// The facts about one tile the capacity model needs. A plain value so plugins, tests and the editor can

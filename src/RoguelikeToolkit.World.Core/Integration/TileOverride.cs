@@ -1,7 +1,6 @@
-using System;
-using System.Collections.Generic;
+using RoguelikeToolkit.World.Core.Biomes;
 
-namespace RoguelikeToolkit.World.Core;
+namespace RoguelikeToolkit.World.Core.Integration;
 
 /// <summary>
 /// Per-tile override applied on top of generated geography. Replacement (not

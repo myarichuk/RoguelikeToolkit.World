@@ -1,6 +1,7 @@
-using System;
+using RoguelikeToolkit.World.Core.Primitives;
+using RoguelikeToolkit.World.Core.Storage;
 
-namespace RoguelikeToolkit.World.Core;
+namespace RoguelikeToolkit.World.Core.Tectonics;
 
 /// <summary>
 /// Default partitioner: simultaneous multi-source Dijkstra growth in a <em>warped</em> space. Each plate spreads

@@ -1,6 +1,6 @@
-using System;
+using RoguelikeToolkit.World.Core.Storage;
 
-namespace RoguelikeToolkit.World.Core;
+namespace RoguelikeToolkit.World.Core.Hydrology;
 
 /// <summary>
 /// Canyon (slot-gorge) physics shared by erosion (incision), feature extraction,

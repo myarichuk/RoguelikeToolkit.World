@@ -1,7 +1,4 @@
-using System;
-using System.Collections.Generic;
-
-namespace RoguelikeToolkit.World.Core;
+namespace RoguelikeToolkit.World.Core.Sites;
 
 /// <summary>
 /// One injector-placed site on a region/local map. CellIndex addresses the

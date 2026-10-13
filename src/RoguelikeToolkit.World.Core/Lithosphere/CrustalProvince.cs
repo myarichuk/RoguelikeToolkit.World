@@ -1,6 +1,4 @@
-using System;
-
-namespace RoguelikeToolkit.World.Core;
+namespace RoguelikeToolkit.World.Core.Lithosphere;
 
 /// <summary>
 /// The tectonic setting a tile sits in, as an ore geologist would name it. Metals

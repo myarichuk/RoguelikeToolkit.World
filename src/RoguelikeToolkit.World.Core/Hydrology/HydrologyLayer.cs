@@ -1,6 +1,6 @@
-using System;
+using RoguelikeToolkit.World.Core.Storage;
 
-namespace RoguelikeToolkit.World.Core;
+namespace RoguelikeToolkit.World.Core.Hydrology;
 
 public class HydrologyLayer : StoreLayer<HydrologyInfo>
 {

@@ -1,7 +1,8 @@
-using System;
-using System.Collections.Generic;
-using RoguelikeToolkit.World.Core;
-using Xunit;
+using RoguelikeToolkit.World.Core.Biomes;
+using RoguelikeToolkit.World.Core.Elevation;
+using RoguelikeToolkit.World.Core.Integration;
+using RoguelikeToolkit.World.Core.Primitives;
+using RoguelikeToolkit.World.Core.Settlement;
 
 namespace RoguelikeToolkit.World.Core.Tests;
 

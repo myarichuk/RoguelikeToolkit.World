@@ -1,7 +1,4 @@
-using System;
-using System.Linq;
-
-namespace RoguelikeToolkit.World.Core;
+namespace RoguelikeToolkit.World.Core.Generation;
 
 /// <summary>
 /// Single place that resolves a stage's order and layer contracts.

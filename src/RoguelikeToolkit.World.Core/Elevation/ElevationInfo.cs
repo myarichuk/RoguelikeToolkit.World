@@ -1,4 +1,4 @@
-namespace RoguelikeToolkit.World.Core;
+namespace RoguelikeToolkit.World.Core.Elevation;
 
 /// <summary>
 /// Per-tile surface height in roughly [-1.2, 1.2]. Sea level is

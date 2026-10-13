@@ -1,7 +1,4 @@
-using System;
-using System.Collections.Generic;
-
-namespace RoguelikeToolkit.World.Core;
+namespace RoguelikeToolkit.World.Core.Hydrology;
 
 /// <summary>
 /// Result of the lake water-balance solver: per-tile depths, ids, playas, and

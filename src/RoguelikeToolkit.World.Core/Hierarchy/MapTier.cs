@@ -1,4 +1,4 @@
-namespace RoguelikeToolkit.World.Core;
+namespace RoguelikeToolkit.World.Core.Hierarchy;
 
 /// <summary>Tier of a map in the planet -&gt; region -&gt; local hierarchy.</summary>
 public enum MapTier : byte

@@ -1,6 +1,10 @@
-using System;
+using RoguelikeToolkit.World.Core.Generation;
+using RoguelikeToolkit.World.Core.Primitives;
+using RoguelikeToolkit.World.Core.Storage;
+using RoguelikeToolkit.World.Core.Tectonics;
+using RoguelikeToolkit.World.Core.Topology;
 
-namespace RoguelikeToolkit.World.Core;
+namespace RoguelikeToolkit.World.Core.Elevation;
 
 [Preserve] // created via reflection by WorldGenerationPipeline.Discover; keep it through Unity code stripping
 [WorldGeneratorStage(PipelineOrder, Reads = new[] { typeof(TectonicPlate) }, ReadsOptional = new[] { typeof(UserEditInfo) }, Writes = new[] { typeof(ElevationInfo) })]

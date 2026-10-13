@@ -1,5 +1,4 @@
-using System.Buffers.Binary;
-using System.Runtime.InteropServices;
+using RoguelikeToolkit.World.Core.Storage;
 
 namespace RoguelikeToolkit.World.Core.Entities;
 

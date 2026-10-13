@@ -1,6 +1,10 @@
-using System;
+using RoguelikeToolkit.World.Core.Biomes;
+using RoguelikeToolkit.World.Core.Elevation;
+using RoguelikeToolkit.World.Core.Primitives;
+using RoguelikeToolkit.World.Core.Settlement;
+using RoguelikeToolkit.World.Core.Storage;
 
-namespace RoguelikeToolkit.World.Core;
+namespace RoguelikeToolkit.World.Core.Climate;
 
 /// <summary>
 /// Sea-ice model. Like <see cref="Glaciology"/> it is a pure function of the tile (position, height and the

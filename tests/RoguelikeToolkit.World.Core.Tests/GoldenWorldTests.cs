@@ -1,6 +1,6 @@
 using System.Security.Cryptography;
-using Xunit;
-using RoguelikeToolkit.World.Core;
+using RoguelikeToolkit.World.Core.Primitives;
+using RoguelikeToolkit.World.Core.Sites;
 
 namespace RoguelikeToolkit.World.Core.Tests;
 

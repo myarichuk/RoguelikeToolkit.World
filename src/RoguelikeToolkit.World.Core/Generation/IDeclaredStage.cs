@@ -1,6 +1,4 @@
-using System;
-
-namespace RoguelikeToolkit.World.Core;
+namespace RoguelikeToolkit.World.Core.Generation;
 
 /// <summary>
 /// Instance-level stage contract for stages whose order and layer

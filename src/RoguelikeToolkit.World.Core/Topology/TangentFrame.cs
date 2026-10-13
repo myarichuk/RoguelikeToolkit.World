@@ -1,6 +1,6 @@
-using System;
+using RoguelikeToolkit.World.Core.Primitives;
 
-namespace RoguelikeToolkit.World.Core;
+namespace RoguelikeToolkit.World.Core.Topology;
 
 /// <summary>
 /// Local tangent frame at a map center: the up (radial) vector, the east/north

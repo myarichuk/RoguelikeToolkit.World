@@ -1,6 +1,6 @@
-using System;
+using RoguelikeToolkit.World.Core.Primitives;
 
-namespace RoguelikeToolkit.World.Core;
+namespace RoguelikeToolkit.World.Core.Topology;
 
 /// <summary>
 /// Flat-top hex-grid geometry of the square axial patches that back region and

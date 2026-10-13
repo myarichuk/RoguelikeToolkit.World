@@ -1,9 +1,6 @@
-using System;
-using System.Collections.Generic;
-using System.Globalization;
-using System.Text;
+using RoguelikeToolkit.World.Core.Hydrology;
 
-namespace RoguelikeToolkit.World.Core;
+namespace RoguelikeToolkit.World.Core.Features;
 
 /// <summary>Managed catalog of connected water bodies (lakes, seas, ocean).</summary>
 public sealed class WaterBodyCatalog

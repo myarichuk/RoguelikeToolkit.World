@@ -1,6 +1,4 @@
-using System;
-
-namespace RoguelikeToolkit.World.Core;
+namespace RoguelikeToolkit.World.Core.Settlement;
 
 /// <summary>
 /// Uses that overlap with a <see cref="LandUseInfo.Use"/> and with each other: a forest is both hunted and

@@ -1,4 +1,4 @@
-namespace RoguelikeToolkit.World.Core;
+namespace RoguelikeToolkit.World.Core.Topology;
 
 /// <summary>Cube coordinates for a hex (x + y + z == 0); axial q = x, r = z.</summary>
 public readonly record struct CubeCoord(int X, int Y, int Z)

@@ -1,6 +1,6 @@
 using System;
 using System.Numerics;
-using RoguelikeToolkit.World.Core;
+using RoguelikeToolkit.World.Core.Primitives;
 
 namespace RoguelikeToolkit.World.Presentation;
 

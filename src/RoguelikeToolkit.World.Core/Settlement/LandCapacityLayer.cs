@@ -1,6 +1,6 @@
-using System;
+using RoguelikeToolkit.World.Core.Storage;
 
-namespace RoguelikeToolkit.World.Core;
+namespace RoguelikeToolkit.World.Core.Settlement;
 
 public class LandCapacityLayer : StoreLayer<LandCapacityInfo>
 {

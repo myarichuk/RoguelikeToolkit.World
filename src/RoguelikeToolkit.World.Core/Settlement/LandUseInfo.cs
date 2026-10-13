@@ -1,6 +1,6 @@
-using System;
+using RoguelikeToolkit.World.Core.Storage;
 
-namespace RoguelikeToolkit.World.Core;
+namespace RoguelikeToolkit.World.Core.Settlement;
 
 /// <summary>
 /// What is actually done with a tile. A *decision* layer: Core never sets it by itself; the allocation

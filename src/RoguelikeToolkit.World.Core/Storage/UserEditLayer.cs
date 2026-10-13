@@ -1,6 +1,4 @@
-using System;
-
-namespace RoguelikeToolkit.World.Core;
+namespace RoguelikeToolkit.World.Core.Storage;
 
 public class UserEditLayer : StoreLayer<UserEditInfo>
 {

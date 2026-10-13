@@ -1,6 +1,7 @@
-using System;
+using RoguelikeToolkit.World.Core.Primitives;
+using RoguelikeToolkit.World.Core.Tectonics;
 
-namespace RoguelikeToolkit.World.Core;
+namespace RoguelikeToolkit.World.Core.Lithosphere;
 
 /// <summary>Derives the <see cref="CrustalProvince"/> and basement age of a tile from the tectonic layer.</summary>
 public static class Geology

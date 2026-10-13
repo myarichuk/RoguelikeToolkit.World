@@ -1,6 +1,4 @@
-using System;
-
-namespace RoguelikeToolkit.World.Core;
+namespace RoguelikeToolkit.World.Core.Primitives;
 
 /// <summary>
 /// Index orderings used by the flow-accumulation and routing passes. Replaces

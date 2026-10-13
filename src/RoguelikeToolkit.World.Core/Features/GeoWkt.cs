@@ -1,9 +1,9 @@
-using System;
-using System.Collections.Generic;
 using System.Globalization;
 using System.Text;
+using RoguelikeToolkit.World.Core.Lithosphere;
+using RoguelikeToolkit.World.Core.Storage;
 
-namespace RoguelikeToolkit.World.Core;
+namespace RoguelikeToolkit.World.Core.Features;
 
 /// <summary>WKT export for feature geometry. Internal storage is tile-id
 /// lists; WKT is produced on demand for interop (no geometry dependency).</summary>

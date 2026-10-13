@@ -1,7 +1,4 @@
-using System;
-using System.Collections.Generic;
-
-namespace RoguelikeToolkit.World.Core;
+namespace RoguelikeToolkit.World.Core.Integration;
 
 /// <summary>Extensible historic-site kinds. Games can map their own events onto these.</summary>
 public enum HistoricSiteKind : byte

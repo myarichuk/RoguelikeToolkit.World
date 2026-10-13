@@ -1,5 +1,5 @@
-using RoguelikeToolkit.World.Core;
-using Xunit;
+using RoguelikeToolkit.World.Core.Biomes;
+using RoguelikeToolkit.World.Core.Elevation;
 
 namespace RoguelikeToolkit.World.Core.Tests;
 

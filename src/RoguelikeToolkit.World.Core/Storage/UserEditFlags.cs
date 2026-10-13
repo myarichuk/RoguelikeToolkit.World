@@ -1,6 +1,4 @@
-using System;
-
-namespace RoguelikeToolkit.World.Core;
+namespace RoguelikeToolkit.World.Core.Storage;
 
 /// <summary>What a tile's <see cref="UserEditInfo"/> overrides.</summary>
 [Flags]

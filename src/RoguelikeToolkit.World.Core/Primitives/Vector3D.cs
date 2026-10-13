@@ -1,4 +1,4 @@
-namespace RoguelikeToolkit.World.Core;
+namespace RoguelikeToolkit.World.Core.Primitives;
 
 public readonly record struct Vector3D(double X, double Y, double Z)
 {

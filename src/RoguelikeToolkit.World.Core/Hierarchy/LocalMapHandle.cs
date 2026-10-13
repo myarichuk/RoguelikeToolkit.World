@@ -1,7 +1,7 @@
-using System;
-using System.Collections.Generic;
+using RoguelikeToolkit.World.Core.Primitives;
+using RoguelikeToolkit.World.Core.Sites;
 
-namespace RoguelikeToolkit.World.Core;
+namespace RoguelikeToolkit.World.Core.Hierarchy;
 
 /// <summary>Leaf detail: one region cell expands to a local tile grid.</summary>
 public sealed class LocalMapHandle : GridMapHandle<LocalTile>

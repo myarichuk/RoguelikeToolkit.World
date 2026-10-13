@@ -1,6 +1,5 @@
 using System.Reflection;
 using YamlDotNet.Serialization;
-using YamlDotNet.Serialization.NamingConventions;
 
 namespace RoguelikeToolkit.World.Core.Names;
 

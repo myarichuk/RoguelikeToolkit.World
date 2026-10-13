@@ -1,7 +1,4 @@
-using System;
-using System.Collections.Generic;
-
-namespace RoguelikeToolkit.World.Core;
+namespace RoguelikeToolkit.World.Core.Sites;
 
 /// <summary>Marks the highest land cell as a landmark.</summary>
 public sealed class LandmarkInjector : SiteInjectorBase

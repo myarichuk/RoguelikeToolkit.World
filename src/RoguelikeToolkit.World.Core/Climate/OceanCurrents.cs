@@ -1,6 +1,8 @@
-using System;
+using RoguelikeToolkit.World.Core.Elevation;
+using RoguelikeToolkit.World.Core.Primitives;
+using RoguelikeToolkit.World.Core.Storage;
 
-namespace RoguelikeToolkit.World.Core;
+namespace RoguelikeToolkit.World.Core.Climate;
 
 /// <summary>
 /// Surface ocean currents and the heat they carry, from the prevailing wind alone.

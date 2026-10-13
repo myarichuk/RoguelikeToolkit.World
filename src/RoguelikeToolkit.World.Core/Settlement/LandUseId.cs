@@ -1,6 +1,4 @@
-using System;
-
-namespace RoguelikeToolkit.World.Core;
+namespace RoguelikeToolkit.World.Core.Settlement;
 
 /// <summary>
 /// Ids of the exclusive land uses: what people (or fire) have done to a tile's ground, as opposed to what

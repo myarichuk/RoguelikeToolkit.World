@@ -1,6 +1,6 @@
-using System;
+using RoguelikeToolkit.World.Core.Primitives;
 
-namespace RoguelikeToolkit.World.Core;
+namespace RoguelikeToolkit.World.Core.Climate;
 
 /// <summary>The solved surface circulation: stream function, velocity and the heat the currents carry.</summary>
 internal sealed class OceanCurrentField

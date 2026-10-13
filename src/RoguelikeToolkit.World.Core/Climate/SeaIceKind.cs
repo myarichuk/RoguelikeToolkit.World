@@ -1,6 +1,4 @@
-using System;
-
-namespace RoguelikeToolkit.World.Core;
+namespace RoguelikeToolkit.World.Core.Climate;
 
 /// <summary>How much of the year an ocean tile is under ice.</summary>
 public enum SeaIceKind : byte

@@ -1,7 +1,4 @@
-using System;
-using System.Collections.Generic;
-
-namespace RoguelikeToolkit.World.Core;
+namespace RoguelikeToolkit.World.Core.Hydrology;
 
 /// <summary>One resolved lake: ponded tiles, surface level, and outflow state.</summary>
 public sealed class Lake

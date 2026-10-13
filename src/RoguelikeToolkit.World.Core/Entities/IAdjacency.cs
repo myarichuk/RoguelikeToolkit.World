@@ -1,6 +1,3 @@
-using System.Buffers.Binary;
-using System.Runtime.InteropServices;
-
 namespace RoguelikeToolkit.World.Core.Entities;
 
 /// <summary>Hex adjacency for <see cref="PopulationGrid.Step{TPolicy,TAdj}"/>. Implement as a struct so the call inlines.</summary>

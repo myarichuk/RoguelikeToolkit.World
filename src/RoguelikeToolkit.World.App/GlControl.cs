@@ -3,13 +3,21 @@ using System.Diagnostics;
 using System.Linq;
 using System.Runtime.InteropServices;
 using System.Numerics;
-using Avalonia;
-using Avalonia.Input;
 using Avalonia.OpenGL;
 using Avalonia.OpenGL.Controls;
 using Avalonia.Threading;
-using RoguelikeToolkit.World.Core;
 using RoguelikeToolkit.World.Presentation;
+using RoguelikeToolkit.World.Core.Biomes;
+using RoguelikeToolkit.World.Core.Climate;
+using RoguelikeToolkit.World.Core.Elevation;
+using RoguelikeToolkit.World.Core.Features;
+using RoguelikeToolkit.World.Core.Generation;
+using RoguelikeToolkit.World.Core.Hierarchy;
+using RoguelikeToolkit.World.Core.Hydrology;
+using RoguelikeToolkit.World.Core.Lithosphere;
+using RoguelikeToolkit.World.Core.Primitives;
+using RoguelikeToolkit.World.Core.Tectonics;
+using RoguelikeToolkit.World.Core.Topology;
 
 namespace RoguelikeToolkit.World.App
 {
@@ -758,7 +766,7 @@ namespace RoguelikeToolkit.World.App
 
             // Indexed generation: face corners ARE tile indices, so coloring needs
             // no per-vertex store lookups and no project->inverse roundtrips.
-            IcosphereGenerator.Generate(_map.DataStore.Size, out RoguelikeToolkit.World.Core.Vector3D[] tileVerts, out TriangleIndices[] faces);
+            IcosphereGenerator.Generate(_map.DataStore.Size, out RoguelikeToolkit.World.Core.Primitives.Vector3D[] tileVerts, out TriangleIndices[] faces);
             int tileCount = tileVerts.Length;
 
             IProjection? projectionObj = ProjectionMode switch
@@ -1114,7 +1122,7 @@ namespace RoguelikeToolkit.World.App
             tileIndex = pick.TileIndex;
 
             // Snap the highlight to the true tile center.
-            var centerVec = RoguelikeToolkit.World.Core.Vector3D.FromGeoCoord(_map.DataStore.GetGeoCoord(tileIndex));
+            var centerVec = RoguelikeToolkit.World.Core.Primitives.Vector3D.FromGeoCoord(_map.DataStore.GetGeoCoord(tileIndex));
             SelectedHexCenter = new System.Numerics.Vector3((float)centerVec.X, (float)centerVec.Y, (float)centerVec.Z);
             if (ViewMode == ViewMode.Terrain && tileIndex >= 0)
                 SelectedHexCenter *= TileTerrainRadius(tileIndex);

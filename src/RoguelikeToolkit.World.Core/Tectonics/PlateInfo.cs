@@ -1,6 +1,6 @@
-using System;
+using RoguelikeToolkit.World.Core.Storage;
 
-namespace RoguelikeToolkit.World.Core;
+namespace RoguelikeToolkit.World.Core.Tectonics;
 
 /// <summary>
 /// Per-plate parameters, one row per plate in a store table (see

@@ -1,6 +1,8 @@
-using System;
+using RoguelikeToolkit.World.Core.Biomes;
+using RoguelikeToolkit.World.Core.Climate;
+using RoguelikeToolkit.World.Core.Settlement;
 
-namespace RoguelikeToolkit.World.Core;
+namespace RoguelikeToolkit.World.Core.Storage;
 
 /// <summary>
 /// A hand-made change to one tile, as a layer the pipeline treats as an *input*: no stage writes it,

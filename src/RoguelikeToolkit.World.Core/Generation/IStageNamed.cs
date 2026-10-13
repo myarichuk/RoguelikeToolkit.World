@@ -1,7 +1,4 @@
-using System;
-using System.Linq;
-
-namespace RoguelikeToolkit.World.Core;
+namespace RoguelikeToolkit.World.Core.Generation;
 
 /// <summary>Optional friendly name for runtime stages (logs/diagnostics).</summary>
 public interface IStageNamed

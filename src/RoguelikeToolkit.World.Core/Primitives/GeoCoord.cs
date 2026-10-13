@@ -1,4 +1,4 @@
-namespace RoguelikeToolkit.World.Core;
+namespace RoguelikeToolkit.World.Core.Primitives;
 
 public readonly record struct GeoCoord(double Latitude, double Longitude)
 {

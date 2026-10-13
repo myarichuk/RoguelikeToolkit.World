@@ -10,7 +10,7 @@ using System.IO;
 using System.Reflection;
 using System.Runtime.Loader;
 
-namespace RoguelikeToolkit.World.Core;
+namespace RoguelikeToolkit.World.Core.Generation;
 
 /// <summary>
 /// Isolated, collectible load context for one compiled C# plugin assembly.

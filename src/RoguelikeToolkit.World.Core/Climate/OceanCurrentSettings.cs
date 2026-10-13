@@ -1,6 +1,4 @@
-using System;
-
-namespace RoguelikeToolkit.World.Core;
+namespace RoguelikeToolkit.World.Core.Climate;
 
 /// <summary>Tunables of the current solver; the defaults are the calibrated ones.</summary>
 internal readonly struct OceanCurrentSettings

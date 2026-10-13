@@ -1,9 +1,4 @@
-using System;
-using System.Collections.Generic;
-using System.Globalization;
-using System.Text;
-
-namespace RoguelikeToolkit.World.Core;
+namespace RoguelikeToolkit.World.Core.Features;
 
 /// <summary>Water body kinds for game queries (lake vs sea vs ocean basin).</summary>
 public enum WaterBodyKind : byte

@@ -1,6 +1,4 @@
-using System;
-
-namespace RoguelikeToolkit.World.Core;
+namespace RoguelikeToolkit.World.Core.Tectonics;
 
 /// <summary>
 /// Per-tile tectonic state, 16 bytes. Plate-wide values (drift, base elevation) live

@@ -1,5 +1,7 @@
-using RoguelikeToolkit.World.Core;
-using Xunit;
+using RoguelikeToolkit.World.Core.Biomes;
+using RoguelikeToolkit.World.Core.Climate;
+using RoguelikeToolkit.World.Core.Features;
+using RoguelikeToolkit.World.Core.Hydrology;
 
 namespace RoguelikeToolkit.World.Core.Tests;
 

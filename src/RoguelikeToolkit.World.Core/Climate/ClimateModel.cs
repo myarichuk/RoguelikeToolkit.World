@@ -1,6 +1,6 @@
-using System;
+using RoguelikeToolkit.World.Core.Primitives;
 
-namespace RoguelikeToolkit.World.Core;
+namespace RoguelikeToolkit.World.Core.Climate;
 
 /// <summary>
 /// The one place the planet's heat budget lives. Temperature used to be computed in three places (the

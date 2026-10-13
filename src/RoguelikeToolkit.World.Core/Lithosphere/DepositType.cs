@@ -1,7 +1,4 @@
-using System;
-using System.Collections.Generic;
-
-namespace RoguelikeToolkit.World.Core;
+namespace RoguelikeToolkit.World.Core.Lithosphere;
 
 /// <summary>Prospectable resources seeded from tectonic, hydrologic and climate setting.</summary>
 public enum DepositType : byte

@@ -1,7 +1,8 @@
-using System;
-using System.Collections.Generic;
+using RoguelikeToolkit.World.Core.Elevation;
+using RoguelikeToolkit.World.Core.Primitives;
+using RoguelikeToolkit.World.Core.Storage;
 
-namespace RoguelikeToolkit.World.Core;
+namespace RoguelikeToolkit.World.Core.Hydrology;
 
 /// <summary>
 /// Shared hydrography helpers: depression filling, flat-resolved flow routing,

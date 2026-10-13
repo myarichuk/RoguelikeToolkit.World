@@ -1,6 +1,7 @@
 using System;
 using System.Numerics;
-using RoguelikeToolkit.World.Core;
+using RoguelikeToolkit.World.Core.Biomes;
+using RoguelikeToolkit.World.Core.Features;
 
 namespace RoguelikeToolkit.World.Presentation;
 

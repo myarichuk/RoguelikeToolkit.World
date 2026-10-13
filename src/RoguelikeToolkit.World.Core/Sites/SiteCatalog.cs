@@ -1,7 +1,4 @@
-using System;
-using System.Collections.Generic;
-
-namespace RoguelikeToolkit.World.Core;
+namespace RoguelikeToolkit.World.Core.Sites;
 
 /// <summary>Managed sparse store for injector-placed sites (overlay, not a dense layer).</summary>
 public sealed class SiteCatalog

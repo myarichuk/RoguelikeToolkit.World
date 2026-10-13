@@ -1,4 +1,6 @@
-namespace RoguelikeToolkit.World.Core;
+using RoguelikeToolkit.World.Core.Primitives;
+
+namespace RoguelikeToolkit.World.Core.Hierarchy;
 
 /// <summary>
 /// Pure hex -&gt; seed derivations, one independent stream per tier.

@@ -1,4 +1,6 @@
-namespace RoguelikeToolkit.World.Core;
+using RoguelikeToolkit.World.Core.Climate;
+
+namespace RoguelikeToolkit.World.Core.Biomes;
 
 public enum BiomeType : byte
 {

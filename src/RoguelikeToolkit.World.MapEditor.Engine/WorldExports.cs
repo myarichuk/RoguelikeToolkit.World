@@ -1,6 +1,16 @@
 using System.Runtime.InteropServices.JavaScript;
 using RoguelikeToolkit.World.Core;
 using RoguelikeToolkit.World.Core.Names;
+using RoguelikeToolkit.World.Core.Biomes;
+using RoguelikeToolkit.World.Core.Climate;
+using RoguelikeToolkit.World.Core.Elevation;
+using RoguelikeToolkit.World.Core.Features;
+using RoguelikeToolkit.World.Core.Hydrology;
+using RoguelikeToolkit.World.Core.Lithosphere;
+using RoguelikeToolkit.World.Core.Settlement;
+using RoguelikeToolkit.World.Core.Storage;
+using RoguelikeToolkit.World.Core.Tectonics;
+using RoguelikeToolkit.World.Core.Topology;
 using CoreWorld = RoguelikeToolkit.World.Core.World;
 
 namespace RoguelikeToolkit.World.MapEditor.Engine;
@@ -288,7 +298,7 @@ public static partial class WorldExports
     [JSExport]
     public static byte[] SeaIce()
     {
-        var mask = RoguelikeToolkit.World.Core.SeaIce.Mask(Current.Map.DataStore);
+        var mask = RoguelikeToolkit.World.Core.Climate.SeaIce.Mask(Current.Map.DataStore);
         var result = new byte[mask.Length];
         for (int i = 0; i < mask.Length; i++) result[i] = (byte)mask[i];
         return result;

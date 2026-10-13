@@ -1,4 +1,6 @@
-namespace RoguelikeToolkit.World.Core;
+using RoguelikeToolkit.World.Core.Hierarchy;
+
+namespace RoguelikeToolkit.World.Core.Topology;
 
 /// <summary>
 /// Generic hex-map view: planet tiles, region cells, or local tiles.

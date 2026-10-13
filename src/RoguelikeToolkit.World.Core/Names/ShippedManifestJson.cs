@@ -1,5 +1,3 @@
-using System.Collections.Generic;
-
 namespace RoguelikeToolkit.World.Core.Names;
 
 /// <summary>

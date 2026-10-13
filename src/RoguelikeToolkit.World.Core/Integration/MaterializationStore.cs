@@ -1,7 +1,6 @@
-using System;
-using System.Collections.Generic;
+using RoguelikeToolkit.World.Core.Hierarchy;
 
-namespace RoguelikeToolkit.World.Core;
+namespace RoguelikeToolkit.World.Core.Integration;
 
 /// <summary>In-memory <see cref="IMaterializationStore"/>.</summary>
 public sealed class MaterializationStore : IMaterializationStore

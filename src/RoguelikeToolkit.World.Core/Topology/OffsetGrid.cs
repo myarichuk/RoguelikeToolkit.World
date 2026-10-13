@@ -1,4 +1,4 @@
-namespace RoguelikeToolkit.World.Core;
+namespace RoguelikeToolkit.World.Core.Topology;
 
 /// <summary>Offset-grid helpers for square (size x size) region/local maps in row-major order.</summary>
 public static class OffsetGrid

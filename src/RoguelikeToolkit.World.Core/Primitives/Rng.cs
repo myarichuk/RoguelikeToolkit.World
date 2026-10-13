@@ -1,4 +1,4 @@
-namespace RoguelikeToolkit.World.Core;
+namespace RoguelikeToolkit.World.Core.Primitives;
 
 /// <summary>
 /// Deterministic hashing RNG (SplitMix64). The single shared randomness primitive

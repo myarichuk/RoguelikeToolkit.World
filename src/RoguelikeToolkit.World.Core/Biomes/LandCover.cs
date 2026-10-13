@@ -1,6 +1,6 @@
-using System;
+using RoguelikeToolkit.World.Core.Hydrology;
 
-namespace RoguelikeToolkit.World.Core;
+namespace RoguelikeToolkit.World.Core.Biomes;
 
 /// <summary>
 /// What the ground and the air above it do to water, by biome. Hydrology runs

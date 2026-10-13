@@ -1,6 +1,6 @@
-using System;
+using RoguelikeToolkit.World.Core.Features;
 
-namespace RoguelikeToolkit.World.Core;
+namespace RoguelikeToolkit.World.Core.Hydrology;
 
 /// <summary>
 /// Dense per-tile hydrology field derived from elevation: discharge-weighted
