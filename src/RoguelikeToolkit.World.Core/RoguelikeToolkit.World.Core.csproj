@@ -13,7 +13,7 @@
          Those shapes predate the baseline and changing them is an API redesign, not a docs fix. -->
     <NoWarn>$(NoWarn);RS0026;RS0027</NoWarn>
     <PackageId>RoguelikeToolkit.World.Core</PackageId>
-    <Version>2.0.0</Version>
+    <Version>2.0.1</Version>
     <Authors>RoguelikeToolkit</Authors>
     <Description>Spherical hex world generation for RPG/roguelike games: tectonics, elevation, hydrology, climate, biomes, regions, city-site queries, and history hooks.</Description>
     <PackageTags>roguelike;rpg;worldgen;hex;procedural</PackageTags>
