@@ -25,7 +25,9 @@ namespace RoguelikeToolkit.World.Core.Elevation;
 [WorldGeneratorStage(StageOrder.Erosion, Reads = new[] { typeof(ElevationInfo) }, ReadsOptional = new[] { typeof(ClimateInfo), typeof(TectonicPlate), typeof(UserEditInfo) }, Writes = new[] { typeof(ElevationInfo) })]
 public partial class ErosionGenerationStage : IWorldGeneratorStage
 {
+    /// <summary>Thermal (talus) sweeps. 0 skips erosion entirely: the diffusion, glacial, fluvial and aeolian passes are gated on it too (height pins are still restored).</summary>
     public int Iterations { get; set; } = 10;
+    /// <summary>Angle of repose: the height drop to a neighbour a tile holds before it sheds material, in height units per tile step. Raised in orogenic rock by <see cref="HardRockTalus"/>.</summary>
     public double Talus { get; set; } = 0.03;
 
     /// <summary>
@@ -41,18 +43,22 @@ public partial class ErosionGenerationStage : IWorldGeneratorStage
     /// over repose is so large that every rock type collapses at the same pace.
     /// </summary>
     public double HardRockResistance { get; set; } = 4.0;
+    /// <summary>Thermal shedding rate: per sweep a tile sheds <c>Rate × 0.5</c> of its steepest excess over the repose angle, scaled by erodibility and by 1.4 where the temperature is between 0.05 and 0.30 (freeze-thaw).</summary>
     public double Rate { get; set; } = 0.25;
 
     /// <summary>Hillslope-diffusion smoothing passes (rolling hills). 0 disables.</summary>
     public int DiffusionIterations { get; set; } = 2;
+    /// <summary>Hillslope creep: fraction of a tile's drop to its lowest neighbour moved per diffusion pass (never more than a quarter of the drop).</summary>
     public double DiffusionRate { get; set; } = 0.03;
 
     /// <summary>Fluvial stream-power passes after thermal smoothing. 0 disables.</summary>
     public int HydraulicIterations { get; set; } = 3;
+    /// <summary>Scale of fluvial incision per pass: a channel tile cuts <c>HydraulicRate × power × channelisation / hardness</c> (stream power from <see cref="StreamPowerM"/> and <see cref="StreamPowerN"/>).</summary>
     public double HydraulicRate { get; set; } = 0.2;
 
     /// <summary>Stream-power exponents: E = K·Q^m·S^n.</summary>
     public double StreamPowerM { get; set; } = 0.5;
+    /// <summary>Slope exponent n of stream power E = K·Q^m·S^n (see <see cref="StreamPowerM"/> for the discharge exponent).</summary>
     public double StreamPowerN { get; set; } = 1.0;
 
     /// <summary>
@@ -71,6 +77,7 @@ public partial class ErosionGenerationStage : IWorldGeneratorStage
 
     /// <summary>Glacial carving passes between thermal and fluvial. 0 disables.</summary>
     public int GlacialIterations { get; set; } = 2;
+    /// <summary>Strength of glacial floor abrasion and valley-wall plucking per pass, in height units.</summary>
     public double GlacialRate { get; set; } = 0.15;
 
     /// <summary>Incision multiplier inside canyon reaches (narrow, deep cut).</summary>
@@ -95,15 +102,19 @@ public partial class ErosionGenerationStage : IWorldGeneratorStage
     /// <summary>Share of airborne sand a fully arid tile drops on the spot even on open ground (the rest hops on downwind).</summary>
     public double AeolianDeposit { get; set; } = 0.25;
 
+    /// <summary>Creates a stage with the default settings (10 thermal iterations); this is the constructor <see cref="WorldGenerationPipeline.Discover(string?, Action{StageDiscoveryDiagnostic}?)"/> uses.</summary>
     public ErosionGenerationStage()
     {
     }
 
+    /// <summary>Creates a stage with the given number of thermal iterations.</summary>
+    /// <param name="iterations">Value for <see cref="Iterations"/>.</param>
     public ErosionGenerationStage(int iterations = 10)
     {
         Iterations = iterations;
     }
 
+    /// <summary>Erodes the <see cref="ElevationInfo"/> layer of <paramref name="map"/> in place: thermal, diffusion, glacial, fluvial and aeolian passes in that order, then restores any height-pinned tiles.</summary>
     public void Execute(WorldMap map)
     {
         var store = map.DataStore;

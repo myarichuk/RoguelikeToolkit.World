@@ -3,6 +3,7 @@ using RoguelikeToolkit.World.Core.Tectonics;
 
 namespace RoguelikeToolkit.World.Core.Biomes;
 
+/// <summary>Store-backed layer exposing the per-tile <see cref="BiomeInfo"/> field written by <see cref="BiomeGenerationStage"/>.</summary>
 public class BiomeLayer : StoreLayer<BiomeInfo>
 {
     /// <param name="store">Store the layer lives in.</param>

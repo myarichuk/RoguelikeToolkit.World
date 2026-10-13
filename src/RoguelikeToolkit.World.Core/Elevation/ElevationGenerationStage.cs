@@ -6,18 +6,23 @@ using RoguelikeToolkit.World.Core.Topology;
 
 namespace RoguelikeToolkit.World.Core.Elevation;
 
+/// <summary>Builds the base height field from tectonics: continentality sets the broad hypsometry, orogeny raises and depresses plate-boundary belts, noise adds hills and ridged crests, and hotspots add volcanic domes. Writes <see cref="ElevationInfo"/> for every tile.</summary>
 [Preserve] // created via reflection by WorldGenerationPipeline.Discover; keep it through Unity code stripping
 [WorldGeneratorStage(StageOrder.Elevation, Reads = new[] { typeof(TectonicPlate) }, ReadsOptional = new[] { typeof(UserEditInfo) }, Writes = new[] { typeof(ElevationInfo) })]
 public class ElevationGenerationStage : IWorldGeneratorStage, ISeededStage
 {
+    /// <summary>Height of the waterline: tiles below it are ocean, tiles at or above it are land.</summary>
     public const double SeaLevel = 0.0;
 
     // Hotspot dome is exp(-a^2 / (2 * 0.055^2)); it falls below the 0.01 floor at
     // a = 0.055 * sqrt(2 ln 100) ~= 0.1669 rad. Skip Acos/Exp for tiles beyond it.
     private static readonly double HotspotCutoffDot = DetMath.Cos(0.055 * Math.Sqrt(2.0 * DetMath.Log(100.0))) - 1e-9;
 
+    /// <summary>Seeds the noise octaves and the hotspot positions. Default 42.</summary>
     public int Seed { get; set; } = 42;
+    /// <summary>Scale of the legacy broad-relief noise term (applied at 0.15 of this value).</summary>
     public double NoiseAmplitude { get; set; } = 0.55;
+    /// <summary>Spatial frequency of the legacy broad-relief noise term.</summary>
     public double NoiseFrequency { get; set; } = 3.0;
 
     /// <summary>
@@ -41,15 +46,19 @@ public class ElevationGenerationStage : IWorldGeneratorStage, ISeededStage
     /// <summary>Hotspot swell height; oceanic hotspots breach as volcanic islands.</summary>
     public double HotspotAmplitude { get; set; } = 0.55;
 
+    /// <summary>Creates a stage with the default <see cref="Seed"/> (42); this is the constructor <see cref="WorldGenerationPipeline.Discover(string?, Action{StageDiscoveryDiagnostic}?)"/> uses.</summary>
     public ElevationGenerationStage()
     {
     }
 
+    /// <summary>Creates a stage with the given <see cref="Seed"/>.</summary>
+    /// <param name="seed">Seed for noise and hotspot placement.</param>
     public ElevationGenerationStage(int seed = 42)
     {
         Seed = seed;
     }
 
+    /// <summary>Computes the height of every tile of <paramref name="map"/> from the <see cref="TectonicPlate"/> layer, replacing the <see cref="ElevationInfo"/> layer. Painted height offsets are added when the user-edit layer is present.</summary>
     public void Execute(WorldMap map)
     {
         var store = map.DataStore;

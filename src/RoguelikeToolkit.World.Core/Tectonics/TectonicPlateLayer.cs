@@ -2,11 +2,13 @@ using RoguelikeToolkit.World.Core.Storage;
 
 namespace RoguelikeToolkit.World.Core.Tectonics;
 
+/// <summary>Store-backed layer exposing the per-tile <see cref="TectonicPlate"/> field; registers the per-plate <see cref="PlateInfo"/> table alongside it.</summary>
 public class TectonicPlateLayer : StoreLayer<TectonicPlate>
 {
     /// <summary>Plate count the host intends to generate with (read by hosts such as the visualizer).</summary>
     public int SeedCount { get; set; }
 
+    /// <summary>Generation seed the layer was built with. Informational: nothing reads it, and <see cref="TectonicPlateGenerationStage"/> uses its own <see cref="TectonicPlateGenerationStage.Seed"/>.</summary>
     public int Seed { get; }
 
     /// <summary>Rows reserved in the plate table even for small plate counts.</summary>

@@ -31,7 +31,9 @@ namespace RoguelikeToolkit.World.Core.Climate;
 [WorldGeneratorStage(StageOrder.Climate, Reads = new[] { typeof(ElevationInfo) }, ReadsOptional = new[] { typeof(HydrologyInfo), typeof(UserEditInfo) }, Writes = new[] { typeof(ClimateInfo) })]
 public class ClimateStage : IWorldGeneratorStage, ISeededStage
 {
+    /// <summary>Seeds the base precipitation noise. Default 42.</summary>
     public int Seed { get; set; } = 42;
+    /// <summary>Temperature lost per unit of height above sea level, in normalised temperature units. Default <see cref="ClimateModel.DefaultLapseRate"/>.</summary>
     public double LapseRate { get; set; } = ClimateModel.DefaultLapseRate;
 
     /// <summary>
@@ -66,6 +68,8 @@ public class ClimateStage : IWorldGeneratorStage, ISeededStage
     /// </para>
     /// </summary>
     public double WindCellBlend { get; set; } = 0.0;
+    /// <summary>Wind direction fallback, default due east (+X).</summary>
+    /// <remarks>Not currently read anywhere in this assembly: the wind field is computed from the zonal cells alone.</remarks>
     public Vector3D PrevailingWindFallback { get; set; } = new Vector3D(1, 0, 0);
 
     /// <summary>
@@ -124,7 +128,10 @@ public class ClimateStage : IWorldGeneratorStage, ISeededStage
     private const double UpwindGateLo = 0.05;
     private const double UpwindGateHi = 0.25;
 
+    /// <summary>Creates a stage with the default <see cref="Seed"/> (42); this is the constructor <see cref="WorldGenerationPipeline.Discover(string?, Action{StageDiscoveryDiagnostic}?)"/> uses.</summary>
     public ClimateStage() { }
+    /// <summary>Creates a stage with the given <see cref="Seed"/>.</summary>
+    /// <param name="seed">Seed for the base precipitation noise.</param>
     public ClimateStage(int seed = 42) { Seed = seed; }
 
     /// <summary>
@@ -136,6 +143,7 @@ public class ClimateStage : IWorldGeneratorStage, ISeededStage
     /// </summary>
     internal bool CurrentsInRefreshPassOnly { get; set; }
 
+    /// <summary>Computes the <see cref="ClimateInfo"/> layer of <paramref name="map"/> from the current elevation, replacing its previous contents.</summary>
     public void Execute(WorldMap map) => Run(map, !CurrentsInRefreshPassOnly);
 
     /// <summary>The post-erosion pass: always with the currents, on the relief the player sees.</summary>

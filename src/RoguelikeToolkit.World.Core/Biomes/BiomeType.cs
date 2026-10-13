@@ -2,16 +2,24 @@ using RoguelikeToolkit.World.Core.Climate;
 
 namespace RoguelikeToolkit.World.Core.Biomes;
 
+/// <summary>Biome of a planet tile, stored as a byte. Ids are stable (some match the editor's colour slots); gaps are retired or reserved ids.</summary>
 public enum BiomeType : byte
 {
+    /// <summary>Open water: any tile below <see cref="Elevation.ElevationGenerationStage.SeaLevel"/>. Glacier and canyon overrides never replace it.</summary>
     Ocean = 0,
+    /// <summary>Default temperate land: moist enough to be neither desert nor tundra, too dry for forest, and claimed by no other rule.</summary>
     Plains = 1,
     /// <summary>Hot arid lowland: sand seas and dunes (erg). The other arid types are the rest of the family.</summary>
     Desert = 2,
+    /// <summary>Land wetter than <see cref="BiomeClassifier.ForestMinMoisture"/> that no hotter, wetter or seasonal rule claimed.</summary>
     Forest = 3,
+    /// <summary>High ground above <see cref="BiomeClassifier.MountainHeight"/> that is not ice-covered (a high, cold, wet tile is <see cref="Glacier"/> instead).</summary>
     Mountain = 4,
+    /// <summary>Cold land below <see cref="BiomeClassifier.TundraMaxTemperature"/>.</summary>
     Tundra = 5,
+    /// <summary>Hot, wet land: warmer than <see cref="BiomeClassifier.JungleMinTemperature"/> and wetter than <see cref="BiomeClassifier.JungleMinMoisture"/>.</summary>
     Jungle = 6,
+    /// <summary>Warm waterlogged land: wetter than <see cref="BiomeClassifier.SwampMinMoisture"/> but not hot enough for <see cref="Jungle"/>.</summary>
     Swamp = 7,
     /// <summary>Land ice: ice caps and glaciated ranges.</summary>
     Glacier = 8,

@@ -40,6 +40,14 @@ public sealed class NoisyFloodFillPlatePartitioner : IPlatePartitioner
     private double[] _hDist = Array.Empty<double>();
     private int[] _hTile = Array.Empty<int>();
 
+    /// <summary>Assigns each tile to the plate whose warped-space front reaches it first.</summary>
+    /// <param name="store">Provides tile count and adjacency.</param>
+    /// <param name="positions">Unit-sphere position of every tile.</param>
+    /// <param name="seeds">Unit-sphere position of each plate seed; at least one.</param>
+    /// <param name="plateIds">Receives the 0-based seed ordinal per tile (tiles never reached get 0); must be at least as long as the tile count.</param>
+    /// <param name="seed">Seed for per-plate growth speeds and the warp field.</param>
+    /// <exception cref="ArgumentException"><paramref name="seeds"/> is empty, or <paramref name="plateIds"/> is shorter than the tile count.</exception>
+    /// <remarks>Reuses internal scratch buffers between calls, so an instance must not be used from several threads at once.</remarks>
     public void Partition(
         WorldDataStore store,
         ReadOnlySpan<Vector3D> positions,

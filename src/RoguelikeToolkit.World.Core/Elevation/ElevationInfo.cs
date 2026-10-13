@@ -6,5 +6,6 @@ namespace RoguelikeToolkit.World.Core.Elevation;
 /// </summary>
 public struct ElevationInfo
 {
+    /// <summary>Surface height in model height units: sea level is <see cref="ElevationGenerationStage.SeaLevel"/> (0) and lower is below it. Erosion refines it in place.</summary>
     public float Height;
 }

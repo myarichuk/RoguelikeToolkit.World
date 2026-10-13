@@ -14,6 +14,7 @@ namespace RoguelikeToolkit.World.Core.Climate;
 /// </summary>
 public static class ClimateModel
 {
+    /// <summary>Temperature lost per unit of height above sea level (normalised temperature units); the default for <see cref="Temperature"/> and <see cref="ClimateStage.LapseRate"/>.</summary>
     public const double DefaultLapseRate = 0.35;
 
     /// <summary>
