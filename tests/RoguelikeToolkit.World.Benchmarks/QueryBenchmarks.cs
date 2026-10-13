@@ -3,7 +3,7 @@ using RoguelikeToolkit.World.Core;
 using RoguelikeToolkit.World.Core.Elevation;
 using RoguelikeToolkit.World.Core.Hierarchy;
 using RoguelikeToolkit.World.Core.Primitives;
-using RoguelikeToolkit.World.Core.Topology;
+using RoguelikeToolkit.World.Core.Queries;
 
 namespace RoguelikeToolkit.World.Benchmarks;
 

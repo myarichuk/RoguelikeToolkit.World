@@ -6,6 +6,7 @@ using RoguelikeToolkit.World.Core.Generation;
 using RoguelikeToolkit.World.Core.Hydrology;
 using RoguelikeToolkit.World.Core.Lithosphere;
 using RoguelikeToolkit.World.Core.Primitives;
+using RoguelikeToolkit.World.Core.Queries;
 using RoguelikeToolkit.World.Core.Settlement;
 using RoguelikeToolkit.World.Core.Storage;
 using RoguelikeToolkit.World.Core.Tectonics;

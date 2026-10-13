@@ -1,5 +1,6 @@
 using RoguelikeToolkit.World.Core.Primitives;
 using RoguelikeToolkit.World.Core.Sites;
+using RoguelikeToolkit.World.Core.Topology;
 
 namespace RoguelikeToolkit.World.Core.Hierarchy;
 

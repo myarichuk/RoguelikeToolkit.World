@@ -1,4 +1,4 @@
-namespace RoguelikeToolkit.World.Core.Topology;
+namespace RoguelikeToolkit.World.Core.Queries;
 
 /// <summary>Unified feature kinds for spatial queries.</summary>
 public enum FeatureKind : byte

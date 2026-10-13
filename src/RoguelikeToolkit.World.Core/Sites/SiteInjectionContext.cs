@@ -1,6 +1,7 @@
 using RoguelikeToolkit.World.Core.Biomes;
 using RoguelikeToolkit.World.Core.Hierarchy;
 using RoguelikeToolkit.World.Core.Primitives;
+using RoguelikeToolkit.World.Core.Topology;
 
 namespace RoguelikeToolkit.World.Core.Sites;
 

@@ -1,7 +1,7 @@
 using RoguelikeToolkit.World.Core.Primitives;
 using RoguelikeToolkit.World.Core.Storage;
 
-namespace RoguelikeToolkit.World.Core.Hierarchy;
+namespace RoguelikeToolkit.World.Core.Topology;
 
 /// <summary>
 /// Spatial extent of one map: its center, a bounding radius in km, and the

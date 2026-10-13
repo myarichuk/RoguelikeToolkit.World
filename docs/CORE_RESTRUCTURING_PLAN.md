@@ -271,6 +271,15 @@ afternoon; Phase 3 is the first one that touches downstream code.
   hash a namespace-independent stable id and bump the file version, so the next move does not repeat this.
 - Build: 0 warnings / 0 errors on net10.0 and netstandard2.1. Tests unchanged versus baseline (Core 541 pass + the same 2 pre-existing failures, Presentation 103, Jint 18, MapEditor.Engine 36), golden hashes identical.
 
+### Phase 4 - done
+- `LocalMapInfo`/`LocalMapLayer`/`LocalMapGenerationStage` are now `BiomeInfo`/`BiomeLayer`/`BiomeGenerationStage`. `LocalMapHandle` and `DeriveLocalMap` keep their names: they are the local-map *tier*.
+- Persisted ids: `StableTypeId` (declaring chain + simple name + generic args, no namespace) replaces `Type.FullName` in the store and entity headers. `WorldDataStore` file version 3 to 4, entity snapshot 3 to 4, delta 1 to 2. Pinned by `StableTypeIdTests`. Renaming a persisted type still changes its id.
+- `StageOrder` holds every built-in stage order; `PipelineOrder`/`StageOrder` consts on individual stages are gone.
+- Visibility: `StageContractValidator`, `StageMetadata`, `PluginLoadContext`, `LocaleData`, `Hydrography`, `LakeSolver`, `LakeSolution`, `IslandChainDetector`, `EntityKeyMap`, `WorldAdjacency` are `internal`. `NamePart`, `CultureData`, `MorphemeYaml` stay public (they leak through `GeneratedName`/`NameDataStore`).
+- Nesting: `StageContractValidator.Conflict` and `EntityStore.Column<T>` were already nested; the `Vector2D/3D` rename was dropped as pure churn now that they live in `Primitives`.
+- Waivers burned down 25 to 20: addresses (`MapAddress`, `MapTier`, `PlanetHex`, `RegionRef`, `LocalRef`) and `MapBounds` moved to `Topology`; `SpatialIndex`/`FeatureKind` moved to a new `Queries` slice (rank 5). Remaining waivers are the pipeline's AOT hooks, `UserEditInfo`, Hydrology/Features and the aggregators.
+- Golden hashes identical; tests as baseline (Core 548 + the same 2 pre-existing failures).
+
 ## 8. Risks / things I have not verified yet
 
 - **Hidden cycles.** I have not computed the real type-level dependency graph; the layering in section 2 is inferred from

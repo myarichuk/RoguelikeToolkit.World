@@ -38,12 +38,13 @@ var (biome, danger) = world.SampleBiome(coord);
 | Namespace (`RoguelikeToolkit.World.Core.`) | What you find there |
 |---|---|
 | `Primitives` | `GeoCoord`, `Vector2D`/`Vector3D`, `Rng`, `DetMath` |
-| `Topology` | `WorldMap`, `IHexMap`, `CubeCoord`, icosphere + `SpatialIndex` |
+| `Topology` | `WorldMap`, `IHexMap`, `CubeCoord`, icosphere, addresses (`MapAddress`, `MapTier`) and `MapBounds` |
+| `Queries` | `SpatialIndex`, `FeatureKind` |
 | `Storage` | `WorldDataStore`, `IMapLayer`, `StoreLayer`, user-edit layer |
 | `Generation` | `WorldGenerationPipeline`, `IWorldGeneratorStage`, `[WorldGeneratorStage]` |
 | `Tectonics` / `Elevation` / `Climate` / `Hydrology` / `Biomes` / `Lithosphere` / `Settlement` | one domain slice each: layer struct, algorithm, stage, catalog |
 | `Features` | sparse per-tile features (`TileFeatureInfo`, WKT) |
-| `Hierarchy` | planet -> region -> local derivation (`MapAddress`, `RegionHandle`, `LocalMapHandle`) |
+| `Hierarchy` | planet -> region -> local derivation (`RegionHandle`, `LocalMapHandle`, `RegionMaps`) |
 | `Sites` | injector pipeline and the built-in injectors |
 | `Integration` | game-side seams (`IHistoricalContext`, `QueryOptions`, materialization) |
 | `Entities` / `Names` / `Localization` | unchanged from 1.x |

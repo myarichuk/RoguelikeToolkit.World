@@ -6,7 +6,6 @@ using System.Numerics;
 using Avalonia.OpenGL;
 using Avalonia.OpenGL.Controls;
 using Avalonia.Threading;
-using RoguelikeToolkit.World.Presentation;
 using RoguelikeToolkit.World.Core.Biomes;
 using RoguelikeToolkit.World.Core.Climate;
 using RoguelikeToolkit.World.Core.Elevation;
@@ -18,6 +17,7 @@ using RoguelikeToolkit.World.Core.Lithosphere;
 using RoguelikeToolkit.World.Core.Primitives;
 using RoguelikeToolkit.World.Core.Tectonics;
 using RoguelikeToolkit.World.Core.Topology;
+using RoguelikeToolkit.World.Presentation;
 
 namespace RoguelikeToolkit.World.App
 {

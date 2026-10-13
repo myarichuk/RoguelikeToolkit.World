@@ -1,4 +1,4 @@
-namespace RoguelikeToolkit.World.Core.Hierarchy;
+namespace RoguelikeToolkit.World.Core.Topology;
 
 /// <summary>
 /// Discriminated address of any map in the hierarchy. Unused levels use -1.

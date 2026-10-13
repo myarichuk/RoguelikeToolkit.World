@@ -29,7 +29,7 @@ public sealed class ArchitectureTests(ITestOutputHelper output)
         ["Generation"] = 2,
         ["Tectonics"] = 3, ["Elevation"] = 3, ["Climate"] = 3, ["Hydrology"] = 3, ["Biomes"] = 3, ["Lithosphere"] = 3, ["Settlement"] = 3,
         ["Features"] = 4, ["Hierarchy"] = 4,
-        ["Sites"] = 5, ["Integration"] = 5,
+        ["Sites"] = 5, ["Integration"] = 5, ["Queries"] = 5,
         [Root] = 6,
     };
 
@@ -46,15 +46,7 @@ public sealed class ArchitectureTests(ITestOutputHelper output)
         ["Storage->Biomes:UserEditInfo"] = "UserEditInfo.PinBiome is a BiomeType",
         ["Storage->Climate:UserEditInfo"] = "doc cref to ClimateInfo.Temperature",
         ["Storage->Settlement:UserEditInfo"] = "UserEditInfo.LandUse is a LandUseId",
-        // SpatialIndex is a query facade over every feature catalog; it is not a topology primitive.
-        ["Topology->Climate:SpatialIndex"] = "SpatialIndex belongs in a query layer above the slices",
-        ["Topology->Elevation:SpatialIndex"] = "SpatialIndex belongs in a query layer above the slices",
-        ["Topology->Features:SpatialIndex"] = "SpatialIndex belongs in a query layer above the slices",
-        ["Topology->Hierarchy:SpatialIndex"] = "SpatialIndex belongs in a query layer above the slices",
-        ["Topology->Hydrology:SpatialIndex"] = "SpatialIndex belongs in a query layer above the slices",
-        ["Topology->Lithosphere:SpatialIndex"] = "SpatialIndex belongs in a query layer above the slices",
-        ["Topology->Sites:SpatialIndex"] = "SpatialIndex belongs in a query layer above the slices",
-        ["Topology->Hierarchy:IHexMap"] = "IHexMap.RootAddress is a MapAddress",
+        ["Settlement->Queries:CitySiteScorer"] = "scorer uses SpatialIndex feature queries",
         // Hydrology produces catalogs that Features reads, and also consumes TileFeatures.
         ["Hydrology->Features:HydrologyStage"] = "river water source / feature types",
         ["Hydrology->Features:HydrologyInfo"] = "river water source / feature types",
@@ -68,7 +60,6 @@ public sealed class ArchitectureTests(ITestOutputHelper output)
         ["Hierarchy->Sites:RegionHandle"] = "handles run the site injector pipeline",
         // City-site scoring reads sites, history and feature info.
         ["Settlement->Features:CitySiteScorer"] = "scorer consumes TileFeatures",
-        ["Settlement->Hierarchy:CitySiteScorer"] = "scorer consumes MapAddress",
         ["Settlement->Integration:CitySiteScorer"] = "scorer consumes IHistoricalContext",
         ["Settlement->Sites:SettlementScoring"] = "scoring is shared with the settlement injector",
     };

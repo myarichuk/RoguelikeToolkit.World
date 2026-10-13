@@ -1,4 +1,4 @@
-using RoguelikeToolkit.World.Core.Hierarchy;
+using RoguelikeToolkit.World.Core.Topology;
 
 namespace RoguelikeToolkit.World.Core.Integration;
 

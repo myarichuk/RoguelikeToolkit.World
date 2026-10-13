@@ -1,9 +1,9 @@
 using RoguelikeToolkit.World.Core.Climate;
 using RoguelikeToolkit.World.Core.Elevation;
-using RoguelikeToolkit.World.Core.Hierarchy;
 using RoguelikeToolkit.World.Core.Hydrology;
 using RoguelikeToolkit.World.Core.Lithosphere;
 using RoguelikeToolkit.World.Core.Primitives;
+using RoguelikeToolkit.World.Core.Queries;
 using RoguelikeToolkit.World.Core.Sites;
 using RoguelikeToolkit.World.Core.Topology;
 

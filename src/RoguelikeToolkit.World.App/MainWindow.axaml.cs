@@ -6,8 +6,8 @@ using System.Collections.Generic;
 using Avalonia;
 using Avalonia.Media;
 using Avalonia.Controls.Shapes;
-using RoguelikeToolkit.World.Presentation;
 using RoguelikeToolkit.World.Core.Hierarchy;
+using RoguelikeToolkit.World.Presentation;
 
 namespace RoguelikeToolkit.World.App
 {
