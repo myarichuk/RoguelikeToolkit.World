@@ -1,5 +1,38 @@
 # Changelog
 
+## [2.0.0](https://github.com/myarichuk/RoguelikeToolkit.World/compare/v1.2.0...v2.0.0) (2026-10-13)
+
+
+### ⚠ BREAKING CHANGES
+
+* **core:** ErosionGenerationStage.Iterations = 0 no longer disables the whole stage (use Enabled = false); GeoWkt output changes for water bodies, ranges and empty geometry.
+* **core:** 2.0 namespaces are per slice (RoguelikeToolkit.World.Core.<Slice>), LocalMap{Info,Layer,GenerationStage} are Biome*, ten helper types are internal, persisted formats are incompatible (store 3->4, entity snapshot 3->4, delta 1->2) and out-of-tree plugins must be recompiled. See docs/MIGRATION_2.0.md.
+* **core:** addresses and bounds to Topology, SpatialIndex to new Queries slice
+* **core:** internalise stage-contract, solver and data-file plumbing
+* **core:** StageOrder constants replace bare stage order ints
+* **core:** persisted type ids no longer depend on namespaces
+* **core:** rename LocalMap{Info,Layer,GenerationStage} to Biome*
+* **core:** all public types except the facade moved namespace. Persisted WorldDataStore / EntityStore files written by 1.x fail their header check because the header hashes Type.FullName (tracked for a follow-up).
+
+### Features
+
+* **core:** document the full public API and enforce it in the build ([598ae95](https://github.com/myarichuk/RoguelikeToolkit.World/commit/598ae954b97e216eb6e442bd555f5e402816066a))
+
+
+### Bug Fixes
+
+* **core:** persisted type ids no longer depend on namespaces ([cfe4e64](https://github.com/myarichuk/RoguelikeToolkit.World/commit/cfe4e64be7245a707a976847109eb36846e17ae9))
+* **core:** resolve Phase 6 findings (QueryRadius options, catalog ids, GetRef tables, erosion Enabled, WKT) ([68bb8ac](https://github.com/myarichuk/RoguelikeToolkit.World/commit/68bb8ac4989b2e08cbbd760ffdc1c4dd4a5a9789))
+
+
+### Code Refactoring
+
+* **core:** addresses and bounds to Topology, SpatialIndex to new Queries slice ([1bb51e9](https://github.com/myarichuk/RoguelikeToolkit.World/commit/1bb51e9d38d42d645ea02b5dc20e815820cb2dfb))
+* **core:** internalise stage-contract, solver and data-file plumbing ([2472af9](https://github.com/myarichuk/RoguelikeToolkit.World/commit/2472af98eae56938d53108e79c0d9050d68d4bee))
+* **core:** namespaces follow folders ([70101bb](https://github.com/myarichuk/RoguelikeToolkit.World/commit/70101bba4980050abd320caf99a4bf9672f87855))
+* **core:** rename LocalMap{Info,Layer,GenerationStage} to Biome* ([c24076a](https://github.com/myarichuk/RoguelikeToolkit.World/commit/c24076a323feecc2855d0b173391ac3ba9c5d189))
+* **core:** StageOrder constants replace bare stage order ints ([2acec13](https://github.com/myarichuk/RoguelikeToolkit.World/commit/2acec13283dc88047eb8277565bb036c4df6eee5))
+
 ## [1.2.0](https://github.com/myarichuk/RoguelikeToolkit.World/compare/v1.1.0...v1.2.0) (2026-10-13)
 
 
