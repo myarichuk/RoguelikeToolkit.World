@@ -38,6 +38,7 @@ public sealed class WorldBuilder
     /// </summary>
     public const int MaxSupportedSize = 7;
 
+    /// <summary>Sets the planet's subdivision level (default 3), which gives <c>10 * 4^size + 2</c> tiles. Throws <see cref="ArgumentOutOfRangeException"/> outside 0..<see cref="MaxSupportedSize"/>.</summary>
     public WorldBuilder WithSize(int size)
     {
         if (size < 0 || size > MaxSupportedSize)
@@ -46,9 +47,13 @@ public sealed class WorldBuilder
         _size = size;
         return this;
     }
+    /// <summary>Sets the world seed (default 42). The same seed and configuration always produce a bit-identical world.</summary>
     public WorldBuilder WithSeed(int seed) { _seed = seed; return this; }
+    /// <summary>Sets the number of tectonic plates (default 12). <see cref="Build"/> throws <see cref="ArgumentOutOfRangeException"/> when it is outside 0..<see cref="TectonicPlate.MaxPlates"/>.</summary>
     public WorldBuilder WithPlateCount(int seedCount) { _seedCount = seedCount; return this; }
+    /// <summary>Backs the store with a memory-mapped file at <paramref name="path"/>, resolved against the current directory; null (the default) keeps it in memory. <see cref="Build"/> throws <see cref="UnauthorizedAccessException"/> for a path that escapes the current directory and <see cref="InvalidDataException"/> for an existing file that does not match this configuration.</summary>
     public WorldBuilder WithFilePath(string? path) { _filePath = path; return this; }
+    /// <summary>Adds a custom stage. It runs among the built-in stages in the order given by its declared <c>Order</c> (see <see cref="WorldGeneratorStageAttribute"/>); <see cref="Build"/> throws <see cref="InvalidOperationException"/> if two stages declare the same order.</summary>
     public WorldBuilder AddStage(IWorldGeneratorStage stage) { _extraStages.Add(stage); return this; }
     /// <summary>Skip the default stage set; only <see cref="AddStage"/> stages run.</summary>
     public WorldBuilder WithoutDefaultStages() { _useDefaults = false; return this; }
@@ -146,6 +151,7 @@ public sealed class WorldBuilder
     /// </summary>
     public WorldBuilder WithLandUse() { _landUse = true; _userEdits = true; return this; }
 
+    /// <summary>Runs the full generation pipeline and returns the finished world, with the feature catalogs and spatial index built. Synchronous and CPU-bound (seconds at the largest sizes). Deterministic in the seed and configuration. The caller owns the returned <see cref="World"/> and must dispose it.</summary>
     public World Build()
     {
         var map = new WorldMap(_size, _filePath);

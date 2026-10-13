@@ -11,12 +11,14 @@ public readonly record struct MapBounds(GeoCoord Center, double RadiusKm, int[] 
 {
     // The synthesized record equality would compare EdgeTiles by reference, so two
     // bounds describing the same ring would be unequal. Compare by content.
+    /// <summary>Value equality that compares <see cref="EdgeTiles"/> by content rather than by array reference.</summary>
     public bool Equals(MapBounds other)
         => Center.Equals(other.Center)
         && RadiusKm.Equals(other.RadiusKm)
         && (ReferenceEquals(EdgeTiles, other.EdgeTiles)
             || (EdgeTiles != null && other.EdgeTiles != null && EdgeTiles.AsSpan().SequenceEqual(other.EdgeTiles)));
 
+    /// <summary>Hash consistent with <see cref="Equals(MapBounds)"/>: combines the centre, radius and every edge tile.</summary>
     public override int GetHashCode()
     {
         var hash = new HashCode();

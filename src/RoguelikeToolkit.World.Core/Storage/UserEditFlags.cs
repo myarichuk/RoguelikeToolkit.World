@@ -4,6 +4,7 @@ namespace RoguelikeToolkit.World.Core.Storage;
 [Flags]
 public enum UserEditFlags : byte
 {
+    /// <summary>The tile has no pins; generation decides everything (sculpt and climate deltas may still apply).</summary>
     None = 0,
     /// <summary>The surface height is fixed to <see cref="UserEditInfo.PinHeight"/> after erosion ("fix", not "sculpt").</summary>
     PinHeight = 1,

@@ -18,8 +18,11 @@ namespace RoguelikeToolkit.World.Core;
 /// </summary>
 public sealed class PlanetParameters
 {
+    /// <summary>Earth's axial tilt in degrees, the default obliquity.</summary>
     public const double EarthObliquityDegrees = 23.44;
+    /// <summary>Lower and upper bound (inclusive) accepted by <see cref="StellarFlux"/>, relative to Earth's flux of 1.</summary>
     public const double MinFlux = 0.3, MaxFlux = 2.5;
+    /// <summary>Lower and upper bound (inclusive) accepted by <see cref="RotationRate"/>, relative to Earth's rate of 1.</summary>
     public const double MinRotation = 0.25, MaxRotation = 4.0;
 
     private double _obliquity = EarthObliquityDegrees, _flux = 1.0, _rotation = 1.0;
@@ -58,6 +61,7 @@ public sealed class PlanetParameters
     /// <summary>True when no parameter departs from Earth, so the climate takes the exact legacy arithmetic.</summary>
     public bool IsEarthBaseline => _obliquity == EarthObliquityDegrees && _flux == 1.0 && _rotation == 1.0 && Insolation == null;
 
+    /// <summary>An independent copy. The scalar settings are copied; <see cref="Insolation"/> is the same instance (models are pure functions of position, so sharing is safe).</summary>
     public PlanetParameters Clone() => new()
     {
         _obliquity = _obliquity, _flux = _flux, _rotation = _rotation, Insolation = Insolation,
