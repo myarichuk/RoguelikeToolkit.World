@@ -95,8 +95,8 @@ public static class NameThemes
             : l.Where(m => !m.Tags.Contains(feminine.Value ? "masc" : "fem", StringComparer.OrdinalIgnoreCase)).ToList();
         // A stem that repeats the fused patronymic marker ("Spark" beside "-spark") is never picked.
         List<MorphemeYaml> Stems(List<MorphemeYaml> l) => Usable(l).Where(m => feminine is null
-            ? !(FantasyNameGenerator.BlockedByMarker(table, m, false) && FantasyNameGenerator.BlockedByMarker(table, m, true))
-            : !FantasyNameGenerator.BlockedByMarker(table, m, feminine.Value)).ToList();
+            ? !(MorphemePicker.BlockedByMarker(table, m, false) && MorphemePicker.BlockedByMarker(table, m, true))
+            : !MorphemePicker.BlockedByMarker(table, m, feminine.Value)).ToList();
         // Only offer a theme from a slot the table can actually emit (an epithet list with EpithetChance 0 is dead data).
         var lists = new List<List<MorphemeYaml>> { Stems(table.GivenStems) };
         if (table.CompoundChance > 0) lists.Add(Stems(table.SecondStems));
