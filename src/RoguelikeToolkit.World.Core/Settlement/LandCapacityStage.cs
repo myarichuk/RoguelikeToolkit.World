@@ -23,12 +23,22 @@ namespace RoguelikeToolkit.World.Core.Settlement;
 public sealed class LandCapacityStage : IWorldGeneratorStage, IDeclaredStage, IStageNamed
 {
 
+    /// <summary>Diagnostic name, <c>LandCapacity</c>.</summary>
     public string Name => "LandCapacity";
+    /// <summary><see cref="Generation.StageOrder.LandCapacity"/> (25).</summary>
     public int Order => Generation.StageOrder.LandCapacity;
+    /// <summary>Elevation and biome layers, which must be registered.</summary>
     public Type[] Reads => new[] { typeof(ElevationInfo), typeof(BiomeInfo) };
+    /// <summary>Climate (temperature, rain, ocean heat, sea ice) and hydrology (fresh and saline water); absent layers fall back to neutral values.</summary>
     public Type[] ReadsOptional => new[] { typeof(ClimateInfo), typeof(HydrologyInfo) };
+    /// <summary>Capacity, and land use, which it resets to default on every tile.</summary>
     public Type[] Writes => new[] { typeof(LandCapacityInfo), typeof(LandUseInfo) };
 
+    /// <summary>Evaluates <see cref="LandCapacity.Evaluate"/> for every tile and clears <see cref="LandUseInfo"/>.</summary>
+    /// <remarks>
+    /// Slope is the steepest height change to a neighbour per unit of arc on the unit sphere. Fresh water means a river or lake on the tile or a neighbour.
+    /// Without climate, temperature and precipitation read as 0.5 and the ocean heat anomaly as 0.
+    /// </remarks>
     public void Execute(WorldMap map)
     {
         var store = map.DataStore;

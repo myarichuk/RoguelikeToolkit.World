@@ -9,5 +9,6 @@ namespace RoguelikeToolkit.World.Core.Features;
 /// </summary>
 public sealed class RiverCatalog
 {
+    /// <summary>All cataloged rivers, in <see cref="River.Id"/> order. Limited to multi-tile reaches: a lone river tile is flagged in the hydrology layer but has no entry here.</summary>
     public List<River> Rivers { get; } = new();
 }

@@ -11,8 +11,17 @@ using RoguelikeToolkit.World.Core.Topology;
 
 namespace RoguelikeToolkit.World.Core.Settlement;
 
+/// <summary>Planet-scale city-site search: filters every tile with a <see cref="CitySiteFilter"/>, scores the survivors with <see cref="SettlementScoring"/> and keeps the best.</summary>
 public static class CitySiteScorer
 {
+    /// <summary>Returns up to <see cref="CitySiteFilter.TopN"/> candidate tiles, best first.</summary>
+    /// <remarks>
+    /// Sorted by descending score, ties broken by ascending tile index, so the result is deterministic.
+    /// Water means a river-path tile, a water-body tile or any tile below sea level, except perennial sea ice; seasonal ice counts but flags a winter-ice penalty
+    /// when it is the only water touched. Missing layers degrade rather than throw: no elevation reads as height 0 (which the default
+    /// <see cref="CitySiteFilter.MinElevation"/> then rejects), no biome layer as plains with danger 0. History modifiers and materialized overrides
+    /// from <c>options</c> adjust danger, habitability and biome; <c>worldSeed</c> only forms the address used to look overrides up.
+    /// </remarks>
     public static List<CitySiteScore> Score(
         WorldDataStore store,
         RiverCatalog rivers,

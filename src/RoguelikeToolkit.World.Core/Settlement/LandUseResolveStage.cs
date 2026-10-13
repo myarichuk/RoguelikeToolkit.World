@@ -13,12 +13,18 @@ namespace RoguelikeToolkit.World.Core.Settlement;
 public sealed class LandUseResolveStage : IWorldGeneratorStage, IDeclaredStage, IStageNamed
 {
 
+    /// <summary>Diagnostic name, <c>LandUseResolve</c>.</summary>
     public string Name => "LandUseResolve";
+    /// <summary><see cref="Generation.StageOrder.LandUse"/> (99).</summary>
     public int Order => Generation.StageOrder.LandUse;
+    /// <summary>Land use and hand-edit layers, which must be registered.</summary>
     public Type[] Reads => new[] { typeof(LandUseInfo), typeof(UserEditInfo) };
+    /// <summary>None.</summary>
     public Type[] ReadsOptional => Array.Empty<Type>();
+    /// <summary>Land use.</summary>
     public Type[] Writes => new[] { typeof(LandUseInfo) };
 
+    /// <summary>Overwrites every tile pinned with <see cref="UserEditFlags.PinLandUse"/> with the pinned use and activities. Intensity becomes 255, or 0 when the pin clears both use and activities.</summary>
     public void Execute(WorldMap map)
     {
         var store = map.DataStore;

@@ -8,12 +8,15 @@ namespace RoguelikeToolkit.World.Core.Settlement;
 [Flags]
 public enum LandActivity : byte
 {
+    /// <summary>No overlapping activity.</summary>
     None = 0,
     /// <summary>Herds are driven across it: a nomadic or seasonal range, as against fenced <see cref="LandUseId.Pasture"/>.</summary>
     Grazing = 1,
+    /// <summary>Wild game is taken; draws on <see cref="LandCapacityInfo.Game"/>.</summary>
     Hunting = 2,
     /// <summary>Gathering of wild fruit, roots, honey, fuel.</summary>
     Foraging = 4,
+    /// <summary>Standing timber is felled; draws on <see cref="LandCapacityInfo.Timber"/>.</summary>
     Logging = 8,
     /// <summary>Fishing grounds: sea, lake or river tiles.</summary>
     Fishing = 16,

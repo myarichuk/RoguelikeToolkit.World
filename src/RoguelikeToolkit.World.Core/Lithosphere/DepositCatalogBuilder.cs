@@ -88,6 +88,13 @@ public static class DepositCatalogBuilder
         public float Orogeny => Plate.Orogeny;
     }
 
+    /// <summary>Appends deposits to <paramref name="catalog"/>, ranking every tile for every <see cref="DepositType"/>.</summary>
+    /// <remarks>
+    /// For each type the best-scoring tiles win, up to a quota scaled from the tile count (always at least one, fewer if too few tiles qualify).
+    /// Needs the tectonic and elevation layers and returns without adding anything when either is missing; climate and hydrology are optional
+    /// (temperature and precipitation default to 0.5). Deterministic for a given map and <paramref name="seed"/>. The catalog is not cleared and ids
+    /// restart at 0, so call it on an empty catalog.
+    /// </remarks>
     public static void Populate(WorldMap map, DepositCatalog catalog, int seed)
     {
         var store = map.DataStore;
