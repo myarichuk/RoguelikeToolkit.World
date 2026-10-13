@@ -11,9 +11,13 @@ namespace RoguelikeToolkit.World.Core.Hierarchy;
 public static class MapSeeds
 {
     // ASCII "MAP1".."MAP4": distinct per tier, unrelated to RegionMaps salts.
+    /// <summary>Stream salt for <see cref="DeriveRegionSeed"/> (ASCII "MAP1").</summary>
     public const int RegionSalt = 0x4D415031;
+    /// <summary>Stream salt for <see cref="DeriveRegionCellSeed"/> (ASCII "MAP2").</summary>
     public const int RegionCellSalt = 0x4D415032;
+    /// <summary>Stream salt for <see cref="DeriveLocalSeed"/> (ASCII "MAP3").</summary>
     public const int LocalSalt = 0x4D415033;
+    /// <summary>Stream salt for <see cref="DeriveLocalTileSeed"/> (ASCII "MAP4").</summary>
     public const int LocalTileSalt = 0x4D415034;
 
     // Each tier is its own stream keyed by (worldSeed, tier salt); the address

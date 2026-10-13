@@ -24,7 +24,9 @@ namespace RoguelikeToolkit.World.Core.Hierarchy;
 /// </summary>
 public static class RegionMaps
 {
+    /// <summary>Default side length, in cells, of a region map.</summary>
     public const int DefaultRegionSize = 8;
+    /// <summary>Default side length, in tiles, of a local map.</summary>
     public const int DefaultLocalSize = 16;
 
     /// <summary>Water depth at or above this marks a threaded river reach on a local map.</summary>
@@ -33,6 +35,18 @@ public static class RegionMaps
     private const double SeaLevel = 0.0;
 
 
+    /// <summary>
+    /// Derives a region map from a parent context. Deterministic: the same arguments always yield identical cells.
+    /// </summary>
+    /// <param name="address">Address stamped on the handle; also supplies <see cref="RegionHandle.WorldTileIndex"/>.</param>
+    /// <param name="parent">Parent-tile summary the cells inherit from.</param>
+    /// <param name="center">Geographic center of the map.</param>
+    /// <param name="radiusKm">Bounding radius of the map in km; must not be negative.</param>
+    /// <param name="seed">Seed for the detail noise and per-cell seeds.</param>
+    /// <param name="size">Side length in cells; must be positive.</param>
+    /// <param name="options">Detail knobs; <see cref="RegionDetailOptions.RegionDefault"/> when null.</param>
+    /// <exception cref="ArgumentNullException"><paramref name="parent"/> is null.</exception>
+    /// <exception cref="ArgumentOutOfRangeException"><paramref name="size"/> is not positive or <paramref name="radiusKm"/> is negative.</exception>
     public static RegionHandle DeriveRegionMap(
         MapAddress address,
         ParentContext parent,
@@ -71,6 +85,18 @@ public static class RegionMaps
             grid.RiverEntry, grid.RiverExit);
     }
 
+    /// <summary>
+    /// Derives a local map from a parent context. Deterministic: the same arguments always yield identical tiles.
+    /// </summary>
+    /// <param name="address">Address stamped on the handle; supplies the world tile and region cell indices.</param>
+    /// <param name="parent">Parent-cell summary the tiles inherit from.</param>
+    /// <param name="center">Geographic center of the map.</param>
+    /// <param name="radiusKm">Bounding radius of the map in km; must not be negative.</param>
+    /// <param name="seed">Seed for the detail noise.</param>
+    /// <param name="size">Side length in tiles; must be positive.</param>
+    /// <param name="options">Detail knobs; <see cref="RegionDetailOptions.LocalDefault"/> when null.</param>
+    /// <exception cref="ArgumentNullException"><paramref name="parent"/> is null.</exception>
+    /// <exception cref="ArgumentOutOfRangeException"><paramref name="size"/> is not positive or <paramref name="radiusKm"/> is negative.</exception>
     public static LocalMapHandle DeriveLocalMap(
         MapAddress address,
         ParentContext parent,
@@ -200,6 +226,7 @@ public static class RegionMaps
 
     // ------------------------------------------------------------------ obsolete shims
 
+    /// <summary>Obsolete shim: derives a region map under a flat default parent centered at (0, 0) with a 120 km radius; use <see cref="DeriveRegionMap"/>.</summary>
     [Obsolete("Use DeriveRegionMap with an explicit ParentContext, center, and bounds. This shim derives a flat default parent.")]
     public static RegionHandle DeriveRegion(int worldSeed, int worldTileIndex, float baseElevation, BiomeType baseBiome, float baseMoisture, int size = DefaultRegionSize)
     {
@@ -215,6 +242,7 @@ public static class RegionMaps
         return DeriveRegionMap(MapAddress.ForRegion(worldSeed, worldTileIndex, -1), parent, center, radiusKm, seed, size);
     }
 
+    /// <summary>Obsolete shim: derives a local map under a default parent at (0, 0) with a 15 km radius and world seed 0 in its address; use <see cref="DeriveLocalMap"/>.</summary>
     [Obsolete("Use DeriveLocalMap with an explicit ParentContext, center, and bounds. This shim derives a flat default parent (world seed unknown, address uses 0).")]
     public static LocalMapHandle DeriveLocal(int worldTileIndex, int regionCellIndex, uint regionCellSeed, int size = DefaultLocalSize)
     {

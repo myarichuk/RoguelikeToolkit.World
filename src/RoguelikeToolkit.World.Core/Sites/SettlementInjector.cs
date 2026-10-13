@@ -13,9 +13,15 @@ namespace RoguelikeToolkit.World.Core.Sites;
 /// </summary>
 public sealed class SettlementInjector : SiteInjectorBase
 {
+    /// <summary>Creates a settlement injector.</summary>
+    /// <param name="maxSites">Maximum cities to place; must not be negative.</param>
+    /// <param name="order">Pipeline order.</param>
+    /// <param name="tier">Tier(s) to run on.</param>
+    /// <param name="id">Injector id; "settlement" when null or empty.</param>
     public SettlementInjector(int maxSites = 3, int order = 0, SiteTier tier = SiteTier.Both, string? id = null)
         : base(id, "settlement", order, tier, maxSites) { }
 
+    /// <inheritdoc/>
     public override IReadOnlyList<PlacedSite> Inject(SiteInjectionContext context)
     {
         ArgumentNullException.ThrowIfNull(context);

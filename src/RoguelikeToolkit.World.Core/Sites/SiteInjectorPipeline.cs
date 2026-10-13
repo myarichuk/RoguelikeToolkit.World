@@ -14,6 +14,10 @@ namespace RoguelikeToolkit.World.Core.Sites;
 /// </summary>
 public static class SiteInjectorPipeline
 {
+    /// <summary>Runs the injectors that apply to the region tier over a region map and returns the resulting catalog.</summary>
+    /// <exception cref="ArgumentNullException"><paramref name="region"/> or <paramref name="injectors"/> is null.</exception>
+    /// <exception cref="ArgumentException"><paramref name="injectors"/> contains a null entry.</exception>
+    /// <exception cref="InvalidOperationException">Two injectors share an Order (checked before tier filtering), or an injector returns a null site or an off-map cell.</exception>
     public static SiteCatalog MaterializeRegion(RegionHandle region, IEnumerable<ISiteInjector> injectors)
     {
         ArgumentNullException.ThrowIfNull(region);
@@ -23,6 +27,10 @@ public static class SiteInjectorPipeline
                 region, null, existing, rng));
     }
 
+    /// <summary>Runs the injectors that apply to the local tier over a local map and returns the resulting catalog.</summary>
+    /// <exception cref="ArgumentNullException"><paramref name="local"/> or <paramref name="injectors"/> is null.</exception>
+    /// <exception cref="ArgumentException"><paramref name="injectors"/> contains a null entry.</exception>
+    /// <exception cref="InvalidOperationException">Two injectors share an Order (checked before tier filtering), or an injector returns a null site or an off-map cell.</exception>
     public static SiteCatalog MaterializeLocal(LocalMapHandle local, IEnumerable<ISiteInjector> injectors)
     {
         ArgumentNullException.ThrowIfNull(local);

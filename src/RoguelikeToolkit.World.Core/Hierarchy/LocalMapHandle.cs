@@ -7,8 +7,11 @@ namespace RoguelikeToolkit.World.Core.Hierarchy;
 /// <summary>Leaf detail: one region cell expands to a local tile grid.</summary>
 public sealed class LocalMapHandle : GridMapHandle<LocalTile>
 {
+    /// <summary>Planet tile index of the world hex this map ultimately belongs to.</summary>
     public int WorldTileIndex { get; }
+    /// <summary>Index of the parent region cell within its region map.</summary>
     public int RegionCellIndex { get; }
+    /// <summary>All tiles in row-major order. This is the live backing array, not a copy; treat it as read-only.</summary>
     public LocalTile[] Tiles { get; }
 
     internal LocalMapHandle(
@@ -22,6 +25,8 @@ public sealed class LocalMapHandle : GridMapHandle<LocalTile>
         Tiles = tiles;
     }
 
+    /// <summary>Returns the tile at a row-major index.</summary>
+    /// <exception cref="IndexOutOfRangeException"><paramref name="index"/> is outside <c>[0, TileCount)</c>.</exception>
     public override LocalTile GetTile(int index) => Tiles[index];
 
     /// <summary>Geographic center of one local tile (see <see cref="GridMapHandle{TTile}"/>).</summary>

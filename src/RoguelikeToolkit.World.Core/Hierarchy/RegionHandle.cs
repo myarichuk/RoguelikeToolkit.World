@@ -7,7 +7,9 @@ namespace RoguelikeToolkit.World.Core.Hierarchy;
 /// <summary>Lazy hierarchical detail: one world hex expands to a region grid.</summary>
 public sealed class RegionHandle : GridMapHandle<RegionCell>
 {
+    /// <summary>Planet tile index of the world hex this region expands.</summary>
     public int WorldTileIndex { get; }
+    /// <summary>All cells in row-major order. This is the live backing array, not a copy; treat it as read-only.</summary>
     public RegionCell[] Cells { get; }
 
     internal RegionHandle(
@@ -20,6 +22,8 @@ public sealed class RegionHandle : GridMapHandle<RegionCell>
         Cells = cells;
     }
 
+    /// <summary>Returns the cell at a row-major index.</summary>
+    /// <exception cref="IndexOutOfRangeException"><paramref name="index"/> is outside <c>[0, TileCount)</c>.</exception>
     public override RegionCell GetTile(int index) => Cells[index];
 
     /// <summary>Geographic center of one region cell (see <see cref="GridMapHandle{TTile}"/>).</summary>
@@ -28,6 +32,12 @@ public sealed class RegionHandle : GridMapHandle<RegionCell>
     /// <summary>Index of the cell containing a coordinate (nearest center; deterministic).</summary>
     public int CellAt(GeoCoord coord) => IndexAt(coord);
 
+    /// <summary>
+    /// Derives the local map of one region cell. The result is recomputed on every call (nothing is cached) and is deterministic for a given cell and size.
+    /// </summary>
+    /// <param name="cellIndex">Row-major index of the region cell to expand.</param>
+    /// <param name="localSize">Side length of the local grid; must be positive.</param>
+    /// <exception cref="IndexOutOfRangeException"><paramref name="cellIndex"/> is outside <c>[0, Cells.Length)</c>.</exception>
     public LocalMapHandle GetLocal(int cellIndex, int localSize = RegionMaps.DefaultLocalSize)
     {
         if ((uint)cellIndex >= (uint)Cells.Length) throw new IndexOutOfRangeException();

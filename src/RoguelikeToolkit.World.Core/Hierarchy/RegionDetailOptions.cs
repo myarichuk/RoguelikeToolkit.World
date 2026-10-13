@@ -24,6 +24,7 @@ public sealed class RegionDetailOptions
     public float RiverCarveDepth { get; set; } = 0.08f;
     /// <summary>Parent <see cref="ParentContext.Flow"/> at or above this threads a river.</summary>
     public float RiverFlowThreshold { get; set; } = 6f;
+    /// <summary>Number of ridged-fBm octaves summed for the detail noise; more octaves add finer relief at higher cost.</summary>
     public int NoiseOctaves { get; set; } = 3;
     /// <summary>Ridged-Fbm octave gain (&lt;0.5 emphasizes large strike-parallel structure).</summary>
     public double DetailGain { get; set; } = 0.5;
