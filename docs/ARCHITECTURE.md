@@ -187,20 +187,39 @@ Worth stating plainly since everything depends on it:
 
 If you ever find two runs disagreeing, it's a bug — the test suite has determinism tests at every tier, and they'd like to hear about it.
 
-## File map
+## Source map
 
-| Area | Files |
-|---|---|
-| Facade + builder | `World.cs` |
-| Planet store + topology | `WorldDataStore.cs`, `WorldMap.cs`, `IcosphereGenerator.cs` |
-| Generation stages | `TectonicPlateGenerationStage.cs`, `ElevationGenerationStage.cs`, `ClimateStage.cs`, `ErosionGenerationStage.cs`, `HydrologyStage.cs`, `BiomeGenerationStage.cs` |
-| Pipeline + contracts | `WorldGenerationPipeline.cs`, `IWorldGeneratorStage.cs`, `WorldGeneratorStageAttribute.cs`, `StageContractValidator.cs`, `ISeededStage.cs` |
-| Field layers | `TectonicPlateLayer.cs`, `ElevationLayer.cs`, `ClimateInfo.cs`, `HydrologyInfo.cs`, `BiomeInfo.cs`, `ElevationInfo.cs`, `IMapOverlay.cs`, `IMapLayer` bits |
-| Hierarchy + derivation | `MapAddresses.cs`, `MapBounds.cs`, `ParentContext.cs`, `TerrainOrientation.cs`, `RegionMaps.cs`, `IHexMap.cs` |
-| Sites | `SiteInjectors.cs` |
-| Queries | `SpatialIndex.cs`, `TileFeatures.cs`, `CitySites.cs`, `Deposits.cs`, `FeatureCatalog.cs`, `Hydrography.cs`, `CanyonAnalysis.cs` |
-| Game-owned state | `HistoryHooks.cs`, `Materialization.cs` |
-| Randomness + noise | `Rng.cs`, `SphereNoise.cs`, `Glaciology.cs`, `PlatePartitioning.cs` |
+`src/RoguelikeToolkit.World.Core` is organised as vertical slices. Every slice is one folder, and the namespace is the folder
+(`RoguelikeToolkit.World.Core.<Slice>`); only the facade types live in the root namespace. Each slice folder has a `README.md`
+with its contents and rules. `ArchitectureTests` enforces namespace == folder, one top-level type per file, and the layering below.
+
+**Layering.** A slice may use slices of equal or lower rank. The only upward edges are the explicit, reasoned waivers in
+`ArchitectureTests` (a ratchet: new ones fail the build, stale ones fail too).
+
+| Rank | Slice | What lives there |
+|---|---|---|
+| 6 | *(root)* | `World`, `WorldBuilder`, `PlanetParameters`, `TileHit`, `IInsolationModel`, `TidallyLockedInsolation` |
+| 5 | [`Sites`](../src/RoguelikeToolkit.World.Core/Sites/README.md) | injector pipeline, `SiteCatalog`, built-in injectors |
+| 5 | [`Integration`](../src/RoguelikeToolkit.World.Core/Integration/README.md) | game-owned state hooks: `QueryOptions`, history, materialization overrides |
+| 5 | [`Queries`](../src/RoguelikeToolkit.World.Core/Queries/README.md) | `SpatialIndex`, `FeatureKind` |
+| 4 | [`Hierarchy`](../src/RoguelikeToolkit.World.Core/Hierarchy/README.md) | region/local derivation: `RegionMaps`, handles, `ParentContext`, `TerrainOrientation` |
+| 4 | [`Features`](../src/RoguelikeToolkit.World.Core/Features/README.md) | sparse catalogs (rivers, water bodies, ranges), `TileFeatures`, WKT export |
+| 3 | [`Tectonics`](../src/RoguelikeToolkit.World.Core/Tectonics/README.md) | plates, boundaries, partitioners |
+| 3 | [`Elevation`](../src/RoguelikeToolkit.World.Core/Elevation/README.md) | elevation and erosion stages |
+| 3 | [`Climate`](../src/RoguelikeToolkit.World.Core/Climate/README.md) | climate model, ocean currents, sea ice, glaciology |
+| 3 | [`Hydrology`](../src/RoguelikeToolkit.World.Core/Hydrology/README.md) | flow, rivers, lakes, canyons, range catalog |
+| 3 | [`Biomes`](../src/RoguelikeToolkit.World.Core/Biomes/README.md) | biome classification and stage |
+| 3 | [`Lithosphere`](../src/RoguelikeToolkit.World.Core/Lithosphere/README.md) | deposits, geology, island chains |
+| 3 | [`Settlement`](../src/RoguelikeToolkit.World.Core/Settlement/README.md) | land capacity/use layers, city-site scoring |
+| 2 | [`Generation`](../src/RoguelikeToolkit.World.Core/Generation/README.md) | pipeline, stage contracts, discovery, plugin loading |
+| 1 | [`Topology`](../src/RoguelikeToolkit.World.Core/Topology/README.md) | icosphere, `TileGrid`, hex grids, addresses, bounds |
+| 1 | [`Storage`](../src/RoguelikeToolkit.World.Core/Storage/README.md) | `WorldDataStore`, memory-mapped layers, user edits |
+| 1 | [`Entities`](../src/RoguelikeToolkit.World.Core/Entities/README.md) | `EntityStore`, columns, population grid |
+| 1 | [`Names`](../src/RoguelikeToolkit.World.Core/Names/README.md) | fantasy name generation and data |
+| 1 | [`Localization`](../src/RoguelikeToolkit.World.Core/Localization/README.md) | locale tables |
+| 0 | [`Primitives`](../src/RoguelikeToolkit.World.Core/Primitives/README.md) | `Rng`, noise, vectors, `StableTypeId`; depends on nothing |
+
+Not in a slice: `Internal/Compat` (polyfills for netstandard2.1, linked by path into the Jint project).
 
 ## Performance notes (no benchmarks were harmed)
 

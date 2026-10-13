@@ -43,7 +43,7 @@ so planet density has steeply diminishing returns past size 6–7.
 
 **Decision:** cap the planet tier at size 6–7 (benchmarks decide, see C1);
 do not add fractional sizes (icosphere subdivision is 4x steps by
-construction, [WorldDataStore.cs](/C:/projects/RoguelikeToolkit.World/src/RoguelikeToolkit.World.Core/WorldDataStore.cs:61)).
+construction, [WorldDataStore.cs](../src/RoguelikeToolkit.World.Core/Storage/WorldDataStore.cs)).
 Gameplay density comes from the hierarchy, not the planet grid.
 
 - **A1 — Document the scale contract (S).** Add the table above (condensed)
@@ -113,14 +113,14 @@ Confirmed causes (all CPU-side today, so fixes stay GLES-1.00-safe for the
 ANGLE backend — no shader-language upgrade needed):
 
 1. `GlControl.SetupMesh` writes **radial normals** even in Terrain relief
-   mode ([GlControl.cs](/C:/projects/RoguelikeToolkit.World/src/RoguelikeToolkit.World.App/GlControl.cs:764)) —
+   mode ([GlControl.cs](../src/RoguelikeToolkit.World.App/GlControl.cs)) —
    displacement is invisible to lighting; relief reads only via silhouette.
 2. `TerrainShading.DisplacedRadius` is ~10:1 asymmetric: land +0.16·h
    (up to +0.24) vs ocean −0.025·|h|, lake −0.02 max, river −0.004…−0.01
-   ([TerrainShading.cs](/C:/projects/RoguelikeToolkit.World/src/RoguelikeToolkit.World.Presentation/TerrainShading.cs:23)).
+   ([TerrainShading.cs](../src/RoguelikeToolkit.World.Presentation/TerrainShading.cs)).
 3. `TileElevationColor` hillshade is **one-sided**: `drop = max(0, h−h_nbr)`
    is 0 for pit tiles, so valley floors get no shading
-   ([GlControl.cs](/C:/projects/RoguelikeToolkit.World/src/RoguelikeToolkit.World.App/GlControl.cs:405)).
+   ([GlControl.cs](../src/RoguelikeToolkit.World.App/GlControl.cs)).
 
 - **D1 — True displaced normals (M).** After Terrain displacement, compute
   per-face normals from displaced positions (CPU, once per rebuild) and
@@ -150,7 +150,7 @@ mask is not "mountains". But the report points at three real problems:
 `ClimateStage` runs (order 16) before `HydrologyStage` (order 18), but
 `WorldBuilder`/`GlControl` *register* the hydro layer up front, so at
 climate time the span is all zeros and `hydro[i].WaterBodyId >= 0` is true
-for **every** tile ([ClimateStage.cs](/C:/projects/RoguelikeToolkit.World/src/RoguelikeToolkit.World.Core/ClimateStage.cs:76)).
+for **every** tile ([ClimateStage.cs](../src/RoguelikeToolkit.World.Core/Climate/ClimateStage.cs)).
 Every inland tile wrongly gets the +0.06 water-proximity bonus; the lake/
 sea moisture signal is dead. Probe (size 3, seed 42, tectonics+elevation+
 climate only): hydro-registered-but-unrun mean 0.5938/min 0.2248/**0**
@@ -161,8 +161,8 @@ should form dry interiors.
 **E0 — Root cause #2 (design tension, confirmed): tundra band squeezed out.**
 Glacier snowline `0.15 + 0.11·p` (up to 0.26) sits *above* the Tundra
 threshold `temp < 0.18`, and the dry-polar gate needs `p < 0.20` while
-measured global precip minima are 0.17–0.24 ([Glaciology.cs](/C:/projects/RoguelikeToolkit.World/src/RoguelikeToolkit.World.Core/Glaciology.cs:58),
-[BiomeGenerationStage.cs](/C:/projects/RoguelikeToolkit.World/src/RoguelikeToolkit.World.Core/BiomeGenerationStage.cs:69)).
+measured global precip minima are 0.17–0.24 ([Glaciology.cs](../src/RoguelikeToolkit.World.Core/Climate/Glaciology.cs),
+[BiomeGenerationStage.cs](../src/RoguelikeToolkit.World.Core/Biomes/BiomeGenerationStage.cs)).
 Result: **Tundra 0–1 tiles in all 8 full builds**; cold land is glacier or
 nothing. Deserts are suppressed by the same dry-tail compression (4–183
 tiles vs thousands of forests/jungles).
