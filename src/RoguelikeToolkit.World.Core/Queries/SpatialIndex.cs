@@ -41,8 +41,22 @@ public sealed class SpatialIndex
     private readonly uint[] _depositTypesOfTile;
     private readonly List<(SiteKind Kind, int TileIndex, PlacedSite Site)> _sites = new();
 
+    /// <summary>The store whose tile centers this index buckets.</summary>
     public WorldDataStore Store => _store;
 
+    /// <summary>
+    /// Builds the index from the world store and any feature catalogs; build time is linear in the tile count.
+    /// Catalogs are optional, and omitted ones simply contribute no tiles.
+    /// </summary>
+    /// <param name="store">World data supplying tile centers and, by default, water and glacier classification.</param>
+    /// <param name="rivers">River reaches; lone <c>IsRiver</c> tiles in the hydrology layer are indexed as rivers too.</param>
+    /// <param name="bodies">Water bodies, added on top of <paramref name="isWater"/>.</param>
+    /// <param name="ranges">Mountain ranges.</param>
+    /// <param name="deposits">Mineral deposits.</param>
+    /// <param name="sites">Injector-placed sites; entries whose cell is not a valid planet tile are skipped.</param>
+    /// <param name="isWater">Per-tile water predicate; defaults to below sea level or a lake.</param>
+    /// <param name="isGlacier">Per-tile glacier predicate; defaults to the climate-based glacier test.</param>
+    /// <exception cref="ArgumentNullException"><paramref name="store"/> is null.</exception>
     public SpatialIndex(
         WorldDataStore store,
         RiverCatalog? rivers = null,

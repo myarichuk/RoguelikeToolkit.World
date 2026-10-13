@@ -3,9 +3,15 @@ namespace RoguelikeToolkit.World.Core.Sites;
 /// <summary>Scatters ruins on random land cells via the injector's own stream.</summary>
 public sealed class RuinInjector : SiteInjectorBase
 {
+    /// <summary>Creates a ruin injector.</summary>
+    /// <param name="maxSites">Maximum ruins to place; must not be negative.</param>
+    /// <param name="order">Pipeline order.</param>
+    /// <param name="tier">Tier(s) to run on.</param>
+    /// <param name="id">Injector id; "ruin" when null or empty.</param>
     public RuinInjector(int maxSites = 2, int order = 10, SiteTier tier = SiteTier.Both, string? id = null)
         : base(id, "ruin", order, tier, maxSites) { }
 
+    /// <inheritdoc/>
     public override IReadOnlyList<PlacedSite> Inject(SiteInjectionContext context)
     {
         ArgumentNullException.ThrowIfNull(context);

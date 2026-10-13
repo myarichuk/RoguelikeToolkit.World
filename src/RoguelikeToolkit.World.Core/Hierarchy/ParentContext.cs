@@ -13,9 +13,13 @@ namespace RoguelikeToolkit.World.Core.Hierarchy;
 public sealed class ParentContext
 {
     // Scalar means (tile + ring).
+    /// <summary>Mean elevation over the tile and its neighbor ring, in planet elevation units (0 is sea level).</summary>
     public float MeanElevation { get; init; }
+    /// <summary>Biome held by the most tiles in the ring (the first one counted wins ties); <see cref="BiomeType.Plains"/> when no biome layer exists.</summary>
     public BiomeType DominantBiome { get; init; } = BiomeType.Plains;
+    /// <summary>Mean normalized temperature over tile + ring; 0.5 when no climate layer exists.</summary>
     public float MeanTemperature { get; init; } = 0.5f;
+    /// <summary>Mean normalized precipitation over tile + ring; 0.5 when no climate layer exists.</summary>
     public float MeanPrecipitation { get; init; } = 0.5f;
     /// <summary>Moisture mean; currently the precipitation proxy (no dense moisture layer exists).</summary>
     public float MeanMoisture { get; init; } = 0.5f;

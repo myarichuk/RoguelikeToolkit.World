@@ -3,14 +3,18 @@ namespace RoguelikeToolkit.World.Core.Sites;
 /// <summary>Managed sparse store for injector-placed sites (overlay, not a dense layer).</summary>
 public sealed class SiteCatalog
 {
+    /// <summary>All sites in insertion order. This is the live list; adding to it directly bypasses the null check in <see cref="Add"/>.</summary>
     public List<PlacedSite> Sites { get; } = new();
 
+    /// <summary>Appends a site.</summary>
+    /// <exception cref="ArgumentNullException"><paramref name="site"/> is null.</exception>
     public void Add(PlacedSite site)
     {
         ArgumentNullException.ThrowIfNull(site);
         Sites.Add(site);
     }
 
+    /// <summary>Sites on one cell in insertion order, as a new list (linear scan); empty when none.</summary>
     public IReadOnlyList<PlacedSite> AtCell(int cellIndex)
     {
         var found = new List<PlacedSite>();
@@ -21,6 +25,7 @@ public sealed class SiteCatalog
         return found;
     }
 
+    /// <summary>Sites of one kind in insertion order, as a new list (linear scan); empty when none.</summary>
     public IReadOnlyList<PlacedSite> OfKind(SiteKind kind)
     {
         var found = new List<PlacedSite>();

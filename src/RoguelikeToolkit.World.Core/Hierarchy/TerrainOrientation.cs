@@ -19,6 +19,13 @@ public static class TerrainOrientation
 {
     private const double Epsilon = 1e-9;
 
+    /// <summary>
+    /// Samples the <see cref="ParentContext"/> of one planet tile from the store. Pure and deterministic for a given store.
+    /// </summary>
+    /// <param name="store">Generated world data; absent layers fall back to the defaults described on the type.</param>
+    /// <param name="tileIndex">Planet tile index.</param>
+    /// <exception cref="ArgumentNullException"><paramref name="store"/> is null.</exception>
+    /// <exception cref="IndexOutOfRangeException"><paramref name="tileIndex"/> is outside <c>[0, store.TileCount)</c>.</exception>
     public static ParentContext Sample(WorldDataStore store, int tileIndex)
     {
         ArgumentNullException.ThrowIfNull(store);

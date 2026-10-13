@@ -10,6 +10,7 @@ public sealed class HistoricSiteIndex
     private readonly Dictionary<int, List<HistoricSite>> _byTile = new();
     private readonly List<HistoricSite> _all = new();
 
+    /// <summary>Adds a site to <see cref="All"/>, and to the per-tile lookup when its <see cref="HistoricSite.TileIndex"/> is non-negative. Duplicates are not detected.</summary>
     public void Add(HistoricSite site)
     {
         _all.Add(site);
@@ -24,8 +25,10 @@ public sealed class HistoricSiteIndex
         }
     }
 
+    /// <summary>Every added site in insertion order, including sites with no tile.</summary>
     public IReadOnlyList<HistoricSite> All => _all;
 
+    /// <summary>Sites attached to one planet tile in insertion order; empty when none. Does not validate the index.</summary>
     public IEnumerable<HistoricSite> SitesOnTile(int tileIndex)
     {
         if (_byTile.TryGetValue(tileIndex, out var list)) return list;
