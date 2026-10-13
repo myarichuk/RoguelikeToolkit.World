@@ -2,17 +2,6 @@ using System;
 
 namespace RoguelikeToolkit.World.Core;
 
-/// <summary>How much of the year an ocean tile is under ice.</summary>
-public enum SeaIceKind : byte
-{
-    /// <summary>Open water all year (or a land tile: sea ice is an ocean condition).</summary>
-    None = 0,
-    /// <summary>Frozen over in winter, open in summer: the marginal ice zone and the fast ice of a cold coast.</summary>
-    Seasonal = 1,
-    /// <summary>Survives the summer: the polar pack.</summary>
-    Perennial = 2
-}
-
 /// <summary>
 /// Sea-ice model. Like <see cref="Glaciology"/> it is a pure function of the tile (position, height and the
 /// climate layer), not a stored layer, so every consumer agrees on the mask with no extra registration or

@@ -1,0 +1,43 @@
+namespace RoguelikeToolkit.World.Core;
+
+public readonly record struct Vector3D(double X, double Y, double Z)
+{
+    public double Length => Math.Sqrt(X * X + Y * Y + Z * Z);
+
+    public Vector3D Normalize()
+    {
+        var len = Length;
+        return len > 0 ? new Vector3D(X / len, Y / len, Z / len) : this;
+    }
+
+    public static Vector3D Cross(Vector3D a, Vector3D b) => new(
+        a.Y * b.Z - a.Z * b.Y,
+        a.Z * b.X - a.X * b.Z,
+        a.X * b.Y - a.Y * b.X
+    );
+
+    public static double Dot(Vector3D a, Vector3D b) => a.X * b.X + a.Y * b.Y + a.Z * b.Z;
+
+    public static Vector3D operator +(Vector3D a, Vector3D b) => new(a.X + b.X, a.Y + b.Y, a.Z + b.Z);
+    public static Vector3D operator -(Vector3D a, Vector3D b) => new(a.X - b.X, a.Y - b.Y, a.Z - b.Z);
+    public static Vector3D operator *(Vector3D a, double b) => new(a.X * b, a.Y * b, a.Z * b);
+    public static Vector3D operator /(Vector3D a, double b) => new(a.X / b, a.Y / b, a.Z / b);
+
+    public GeoCoord ToGeoCoord()
+    {
+        var n = Normalize();
+        return GeoCoord.FromRadians(DetMath.Asin(n.Z), DetMath.Atan2(n.Y, n.X));
+    }
+
+    public static Vector3D FromGeoCoord(GeoCoord geo)
+    {
+        var lat = geo.LatitudeRad;
+        var lon = geo.LongitudeRad;
+        var cosLat = DetMath.Cos(lat);
+        return new Vector3D(
+            cosLat * DetMath.Cos(lon),
+            cosLat * DetMath.Sin(lon),
+            DetMath.Sin(lat)
+        );
+    }
+}

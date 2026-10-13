@@ -249,6 +249,12 @@ afternoon; Phase 3 is the first one that touches downstream code.
   Still pending from the plan: the `Names/Data` and `Localization` YAML stay put (resource names).
   `docs/PLANET_SCALE_BACKLOG.md` has absolute `C:/projects/...` file links that were already non-portable; they will be refreshed in Phase 6.
 
+### Phase 2 - done
+- Every multi-type file split into one top-level type per file with a brace-aware script (strings, comments and attribute `new[] { }` initializers handled; the script verified that no non-whitespace source text was dropped). Nested types were left alone.
+- `IMapOverlay.cs` renamed to `IMapLayer.cs` (it holds `IMapLayer<T>`); `IcosphereGenerator.cs` moved from a block-scoped namespace to a file-scoped one and `TriangleIndices` split out.
+- Intentionally left alone: `Internal/Compat/*` (polyfills, linked by path into the Jint project) and `Generation/PluginLoadContext.cs` (top-level `#if`).
+- Build and tests identical to the Phase 0 baseline; golden hashes unchanged.
+
 ## 8. Risks / things I have not verified yet
 
 - **Hidden cycles.** I have not computed the real type-level dependency graph; the layering in section 2 is inferred from

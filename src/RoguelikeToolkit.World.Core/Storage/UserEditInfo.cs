@@ -2,19 +2,6 @@ using System;
 
 namespace RoguelikeToolkit.World.Core;
 
-/// <summary>What a tile's <see cref="UserEditInfo"/> overrides.</summary>
-[Flags]
-public enum UserEditFlags : byte
-{
-    None = 0,
-    /// <summary>The surface height is fixed to <see cref="UserEditInfo.PinHeight"/> after erosion ("fix", not "sculpt").</summary>
-    PinHeight = 1,
-    /// <summary>The biome is fixed to <see cref="UserEditInfo.PinBiome"/>: hydrology classifies its cover from it and the biome stage keeps it.</summary>
-    PinBiome = 2,
-    /// <summary>The land use is fixed to <see cref="UserEditInfo.LandUse"/> / <see cref="UserEditInfo.LandActivities"/>, whatever the allocation stages decided. Land use is a decision, never a physics input.</summary>
-    PinLandUse = 4,
-}
-
 /// <summary>
 /// A hand-made change to one tile, as a layer the pipeline treats as an *input*: no stage writes it,
 /// so a re-run never clears it. Together with the seed it fully determines the world, which is what
@@ -52,9 +39,4 @@ public struct UserEditInfo
     public byte LandActivities;
 
     public readonly bool IsEmpty => HeightDelta == 0f && Flags == UserEditFlags.None && TemperatureDelta == 0f && PrecipitationDelta == 0f;
-}
-
-public class UserEditLayer : StoreLayer<UserEditInfo>
-{
-    public UserEditLayer(WorldDataStore store) : base(store) { }
 }

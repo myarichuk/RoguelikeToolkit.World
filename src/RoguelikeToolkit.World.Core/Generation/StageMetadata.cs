@@ -47,9 +47,3 @@ public static class StageMetadata
             ? name
             : stage.GetType().Name;
 }
-
-/// <summary>Optional friendly name for runtime stages (logs/diagnostics).</summary>
-public interface IStageNamed
-{
-    string Name { get; }
-}

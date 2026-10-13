@@ -27,8 +27,3 @@ public struct HydrologyInfo
     /// <summary>1 on a playa, a terminal (closed) lake, and the exposed lakebed ringing one: ground where evaporation leaves salt.</summary>
     public byte Saline;
 }
-
-public class HydrologyLayer : StoreLayer<HydrologyInfo>
-{
-    public HydrologyLayer(WorldDataStore store) : base(store) { }
-}

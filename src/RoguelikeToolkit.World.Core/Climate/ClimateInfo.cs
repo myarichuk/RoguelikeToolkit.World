@@ -31,8 +31,3 @@ public struct ClimateInfo
     public float CurrentY;
     public float CurrentZ;
 }
-
-public class ClimateLayer : StoreLayer<ClimateInfo>
-{
-    public ClimateLayer(WorldDataStore store) : base(store) { }
-}

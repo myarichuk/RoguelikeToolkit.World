@@ -378,15 +378,3 @@ public class WorldGenerationPipeline : IDisposable
         return list;
     }
 }
-
-public sealed class StageDiscoveryDiagnostic
-{
-    public string Message { get; }
-    public Exception Exception { get; }
-
-    public StageDiscoveryDiagnostic(string message, Exception exception)
-    {
-        Message = message;
-        Exception = exception;
-    }
-}

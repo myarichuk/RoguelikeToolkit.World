@@ -3,43 +3,6 @@ using System;
 namespace RoguelikeToolkit.World.Core;
 
 /// <summary>
-/// Supplies the annual-mean stellar energy reaching a point of the surface, relative to the mean over
-/// the whole sphere (1.0 = the planet-wide average). Implement it for worlds whose heating is not the
-/// textbook "spinning, tilted ball around one sun": a tidally locked planet, a binary star.
-/// Must be a pure function of the position (determinism).
-/// </summary>
-public interface IInsolationModel
-{
-    /// <param name="unitPosition">Unit vector from the planet's centre to the surface point (+Z is the spin axis).</param>
-    double RelativeInsolation(Vector3D unitPosition);
-}
-
-/// <summary>
-/// A planet always keeps one face to its star: the substellar point is hot, the far side only warm
-/// through atmospheric heat transport. <c>NightFloor</c> is the share of the mean energy the far side
-/// still receives that way; the sphere-wide mean stays 1 (day side = <c>NightFloor + (1-NightFloor) * 4 cos</c>).
-/// </summary>
-public sealed class TidallyLockedInsolation : IInsolationModel
-{
-    public Vector3D Substellar { get; }
-    public double NightFloor { get; }
-
-    public TidallyLockedInsolation(Vector3D substellarDirection, double nightFloor = 0.35)
-    {
-        if (substellarDirection.Length <= 0.0) throw new ArgumentException("Substellar direction must be non-zero.", nameof(substellarDirection));
-        if (nightFloor < 0.0 || nightFloor > 1.0) throw new ArgumentOutOfRangeException(nameof(nightFloor), nightFloor, "NightFloor must be in [0, 1].");
-        Substellar = substellarDirection.Normalize();
-        NightFloor = nightFloor;
-    }
-
-    public double RelativeInsolation(Vector3D unitPosition)
-    {
-        double cos = Math.Max(0.0, Vector3D.Dot(unitPosition, Substellar));
-        return NightFloor + (1.0 - NightFloor) * 4.0 * cos;
-    }
-}
-
-/// <summary>
 /// The astronomical knobs of the climate model. Every default is Earth, and an Earth-like set takes a
 /// code path that adds exactly nothing, so existing worlds are bit-for-bit what they were before this
 /// type existed. All three scalars act as <em>differences against Earth</em>: the biome thresholds

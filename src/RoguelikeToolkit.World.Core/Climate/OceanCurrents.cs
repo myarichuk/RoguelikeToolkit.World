@@ -2,66 +2,6 @@ using System;
 
 namespace RoguelikeToolkit.World.Core;
 
-/// <summary>The solved surface circulation: stream function, velocity and the heat the currents carry.</summary>
-internal sealed class OceanCurrentField
-{
-    /// <summary>Stream function per tile (0 on land and so on every coast: no flow through a shore).</summary>
-    public double[] Psi = Array.Empty<double>();
-
-    /// <summary>
-    /// Surface current per tile, tangent to the sphere, in units of <see cref="ReferenceSpeed"/>
-    /// (1 = a strong boundary current; zero on land).
-    /// </summary>
-    public Vector3D[] Velocity = Array.Empty<Vector3D>();
-
-    /// <summary>
-    /// Sea-surface temperature minus the latitude's radiative equilibrium, in climate temperature units, per
-    /// ocean tile: positive where a current carries tropical water poleward, negative where it brings polar
-    /// water to the equator. Zero on land.
-    /// </summary>
-    public double[] Anomaly = Array.Empty<double>();
-
-    /// <summary>The speed (stream-function units per radian) that <see cref="Velocity"/> is normalised by.</summary>
-    public double ReferenceSpeed;
-}
-
-/// <summary>Tunables of the current solver; the defaults are the calibrated ones.</summary>
-internal readonly struct OceanCurrentSettings
-{
-    /// <summary>
-    /// Screening length of the stream function, in radians of arc: friction confines each gyre's
-    /// influence to about this far. 0.4 rad is ~2500 km, the width of a basin-scale boundary current system.
-    /// </summary>
-    public double ScreeningLength { get; init; }
-
-    /// <summary>
-    /// Width of the western boundary layer at the equator, in radians of arc (it widens with latitude, as beta
-    /// falls with cos latitude): the Stommel scale r / beta, a property of the planet and not of the mesh, so the
-    /// same world has the same current at every icosphere size. Below about two tile spacings the layer is
-    /// not resolved and the scheme saturates at one tile (the monotone limit), so coarse worlds see a wider, weaker jet.
-    /// </summary>
-    public double BoundaryWidth { get; init; }
-
-    /// <summary>
-    /// E-folding distance, in radians of arc, over which a current keeps the temperature it carried
-    /// before the surrounding sea drags it back to its local equilibrium, at the reference speed.
-    /// </summary>
-    public double Reach { get; init; }
-
-    /// <summary>
-    /// When > 0, skip the multilevel solve and run this many flat Gauss-Seidel sweeps on the finest mesh: the slow,
-    /// obviously-correct reference the hierarchical solver is tested against.
-    /// </summary>
-    public int ReferenceSweeps { get; init; }
-
-    public static OceanCurrentSettings Default => new OceanCurrentSettings
-    {
-        ScreeningLength = 0.4,
-        BoundaryWidth = 0.06,
-        Reach = 0.45,
-    };
-}
-
 /// <summary>
 /// Surface ocean currents and the heat they carry, from the prevailing wind alone.
 /// <para>

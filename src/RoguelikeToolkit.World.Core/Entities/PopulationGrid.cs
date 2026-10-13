@@ -3,35 +3,6 @@ using System.Runtime.InteropServices;
 
 namespace RoguelikeToolkit.World.Core.Entities;
 
-/// <summary>Hex adjacency for <see cref="PopulationGrid.Step{TPolicy,TAdj}"/>. Implement as a struct so the call inlines.</summary>
-public interface IAdjacency
-{
-    /// <summary>Writes the neighbouring cells of <paramref name="cell"/> (at most 8) and returns how many.</summary>
-    int GetAdjacent(int cell, Span<int> neighbors);
-}
-
-/// <summary>Adjacency over a planet's tile graph.</summary>
-public readonly struct WorldAdjacency(WorldDataStore store) : IAdjacency
-{
-    public int GetAdjacent(int cell, Span<int> neighbors) => store.GetAdjacent(cell, neighbors);
-}
-
-/// <summary>
-/// The game's rules for aggregate population change. All rates are per tick and are clamped to [0, 1]
-/// by the grid. Implement as a struct so the calls inline.
-/// </summary>
-public interface IPopulationPolicy
-{
-    double BirthRate(int cell, int group, uint count);
-    double DeathRate(int cell, int group, uint count);
-
-    /// <summary>Fraction of the group that leaves the cell this tick.</summary>
-    double MigrationRate(int cell, int group, uint count);
-
-    /// <summary>How appealing <paramref name="cell"/> is as a destination for <paramref name="group"/>; zero or less = never.</summary>
-    double Attraction(int cell, int group);
-}
-
 /// <summary>
 /// Aggregate (non-individual) population: a head count per (cell, group), where a group is whatever the
 /// game buckets people by (species, faction, profession...). Far from the player nobody is an entity; a
