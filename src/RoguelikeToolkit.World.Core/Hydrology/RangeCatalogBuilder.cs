@@ -11,7 +11,7 @@ public static class RangeCatalogBuilder
 {
     /// <summary>Adds mountain-range, canyon, playa and valley features found in <paramref name="map"/> to <paramref name="catalog"/>, grouping qualifying tiles by adjacency. Does nothing without an elevation layer; canyons need hydrology and climate, playas and valleys need hydrology.</summary>
     /// <param name="map">Generated map to scan.</param>
-    /// <param name="catalog">Receives the features; existing entries are kept, and new feature ids start at 0 regardless of them.</param>
+    /// <param name="catalog">Receives the features; existing entries are kept and new feature ids continue after the highest existing id (starting at 0 for an empty catalog).</param>
     /// <param name="mountainThreshold">Height at or above which a tile belongs to a mountain range.</param>
     /// <param name="riverThresholdScale">Must match <see cref="HydrologyStage.RiverThresholdScale"/> so canyons agree with rivers.</param>
     public static void Populate(WorldMap map, RangeCatalog catalog, float mountainThreshold = 0.5f, float riverThresholdScale = 1f)
@@ -27,6 +27,7 @@ public static class RangeCatalogBuilder
         var visited = new bool[n];
         Span<int> scratch = stackalloc int[6];
         int nextId = 0;
+        foreach (var existing in catalog.Features) nextId = Math.Max(nextId, existing.Id + 1);
         for (int i = 0; i < n; i++)
         {
             if (visited[i] || elev[i].Height < mountainThreshold) continue;

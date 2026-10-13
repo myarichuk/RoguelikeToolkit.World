@@ -313,13 +313,16 @@ public unsafe class WorldDataStore : IDisposable
     /// <summary>True when <typeparamref name="T"/> was registered with <see cref="RegisterTable{T}"/> (as opposed to a per-tile layer).</summary>
     public bool IsTableRegistered<T>() where T : unmanaged => _tableLengths.ContainsKey(typeof(T));
 
-    /// <summary>A reference to one tile's <typeparamref name="T"/> value in the store's memory; writes are visible to everyone reading the layer. <typeparamref name="T"/> must be a per-tile layer (this is not checked for tables). Throws <see cref="IndexOutOfRangeException"/> for an index outside <c>0..TileCount-1</c>, and the same errors as <see cref="GetSpan{T}"/> for an unallocated or unregistered type.</summary>
+    /// <summary>A reference to one tile's <typeparamref name="T"/> value in the store's memory; writes are visible to everyone reading the layer. <typeparamref name="T"/> must be a per-tile layer. Throws <see cref="IndexOutOfRangeException"/> for an index outside <c>0..TileCount-1</c>, and the same errors as <see cref="GetSpan{T}"/> for an unallocated or unregistered type or a table.</summary>
     public ref T GetRef<T>(int index) where T : unmanaged
     {
         if ((uint)index >= (uint)_tileCount)
             throw new IndexOutOfRangeException();
 
-        return ref ((T*)(_ptr + _dataOffset + OffsetOf<T>()))[index];
+        long offset = OffsetOf<T>();
+        if (_lengthById[LayerSlot<T>.Id] != _tileCount)
+            throw new InvalidOperationException($"{typeof(T).Name} is a table; use GetTable<{typeof(T).Name}>().");
+        return ref ((T*)(_ptr + _dataOffset + offset))[index];
     }
 
     /// <summary>Nearest tile center via the shared <see cref="TileGrid"/> bucket index.</summary>

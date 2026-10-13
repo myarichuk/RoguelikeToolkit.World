@@ -346,7 +346,7 @@ namespace RoguelikeToolkit.World.App
         }
 
         public TileFeatureInfo GetTileFeatures(int tileIndex)
-            => TileFeatures.Query(_map.DataStore, tileIndex, _rivers, _bodies, _ranges, _deposits);
+            => TileFeatures.Query(_map.DataStore, tileIndex, _rivers, _bodies, _ranges, _deposits, address: MapAddress.ForPlanet(WorldSeed, tileIndex));
 
         public void SetRecursionLevel(int level)
         {

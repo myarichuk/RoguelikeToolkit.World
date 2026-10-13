@@ -30,7 +30,7 @@ public static class TileFeatures
     /// <param name="ranges">Catalog used to fill the <c>InMountainRange</c>, <c>InValley</c>, <c>InCanyon</c> and <c>InPlaya</c> flags.</param>
     /// <param name="deposits">Catalog used to fill <see cref="TileFeatureInfo.Deposits"/>.</param>
     /// <param name="sites">Catalog used to fill <see cref="TileFeatureInfo.Sites"/> (matched on cell index <paramref name="tileIndex"/>).</param>
-    /// <param name="address">Echoed into <see cref="TileFeatureInfo.Address"/>; when null, a planet-tier address with world seed 0 is used.</param>
+    /// <param name="address">Echoed into <see cref="TileFeatureInfo.Address"/>; when null, a planet-tier address with <b>world seed 0</b> is used, so pass the world's address (<c>World.GetTileFeatures</c> does) whenever the seed matters.</param>
     /// <param name="tileOverride">Optional biome and danger override applied last, over the stored values.</param>
     /// <exception cref="IndexOutOfRangeException"><paramref name="tileIndex"/> is negative or not below the store's tile count.</exception>
     public static TileFeatureInfo Query(

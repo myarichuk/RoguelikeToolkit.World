@@ -99,7 +99,7 @@ public class RemediationTests
         setup.Execute(map);
         var before = map.DataStore.GetSpan<ElevationInfo>().ToArray();
 
-        new ErosionGenerationStage(0).Execute(map);
+        new ErosionGenerationStage { Enabled = false }.Execute(map);
         var after = map.DataStore.GetSpan<ElevationInfo>();
         Assert.Equal(before.Length, after.Length);
         for (int i = 0; i < before.Length; i++)

@@ -92,8 +92,8 @@ public static class DepositCatalogBuilder
     /// <remarks>
     /// For each type the best-scoring tiles win, up to a quota scaled from the tile count (always at least one, fewer if too few tiles qualify).
     /// Needs the tectonic and elevation layers and returns without adding anything when either is missing; climate and hydrology are optional
-    /// (temperature and precipitation default to 0.5). Deterministic for a given map and <paramref name="seed"/>. The catalog is not cleared and ids
-    /// restart at 0, so call it on an empty catalog.
+    /// (temperature and precipitation default to 0.5). Deterministic for a given map and <paramref name="seed"/>. The catalog is not cleared; new ids continue
+    /// after the highest existing id (starting at 0 for an empty catalog).
     /// </remarks>
     public static void Populate(WorldMap map, DepositCatalog catalog, int seed)
     {
@@ -158,6 +158,7 @@ public static class DepositCatalogBuilder
         }
 
         int nextId = 0;
+        foreach (var existing in catalog.Deposits) nextId = Math.Max(nextId, existing.Id + 1);
         foreach (DepositType type in Enum.GetValues<DepositType>())
         {
             int want = Math.Max(1, (int)Math.Round(Abundance[type] * n / (double)ReferenceTiles));

@@ -153,7 +153,7 @@ public sealed class World : IDisposable
     /// <summary>All tiles within radiusKm of center, sorted by distance.</summary>
     /// <param name="center">Query centre.</param>
     /// <param name="radiusKm">Great-circle radius in kilometres.</param>
-    /// <param name="options">Currently ignored: history and materialized overrides are <b>not</b> applied to <see cref="TileHit.Biome"/> here (unlike <c>SampleBiome</c> and <c>ScoreCitySites</c>).</param>
+    /// <param name="options">When it carries a <see cref="QueryOptions.Materialized"/> store, a tile override's biome replaces <see cref="TileHit.Biome"/> (as in <c>SampleBiome</c>). <see cref="QueryOptions.History"/> only adjusts danger, which a <see cref="TileHit"/> does not carry.</param>
     public List<TileHit> QueryRadius(GeoCoord center, double radiusKm, QueryOptions? options = null)
     {
         var store = Map.DataStore;
@@ -167,6 +167,7 @@ public sealed class World : IDisposable
         var target = Vector3D.FromGeoCoord(center);
         double angle = radiusKm / EarthRadiusKm;
         double minDot = angle >= Math.PI ? -2.0 : DetMath.Cos(angle);
+        var materialized = options?.Materialized;
         var result = new List<TileHit>();
         for (int i = 0; i < vectors.Length; i++)
         {
@@ -174,12 +175,17 @@ public sealed class World : IDisposable
             if (dot < minDot) continue;
             double d = DetMath.Acos(Math.Clamp(dot, -1.0, 1.0)) * EarthRadiusKm;
             if (d > radiusKm) continue;
+            var biome = hasLocals ? locals[i].Biome : BiomeType.Plains;
+            if (materialized != null
+                && materialized.TryGetOverride(MapAddress.ForPlanet(Seed, i), out var tileOverride)
+                && tileOverride?.Biome is { } overridden)
+                biome = overridden;
             result.Add(new TileHit
             {
                 TileIndex = i,
                 Coord = store.GetGeoCoord(i),
                 Elevation = hasElev ? elev[i].Height : 0f,
-                Biome = hasLocals ? locals[i].Biome : BiomeType.Plains,
+                Biome = biome,
                 DistanceKm = d
             });
         }

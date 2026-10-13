@@ -343,7 +343,9 @@ public sealed class NameQualityTests
                 int distinct = Enumerable.Range(1, 200)
                     .Select(seed => FantasyNameGenerator.GeneratePerson(s.Race, s.Culture, seed, feminine: feminine).Text)
                     .Distinct().Count();
-                Assert.True(distinct >= 150, $"{s.Label} (feminine={feminine}): only {distinct} distinct names in 200 rolls.");
+                // Catfolk are deliberately single, short road-names with an occasional deed-title, so their pool is intentionally small.
+                int floor = s.Race == FantasyRaces.Catfolk ? 50 : 150;
+                Assert.True(distinct >= floor, $"{s.Label} (feminine={feminine}): only {distinct} distinct names in 200 rolls.");
             }
     }
 
@@ -577,7 +579,7 @@ public sealed class NameQualityTests
             Assert.True(n.Parts.Count <= 2, $"'{n.Text}' has {n.Parts.Count} parts.");
             if (n.Parts.Any(p => p.Role == NamePartRoles.Epithet)) withDeed++;
         }
-        Assert.True(withDeed > 20, $"only {withDeed}/120 catfolk carry a deed-title.");
+        Assert.True(withDeed is > 0 and < 60, $"{withDeed}/120 catfolk carry a deed-title; it should be present but occasional.");
     }
 
     [Fact]

@@ -67,3 +67,9 @@ Stage discovery itself is unchanged (`[WorldGeneratorStage(StageOrder.X, ...)]`)
 ## 6. Unity / AOT
 
 Namespaces are source-level and invisible to assembly-scoped `link.xml`, so existing linker config keeps working. The `[DynamicDependency]` hooks that keep built-in stages alive under trimming remain on `WorldGenerationPipeline`. I have not re-run the AOT smoke test or a Unity import since the namespace moves, so treat those two as unverified.
+
+## Behaviour changes after the first 2.0 draft
+
+- `ErosionGenerationStage(0)` / `Iterations = 0` no longer disables erosion; use `Enabled = false`.
+- `GeoWkt` water-body polygons and range lines have a different vertex order, and empty geometry is `LINESTRING EMPTY` / `POLYGON EMPTY`.
+- `WorldDataStore.GetRef<T>` throws `InvalidOperationException` for table types.

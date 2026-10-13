@@ -25,7 +25,9 @@ namespace RoguelikeToolkit.World.Core.Elevation;
 [WorldGeneratorStage(StageOrder.Erosion, Reads = new[] { typeof(ElevationInfo) }, ReadsOptional = new[] { typeof(ClimateInfo), typeof(TectonicPlate), typeof(UserEditInfo) }, Writes = new[] { typeof(ElevationInfo) })]
 public partial class ErosionGenerationStage : IWorldGeneratorStage
 {
-    /// <summary>Thermal (talus) sweeps. 0 skips erosion entirely: the diffusion, glacial, fluvial and aeolian passes are gated on it too (height pins are still restored).</summary>
+    /// <summary>When false the stage leaves elevation untouched (height pins are still restored). The individual passes are tuned by their own iteration counts.</summary>
+    public bool Enabled { get; set; } = true;
+    /// <summary>Thermal (talus) sweeps; 0 skips only the thermal pass, the other passes are governed by their own iteration counts (use <see cref="Enabled"/> to switch the whole stage off).</summary>
     public int Iterations { get; set; } = 10;
     /// <summary>Angle of repose: the height drop to a neighbour a tile holds before it sheds material, in height units per tile step. Raised in orogenic rock by <see cref="HardRockTalus"/>.</summary>
     public double Talus { get; set; } = 0.03;
@@ -148,7 +150,7 @@ public partial class ErosionGenerationStage : IWorldGeneratorStage
         }
         var delta = new float[store.TileCount];
         Span<float> excess = stackalloc float[6];
-        for (int iter = 0; iter < Iterations; iter++)
+        for (int iter = 0; Enabled && iter < Iterations; iter++)
         {
             Array.Clear(delta);
             for (int i = 0; i < store.TileCount; i++)
@@ -180,8 +182,8 @@ public partial class ErosionGenerationStage : IWorldGeneratorStage
         }
 
         // Diffusion: gentle creep rounding every slope (rolling hills). Skipped
-        // with Iterations == 0 (pristine).
-        if (Iterations > 0)
+        // when the stage is disabled (pristine).
+        if (Enabled)
         {
             for (int d = 0; d < DiffusionIterations; d++)
             {
@@ -206,14 +208,14 @@ public partial class ErosionGenerationStage : IWorldGeneratorStage
         }
 
         // Glacial pass: U-valley carving with overdeepening. Skipped with
-        // Iterations == 0 (pristine).
-        if (Iterations > 0 && GlacialIterations > 0)
+        // when the stage is disabled (pristine).
+        if (Enabled && GlacialIterations > 0)
         {
             GlacialPass(store, elev, neighbors, hasClimate, climate);
         }
 
-        // Fluvial pass: stream-power incision ordered down the filled surface. Skipped with Iterations == 0 (pristine).
-        if (Iterations > 0)
+        // Fluvial pass: stream-power incision ordered down the filled surface. Skipped when the stage is disabled (pristine).
+        if (Enabled)
         for (int h = 0; h < HydraulicIterations; h++)
         {
             FluvialPass(store, elev, neighbors, hasClimate, climate);
@@ -221,7 +223,7 @@ public partial class ErosionGenerationStage : IWorldGeneratorStage
 
         // Aeolian pass: wind strips loose ground in dry country and lays it down downwind. After the
         // fluvial passes so water has already taken what it can; before the pin restore so pins stay exact.
-        if (Iterations > 0 && AeolianIterations > 0 && hasClimate)
+        if (Enabled && AeolianIterations > 0 && hasClimate)
             AeolianPass(store, elev, neighbors, climate, erodibility);
 
         // Fixed ground is restored last: erosion shapes everything around a pin (and may have moved

@@ -312,6 +312,8 @@ RoguelikeToolkit.World.Core.Elevation.ErosionGenerationStage.HydraulicIterations
 RoguelikeToolkit.World.Core.Elevation.ErosionGenerationStage.HydraulicIterations.set -> void
 RoguelikeToolkit.World.Core.Elevation.ErosionGenerationStage.HydraulicRate.get -> double
 RoguelikeToolkit.World.Core.Elevation.ErosionGenerationStage.HydraulicRate.set -> void
+RoguelikeToolkit.World.Core.Elevation.ErosionGenerationStage.Enabled.get -> bool
+RoguelikeToolkit.World.Core.Elevation.ErosionGenerationStage.Enabled.set -> void
 RoguelikeToolkit.World.Core.Elevation.ErosionGenerationStage.Iterations.get -> int
 RoguelikeToolkit.World.Core.Elevation.ErosionGenerationStage.Iterations.set -> void
 RoguelikeToolkit.World.Core.Elevation.ErosionGenerationStage.Rate.get -> double

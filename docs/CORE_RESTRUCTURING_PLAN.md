@@ -327,3 +327,7 @@ Defaults in bold; I will proceed with these unless told otherwise.
 3. Do the `LocalMap*` to `Biome*` rename and the other section 4 items: **yes, all, as separate droppable commits**.
 4. Version: **2.0.0** with a migration doc.
 5. Should this stay within the single assembly (**yes**) with architecture tests as the boundary?
+
+### Phase 6 follow-up - findings fixed
+
+`QueryRadius` now applies a materialized biome override; `DepositCatalogBuilder.Populate` / `RangeCatalogBuilder.Populate` continue ids after the highest existing one; `WorldDataStore.GetRef<T>` rejects tables; `ErosionGenerationStage.Enabled` switches the stage off, while `Iterations = 0` only skips the thermal pass; `GeoWkt` emits `... EMPTY` for empty geometry, orders water-body rings by angle and range lines along their principal axis (this changes the golden hashes, which include the WKT); the App passes the world seed to `TileFeatures.Query`. Catfolk name tests were relaxed to match the authored data.
