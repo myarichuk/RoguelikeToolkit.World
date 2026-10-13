@@ -9,7 +9,7 @@ namespace RoguelikeToolkit.World.Core.Generation;
 /// read-modify-write chain — every writer after the first must also read the
 /// type. A blind second writer (writes without reading) is a collision.
 /// </summary>
-public static class StageContractValidator
+internal static class StageContractValidator
 {
     public sealed record Conflict(string Message);
 

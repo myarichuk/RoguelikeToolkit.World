@@ -24,7 +24,7 @@ namespace RoguelikeToolkit.World.Core.Lithosphere;
 /// (two-sweep BFS diameter), so a lone round islet never qualifies.</item>
 /// </list>
 /// </remarks>
-public static class IslandChainDetector
+internal static class IslandChainDetector
 {
     /// <summary>Finds every tectonic ribbon in the current heights. Does not modify anything.</summary>
     public static List<IslandChain> Detect(

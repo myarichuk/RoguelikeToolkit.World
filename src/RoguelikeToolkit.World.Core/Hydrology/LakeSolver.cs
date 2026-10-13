@@ -17,7 +17,7 @@ namespace RoguelikeToolkit.World.Core.Hydrology;
 /// what grows in it (a swamp turns a shallow pond into wetland).
 /// </para>
 /// </summary>
-public static class LakeSolver
+internal static class LakeSolver
 {
     /// <summary>Deepest point a ponded depression must reach (height units) to count as a lake rather than a marsh.</summary>
     public const float MinLakeDepth = 0.03f;

@@ -4,7 +4,7 @@ namespace RoguelikeToolkit.World.Core.Hydrology;
 /// Result of the lake water-balance solver: per-tile depths, ids, playas, and
 /// the routing (hydro) surface with lakes leveled to their water surface.
 /// </summary>
-public sealed class LakeSolution
+internal sealed class LakeSolution
 {
     public float[] Depth = Array.Empty<float>();
     public float[] Surface = Array.Empty<float>();

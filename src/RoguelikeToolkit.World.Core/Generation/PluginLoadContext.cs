@@ -29,7 +29,7 @@ namespace RoguelikeToolkit.World.Core.Generation;
 /// strong references to plugin types/instances escape (pipeline drops its stage
 /// references on reset).
 /// </remarks>
-public sealed class PluginLoadContext : AssemblyLoadContext
+internal sealed class PluginLoadContext : AssemblyLoadContext
 {
     private readonly string _pluginDirectory;
     private readonly AssemblyDependencyResolver _resolver;

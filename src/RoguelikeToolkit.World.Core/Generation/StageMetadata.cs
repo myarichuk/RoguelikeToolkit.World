@@ -6,7 +6,7 @@ namespace RoguelikeToolkit.World.Core.Generation;
 /// <see cref="WorldGeneratorStageAttribute"/> applies; otherwise the stage is
 /// treated as undeclared (order last, no contract validation).
 /// </summary>
-public static class StageMetadata
+internal static class StageMetadata
 {
     private readonly record struct Declaration(
         bool IsDeclared, int Order, Type[] Reads, Type[] ReadsOptional, Type[] Writes);

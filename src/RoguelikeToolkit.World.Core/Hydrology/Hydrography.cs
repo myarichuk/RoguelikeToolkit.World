@@ -10,7 +10,7 @@ namespace RoguelikeToolkit.World.Core.Hydrology;
 /// <see cref="ErosionGenerationStage"/> (stream-power pass) and
 /// <see cref="HydrologyStage"/> (river/lake extraction) so both agree.
 /// </summary>
-public static class Hydrography
+internal static class Hydrography
 {
     /// <summary>
     /// Discharge at which a tile counts as a river (and the base for canyon
