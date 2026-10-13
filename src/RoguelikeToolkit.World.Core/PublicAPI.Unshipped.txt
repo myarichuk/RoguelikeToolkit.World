@@ -1664,3 +1664,5 @@ static RoguelikeToolkit.World.Core.World.DistanceKm(RoguelikeToolkit.World.Core.
 RoguelikeToolkit.World.Core.Elevation.ElevationGenerationStage.ReferenceTileCount.get -> int
 RoguelikeToolkit.World.Core.Elevation.ElevationGenerationStage.ReferenceTileCount.set -> void
 RoguelikeToolkit.World.Core.WorldBuilder.WithElevation(System.Action<RoguelikeToolkit.World.Core.Elevation.ElevationGenerationStage!>! configure) -> RoguelikeToolkit.World.Core.WorldBuilder!
+RoguelikeToolkit.World.Core.Elevation.ErosionGenerationStage.OrderIndependent.get -> bool
+RoguelikeToolkit.World.Core.Elevation.ErosionGenerationStage.OrderIndependent.set -> void

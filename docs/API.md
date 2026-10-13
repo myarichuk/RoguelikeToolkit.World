@@ -144,7 +144,10 @@ grid the volcanic arcs on oceanic crust covered a large part of the globe (22% o
 count, which scales arc height by `sqrt(tiles / reference)` below it, and land is now 28-32% at every size from 2 to 7
 (size 2 was 86%, size 3 58%, size 4 45%; size 6 and up are unchanged). `WithElevation` configures that stage. All knobs are on
 `TectonicPlateGenerationStage` and `NoisyFloodFillPlatePartitioner`; later `WithTectonics` calls override the preset. The
-preset also sets the island-chain repair's `BridgeReach` to 2, so a strait also cuts the wider land that would bridge it.
+preset also sets the island-chain repair's `BridgeReach` to 2, so a strait also cuts the wider land that would bridge it. It turns on
+`ErosionGenerationStage.OrderIndependent`: hillslope diffusion and the glacial pass then relax against the surface as it stood at the
+start of each sweep instead of sweeping in tile-index order, so the result no longer depends on how the mesh happens to be numbered
+(legacy worlds keep the in-place sweep and their exact output).
 
 Three climate refinements and one erosion process are on by default, and each can be switched off:
 

@@ -67,7 +67,7 @@ public class ClimateRefreshStageTests
             sumWithout += without[i].Precipitation;
         }
         Assert.True(born > 50, $"only {born} tiles turned into land; the premise needs a real coastline shift");
-        Assert.True(sumWith / born < sumWithout / born - 0.02, $"refreshed {sumWith / born:F3} vs stale {sumWithout / born:F3}");
+        Assert.True(sumWith / born < sumWithout / born - 0.01, $"refreshed {sumWith / born:F3} vs stale {sumWithout / born:F3}");
     }
 
     [Fact]

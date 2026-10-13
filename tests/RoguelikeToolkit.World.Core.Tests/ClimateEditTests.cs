@@ -135,13 +135,14 @@ public class ClimateEditTests
     public void TheRefreshPass_KeepsTheBrushedOffset()
     {
         // The refresh pass rebuilds the climate layer wholesale after erosion; a delta applied only in the
-        // first pass would vanish there. Erosion may move a tile's height a little (lapse rate), hence the tolerance.
+        // first pass would vanish there. Erosion may move a tile's height a little (lapse rate), hence the tolerance; the tile is lowland because
+        // orographic rainfall on a peak responds to a rain delta nonlinearly, which is not what this test is about.
         using var plain = new WorldBuilder().WithSize(3).WithSeed(42).WithUserEdits().Build();
         var a = Copy(plain);
         var e = plain.Map.DataStore.GetSpan<ElevationInfo>();
         int t = -1;
         for (int i = 0; i < a.Length; i++)
-            if (e[i].Height > 0.05f && a[i].Temperature is > 0.3f and < 0.6f && a[i].Precipitation is > 0.3f and < 0.7f) { t = i; break; }
+            if (e[i].Height is > 0.05f and < 0.3f && a[i].Temperature is > 0.3f and < 0.6f && a[i].Precipitation is > 0.3f and < 0.7f) { t = i; break; }
         Assert.True(t >= 0);
         using var edited = new WorldBuilder().WithSize(3).WithSeed(42).WithUserEdits().Build();
         edited.Edits[t] = new UserEditInfo { TemperatureDelta = 0.1f, PrecipitationDelta = -0.1f };

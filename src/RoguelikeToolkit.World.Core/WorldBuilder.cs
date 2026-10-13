@@ -237,7 +237,7 @@ public sealed class WorldBuilder
             hydrologyStage = new HydrologyStage();
             _hydrologyConfig?.Invoke(hydrologyStage);
             riverScale = hydrologyStage.RiverThresholdScale;
-            var erosion = new ErosionGenerationStage { RiverThresholdScale = riverScale };
+            var erosion = new ErosionGenerationStage { RiverThresholdScale = riverScale, OrderIndependent = _balancedPlates };
             _erosionConfig?.Invoke(erosion);
             pipeline.AddStage(erosion);
             if (_islandChains) // ties erosion's order; the stable sort keeps it after erosion and ahead of the refresh
