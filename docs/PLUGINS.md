@@ -16,7 +16,7 @@ elevation (15) → climate (16) → erosion (17) → hydrology (18) → biomes (
 With `WorldBuilder.WithLandUse()` the pipeline also gets land capacity (25) and a pin resolver (99); land-use
 allocation plugins go in 26..98 and must declare `Reads` and `Writes` for `LandUseInfo` (see docs/API.md,
 "Land use"). Orders 21..24 stay free for biome and danger tweaks, which run before capacity reads the final biome.
-The default pipeline also has a second climate pass (`ClimateRefreshStage`, `WithClimateRefresh(false)` removes it) that shares erosion's order 17 and runs right after it (stable sort).
+The default pipeline also has a second climate pass (`ClimateRefreshStage`, `WithClimateRefresh(false)` removes it) that shares erosion's order 17 and runs right after it (stable sort). `IslandChainStage` (`WithoutIslandChains()` removes it) ties the same order and runs between erosion and the refresh.
 
 ## Rules both kinds follow
 

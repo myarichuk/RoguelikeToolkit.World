@@ -289,6 +289,8 @@ public sealed class WorldBuilder
     private bool _userEdits;
     private bool _landUse;
     private bool _climateRefresh = true;
+    private bool _islandChains = true;
+    private Action<IslandChainStage>? _islandChainsConfig;
 
     /// <summary>
     /// Largest supported planet size (backlog A2, from the Phase 2
@@ -321,6 +323,18 @@ public sealed class WorldBuilder
         _tectonicsConfig = prev == null ? configure : s => { prev(s); configure(s); };
         return this;
     }
+    /// <summary>Tweak the island-chain repair stage (see <see cref="IslandChainDetector"/>).</summary>
+    public WorldBuilder WithIslandChains(Action<IslandChainStage> configure)
+    {
+        var prev = _islandChainsConfig;
+        _islandChainsConfig = prev == null ? configure : s => { prev(s); configure(s); };
+        _islandChains = true;
+        return this;
+    }
+
+    /// <summary>Keep plate-boundary land ribbons as the tectonics drew them instead of breaking them into islands.</summary>
+    public WorldBuilder WithoutIslandChains() { _islandChains = false; return this; }
+
     /// <summary>Tweak the default climate stage (smoothing passes...).</summary>
     public WorldBuilder WithClimate(Action<ClimateStage> configure)
     {
@@ -433,6 +447,12 @@ public sealed class WorldBuilder
             var erosion = new ErosionGenerationStage { RiverThresholdScale = riverScale };
             _erosionConfig?.Invoke(erosion);
             pipeline.AddStage(erosion);
+            if (_islandChains) // ties erosion's order; the stable sort keeps it after erosion and ahead of the refresh
+            {
+                var chains = new IslandChainStage(_seed);
+                _islandChainsConfig?.Invoke(chains);
+                pipeline.AddStage(chains);
+            }
             if (_climateRefresh) pipeline.AddStage(new ClimateRefreshStage(climate)); // ties erosion's order; the stable sort keeps it after
             pipeline.AddStage(hydrologyStage);
             var biomes = new LocalMapGenerationStage(_seed) { RiverThresholdScale = riverScale };

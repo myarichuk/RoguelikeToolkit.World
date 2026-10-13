@@ -106,6 +106,16 @@ rules do not read them yet.
 
 Three climate refinements and one erosion process are on by default, and each can be switched off:
 
+- **Island-chain repair** (`WithoutIslandChains()` to disable, `WithIslandChains(s => s.Options...)` to tune). Where two
+  oceanic plates meet, the uplift apron is a tile or two wide but continuous along the whole border, so the coast came
+  out as a land ribbon hundreds of kilometres long through open ocean instead of an arc of separate volcanoes.
+  `IslandChainDetector` finds them: land with no interior tile (coast depth >= 4) within two rings, restricted per
+  tile to oceanic crust within two rings of a plate boundary, grouped into runs at least six rings end to end.
+  `IslandChainStage` (order 17, after erosion and ahead of the climate refresh) then walks each run from one end and
+  drowns 1-3-ring straits between 2-5-ring beads, deterministically per (seed, anchor tile). It runs after erosion
+  because thermal creep refills a strait cut earlier. Hand-sculpted and pinned tiles are never drowned, and grids below
+  8000 tiles (size < 5) are skipped, where a one-tile ribbon is already the smallest land feature. Over sixteen seeds
+  at size 6 the audited ribbon tiles fall 83% (18032 to 3075) for 2.8% of land.
 - **Climate refresh** (`WithClimateRefresh(false)` to disable). Erosion runs after the first climate pass and moves the
   coastline, because sediment fills shallows: a size-4 world gains around 20% more land tiles, and every one of them
   kept the ocean's 0.55 rainfall floor. `ClimateRefreshStage` (order 17, tied with erosion and placed after it by the
