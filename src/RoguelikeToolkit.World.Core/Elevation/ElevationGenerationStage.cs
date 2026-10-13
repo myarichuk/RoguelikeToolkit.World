@@ -7,13 +7,10 @@ using RoguelikeToolkit.World.Core.Topology;
 namespace RoguelikeToolkit.World.Core.Elevation;
 
 [Preserve] // created via reflection by WorldGenerationPipeline.Discover; keep it through Unity code stripping
-[WorldGeneratorStage(PipelineOrder, Reads = new[] { typeof(TectonicPlate) }, ReadsOptional = new[] { typeof(UserEditInfo) }, Writes = new[] { typeof(ElevationInfo) })]
+[WorldGeneratorStage(StageOrder.Elevation, Reads = new[] { typeof(TectonicPlate) }, ReadsOptional = new[] { typeof(UserEditInfo) }, Writes = new[] { typeof(ElevationInfo) })]
 public class ElevationGenerationStage : IWorldGeneratorStage, ISeededStage
 {
     public const double SeaLevel = 0.0;
-
-    /// <summary>The stage's pipeline order; <see cref="World.Recompute"/> re-runs from here.</summary>
-    public const int PipelineOrder = 15;
 
     // Hotspot dome is exp(-a^2 / (2 * 0.055^2)); it falls below the 0.01 floor at
     // a = 0.055 * sqrt(2 ln 100) ~= 0.1669 rad. Skip Acos/Exp for tiles beyond it.

@@ -6,7 +6,7 @@ using RoguelikeToolkit.World.Core.Topology;
 namespace RoguelikeToolkit.World.Core.Tectonics;
 
 [Preserve] // created via reflection by WorldGenerationPipeline.Discover; keep it through Unity code stripping
-[WorldGeneratorStage(10, Writes = new[] { typeof(TectonicPlate) })]
+[WorldGeneratorStage(StageOrder.Tectonics, Writes = new[] { typeof(TectonicPlate) })]
 public class TectonicPlateGenerationStage : IWorldGeneratorStage, ISeededStage, IDisposable
 {
     public int SeedCount { get; set; } = 12;

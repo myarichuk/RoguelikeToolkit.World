@@ -32,7 +32,7 @@ public sealed class ClimateRefreshStage : IWorldGeneratorStage, IDeclaredStage, 
     }
 
     public string Name => "ClimateRefresh";
-    public int Order => 17;
+    public int Order => StageOrder.ClimateRefresh;
     public Type[] Reads => new[] { typeof(ElevationInfo), typeof(ClimateInfo) };
     public Type[] ReadsOptional => new[] { typeof(UserEditInfo) };
     public Type[] Writes => new[] { typeof(ClimateInfo) };

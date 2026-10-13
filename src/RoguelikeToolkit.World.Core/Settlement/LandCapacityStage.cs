@@ -22,10 +22,9 @@ namespace RoguelikeToolkit.World.Core.Settlement;
 [Preserve]
 public sealed class LandCapacityStage : IWorldGeneratorStage, IDeclaredStage, IStageNamed
 {
-    public const int StageOrder = 25;
 
     public string Name => "LandCapacity";
-    public int Order => StageOrder;
+    public int Order => Generation.StageOrder.LandCapacity;
     public Type[] Reads => new[] { typeof(ElevationInfo), typeof(BiomeInfo) };
     public Type[] ReadsOptional => new[] { typeof(ClimateInfo), typeof(HydrologyInfo) };
     public Type[] Writes => new[] { typeof(LandCapacityInfo), typeof(LandUseInfo) };

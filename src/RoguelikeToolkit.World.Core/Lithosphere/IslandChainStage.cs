@@ -35,7 +35,7 @@ public sealed class IslandChainStage : IWorldGeneratorStage, IDeclaredStage, ISt
     }
 
     public string Name => "IslandChains";
-    public int Order => ErosionGenerationStage.PipelineOrder;
+    public int Order => StageOrder.Erosion;
     public Type[] Reads => new[] { typeof(ElevationInfo), typeof(TectonicPlate) };
     public Type[] ReadsOptional => new[] { typeof(UserEditInfo) };
     public Type[] Writes => new[] { typeof(ElevationInfo) };

@@ -28,7 +28,7 @@ namespace RoguelikeToolkit.World.Core.Climate;
 /// up lake adjacency where a host explicitly orders a second pass.
 /// </summary>
 [Preserve] // created via reflection by WorldGenerationPipeline.Discover; keep it through Unity code stripping
-[WorldGeneratorStage(16, Reads = new[] { typeof(ElevationInfo) }, ReadsOptional = new[] { typeof(HydrologyInfo), typeof(UserEditInfo) }, Writes = new[] { typeof(ClimateInfo) })]
+[WorldGeneratorStage(StageOrder.Climate, Reads = new[] { typeof(ElevationInfo) }, ReadsOptional = new[] { typeof(HydrologyInfo), typeof(UserEditInfo) }, Writes = new[] { typeof(ClimateInfo) })]
 public class ClimateStage : IWorldGeneratorStage, ISeededStage
 {
     public int Seed { get; set; } = 42;

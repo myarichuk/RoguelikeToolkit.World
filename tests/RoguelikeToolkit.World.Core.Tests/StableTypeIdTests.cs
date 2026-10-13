@@ -1,5 +1,4 @@
 using RoguelikeToolkit.World.Core.Primitives;
-using Xunit;
 
 namespace RoguelikeToolkit.World.Core.Tests;
 

@@ -1,3 +1,4 @@
+using RoguelikeToolkit.World.Core.Generation;
 using RoguelikeToolkit.World.Core.Elevation;
 using RoguelikeToolkit.World.Core.Lithosphere;
 using RoguelikeToolkit.World.Core.Storage;
@@ -178,7 +179,7 @@ public class IslandChainTests
     [Fact]
     public void Stage_TiesErosionsOrder_SoTheStableSortRunsItAfterErosion()
     {
-        Assert.Equal(ErosionGenerationStage.PipelineOrder, new IslandChainStage().Order);
+        Assert.Equal(StageOrder.Erosion, new IslandChainStage().Order);
         Assert.Equal(new[] { typeof(ElevationInfo), typeof(TectonicPlate) }, new IslandChainStage().Reads);
         Assert.Equal(new[] { typeof(ElevationInfo) }, new IslandChainStage().Writes);
     }

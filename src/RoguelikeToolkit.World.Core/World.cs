@@ -77,7 +77,7 @@ public sealed class World : IDisposable
     public void Recompute()
     {
         if (!Editable) throw new InvalidOperationException("Build the world with WithUserEdits() to recompute it.");
-        _pipeline!.ExecuteFrom(Map, ElevationGenerationStage.PipelineOrder);
+        _pipeline!.ExecuteFrom(Map, StageOrder.Elevation);
         Rivers.Rivers.Clear();
         WaterBodies.Bodies.Clear();
         Ranges.Features.Clear();

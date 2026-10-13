@@ -22,7 +22,7 @@ namespace RoguelikeToolkit.World.Core.Hydrology;
 /// the sea, a lake, or an inland sink — never mid-slope.
 /// </summary>
 [Preserve] // created via reflection by WorldGenerationPipeline.Discover; keep it through Unity code stripping
-[WorldGeneratorStage(18, Reads = new[] { typeof(ElevationInfo) }, ReadsOptional = new[] { typeof(ClimateInfo), typeof(UserEditInfo) }, Writes = new[] { typeof(HydrologyInfo) })]
+[WorldGeneratorStage(StageOrder.Hydrology, Reads = new[] { typeof(ElevationInfo) }, ReadsOptional = new[] { typeof(ClimateInfo), typeof(UserEditInfo) }, Writes = new[] { typeof(HydrologyInfo) })]
 public class HydrologyStage : IWorldGeneratorStage
 {
     /// <summary>

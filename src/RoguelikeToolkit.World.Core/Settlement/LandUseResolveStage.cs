@@ -12,10 +12,9 @@ namespace RoguelikeToolkit.World.Core.Settlement;
 [Preserve]
 public sealed class LandUseResolveStage : IWorldGeneratorStage, IDeclaredStage, IStageNamed
 {
-    public const int StageOrder = 99;
 
     public string Name => "LandUseResolve";
-    public int Order => StageOrder;
+    public int Order => Generation.StageOrder.LandUse;
     public Type[] Reads => new[] { typeof(LandUseInfo), typeof(UserEditInfo) };
     public Type[] ReadsOptional => Array.Empty<Type>();
     public Type[] Writes => new[] { typeof(LandUseInfo) };

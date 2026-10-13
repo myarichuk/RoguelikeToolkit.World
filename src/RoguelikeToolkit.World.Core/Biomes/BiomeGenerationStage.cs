@@ -9,7 +9,7 @@ using RoguelikeToolkit.World.Core.Topology;
 namespace RoguelikeToolkit.World.Core.Biomes;
 
 [Preserve] // created via reflection by WorldGenerationPipeline.Discover; keep it through Unity code stripping
-[WorldGeneratorStage(20, Reads = new[] { typeof(ElevationInfo) }, ReadsOptional = new[] { typeof(ClimateInfo), typeof(HydrologyInfo), typeof(UserEditInfo) }, Writes = new[] { typeof(BiomeInfo) })]
+[WorldGeneratorStage(StageOrder.Biomes, Reads = new[] { typeof(ElevationInfo) }, ReadsOptional = new[] { typeof(ClimateInfo), typeof(HydrologyInfo), typeof(UserEditInfo) }, Writes = new[] { typeof(BiomeInfo) })]
 public class BiomeGenerationStage : IWorldGeneratorStage, ISeededStage
 {
     public int Seed { get; set; } = 42;
