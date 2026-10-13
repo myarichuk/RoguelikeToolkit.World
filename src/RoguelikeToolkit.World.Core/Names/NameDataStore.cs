@@ -13,7 +13,9 @@ namespace RoguelikeToolkit.World.Core.Names;
 /// </summary>
 public sealed class NameDataStore
 {
+    /// <summary>Loaded tables keyed by <see cref="CultureData.Key"/> (case-insensitive).</summary>
     public Dictionary<string, CultureData> Tables { get; } = new(StringComparer.OrdinalIgnoreCase);
+    /// <summary>Extra names that resolve to a table, built from each table's <see cref="CultureData.Aliases"/> (case-insensitive alias to table key).</summary>
     public Dictionary<string, string> Aliases { get; } = new(StringComparer.OrdinalIgnoreCase);
 
     /// <summary>Strict lookup: throws <see cref="UnknownNameKeyException"/> naming available keys.</summary>
@@ -26,8 +28,10 @@ public sealed class NameDataStore
         throw new UnknownNameKeyException(kind, key, available);
     }
 
+    /// <summary>Strict lookup of a race key or alias; throws <see cref="UnknownNameKeyException"/> with Kind <c>race</c> if there is no such table.</summary>
     public CultureData ResolveRace(string race, IEnumerable<string>? extraAvailable = null)
         => Get(race, "race", extraAvailable);
+    /// <summary>Strict lookup of a culture key or alias; throws <see cref="UnknownNameKeyException"/> with Kind <c>culture</c> if there is no such table.</summary>
     public CultureData ResolveCulture(string culture, IEnumerable<string>? extraAvailable = null)
         => Get(culture, "culture", extraAvailable);
 
@@ -53,6 +57,11 @@ public sealed class NameDataStore
         }
     }
 
+    /// <summary>
+    /// Loads the shipped tables and, when <paramref name="overrideDir"/> exists, every <c>*.yaml</c> under it (recursively); an on-disk table replaces the shipped one with the same key.
+    /// A null or missing directory loads only the shipped tables.
+    /// </summary>
+    /// <exception cref="NameDataException">Any file is unreadable, malformed or invalid, or two files claim the same key; all problems are reported together.</exception>
     public static NameDataStore Load(string? overrideDir = null)
     {
         var store = LoadCore(overrideDir, out var problems);

@@ -9,7 +9,9 @@ public static class FantasyNameGenerator
 {
     private static NameDataStore? _configured;
 
+    /// <summary>Sets the store that <see cref="Shared"/> returns, replacing any loaded one. Not synchronized; call it at startup before generating.</summary>
     public static void Configure(NameDataStore store) => _configured = store;
+    /// <summary>The store used when a call passes no <c>overrideDir</c> or store: the one given to <see cref="Configure"/>, else the shipped tables loaded lazily on first access (not thread-safe).</summary>
     public static NameDataStore Shared => _configured ??= NameDataStore.Load();
 
     /// <summary>
@@ -111,6 +113,11 @@ public static class FantasyNameGenerator
         return NameThemes.ForPlaces(store.Get(TableKey(race, culture, store)), store.Get(Cultures.FantasyCommon));
     }
 
+    /// <summary>
+    /// Resolves a race/culture pair to the key of the table that generates its names. Humans use the culture table; other races use their race table (shipped mapping first, else the race key itself).
+    /// Blank race means human and blank culture means <see cref="Cultures.FantasyCommon"/>.
+    /// </summary>
+    /// <exception cref="UnknownNameKeyException">The race or culture is unknown; the culture is validated even for non-humans, where it is otherwise ignored.</exception>
     public static string TableKey(string race, string culture, NameDataStore? store = null)
     {
         store ??= Shared;
@@ -126,9 +133,11 @@ public static class FantasyNameGenerator
         return store.ResolveRace(race, RaceTables.Keys).Key;
     }
 
+    /// <summary>The lineage the race/culture table follows by default, normalized to one of the <see cref="Lineages"/> values. Throws <see cref="UnknownNameKeyException"/> for unknown keys.</summary>
     public static string DefaultLineage(string race, string culture, NameDataStore? store = null)
         => NormalizeLineage((store ?? Shared).Get(TableKey(race, culture, store)).LineageDefault);
 
+    /// <summary>Maps a lineage string (trimmed, case-insensitive) to a <see cref="Lineages"/> constant; null, blank or unrecognised input yields <see cref="Lineages.Patrilineal"/>.</summary>
     public static string NormalizeLineage(string? lineage) => lineage?.Trim().ToLowerInvariant() switch
     {
         Lineages.Matrilineal => Lineages.Matrilineal,
@@ -136,6 +145,19 @@ public static class FantasyNameGenerator
         _ => Lineages.Patrilineal,
     };
 
+    /// <summary>
+    /// Generates a person name; the same arguments always produce the same name for a given set of tables.
+    /// </summary>
+    /// <param name="race">Race key (see <see cref="FantasyRaces"/>); blank means human.</param>
+    /// <param name="culture">Culture key (see <see cref="Cultures"/>); only used for humans and half-bloods, but must still be valid.</param>
+    /// <param name="seed">Deterministic seed, echoed in <see cref="GeneratedName.Seed"/>.</param>
+    /// <param name="lineage">Overrides the table's default lineage; null or blank uses the default.</param>
+    /// <param name="feminine">Selects feminine given names, patronymic marker and surname forms.</param>
+    /// <param name="salt">Extra number mixed into the seed to get a different name for the same seed.</param>
+    /// <param name="overrideDir">Directory of YAML tables to load instead of <see cref="Shared"/>; reloaded on every call, so avoid it in hot paths.</param>
+    /// <param name="inspiredBy">Theme words that bias which morphemes are picked.</param>
+    /// <param name="script">Script to render the name in.</param>
+    /// <exception cref="UnknownNameKeyException">The race or culture has no table.</exception>
     public static GeneratedName GeneratePerson(
         string race, string culture, int seed,
         string? lineage = null, bool feminine = false, int salt = 0,
@@ -149,6 +171,19 @@ public static class FantasyNameGenerator
             attempt => BuildPerson(store, race, culture, seed, lineage, feminine, salt + attempt * 100003, tokens, script));
     }
 
+    /// <summary>
+    /// Generates a place name of the given kind; the same arguments always produce the same name for a given set of tables.
+    /// </summary>
+    /// <param name="kind">One of <see cref="PlaceKinds"/>; any other value is treated as a village. This argument, not <see cref="PlaceContext.Kind"/>, selects the kind.</param>
+    /// <param name="ctx">Surroundings the name should reflect.</param>
+    /// <param name="race">Race key whose vocabulary is used; blank means human.</param>
+    /// <param name="culture">Culture key; only used for humans, but must still be valid.</param>
+    /// <param name="seed">Deterministic seed, echoed in <see cref="GeneratedName.Seed"/>.</param>
+    /// <param name="salt">Extra number mixed into the seed to get a different name for the same seed.</param>
+    /// <param name="overrideDir">Directory of YAML tables to load instead of <see cref="Shared"/>; reloaded on every call.</param>
+    /// <param name="inspiredBy">Theme words that bias which morphemes are picked.</param>
+    /// <param name="script">Script to render the name in.</param>
+    /// <exception cref="UnknownNameKeyException">The race or culture has no table.</exception>
     public static GeneratedName GeneratePlace(
         string kind, PlaceContext ctx, string race, string culture,
         int seed, int salt = 0, string? overrideDir = null, IEnumerable<string>? inspiredBy = null,
