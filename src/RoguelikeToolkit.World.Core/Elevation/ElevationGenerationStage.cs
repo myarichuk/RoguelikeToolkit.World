@@ -21,9 +21,11 @@ public class ElevationGenerationStage : IWorldGeneratorStage, ISeededStage
     /// <summary>Seeds the noise octaves and the hotspot positions. Default 42.</summary>
     public int Seed { get; set; } = 42;
     /// <summary>Scale of the legacy broad-relief noise term (applied at 0.15 of this value).</summary>
-    public double NoiseAmplitude { get; set; } = 0.55;
+    public double NoiseAmplitude { get => _noiseAmplitude; set => _noiseAmplitude = StageKnob.Finite(value, nameof(NoiseAmplitude)); }
+    private double _noiseAmplitude = 0.55;
     /// <summary>Spatial frequency of the legacy broad-relief noise term.</summary>
-    public double NoiseFrequency { get; set; } = 3.0;
+    public double NoiseFrequency { get => _noiseFrequency; set => _noiseFrequency = StageKnob.Finite(value, nameof(NoiseFrequency)); }
+    private double _noiseFrequency = 3.0;
 
     /// <summary>
     /// Height gained per unit of orogeny driver. Deliberately above 1: belts
@@ -32,19 +34,24 @@ public class ElevationGenerationStage : IWorldGeneratorStage, ISeededStage
     /// uplift still fades within ~2 rings, so this sharpens ranges instead of
     /// widening them.
     /// </summary>
-    public double BoundaryUplift { get; set; } = 1.15;
+    public double BoundaryUplift { get => _boundaryUplift; set => _boundaryUplift = StageKnob.Finite(value, nameof(BoundaryUplift)); }
+    private double _boundaryUplift = 1.15;
 
     /// <summary>Rolling-hill amplitude on land (abyssal texture is ~40% of this).</summary>
-    public double HillAmplitude { get; set; } = 0.085;
+    public double HillAmplitude { get => _hillAmplitude; set => _hillAmplitude = StageKnob.Finite(value, nameof(HillAmplitude)); }
+    private double _hillAmplitude = 0.085;
 
     /// <summary>Ridged-crest amplitude per unit of positive orogeny.</summary>
-    public double RidgeAmplitude { get; set; } = 0.38;
+    public double RidgeAmplitude { get => _ridgeAmplitude; set => _ridgeAmplitude = StageKnob.Finite(value, nameof(RidgeAmplitude)); }
+    private double _ridgeAmplitude = 0.38;
 
     /// <summary>Hotspot island-chain count (deterministic positions from seed).</summary>
-    public int HotspotCount { get; set; } = 3;
+    public int HotspotCount { get => _hotspotCount; set => _hotspotCount = StageKnob.NonNegative(value, nameof(HotspotCount)); }
+    private int _hotspotCount = 3;
 
     /// <summary>Hotspot swell height; oceanic hotspots breach as volcanic islands.</summary>
-    public double HotspotAmplitude { get; set; } = 0.55;
+    public double HotspotAmplitude { get => _hotspotAmplitude; set => _hotspotAmplitude = StageKnob.Finite(value, nameof(HotspotAmplitude)); }
+    private double _hotspotAmplitude = 0.55;
 
     /// <summary>Creates a stage with the default <see cref="Seed"/> (42); this is the constructor <see cref="WorldGenerationPipeline.Discover(string?, Action{StageDiscoveryDiagnostic}?)"/> uses.</summary>
     public ElevationGenerationStage()

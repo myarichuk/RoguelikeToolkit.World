@@ -24,6 +24,11 @@ namespace RoguelikeToolkit.World.MapEditor.Engine;
 /// int arrays (<c>[count, (header..., n, items...)...]</c>) because one marshalled array is
 /// cheaper than thousands of tiny ones, and JS decodes them with a cursor in a few lines.
 /// </para>
+/// <para>
+/// Single-threaded by contract: the current world lives in static fields, and <see cref="Generate"/> and
+/// <see cref="ApplyEdits"/> rewrite or dispose it while every other export reads it. The browser runtime runs
+/// this on the one worker thread, which is what makes that safe; do not call it from several threads.
+/// </para>
 /// </summary>
 [System.Runtime.Versioning.SupportedOSPlatform("browser")]
 public static partial class WorldExports

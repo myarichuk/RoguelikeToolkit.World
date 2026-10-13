@@ -212,6 +212,11 @@ sea air does not carry the offset inland (paint the coast too if you want that).
 lakes read the offset climate like any other. It is global: hydrology is a whole-world solve, so one
 raised ridge may redirect a basin far from it.
 
+**Threading.** A `World` is not thread-safe. Concurrent *reads* (queries, spans) are fine; `Recompute()`,
+writes through `Edits`, and `Dispose()` are writers that rewrite the layers and catalogs in place, so a reader
+that overlaps one sees torn data or freed memory. Nothing enforces this: guard writers against readers yourself
+(a `ReaderWriterLockSlim` is enough) or keep the world on one thread. Re-fetch spans after `Recompute()`.
+
 ## Land use: what the ground could carry, and what people decide to do with it
 
 A biome is what the climate grows, and the physics reproduces it. Farmland, pasture, a burn scar, a

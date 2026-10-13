@@ -143,22 +143,10 @@ public unsafe class WorldDataStore : IDisposable
             throw new InvalidOperationException("No layers registered. Call RegisterLayer<T>() before Allocate().");
         if (IsAllocated) return;
 
+        string? fullPath = null;
         if (_filePath != null)
         {
-            var baseDirectory = Path.GetFullPath(Environment.CurrentDirectory);
-            var fullPath = Path.GetFullPath(Path.Combine(baseDirectory, _filePath));
-
-            string baseDirectoryWithSeparator = baseDirectory;
-            if (!baseDirectoryWithSeparator.EndsWith(Path.DirectorySeparatorChar.ToString()))
-            {
-                baseDirectoryWithSeparator += Path.DirectorySeparatorChar;
-            }
-
-            if (!fullPath.StartsWith(baseDirectoryWithSeparator, StringComparison.Ordinal) &&
-                fullPath != baseDirectory)
-            {
-                throw new UnauthorizedAccessException("Path traversal is not allowed.");
-            }
+            fullPath = ResolveStorePath(_filePath);
 
             if (_layerOffsets.Count > MaxHeaderLayers)
                 throw new InvalidOperationException($"File-backed stores support at most {MaxHeaderLayers} layers.");
@@ -192,8 +180,8 @@ public unsafe class WorldDataStore : IDisposable
 
         if (_filePath != null)
         {
-            if (new FileInfo(Path.GetFullPath(Path.Combine(Path.GetFullPath(Environment.CurrentDirectory), _filePath))).Length == HeaderSize + _currentTotalBytes
-                && !IsFreshFile(Path.GetFullPath(Path.Combine(Path.GetFullPath(Environment.CurrentDirectory), _filePath))))
+            if (new FileInfo(fullPath!).Length == HeaderSize + _currentTotalBytes
+                && !IsFreshFile(fullPath!))
             {
                 ValidateFileHeader();
             }
@@ -208,6 +196,54 @@ public unsafe class WorldDataStore : IDisposable
             new Span<byte>(_ptr, (int)_currentTotalBytes).Clear();
         }
     }
+
+    /// <summary>
+    /// Resolves <paramref name="path"/> against the current directory and proves it stays inside it. The check is on the
+    /// real location, not the spelling: on .NET 6+ every symbolic link or junction along the path is followed first, so a
+    /// link inside the directory that points outside is rejected like a literal <c>..</c>. The returned path is the one to
+    /// open (the resolved target), so nothing is re-resolved between the check and the open.
+    /// </summary>
+    private static string ResolveStorePath(string path)
+    {
+        var baseDirectory = Path.GetFullPath(Environment.CurrentDirectory);
+        var fullPath = Path.GetFullPath(Path.Combine(baseDirectory, path));
+#if NET6_0_OR_GREATER
+        baseDirectory = ResolveLinks(baseDirectory, 0);
+        fullPath = ResolveLinks(fullPath, 0);
+#endif
+        string baseWithSeparator = baseDirectory.EndsWith(Path.DirectorySeparatorChar.ToString(), StringComparison.Ordinal)
+            ? baseDirectory
+            : baseDirectory + Path.DirectorySeparatorChar;
+
+        if (!fullPath.StartsWith(baseWithSeparator, StringComparison.Ordinal) && fullPath != baseDirectory)
+            throw new UnauthorizedAccessException("Path traversal is not allowed.");
+        return fullPath;
+    }
+
+#if NET6_0_OR_GREATER
+    private const int MaxLinkHops = 40;
+
+    // Walks the path one segment at a time and follows each link it meets, whether the link is the file itself or a
+    // directory in the middle. A link's target is itself re-walked, since it may sit under another link.
+    // Segments that do not exist yet (a store file about to be created) are kept as spelled.
+    private static string ResolveLinks(string fullPath, int hops)
+    {
+        var root = Path.GetPathRoot(fullPath) ?? string.Empty;
+        var current = root;
+        var segments = fullPath.Substring(root.Length).Split(new[] { Path.DirectorySeparatorChar, Path.AltDirectorySeparatorChar }, StringSplitOptions.RemoveEmptyEntries);
+        foreach (var segment in segments)
+        {
+            current = Path.Combine(current, segment);
+            FileSystemInfo info = Directory.Exists(current) ? new DirectoryInfo(current) : new FileInfo(current);
+            if (!info.Exists || info.LinkTarget == null) continue;
+            if (hops >= MaxLinkHops) throw new UnauthorizedAccessException("Too many symbolic links in the store path.");
+            var target = info.ResolveLinkTarget(returnFinalTarget: true);
+            if (target == null) continue;
+            current = ResolveLinks(Path.GetFullPath(target.FullName), hops + 1);
+        }
+        return current;
+    }
+#endif
 
     private static bool IsFreshFile(string fullPath)
     {

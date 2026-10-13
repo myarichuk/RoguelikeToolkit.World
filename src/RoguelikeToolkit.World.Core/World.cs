@@ -20,6 +20,15 @@ namespace RoguelikeToolkit.World.Core;
 /// catalogs. Owns generation (via <see cref="WorldBuilder"/>) and all
 /// game-facing queries. History is consumed here via <see cref="QueryOptions"/>.
 /// </summary>
+/// <remarks>
+/// <para><b>Threading.</b> A world is not thread-safe. Queries and the layer spans are lock-free reads of unmanaged
+/// memory, so any number of threads may read concurrently <i>as long as nobody writes</i>. <see cref="Recompute"/>,
+/// writes through <see cref="Edits"/> or a layer span, and <see cref="Dispose"/> are writers: they rewrite the layers
+/// and refill the catalogs in place, and a reader that overlaps one sees torn data, or (after <see cref="Dispose"/>) freed
+/// memory. Nothing enforces this. Serialise writers against readers yourself, for example with a
+/// <see cref="System.Threading.ReaderWriterLockSlim"/>, or keep the world on one thread.</para>
+/// <para>Spans, refs and catalog entries obtained before a <see cref="Recompute"/> describe the old world; fetch them again afterwards.</para>
+/// </remarks>
 public sealed class World : IDisposable
 {
     /// <summary>Planet radius in kilometres used by every distance and radius in the library. It is fixed and independent of <see cref="PlanetParameters"/>.</summary>
@@ -83,6 +92,7 @@ public sealed class World : IDisposable
     /// reproduces the same world bit for bit, and with no edits it reproduces the generated one, so
     /// applying is idempotent and never double-erodes. Hydrology is global (a ridge can redirect a
     /// river basin away), so this is a whole-world action, not a per-brush-dab one.
+    /// Not safe to run while another thread queries the world (see the class remarks).
     /// </summary>
     public void Recompute()
     {

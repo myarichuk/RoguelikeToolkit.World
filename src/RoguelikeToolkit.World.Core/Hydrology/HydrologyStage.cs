@@ -31,9 +31,11 @@ public partial class HydrologyStage : IWorldGeneratorStage
     /// climate) produced, 513 vs 513 over seven reference worlds. Use 1 with <c>WithClimateRefresh(false)</c> to
     /// get the pre-refresh pipeline back.
     /// </summary>
-    public float RiverThresholdScale { get; set; } = 0.92f;
+    public float RiverThresholdScale { get => _riverThresholdScale; set => _riverThresholdScale = StageKnob.Finite(value, nameof(RiverThresholdScale)); }
+    private float _riverThresholdScale = 0.92f;
     /// <summary>Cap on the number of rivers kept in the river catalog, applied when <see cref="World"/> calls <see cref="PopulateCatalogs"/>. Does not affect the per-tile <see cref="HydrologyInfo.IsRiver"/> flags.</summary>
-    public int MaxRivers { get; set; } = 256;
+    public int MaxRivers { get => _maxRivers; set => _maxRivers = StageKnob.NonNegative(value, nameof(MaxRivers)); }
+    private int _maxRivers = 256;
 
     /// <summary>
     /// How much steeper ground lowers the discharge needed to start a channel:
@@ -42,15 +44,18 @@ public partial class HydrologyStage : IWorldGeneratorStage
     /// mountain flanks instead of waiting for the foothills. 0 restores one
     /// global threshold.
     /// </summary>
-    public float SteepBoost { get; set; } = 3f;
+    public float SteepBoost { get => _steepBoost; set => _steepBoost = StageKnob.Finite(value, nameof(SteepBoost)); }
+    private float _steepBoost = 3f;
 
     /// <summary>Descent per tile (on the routing surface) at which the full <see cref="SteepBoost"/> applies.</summary>
-    public float SteepSlope { get; set; } = 0.05f;
+    public float SteepSlope { get => _steepSlope; set => _steepSlope = StageKnob.Finite(value, nameof(SteepSlope)); }
+    private float _steepSlope = 0.05f;
     /// <summary>
     /// Transmission-loss strength multiplier. 1.0 charges the full local water
     /// deficit; lower values keep more desert rivers alive.
     /// </summary>
-    public float LossFactor { get; set; } = 1.0f;
+    public float LossFactor { get => _lossFactor; set => _lossFactor = StageKnob.Finite(value, nameof(LossFactor)); }
+    private float _lossFactor = 1.0f;
 
     /// <summary>
     /// Let the provisional biome shape the water balance (runoff coefficient, lake evaporation,

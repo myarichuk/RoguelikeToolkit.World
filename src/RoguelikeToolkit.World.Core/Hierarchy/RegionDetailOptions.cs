@@ -1,3 +1,4 @@
+using RoguelikeToolkit.World.Core.Generation;
 namespace RoguelikeToolkit.World.Core.Hierarchy;
 
 /// <summary>
@@ -11,23 +12,32 @@ namespace RoguelikeToolkit.World.Core.Hierarchy;
 public sealed class RegionDetailOptions
 {
     /// <summary>Lattice units spanned by the map half-extent before warping.</summary>
-    public double DetailFrequency { get; set; } = 1.0;
+    public double DetailFrequency { get => _detailFrequency; set => _detailFrequency = StageKnob.Finite(value, nameof(DetailFrequency)); }
+    private double _detailFrequency = 1.0;
     /// <summary>Across-strike coordinate multiplier (&gt;1 compresses: tighter ridges).</summary>
-    public double AcrossStrikeScale { get; set; } = 3.0;
+    public double AcrossStrikeScale { get => _acrossStrikeScale; set => _acrossStrikeScale = StageKnob.Finite(value, nameof(AcrossStrikeScale)); }
+    private double _acrossStrikeScale = 3.0;
     /// <summary>Along-strike coordinate multiplier (&lt;1 elongates: smoother crests).</summary>
-    public double AlongStrikeScale { get; set; } = 0.2;
+    public double AlongStrikeScale { get => _alongStrikeScale; set => _alongStrikeScale = StageKnob.Finite(value, nameof(AlongStrikeScale)); }
+    private double _alongStrikeScale = 0.2;
     /// <summary>Peak detail height added (or removed) in the map interior.</summary>
-    public float DetailAmplitude { get; set; } = 0.12f;
+    public float DetailAmplitude { get => _detailAmplitude; set => _detailAmplitude = StageKnob.Finite(value, nameof(DetailAmplitude)); }
+    private float _detailAmplitude = 0.12f;
     /// <summary>Edge-pinning blend width in cells (outer ring is fully pinned).</summary>
-    public double EdgePinCells { get; set; } = 2.0;
+    public double EdgePinCells { get => _edgePinCells; set => _edgePinCells = StageKnob.Finite(value, nameof(EdgePinCells)); }
+    private double _edgePinCells = 2.0;
     /// <summary>Depth carved along a threaded river reach (tapered at both ends).</summary>
-    public float RiverCarveDepth { get; set; } = 0.08f;
+    public float RiverCarveDepth { get => _riverCarveDepth; set => _riverCarveDepth = StageKnob.Finite(value, nameof(RiverCarveDepth)); }
+    private float _riverCarveDepth = 0.08f;
     /// <summary>Parent <see cref="ParentContext.Flow"/> at or above this threads a river.</summary>
-    public float RiverFlowThreshold { get; set; } = 6f;
+    public float RiverFlowThreshold { get => _riverFlowThreshold; set => _riverFlowThreshold = StageKnob.Finite(value, nameof(RiverFlowThreshold)); }
+    private float _riverFlowThreshold = 6f;
     /// <summary>Number of ridged-fBm octaves summed for the detail noise; more octaves add finer relief at higher cost.</summary>
-    public int NoiseOctaves { get; set; } = 3;
+    public int NoiseOctaves { get => _noiseOctaves; set => _noiseOctaves = StageKnob.NonNegative(value, nameof(NoiseOctaves)); }
+    private int _noiseOctaves = 3;
     /// <summary>Ridged-Fbm octave gain (&lt;0.5 emphasizes large strike-parallel structure).</summary>
-    public double DetailGain { get; set; } = 0.5;
+    public double DetailGain { get => _detailGain; set => _detailGain = StageKnob.Finite(value, nameof(DetailGain)); }
+    private double _detailGain = 0.5;
 
     /// <summary>Tight strike coupling for the region tier.</summary>
     public static RegionDetailOptions RegionDefault => new()
