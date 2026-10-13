@@ -22,15 +22,24 @@ namespace RoguelikeToolkit.World.Core;
 /// </summary>
 public sealed class World : IDisposable
 {
+    /// <summary>Planet radius in kilometres used by every distance and radius in the library. It is fixed and independent of <see cref="PlanetParameters"/>.</summary>
     public const double EarthRadiusKm = 6371.0;
 
+    /// <summary>The tile store and layer views holding all per-tile generated data.</summary>
     public WorldMap Map { get; }
+    /// <summary>The seed the world was built with; with the build configuration it fully determines the generated world.</summary>
     public int Seed { get; }
+    /// <summary>Subdivision level of the planet's tile grid; see <see cref="WorldDataStore.Size"/>.</summary>
     public int Size => Map.DataStore.Size;
+    /// <summary>Number of planet tiles, <c>10 * 4^Size + 2</c>.</summary>
     public int TileCount => Map.DataStore.TileCount;
+    /// <summary>Rivers found by hydrology; filled at build time and refilled in place by <see cref="Recompute"/>.</summary>
     public RiverCatalog Rivers { get; } = new();
+    /// <summary>Oceans and lakes found by hydrology; refilled in place by <see cref="Recompute"/>.</summary>
     public WaterBodyCatalog WaterBodies { get; } = new();
+    /// <summary>Mountain ranges; refilled in place by <see cref="Recompute"/>.</summary>
     public RangeCatalog Ranges { get; } = new();
+    /// <summary>Resource deposits, derived from the world seed and terrain; refilled in place by <see cref="Recompute"/>.</summary>
     public DepositCatalog Deposits { get; } = new();
     /// <summary>Bucketed nearest-feature index, built after the catalogs are populated.</summary>
     public SpatialIndex Index { get; private set; } = null!;
@@ -106,12 +115,14 @@ public sealed class World : IDisposable
     /// </summary>
     public uint TileSeed(int tileIndex) => Rng.DeriveTileSeed(Seed, tileIndex);
 
+    /// <summary>Surface height of the tile nearest to <paramref name="coord"/>, in the dimensionless <see cref="Elevation.ElevationInfo.Height"/> scale (below <see cref="Elevation.ElevationGenerationStage.SeaLevel"/> is ocean). Throws <see cref="ArgumentOutOfRangeException"/> for a non-finite coordinate.</summary>
     public float SampleElevation(GeoCoord coord)
     {
         int i = Map.DataStore.GetTileIndex(coord);
         return Map.DataStore.GetRef<ElevationInfo>(i).Height;
     }
 
+    /// <summary>Biome and danger level of the tile nearest to <paramref name="coord"/>. With <paramref name="options"/>, history modifiers adjust the danger and materialized overrides replace the biome and/or danger; the returned danger is never negative.</summary>
     public (BiomeType Biome, int Danger) SampleBiome(GeoCoord coord, QueryOptions? options = null)
     {
         int i = Map.DataStore.GetTileIndex(coord);
@@ -130,6 +141,7 @@ public sealed class World : IDisposable
         return (biome, Math.Max(0, danger));
     }
 
+    /// <summary>Great-circle distance in kilometres between two coordinates, on a sphere of radius <see cref="EarthRadiusKm"/> (at most half its circumference). Deterministic across platforms; derived from the angle's cosine, so very small distances are coarse.</summary>
     public static double DistanceKm(GeoCoord a, GeoCoord b)
     {
         var va = Vector3D.FromGeoCoord(a);
@@ -201,9 +213,13 @@ public sealed class World : IDisposable
     public PlanetHex Resolve(GeoCoord coord)
         => new(Seed, Map.DataStore.GetTileIndex(coord));
 
+    /// <summary>The region map of one planet tile, derived on demand (not cached) from the tile's data and the world seed. Throws <see cref="IndexOutOfRangeException"/> for a tile index outside <c>0..TileCount-1</c>.</summary>
+    /// <param name="worldTileIndex">Planet tile to expand.</param>
+    /// <param name="regionSize">Side of the square region patch, in cells.</param>
     public RegionHandle GetRegion(int worldTileIndex, int regionSize = RegionMaps.DefaultRegionSize)
         => GetRegion(new PlanetHex(Seed, worldTileIndex), regionSize);
 
+    /// <summary>As <see cref="GetRegion(int, int)"/> for an already-resolved hex. Throws <see cref="ArgumentException"/> when <paramref name="hex"/> was issued by a world with a different seed.</summary>
     public RegionHandle GetRegion(PlanetHex hex, int regionSize = RegionMaps.DefaultRegionSize)
     {
         if (hex.WorldSeed != Seed) throw new ArgumentException("Planet hex belongs to a different world.", nameof(hex));
@@ -228,6 +244,7 @@ public sealed class World : IDisposable
         return GetRegion(new PlanetHex(Seed, region.WorldTileIndex), regionSize).GetLocal(region.RegionCellIndex, localSize);
     }
 
+    /// <summary>Ranks candidate settlement tiles that pass <paramref name="filter"/> (default filter when null), best first. Ties are broken by ascending tile index, so the order is deterministic, and the list is cut to the filter's <c>TopN</c>.</summary>
     public List<CitySiteScore> ScoreCitySites(CitySiteFilter? filter = null, QueryOptions? options = null)
         => CitySiteScorer.Score(Map.DataStore, Rivers, WaterBodies, filter ?? new CitySiteFilter(), options, Seed);
 
@@ -245,6 +262,7 @@ public sealed class World : IDisposable
     public TileFeatureInfo GetTileFeatures(GeoCoord coord, QueryOptions? options = null, SiteCatalog? sites = null)
         => GetTileFeatures(Map.DataStore.GetTileIndex(coord), options, sites);
 
+    /// <summary>WKT <c>LINESTRING</c> (longitude latitude order) following the river's tile path. <paramref name="riverId"/> indexes <see cref="Rivers"/>; throws <see cref="ArgumentOutOfRangeException"/> for an unknown id.</summary>
     public string RiverToWkt(int riverId)
     {
         if ((uint)riverId >= (uint)Rivers.Rivers.Count)
@@ -260,6 +278,7 @@ public sealed class World : IDisposable
         }
         throw new ArgumentOutOfRangeException(nameof(bodyId), bodyId, $"Unknown water-body id {bodyId}.");
     }
+    /// <summary>WKT <c>POINT</c> (longitude latitude order) at the centre of the deposit's tile. <paramref name="depositId"/> indexes the deposit list; throws <see cref="ArgumentOutOfRangeException"/> for an unknown id.</summary>
     public string DepositToWkt(int depositId)
     {
         if ((uint)depositId >= (uint)Deposits.Deposits.Count)
@@ -267,6 +286,7 @@ public sealed class World : IDisposable
         return GeoWkt.DepositToWkt(Deposits.Deposits[depositId], Map.DataStore);
     }
 
+    /// <summary>Disposes the generation pipeline and the map (and so the store). Spans, references and handles obtained from the world must not be used afterwards.</summary>
     public void Dispose()
     {
         _pipeline?.Dispose();

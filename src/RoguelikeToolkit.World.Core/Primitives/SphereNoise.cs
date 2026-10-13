@@ -7,6 +7,7 @@ namespace RoguelikeToolkit.World.Core.Primitives;
 /// </summary>
 public static class SphereNoise
 {
+    /// <summary>Smooth value noise in [-1, 1) at <paramref name="p"/>: pseudo-random values on the integer lattice, blended trilinearly with a smoothstep fade. The lattice cell is one unit wide, so scale <paramref name="p"/> (a unit-sphere point) by the desired frequency; <paramref name="seed"/> selects the lattice.</summary>
     public static double Value(Vector3D p, int seed)
     {
         long xi = (long)Math.Floor(p.X);
@@ -41,6 +42,12 @@ public static class SphereNoise
         return Lerp(y0, y1, w) * 2.0 - 1.0;
     }
 
+    /// <summary>Fractal sum of <see cref="Value"/> octaves, normalised by the total amplitude so the result stays in [-1, 1). Octave <c>o</c> samples at <c>p * lacunarity^o</c> with amplitude <c>gain^o</c> and seed <c>seed + o * 101</c>; zero or fewer octaves give 0.</summary>
+    /// <param name="p">Sample position (a unit-sphere point scaled by the base frequency).</param>
+    /// <param name="seed">Base lattice seed; octave <c>o</c> uses <c>seed + o * 101</c>.</param>
+    /// <param name="octaves">Number of octaves summed.</param>
+    /// <param name="lacunarity">Frequency multiplier between successive octaves.</param>
+    /// <param name="gain">Amplitude multiplier between successive octaves.</param>
     public static double Fbm(Vector3D p, int seed, int octaves = 4, double lacunarity = 2.0, double gain = 0.5)
     {
         double sum = 0.0;

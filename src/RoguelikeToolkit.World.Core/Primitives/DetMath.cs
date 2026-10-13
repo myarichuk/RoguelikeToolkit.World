@@ -28,6 +28,7 @@ public static class DetMath
     private const double Pio2_3 = 2.02226624871116645580e-21;
     private const double Pio2_3t = 8.47842766036889956997e-32;
 
+    /// <summary>Sine of <paramref name="x"/> (radians); NaN for NaN or infinite input.</summary>
     public static double Sin(double x)
     {
         if (double.IsNaN(x) || double.IsInfinity(x)) return double.NaN;
@@ -41,6 +42,7 @@ public static class DetMath
         };
     }
 
+    /// <summary>Cosine of <paramref name="x"/> (radians); NaN for NaN or infinite input.</summary>
     public static double Cos(double x)
     {
         if (double.IsNaN(x) || double.IsInfinity(x)) return double.NaN;
@@ -99,6 +101,7 @@ public static class DetMath
         return w + (((1.0 - w) - hz) + z * r);
     }
 
+    /// <summary>e<sup>x</sup>. Returns +Infinity above about 709.78, 0 below about -745.13 and NaN for NaN.</summary>
     public static double Exp(double x)
     {
         const double Ln2Hi = 6.93147180369123816490e-01, Ln2Lo = 1.90821492927058770002e-10,
@@ -121,6 +124,7 @@ public static class DetMath
         return Math.ScaleB(y, (int)kd);
     }
 
+    /// <summary>Natural logarithm. NaN for NaN or negative input, -Infinity for 0, +Infinity for +Infinity; subnormal inputs are handled.</summary>
     public static double Log(double x)
     {
         const double Ln2Hi = 6.93147180369123816490e-01, Ln2Lo = 1.90821492927058770002e-10,
@@ -152,6 +156,8 @@ public static class DetMath
         return dk * Ln2Hi - ((hfsq - (s * (hfsq + rr) + dk * Ln2Lo)) - f);
     }
 
+    /// <summary><paramref name="x"/> raised to <paramref name="y"/>, computed as <c>Exp(y * Log(x))</c>, so the relative error grows with <c>|y * Log(x)|</c> and the result is not correctly rounded.</summary>
+    /// <remarks>Returns 1 when <paramref name="y"/> is 0 or <paramref name="x"/> is 1 (even if the other argument is NaN, as in C), 0 for a zero base with positive <paramref name="y"/> and +Infinity for a zero base otherwise. A negative base is defined only for integral finite <paramref name="y"/> (the sign follows its parity); otherwise the result is NaN.</remarks>
     public static double Pow(double x, double y)
     {
         if (y == 0.0) return 1.0;
@@ -190,6 +196,7 @@ public static class DetMath
         return x < 0 ? -a : a;
     }
 
+    /// <summary>Angle in radians, in [-pi, pi], of the point (<paramref name="x"/>, <paramref name="y"/>) measured from the +X axis, with the quadrant resolved. NaN if either argument is NaN; signed zeros and infinities follow the C <c>atan2</c> conventions.</summary>
     public static double Atan2(double y, double x)
     {
         if (double.IsNaN(x) || double.IsNaN(y)) return double.NaN;
@@ -213,12 +220,14 @@ public static class DetMath
         return y < 0 || (y == 0 && double.IsNegative(y)) ? -a : a;
     }
 
+    /// <summary>Arc cosine in [0, pi]; NaN when <paramref name="x"/> is NaN or outside [-1, 1] (no clamping, so callers pass a clamped dot product).</summary>
     public static double Acos(double x)
     {
         if (double.IsNaN(x) || x > 1.0 || x < -1.0) return double.NaN;
         return Atan2(Math.Sqrt((1.0 - x) * (1.0 + x)), x);
     }
 
+    /// <summary>Arc sine in [-pi/2, pi/2]; NaN when <paramref name="x"/> is NaN or outside [-1, 1] (no clamping).</summary>
     public static double Asin(double x)
     {
         if (double.IsNaN(x) || x > 1.0 || x < -1.0) return double.NaN;

@@ -16,7 +16,9 @@ namespace RoguelikeToolkit.World.Core.Entities;
 /// </remarks>
 public sealed partial class EntityStore
 {
+    /// <summary>log2 of <see cref="ChunkSize"/>: a slot's chunk is <c>slot &gt;&gt; ChunkShift</c>.</summary>
     public const int ChunkShift = 10;
+    /// <summary>Slots per chunk (1024). The generation table and every column grow in whole chunks of this size.</summary>
     public const int ChunkSize = 1 << ChunkShift;
     private const int ChunkMask = ChunkSize - 1;
 
@@ -48,6 +50,7 @@ public sealed partial class EntityStore
     /// <summary>One past the highest slot ever used; iterate <c>0..HighWater</c> and skip dead slots.</summary>
     public int HighWater => _highWater;
 
+    /// <summary>Slots allocated so far, always a whole number of chunks and at least <see cref="HighWater"/>. Grows by one chunk when a spawn finds no free slot.</summary>
     public int Capacity => _generations.Count << ChunkShift;
 
     /// <summary>Allocates chunks so at least <paramref name="slots"/> slots exist without further growth.</summary>
@@ -79,6 +82,7 @@ public sealed partial class EntityStore
         return column;
     }
 
+    /// <summary>The column registered for <typeparamref name="T"/>. A store holds at most one column per element type. Throws <see cref="ArgumentException"/> when <see cref="AddColumn{T}"/> was never called for it.</summary>
     public Column<T> GetColumn<T>() where T : unmanaged
     {
         int id = ColumnSlot<T>.Id;
@@ -89,6 +93,7 @@ public sealed partial class EntityStore
 
     private ref uint GenerationAt(int slot) => ref _generations[slot >> ChunkShift][slot & ChunkMask];
 
+    /// <summary>True when <paramref name="id"/> names a currently live entity: false for <see cref="EntityId.None"/>, for destroyed or recycled handles (stale generation) and for indices beyond <see cref="HighWater"/>.</summary>
     public bool IsAlive(EntityId id)
         => (uint)id.Index < (uint)_highWater && (id.Generation & 1) == 1 && GenerationAt(id.Index) == id.Generation;
 

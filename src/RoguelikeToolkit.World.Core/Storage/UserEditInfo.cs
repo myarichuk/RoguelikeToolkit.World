@@ -23,7 +23,9 @@ public struct UserEditInfo
     public float HeightDelta;
     /// <summary>Final height where <see cref="UserEditFlags.PinHeight"/> is set (fix).</summary>
     public float PinHeight;
+    /// <summary>Biome forced on the tile where <see cref="UserEditFlags.PinBiome"/> is set; ignored otherwise.</summary>
     public BiomeType PinBiome;
+    /// <summary>Which pins (height, biome, land use) this edit applies; the corresponding value fields are ignored unless their flag is set.</summary>
     public UserEditFlags Flags;
     /// <summary>
     /// Added to the tile's annual-mean temperature at the very end of the climate stage (both passes), in
@@ -40,5 +42,6 @@ public struct UserEditInfo
     /// <summary>Hand-painted <see cref="LandActivity"/> bits where <see cref="UserEditFlags.PinLandUse"/> is set.</summary>
     public byte LandActivities;
 
+    /// <summary>True when the tile carries no edit: no pin flags and zero height, temperature and precipitation deltas.</summary>
     public readonly bool IsEmpty => HeightDelta == 0f && Flags == UserEditFlags.None && TemperatureDelta == 0f && PrecipitationDelta == 0f;
 }

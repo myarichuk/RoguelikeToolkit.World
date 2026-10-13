@@ -2,6 +2,7 @@ using RoguelikeToolkit.World.Core.Primitives;
 
 namespace RoguelikeToolkit.World.Core.Topology;
 
+/// <summary>Builds the unit-sphere icosphere whose vertices are the planet's tile centres (the dual hex grid): a regular icosahedron subdivided by midpoint splitting. Deterministic.</summary>
 public static class IcosphereGenerator
 {
     private const long EdgeKeyStride = 1_000_003L; // prime > max vertex count (size 7 = 163,842)
@@ -41,6 +42,7 @@ public static class IcosphereGenerator
         return i;
     }
 
+    /// <summary>Subdivides an icosahedron <paramref name="recursionLevel"/> times (a level below 0 behaves as 0). Produces <c>10 * 4^level + 2</c> unit vertices, the first 12 being the icosahedron corners (the pentagons), and <c>20 * 4^level</c> triangles indexing into them.</summary>
     public static void Generate(int recursionLevel, out Vector3D[] outVertices, out TriangleIndices[] outFaces)
     {
         List<Vector3D> vertices = new List<Vector3D>();
@@ -110,6 +112,7 @@ public static class IcosphereGenerator
         outFaces = faces.ToArray();
     }
 
+    /// <summary>Flat-shaded render mesh of <see cref="Generate"/>: three unshared vertices per triangle, so the three arrays have <c>3 * 20 * 4^level</c> entries, narrowed to <see cref="float"/>. Normals equal the positions (unit sphere); barycentric entries cycle (1,0,0), (0,1,0), (0,0,1) for edge shading.</summary>
     public static void GenerateFlat(int recursionLevel, out System.Numerics.Vector3[] outVertices, out System.Numerics.Vector3[] outNormals, out System.Numerics.Vector3[] outBarycentric)
     {
         Generate(recursionLevel, out Vector3D[] vertices, out TriangleIndices[] faces);

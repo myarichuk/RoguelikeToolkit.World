@@ -56,9 +56,12 @@ public unsafe class WorldDataStore : IDisposable
     private const int MaxHeaderLayers = 32;
     private const int HeaderLayerEntrySize = 16; // 8 name hash + 4 stride + 4 table length (0 = per-tile)
 
+    /// <summary>Subdivision level of the icosphere (0 to <see cref="WorldBuilder.MaxSupportedSize"/>); see <see cref="TileCount"/>.</summary>
     public int Size => _size;
+    /// <summary>Number of tiles, <c>10 * 4^Size + 2</c>; indices 0-11 are the 12 pentagons, the rest hexagons.</summary>
     public int TileCount => _tileCount;
 
+    /// <summary>Tile count for a subdivision level, <c>10 * 4^size + 2</c>. Throws <see cref="ArgumentOutOfRangeException"/> outside 0..<see cref="WorldBuilder.MaxSupportedSize"/>.</summary>
     public static int GetTileCount(int size)
     {
         // size acts as the recursion level
@@ -69,6 +72,7 @@ public unsafe class WorldDataStore : IDisposable
         return 10 * (1 << (2 * size)) + 2;
     }
 
+    /// <summary>Creates an unallocated store: register layers and tables, then call <see cref="Allocate"/>. A null <paramref name="filePath"/> gives an in-memory store; otherwise the data is memory-mapped from that file, resolved against the current directory (<see cref="Allocate"/> rejects paths that escape it). Throws <see cref="ArgumentOutOfRangeException"/> for a <paramref name="size"/> outside the supported range.</summary>
     public WorldDataStore(int size, string? filePath = null)
     {
         _size = size;
@@ -270,8 +274,10 @@ public unsafe class WorldDataStore : IDisposable
         new Span<byte>(_ptr + _dataOffset + offset, checked((int)bytes)).Clear();
     }
 
+    /// <summary>True when a layer or table of this type is registered. Non-generic form of <see cref="IsLayerRegistered{T}"/>.</summary>
     public bool IsLayerRegistered(Type type) => _layerOffsets.ContainsKey(type);
 
+    /// <summary>True when a layer or table of type <typeparamref name="T"/> is registered with this store.</summary>
     public bool IsLayerRegistered<T>() where T : unmanaged
     {
         int id = LayerSlot<T>.Id;
@@ -288,6 +294,7 @@ public unsafe class WorldDataStore : IDisposable
         return offsets[id];
     }
 
+    /// <summary>All tiles of the <typeparamref name="T"/> layer, indexed by tile index, as a span over the store's memory (no copy: writes go straight to the store or its file). The span is invalid after <see cref="Dispose"/>. Throws <see cref="InvalidOperationException"/> if the store is not allocated or <typeparamref name="T"/> is a table, and <see cref="ArgumentException"/> if it is not registered.</summary>
     public Span<T> GetSpan<T>() where T : unmanaged
     {
         long offset = OffsetOf<T>();
@@ -303,8 +310,10 @@ public unsafe class WorldDataStore : IDisposable
         return new Span<T>(_ptr + _dataOffset + offset, _lengthById[LayerSlot<T>.Id]);
     }
 
+    /// <summary>True when <typeparamref name="T"/> was registered with <see cref="RegisterTable{T}"/> (as opposed to a per-tile layer).</summary>
     public bool IsTableRegistered<T>() where T : unmanaged => _tableLengths.ContainsKey(typeof(T));
 
+    /// <summary>A reference to one tile's <typeparamref name="T"/> value in the store's memory; writes are visible to everyone reading the layer. <typeparamref name="T"/> must be a per-tile layer (this is not checked for tables). Throws <see cref="IndexOutOfRangeException"/> for an index outside <c>0..TileCount-1</c>, and the same errors as <see cref="GetSpan{T}"/> for an unallocated or unregistered type.</summary>
     public ref T GetRef<T>(int index) where T : unmanaged
     {
         if ((uint)index >= (uint)_tileCount)
@@ -319,6 +328,7 @@ public unsafe class WorldDataStore : IDisposable
     /// <summary>Exhaustive nearest-center search. The verification path for <see cref="GetTileIndex"/>.</summary>
     public int GetTileIndexExact(GeoCoord coord) => _topology.NearestTileExact(coord);
 
+    /// <summary>Centre of a tile. Throws <see cref="IndexOutOfRangeException"/> for an index outside <c>0..TileCount-1</c>.</summary>
     public GeoCoord GetGeoCoord(int index)
     {
         if ((uint)index >= (uint)_tileCount)
@@ -331,11 +341,13 @@ public unsafe class WorldDataStore : IDisposable
     /// <summary>The shared topology array itself (no copy); treat as read-only.</summary>
     internal Vector3D[] TileVectorArray => _topology.TileVectors;
 
+    /// <summary>Unit-vector centres of all tiles, indexed by tile index. This is the shared topology array for the store's size (no copy; every store of that size sees the same one), so it is read-only.</summary>
     public ReadOnlySpan<Vector3D> GetTileVectors()
     {
         return _topology.TileVectors;
     }
 
+    /// <summary>Writes the neighbouring tile indices of <paramref name="index"/> into <paramref name="neighbors"/> and returns how many were written: 5 for the pentagons (0-11), 6 for hexagons, fewer if the span is shorter. Throws <see cref="IndexOutOfRangeException"/> for an invalid index.</summary>
     public int GetAdjacent(int index, Span<int> neighbors)
     {
         if ((uint)index >= (uint)_tileCount)
@@ -358,6 +370,7 @@ public unsafe class WorldDataStore : IDisposable
 
     private bool IsAllocated => _mmf != null || _heap != IntPtr.Zero;
 
+    /// <summary>Releases the heap block or the file mapping. Spans and references obtained earlier must not be used afterwards. Safe to call more than once.</summary>
     public void Dispose()
     {
         if (_heap != IntPtr.Zero)

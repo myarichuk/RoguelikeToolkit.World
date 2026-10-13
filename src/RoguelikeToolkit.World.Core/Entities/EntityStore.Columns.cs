@@ -5,6 +5,7 @@ namespace RoguelikeToolkit.World.Core.Entities;
 
 public sealed partial class EntityStore
 {
+    /// <summary>Non-generic base of <see cref="Column{T}"/> that lets the store hold, grow and persist columns of different element types. Its members are internal, so it cannot be derived from outside this assembly.</summary>
     public abstract class ColumnBase
     {
         internal abstract ulong TypeHash { get; }
