@@ -30,6 +30,8 @@ public sealed class WorldBuilder
     private bool _climateRefresh = true;
     private bool _islandChains = true;
     private bool _balancedPlates = true;
+    private Action<ElevationGenerationStage>? _elevationConfig;
+    private const int ElevationReferenceTileCount = 40962; // size 6, where the arc height was tuned
     private Action<IslandChainStage>? _islandChainsConfig;
 
     /// <summary>
@@ -157,6 +159,11 @@ public sealed class WorldBuilder
         _hydrologyConfig = prev == null ? configure : s => { prev(s); configure(s); };
         return this;
     }
+
+    /// <summary>Configures the <see cref="ElevationGenerationStage"/> after the balanced-plates preset (when it is on) has set its defaults.</summary>
+    /// <param name="configure">Callback that adjusts the stage.</param>
+    public WorldBuilder WithElevation(Action<ElevationGenerationStage> configure) { _elevationConfig = configure ?? throw new ArgumentNullException(nameof(configure)); return this; }
+
     /// <summary>Tweak the default erosion stage (iteration counts, wind erosion...).</summary>
     public WorldBuilder WithErosion(Action<ErosionGenerationStage> configure)
     {
@@ -218,7 +225,10 @@ public sealed class WorldBuilder
             if (_balancedPlates) ApplyBalancedPlates(tectonics);
             _tectonicsConfig?.Invoke(tectonics);
             pipeline.AddStage(tectonics);
-            pipeline.AddStage(new ElevationGenerationStage(_seed));
+            var elevation = new ElevationGenerationStage(_seed);
+            if (_balancedPlates) elevation.ReferenceTileCount = ElevationReferenceTileCount;
+            _elevationConfig?.Invoke(elevation);
+            pipeline.AddStage(elevation);
             var climate = new ClimateStage(_seed);
             _climateConfig?.Invoke(climate);
             climate.CurrentsInRefreshPassOnly = _climateRefresh;

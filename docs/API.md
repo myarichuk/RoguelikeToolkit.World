@@ -138,8 +138,11 @@ crust out to the heaviest set of plates that do not touch (`DisperseContinents`)
 adjacent, and adjacent continental plates fuse, so the largest landmass held 79% of the land (96% on some seeds) at size 6.
 Over 15 seeds at size 6 the largest landmass now holds 46% (never above 71%) with about three landmasses of 5% or more,
 the largest plate is 2.7 times the smallest (was 65), plates that are all land or all sea fall from 69% to 32%, coastline
-tiles on a border from 71% to about 50%, and land is 31% (legacy 36%). Worlds below size 5 are mostly land whatever the
-plates do, because erosion moves a fixed height per tile. All knobs are on
+tiles on a border from 71% to about 50%, and land is 31% (legacy 36%). A belt is about one tile wide at any size, so on a coarse
+grid the volcanic arcs on oceanic crust covered a large part of the globe (22% of all tiles at size 3, against 4.6% at size
+6) and small worlds came out mostly land; the preset sets `ElevationGenerationStage.ReferenceTileCount` to the size-6 tile
+count, which scales arc height by `sqrt(tiles / reference)` below it, and land is now 28-32% at every size from 2 to 7
+(size 2 was 86%, size 3 58%, size 4 45%; size 6 and up are unchanged). `WithElevation` configures that stage. All knobs are on
 `TectonicPlateGenerationStage` and `NoisyFloodFillPlatePartitioner`; later `WithTectonics` calls override the preset. The
 preset also sets the island-chain repair's `BridgeReach` to 2, so a strait also cuts the wider land that would bridge it.
 

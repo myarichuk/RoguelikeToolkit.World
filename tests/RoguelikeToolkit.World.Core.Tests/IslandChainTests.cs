@@ -12,7 +12,7 @@ namespace RoguelikeToolkit.World.Core.Tests;
 /// </summary>
 public class IslandChainTests
 {
-    private const int Size = 5;
+    private const int Size = 6;
     private static readonly int[] Seeds = { 1, 2, 3, 5, 7, 11 };
 
     // A run this long is a ribbon, not an island arc: the repaired beads are at most ~MaxBead rings plus their width.

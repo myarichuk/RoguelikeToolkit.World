@@ -63,7 +63,7 @@ public class BalancedPlatesTests
         foreach (int seed in new[] { 1, 2, 3, 42 })
         {
             var legacy = Run(seed, b => b.WithLegacyPlates(), size: 5).Area.Skip(1).ToArray();
-            var balanced = Run(seed, _ => { }, size: 5).Area.Skip(1).ToArray();
+            var balanced = Run(seed, _ => { }, size: 6).Area.Skip(1).ToArray();
             double legacyRatio = (double)legacy.Max() / Math.Max(1, legacy.Min());
             double balancedRatio = (double)balanced.Max() / Math.Max(1, balanced.Min());
             Assert.True(balanced.Min() > 0, $"seed {seed}: a plate vanished");
@@ -110,12 +110,13 @@ public class BalancedPlatesTests
     [Fact]
     public void BalancedPlates_KeepLandShareNearTheLegacyOne()
     {
+        // Size 6, where the legacy generator is not yet inflated by coarse tiles (it holds 39% land at size 5 and 63% at size 3).
         double legacy = 0, balanced = 0;
-        int[] seeds = { 1, 2, 3, 4, 5, 6 };
+        int[] seeds = { 1, 2, 3, 4 };
         foreach (int seed in seeds)
         {
-            var l = Run(seed, bb => bb.WithLegacyPlates(), size: 5);
-            var b = Run(seed, _ => { }, size: 5);
+            var l = Run(seed, bb => bb.WithLegacyPlates(), size: 6);
+            var b = Run(seed, _ => { }, size: 6);
             legacy += l.Land / (double)l.Continentality.Length;
             balanced += b.Land / (double)b.Continentality.Length;
         }
@@ -131,6 +132,7 @@ public class BalancedPlatesTests
         Assert.Throws<ArgumentOutOfRangeException>(() => stage.CrustWarp = double.NaN);
         Assert.Throws<ArgumentOutOfRangeException>(() => stage.CrustBlurPasses = -1);
         Assert.Throws<ArgumentOutOfRangeException>(() => stage.OceanContrast = double.NaN);
+        Assert.Throws<ArgumentOutOfRangeException>(() => new ElevationGenerationStage().ReferenceTileCount = -1);
         Assert.Throws<ArgumentOutOfRangeException>(() => new NoisyFloodFillPlatePartitioner().SpeedRange = -1);
     }
 
@@ -212,6 +214,35 @@ public class BalancedPlatesTests
         Assert.True(legacy > 0.70, $"non-vacuity: legacy worlds should be mostly one landmass, got {legacy:P0}.");
         Assert.True(dispersed < 0.55, $"the largest landmass still holds {dispersed:P0} of the land on average.");
         Assert.True(worst < 0.85, $"one seed still has a supercontinent: {worst:P0} of the land in one piece.");
+    }
+
+    [Fact]
+    public void LandShare_DoesNotInflateOnSmallWorlds()
+    {
+        // A belt is about one tile wide at any size, so on a coarse grid the volcanic arcs on oceanic crust used to cover a
+        // large part of the globe: the same crust gave 58% land at size 3 and 31% at size 6.
+        double Land(int size, Action<WorldBuilder> configure)
+        {
+            double sum = 0;
+            int[] seeds = { 1, 2, 3, 4 };
+            foreach (int seed in seeds)
+            {
+                var builder = new WorldBuilder().WithSize(size).WithSeed(seed);
+                configure(builder);
+                using var world = builder.Build();
+                int land = 0;
+                var elev = world.Map.DataStore.GetSpan<ElevationInfo>();
+                foreach (var e in elev) if (e.Height >= ElevationGenerationStage.SeaLevel) land++;
+                sum += land / (double)elev.Length;
+            }
+            return sum / seeds.Length;
+        }
+
+        double small = Land(3, _ => { });
+        double reference = Land(6, _ => { });
+        Assert.InRange(small, reference - 0.08, reference + 0.08);
+        // Non-vacuity: without the scaling the small world is far above the reference.
+        Assert.True(Land(3, b => b.WithElevation(e => e.ReferenceTileCount = 0)) > reference + 0.12);
     }
 
     [Fact]

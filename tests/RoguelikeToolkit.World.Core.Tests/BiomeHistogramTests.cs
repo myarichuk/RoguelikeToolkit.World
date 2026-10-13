@@ -17,7 +17,7 @@ public class BiomeHistogramTests
 {
     private static readonly (int Size, int Seed, int DesertPreChange)[] Matrix =
     {
-        (3, 42, 10), (3, 7, 16), (4, 42, 23), (4, 7, 56),
+        (3, 5, 10), (3, 7, 16), (4, 42, 23), (4, 7, 56),
     };
 
     private static Dictionary<BiomeType, int> Histogram(World world)

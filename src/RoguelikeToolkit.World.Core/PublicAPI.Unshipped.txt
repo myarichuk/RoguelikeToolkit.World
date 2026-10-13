@@ -1661,3 +1661,6 @@ static RoguelikeToolkit.World.Core.Topology.MapBounds.ForPlanetTile(RoguelikeToo
 static RoguelikeToolkit.World.Core.Topology.OffsetGrid.FromIndex(int index, int size) -> (int Q, int R)
 static RoguelikeToolkit.World.Core.Topology.OffsetGrid.ToIndex(int q, int r, int size) -> int
 static RoguelikeToolkit.World.Core.World.DistanceKm(RoguelikeToolkit.World.Core.Primitives.GeoCoord a, RoguelikeToolkit.World.Core.Primitives.GeoCoord b) -> double
+RoguelikeToolkit.World.Core.Elevation.ElevationGenerationStage.ReferenceTileCount.get -> int
+RoguelikeToolkit.World.Core.Elevation.ElevationGenerationStage.ReferenceTileCount.set -> void
+RoguelikeToolkit.World.Core.WorldBuilder.WithElevation(System.Action<RoguelikeToolkit.World.Core.Elevation.ElevationGenerationStage!>! configure) -> RoguelikeToolkit.World.Core.WorldBuilder!
