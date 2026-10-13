@@ -42,7 +42,6 @@ public static partial class WorldExports
         if (!(meridionalWind >= 0) || !(oceanHeat >= 0) || !(oceanRain >= 0) || aeolian < 0)
             throw new ArgumentOutOfRangeException(nameof(meridionalWind), "Climate model strengths cannot be negative.");
         var planet = new PlanetParameters { ObliquityDegrees = obliquity, StellarFlux = flux, RotationRate = rotation };
-        _world?.Dispose();
         var builder = new WorldBuilder().WithSize(size).WithSeed(seed).WithUserEdits().WithLandUse().WithPlanet(planet)
             .WithClimateRefresh(climateRefresh)
             .WithClimate(c => { c.MeridionalWind = meridionalWind; c.WindCellBlend = windCellBlend; c.OceanHeatStrength = oceanHeat; c.OceanRainGain = oceanRain; })
@@ -50,10 +49,28 @@ public static partial class WorldExports
         // The unrefreshed pipeline was calibrated at a river threshold of 1; 0.92 is for the refreshed climate (see WithClimateRefresh).
         if (!climateRefresh) builder.WithHydrology(h => h.RiverThresholdScale = 1f);
         if (plates > 0) builder.WithPlateCount(plates);
-        _world = builder.Build();
-        // The store discards faces after deriving adjacency; regenerate them (deterministic, same vertex order).
-        IcosphereGenerator.Generate(size, out _, out _faces);
-        return _world.TileCount;
+
+        // Configuration is validated above (a bad request keeps the current world). From here the old world is
+        // retired before the heavy build, which keeps the peak-memory profile WASM needs, but it is never left
+        // reachable once disposed: if Build throws, the exports hit the "Generate first" guard, not a freed store.
+        var previous = _world;
+        _world = null;
+        _faces = null;
+        previous?.Dispose();
+        var built = builder.Build();
+        try
+        {
+            // The store discards faces after deriving adjacency; regenerate them (deterministic, same vertex order).
+            IcosphereGenerator.Generate(size, out _, out var faces);
+            _faces = faces;
+        }
+        catch
+        {
+            built.Dispose();
+            throw;
+        }
+        _world = built;
+        return built.TileCount;
     }
 
     /// <summary>
@@ -73,11 +90,25 @@ public static partial class WorldExports
             || tiles.Length != temperature.Length || tiles.Length != precipitation.Length)
             throw new ArgumentException("Edit arrays must have equal lengths.");
         var edits = world.Edits;
-        edits.Clear();
+
+        // Validate the whole request before touching the edit table: a rejected call must leave the previous
+        // edits in place, not a cleared or half-applied set with no recompute behind it.
         for (int k = 0; k < tiles.Length; k++)
         {
             int t = tiles[k];
             if ((uint)t >= (uint)edits.Length) throw new ArgumentOutOfRangeException(nameof(tiles), t, "Tile index out of range.");
+            if (!double.IsFinite(heightDelta[k]) || !double.IsFinite(pinHeight[k])
+                || !double.IsFinite(temperature[k]) || !double.IsFinite(precipitation[k]))
+                throw new ArgumentOutOfRangeException(nameof(heightDelta), $"Edit values for tile {t} must be finite.");
+            byte biome = (byte)((meta[k] >> 8) & 0xff);
+            if (!Enum.IsDefined(typeof(BiomeType), biome))
+                throw new ArgumentOutOfRangeException(nameof(meta), biome, $"Tile {t} pins an unknown biome id.");
+        }
+
+        edits.Clear();
+        for (int k = 0; k < tiles.Length; k++)
+        {
+            int t = tiles[k];
             edits[t] = new UserEditInfo
             {
                 HeightDelta = (float)heightDelta[k],
@@ -365,6 +396,8 @@ public static partial class WorldExports
     [JSExport]
     public static string[] NamePlaces(string[] kinds, int[] seeds, string[] races, string[] cultures, int[] context)
     {
+        if (seeds.Length != kinds.Length || races.Length != kinds.Length || cultures.Length != kinds.Length || context.Length != kinds.Length)
+            throw new ArgumentException("Place arrays must have equal lengths.");
         var result = new string[kinds.Length];
         for (int i = 0; i < kinds.Length; i++)
         {

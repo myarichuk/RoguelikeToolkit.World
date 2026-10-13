@@ -1,3 +1,5 @@
+using RoguelikeToolkit.World.Core.Storage;
+
 namespace RoguelikeToolkit.World.MapEditor.Engine.Tests;
 
 public class WorldExportsApplyEditsTests
@@ -91,5 +93,46 @@ public class WorldExportsApplyEditsTests
         var before = WorldExports.Climate();
         Apply(5, dT: 0.2, dP: 0.2);
         Assert.NotEqual(before, WorldExports.Climate());
+    }
+
+    // The edit table of the live world, read without going through ApplyEdits (which would rewrite it).
+    private static UserEditInfo EditAt(int tile)
+    {
+        var world = (RoguelikeToolkit.World.Core.World)typeof(WorldExports)
+            .GetField("_world", System.Reflection.BindingFlags.NonPublic | System.Reflection.BindingFlags.Static)!.GetValue(null)!;
+        return world.Edits[tile];
+    }
+
+    [Fact]
+    public void ARejectedRequest_KeepsThePreviousEdits()
+    {
+        Tiles();
+        Apply(5, pinHeight: 0.8, meta: 1);
+        // Tile 5 is valid, tile -1 is not: nothing from this call may land, and the old pin must survive.
+        Assert.Throws<ArgumentOutOfRangeException>(() =>
+            WorldExports.ApplyEdits([7, -1], [0.0, 0.0], [0.3, 0.0], [1, 0], [0.0, 0.0], [0.0, 0.0]));
+        Assert.Equal(UserEditFlags.PinHeight, EditAt(5).Flags);
+        Assert.Equal(0.8f, EditAt(5).PinHeight);
+        Assert.Equal(UserEditFlags.None, EditAt(7).Flags);
+    }
+
+    [Theory]
+    [InlineData(double.NaN, 0.0, 0.0, 0.0)]
+    [InlineData(0.0, double.PositiveInfinity, 0.0, 0.0)]
+    [InlineData(0.0, 0.0, double.NaN, 0.0)]
+    [InlineData(0.0, 0.0, 0.0, double.NegativeInfinity)]
+    public void NonFiniteValues_Throw_AndKeepThePreviousEdits(double dh, double pin, double dT, double dP)
+    {
+        Tiles();
+        Apply(5, pinHeight: 0.8, meta: 1);
+        Assert.Throws<ArgumentOutOfRangeException>(() => WorldExports.ApplyEdits([6], [dh], [pin], [0], [dT], [dP]));
+        Assert.Equal(0.8f, EditAt(5).PinHeight);
+    }
+
+    [Fact]
+    public void AnUnknownPinnedBiome_Throws()
+    {
+        Tiles();
+        Assert.Throws<ArgumentOutOfRangeException>(() => Apply(5, meta: 2 | (200 << 8)));
     }
 }

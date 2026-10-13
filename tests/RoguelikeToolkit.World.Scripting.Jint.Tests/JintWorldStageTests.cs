@@ -195,6 +195,42 @@ public class JintWorldStageTests
         Assert.ThrowsAny<System.Exception>(() => Stage("function execute() { setBiome(0, 300); }").Execute(map));
     }
 
+    // A NaN/Infinity from a script would flow through climate, erosion and biome classification with no error.
+    [Theory]
+    [InlineData("setHeight(0, NaN)", typeof(ElevationInfo))]
+    [InlineData("setHeight(0, Infinity)", typeof(ElevationInfo))]
+    [InlineData("setHeight(0, 1e300)", typeof(ElevationInfo))]      // finite as a double, +Infinity as a float
+    [InlineData("setTemp(0, NaN)", typeof(ClimateInfo))]
+    [InlineData("setTemp(0, -Infinity)", typeof(ClimateInfo))]
+    [InlineData("setPrecip(0, NaN)", typeof(ClimateInfo))]
+    [InlineData("setBiome(0, NaN)", typeof(BiomeInfo))]             // (int)NaN is 0, i.e. a silent Ocean
+    [InlineData("setDanger(0, NaN)", typeof(BiomeInfo))]
+    public void NonFiniteWrites_AreRejected_AndLeaveTheTileAlone(string call, Type layer)
+    {
+        using var map = TinyMap();
+        var stage = new JintWorldStage(new JintStageSpec
+        {
+            Name = "nan-js", Order = 21, Source = $"function execute() {{ {call}; }}",
+            Reads = new[] { layer }, Writes = new[] { layer },
+        });
+        var ex = Assert.Throws<InvalidOperationException>(() => stage.Execute(map));
+        Assert.Contains("not a finite number", ex.ToString());
+    }
+
+    [Fact]
+    public void FiniteWrites_StillWork()
+    {
+        using var map = TinyMap();
+        new JintWorldStage(new JintStageSpec
+        {
+            Name = "ok-js", Order = 21, Source = "function execute() { setHeight(0, 0.25); setTemp(0, 0.5); setPrecip(0, 0.75); }",
+            Reads = new[] { typeof(ElevationInfo), typeof(ClimateInfo) }, Writes = new[] { typeof(ElevationInfo), typeof(ClimateInfo) },
+        }).Execute(map);
+        Assert.Equal(0.25f, map.DataStore.GetSpan<ElevationInfo>()[0].Height);
+        Assert.Equal(0.5f, map.DataStore.GetSpan<ClimateInfo>()[0].Temperature);
+        Assert.Equal(0.75f, map.DataStore.GetSpan<ClimateInfo>()[0].Precipitation);
+    }
+
     [Fact]
     public void NoClrAccess()
     {

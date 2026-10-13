@@ -75,4 +75,30 @@ public class WorldExportsGenerateTests
         Generate(windCellBlend: 0.5);
         Assert.Equal(a, WorldExports.Climate());
     }
+
+    [Fact]
+    public void ABadSize_KeepsThePreviousWorldUsable()
+    {
+        int tiles = Generate();
+        Assert.Throws<ArgumentOutOfRangeException>(() => WorldExports.Generate(7, -1, 0, 23.4, 1, 1, true, 0.3, 0, 1, 2, 4));
+        Assert.Equal(tiles, WorldExports.ApplyEdits([], [], [], [], [], []));
+    }
+
+    // If the build itself fails the old world is already gone. Exports must say "Generate first", not read a freed store.
+    [Fact]
+    public void AFailedBuild_LeavesNoDisposedWorldBehind()
+    {
+        Generate();
+        Assert.ThrowsAny<Exception>(() => WorldExports.Generate(7, 2, 1_000_000, 23.4, 1, 1, true, 0.3, 0, 1, 2, 4));
+        Assert.Throws<InvalidOperationException>(() => WorldExports.Heights());
+        Assert.Throws<InvalidOperationException>(() => WorldExports.Faces());
+        Assert.True(Generate() > 0);   // and the editor recovers on the next good request
+    }
+
+    [Fact]
+    public void NamePlaces_WithMismatchedArrays_ThrowsInsteadOfIndexingPastTheEnd()
+    {
+        Assert.Throws<ArgumentException>(() => WorldExports.NamePlaces(["town", "city"], [1], ["human", "human"], ["a", "b"], [0, 0]));
+        Assert.Throws<ArgumentException>(() => WorldExports.NamePlaces(["town"], [1], ["human"], ["a"], []));
+    }
 }
