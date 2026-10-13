@@ -1,0 +1,63 @@
+name: Deploy map editor
+
+# Publishes the web map editor (src/RoguelikeToolkit.World.MapEditor) to GitHub Pages: the engine is Core compiled to
+# browser-wasm, the front end is the Vite build around it. Needs Settings > Pages > Source = "GitHub Actions" once.
+on:
+  push:
+    branches: [ main ]
+    paths:
+      - 'src/RoguelikeToolkit.World.MapEditor/**'
+      - 'src/RoguelikeToolkit.World.MapEditor.Engine/**'
+      - 'src/RoguelikeToolkit.World.Core/**'
+      - '.github/workflows/pages.yml'
+  workflow_dispatch:
+
+permissions:
+  contents: read
+  pages: write
+  id-token: write
+
+# One deploy at a time; a newer push supersedes a queued one but never cancels a deploy that is already publishing.
+concurrency:
+  group: pages
+  cancel-in-progress: false
+
+jobs:
+  build:
+    runs-on: ubuntu-latest
+    steps:
+    - uses: actions/checkout@v4
+    - name: Setup .NET
+      uses: actions/setup-dotnet@v4
+      with:
+        dotnet-version: 10.0.x
+    - name: Setup Node
+      uses: actions/setup-node@v4
+      with:
+        node-version: 22
+        cache: npm
+        cache-dependency-path: src/RoguelikeToolkit.World.MapEditor/package-lock.json
+    # Publishes the engine into public/_framework, then npm ci + tsc + vite build into dist/ (base './', so the
+    # site works under /<repo>/ with no path rewriting).
+    - name: Build
+      working-directory: src/RoguelikeToolkit.World.MapEditor
+      run: ./build.sh
+    - name: Test
+      working-directory: src/RoguelikeToolkit.World.MapEditor
+      run: npm test
+    - name: Keep Pages from running Jekyll (it would drop the _framework folder)
+      run: touch src/RoguelikeToolkit.World.MapEditor/dist/.nojekyll
+    - uses: actions/configure-pages@v5
+    - uses: actions/upload-pages-artifact@v3
+      with:
+        path: src/RoguelikeToolkit.World.MapEditor/dist
+
+  deploy:
+    needs: build
+    runs-on: ubuntu-latest
+    environment:
+      name: github-pages
+      url: ${{ steps.deployment.outputs.page_url }}
+    steps:
+    - id: deployment
+      uses: actions/deploy-pages@v4

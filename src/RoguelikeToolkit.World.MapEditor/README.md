@@ -28,6 +28,11 @@ npm run dev              # http://localhost:5173
 ./build.sh --aot         # same, with the engine AOT-compiled (needs: dotnet workload install wasm-tools)
 ```
 
+Pushes to `main` that touch the editor, its engine or Core publish `dist/` to GitHub Pages through
+[`.github/workflows/pages.yml`](../../.github/workflows/pages.yml) (the site lives at `https://<owner>.github.io/<repo>/`). It needs
+**Settings → Pages → Source = GitHub Actions** set once on the repository. The build uses relative URLs (`base: './'`), so it runs under
+that sub-path unchanged. Run the workflow by hand from the Actions tab to redeploy without a push.
+
 On Windows, use `build.ps1` with `-EngineOnly` / `-Aot`. Other scripts:
 
 - `npm test`: vitest, engine logic, no browser.

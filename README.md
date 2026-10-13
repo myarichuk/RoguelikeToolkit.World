@@ -13,7 +13,7 @@ generation pipeline. The library supplies geography; history stays in your game 
 | `RoguelikeToolkit.World.App` | `net10.0` | Avalonia 11 visualizer. |
 | `RoguelikeToolkit.World.NameTester` | `net10.0` | Avalonia name-generator playground. |
 | `RoguelikeToolkit.World.MapEditor.Engine` | `net10.0` (browser-wasm) | Core's surface for the web map editor. |
-| [`RoguelikeToolkit.World.MapEditor`](src/RoguelikeToolkit.World.MapEditor) | web (TypeScript, React, WebGL2) | Browser map editor: generate, paint, label, export SVG. |
+| [`RoguelikeToolkit.World.MapEditor`](src/RoguelikeToolkit.World.MapEditor) | web (TypeScript, React, WebGL2) | Browser map editor: generate, paint, label, export SVG. Deployed to GitHub Pages from `main` (see below). |
 
 **License:** dual. Free for personal and other noncommercial use under
 [PolyForm Noncommercial 1.0.0](LICENSE); commercial use needs a commercial license (see
