@@ -1,3 +1,24 @@
+RoguelikeToolkit.World.Core.Tectonics.NoisyFloodFillPlatePartitioner.MinSpeed.get -> double
+RoguelikeToolkit.World.Core.Tectonics.NoisyFloodFillPlatePartitioner.MinSpeed.set -> void
+RoguelikeToolkit.World.Core.Tectonics.NoisyFloodFillPlatePartitioner.SpeedRange.get -> double
+RoguelikeToolkit.World.Core.Tectonics.NoisyFloodFillPlatePartitioner.SpeedRange.set -> void
+RoguelikeToolkit.World.Core.Tectonics.TectonicPlateGenerationStage.BalancedSeeding.get -> bool
+RoguelikeToolkit.World.Core.Tectonics.TectonicPlateGenerationStage.BalancedSeeding.set -> void
+RoguelikeToolkit.World.Core.Tectonics.TectonicPlateGenerationStage.CrustBlurPasses.get -> int
+RoguelikeToolkit.World.Core.Tectonics.TectonicPlateGenerationStage.CrustBlurPasses.set -> void
+RoguelikeToolkit.World.Core.Tectonics.TectonicPlateGenerationStage.CrustNoiseWeight.get -> double
+RoguelikeToolkit.World.Core.Tectonics.TectonicPlateGenerationStage.CrustNoiseWeight.set -> void
+RoguelikeToolkit.World.Core.Tectonics.TectonicPlateGenerationStage.CrustWarp.get -> double
+RoguelikeToolkit.World.Core.Tectonics.TectonicPlateGenerationStage.CrustWarp.set -> void
+RoguelikeToolkit.World.Core.Tectonics.TectonicPlateGenerationStage.CrustWarpFrequency.get -> double
+RoguelikeToolkit.World.Core.Tectonics.TectonicPlateGenerationStage.CrustWarpFrequency.set -> void
+RoguelikeToolkit.World.Core.Tectonics.TectonicPlateGenerationStage.LandFraction.get -> double
+RoguelikeToolkit.World.Core.Tectonics.TectonicPlateGenerationStage.LandFraction.set -> void
+RoguelikeToolkit.World.Core.Tectonics.TectonicPlateGenerationStage.PlateOffsetWeight.get -> double
+RoguelikeToolkit.World.Core.Tectonics.TectonicPlateGenerationStage.PlateOffsetWeight.set -> void
+RoguelikeToolkit.World.Core.Tectonics.TectonicPlateGenerationStage.SeedSpacing.get -> double
+RoguelikeToolkit.World.Core.Tectonics.TectonicPlateGenerationStage.SeedSpacing.set -> void
+RoguelikeToolkit.World.Core.WorldBuilder.WithBalancedPlates() -> RoguelikeToolkit.World.Core.WorldBuilder!
 abstract RoguelikeToolkit.World.Core.Hierarchy.GridMapHandle<TTile>.GetTile(int index) -> TTile
 abstract RoguelikeToolkit.World.Core.Sites.SiteInjectorBase.Inject(RoguelikeToolkit.World.Core.Sites.SiteInjectionContext! context) -> System.Collections.Generic.IReadOnlyList<RoguelikeToolkit.World.Core.Sites.PlacedSite!>!
 const RoguelikeToolkit.World.Core.Biomes.BiomeClassifier.BadlandsRelief = 0.12 -> double
