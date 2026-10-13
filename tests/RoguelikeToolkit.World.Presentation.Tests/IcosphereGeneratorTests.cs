@@ -1,8 +1,7 @@
 using System;
 using System.Numerics;
 using Xunit;
-using RoguelikeToolkit.World.Core;
-using RoguelikeToolkit.World.Presentation;
+using RoguelikeToolkit.World.Core.Topology;
 
 namespace RoguelikeToolkit.World.Presentation.Tests
 {

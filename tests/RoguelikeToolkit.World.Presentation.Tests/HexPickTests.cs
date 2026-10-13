@@ -1,9 +1,9 @@
 using Xunit;
 using Xunit.Abstractions;
-using RoguelikeToolkit.World.Presentation;
 using RoguelikeToolkit.World.Core;
+using RoguelikeToolkit.World.Core.Primitives;
+using RoguelikeToolkit.World.Core.Storage;
 using System;
-using System.Collections.Generic;
 using System.Diagnostics;
 using System.Numerics;
 

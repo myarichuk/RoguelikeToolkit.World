@@ -1,0 +1,7 @@
+root = true
+
+[*.cs]
+# Namespace must match the folder structure under the project root (Core: RoguelikeToolkit.World.Core.<Slice>).
+dotnet_diagnostic.IDE0130.severity = suggestion
+dotnet_style_namespace_match_folder = true
+dotnet_diagnostic.IDE0005.severity = suggestion

@@ -1,7 +1,4 @@
-using System;
-using System.Linq;
-using RoguelikeToolkit.World.Core;
-using RoguelikeToolkit.World.MapEditor.Engine;
+using RoguelikeToolkit.World.Core.Settlement;
 
 namespace RoguelikeToolkit.World.MapEditor.Engine.Tests;
 

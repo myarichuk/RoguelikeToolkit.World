@@ -255,6 +255,22 @@ afternoon; Phase 3 is the first one that touches downstream code.
 - Intentionally left alone: `Internal/Compat/*` (polyfills, linked by path into the Jint project) and `Generation/PluginLoadContext.cs` (top-level `#if`).
 - Build and tests identical to the Phase 0 baseline; golden hashes unchanged.
 
+### Phase 3 - done
+- Every Core file's namespace now equals its folder (`RoguelikeToolkit.World.Core.<Slice>`); the root namespace keeps only `World`, `WorldBuilder`,
+  `TileHit`, `PlanetParameters`, `IInsolationModel`, `TidallyLockedInsolation` and the internal compat shims (**strict** option for open decision 2: `MapAddress`
+  and `QueryOptions` are in `Hierarchy`/`Integration`; relaxing that later is a one-line `namespace` edit per file).
+- Mechanics: namespace rewrite by script, then every file got all slice usings and `dotnet format style --diagnostics IDE0005` pruned
+  the unused ones, so the surviving `using` lines are the true dependency graph. 266 files touched across src/tests/samples. Docs snippets updated.
+- `.editorconfig` added (namespace-matches-folder as `suggestion`; IDE0005 left at `suggestion` too, flip to `warning` to enforce).
+- `ArchitectureTests` added: namespace==folder, one top-level type per file, `Primitives` depends on nothing, and a **ratchet** on layer direction.
+  The first run found 25 upward edges (all listed with a reason in the test, none new) and one cyclic group containing 14 slices: the domain
+  slices read each other's layer structs in both directions, and `Topology`/`Storage`/`Generation` each reach up into domain slices
+  (`SpatialIndex`, `UserEditInfo`, the pipeline's AOT `DynamicDependency` hooks). Those are Phase 4/5 material, not a reason to block the move.
+- **Found, not fixed:** `WorldDataStore.LayerNameHash` and `EntityStore.TypeHash` FNV-hash `typeof(T).FullName` into persisted file headers.
+  Moving namespaces therefore invalidates store/entity files written by 1.x (they fail the header check loudly, they do not corrupt). Queued for Phase 4:
+  hash a namespace-independent stable id and bump the file version, so the next move does not repeat this.
+- Build: 0 warnings / 0 errors on net10.0 and netstandard2.1. Tests unchanged versus baseline (Core 541 pass + the same 2 pre-existing failures, Presentation 103, Jint 18, MapEditor.Engine 36), golden hashes identical.
+
 ## 8. Risks / things I have not verified yet
 
 - **Hidden cycles.** I have not computed the real type-level dependency graph; the layering in section 2 is inferred from

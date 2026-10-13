@@ -1,5 +1,6 @@
 using BenchmarkDotNet.Attributes;
 using RoguelikeToolkit.World.Core;
+using RoguelikeToolkit.World.Core.Primitives;
 
 namespace RoguelikeToolkit.World.Benchmarks;
 
