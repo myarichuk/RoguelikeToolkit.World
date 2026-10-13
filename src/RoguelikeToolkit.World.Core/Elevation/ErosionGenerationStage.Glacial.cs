@@ -37,8 +37,13 @@ public partial class ErosionGenerationStage
         }
         for (int i = 0; i < n; i++) if (flux[i] > maxFlux) maxFlux = flux[i];
 
+        // Order-independent mode records every move against the frozen surface and applies them together
+        // (see ApplyMoves); the legacy mode writes through immediately, in tile order.
+        bool jacobi = OrderIndependent;
+        var moves = jacobi ? new List<(int From, int To, float Amount)>() : null;
         for (int g = 0; g < GlacialIterations; g++)
         {
+            moves?.Clear();
             for (int i = 0; i < n; i++)
             {
                 if (!isGlacier[i]) continue;
@@ -72,11 +77,7 @@ public partial class ErosionGenerationStage
                     double carve = GlacialRate * (0.25 + 0.75 * q) * (0.3 + Math.Min(slope * 8.0, 1.2));
                     if (!hasUpstreamIce) carve *= 1.5;
                     float move = (float)Math.Min(carve, slope * 1.1);
-                    if (move > 0)
-                    {
-                        elev[i].Height -= move;
-                        elev[lowest].Height += move; // frontal moraine / outwash
-                    }
+                    if (move > 0) Move(elev, moves, i, lowest, move); // frontal moraine / outwash
                 }
 
                 // Wall plucking: U-widening draws the valley walls down into
@@ -85,14 +86,55 @@ public partial class ErosionGenerationStage
                 {
                     double wallSlope = wallTop - elev[i].Height;
                     float wallMove = (float)Math.Min(wallSlope * GlacialRate * 0.3, wallSlope * 0.25);
-                    if (wallMove > 0)
-                    {
-                        elev[highestWall].Height -= wallMove;
-                        elev[i].Height += wallMove;
-                    }
+                    if (wallMove > 0) Move(elev, moves, highestWall, i, wallMove);
                 }
             }
+            if (jacobi) ApplyMoves(store, elev, neighbors, moves!);
         }
+    }
+
+    private static void Move(Span<ElevationInfo> elev, List<(int From, int To, float Amount)>? moves, int from, int to, float amount)
+    {
+        if (moves != null) { moves.Add((from, to, amount)); return; }
+        elev[from].Height -= amount;
+        elev[to].Height += amount;
+    }
+
+    /// <summary>
+    /// Applies one Jacobi sweep of glacial moves. Several glaciers can pluck the same wall tile in one
+    /// sweep, which the in-place order used to limit by letting later plucks see the lowered wall. The same
+    /// bound is kept explicitly: a source gives up at most 1.1× its drop to its lowest neighbor (the single-move
+    /// limit of the floor abrasion), the moves it makes scaled down together when they would exceed it.
+    /// </summary>
+    private static void ApplyMoves(
+        WorldDataStore store, Span<ElevationInfo> elev, Span<int> neighbors, List<(int From, int To, float Amount)> moves)
+    {
+        if (moves.Count == 0) return;
+        var outgoing = new Dictionary<int, float>();
+        foreach (var (from, _, amount) in moves)
+            outgoing[from] = outgoing.TryGetValue(from, out float o) ? o + amount : amount;
+
+        var scale = new Dictionary<int, float>(outgoing.Count);
+        foreach (var (tile, total) in outgoing)
+        {
+            int adjacent = store.GetAdjacent(tile, neighbors);
+            float lowest = elev[tile].Height;
+            for (int k = 0; k < adjacent; k++)
+                if (elev[neighbors[k]].Height < lowest) lowest = elev[neighbors[k]].Height;
+            float cap = (elev[tile].Height - lowest) * 1.1f;
+            scale[tile] = total > cap ? Math.Max(0f, cap) / total : 1f;
+        }
+
+        // Accumulate first, add after: no move sees another's effect. Per-tile sums still add in list order
+        // (tile order), which can differ in the last ulp but never in which move wins.
+        var delta = new Dictionary<int, float>();
+        foreach (var (from, to, amount) in moves)
+        {
+            float a = amount * scale[from];
+            delta[from] = delta.TryGetValue(from, out float f) ? f - a : -a;
+            delta[to] = delta.TryGetValue(to, out float t) ? t + a : a;
+        }
+        foreach (var (tile, d) in delta) elev[tile].Height += d;
     }
 
     private static int[] DescendingOrder(float[] surface)

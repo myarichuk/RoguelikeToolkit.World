@@ -54,4 +54,13 @@ public sealed class IslandChainOptions
     /// <summary>Height a drowned strait tile is pushed down to, below sea level.</summary>
     public double GapDepth { get => _gapDepth; set => _gapDepth = StageKnob.Finite(value, nameof(GapDepth)); }
     private double _gapDepth = 0.06;
+
+    /// <summary>
+    /// How many rings beside a chain a strait also cuts through. Land the thin test excluded (a blob wider than a ribbon
+    /// that the chain skirts) can bridge a strait: it carries land around the drowned tiles, and once the cut lowers its
+    /// coast depth it turns thin and rejoins the beads, so the run survives the repair. Cutting the bridge too, at the
+    /// strait's ring and only there, stops that. 0 (default) cuts the chain's own tiles only, as before.
+    /// </summary>
+    public int BridgeReach { get => _bridgeReach; set => _bridgeReach = StageKnob.NonNegative(value, nameof(BridgeReach)); }
+    private int _bridgeReach;
 }

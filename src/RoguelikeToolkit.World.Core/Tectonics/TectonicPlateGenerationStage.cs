@@ -22,6 +22,24 @@ public class TectonicPlateGenerationStage : IWorldGeneratorStage, ISeededStage, 
     public double ConvergenceThreshold { get; set; } = 0.08;
 
     /// <summary>
+    /// When true, boundaries are classified on the whole relative motion rather than on its component across the border
+    /// alone, and the switch between boundary kinds is a ramp instead of a step. A boundary whose plates mostly slide past
+    /// one another (shear well above the across-border motion) is a transform fault however large its small convergent
+    /// component is, and two plates that barely move relative to each other leave only a faint scar instead of the full
+    /// fault ridge. The driver blends from the transform value to the convergent or divergent one over
+    /// <see cref="ConvergenceThreshold"/> to three times that, where the legacy classification jumps from a ridge of 0.12
+    /// to a rift valley of -0.55 across a single threshold. Off by default: it moves every boundary's relief.
+    /// </summary>
+    public bool ShearTransform { get; set; }
+
+    /// <summary>
+    /// When true, the colliding plates of an oceanic-oceanic boundary get a polarity instead of the same arc on both sides:
+    /// the plate with the lower base elevation draw (the older, denser one; the lower plate id on a tie) dives and takes the
+    /// trench, the other keeps the island arc. Off by default: it moves the relief of every oceanic convergent border.
+    /// </summary>
+    public bool OceanicPolarity { get; set; }
+
+    /// <summary>
     /// BFS cap for the boundary-distance field, in neighbor rings. Kept small
     /// on purpose: a plate at the default 12-plate density is only ~4 rings in
     /// radius, so a wider cap lets every boundary's uplift apron meet in the
@@ -60,11 +78,103 @@ public class TectonicPlateGenerationStage : IWorldGeneratorStage, ISeededStage, 
     /// </summary>
     public double SegmentGapFloor { get; set; } = 0.25;
 
+    /// <summary>
+    /// When true, plate seeds are spread evenly over the sphere instead of drawn with uniform latitude, and a seed that
+    /// lands too close to an earlier plate's is redrawn. Uniform latitude puts 28% of seeds above 60 degrees (a uniform
+    /// sphere has 13%), which crowds the poles with slivers. Off by default: it moves every seed's plate layout.
+    /// Plate <c>i</c> then depends on plates <c>0..i-1</c> as well as on <see cref="Seed"/>.
+    /// </summary>
+    public bool BalancedSeeding { get; set; }
+
+    /// <summary>Minimum seed separation for <see cref="BalancedSeeding"/>, as a fraction of the even-spacing arc <c>sqrt(4π/plates)</c>; it relaxes slightly with each redraw so placement always terminates. Default 0.75.</summary>
+    public double SeedSpacing { get => _seedSpacing; set => _seedSpacing = StageKnob.Finite(value, nameof(SeedSpacing)); }
+    private double _seedSpacing = 0.75;
+
+    /// <summary>
+    /// Weight of a plate's own continentality offset (<c>seedElevation - 0.45</c>) in the crust field. Default 1.2, which
+    /// dwarfs <see cref="CrustNoiseWeight"/> and makes most plates entirely land or entirely sea, so coastlines follow plate
+    /// borders. Lower values let the noise decide where the coast runs inside a plate.
+    /// </summary>
+    public double PlateOffsetWeight { get => _plateOffsetWeight; set => _plateOffsetWeight = StageKnob.Finite(value, nameof(PlateOffsetWeight)); }
+    private double _plateOffsetWeight = 1.2;
+
+    /// <summary>Weight of the broad noise swells in the crust field. Default 0.55.</summary>
+    public double CrustNoiseWeight { get => _crustNoiseWeight; set => _crustNoiseWeight = StageKnob.Finite(value, nameof(CrustNoiseWeight)); }
+    private double _crustNoiseWeight = 0.55;
+
+    /// <summary>
+    /// Amplitude, in unit-sphere lengths, of a fractal displacement applied to the finished crust field before it is
+    /// thresholded: each tile takes the crust value of the tile its displaced position lands on. The plate offset is a hard
+    /// step along every border, and blurring a step only gives a smooth curve that still traces the border; displacing it
+    /// detaches coastline and shelf from the plate outline. 0 (default) disables it.
+    /// </summary>
+    public double CrustWarp { get => _crustWarp; set => _crustWarp = StageKnob.Finite(value, nameof(CrustWarp)); }
+    private double _crustWarp;
+
+    /// <summary>Spatial frequency of the coarsest <see cref="CrustWarp"/> octave. Default 1.2.</summary>
+    public double CrustWarpFrequency { get => _crustWarpFrequency; set => _crustWarpFrequency = StageKnob.Finite(value, nameof(CrustWarpFrequency)); }
+    private double _crustWarpFrequency = 1.2;
+
+    /// <summary>Neighbour-averaging passes over the crust field after <see cref="CrustWarp"/>, rounding off what is left of the step. 0 (default) disables it.</summary>
+    public int CrustBlurPasses { get => _crustBlurPasses; set => _crustBlurPasses = StageKnob.NonNegative(value, nameof(CrustBlurPasses)); }
+    private int _crustBlurPasses;
+
+    /// <summary>
+    /// Share of tiles that end up as continental crust (continentality above <see cref="CrustThreshold"/>), set exactly by
+    /// a quantile of the crust field. Continental crust is what rides above sea level: the elevation stage lowers every
+    /// oceanic tile by 0.1, so this share is within a few points of the land share (orogeny, hotspots and erosion move it
+    /// slightly). 0 (default) keeps the legacy calibration, which recentres the field to a fixed mean instead: that fixes
+    /// the mean but not the share, so changing <see cref="PlateOffsetWeight"/> or the crust warp moves how much land there
+    /// is (37.6% to 26.5% over 12 seeds when the offset weight went from 1.2 to 0.6). Must be in [0, 1).
+    /// </summary>
+    public double LandFraction
+    {
+        get => _landFraction;
+        set => _landFraction = StageKnob.Finite(value, nameof(LandFraction)) is < 0 or >= 1
+            ? throw new ArgumentOutOfRangeException(nameof(LandFraction), value, "LandFraction must be in [0, 1) (0 keeps the legacy mean calibration).")
+            : value;
+    }
+    private double _landFraction;
+
+    /// <summary>
+    /// Stretches the calibrated crust field away from <see cref="CrustThreshold"/>: continental tiles ride higher and
+    /// oceanic tiles sit deeper by this factor, and the continental share is unchanged. Needed because a smaller
+    /// <see cref="PlateOffsetWeight"/> narrows the field (std 0.33 to 0.19), which flattens continents and parks the sea
+    /// floor near sea level where erosion fills it. Default 1 (no change).
+    /// </summary>
+    public double CrustContrast { get => _crustContrast; set => _crustContrast = StageKnob.Finite(value, nameof(CrustContrast)); }
+    private double _crustContrast = 1.0;
+
+    /// <summary>
+    /// <see cref="CrustContrast"/> for the oceanic side of the threshold. Deepening the sea floor on its own keeps volcanic
+    /// arcs and ridges built on oceanic crust under water, so oceanic plate borders stop raising long thin ribbons of land,
+    /// without lifting the continents. Default 1 (no change).
+    /// </summary>
+    public double OceanContrast { get => _oceanContrast; set => _oceanContrast = StageKnob.Finite(value, nameof(OceanContrast)); }
+    private double _oceanContrast = 1.0;
+
+    /// <summary>
+    /// When true, the plates that carry continents are chosen as the heaviest set of plates that do not touch one another
+    /// (weighted by area and by each plate's drawn elevation), instead of letting every plate's random offset decide on its
+    /// own. Independent offsets leave continental plates adjacent more often than not, and adjacent continental plates fuse:
+    /// the largest landmass held 79% of the land over 15 seeds at size 6 (96% on some), against 44% with this on. Chosen plates
+    /// get a bias of +0.35 and the rest -0.35 (in units of the plate offset) on top of their own draw, and the quantile
+    /// calibration then lays the coast out inside and around them. Off by default.
+    /// </summary>
+    public bool DisperseContinents { get; set; }
+
+    private const double ContinentBias = 0.35;
+
     // Cached scratch so repeated Execute calls stay allocation-free: buffers grow
     // to the largest map/plate count seen and are reused (never shrunk) after that.
     private int[] _plateIds = Array.Empty<int>();
     private Vector3D[] _seedCopy = Array.Empty<Vector3D>();
     private double[] _seedElevations = Array.Empty<double>();
+    private float[] _crustRaw = Array.Empty<float>();
+    private float[] _crustTmp = Array.Empty<float>();
+    private bool[] _continental = Array.Empty<bool>();
+    private bool[] _touches = Array.Empty<bool>();
+    private int[] _plateArea = Array.Empty<int>();
     private readonly OrogenyScratch _orogeny = new();
     private static readonly VoronoiPlatePartitioner FallbackPartitioner = new();
 
@@ -117,9 +227,11 @@ public class TectonicPlateGenerationStage : IWorldGeneratorStage, ISeededStage, 
         for (int i = 0; i < SeedCount; i++)
         {
             var r = Rng.Create(Seed, i);
-            double lat = r.NextDouble() * 180.0 - 90.0;
-            double lon = r.NextDouble() * 360.0 - 180.0;
-            seeds[i] = Vector3D.FromGeoCoord(new GeoCoord(lat, lon));
+            double latDraw = r.NextDouble();
+            double lonDraw = r.NextDouble();
+            seeds[i] = BalancedSeeding
+                ? BalancedSeed(i, latDraw, lonDraw, seeds)
+                : Vector3D.FromGeoCoord(new GeoCoord(latDraw * 180.0 - 90.0, lonDraw * 360.0 - 180.0));
             seedElevations[i] = r.NextDouble();
             double driftSpeed = r.NextDouble();
 
@@ -151,13 +263,18 @@ public class TectonicPlateGenerationStage : IWorldGeneratorStage, ISeededStage, 
         var idSpan = new Span<int>(plateIds, 0, store.TileCount);
         (Partitioner ?? (IPlatePartitioner)FallbackPartitioner).Partition(store, tilePositions, seedSpan, idSpan, Seed);
 
+        if (DisperseContinents) ChooseContinentalPlates(store, plateIds, seedElevations);
+
         for (int i = 0; i < store.TileCount; i++)
         {
             int bestSeed = Math.Clamp(plateIds[i], 0, SeedCount - 1);
+            double plateTerm = DisperseContinents
+                ? ((seedElevations[bestSeed] - 0.45) + (_continental[bestSeed] ? ContinentBias : -ContinentBias)) * PlateOffsetWeight
+                : (seedElevations[bestSeed] - 0.45) * PlateOffsetWeight;
             // Mixed plates: a plate-scale offset plus broad seamless swells, so
             // each plate carries both continental and oceanic tiles like Earth.
-            double continentality = (seedElevations[bestSeed] - 0.45) * 1.2
-                + SphereNoise.Fbm(tilePositions[i] * 1.6, Seed + 77) * 0.55;
+            double continentality = plateTerm
+                + SphereNoise.Fbm(tilePositions[i] * 1.6, Seed + 77) * CrustNoiseWeight;
             span[i] = new TectonicPlate
             {
                 Id = (ushort)(bestSeed + 1),
@@ -170,22 +287,191 @@ public class TectonicPlateGenerationStage : IWorldGeneratorStage, ISeededStage, 
             };
         }
 
+        if (CrustWarp > 0.0 || CrustBlurPasses > 0) ReshapeCrust(store, span, tilePositions);
+
         // Hypsometric calibration: plate offsets are arbitrary, so recenter the
         // field to a fixed mean. Land fraction then stays Earth-like for every
         // seed instead of swinging with the plate draw.
-        double contMean = 0;
-        for (int i = 0; i < store.TileCount; i++) contMean += span[i].Continentality;
-        contMean /= store.TileCount;
-        float shift = (float)(contMean - (-0.10));
+        float shift;
+        if (LandFraction > 0.0)
+        {
+            // Quantile calibration: continental crust is exactly the top LandFraction of tiles by continentality.
+            int count = store.TileCount;
+            Grow(ref _crustRaw, count);
+            for (int i = 0; i < count; i++) _crustRaw[i] = span[i].Continentality;
+            Array.Sort(_crustRaw, 0, count);
+            int cut = Math.Clamp((int)Math.Floor((1.0 - LandFraction) * count), 0, count - 1);
+            shift = (float)(_crustRaw[cut] - CrustThreshold);
+        }
+        else
+        {
+            double contMean = 0;
+            for (int i = 0; i < store.TileCount; i++) contMean += span[i].Continentality;
+            contMean /= store.TileCount;
+            shift = (float)(contMean - (-0.10));
+        }
         for (int i = 0; i < store.TileCount; i++)
         {
             float c = span[i].Continentality - shift;
+            double contrast = c > CrustThreshold ? CrustContrast : OceanContrast;
+            if (contrast != 1.0) c = (float)(CrustThreshold + (c - CrustThreshold) * contrast);
             span[i].Continentality = c;
             span[i].Crust = c > CrustThreshold ? CrustType.Continental : CrustType.Oceanic;
         }
 
         ClassifyBoundaries(store, span, table, tilePositions, ConvergenceThreshold);
         PropagateOrogeny(store, span, table, _orogeny, MaxBoundaryDistance);
+    }
+
+    /// <summary>
+    /// Marks which plates carry continents under <see cref="DisperseContinents"/>: the heaviest set of plates, no two of which
+    /// share a border.
+    /// </summary>
+    private void ChooseContinentalPlates(WorldDataStore store, int[] plateIds, double[] seedElevations)
+    {
+        int plates = SeedCount;
+        if (_continental.Length < plates) _continental = new bool[plates];
+        if (_plateArea.Length < plates) _plateArea = new int[plates];
+        if (_touches.Length < plates * plates) _touches = new bool[plates * plates];
+        Array.Clear(_continental, 0, plates);
+        Array.Clear(_plateArea, 0, plates);
+        Array.Clear(_touches, 0, plates * plates);
+
+        Span<int> nb = stackalloc int[6];
+        int count = store.TileCount;
+        for (int i = 0; i < count; i++)
+        {
+            int a = Math.Clamp(plateIds[i], 0, plates - 1);
+            _plateArea[a]++;
+            int adjacent = store.GetAdjacent(i, nb);
+            for (int k = 0; k < adjacent; k++)
+            {
+                int b = Math.Clamp(plateIds[nb[k]], 0, plates - 1);
+                if (a != b) { _touches[a * plates + b] = true; _touches[b * plates + a] = true; }
+            }
+        }
+
+        // Heaviest set of mutually non-touching plates, weighting each by area and by its drawn elevation so the pick is
+        // seeded rather than fixed by the layout. Exhaustive search with a node budget (the budget only bites past ~40
+        // plates, and the best set found so far is kept, so the result stays a pure function of the draws).
+        int usable = Math.Min(plates, 62);
+        var weight = new double[usable];
+        var touchMask = new ulong[usable];
+        for (int p = 0; p < usable; p++)
+        {
+            weight[p] = _plateArea[p] * (0.75 + 0.5 * seedElevations[p]);
+            for (int q = 0; q < usable; q++)
+                if (_touches[p * plates + q]) touchMask[p] |= 1UL << q;
+        }
+        var suffix = new double[usable + 1];
+        for (int p = usable - 1; p >= 0; p--) suffix[p] = suffix[p + 1] + weight[p];
+        ulong best = 0;
+        double bestWeight = -1;
+        int budget = 400_000;
+        void Search(int p, ulong taken, double sum)
+        {
+            if (sum > bestWeight) { bestWeight = sum; best = taken; }
+            if (p == usable || budget-- <= 0 || sum + suffix[p] <= bestWeight) return;
+            if ((touchMask[p] & taken) == 0) Search(p + 1, taken | (1UL << p), sum + weight[p]);
+            Search(p + 1, taken, sum);
+        }
+        Search(0, 0UL, 0.0);
+        double have = 0;
+        for (int p = 0; p < usable; p++)
+            if ((best & (1UL << p)) != 0) { _continental[p] = true; have += _plateArea[p]; }
+        // Never leave the world without a continent (a single plate has nothing to touch, so this is only a safeguard).
+        if (have == 0) _continental[0] = true;
+    }
+
+    /// <summary>
+    /// Seed position for plate <paramref name="i"/> under <see cref="BalancedSeeding"/>: uniform on the sphere (latitude
+    /// from the arcsine of a uniform draw), redrawn from fresh per-plate sub-streams while it sits closer than the minimum
+    /// spacing to an earlier seed. The spacing relaxes 0.5% per redraw, so 200 attempts always end in a placement.
+    /// </summary>
+    private Vector3D BalancedSeed(int i, double latDraw, double lonDraw, Vector3D[] placed)
+    {
+        double minArc = SeedSpacing * Math.Sqrt(4.0 * Math.PI / SeedCount);
+        Vector3D candidate = default;
+        for (int attempt = 0; attempt < 200; attempt++)
+        {
+            if (attempt > 0)
+            {
+                var retry = Rng.Create(Seed + 9100, i * 256 + attempt);
+                latDraw = retry.NextDouble();
+                lonDraw = retry.NextDouble();
+            }
+            double z = latDraw * 2.0 - 1.0;
+            double ring = Math.Sqrt(Math.Max(0.0, 1.0 - z * z));
+            double lon = lonDraw * 2.0 * Math.PI;
+            candidate = new Vector3D(ring * DetMath.Cos(lon), ring * DetMath.Sin(lon), z);
+
+            double cosMin = DetMath.Cos(Math.Min(minArc, Math.PI));
+            bool clear = true;
+            for (int k = 0; k < i && clear; k++)
+                if (Vector3D.Dot(candidate, placed[k]) > cosMin) clear = false;
+            if (clear) break;
+            minArc *= 0.995;
+        }
+        return candidate;
+    }
+
+    /// <summary>
+    /// Detaches the coastline from the plate outline: every tile takes the crust value found at its displaced position
+    /// (fractal displacement of <see cref="CrustWarp"/>), then <see cref="CrustBlurPasses"/> neighbour-averaging passes round
+    /// off the remaining step. The displaced position is resolved by walking the adjacency graph from the tile toward it,
+    /// so it needs no spatial index.
+    /// </summary>
+    private void ReshapeCrust(WorldDataStore store, Span<TectonicPlate> span, ReadOnlySpan<Vector3D> positions)
+    {
+        int n = store.TileCount;
+        Grow(ref _crustRaw, n);
+        Grow(ref _crustTmp, n);
+        var raw = _crustRaw;
+        var tmp = _crustTmp;
+        for (int i = 0; i < n; i++) raw[i] = span[i].Continentality;
+
+        Span<int> nb = stackalloc int[6];
+        if (CrustWarp > 0.0)
+        {
+            for (int i = 0; i < n; i++)
+            {
+                var q = positions[i] * CrustWarpFrequency;
+                var target = (positions[i] + new Vector3D(
+                    SphereNoise.Fbm(q, Seed + 7100, 4),
+                    SphereNoise.Fbm(q, Seed + 7200, 4),
+                    SphereNoise.Fbm(q, Seed + 7300, 4)) * CrustWarp).Normalize();
+                int cur = i;
+                double best = Vector3D.Dot(positions[cur], target);
+                for (int step = 0; step < 4096; step++)
+                {
+                    int adjacent = store.GetAdjacent(cur, nb);
+                    int next = cur;
+                    for (int k = 0; k < adjacent; k++)
+                    {
+                        double d = Vector3D.Dot(positions[nb[k]], target);
+                        if (d > best) { best = d; next = nb[k]; }
+                    }
+                    if (next == cur) break;
+                    cur = next;
+                }
+                tmp[i] = raw[cur];
+            }
+            (raw, tmp) = (tmp, raw);
+        }
+
+        for (int pass = 0; pass < CrustBlurPasses; pass++)
+        {
+            for (int i = 0; i < n; i++)
+            {
+                int adjacent = store.GetAdjacent(i, nb);
+                float sum = 0f;
+                for (int k = 0; k < adjacent; k++) sum += raw[nb[k]];
+                tmp[i] = adjacent == 0 ? raw[i] : 0.5f * raw[i] + 0.5f * (sum / adjacent);
+            }
+            (raw, tmp) = (tmp, raw);
+        }
+
+        for (int i = 0; i < n; i++) span[i].Continentality = raw[i];
     }
 
     /// <summary>
@@ -217,8 +503,10 @@ public class TectonicPlateGenerationStage : IWorldGeneratorStage, ISeededStage, 
             bool hasForeign = false;
             double maxConvergence = double.NegativeInfinity;
             double minConvergence = double.PositiveInfinity;
+            double maxShear = 0.0, minShear = 0.0;
             // Winning convergent pair (for subduction polarity + belt width).
             CrustType acrossCrust = plate.Crust;
+            int acrossPlate = plate.Id;
             for (int k = 0; k < adjacent; k++)
             {
                 int j = neighbors[k];
@@ -231,18 +519,24 @@ public class TectonicPlateGenerationStage : IWorldGeneratorStage, ISeededStage, 
                 double relY = theirs.DriftY * theirs.DriftSpeed - mine.DriftY * mine.DriftSpeed;
                 double relZ = theirs.DriftZ * theirs.DriftSpeed - mine.DriftZ * mine.DriftSpeed;
                 double convergence = -(relX * dir.X + relY * dir.Y + relZ * dir.Z);
-                if (convergence > maxConvergence) { maxConvergence = convergence; acrossCrust = other.Crust; }
-                if (convergence < minConvergence) minConvergence = convergence;
+                double shear = ShearTransform ? ShearComponent(relX, relY, relZ, positions[i], convergence) : 0.0;
+                if (convergence > maxConvergence) { maxConvergence = convergence; maxShear = shear; acrossCrust = other.Crust; acrossPlate = other.Id; }
+                if (convergence < minConvergence) { minConvergence = convergence; minShear = shear; }
             }
             if (!hasForeign)
             {
                 plate.Boundary = PlateBoundaryType.None;
                 plate.Orogeny = 0f;
             }
+            else if (ShearTransform)
+            {
+                ClassifySheared(ref plate, mine, table[acrossPlate - 1], acrossPlate, acrossCrust, positions[i], threshold,
+                    maxConvergence, maxShear, minConvergence, minShear);
+            }
             else if (maxConvergence > threshold)
             {
                 plate.Boundary = PlateBoundaryType.Convergent;
-                plate.Orogeny = (float)(ConvergentDriver(plate.Crust, acrossCrust, maxConvergence) * SegmentFactor(positions[i]));
+                plate.Orogeny = (float)(ConvergentDriver(plate.Crust, acrossCrust, maxConvergence, Subducts(plate, plate.Id, acrossCrust, acrossPlate, mine, table)) * SegmentFactor(positions[i]));
             }
             else if (minConvergence < -threshold)
             {
@@ -259,12 +553,92 @@ public class TectonicPlateGenerationStage : IWorldGeneratorStage, ISeededStage, 
         }
     }
 
+    private const float TransformDriver = 0.12f;
+
+    /// <summary>
+    /// Boundary kind and driver on the whole relative motion (see <see cref="ShearTransform"/>). The across-border
+    /// component is weighed against the shear along the border, and the boundary driver is blended in from the transform
+    /// value as the motion grows past <paramref name="threshold"/>, so no kind starts at full strength.
+    /// </summary>
+    private void ClassifySheared(
+        ref TectonicPlate plate, in PlateInfo mine, in PlateInfo across, int acrossId, CrustType acrossCrust, Vector3D position, double threshold,
+        double maxConvergence, double maxShear, double minConvergence, double minShear)
+    {
+        // The stronger of the two signed motions decides, as the legacy code lets convergence win over divergence.
+        bool converging = maxConvergence > threshold && maxConvergence >= -minConvergence;
+        bool diverging = !converging && minConvergence < -threshold;
+        double motion = converging ? maxConvergence : diverging ? -minConvergence : 0.0;
+        double shear = converging ? maxShear : minShear;
+
+        // Share of the relative motion that goes across the border: the weight of a convergent or divergent kind.
+        double across01 = motion + shear > 1e-9 ? motion / (motion + shear) : 0.0;
+        double gate = Smooth((motion - threshold) / (2.0 * threshold)) * Smooth((across01 - 0.2) / 0.25);
+        double speed = Math.Sqrt(motion * motion + shear * shear);
+
+        if ((!converging && !diverging) || gate < 0.5)
+        {
+            plate.Boundary = PlateBoundaryType.Transform;
+            // A pair that barely moves relative to each other leaves only a faint scar, not a full fault ridge.
+            plate.Orogeny = (float)(TransformDriver * Smooth(speed / 0.3));
+            return;
+        }
+
+        double target;
+        if (converging)
+        {
+            plate.Boundary = PlateBoundaryType.Convergent;
+            target = ConvergentDriver(plate.Crust, acrossCrust, maxConvergence, SubductsPair(plate.Crust, acrossCrust, plate.Id, acrossId, mine, across)) * SegmentFactor(position);
+        }
+        else
+        {
+            plate.Boundary = PlateBoundaryType.Divergent;
+            target = plate.Crust == CrustType.Oceanic ? 0.5 : -0.55;
+        }
+        plate.Orogeny = (float)(TransformDriver + (target - TransformDriver) * gate);
+    }
+
+    // Smoothstep on [0, 1], clamped.
+    private static double Smooth(double t)
+    {
+        t = Math.Clamp(t, 0.0, 1.0);
+        return t * t * (3.0 - 2.0 * t);
+    }
+
+    /// <summary>
+    /// Magnitude of the relative motion along the border: what is left of the surface-tangent part of
+    /// <c>rel</c> once the across-border component <paramref name="convergence"/> is taken out.
+    /// </summary>
+    private static double ShearComponent(double relX, double relY, double relZ, Vector3D position, double convergence)
+    {
+        var n = position.Normalize();
+        double radial = relX * n.X + relY * n.Y + relZ * n.Z;
+        double tangentSq = relX * relX + relY * relY + relZ * relZ - radial * radial;
+        return Math.Sqrt(Math.Max(0.0, tangentSq - convergence * convergence));
+    }
+
+    private bool Subducts(in TectonicPlate plate, int plateId, CrustType acrossCrust, int acrossPlateId, in PlateInfo mine, ReadOnlySpan<PlateInfo> table)
+        => SubductsPair(plate.Crust, acrossCrust, plateId, acrossPlateId, mine, table[acrossPlateId - 1]);
+
+    /// <summary>
+    /// True when this side of an oceanic-oceanic convergent border is the plate that dives (see
+    /// <see cref="OceanicPolarity"/>). Always false for any other pair, and with the option off.
+    /// </summary>
+    private bool SubductsPair(CrustType mine, CrustType across, int mineId, int acrossId, in PlateInfo mineInfo, in PlateInfo acrossInfo)
+    {
+        if (!OceanicPolarity || mine != CrustType.Oceanic || across != CrustType.Oceanic) return false;
+        // The lower base elevation is the older, denser plate. Ties fall to the lower id, so exactly one side dives.
+        if (mineInfo.Elevation != acrossInfo.Elevation) return mineInfo.Elevation < acrossInfo.Elevation;
+        return mineId < acrossId;
+    }
+
     /// <summary>
     /// Signed convergent driver with subduction polarity: the oceanic side dives
     /// (trench, negative) while the overriding side piles up (arc/orogen, positive).
     /// </summary>
-    internal static double ConvergentDriver(CrustType mine, CrustType across, double convergence)
+    internal static double ConvergentDriver(CrustType mine, CrustType across, double convergence, bool subducting = false)
     {
+        if (subducting)
+            return -convergence * 1.0; // the diving side of an oceanic-oceanic border: trench
         if (mine == CrustType.Continental && across == CrustType.Oceanic)
             return convergence * 1.8; // Andes-style arc
         if (mine == CrustType.Oceanic && across == CrustType.Continental)

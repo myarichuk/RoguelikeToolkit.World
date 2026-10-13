@@ -53,6 +53,16 @@ public class ElevationGenerationStage : IWorldGeneratorStage, ISeededStage
     public double HotspotAmplitude { get => _hotspotAmplitude; set => _hotspotAmplitude = StageKnob.Finite(value, nameof(HotspotAmplitude)); }
     private double _hotspotAmplitude = 0.55;
 
+    /// <summary>
+    /// Tile count at which volcanic arcs on oceanic crust reach full height; on a coarser grid they are scaled down by
+    /// <c>sqrt(tileCount / ReferenceTileCount)</c>. A belt is about one tile wide whatever the resolution, so on a coarse grid
+    /// it covers far more of the globe than its real width does (at size 3, 22% of all tiles were arc land on oceanic crust,
+    /// against 4.6% at size 6) and every small world came out half land. A tile's height stands for its whole area, so a belt
+    /// narrower than the tile lifts it proportionally less. 0 (default) leaves arcs at full height at every size.
+    /// </summary>
+    public int ReferenceTileCount { get => _referenceTileCount; set => _referenceTileCount = StageKnob.NonNegative(value, nameof(ReferenceTileCount)); }
+    private int _referenceTileCount;
+
     /// <summary>Creates a stage with the default <see cref="Seed"/> (42); this is the constructor <see cref="WorldGenerationPipeline.Discover(string?, Action{StageDiscoveryDiagnostic}?)"/> uses.</summary>
     public ElevationGenerationStage()
     {
@@ -87,6 +97,8 @@ public class ElevationGenerationStage : IWorldGeneratorStage, ISeededStage
             hotspots[h] = Vector3D.FromGeoCoord(new GeoCoord(lat, lon));
         }
 
+        double arcScale = ReferenceTileCount > 0 ? Math.Min(1.0, Math.Sqrt(store.TileCount / (double)ReferenceTileCount)) : 1.0;
+
         for (int i = 0; i < store.TileCount; i++)
         {
             var plate = plates[i];
@@ -106,6 +118,7 @@ public class ElevationGenerationStage : IWorldGeneratorStage, ISeededStage
             // Orogeny: signed belt driver already decayed by boundary distance
             // (fold belts / arcs uplift, trenches and rifts depress).
             double orogeny = plate.Orogeny * BoundaryUplift;
+            if (plate.Crust == CrustType.Oceanic && orogeny > 0.0) orogeny *= arcScale;
             height += Math.Min(Math.Max(orogeny, -1.0), 2.0);
 
             // Ridged crests inside uplift belts (sharp ranges, wide plateaus).

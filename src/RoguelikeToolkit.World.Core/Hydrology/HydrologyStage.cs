@@ -146,7 +146,8 @@ public partial class HydrologyStage : IWorldGeneratorStage
                 loss[i] = (Math.Max(0f, evap[i] - rain[i]) + evap[i] * 0.1f) * LossFactor;
         }
         var flowFilled = new float[n];
-        Hydrography.AccumulateFlow(store, filled, recvFilled, runoff, flowFilled, default, loss, depthFilled);
+        Hydrography.AccumulateFlow(
+            store, Hydrography.DrainageOrder(filled, depthFilled), recvFilled, runoff, flowFilled, default, loss);
         var lakes = LakeSolver.Solve(store, heights, filled, flowFilled, recvFilled, runoff, evap,
             (float)ElevationGenerationStage.SeaLevel, hasClimate && UseLandCover ? cover : default, loss);
 
@@ -172,7 +173,9 @@ public partial class HydrologyStage : IWorldGeneratorStage
         var depth = new int[n];
         Hydrography.ComputeReceivers(store, lakes.Surface, receiver, depth);
         var flow = new float[n];
-        Hydrography.AccumulateFlow(store, lakes.Surface, receiver, runoff, flow, evapSink, loss, depth);
+        // One sort of the final routing serves accumulation, channel extraction and the endorheic walk.
+        int[] drainOrder = Hydrography.DrainageOrder(lakes.Surface, depth);
+        Hydrography.AccumulateFlow(store, drainOrder, receiver, runoff, flow, evapSink, loss);
 
         float threshold = Hydrography.RiverThreshold(n, RiverThresholdScale);
 
@@ -218,7 +221,7 @@ public partial class HydrologyStage : IWorldGeneratorStage
         var isRiver = new bool[n];
         var fed = new bool[n];
         float floorThreshold = Hydrography.ChannelThreshold(threshold, float.MaxValue, SteepBoost, SteepSlope);
-        foreach (int i in Hydrography.DrainageOrder(lakes.Surface, depth))
+        foreach (int i in drainOrder)
         {
             if (elev[i].Height < ElevationGenerationStage.SeaLevel || lakes.Depth[i] > 0f) continue;
             int rcv = receiver[i];
@@ -233,7 +236,6 @@ public partial class HydrologyStage : IWorldGeneratorStage
         // ends in a closed depression or an inland sink. Receivers are visited
         // before their donors, so each tile just inherits its receiver's answer.
         var endorheic = new bool[n];
-        int[] drainOrder = Hydrography.DrainageOrder(lakes.Surface, depth);
         for (int k = drainOrder.Length - 1; k >= 0; k--)
         {
             int i = drainOrder[k];

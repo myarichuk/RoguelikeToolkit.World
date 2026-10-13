@@ -126,6 +126,15 @@ public partial class ErosionGenerationStage : IWorldGeneratorStage
     public double AeolianDeposit { get => _aeolianDeposit; set => _aeolianDeposit = StageKnob.Finite(value, nameof(AeolianDeposit)); }
     private double _aeolianDeposit = 0.25;
 
+    /// <summary>
+    /// When true the hillslope-diffusion and glacial passes are Jacobi sweeps: every move is computed
+    /// against the surface as it stood at the start of the pass and applied together, so the result cannot
+    /// depend on the order tiles are visited in (the index order of the mesh means nothing geographically).
+    /// When false they sweep in place in tile order, as earlier versions did, and output stays bit-identical
+    /// to them. The thermal pass is always order-independent.
+    /// </summary>
+    public bool OrderIndependent { get; set; }
+
     /// <summary>Creates a stage with the default settings (10 thermal iterations); this is the constructor <see cref="WorldGenerationPipeline.Discover(string?, Action{StageDiscoveryDiagnostic}?)"/> uses.</summary>
     public ErosionGenerationStage()
     {
@@ -209,6 +218,30 @@ public partial class ErosionGenerationStage : IWorldGeneratorStage
         {
             for (int d = 0; d < DiffusionIterations; d++)
             {
+                if (OrderIndependent)
+                {
+                    // Jacobi: every tile creeps toward its lowest neighbor measured on the frozen
+                    // surface. A tile that is both donor and receiver nets out in delta.
+                    Array.Clear(delta);
+                    for (int i = 0; i < store.TileCount; i++)
+                    {
+                        int adjacent = store.GetAdjacent(i, neighbors);
+                        int lowest = -1;
+                        float best = elev[i].Height;
+                        for (int k = 0; k < adjacent; k++)
+                        {
+                            int j = neighbors[k];
+                            if (elev[j].Height < best) { best = elev[j].Height; lowest = j; }
+                        }
+                        if (lowest < 0) continue;
+                        double slope = elev[i].Height - best;
+                        float move = (float)Math.Min(slope * DiffusionRate, slope * 0.25);
+                        delta[i] -= move;
+                        delta[lowest] += move;
+                    }
+                    for (int i = 0; i < store.TileCount; i++) elev[i].Height += delta[i];
+                    continue;
+                }
                 for (int i = 0; i < store.TileCount; i++)
                 {
                     int adjacent = store.GetAdjacent(i, neighbors);

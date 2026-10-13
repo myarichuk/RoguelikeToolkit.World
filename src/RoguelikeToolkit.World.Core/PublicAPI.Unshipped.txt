@@ -1,3 +1,33 @@
+RoguelikeToolkit.World.Core.Lithosphere.IslandChainOptions.BridgeReach.get -> int
+RoguelikeToolkit.World.Core.Lithosphere.IslandChainOptions.BridgeReach.set -> void
+RoguelikeToolkit.World.Core.Tectonics.NoisyFloodFillPlatePartitioner.MinSpeed.get -> double
+RoguelikeToolkit.World.Core.Tectonics.NoisyFloodFillPlatePartitioner.MinSpeed.set -> void
+RoguelikeToolkit.World.Core.Tectonics.NoisyFloodFillPlatePartitioner.SpeedRange.get -> double
+RoguelikeToolkit.World.Core.Tectonics.NoisyFloodFillPlatePartitioner.SpeedRange.set -> void
+RoguelikeToolkit.World.Core.Tectonics.TectonicPlateGenerationStage.BalancedSeeding.get -> bool
+RoguelikeToolkit.World.Core.Tectonics.TectonicPlateGenerationStage.BalancedSeeding.set -> void
+RoguelikeToolkit.World.Core.Tectonics.TectonicPlateGenerationStage.CrustBlurPasses.get -> int
+RoguelikeToolkit.World.Core.Tectonics.TectonicPlateGenerationStage.CrustBlurPasses.set -> void
+RoguelikeToolkit.World.Core.Tectonics.TectonicPlateGenerationStage.CrustContrast.get -> double
+RoguelikeToolkit.World.Core.Tectonics.TectonicPlateGenerationStage.CrustContrast.set -> void
+RoguelikeToolkit.World.Core.Tectonics.TectonicPlateGenerationStage.OceanContrast.get -> double
+RoguelikeToolkit.World.Core.Tectonics.TectonicPlateGenerationStage.OceanContrast.set -> void
+RoguelikeToolkit.World.Core.Tectonics.TectonicPlateGenerationStage.DisperseContinents.get -> bool
+RoguelikeToolkit.World.Core.Tectonics.TectonicPlateGenerationStage.DisperseContinents.set -> void
+RoguelikeToolkit.World.Core.Tectonics.TectonicPlateGenerationStage.CrustNoiseWeight.get -> double
+RoguelikeToolkit.World.Core.Tectonics.TectonicPlateGenerationStage.CrustNoiseWeight.set -> void
+RoguelikeToolkit.World.Core.Tectonics.TectonicPlateGenerationStage.CrustWarp.get -> double
+RoguelikeToolkit.World.Core.Tectonics.TectonicPlateGenerationStage.CrustWarp.set -> void
+RoguelikeToolkit.World.Core.Tectonics.TectonicPlateGenerationStage.CrustWarpFrequency.get -> double
+RoguelikeToolkit.World.Core.Tectonics.TectonicPlateGenerationStage.CrustWarpFrequency.set -> void
+RoguelikeToolkit.World.Core.Tectonics.TectonicPlateGenerationStage.LandFraction.get -> double
+RoguelikeToolkit.World.Core.Tectonics.TectonicPlateGenerationStage.LandFraction.set -> void
+RoguelikeToolkit.World.Core.Tectonics.TectonicPlateGenerationStage.PlateOffsetWeight.get -> double
+RoguelikeToolkit.World.Core.Tectonics.TectonicPlateGenerationStage.PlateOffsetWeight.set -> void
+RoguelikeToolkit.World.Core.Tectonics.TectonicPlateGenerationStage.SeedSpacing.get -> double
+RoguelikeToolkit.World.Core.Tectonics.TectonicPlateGenerationStage.SeedSpacing.set -> void
+RoguelikeToolkit.World.Core.WorldBuilder.WithBalancedPlates(bool enabled = true) -> RoguelikeToolkit.World.Core.WorldBuilder!
+RoguelikeToolkit.World.Core.WorldBuilder.WithLegacyPlates() -> RoguelikeToolkit.World.Core.WorldBuilder!
 abstract RoguelikeToolkit.World.Core.Hierarchy.GridMapHandle<TTile>.GetTile(int index) -> TTile
 abstract RoguelikeToolkit.World.Core.Sites.SiteInjectorBase.Inject(RoguelikeToolkit.World.Core.Sites.SiteInjectionContext! context) -> System.Collections.Generic.IReadOnlyList<RoguelikeToolkit.World.Core.Sites.PlacedSite!>!
 const RoguelikeToolkit.World.Core.Biomes.BiomeClassifier.BadlandsRelief = 0.12 -> double
@@ -1631,3 +1661,12 @@ static RoguelikeToolkit.World.Core.Topology.MapBounds.ForPlanetTile(RoguelikeToo
 static RoguelikeToolkit.World.Core.Topology.OffsetGrid.FromIndex(int index, int size) -> (int Q, int R)
 static RoguelikeToolkit.World.Core.Topology.OffsetGrid.ToIndex(int q, int r, int size) -> int
 static RoguelikeToolkit.World.Core.World.DistanceKm(RoguelikeToolkit.World.Core.Primitives.GeoCoord a, RoguelikeToolkit.World.Core.Primitives.GeoCoord b) -> double
+RoguelikeToolkit.World.Core.Elevation.ElevationGenerationStage.ReferenceTileCount.get -> int
+RoguelikeToolkit.World.Core.Elevation.ElevationGenerationStage.ReferenceTileCount.set -> void
+RoguelikeToolkit.World.Core.WorldBuilder.WithElevation(System.Action<RoguelikeToolkit.World.Core.Elevation.ElevationGenerationStage!>! configure) -> RoguelikeToolkit.World.Core.WorldBuilder!
+RoguelikeToolkit.World.Core.Elevation.ErosionGenerationStage.OrderIndependent.get -> bool
+RoguelikeToolkit.World.Core.Elevation.ErosionGenerationStage.OrderIndependent.set -> void
+RoguelikeToolkit.World.Core.Tectonics.TectonicPlateGenerationStage.OceanicPolarity.get -> bool
+RoguelikeToolkit.World.Core.Tectonics.TectonicPlateGenerationStage.OceanicPolarity.set -> void
+RoguelikeToolkit.World.Core.Tectonics.TectonicPlateGenerationStage.ShearTransform.get -> bool
+RoguelikeToolkit.World.Core.Tectonics.TectonicPlateGenerationStage.ShearTransform.set -> void

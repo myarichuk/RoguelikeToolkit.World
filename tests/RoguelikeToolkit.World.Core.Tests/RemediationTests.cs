@@ -77,9 +77,10 @@ public class RemediationTests
     [Fact]
     public void MaxRivers_ConfigIsHonored()
     {
-        using var capped = new WorldBuilder().WithSize(2).WithSeed(42).WithHydrology(h => h.MaxRivers = 2).Build();
+        // Size 2 is 162 tiles, so rivers are a seed lottery (seed 42 draws a single river); seed 40 draws 13.
+        using var capped = new WorldBuilder().WithSize(2).WithSeed(40).WithHydrology(h => h.MaxRivers = 2).Build();
         Assert.True(capped.Rivers.Rivers.Count <= 2);
-        using var uncapped = new WorldBuilder().WithSize(2).WithSeed(42).Build();
+        using var uncapped = new WorldBuilder().WithSize(2).WithSeed(40).Build();
         Assert.True(uncapped.Rivers.Rivers.Count > 2, "Seed must produce >2 rivers for a non-vacuous cap test.");
     }
 

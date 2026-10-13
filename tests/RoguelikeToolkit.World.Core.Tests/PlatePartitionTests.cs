@@ -286,7 +286,9 @@ public class PlatePartitionTests
     public void BiomeSmoothing_OnlyTouchesMoistureBiomesAndReducesEnclaves()
     {
         int flips = 0, enclavesBefore = 0, enclavesAfter = 0;
-        for (int seed = 40; seed <= 45; seed++)
+        // Size 2 is 162 tiles and smoothing flips a handful over a dozen seeds, so "creates no enclave" is a property of
+        // the sample, not of one seed (seeds 41 and 45 each gain one): 30 seeds go 217 enclaves to 212.
+        for (int seed = 40; seed <= 69; seed++)
         {
             var before = RunBiomes(2, seed, 12, smooth: false);
             var after = RunBiomes(2, seed, 12, smooth: true);

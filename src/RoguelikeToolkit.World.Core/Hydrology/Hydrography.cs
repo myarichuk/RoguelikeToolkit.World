@@ -42,22 +42,9 @@ internal static class Hydrography
     /// pass something downstream and must not visit a receiver first.
     /// </summary>
     public static int[] DrainageOrder(ReadOnlySpan<float> surface, ReadOnlySpan<int> drainDepth = default)
-    {
-        int n = surface.Length;
-        var snapshot = surface.ToArray();
-        var depth = drainDepth.IsEmpty ? null : drainDepth.ToArray();
-        if (depth == null) return TileOrdering.DescendingByValue(snapshot);
-        var order = new int[n];
-        for (int i = 0; i < n; i++) order[i] = i;
-        Array.Sort(order, (a, b) =>
-        {
-            int c = snapshot[b].CompareTo(snapshot[a]);
-            if (c != 0) return c;
-            c = depth[b].CompareTo(depth[a]);
-            return c != 0 ? c : a.CompareTo(b);
-        });
-        return order;
-    }
+        => drainDepth.IsEmpty
+            ? TileOrdering.DescendingByValue(surface)
+            : TileOrdering.DescendingByValueThenDescending(surface, drainDepth);
 
     public static int LowestNeighbor(WorldDataStore store, ReadOnlySpan<float> heights, int tile, Span<int> scratch)
     {
@@ -154,13 +141,15 @@ internal static class Hydrography
         for (int i = 0; i < n; i++) filled[i] = heights[i];
 
         var closed = new bool[n];
-        var heap = new PriorityQueue<int, (double Height, int Index)>();
+        // Packed (level, index) key: one ulong compare per sift step instead of a boxed-free but still
+        // IComparable-dispatched tuple compare. Same order: level ascending, then index.
+        var heap = new PriorityQueue<int, ulong>();
 
         for (int i = 0; i < n; i++)
         {
             if (heights[i] >= seaLevel) continue;
             closed[i] = true;
-            heap.Enqueue(i, (heights[i], i));
+            heap.Enqueue(i, TileOrdering.AscendingKey(heights[i], i));
         }
         if (heap.Count == 0)
         {
@@ -168,7 +157,7 @@ internal static class Hydrography
             int min = 0;
             for (int i = 1; i < n; i++) if (heights[i] < heights[min]) min = i;
             closed[min] = true;
-            heap.Enqueue(min, (heights[min], min));
+            heap.Enqueue(min, TileOrdering.AscendingKey(heights[min], min));
         }
 
         Span<int> scratch = stackalloc int[6];
@@ -183,7 +172,7 @@ internal static class Hydrography
                 closed[nb] = true;
                 float level = Math.Max(heights[nb], filled[cur]);
                 filled[nb] = level;
-                heap.Enqueue(nb, (level, nb));
+                heap.Enqueue(nb, TileOrdering.AscendingKey(level, nb));
             }
         }
     }
@@ -351,11 +340,24 @@ internal static class Hydrography
         ReadOnlySpan<float> evapSink = default,
         ReadOnlySpan<float> channelLoss = default,
         ReadOnlySpan<int> drainDepth = default)
+        => AccumulateFlow(store, DrainageOrder(surface, drainDepth), receiver, runoff, flow, evapSink, channelLoss);
+
+    /// <summary>
+    /// Flow accumulation over a <see cref="DrainageOrder"/> the caller already holds. A routing is sorted once
+    /// and the order reused by every pass that walks it (accumulation, channel extraction, sediment routing,
+    /// endorheic reach).
+    /// </summary>
+    public static void AccumulateFlow(
+        WorldDataStore store,
+        int[] order,
+        ReadOnlySpan<int> receiver,
+        ReadOnlySpan<float> runoff,
+        Span<float> flow,
+        ReadOnlySpan<float> evapSink = default,
+        ReadOnlySpan<float> channelLoss = default)
     {
         int n = store.TileCount;
         for (int i = 0; i < n; i++) flow[i] = runoff[i];
-
-        int[] order = DrainageOrder(surface, drainDepth);
 
         bool hasSink = !evapSink.IsEmpty;
         bool hasLoss = !channelLoss.IsEmpty;

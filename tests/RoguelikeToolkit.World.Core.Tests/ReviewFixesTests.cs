@@ -38,7 +38,8 @@ public class ReviewFixesTests
     public void Pipeline_Rerun_OnUsedMap_IsIdempotent()
     {
         // Used to differ: climate read the previous run's hydrology (31/2562 tiles).
-        using var world = new WorldBuilder().WithSize(4).WithSeed(7).Build();
+        // DefaultPipeline below is the hand-built legacy stage set, so the world it is compared with must use legacy plates.
+        using var world = new WorldBuilder().WithSize(4).WithSeed(7).WithLegacyPlates().Build();
         var store = world.Map.DataStore;
         var climate = store.GetSpan<ClimateInfo>().ToArray();
         var elev = store.GetSpan<ElevationInfo>().ToArray();
