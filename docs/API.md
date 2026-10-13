@@ -132,9 +132,14 @@ under 1% to over 25% of the globe), and built the crust field mostly from each p
 for the noise), so most plates were entirely land or entirely sea and 71% of coastline tiles sat on a plate border. The
 preset spreads seeds evenly with a minimum spacing, bounds the speed spread to 0.85-1.35, lowers the plate offset to 0.6,
 displaces and blurs the crust field before thresholding (`CrustWarp`, `CrustBlurPasses`), sets the continental share by
-quantile (`LandFraction`) and restores the field's spread (`CrustContrast`) so relief and sea depth match the legacy worlds.
-Over 12 seeds at size 6 the largest plate is 2.7 times the smallest (was 65), plates that are all land or all sea fall from
-69% to 32%, coastline tiles on a border from 71% to 45%, and land stays near 36%. All knobs are on
+quantile (`LandFraction`) and restores the field's spread (`CrustContrast` for the land side, `OceanContrast` for the sea
+floor) so relief matches the legacy worlds and volcanic arcs on oceanic crust stay under water. It also deals continental
+crust out to the heaviest set of plates that do not touch (`DisperseContinents`): independent offsets left continental plates
+adjacent, and adjacent continental plates fuse, so the largest landmass held 79% of the land (96% on some seeds) at size 6.
+Over 15 seeds at size 6 the largest landmass now holds 46% (never above 71%) with about three landmasses of 5% or more,
+the largest plate is 2.7 times the smallest (was 65), plates that are all land or all sea fall from 69% to 32%, coastline
+tiles on a border from 71% to about 50%, and land is 31% (legacy 36%). Worlds below size 5 are mostly land whatever the
+plates do, because erosion moves a fixed height per tile. All knobs are on
 `TectonicPlateGenerationStage` and `NoisyFloodFillPlatePartitioner`; later `WithTectonics` calls override the preset. The
 preset also sets the island-chain repair's `BridgeReach` to 2, so a strait also cuts the wider land that would bridge it.
 

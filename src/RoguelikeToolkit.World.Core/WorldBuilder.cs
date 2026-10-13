@@ -92,9 +92,11 @@ public sealed class WorldBuilder
         t.BalancedSeeding = true;
         t.PlateOffsetWeight = 0.6;
         t.LandFraction = 0.28;
-        t.CrustContrast = 2.0;
         t.CrustWarp = 0.5;
         t.CrustBlurPasses = 3;
+        t.DisperseContinents = true;
+        t.CrustContrast = 0.8;
+        t.OceanContrast = 2.0;
         if (t.Partitioner is NoisyFloodFillPlatePartitioner flood)
         {
             flood.MinSpeed = 0.85;

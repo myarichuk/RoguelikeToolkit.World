@@ -40,6 +40,9 @@ public class BalancedPlatesTests
             t.CrustWarp = 0;
             t.CrustBlurPasses = 0;
             t.LandFraction = 0;
+            t.CrustContrast = 1.0;
+            t.OceanContrast = 1.0;
+            t.DisperseContinents = false;
         }));
         Assert.Equal(plain.Continentality, explicitDefaults.Continentality);
         Assert.Equal(plain.Area, explicitDefaults.Area);
@@ -127,6 +130,7 @@ public class BalancedPlatesTests
         Assert.Throws<ArgumentOutOfRangeException>(() => stage.LandFraction = -0.1);
         Assert.Throws<ArgumentOutOfRangeException>(() => stage.CrustWarp = double.NaN);
         Assert.Throws<ArgumentOutOfRangeException>(() => stage.CrustBlurPasses = -1);
+        Assert.Throws<ArgumentOutOfRangeException>(() => stage.OceanContrast = double.NaN);
         Assert.Throws<ArgumentOutOfRangeException>(() => new NoisyFloodFillPlatePartitioner().SpeedRange = -1);
     }
 
@@ -154,6 +158,60 @@ public class BalancedPlatesTests
         double balancedHigh = LandShareHigh(b => b, out double balancedMedian);
         Assert.InRange(balancedHigh, legacyHigh - 0.08, legacyHigh + 0.08);
         Assert.InRange(balancedMedian, legacyMedian - 0.05, legacyMedian + 0.05);
+    }
+
+    [Fact]
+    public void DisperseContinents_SplitsTheLandIntoSeveralContinents()
+    {
+        // Independent plate offsets leave continental plates touching, and touching continental plates fuse into one
+        // landmass; the default deals continents out to plates that do not touch. Share of the land held by the largest
+        // landmass, over eight seeds, with the island-chain repair on as in a normal build.
+        double LargestShare(Func<WorldBuilder, WorldBuilder> configure, out double worst)
+        {
+            double sum = 0;
+            worst = 0;
+            var neighbours = new int[6];
+            for (int seed = 1; seed <= 8; seed++)
+            {
+                using var world = configure(new WorldBuilder().WithSize(5).WithSeed(seed)).Build();
+                var store = world.Map.DataStore;
+                var elev = store.GetSpan<ElevationInfo>();
+                var land = new bool[store.TileCount];
+                int total = 0;
+                for (int i = 0; i < land.Length; i++)
+                    if (land[i] = elev[i].Height >= ElevationGenerationStage.SeaLevel) total++;
+
+                int largest = 0;
+                var seen = new bool[land.Length];
+                var stack = new Stack<int>();
+                for (int start = 0; start < land.Length; start++)
+                {
+                    if (!land[start] || seen[start]) continue;
+                    int size = 0;
+                    seen[start] = true;
+                    stack.Push(start);
+                    while (stack.Count > 0)
+                    {
+                        int t = stack.Pop();
+                        size++;
+                        int n = store.GetAdjacent(t, neighbours);
+                        for (int k = 0; k < n; k++)
+                            if (land[neighbours[k]] && !seen[neighbours[k]]) { seen[neighbours[k]] = true; stack.Push(neighbours[k]); }
+                    }
+                    largest = Math.Max(largest, size);
+                }
+                double share = largest / (double)total;
+                sum += share;
+                worst = Math.Max(worst, share);
+            }
+            return sum / 8;
+        }
+
+        double legacy = LargestShare(b => b.WithLegacyPlates(), out _);
+        double dispersed = LargestShare(b => b, out double worst);
+        Assert.True(legacy > 0.70, $"non-vacuity: legacy worlds should be mostly one landmass, got {legacy:P0}.");
+        Assert.True(dispersed < 0.55, $"the largest landmass still holds {dispersed:P0} of the land on average.");
+        Assert.True(worst < 0.85, $"one seed still has a supercontinent: {worst:P0} of the land in one piece.");
     }
 
     [Fact]

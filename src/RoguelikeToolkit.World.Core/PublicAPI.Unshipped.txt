@@ -10,6 +10,10 @@ RoguelikeToolkit.World.Core.Tectonics.TectonicPlateGenerationStage.CrustBlurPass
 RoguelikeToolkit.World.Core.Tectonics.TectonicPlateGenerationStage.CrustBlurPasses.set -> void
 RoguelikeToolkit.World.Core.Tectonics.TectonicPlateGenerationStage.CrustContrast.get -> double
 RoguelikeToolkit.World.Core.Tectonics.TectonicPlateGenerationStage.CrustContrast.set -> void
+RoguelikeToolkit.World.Core.Tectonics.TectonicPlateGenerationStage.OceanContrast.get -> double
+RoguelikeToolkit.World.Core.Tectonics.TectonicPlateGenerationStage.OceanContrast.set -> void
+RoguelikeToolkit.World.Core.Tectonics.TectonicPlateGenerationStage.DisperseContinents.get -> bool
+RoguelikeToolkit.World.Core.Tectonics.TectonicPlateGenerationStage.DisperseContinents.set -> void
 RoguelikeToolkit.World.Core.Tectonics.TectonicPlateGenerationStage.CrustNoiseWeight.get -> double
 RoguelikeToolkit.World.Core.Tectonics.TectonicPlateGenerationStage.CrustNoiseWeight.set -> void
 RoguelikeToolkit.World.Core.Tectonics.TectonicPlateGenerationStage.CrustWarp.get -> double
