@@ -1,5 +1,26 @@
 # Changelog
 
+## [3.0.0](https://github.com/myarichuk/RoguelikeToolkit.World/compare/v2.0.1...v3.0.0) (2026-10-13)
+
+
+### ⚠ BREAKING CHANGES
+
+* **core:** default world generation changed. Call WithLegacyPlates() to keep existing seeds producing the same worlds.
+
+### Features
+
+* **core:** make balanced plates the default world generator ([28c399b](https://github.com/myarichuk/RoguelikeToolkit.World/commit/28c399b9ba430e491f7bdbb08ace62c9c3005422))
+* **core:** make diffusion and glacial erosion independent of tile order ([fb7044b](https://github.com/myarichuk/RoguelikeToolkit.World/commit/fb7044bca761809c0e95ce9dcbe2e0b32186b14c))
+* **core:** opt-in balanced plates (even seeding, bounded plate size, coast off the plate borders) ([5441433](https://github.com/myarichuk/RoguelikeToolkit.World/commit/5441433d0f6d064d57cb14ccefea62da462f1fdb))
+* **core:** shear-aware boundaries with a soft gate, and oceanic-oceanic polarity ([6567619](https://github.com/myarichuk/RoguelikeToolkit.World/commit/6567619fa48e9d81b3504536c39c2aa61088975c))
+* **core:** split the default world into separate continents ([be1dc1d](https://github.com/myarichuk/RoguelikeToolkit.World/commit/be1dc1d4961c1aeea7d05a8b62ae93a21ce467d8))
+* **core:** stop small worlds from coming out mostly land ([fbb0c55](https://github.com/myarichuk/RoguelikeToolkit.World/commit/fbb0c55012875fd3a49108128e2659c64fb43de5))
+
+
+### Performance Improvements
+
+* **core:** sort each drainage routing once, with packed keys ([7a9e21f](https://github.com/myarichuk/RoguelikeToolkit.World/commit/7a9e21f6fd30c55473399376adcfc40b3022d912))
+
 ## [2.0.1](https://github.com/myarichuk/RoguelikeToolkit.World/compare/v2.0.0...v2.0.1) (2026-10-13)
 
 
