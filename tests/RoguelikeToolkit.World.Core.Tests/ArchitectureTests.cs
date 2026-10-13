@@ -140,6 +140,14 @@ public sealed class ArchitectureTests(ITestOutputHelper output)
         return edges;
     }
 
+    /// <summary>"HydrologyStage.Catalogs.cs" is a part of type HydrologyStage: waivers are per type, not per partial file.</summary>
+    private static string TypeNameOf(string relPath)
+    {
+        var name = Path.GetFileNameWithoutExtension(relPath);
+        var dot = name.IndexOf('.');
+        return dot < 0 ? name : name[..dot];
+    }
+
     private static List<SourceFile> SourceFiles([CallerFilePath] string here = "")
     {
         var core = Path.GetFullPath(Path.Combine(Path.GetDirectoryName(here)!, "..", "..", "src", "RoguelikeToolkit.World.Core"));
@@ -150,7 +158,7 @@ public sealed class ArchitectureTests(ITestOutputHelper output)
             var rel = Path.GetRelativePath(core, path).Replace('\\', '/');
             if (rel.StartsWith("obj/") || rel.StartsWith("bin/") || rel.StartsWith("Internal/")) continue;
             var slash = rel.IndexOf('/');
-            list.Add(new SourceFile(slash < 0 ? Root : rel[..slash], Path.GetFileNameWithoutExtension(rel), File.ReadAllText(path)));
+            list.Add(new SourceFile(slash < 0 ? Root : rel[..slash], TypeNameOf(rel), File.ReadAllText(path)));
         }
         return list;
     }

@@ -280,6 +280,15 @@ afternoon; Phase 3 is the first one that touches downstream code.
 - Waivers burned down 25 to 20: addresses (`MapAddress`, `MapTier`, `PlanetHex`, `RegionRef`, `LocalRef`) and `MapBounds` moved to `Topology`; `SpatialIndex`/`FeatureKind` moved to a new `Queries` slice (rank 5). Remaining waivers are the pipeline's AOT hooks, `UserEditInfo`, Hydrology/Features and the aggregators.
 - Golden hashes identical; tests as baseline (Core 548 + the same 2 pre-existing failures).
 
+### Phase 5 - done
+- **`FantasyNameGenerator`** (946 lines) is a 201-line public facade (configuration, catalog queries, `Generate*`). Assembly lives in internal `PersonNameBuilder` / `PlaceNameBuilder`, selection in `MorphemePicker` (incl. the `RootSet` stutter guard), string/gloss/script helpers in `NameText`. Bodies were moved verbatim by a brace-aware script; call sites use `using static`.
+- **`WorldDataStore`** (651 -> 379): tile geometry (bucket index, nearest-tile search, adjacency, icosphere build, per-size cache) is now the internal, immutable `Topology.TileGrid`. The store keeps layers, allocation and the file format, and delegates `GetTileIndex*` / `GetAdjacent`.
+- **`EntityStore`** (567 -> 138) is `partial`: lifecycle, `.Persistence` (snapshot + delta formats) and `.Columns`. A separate serializer class would have meant exposing slot state, so the split is by file, not by type.
+- **`ErosionGenerationStage`** (539 -> 226) and **`HydrologyStage`** (449 -> 254) are `partial`, one file per process (`.Aeolian`, `.Glacial`, `.Fluvial`, `.Catalogs`). The passes read the stage's tunables and the fluvial pass is hot, so no options-object copy or extra call boundary was introduced.
+- `ArchitectureTests` now keys waivers by type: `X.Part.cs` counts as `X`.
+- **Deliberately not split:** `ClimateStage.Run` (190 lines whose phases share a dozen locals; splitting means state plumbing in the hottest loop) and `Hydrography` (cohesive static algorithm set). `World` (275 lines) was never a giant.
+- **Benchmarks (Release, net10.0, ShortRun, Xeon 2.1 GHz x4):** allocations are byte-identical everywhere. Size-6 build 729 -> 682 ms, size-3 9.3 -> 10.3 ms (both inside the run-to-run error). Stages (us): Tectonics 740/837, Elevation 395/384, Climate 2574/2659, Erosion 1816/1838, Hydrology 479/434, Biomes 114/123. `GetTileIndex` 903 -> 815 ns, `GetAdjacent` 8.4 -> 6.6 ns. Entity snapshot 7.24 -> 7.58 ms, delta 1.76 -> 1.82 ms.
+
 ## 8. Risks / things I have not verified yet
 
 - **Hidden cycles.** I have not computed the real type-level dependency graph; the layering in section 2 is inferred from
