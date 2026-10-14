@@ -2,7 +2,7 @@
 
 Fantasy name generation: culture/race data (embedded YAML in `Data/`), morpheme-based person and place names, and lint.
 
-Namespace `RoguelikeToolkit.World.Core.Names`, layer rank 1 (see `docs/ARCHITECTURE.md` and `ArchitectureTests`).
+Namespace `RoguelikeToolkit.World.Core.Names`, layer rank 5 (see `docs/ARCHITECTURE.md` and `ArchitectureTests`).
 
 ## Contents
 
@@ -10,6 +10,7 @@ Namespace `RoguelikeToolkit.World.Core.Names`, layer rank 1 (see `docs/ARCHITECT
 - **PersonNameBuilder, PlaceNameBuilder, MorphemePicker, NameText (internal)**: Assembly, selection and text helpers behind the facade.
 - **NameDataStore, CultureData, Cultures, FantasyRaces, PlaceKinds**: Data model and catalogs.
 - **NameLint**: Quality checks over generated names.
+- **FantasyRaces**: Kept as a shim; the generated folk index (`PeoplesStore.FolkKeys`) is the folk registry.
 
 ## Rules
 

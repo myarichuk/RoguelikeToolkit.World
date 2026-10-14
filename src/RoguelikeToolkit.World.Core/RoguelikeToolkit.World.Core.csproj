@@ -42,6 +42,7 @@
 
   <ItemGroup>
     <EmbeddedResource Include="Names\Data\*.yaml"/>
+    <EmbeddedResource Include="Peoples\Data\**\*.yaml"/>
     <EmbeddedResource Include="Localization\*.yaml"/>
   </ItemGroup>
 

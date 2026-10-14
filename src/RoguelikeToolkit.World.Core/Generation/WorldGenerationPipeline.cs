@@ -308,7 +308,7 @@ public class WorldGenerationPipeline : IDisposable
     /// <summary>Runs every stage in order against <paramref name="map"/> after validating contracts and clearing layers.</summary>
     /// <param name="map">Map whose store has every declared layer registered.</param>
     /// <exception cref="InvalidOperationException">A contract conflict, or a declared layer that is not registered in the map's store.</exception>
-    public void Execute(WorldMap map) => Execute(map, int.MinValue);
+    public void Execute(WorldMap map) => Execute(map, int.MinValue, int.MaxValue, null);
 
     /// <summary>
     /// Re-runs the pipeline from the first stage whose order is at least <paramref name="fromOrder"/>,
@@ -318,9 +318,38 @@ public class WorldGenerationPipeline : IDisposable
     /// full run would clear them, restricted to the stages that run, so the result is identical to a
     /// full <see cref="Execute(WorldMap)"/> on the same seed and inputs.
     /// </summary>
-    public void ExecuteFrom(WorldMap map, int fromOrder) => Execute(map, fromOrder);
+    public void ExecuteFrom(WorldMap map, int fromOrder) => Execute(map, fromOrder, int.MaxValue, null);
+    /// <summary>
+    /// Runs the stages whose order lies in [<paramref name="fromOrder"/>, <paramref name="toOrder"/>] against <paramref name="map"/>,
+    /// keeping every layer the out-of-range stages wrote. This is how <see cref="World.RegenerateHistory"/> re-runs only the history
+    /// band: the physics layers survive untouched. Layers are cleared exactly as a full run would clear them, restricted to the stages
+    /// that run. Throws <see cref="ArgumentOutOfRangeException"/> when <paramref name="toOrder"/> is below <paramref name="fromOrder"/>.
+    /// </summary>
+    public void ExecuteRange(WorldMap map, int fromOrder, int toOrder) => Execute(map, CheckedRange(fromOrder, toOrder), toOrder, null);
+    /// <summary>
+    /// Runs the stages whose order lies in [<paramref name="fromOrder"/>, <paramref name="toOrder"/>] except the stages
+    /// <paramref name="skip"/> selects, keeping every layer the skipped stages wrote. Throws <see cref="ArgumentOutOfRangeException"/>
+    /// when <paramref name="toOrder"/> is below <paramref name="fromOrder"/> and <see cref="ArgumentNullException"/> when
+    /// <paramref name="skip"/> is null.
+    /// </summary>
+    public void ExecuteRange(WorldMap map, int fromOrder, int toOrder, Predicate<IWorldGeneratorStage> skip)
+    {
+        ArgumentNullException.ThrowIfNull(skip);
+        Execute(map, CheckedRange(fromOrder, toOrder), toOrder, skip);
+    }
+    /// <summary>
+    /// Re-runs the pipeline from the first stage whose order is at least <paramref name="fromOrder"/>, except the stages
+    /// <paramref name="skip"/> selects. Layers written only by skipped stages are kept, so skipping the history band (as
+    /// <see cref="World.Recompute"/> does) leaves the history catalog's tile inputs intact. Throws <see cref="ArgumentNullException"/>
+    /// when <paramref name="skip"/> is null.
+    /// </summary>
+    public void ExecuteFromExcept(WorldMap map, int fromOrder, Predicate<IWorldGeneratorStage> skip)
+    {
+        ArgumentNullException.ThrowIfNull(skip);
+        Execute(map, fromOrder, int.MaxValue, skip);
+    }
 
-    private void Execute(WorldMap map, int fromOrder)
+    private void Execute(WorldMap map, int fromOrder, int toOrder, Predicate<IWorldGeneratorStage>? skip)
     {
         // Fail fast on plugin collisions before mutating anything. Ordering +
         // validation are cached so steady-state Execute stays allocation-free.
@@ -366,34 +395,42 @@ public class WorldGenerationPipeline : IDisposable
                 throw new InvalidOperationException(
                     $"Stage '{stageName}' writes layer '{layer.Name}' but it is not registered. Call RegisterLayer<{layer.Name}>() before Allocate().");
         }
-        foreach (var layer in ClearListFor(fromOrder))
+        foreach (var layer in ClearListFor(fromOrder, toOrder, skip))
             map.DataStore.ClearLayer(layer);
         for (int i = 0; i < _orderedCache.Count; i++)
         {
-            if (_orderOfCache[i] < fromOrder) continue;
-            _orderedCache[i].Execute(map);
+            if (_orderOfCache[i] < fromOrder || _orderOfCache[i] > toOrder) continue;
+            if (skip == null || !skip(_orderedCache[i])) _orderedCache[i].Execute(map);
         }
     }
 
-    // Same rule as the full-run list (a layer is cleared by its first writer that does not read it),
-    // evaluated over only the stages that will run: a layer written by a skipped stage and merely
-    // rewritten downstream (read-modify-write) must survive.
-    private List<Type> ClearListFor(int fromOrder)
+    // Validates an [fromOrder, toOrder] execution range, returning fromOrder.
+    private static int CheckedRange(int fromOrder, int toOrder)
     {
-        if (fromOrder == int.MinValue) return _clearCache;
-        if (_clearFromCache.TryGetValue(fromOrder, out var cached)) return cached;
+        if (toOrder < fromOrder) throw new ArgumentOutOfRangeException(nameof(toOrder), toOrder, $"toOrder {toOrder} is below fromOrder {fromOrder}.");
+        return fromOrder;
+    }
+
+    // Same rule as the full-run list (a layer is cleared by its first writer that does not read it),
+    // evaluated over only the stages that will run: a layer written by a skipped or out-of-range stage
+    // and merely rewritten downstream (read-modify-write) must survive.
+    private List<Type> ClearListFor(int fromOrder, int toOrder, Predicate<IWorldGeneratorStage>? skip)
+    {
+        if (fromOrder == int.MinValue && toOrder == int.MaxValue && skip == null) return _clearCache;
+        if (skip == null && toOrder == int.MaxValue && _clearFromCache.TryGetValue(fromOrder, out var cached)) return cached;
         var list = new List<Type>();
         var written = new HashSet<Type>();
         for (int i = 0; i < _orderedCache.Count; i++)
         {
-            if (_orderOfCache[i] < fromOrder) continue;
+            if (_orderOfCache[i] < fromOrder || _orderOfCache[i] > toOrder) continue;
             var stage = _orderedCache[i];
+            if (_orderOfCache[i] > toOrder || (skip != null && skip(stage))) continue;
             var stageReads = StageMetadata.GetReads(stage);
             foreach (var w in StageMetadata.GetWrites(stage))
                 if (written.Add(w) && Array.IndexOf(stageReads, w) < 0)
                     list.Add(w);
         }
-        _clearFromCache[fromOrder] = list;
+        if (skip == null && toOrder == int.MaxValue) _clearFromCache[fromOrder] = list;
         return list;
     }
 }

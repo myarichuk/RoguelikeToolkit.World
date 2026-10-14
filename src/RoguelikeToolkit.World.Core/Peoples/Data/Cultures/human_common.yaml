@@ -1,0 +1,17 @@
+Key: human_common
+DisplayName: "Human · Common"
+NamingTable: fantasy_common
+Subsistence: agrarian
+LineageDefault: Patrilineal
+Xenophobia: 30
+HierarchyClaim: 40
+Collectivism: 50
+Honor: 50
+FaithForm: polytheism
+MixedNaming: Hybrid
+DominantShareThreshold: 0.75
+OpennessOffset: 0
+ConscientiousnessOffset: 0
+ExtraversionOffset: 0
+AgreeablenessOffset: 0
+NeuroticismOffset: 0

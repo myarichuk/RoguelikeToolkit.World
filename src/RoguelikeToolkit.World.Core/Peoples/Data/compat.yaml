@@ -1,0 +1,4 @@
+# Pairwise offspring rules. Unlisted pairs default to Blend; a folk is always
+# blend-compatible with itself, so no row is needed for those.
+Rules:
+  - {FolkA: demon, FolkB: angel, Rule: Sterile}

@@ -2,6 +2,7 @@ using RoguelikeToolkit.World.Core.Biomes;
 using RoguelikeToolkit.World.Core.Climate;
 using RoguelikeToolkit.World.Core.Elevation;
 using RoguelikeToolkit.World.Core.Generation;
+using RoguelikeToolkit.World.Core.History;
 using RoguelikeToolkit.World.Core.Hydrology;
 using RoguelikeToolkit.World.Core.Lithosphere;
 using RoguelikeToolkit.World.Core.Settlement;
@@ -27,6 +28,8 @@ public sealed class WorldBuilder
     private Action<ErosionGenerationStage>? _erosionConfig;
     private bool _userEdits;
     private bool _landUse;
+    private bool _history = true;
+    private readonly HistoryContext _historyConfig = new();
     private bool _climateRefresh = true;
     private bool _islandChains = true;
     private bool _balancedPlates = true;
@@ -188,9 +191,20 @@ public sealed class WorldBuilder
     public WorldBuilder WithUserEdits() { _userEdits = true; return this; }
 
     /// <summary>
+    /// Configures the history simulation (turn length, span, per-turn budgets, peoples roster) through
+    /// <paramref name="configure"/>; history is on by default. The same seed and configuration always
+    /// produce the same catalog bytes.
+    /// </summary>
+    public WorldBuilder WithHistory(Action<HistoryContext>? configure = null) { _history = true; configure?.Invoke(_historyConfig); return this; }
+
+    /// <summary>Skips the history stages (orders 26..91); the world still carries an empty <c>History</c> catalog.</summary>
+    public WorldBuilder WithoutHistory() { _history = false; return this; }
+
+    /// <summary>
     /// Adds the land-use layers and their two framing stages: <see cref="LandCapacityInfo"/> (what each tile
     /// could support, order 25) and <see cref="LandUseInfo"/> (what is decided to be done with it), which starts
-    /// empty and is filled by the allocation stages you add with <see cref="AddStage"/> at orders 26..98.
+    /// empty and is filled by the allocation stages you add with <see cref="AddStage"/> at orders 26..98
+    /// (history occupies 26..28 and 91 when enabled, so give allocation stages other orders).
     /// <see cref="LandUseResolveStage"/> (99) then applies hand-painted pins. Implies <see cref="WithUserEdits"/>.
     /// Off by default: a default world carries no people, and costs nothing. Land use is never read by the
     /// climate, erosion, hydrology or biome stages, so it cannot change them.
@@ -217,7 +231,24 @@ public sealed class WorldBuilder
         }
         map.DataStore.Allocate();
 
+        HistoryCatalog? history = null;
         var pipeline = new WorldGenerationPipeline();
+        if (_history)
+        {
+            history = new HistoryCatalog(_seed);
+            map.SetAttachment(history);
+            map.SetAttachment(_historyConfig);
+            pipeline.AddStage(new CultureSeedStage());
+            pipeline.AddStage(new PolityFormStage());
+            pipeline.AddStage(new HistoryEventsStage());
+            pipeline.AddStage(new TradeRoadStage());
+            pipeline.AddStage(new PopulationStage());
+            pipeline.AddStage(new WarStage());
+            pipeline.AddStage(new ConquestStage());
+            pipeline.AddStage(new RebellionStage());
+            pipeline.AddStage(new ExchangeStage());
+            pipeline.AddStage(new CityHistoryProjectStage());
+        }
         HydrologyStage? hydrologyStage = null;
         PlanetParameters planet = new PlanetParameters();
         float riverScale = 1f;
@@ -262,6 +293,7 @@ public sealed class WorldBuilder
         pipeline.Execute(map);
 
         var world = new World(map, _seed) { Planet = planet };
+        world.History = history ?? new HistoryCatalog(_seed);
         world.Attach(pipeline, hydrologyStage?.MaxRivers ?? new HydrologyStage().MaxRivers, riverScale);
         world.PopulateFeatureCatalogs();
         world.RebuildIndex();

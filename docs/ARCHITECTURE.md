@@ -201,9 +201,11 @@ with its contents and rules. `ArchitectureTests` enforces namespace == folder, o
 | 6 | *(root)* | `World`, `WorldBuilder`, `PlanetParameters`, `TileHit`, `IInsolationModel`, `TidallyLockedInsolation` |
 | 5 | [`Sites`](../src/RoguelikeToolkit.World.Core/Sites/README.md) | injector pipeline, `SiteCatalog`, built-in injectors |
 | 5 | [`Integration`](../src/RoguelikeToolkit.World.Core/Integration/README.md) | game-owned state hooks: `QueryOptions`, history, materialization overrides |
+| 5 | [`Names`](../src/RoguelikeToolkit.World.Core/Names/README.md) | fantasy name generation (leaf renderer over actors/peoples/history tags) |
 | 5 | [`Queries`](../src/RoguelikeToolkit.World.Core/Queries/README.md) | `SpatialIndex`, `FeatureKind` |
 | 4 | [`Hierarchy`](../src/RoguelikeToolkit.World.Core/Hierarchy/README.md) | region/local derivation: `RegionMaps`, handles, `ParentContext`, `TerrainOrientation` |
 | 4 | [`Features`](../src/RoguelikeToolkit.World.Core/Features/README.md) | sparse catalogs (rivers, water bodies, ranges), `TileFeatures`, WKT export |
+| 4 | `History` | history simulation catalog (polities, events, ownership); lands in P2 of the history plan |
 | 3 | [`Tectonics`](../src/RoguelikeToolkit.World.Core/Tectonics/README.md) | plates, boundaries, partitioners |
 | 3 | [`Elevation`](../src/RoguelikeToolkit.World.Core/Elevation/README.md) | elevation and erosion stages |
 | 3 | [`Climate`](../src/RoguelikeToolkit.World.Core/Climate/README.md) | climate model, ocean currents, sea ice, glaciology |
@@ -212,10 +214,12 @@ with its contents and rules. `ArchitectureTests` enforces namespace == folder, o
 | 3 | [`Lithosphere`](../src/RoguelikeToolkit.World.Core/Lithosphere/README.md) | deposits, geology, island chains |
 | 3 | [`Settlement`](../src/RoguelikeToolkit.World.Core/Settlement/README.md) | land capacity/use layers, city-site scoring |
 | 2 | [`Generation`](../src/RoguelikeToolkit.World.Core/Generation/README.md) | pipeline, stage contracts, discovery, plugin loading |
+| 2 | [`Peoples`](../src/RoguelikeToolkit.World.Core/Peoples/README.md) | folk + culture data (`FolkDef`, `CultureDef`), compat rules |
 | 1 | [`Topology`](../src/RoguelikeToolkit.World.Core/Topology/README.md) | icosphere, `TileGrid`, hex grids, addresses, bounds |
 | 1 | [`Storage`](../src/RoguelikeToolkit.World.Core/Storage/README.md) | `WorldDataStore`, memory-mapped layers, user edits |
 | 1 | [`Entities`](../src/RoguelikeToolkit.World.Core/Entities/README.md) | `EntityStore`, columns, population grid |
-| 1 | [`Names`](../src/RoguelikeToolkit.World.Core/Names/README.md) | fantasy name generation and data |
+| 1 | [`Actors`](../src/RoguelikeToolkit.World.Core/Actors/README.md) | simulated people: handles, OCEAN traits, adult gate |
+| 1 | [`Lineage`](../src/RoguelikeToolkit.World.Core/Lineage/README.md) | descent math: ancestry shares, implied status, compatibility |
 | 1 | [`Localization`](../src/RoguelikeToolkit.World.Core/Localization/README.md) | locale tables |
 | 0 | [`Primitives`](../src/RoguelikeToolkit.World.Core/Primitives/README.md) | `Rng`, noise, vectors, `StableTypeId`; depends on nothing |
 

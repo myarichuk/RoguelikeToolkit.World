@@ -19,8 +19,8 @@ Rank-table changes (`ArchitectureTests.Rank`, land in P0 so later steps compile 
 
 - `Names` moves from rank 1 to above `Peoples`/`History` (today only `AotYamlObjectFactory` references it, so the move is cheap). `Actors`, `Lineage` = 1 (beside `Entities`); `Peoples` = 2; `History` = 4 (beside `Features`).
 - `History` reads `Settlement`/`Hydrology`/`Climate` (rank 3) — intended downward dependency; cities are history's input.
-- `Settlement` (rank 3) must never reference `History` (rank 4). `CitySiteScorer` consumes `IHistoricalContext` (rank 5, existing waiver); `History` implements it. No new waivers.
-- One history surface: `HistoryCatalog` implements `IHistoricalContext` (tile modifiers + historic sites) and extends it via new read interfaces in `Integration`; a game-supplied implementation still replaces it. No second source of tile history.
+- `Settlement` (rank 3) must never reference `History` (rank 4). `CitySiteScorer` consumes `IHistoricalContext` (rank 5, existing waiver); `History` implements it. This needs exactly one new waiver: `History->Integration` (catalog implements the hook).
+- One history surface: `HistoryCatalog` implements `IHistoricalContext` (tile modifiers + historic sites) and extends it via new read interfaces in `Integration` (kept there so `Settlement` gains no new slice edge — already waived); a game-supplied implementation still replaces it. No second source of tile history.
 
 Current seams: `FantasyRaces` + `RaceTables` bind folk to one table; `PersonNameBuilder:130-140` hardcodes two half-bloods; `CultureData` holds naming + `LineageDefault`; culture assignment is `hash2(seed,plate)%n` in editor `features.ts` / `Editor.nameRequestAt`; injectors emit opaque `NameSeed`; `CitySiteScorer` ranks geography only; `IHistoricalContext` never generates history; no owner layer, no `HistoryCatalog`; orders 26–98 free before `LandUse 99`.
 
@@ -53,7 +53,7 @@ Scope tags: **[CORE]** = `RoguelikeToolkit.World.Core` library (and its tests); 
 
 - New `src/.../Actors/` (rank 1–2, beside `Entities`): `ActorId`, `Actor` (5 OCEAN bytes rolled once from `Rng.Create(seed,actorId)` vs prior, house id, adult flag from folk maturation age, faith id), `Ancestry[{folk,share}]` (top 2–3 define implied status), `Compatibility` matrix + `blend|dominant|sterile` rule. Adult gate enforced here. No geography, no names.
 - New `src/.../Peoples/` (data only): `FolkDef` (`sapience full|instinct|setting`, `embodiment`, habitat affinity, lifespan/maturation, `r`, personality prior as low/balanced/high weights, compat group) + `CultureDef` (`namingTable` ref to existing `CultureData` key, subsistence archetype, lineage default, values: xenophobia/hierarchy-claim/collectivism/honor, faith form, expression offsets, mixed-naming + hypodescent threshold). YAML under `Names/Data` migrated: one human + one non-human folk first; demons `instinct` (titles only), devils `full`, elementals flag-per-setting.
-- Update `ArchitectureTests.Rank` per the rank-table changes above (new slices + `Names` move), no new waivers.
+- Update `ArchitectureTests.Rank` per the rank-table changes above (new slices + `Names` move), plus exactly one new waiver (`History->Integration`).
 - Prerequisite: land or park the uncommitted `Names/Data` YAML and `NameQualityTests` edits before migrating schemas.
 - AOT/WASM: register `FolkDef`/`CultureDef` in `AotYamlObjectFactory` and verify trimming (`DynamicDependency`) for plugin discovery.
 - Change `NameDataStore` validation for new schemas; deprecate `FantasyRaces.All` toward generated folk index (keep shims, no break).
@@ -72,16 +72,17 @@ Scope tags: **[CORE]** = `RoguelikeToolkit.World.Core` library (and its tests); 
 - New `src/.../History/` (rank 4, beside `Features`): `HistoryCatalog` managed on `World` (polities, settlements + tile-ownership map, roads, actors roster refs, events append-only, faiths, institutions, deltas); implements `IHistoricalContext`. `IHistoryPlugin : IWorldGeneratorStage` with `Precondition/Apply`; `HistoryContext` (fixed turn default 10y configurable; per-turn budget N decisions / M emergences / K events in deterministic polity order).
 - RNG scheme: every draw uses `Rng.Create(seed, hash(stage, turn, polityId|actorId, purpose))` — no shared stream, so operator order never changes outcomes. No floating-point accumulation across unordered iteration.
 - Change `Generation/StageOrder.cs`: add `CultureSeed 26, PolityForm 27, HistoryEvents 28–90, CityHistoryProject 91`. `PolityForm` seeds kingdom / merchant-republic / loose-association / horde from capacity + water + deposits.
-- `World.Recompute` policy (decide here): history stages are skipped on recompute and the catalog is marked stale; re-run is explicit/lazy. A map edit forks the timeline (`forkedAt`, keep log, re-resolve territory). Add a user-override layer (rename polity, pin border) that survives forks.
+- `World.Recompute` policy (pinned): default `Recompute` re-runs orders 15–25 plus 99, skips history stages 26–91, keeps the old `HistoryCatalog` readable, and sets a `Stale` flag. A full resim is explicit via a separate call (e.g. `RegenerateHistory`, lazy or eager). A map edit forks the timeline: the event log stays append-only, `forkedAt` advances only when tile ownership actually changed (so null edits do not flicker the editor fork marker), and only the spatial projection is re-resolved (polity territory, city habitability, drowned/landlocked sites) — causes and dates are never rewritten. A user-override input layer beside `UserEditInfo` (rename polity, pin border; no stage writes it) survives both recompute and fork and is re-applied after territory re-resolution. Determinism: same seed, config, edits, and override layer produce the same catalog bytes; no-edit recompute is a no-op including history.
 - Persistence: `HistoryCatalog` round-trips through `Storage` with a schema version; event log has a configurable cap (compaction beyond it).
 - Perf budget: full history over the default span within a stated bound (set after the spike; must also hold under WASM).
 - Validate: text providers stubbed → identical event log; same `(seed, stage set)` twice → byte-identical catalog; round-trip test.
 
-### P2b [CORE] — Conflict operators
+### P2b [CORE] — Conflict operators (landed)
 
 - Each a plugin: War, Conquest (culture overlay), Rebellion (distance + oppression + tightness), TradeRoad builder (surplus-complementary river/coast/low-danger edges; cut in war → pressure both sides), Exchange (road-volume diffusion: loanwords, openness drift).
 - People/time: logistic growth `r` vs `LandCapacity` K → pressure; generations-per-folk in turns (human ~3, dwarf ~8, elf ~30); succession and trait drift tick in turns.
 - Validate: budget test (noisy war starves nothing); no operator reads another's RNG draws; perf budget holds.
+- Landed as: War (50), Conquest overlay (60), Rebellion (70), TradeRoad builder (30; cut in war → pressure both sides), Exchange (80), plus Population (32) for people/time — all looping turns 1..`TurnCount`-1 behind the driver (28). Annual-`r` compounded per turn vs K (biome-surplus fallback); generations human 3 / dwarf 8 via lifespan power law; successions per generation; trait drift via Exchange openness (±20). Per-operator per-turn ledgers (decisions: war/conquest; emergences: roads/rebellion; exchange: none). Catalog schema v2; battlefields project with danger +2. Tests: starved-war isolation, determinism, round-trip.
 
 ### P2c [CORE] — Treaty, faith, optionals
 
@@ -110,6 +111,13 @@ Scope tags: **[CORE]** = `RoguelikeToolkit.World.Core` library (and its tests); 
 - Change `features.ts` / `Editor.nameRequestAt`: drop plate-hash culture styles (hash stays as fallback); send ids+tags.
 - New history panel plugin: select polity (territory overlay), list its cities, city timeline; fork-marker display after a map edit; user overrides (rename polity, pin border) via the Core override layer.
 - Validate: Vitest for engine/protocol changes; Playwright E2E (`e2e/*.cjs`) generate → select polity → cities + timeline render.
+
+## Next steps (agreed, unscoped — scope/effects to be pinned before implementation)
+
+- P2b+ point-wonder builder: temple/palace/granary/harbor as point sites with small modifiers + tags (same hook as battlefield sites). Triggers: faith form/holy status, war victories, treaty signings, famous actors. Famous = leaders, politicians, military officers, identified by role-fit scores + event participation. Wonders carry mechanical trait shifts that fade over time (e.g. a warlike monument pushes warlike up, then decays). Open: decay rate/shape, per-turn budget.
+- P2b+ imperial-road upgrade: raise exchange chance + small endpoint habitability on existing routes. Open: upgrade cost/trigger, stacking with base roads.
+- P2c+ treaty kinds: cooperation, tribute, others on top of the base P2c treaty (non-aggression/alliance). All kinds mechanical: culture propagation via travelers/trade plus cultural trait shifts (same fading-shift machinery as wonders). Open: effect + event/tag contract per kind.
+- Deferred: wall-style linear infrastructure — needs a border-crossing step in war targeting (walled borders lower the chance) plus maintenance/gates; flavor-only until then.
 
 ## Validation Plan
 

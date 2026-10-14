@@ -106,6 +106,13 @@ var name = FantasyNameGenerator.GeneratePerson(FantasyRaces.Dwarf, Cultures.Fant
 Check(!string.IsNullOrWhiteSpace(name.Text), "person name");
 foreach (var c in name.Text) Mix(c);
 
+// 4b. Peoples (embedded folk/culture YAML + compat rules load under trimming).
+var peoples = RoguelikeToolkit.World.Core.Peoples.PeoplesStore.Load();
+var dwarf = peoples.GetFolk("dwarf");
+Check(dwarf.MaturationYears == 50, "folk table");
+Check(!peoples.Compatibility.TryUnion("demon", "angel", out _), "compat table");
+foreach (var c in dwarf.Key + peoples.GetCulture("dwarven_clan").NamingTable) Mix(c);
+
 // 5. Entity store: spawn, snapshot, reload.
 var store = new EntityStore();
 var places = store.AddColumn<int>();

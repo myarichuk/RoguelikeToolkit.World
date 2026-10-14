@@ -25,11 +25,11 @@ public sealed class ArchitectureTests(ITestOutputHelper output)
     private static readonly Dictionary<string, int> Rank = new()
     {
         ["Primitives"] = 0,
-        ["Names"] = 1, ["Localization"] = 1, ["Topology"] = 1, ["Storage"] = 1, ["Entities"] = 1,
-        ["Generation"] = 2,
+        ["Actors"] = 1, ["Lineage"] = 1, ["Entities"] = 1, ["Localization"] = 1, ["Topology"] = 1, ["Storage"] = 1,
+        ["Generation"] = 2, ["Peoples"] = 2,
         ["Tectonics"] = 3, ["Elevation"] = 3, ["Climate"] = 3, ["Hydrology"] = 3, ["Biomes"] = 3, ["Lithosphere"] = 3, ["Settlement"] = 3,
-        ["Features"] = 4, ["Hierarchy"] = 4,
-        ["Sites"] = 5, ["Integration"] = 5, ["Queries"] = 5,
+        ["Features"] = 4, ["Hierarchy"] = 4, ["History"] = 4,
+        ["Sites"] = 5, ["Integration"] = 5, ["Queries"] = 5, ["Names"] = 5,
         [Root] = 6,
     };
 
@@ -62,6 +62,8 @@ public sealed class ArchitectureTests(ITestOutputHelper output)
         ["Settlement->Features:CitySiteScorer"] = "scorer consumes TileFeatures",
         ["Settlement->Integration:CitySiteScorer"] = "scorer consumes IHistoricalContext",
         ["Settlement->Sites:SettlementScoring"] = "scoring is shared with the settlement injector",
+        // The catalog is the one history surface: it implements the game-side hook (tile modifiers + historic sites).
+        ["History->Integration:HistoryCatalog"] = "HistoryCatalog implements IHistoricalContext",
     };
 
     [Fact]

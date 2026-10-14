@@ -3,6 +3,7 @@ using RoguelikeToolkit.World.Core.Elevation;
 using RoguelikeToolkit.World.Core.Features;
 using RoguelikeToolkit.World.Core.Generation;
 using RoguelikeToolkit.World.Core.Hierarchy;
+using RoguelikeToolkit.World.Core.History;
 using RoguelikeToolkit.World.Core.Hydrology;
 using RoguelikeToolkit.World.Core.Integration;
 using RoguelikeToolkit.World.Core.Lithosphere;
@@ -52,6 +53,8 @@ public sealed class World : IDisposable
     public DepositCatalog Deposits { get; } = new();
     /// <summary>Bucketed nearest-feature index, built after the catalogs are populated.</summary>
     public SpatialIndex Index { get; private set; } = null!;
+    /// <summary>Simulated history: polities, tile ownership, settlements, sites and the event log. Never null (empty when built with <see cref="WorldBuilder.WithoutHistory"/>); survives <see cref="Recompute"/>.</summary>
+    public HistoryCatalog History { get; internal set; } = new HistoryCatalog(0);
 
     // Kept so Recompute can re-run the stages downstream of an edit with the exact configuration
     // the world was built with.
@@ -92,18 +95,47 @@ public sealed class World : IDisposable
     /// reproduces the same world bit for bit, and with no edits it reproduces the generated one, so
     /// applying is idempotent and never double-erodes. Hydrology is global (a ridge can redirect a
     /// river basin away), so this is a whole-world action, not a per-brush-dab one.
+    /// History stages (orders 26..91) are skipped: the <see cref="History"/> catalog stays readable, only its
+    /// spatial projection is re-resolved (ownership, habitability, drowned sites), and
+    /// <see cref="HistoryCatalog.Stale"/> is set. A map edit that changes tile ownership forks the timeline
+    /// (append-only fork marker; causes and dates are never rewritten) while a null edit changes nothing.
+    /// A full history resimulation is explicit via <see cref="RegenerateHistory"/>.
     /// Not safe to run while another thread queries the world (see the class remarks).
     /// </summary>
     public void Recompute()
     {
         if (!Editable) throw new InvalidOperationException("Build the world with WithUserEdits() to recompute it.");
-        _pipeline!.ExecuteFrom(Map, StageOrder.Elevation);
+        _pipeline!.ExecuteRange(Map, StageOrder.Elevation, StageOrder.LandCapacity);
         Rivers.Rivers.Clear();
         WaterBodies.Bodies.Clear();
         Ranges.Features.Clear();
         Deposits.Deposits.Clear();
         PopulateFeatureCatalogs();
         RebuildIndex();
+        if (History.CultureSeeded)
+        {
+            History.Respatialize(Map.DataStore);
+            History.Stale = true;
+        }
+        _pipeline!.ExecuteRange(Map, StageOrder.CultureSeed, int.MaxValue, static s => s is IHistoryPlugin);
+    }
+
+    /// <summary>
+    /// Resimulates history from the current physics without touching a tile: clears the
+    /// <see cref="History"/> catalog (user renames and pins survive and are re-applied) and re-runs
+    /// only the history stages (orders 26..91), then clears the <see cref="HistoryCatalog.Stale"/> flag
+    /// and any fork marker. Deterministic in (seed, configuration, edits, overrides). User allocation
+    /// stages in the same band do not re-run (their land-use output would otherwise apply twice);
+    /// pair with <see cref="Recompute"/> (which preserves history) to redo everything.
+    /// Not safe to run while another thread queries the world (see the class remarks).
+    /// </summary>
+    public void RegenerateHistory()
+    {
+        if (_pipeline == null) throw new InvalidOperationException("This world was not built by WorldBuilder.");
+        History.Reset();
+        _pipeline.ExecuteRange(Map, StageOrder.CultureSeed, StageOrder.CityHistoryProject, static s => s is not IHistoryPlugin);
+        History.Stale = false;
+        History.ForkedAtTurn = null;
     }
 
     internal void PopulateFeatureCatalogs()

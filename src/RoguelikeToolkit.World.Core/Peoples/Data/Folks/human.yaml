@@ -1,0 +1,14 @@
+Key: human
+DisplayName: "Human"
+Sapience: Full
+Embodiment: humanoid
+HabitatAffinity: temperate
+LifespanYears: 80
+MaturationYears: 16
+GrowthR: 0.05
+CompatGroup: mammal
+OpennessPrior: balanced
+ConscientiousnessPrior: balanced
+ExtraversionPrior: balanced
+AgreeablenessPrior: balanced
+NeuroticismPrior: balanced

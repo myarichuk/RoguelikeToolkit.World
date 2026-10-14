@@ -1,0 +1,17 @@
+Key: dwarven_clan
+DisplayName: "Dwarf · Clan"
+NamingTable: dwarven
+Subsistence: artisan
+LineageDefault: Patrilineal
+Xenophobia: 60
+HierarchyClaim: 70
+Collectivism: 80
+Honor: 80
+FaithForm: ancestor
+MixedNaming: Dominant
+DominantShareThreshold: 0.75
+OpennessOffset: -10
+ConscientiousnessOffset: 10
+ExtraversionOffset: 0
+AgreeablenessOffset: 0
+NeuroticismOffset: 0

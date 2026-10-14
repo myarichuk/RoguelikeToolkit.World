@@ -1,0 +1,14 @@
+Key: dwarf
+DisplayName: "Dwarf"
+Sapience: Full
+Embodiment: humanoid
+HabitatAffinity: mountain
+LifespanYears: 350
+MaturationYears: 50
+GrowthR: 0.02
+CompatGroup: mammal
+OpennessPrior: low
+ConscientiousnessPrior: high
+ExtraversionPrior: low
+AgreeablenessPrior: balanced
+NeuroticismPrior: balanced

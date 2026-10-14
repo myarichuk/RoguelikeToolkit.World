@@ -32,6 +32,36 @@ public static class StageOrder
     /// <summary>Land capacity (settlement scoring input).</summary>
     public const int LandCapacity = 25;
 
+    /// <summary>Culture seeding: the peoples roster this world's history draws on. Fills the attached history catalog; writes no tile layer.</summary>
+    public const int CultureSeed = 26;
+
+    /// <summary>Polity formation: capitals, forms and tile ownership from capacity, water and deposits. Fills the attached history catalog; writes no tile layer.</summary>
+    public const int PolityForm = 27;
+
+    /// <summary>First order of the history-operator band (war, conquest and the other conflict operators plug in at 28..90). The turn driver lives here.</summary>
+    public const int HistoryEvents = 28;
+
+    /// <summary>Trade-road builder: opens surplus-complementary routes between capitals.</summary>
+    public const int TradeRoad = 30;
+
+    /// <summary>People and time: logistic growth, pressure, succession and trait-drift ticks.</summary>
+    public const int Population = 32;
+
+    /// <summary>War operator: raids between neighboring polities; severs roads, raises pressure.</summary>
+    public const int War = 50;
+
+    /// <summary>Conquest operator: resolves wars into culture overlays when the attacker is stronger.</summary>
+    public const int Conquest = 60;
+
+    /// <summary>Rebellion operator: far-flung, oppressed regions break away (bounded by the polity cap).</summary>
+    public const int Rebellion = 70;
+
+    /// <summary>Exchange operator: road-volume diffusion (loanwords, openness drift) along active routes.</summary>
+    public const int Exchange = 80;
+
+    /// <summary>City-history projection: polity capitals become settlements and historic sites. Last history order before the land-use allocation band closes.</summary>
+    public const int CityHistoryProject = 91;
+
     /// <summary>Final land-use resolution; always last.</summary>
     public const int LandUse = 99;
 }

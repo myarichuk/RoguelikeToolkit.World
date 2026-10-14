@@ -7,6 +7,7 @@ public class WorldMap : IDisposable
 {
     private readonly int _size;
     private readonly Dictionary<Type, object> _layers = new();
+    private readonly Dictionary<Type, object> _attachments = new();
 
     /// <summary>The backing store holding every layer's per-tile data.</summary>
     public WorldDataStore DataStore { get; }
@@ -37,6 +38,19 @@ public class WorldMap : IDisposable
         return null;
     }
 
+    /// <summary>Attaches a shared reference object for <typeparamref name="T"/> (for example the history catalog built alongside the map), replacing any earlier attachment of the same type. Attachments are not layers: they are never cleared or disposed by the map.</summary>
+    public void SetAttachment<T>(T value) where T : class
+    {
+        ArgumentNullException.ThrowIfNull(value);
+        _attachments[typeof(T)] = value;
+    }
+
+    /// <summary>Returns the object attached with <see cref="SetAttachment{T}"/> for <typeparamref name="T"/>, or null when there is none.</summary>
+    public T? GetAttachment<T>() where T : class
+    {
+        return _attachments.TryGetValue(typeof(T), out var value) ? (T)value : null;
+    }
+
     /// <summary>Disposes every registered layer view, forgets them, then disposes <see cref="DataStore"/>; spans taken from the store become invalid.</summary>
     public void Dispose()
     {
@@ -48,6 +62,7 @@ public class WorldMap : IDisposable
             }
         }
         _layers.Clear();
+        _attachments.Clear();
         DataStore.Dispose();
     }
 }

@@ -1,6 +1,7 @@
 using System.Diagnostics.CodeAnalysis;
 using RoguelikeToolkit.World.Core.Localization;
 using RoguelikeToolkit.World.Core.Names;
+using RoguelikeToolkit.World.Core.Peoples;
 using YamlDotNet.Serialization;
 using YamlDotNet.Serialization.ObjectFactories;
 
@@ -20,6 +21,11 @@ internal sealed class AotYamlObjectFactory : DefaultObjectFactory
     {
         if (type == typeof(CultureData)) return new CultureData();
         if (type == typeof(MorphemeYaml)) return new MorphemeYaml();
+        if (type == typeof(FolkDef)) return new FolkDef();
+        if (type == typeof(CultureDef)) return new CultureDef();
+        if (type == typeof(CompatData)) return new CompatData();
+        if (type == typeof(CompatData.CompatRule)) return new CompatData.CompatRule();
+        if (type == typeof(List<CompatData.CompatRule>)) return new List<CompatData.CompatRule>();
         if (type == typeof(LocaleData)) return new LocaleData();
         if (type == typeof(List<MorphemeYaml>)) return new List<MorphemeYaml>();
         if (type == typeof(List<string>)) return new List<string>();
@@ -32,6 +38,10 @@ internal sealed class AotYamlObjectFactory : DefaultObjectFactory
     /// <summary>Deserializer for Core's embedded YAML (null naming convention, unmatched properties ignored).</summary>
     [DynamicDependency(DynamicallyAccessedMemberTypes.PublicProperties | DynamicallyAccessedMemberTypes.PublicParameterlessConstructor, typeof(CultureData))]
     [DynamicDependency(DynamicallyAccessedMemberTypes.PublicProperties | DynamicallyAccessedMemberTypes.PublicParameterlessConstructor, typeof(MorphemeYaml))]
+    [DynamicDependency(DynamicallyAccessedMemberTypes.PublicProperties | DynamicallyAccessedMemberTypes.PublicParameterlessConstructor, typeof(FolkDef))]
+    [DynamicDependency(DynamicallyAccessedMemberTypes.PublicProperties | DynamicallyAccessedMemberTypes.PublicParameterlessConstructor, typeof(CultureDef))]
+    [DynamicDependency(DynamicallyAccessedMemberTypes.PublicProperties | DynamicallyAccessedMemberTypes.PublicParameterlessConstructor, typeof(CompatData))]
+    [DynamicDependency(DynamicallyAccessedMemberTypes.PublicProperties | DynamicallyAccessedMemberTypes.PublicParameterlessConstructor, typeof(CompatData.CompatRule))]
     [DynamicDependency(DynamicallyAccessedMemberTypes.PublicProperties | DynamicallyAccessedMemberTypes.PublicParameterlessConstructor, typeof(LocaleData))]
     public static IDeserializer CreateDeserializer() => new DeserializerBuilder()
         .WithObjectFactory(new AotYamlObjectFactory())

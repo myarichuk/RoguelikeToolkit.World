@@ -4,6 +4,10 @@ namespace RoguelikeToolkit.World.Core.Names;
 /// Fantasy ancestry keys. DarkElf is a generic folklore archetype, not Drow.
 /// Plain strings on purpose: new folk (e.g. "troll") can be added with a
 /// YAML-only drop, no code changes. See <see cref="Cultures"/> the same way.
+/// <remarks>Deprecated as the folk registry: the generated folk index
+/// (<see cref="RoguelikeToolkit.World.Core.Peoples.PeoplesStore.FolkKeys"/>) is the
+/// source of truth for which folk exist. This class stays as a shim so existing
+/// race keys keep compiling and producing identical names.</remarks>
 /// </summary>
 public static class FantasyRaces
 {
@@ -48,7 +52,7 @@ public static class FantasyRaces
     /// <summary>Air elementals (table <c>elemental_air</c>).</summary>
     public const string ElementalAir = "elemental_air";
 
-    /// <summary>Every shipped race key, in declaration order; YAML-added and runtime-registered races are not included (see <see cref="FantasyNameGenerator.AvailableRaces"/>).</summary>
+    /// <summary>Every shipped race key, in declaration order; YAML-added and runtime-registered races are not included (see <see cref="FantasyNameGenerator.AvailableRaces"/>). Kept as a shim; new code should read the generated folk index instead.</summary>
     public static readonly IReadOnlyList<string> All = new[]
     {
         Human, Dwarf, Halfling, Gnome, ElfHigh, ElfWood, ElfDark, Orc,
