@@ -1,5 +1,18 @@
 # Changelog
 
+## [3.1.0](https://github.com/myarichuk/RoguelikeToolkit.World/compare/v3.0.0...v3.1.0) (2026-10-14)
+
+
+### Features
+
+* **core:** history-first P1 - drift deltas and generalized mixed naming ([f5f8831](https://github.com/myarichuk/RoguelikeToolkit.World/commit/f5f8831e81c0da4b64d2e26435e79fcad8c85d57))
+* implementing history WIP ([518730d](https://github.com/myarichuk/RoguelikeToolkit.World/commit/518730d4a37053312060b9438e71e14c620fe79a))
+
+
+### Bug Fixes
+
+* bug fix and improvements pass ([3521f88](https://github.com/myarichuk/RoguelikeToolkit.World/commit/3521f88bc2a248545dcf0e7681758c791319973c))
+
 ## [3.0.0](https://github.com/myarichuk/RoguelikeToolkit.World/compare/v2.0.1...v3.0.0) (2026-10-13)
 
 
