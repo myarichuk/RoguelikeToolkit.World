@@ -66,6 +66,7 @@ public static class CitySiteScorer
 
         for (int i = 0; i < store.TileCount; i++)
         {
+            if (hasHydro && hydro[i].WaterBodyId >= 0) continue; // settlements stand on dry land, never on lake or sea water
             float h = hasElev ? elev[i].Height : 0f;
             if (h < filter.MinElevation || h > filter.MaxElevation) continue;
 

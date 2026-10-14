@@ -4,6 +4,7 @@ import { AddEntities, RemoveEntities } from '../commands/EntityCommands';
 import { CompositeCommand, type Command } from '../commands/Command';
 import type { StampEntity } from '../doc/types';
 import type { Camera } from '../render/Camera';
+import { hashString, mulberry32 } from '../core/rng';
 import { strokePoints } from './brushes';
 import type { PointerInput, Tool, ToolContext } from './Tool';
 
@@ -12,6 +13,18 @@ import type { PointerInput, Tool, ToolContext } from './Tool';
  * stroke (jittered inside the brush). Alt-drag erases stamps inside the brush. One undo step per
  * stroke; stamps appear live while painting.
  */
+/**
+ * One hand-scattered dab, pure in (seed, seq, x, y): the same stroke replays bit-identical
+ * stamps, so scatter is as reproducible as every other placement (see core/rng.ts). The disc
+ * is area-uniform (sqrt), matching the old Math.random version whose stream this replaces.
+ */
+export function scatterDraw(seed: number, seq: number, x: number, y: number, radius: number): { dx: number; dy: number; scale: number; flip: boolean } {
+  const rng = mulberry32(hashString(`${seed}:${seq}:${x.toFixed(3)},${y.toFixed(3)}`));
+  const a = rng() * Math.PI * 2, d = Math.sqrt(rng()) * radius;
+  // + 0 normalises a possible -0 (cosine times a zero radius) out of stored coordinates.
+  return { dx: Math.cos(a) * d + 0, dy: Math.sin(a) * d + 0, scale: 0.85 + rng() * 0.3, flip: rng() < 0.5 };
+}
+
 export class StampTool implements Tool {
   readonly id = 'stamp' as const;
   readonly cursor = 'copy';
@@ -56,12 +69,12 @@ export class StampTool implements Tool {
     const o = ctx.options;
     const variants = ctx.library.variants(o.asset);
     if (!variants) { ctx.status(`Unknown asset ${o.asset}`); return; }
-    const r = scatter ? o.radius * 0.6 : 0;
-    const a = Math.random() * Math.PI * 2, d = Math.sqrt(Math.random()) * r;
+    const seq = this.seq++;
+    const s = scatter ? scatterDraw(ctx.doc.settings.seed, seq, x, y, o.radius * 0.6) : null;
     const st: StampEntity = {
-      id: newId('st'), asset: o.asset, variant: (this.seq++ * 2654435761 >>> 0) % variants,
-      x: x + Math.cos(a) * d, y: y + Math.sin(a) * d, scale: o.stampScale * (scatter ? 0.85 + Math.random() * 0.3 : 1),
-      rotation: 0, flip: scatter && Math.random() < 0.5,
+      id: newId('st'), asset: o.asset, variant: (seq * 2654435761 >>> 0) % variants,
+      x: x + (s?.dx ?? 0), y: y + (s?.dy ?? 0), scale: o.stampScale * (s?.scale ?? 1),
+      rotation: 0, flip: s?.flip ?? false,
     };
     ctx.doc.stamps.add([st]);
     this.stroke!.added.push(st);

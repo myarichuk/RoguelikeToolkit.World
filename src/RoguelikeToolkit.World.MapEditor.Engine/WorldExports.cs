@@ -221,6 +221,16 @@ public static partial class WorldExports
         return result;
     }
 
+    /// <summary>Per-tile ponded water depth (0 on dry land and open sea); the editor carves lakes into its rasters from this.</summary>
+    [JSExport]
+    public static double[] LakeDepth()
+    {
+        var h = Current.Map.DataStore.GetSpan<HydrologyInfo>();
+        var result = new double[h.Length];
+        for (int i = 0; i < h.Length; i++) result[i] = h[i].LakeDepth;
+        return result;
+    }
+
     /// <summary><c>[count, (id, terminal, terminalBody, n, tiles...)...]</c>, downstream order.</summary>
     [JSExport]
     public static int[] Rivers()

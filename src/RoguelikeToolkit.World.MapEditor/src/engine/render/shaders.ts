@@ -54,7 +54,7 @@ void main() {
   oField = vec4(h, 0.0, 0.0, 1.0);
 }`;
 
-/** Land colors at 1 mu/texel: biome ids through the same warp, soft-blended by a small tap disk. */
+/** Land colors at 1 mu/texel: biome ids through the same warp, soft-blended by two noise-rotated tap rings averaged in linear space (an sRGB average darkens the mids into a muddy fringe). */
 export const FS_COLORIZE = `#version 300 es
 precision highp float;
 precision highp usampler2D;
@@ -72,12 +72,15 @@ void main() {
   vec2 mu = gl_FragCoord.xy;
   vec2 q = warp(mu);
   float a = hash3(vec3(mu, 7.0)) * 6.2831853;
-  vec3 c = pal(q) * 2.0;
+  vec3 acc = pal(q) * pal(q) * 2.0;
   for (int i = 0; i < 6; i++) {
     float t = a + float(i) * 1.0471976;
-    c += pal(q + vec2(cos(t), sin(t)) * 1.35);
+    vec2 o = vec2(cos(t), sin(t));
+    vec3 c0 = pal(q + o * 0.95);
+    vec3 c1 = pal(q - o * 2.1);
+    acc += c0 * c0 + 0.5 * c1 * c1;
   }
-  oColor = vec4(c / 8.0, 1.0);
+  oColor = vec4(sqrt(acc / 11.0), 1.0);
 }`;
 
 /**
@@ -220,6 +223,10 @@ void main() {
       }
     } else {
       vec3 land = texture(uColor, uv).rgb + uGrain * grain;
+      // Relief reads across biomes: high ground pales toward the paper, so a hill in
+      // plains and a hill in forest share a height cue no flat biome wash carries.
+      float hTopo = texture(uElev, uv).r;
+      land = mix(land, uPaper + uGrain * grain, smoothstep(0.40, 0.85, hTopo) * 0.45);
       land *= 1.0 + uShade * shadeOf(uField, uv, 1.0 / uFieldSize, 40.0);
       land = mix(land, land * vec3(0.86, 0.80, 0.70), exp(-d / 1.6) * uInnerCoast);
       col = land;

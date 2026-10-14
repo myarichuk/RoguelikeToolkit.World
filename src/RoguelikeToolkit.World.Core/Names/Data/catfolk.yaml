@@ -1,7 +1,7 @@
 Key: catfolk
 DisplayName: "Catfolk"
-EpithetChance: 10 # was 50 - that's why you got Mothwhisper Nightsinger double titles
-CompoundChance: 20 # was 40 - cats are short names
+EpithetChance: 10 # deed-names stay occasional; higher values stack double titles
+CompoundChance: 20 # short true-names; higher values grow long compounds
 LineageDefault: Matrilineal
 Provenance: original wandering tale-keepers; one short true-name, pride known by mother's name, deed-names only for elders
 Patronymic: false
@@ -24,7 +24,7 @@ GivenStems:
     - {Form: Sorrel, Gloss: sorrel-step}
     - {Form: Rowan, Gloss: rowan-climber}
     - {Form: Juniper, Gloss: juniper-leaper}
-    - {Form: Moth, Gloss: moth-eyed} # keep 2-3 English ones but short
+    - {Form: Moth, Gloss: moth-eyed}
 
 SecondStems:
     - {Form: ri, Gloss: little}

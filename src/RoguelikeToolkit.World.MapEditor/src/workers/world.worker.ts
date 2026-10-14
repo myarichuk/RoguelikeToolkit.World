@@ -25,6 +25,7 @@ interface EngineApi {
   Plates(): Arr;
   PlateDrift(): Arr;
   Flow(): Arr;
+  LakeDepth(): Arr;
   Climate(): Arr;
   LandCapacity(): Arr;
   SeaIce(): Arr;
@@ -126,13 +127,14 @@ function pull(e: EngineApi, p: GenerateParams, tileCount: number, timings: Recor
   timings.pullMs = performance.now() - t;
 
   t = performance.now();
-  const rasters = rasterize({ vectors, faces, heights, biomes }, MAP_W, MAP_H);
+  const lakeDepth = Float32Array.from(e.LakeDepth());
+  const rasters = rasterize({ vectors, faces, heights, biomes, lakeDepth }, MAP_W, MAP_H);
   timings.rasterMs = performance.now() - t;
 
   let features: WorldSnapshot['features'] = { features: [], rivers: [] };
   if (want.features) {
     t = performance.now();
-    features = extractFeatures({ seed: p.seed, vectors, faces, heights, biomes, flow, climate, tilePlate, ...catalogs, styles: chosen });
+    features = extractFeatures({ seed: p.seed, vectors, faces, heights, biomes, flow, climate, tilePlate, ...catalogs, waterPixels: rasters.waterPixels, styles: chosen });
     timings.featuresMs = performance.now() - t;
   }
 

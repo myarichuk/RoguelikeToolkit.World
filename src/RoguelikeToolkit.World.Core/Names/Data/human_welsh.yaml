@@ -11,7 +11,8 @@ PlaceJoin: Fuse
 # Feminine nouns (tagged fem) soft-mutate the adjective after them: Pont + du = Pontddu, Moel + mawr = Moelfawr.
 PlaceMutation: Soft
 PlaceFallback: false
-Banned: []
+# Dinas + aur fuses to "Dinasaur": ban the collision, the reroll picks another pairing.
+Banned: [dinasaur]
 GivenStems:
   - {Form: Bran, Gloss: raven, Tags: [masc]}
   - {Form: Owain, Gloss: young warrior, Tags: [masc]}

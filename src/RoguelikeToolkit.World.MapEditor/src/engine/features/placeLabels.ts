@@ -17,6 +17,30 @@ const PRIORITY: Record<string, number> = {
  * middle stretch of the river as a baseline path). Candidates are laid out with the real font,
  * and the first one whose bounds clear everything already placed wins. Wrap-aware.
  */
+/** Samples map elevation at a point (map units), e.g. `(x, y) => doc.elevationAt(x, y)`. */
+export type ElevationSampler = (x: number, y: number) => number;
+
+/**
+ * Share of an axis-aligned label footprint reading as land (elevation >= 0), sampled on an
+ * n×n grid of cell centers. Uniform water reads 0, uniform land reads 1, independent of n.
+ */
+export function labelLandFraction(sample: ElevationSampler, bounds: Rect, n: number): number {
+  const m = Math.max(1, Math.floor(n));
+  const w = bounds.x1 - bounds.x0, h = bounds.y1 - bounds.y0;
+  if (!(w > 0 && h > 0)) return sample((bounds.x0 + bounds.x1) / 2, (bounds.y0 + bounds.y1) / 2) >= 0 ? 1 : 0;
+  let land = 0;
+  for (let iy = 0; iy < m; iy++) {
+    const y = bounds.y0 + ((iy + 0.5) / m) * h;
+    for (let ix = 0; ix < m; ix++) {
+      if (sample(bounds.x0 + ((ix + 0.5) / m) * w, y) >= 0) land++;
+    }
+  }
+  return land / (m * m);
+}
+
+/** A sea/ocean candidate is usable only while it reads as mostly water. */
+const MAX_SEA_LAND_FRACTION = 0.4;
+
 export function placeLabels(doc: MapDocument, theme: Theme, fonts: FontLibrary, seed: number): LabelEntity[] {
   const feats = [...doc.features.all()].filter((f) => f.kind !== 'deposit' && f.name && PRIORITY[f.kind] !== undefined);
   // Weight normalization per kind (area labels grow with the feature).
@@ -48,6 +72,10 @@ export function placeLabels(doc: MapDocument, theme: Theme, fonts: FontLibrary, 
     const size = style.size * (style.sizeExp ? Math.max(0.6, Math.pow(rel, style.sizeExp)) : 1);
     for (const cand of candidates(f, size, doc, seed)) {
       const geo = layoutLabel(font, { text: f.name, size, spacing: style.spacing, uppercase: style.uppercase, ...cand });
+      // Sea and ocean names belong on water: refuse a candidate sprawling over land so a
+      // shifted fallback over open water wins. No usable water candidate means no label.
+      if ((f.kind === 'sea' || f.kind === 'ocean') &&
+        labelLandFraction((x, y) => doc.elevationAt(x, y), geo.bounds, 4) > MAX_SEA_LAND_FRACTION) continue;
       const pad = size * 0.25;
       const r = { x0: geo.bounds.x0 - pad, y0: geo.bounds.y0 - pad, x1: geo.bounds.x1 + pad, y1: geo.bounds.y1 + pad };
       // Area labels must stay roughly within their feature's extent.

@@ -6,6 +6,27 @@ export type HeightMode = 'raise' | 'lower' | 'smooth' | 'flatten' | 'roughen' | 
 
 export interface Dab { x: number; y: number; radius: number; strength: number; }
 
+/**
+ * Correlated edge noise in [0,1): two octaves of value noise over a ~3.5px lattice, pure in
+ * (seed, x, y). Per-texel white noise (hash2 directly) makes painted rims speckle like
+ * salt-and-pepper; this varies in blobby patches instead, so a stroke edge reads as a wobbly
+ * pen line rather than spray.
+ */
+export function edgeNoise(seed: number, x: number, y: number): number {
+  const base = vnoise(x / 3.5, y / 3.5, seed);
+  const detail = vnoise(x / 1.6 + 13.7, y / 1.6 + 7.3, seed ^ 0x5bd1e995);
+  return base * 0.7 + detail * 0.3;
+}
+
+function vnoise(x: number, y: number, seed: number): number {
+  const xi = Math.floor(x), yi = Math.floor(y);
+  let fx = x - xi, fy = y - yi;
+  fx = fx * fx * (3 - 2 * fx); fy = fy * fy * (3 - 2 * fy);
+  const h = (i: number, j: number) => hash2(seed, (i * 73856093) ^ (j * 19349663)) / 4294967296;
+  const a = h(xi, yi), b = h(xi + 1, yi), c = h(xi, yi + 1), d = h(xi + 1, yi + 1);
+  return a + (b - a) * fx + (c - a) * fy + (a - b - c + d) * fx * fy;
+}
+
 /** Rect a dab touches (x unwrapped). */
 export const dabRect = (d: Dab): Rect => ({ x0: Math.floor(d.x - d.radius), y0: Math.floor(d.y - d.radius), x1: Math.ceil(d.x + d.radius) + 1, y1: Math.ceil(d.y + d.radius) + 1 });
 
@@ -52,7 +73,7 @@ export function heightDab(data: Float32Array, W: number, H: number, d: Dab, mode
       case 'raise': data[i] = h + s * w; break;
       case 'lower': data[i] = h - s * w; break;
       case 'flatten': data[i] = h + (target - h) * Math.min(1, s * 6 * w); break;
-      case 'roughen': data[i] = h + s * w * ((hash2(seed, y * 65536 + x) / 4294967296) - 0.5) * 2; break;
+      case 'roughen': data[i] = h + s * w * (edgeNoise(seed, x, y) * 2 - 1); break;
       case 'land': if (h < 0.06) data[i] = h + (0.06 - h) * Math.min(1, w * 3); break;
       case 'sea': if (h > -0.08) data[i] = h + (-0.08 - h) * Math.min(1, w * 3); break;
     }
@@ -66,8 +87,11 @@ export function heightDab(data: Float32Array, W: number, H: number, d: Dab, mode
  */
 export function biomeDab(data: Uint8Array, W: number, H: number, d: Dab, biome: number, seed: number): Rect {
   forEach(W, H, d, (i, w, x, y) => {
-    const n = hash2(seed, y * 65536 + x) / 4294967296;
-    if (n < Math.min(1, w * 2.2) * d.strength + (w > 0.6 ? 1 : 0)) data[i] = biome;
+    if (w > 0.75) { data[i] = biome; return; } // solid heart: no speckle where the brush means it
+    // Blobby rim: the correlated noise keeps whole patches in or out, so the edge wobbles
+    // like a pen line instead of spraying half-tone dots.
+    const n = edgeNoise(seed, x, y);
+    if (n < w * 1.9 * d.strength + 0.08 * d.strength) data[i] = biome;
   });
   return dabRect(d);
 }

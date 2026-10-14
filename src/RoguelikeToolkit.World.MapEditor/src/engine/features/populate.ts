@@ -21,6 +21,27 @@ export interface PopulateOptions {
  * then get their markers and clear vegetation around them. Stable ids derive from the rule and
  * cell, so re-running yields the same stamps.
  */
+/**
+ * A variant that does not repeat an already-placed neighbour's exact (asset, variant), and
+ * records itself, so dense scatters read as varied rather than tiled. Deterministic in its
+ * inputs; per-cell rng streams are independent, so the re-roll shifts nothing else. With a
+ * single variant there is nothing to avoid and the candidate stands.
+ */
+export function placeVariant(rng: () => number, count: number, seen: Map<number, string>, nx: number, cx: number, cy: number, asset: string): number {
+  const n = Math.max(1, count);
+  let variant = Math.floor(rng() * 1e6) % n;
+  if (n > 1) {
+    const tag = (v: number) => `${asset}#${v}`;
+    const at = (ox: number, oy: number) => seen.get((cy + oy) * nx + (((cx + ox) % nx) + nx) % nx);
+    let guard = 0;
+    // at(1, 0) only ever hits on the last column, where the row's first cell is already
+    // placed: it closes the antimeridian seam, whose two sides are neighbours on the planet.
+    while (guard++ < n && (at(-1, 0) === tag(variant) || at(1, 0) === tag(variant) || at(0, -1) === tag(variant) || at(-1, -1) === tag(variant) || at(1, -1) === tag(variant))) variant = (variant + 1) % n;
+  }
+  seen.set(cy * nx + cx, `${asset}#${variant}`);
+  return variant;
+}
+
 export function populate(doc: MapDocument, o: PopulateOptions): StampEntity[] {
   const out: StampEntity[] = [];
   const density = o.density ?? 1;
@@ -29,6 +50,7 @@ export function populate(doc: MapDocument, o: PopulateOptions): StampEntity[] {
     const assets = rule.assets.filter((a) => o.library.variants(a) > 0);
     if (!assets.length) continue;
     const ruleSeed = hash2(o.seed, hashString(rule.id));
+    const seen = new Map<number, string>();
     const [emin, emax] = rule.elevation ?? [0.02, 99];
     const land = emin >= 0;
     const biomes = rule.biomes ? new Set(rule.biomes) : null;
@@ -50,8 +72,8 @@ export function populate(doc: MapDocument, o: PopulateOptions): StampEntity[] {
         let scale = s0 + (s1 - s0) * rng();
         if (rule.scaleWithElevation !== undefined) scale *= 1 + Math.max(0, h - rule.scaleWithElevation) * 1.1;
         out.push({
-          id: `st_${rule.id}_${cx}_${cy}`, asset, variant: Math.floor(rng() * 1e6) % Math.max(1, o.library.variants(asset)),
-          x, y, scale, rotation: 0, flip: rng() < 0.5 && !/compass/.test(asset),
+          id: `st_${rule.id}_${cx}_${cy}`, asset, variant: placeVariant(rng, o.library.variants(asset), seen, nx, cx, cy, asset),
+          x, y, scale, rotation: /compass/.test(asset) ? 0 : (rng() - 0.5) * 0.14, flip: rng() < 0.5 && !/compass/.test(asset),
         });
       }
     }

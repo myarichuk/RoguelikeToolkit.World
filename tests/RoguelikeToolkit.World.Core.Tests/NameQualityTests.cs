@@ -601,4 +601,72 @@ public sealed class NameQualityTests
         Assert.True(withPack >= 80, $"only {withPack}/120 dogfolk carry a pack name.");
     }
 
+
+    [Fact]
+    public void BannedCompounds_NeverGenerate()
+    {
+        // Dinas + aur fused to "Dinasaur"; Novo/Belo/Staro + gorod to
+        // "Novogorod"/"Belogorod"/"Starogorod" (the cities are Novgorod,
+        // Belgorod, Stargorod). The tables ban those exact compounds and the
+        // generator rerolls past them, in every script.
+        var cases = new[]
+        {
+            (Cultures.Welsh, new[] { "dinasaur" }),
+            (Cultures.Russian, new[] { "novogorod", "belogorod", "starogorod" }),
+        };
+        foreach (var (culture, bans) in cases)
+            foreach (var script in new[] { NameScript.Native, NameScript.Latin })
+                foreach (var kind in Kinds)
+                    for (int seed = 1; seed <= 60; seed++)
+                    {
+                        var text = FantasyNameGenerator.GeneratePlace(kind, new PlaceContext(), FantasyRaces.Human, culture, seed, script: script).Text.ToLowerInvariant();
+                        foreach (var ban in bans)
+                            Assert.DoesNotContain(ban, text);
+                    }
+    }
+
+    [Fact]
+    public void WaterWords_CarryBothRiverAndLakeTags()
+    {
+        // Tag review: water-general words serve still and flowing water alike,
+        // and sea words are tagged sea (shima is first an island of the sea).
+        var store = FantasyNameGenerator.Shared;
+        // Chinese: clear green, long, dragon, upper, lower stretch over lakes as well as rivers.
+        foreach (var form in new[] { "Qing", "Chang", "Long", "Shang", "Xia" })
+        {
+            var tags = store.Get(Cultures.Chinese).Descriptors.Single(m => m.Form == form).Tags;
+            Assert.Contains("river", tags);
+            Assert.Contains("lake", tags);
+        }
+        // Chinese: silver and mist are general water words.
+        foreach (var form in new[] { "Yin", "Wu" })
+        {
+            var tags = store.Get(Cultures.Chinese).Descriptors.Single(m => m.Form == form).Tags;
+            Assert.Contains("river", tags);
+            Assert.Contains("lake", tags);
+            Assert.Contains("water", tags);
+        }
+        // A shallow lake never names a river, and a pool never names a village.
+        Assert.DoesNotContain("river", store.Get(Cultures.Chinese).Nouns.Single(m => m.Form == "dang").Tags);
+        Assert.DoesNotContain("village", store.Get(Cultures.Chinese).Nouns.Single(m => m.Form == "chi").Tags);
+        // Japanese: mist, azure and moonlight fall on rivers too; long suits lakes.
+        foreach (var form in new[] { "Kiri", "Ao", "Tsuki" })
+            Assert.Contains("river", store.Get(Cultures.Japanese).Descriptors.Single(m => m.Form == form).Tags);
+        Assert.Contains("lake", store.Get(Cultures.Japanese).Descriptors.Single(m => m.Form == "Naga").Tags);
+        // Japanese sea words: island, inlet, harbour and shallows all meet the sea.
+        foreach (var form in new[] { "shima", "e", "tsu", "se" })
+            Assert.Contains("sea", store.Get(Cultures.Japanese).Nouns.Single(m => m.Form == form).Tags);
+        // A bay is a sea word, not a lake or village one.
+        var ura = store.Get(Cultures.Japanese).Nouns.Single(m => m.Form == "ura").Tags;
+        Assert.Contains("sea", ura);
+        Assert.DoesNotContain("lake", ura);
+        Assert.DoesNotContain("village", ura);
+        // Russian: wide, upper and lower all describe lakes (swift and steep stay river-only).
+        foreach (var latin in new[] { "Shiroko", "Verkhne", "Nizhne" })
+        {
+            var tags = store.Get(Cultures.Russian).Descriptors.Single(m => m.Latin == latin).Tags;
+            Assert.Contains("river", tags);
+            Assert.Contains("lake", tags);
+        }
+    }
 }

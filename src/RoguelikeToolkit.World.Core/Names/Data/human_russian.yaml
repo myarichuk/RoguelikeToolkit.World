@@ -8,7 +8,7 @@ PatronymicDaughter: овна
 PatronymicSonLatin: ovich
 PatronymicDaughterLatin: ovna
 PlaceFallback: false
-Banned: []
+Banned: [novogorod, belogorod, starogorod]
 # Base/BaseLatin: the stem the patronymic marker fuses onto (Пётр -> Петр + ович).
 # nopatron: names whose patronymic is irregular (Сергеевич) and so is left out rather than misspelled.
 GivenStems:
@@ -97,15 +97,15 @@ Descriptors:
   - {Form: Старо, Latin: Staro, Gloss: old, Tags: [village, town, city, hold]}
   - {Form: Красно, Latin: Krasno, Gloss: beautiful}
   - {Form: Тихо, Latin: Tikho, Gloss: quiet, Tags: [river, lake, water, village]}
-  - {Form: Широко, Latin: Shiroko, Gloss: wide, Tags: [valley, river]}
+  - {Form: Широко, Latin: Shiroko, Gloss: wide, Tags: [valley, river, lake]}
   - {Form: Черно, Latin: Cherno, Gloss: black}
   - {Form: Зелено, Latin: Zeleno, Gloss: green, Tags: [forest, valley, village, hill]}
   - {Form: Злато, Latin: Zlato, Gloss: golden, Tags: [deposit, city]}
   - {Form: Железо, Latin: Zhelezo, Gloss: iron, Tags: [deposit, mountain]}
   - {Form: Северо, Latin: Severo, Gloss: north}
   - {Form: Южно, Latin: Yuzhno, Gloss: south}
-  - {Form: Верхне, Latin: Verkhne, Gloss: upper, Tags: [high, river, village, hill]}
-  - {Form: Нижне, Latin: Nizhne, Gloss: lower, Tags: [valley, river, village, town]}
+  - {Form: Верхне, Latin: Verkhne, Gloss: upper, Tags: [high, river, lake, village, hill]}
+  - {Form: Нижне, Latin: Nizhne, Gloss: lower, Tags: [valley, river, lake, village, town]}
   - {Form: Каменно, Latin: Kamenno, Gloss: stony, Tags: [hill, mountain, hold, deposit]}
   - {Form: Высоко, Latin: Vysoko, Gloss: high, Tags: [mountain, hill, high]}
   - {Form: Снежно, Latin: Snezhno, Gloss: snowy, Tags: [mountain, high]}

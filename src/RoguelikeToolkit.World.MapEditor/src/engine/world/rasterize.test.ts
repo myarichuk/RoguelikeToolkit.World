@@ -49,4 +49,22 @@ describe('rasterize', () => {
     const flat = arcLatitudeExtremes(Float64Array.from([...pt(0, 0), ...pt(0, 40)]), 0, 1);
     expect(flat.max).toBeCloseTo(0, 9); expect(flat.min).toBeCloseTo(0, 9);
   });
+
+  it('carves ponded tiles into water and counts their wet pixels', () => {
+    const { vectors, faces } = icosphere(2);
+    const n = vectors.length / 3;
+    const land = { vectors, faces, heights: new Float64Array(n).fill(0.25), biomes: new Uint8Array(n).fill(1) };
+    const dry = rasterize(land, MAP_W, MAP_H);
+    expect(dry.waterPixels.every((w) => w === 0)).toBe(true);
+
+    const lakeDepth = new Float64Array(n);
+    lakeDepth[7] = 0.15;
+    const wet = rasterize({ ...land, lakeDepth }, MAP_W, MAP_H);
+    expect(wet.waterPixels[7]).toBeGreaterThan(0);
+    // Shorelines meet the land at the 0 contour; interiors deepen with the ponding.
+    let min = Infinity;
+    for (const v of wet.elevation) min = Math.min(min, v);
+    expect(min).toBeLessThan(0);
+    expect(min).toBeGreaterThanOrEqual(-0.15);
+  });
 });

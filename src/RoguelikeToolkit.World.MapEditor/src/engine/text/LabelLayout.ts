@@ -121,7 +121,7 @@ export function layoutLabel(font: opentype.Font, inp: LayoutInput): LabelGeometr
   return { d, bounds: { x0, y0, x1, y1 }, width };
 }
 
-/** Arc-length parametrized, smoothed polyline baseline centered on the path's midpoint. */
+/** Arc-length parametrized polyline baseline centered on the path's midpoint, extrapolated past its ends. */
 function pathBaseline(path: number[], textWidth: number, offset: number): (t: number) => { x: number; y: number; a: number } {
   let pts: [number, number][] = [];
   for (let i = 0; i + 1 < path.length; i += 2) pts.push([path[i], path[i + 1]]);
@@ -129,8 +129,21 @@ function pathBaseline(path: number[], textWidth: number, offset: number): (t: nu
   const cum = [0];
   for (let i = 1; i < pts.length; i++) cum.push(cum[i - 1] + Math.hypot(pts[i][0] - pts[i - 1][0], pts[i][1] - pts[i - 1][1]));
   const total = cum[cum.length - 1] || 1;
+  // End directions for extrapolation (first/last non-degenerate segment; +x when the path is a point).
+  const dir = (a: [number, number], b: [number, number]): [number, number] => {
+    const dx = b[0] - a[0], dy = b[1] - a[1], l = Math.hypot(dx, dy);
+    return l > 0 ? [dx / l, dy / l] : [1, 0];
+  };
+  let si = 0;
+  while (si < pts.length - 2 && pts[si + 1][0] === pts[si][0] && pts[si + 1][1] === pts[si][1]) si++;
+  let ei = pts.length - 1;
+  while (ei > 1 && pts[ei][0] === pts[ei - 1][0] && pts[ei][1] === pts[ei - 1][1]) ei--;
+  const sDir = dir(pts[si], pts[si + 1]), eDir = dir(pts[ei - 1], pts[ei]);
   const at = (s: number): [number, number] => {
-    const t = Math.max(0, Math.min(total, s));
+    // A name longer than its river keeps going straight past the segment instead of piling its glyphs at the ends.
+    if (s <= 0) return [pts[0][0] + sDir[0] * s, pts[0][1] + sDir[1] * s];
+    if (s >= total) { const d = s - total, l = pts[pts.length - 1]; return [l[0] + eDir[0] * d, l[1] + eDir[1] * d]; }
+    const t = s;
     let i = 1;
     while (i < cum.length - 1 && cum[i] < t) i++;
     const seg = cum[i] - cum[i - 1] || 1, f = (t - cum[i - 1]) / seg;

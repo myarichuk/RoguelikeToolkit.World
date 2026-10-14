@@ -26,6 +26,8 @@ export interface CatalogInput {
   ranges: Int32Array;
   deposits: Int32Array;
   /** (tile, score*1000) pairs, best first. */
+  /** Per-tile count of raster pixels reading as water. When present, lakes covering no water pixel are dropped as phantoms. */
+  waterPixels?: ArrayLike<number>;
   citySites: Int32Array;
   /** One comma-joined list of scoring terms per site, same order as `citySites` pairs. */
   citySiteReasons: string[];
@@ -47,6 +49,10 @@ const SITE_REASON: Record<string, string> = {
 export const siteReasons = (raw: string | undefined): string =>
   (raw ?? '').split(',').filter(Boolean).map((r) => SITE_REASON[r] ?? r).join(', ');
 const TERMINAL = ['the sea', 'a lake', 'an inland sink'];
+/** Core's RiverTerminal for the river header: Sea 0, Lake 1, Sink 2. */
+const RIVER_SINK = 2;
+/** A reach ending at a confluence earns a name only at this many in-map tiles: shorter ones are drawn but stay unnamed. */
+const MIN_NAMED_CONFLUENCE_TILES = 5;
 const EARTH_AREA_KM2 = 4 * Math.PI * 6371 * 6371;
 
 /** Tile adjacency in CSR form, derived from icosphere faces. */
@@ -247,7 +253,7 @@ export function extractFeatures(c: CatalogInput): FeatureSet {
       let x = xy[t * 2];
       x = prevX + dxWrap(prevX, x); prevX = x;
       let y = xy[t * 2 + 1];
-      const w = Math.min(2.4, 0.35 + 0.32 * Math.log(1 + c.flow[t] / minFlow));
+      const w = Math.min(6, 1.6 + 0.9 * Math.log(1 + c.flow[t] / minFlow)); // drawn map units: headwaters ~1.6 mu, great rivers ~4 mu (the river shader fades sub-pixel lines)
       // The terminal tile is open water: stop halfway, at the coast.
       if (i === path.length - 1 && !isLand(t) && pts.length >= 3) {
         x = (x + pts[pts.length - 3]) / 2; y = (y + pts[pts.length - 2]) / 2;
@@ -255,12 +261,18 @@ export function extractFeatures(c: CatalogInput): FeatureSet {
       pts.push(x, y, w);
     }
     rivers.push({ points: meander(pts, rng) });
+    // A reach ending on dry land without dying in a sink joins a parent reach at a confluence
+    // (Core reports the parent's terminal): it is a tributary, not a river mouth. Short ones are
+    // headwater trickles starting and ending in the hills, so they are drawn but not named.
+    // The true tail decides: the in-map path may be cut short by the Mercator edge.
+    const tributary = terminal !== RIVER_SINK && c.heights[r.items[r.items.length - 1]] >= 0;
+    if (tributary && path.length < MIN_NAMED_CONFLUENCE_TILES) continue;
     const mid = path[Math.floor(path.length * 0.55)];
     const mouth = path[path.length - 1];
     add(`river:${id}`, 'river', mid, { x: xy[mid * 2], y: xy[mid * 2 + 1], angle: 0, extent: 0 }, path.length, [
       ['Length', `${fmtInt(lengthKm * 1.25)} km`], // ×1.25: tile chains cut meanders short
       ['Discharge at mouth', (c.flow[mouth] / minFlow).toFixed(0) + ' × source'],
-      ['Flows into', TERMINAL[terminal] ?? 'unknown'],
+      ['Flows into', tributary ? 'another river' : (TERMINAL[terminal] ?? 'unknown')],
       ['Source elevation', (c.heights[path[0]] as number).toFixed(2)],
     ], { river: rivers.length - 1, tiles: Int32Array.from(path) });
   }
@@ -269,11 +281,15 @@ export function extractFeatures(c: CatalogInput): FeatureSet {
   // Core already hands over connected bodies: an enclosed marine body is one sea and stays one
   // feature, however large. Only the world ocean is divided, along geography (see oceanBasins).
   const oceanTarget = Math.max(60, Math.round(n * 0.03));
+  // Tiles of lakes that are actually drawn: settlements never stand on them (see below).
+  const lakeTiles = new Set<number>();
   for (const b of records(c.waterBodies, 2)) {
     const [id, kind] = b.head;
     if (kind === WaterKind.Lake) {
       const tiles = Array.from(b.items).filter(inMap);
       if (tiles.length < 2) continue;
+      if (c.waterPixels && !tiles.some((t) => (c.waterPixels?.[t] ?? 0) > 0)) continue; // phantom: ponded water with no visible water pixel
+      for (const t of tiles) lakeTiles.add(t);
       const anchor = deepest(tiles, waterDist);
       add(`lake:${id}`, 'lake', anchor, shapeOf(tiles, anchor, xy), tiles.length, areaFacts(tiles, true), { tiles: Int32Array.from(tiles) });
       continue;
@@ -331,7 +347,7 @@ export function extractFeatures(c: CatalogInput): FeatureSet {
     let placed = 0;
     for (let i = 0; i < c.citySites.length && placed < tier.count; i += 2) {
       const t = c.citySites[i];
-      if (!inMap(t) || !far(t, tier.spacing)) continue;
+      if (!inMap(t) || lakeTiles.has(t) || !far(t, tier.spacing)) continue; // never inside a drawn lake
       picked.push({ tile: t, kind: tier.kind, score: c.citySites[i + 1] / 1000, reasons: siteReasons(c.citySiteReasons[i / 2]) }); placed++;
     }
   }

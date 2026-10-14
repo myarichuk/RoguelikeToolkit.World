@@ -63,7 +63,7 @@ FamilyAffixes:
 Clans: []
 Epithets: []
 Descriptors:
-  - {Form: Qing, Gloss: clear green, Tags: [water, forest, river]}
+  - {Form: Qing, Gloss: clear green, Tags: [water, forest, river, lake]}
   - {Form: Lao, Gloss: old, Tags: [town, city]}
   - {Form: Xin, Gloss: new, Tags: [village, town, city]}
   - {Form: Da, Gloss: great}
@@ -72,21 +72,21 @@ Descriptors:
   - {Form: Hei, Gloss: black}
   - {Form: Hong, Gloss: red}
   - {Form: Jin, Gloss: gold, Tags: [deposit, city]}
-  - {Form: Yin, Gloss: silver, Tags: [deposit, lake]}
-  - {Form: Long, Gloss: dragon, Tags: [mountain, river, danger]}
+  - {Form: Yin, Gloss: silver, Tags: [deposit, lake, river, water]}
+  - {Form: Long, Gloss: dragon, Tags: [mountain, river, lake, danger]}
   - {Form: Dong, Gloss: east}
   - {Form: Xi, Gloss: west}
   - {Form: Nan, Gloss: south}
   - {Form: Bei, Gloss: north}
-  - {Form: Shang, Gloss: upper, Tags: [high, river, village, mountain]}
-  - {Form: Xia, Gloss: lower, Tags: [valley, river, village]}
+  - {Form: Shang, Gloss: upper, Tags: [high, river, lake, village, mountain]}
+  - {Form: Xia, Gloss: lower, Tags: [valley, river, lake, village]}
   - {Form: Zhu, Gloss: bamboo, Tags: [forest, village, hill]}
   - {Form: Song, Gloss: pine, Tags: [forest, mountain, hill]}
   - {Form: Tai, Gloss: great peace}
   - {Form: Yong, Gloss: eternal}
   - {Form: Ming, Gloss: bright}
   - {Form: Fu, Gloss: fortune, Tags: [village, town, city]}
-  - {Form: Chang, Gloss: long, Tags: [river, valley, hill]}
+  - {Form: Chang, Gloss: long, Tags: [river, lake, valley, hill]}
   - {Form: Tian, Gloss: heaven, Tags: [high, mountain]}
   - {Form: Yun, Gloss: cloud, Tags: [high, mountain, hill]}
   - {Form: Shi, Gloss: stone, Tags: [mountain, hill, deposit]}
@@ -96,7 +96,7 @@ Descriptors:
   - {Form: Tao, Gloss: peach, Tags: [village, valley]}
   - {Form: Liu, Gloss: willow, Tags: [river, lake, village]}
   - {Form: Lian, Gloss: lotus, Tags: [lake, water]}
-  - {Form: Wu, Gloss: misty, Tags: [mountain, valley, lake, forest]}
+  - {Form: Wu, Gloss: misty, Tags: [mountain, valley, lake, river, water, forest]}
   - {Form: Huang, Gloss: yellow, Tags: [sea]}
   - {Form: Cang, Gloss: vast blue, Tags: [sea]}
   - {Form: Bo, Gloss: surging, Tags: [sea]}
@@ -124,8 +124,8 @@ Nouns:
   - {Form: yuan, Gloss: garden, Tags: [forest, village]}
   - {Form: bao, Gloss: fort, Tags: [hold, camp, village]}
   - {Form: ying, Gloss: camp, Tags: [camp]}
-  - {Form: chi, Gloss: pool, Tags: [lake, village]}
-  - {Form: dang, Gloss: shallow lake, Tags: [lake, river]}
+  - {Form: chi, Gloss: pool, Tags: [lake]}
+  - {Form: dang, Gloss: shallow lake, Tags: [lake]}
   - {Form: pu, Gloss: shore, Tags: [lake, river]}
   - {Form: ping, Gloss: flat, Tags: [valley, village]}
   - {Form: yu, Gloss: narrow valley, Tags: [valley]}

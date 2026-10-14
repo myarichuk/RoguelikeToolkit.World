@@ -15,6 +15,8 @@ export interface TileFields {
   faces: Int32Array;
   heights: Float64Array;
   biomes: Uint8Array;
+  /** Ponded water depth per tile (0 where dry): carved into the elevation so lakes read as water. */
+  lakeDepth?: ArrayLike<number>;
 }
 
 export interface Rasters {
@@ -26,6 +28,8 @@ export interface Rasters {
   biome: Uint8Array;
   /** Dominant tile per pixel (inspection, categorical lookups such as plates). */
   tile: Int32Array;
+  /** Per-tile count of pixels reading as water (elevation below 0). */
+  waterPixels: Int32Array;
 }
 
 /** Smooth 2D value noise in [0,1), one independent field per `salt`. */
@@ -72,6 +76,7 @@ const clampUnit = (v: number): number => Math.max(-1, Math.min(1, v));
 
 export function rasterize(t: TileFields, W: number, H: number, biomeJitter = 0.22): Rasters {
   const V = t.vectors, F = t.faces;
+  const lakeDepth = t.lakeDepth;
   const elevation = new Float32Array(W * H).fill(NaN);
   const biome = new Uint8Array(W * H);
   const tile = new Int32Array(W * H);
@@ -144,6 +149,7 @@ export function rasterize(t: TileFields, W: number, H: number, biomeJitter = 0.2
     const x1 = Math.ceil((lonMax + Math.PI) / pxLon) + 1;
 
     const hA = t.heights[ia], hB = t.heights[ib], hC = t.heights[ic];
+    const ldA = lakeDepth?.[ia] ?? 0, ldB = lakeDepth?.[ib] ?? 0, ldC = lakeDepth?.[ic] ?? 0;
     const bA = t.biomes[ia], bB = t.biomes[ib], bC = t.biomes[ic];
     const sameBiome = bA === bB && bB === bC;
     for (let y = y0; y <= y1; y++) {
@@ -160,6 +166,8 @@ export function rasterize(t: TileFields, W: number, H: number, biomeJitter = 0.2
         const s = wa + wb + wc;
         const i = y * W + x;
         elevation[i] = (wa * hA + wb * hB + wc * hC) / s;
+        const ponded = (wa * ldA + wb * ldB + wc * ldC) / s;
+        if (ponded > 0) elevation[i] = -ponded;
         tile[i] = wa >= wb && wa >= wc ? ia : wb >= wc ? ib : ic;
         if (sameBiome) { biome[i] = bA; continue; }
         const ja = wa / s + biomeJitter * (valueNoise(x * jf, y * jf, ia) - 0.5);
@@ -170,5 +178,7 @@ export function rasterize(t: TileFields, W: number, H: number, biomeJitter = 0.2
     }
   }
   for (let i = 0; i < elevation.length; i++) if (Number.isNaN(elevation[i])) throw new Error(`raster hole at pixel ${i}`);
-  return { width: W, height: H, elevation, biome, tile };
+  const waterPixels = new Int32Array(nT);
+  for (let i = 0; i < elevation.length; i++) if (elevation[i] < 0) waterPixels[tile[i]]++;
+  return { width: W, height: H, elevation, biome, tile, waterPixels };
 }

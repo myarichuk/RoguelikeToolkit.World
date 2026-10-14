@@ -780,7 +780,7 @@
    "category": "tree",
    "size": 5.5,
    "generator": "conifer",
-   "variants": 10
+   "variants": 14
   },
   {
    "id": "core.deciduous",
@@ -788,7 +788,7 @@
    "category": "tree",
    "size": 5.5,
    "generator": "deciduous",
-   "variants": 10
+   "variants": 14
   },
   {
    "id": "core.palm",
@@ -796,7 +796,7 @@
    "category": "tree",
    "size": 6,
    "generator": "palm",
-   "variants": 6
+   "variants": 8
   },
   {
    "id": "core.deadTree",
@@ -812,7 +812,7 @@
    "category": "vegetation",
    "size": 3,
    "generator": "shrub",
-   "variants": 6
+   "variants": 8
   },
   {
    "id": "core.grassTuft",
@@ -820,7 +820,7 @@
    "category": "vegetation",
    "size": 2.5,
    "generator": "grassTuft",
-   "variants": 6
+   "variants": 10
   },
   {
    "id": "core.reeds",
@@ -1170,6 +1170,22 @@
    ],
    "spacing": 13,
    "density": 0.14
+  },
+  {
+   "id": "saltPan",
+   "assets": [
+    "core.dunes",
+    "core.rock"
+   ],
+   "biomes": [
+    15
+   ],
+   "elevation": [
+    0,
+    0.47
+   ],
+   "spacing": 15,
+   "density": 0.1
   },
   {
    "id": "plains",

@@ -19,6 +19,7 @@ public class WorldExportsLayoutTests
         Assert.Equal(n, WorldExports.Biomes().Length);
         Assert.Equal(n, WorldExports.Plates().Length);
         Assert.Equal(n, WorldExports.Flow().Length);
+        Assert.Equal(n, WorldExports.LakeDepth().Length);
         Assert.Equal(n * 2, WorldExports.Climate().Length);
         Assert.Equal(n * 12, WorldExports.ClimateField().Length);
         Assert.Equal(n * 5, WorldExports.LandCapacity().Length);
