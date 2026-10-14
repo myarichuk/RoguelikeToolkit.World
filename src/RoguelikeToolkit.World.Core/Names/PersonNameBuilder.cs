@@ -15,8 +15,44 @@ internal static class PersonNameBuilder
         if (string.IsNullOrWhiteSpace(race)) race = FantasyRaces.Human;
         if (string.IsNullOrWhiteSpace(culture)) culture = Cultures.FantasyCommon;
         var table = store.Get(TableKey(race, culture, store));
+        // Compat shims: the historical half-blood keys render through the
+        // generalized mixed rule with identical draws (golden-tested). Removal
+        // needs a major bump (3.0.0 just shipped).
+        CultureData? second = null;
+        bool epithetCoinFlip = false;
+        if (race.Equals(FantasyRaces.HalfElf, StringComparison.OrdinalIgnoreCase))
+        {
+            second = store.ResolveCulture(culture, Cultures.All);
+        }
+        else if (race.Equals(FantasyRaces.HalfOrc, StringComparison.OrdinalIgnoreCase))
+        {
+            second = store.ResolveCulture(culture, Cultures.All);
+            epithetCoinFlip = true;
+        }
+        return BuildCore(store, table, second, secondIsHuman: true, epithetCoinFlip, lineageDefault: null,
+            race, culture, seed, lineage, feminine, salt, tokens, script);
+    }
+
+    /// <summary>
+    /// Generalized mixed-ancestry build: the given name (and patronymic) comes
+    /// from <paramref name="dominant"/>, the lineage slot from
+    /// <paramref name="second"/> via <see cref="RenderMixed"/>. A 0.5/0.5
+    /// ancestry names through here with no <c>half_X</c> key.
+    /// </summary>
+    internal static GeneratedName BuildMixed(
+        NameDataStore store, CultureData dominant, CultureData second, bool secondIsHuman,
+        string lineageDefault, string race, string culture,
+        int seed, string? lineage, bool feminine, int salt, HashSet<string> tokens, NameScript script)
+        => BuildCore(store, dominant, second, secondIsHuman, epithetCoinFlip: false, lineageDefault,
+            race, culture, seed, lineage, feminine, salt, tokens, script);
+
+    private static GeneratedName BuildCore(
+        NameDataStore store, CultureData table, CultureData? second, bool secondIsHuman, bool epithetCoinFlip,
+        string? lineageDefault, string race, string culture,
+        int seed, string? lineage, bool feminine, int salt, HashSet<string> tokens, NameScript script)
+    {
         var rng = Rng.Create(seed, salt ^ (StableHash(race) * 7919) ^ (StableHash(culture) * 4789));
-        var effLineage = NormalizeLineage(string.IsNullOrWhiteSpace(lineage) ? table.LineageDefault : lineage);
+        var effLineage = NormalizeLineage(string.IsNullOrWhiteSpace(lineage) ? lineageDefault ?? table.LineageDefault : lineage);
         var parts = new List<NamePart>();
 
         // Fused patronymic markers count as words already in the name: a "spark" second stem
@@ -31,7 +67,7 @@ internal static class PersonNameBuilder
         var freshGiven = givenPool.Where(m => !used.Clashes(m)).ToList();
         if (freshGiven.Count > 0) givenPool = freshGiven;
         var stem = PickBiased(ref rng, givenPool, tokens) ?? new MorphemeYaml { Form = "Ash", Gloss = "ash tree" };
-        MorphemeYaml? second = null;
+        MorphemeYaml? secondStem = null;
         if (table.SecondStems.Count > 0 && !HasTag(stem, "solo"))
         {
             // A "bound" stem is only half a name ("Ald", "Medved"): it always takes a second element.
@@ -40,33 +76,33 @@ internal static class PersonNameBuilder
             {
                 // Strict, unlike given stems: a feminine name must never take a masculine ending ("Layla al-Din").
                 var secondPool = table.SecondStems.Where(m => GenderOf(m) != (feminine ? 1 : -1) && !used.Clashes(m)).ToList();
-                second = PickSecond(ref rng, secondPool, tokens, stem);
+                secondStem = PickSecond(ref rng, secondPool, tokens, stem);
             }
         }
-        if (second is null && HasTag(stem, "bound"))
+        if (secondStem is null && HasTag(stem, "bound"))
         {
             // No ending fits (every draw clashed, or none suits this gender): use a stem that can stand alone.
             var free = givenPool.Where(m => !HasTag(m, "bound")).ToList();
             if (free.Count > 0) stem = PickBiased(ref rng, free, tokens)!;
         }
         used.Add(stem);
-        if (second is not null) used.Add(second);
+        if (secondStem is not null) used.Add(secondStem);
         var stemShown = Cap(Display(stem, script));
         string given;
-        if (second is null)
+        if (secondStem is null)
         {
             given = stemShown;
         }
         else
         {
-            var secondShown = Display(second, script);
+            var secondShown = Display(secondStem, script);
             // Particles that are words of their own ("al-Din") join with a space,
             // plain stem endings ("gar", "mir") fuse ("Thrungar", "Vladimir").
             given = secondShown.Contains(' ') || secondShown.Contains('-')
                 ? stemShown + " " + secondShown
                 : Fuse(stemShown, secondShown, dedupe: true);
         }
-        var givenGloss = second is null ? stem.Gloss : JoinGloss(stem.Gloss, second.Gloss);
+        var givenGloss = secondStem is null ? stem.Gloss : JoinGloss(stem.Gloss, secondStem.Gloss);
         parts.Add(new NamePart { Form = given, Gloss = givenGloss, Role = NamePartRoles.Given });
 
         // Parent for the patronymic/matronymic slot: the right gender for the line,
@@ -124,19 +160,12 @@ internal static class PersonNameBuilder
 
         // Clan / family / warband / epithet slots. Race-specific behaviour lives in
         // the YAML (ClanChance, EpithetChance, FamilyChance, FamilyReplacesPatronymic);
-        // only the half-bloods, which borrow a human family name, are special-cased by race.
+        // mixed ancestry renders the lineage slot from the second table instead.
         // A person name holds at most three parts: the epithet below yields when a
         // patronymic plus a clan/family name already filled the lineage slot.
-        if (race.Equals(FantasyRaces.HalfElf, StringComparison.OrdinalIgnoreCase))
+        if (second is not null)
         {
-            AddHumanFamily(ref rng, store, culture, parts, script, feminine, used);
-        }
-        else if (race.Equals(FantasyRaces.HalfOrc, StringComparison.OrdinalIgnoreCase))
-        {
-            if (rng.NextUInt(100) < 50 && table.Epithets.Count > 0)
-                AddPickBiased(ref rng, parts, table.Epithets, NamePartRoles.Epithet, tokens, script, used);
-            else
-                AddHumanFamily(ref rng, store, culture, parts, script, feminine, used);
+            RenderMixed(ref rng, store, table, second, secondIsHuman, epithetCoinFlip, parts, tokens, script, feminine, used);
         }
         else
         {
@@ -214,29 +243,50 @@ internal static class PersonNameBuilder
         };
     }
 
-    internal static void AddHumanFamily(
-        ref Rng rng, NameDataStore store, string culture, List<NamePart> parts, NameScript script, bool feminine,
+    /// <summary>
+    /// Generalized mixed-ancestry lineage slot: the given name above already came
+    /// from <paramref name="dominant"/>, and the family/clan slot comes from
+    /// <paramref name="second"/> with the usual clash-avoidance. The half-orc
+    /// coin flip (an orcish deed-name or a borrowed family name) is the historical
+    /// shape of this slot, kept behind <paramref name="epithetCoinFlip"/>.
+    /// </summary>
+    internal static void RenderMixed(
+        ref Rng rng, NameDataStore store, CultureData dominant, CultureData second, bool secondIsHuman,
+        bool epithetCoinFlip, List<NamePart> parts, HashSet<string> tokens, NameScript script, bool feminine,
         RootSet used)
     {
-        var humanTable = store.ResolveCulture(
-            string.IsNullOrWhiteSpace(culture) ? Cultures.FantasyCommon : culture, Cultures.All);
-        var common = store.Get(Cultures.FantasyCommon);
-        var fam = Pick(ref rng, humanTable.Clans.Concat(humanTable.FamilyAffixes)
+        if (epithetCoinFlip && dominant.Epithets.Count > 0 && rng.NextUInt(100) < 50)
+        {
+            AddPickBiased(ref rng, parts, dominant.Epithets, NamePartRoles.Epithet, tokens, script, used);
+            return;
+        }
+        AddSecondFamily(ref rng, second, store.Get(Cultures.FantasyCommon), secondIsHuman, parts, script, feminine, used);
+    }
+
+    internal static void AddSecondFamily(
+        ref Rng rng, CultureData second, CultureData common, bool secondIsHuman,
+        List<NamePart> parts, NameScript script, bool feminine, RootSet used)
+    {
+        var fam = Pick(ref rng, second.Clans.Concat(second.FamilyAffixes)
                       .Where(m => GenderOf(m) != (feminine ? 1 : -1) && !used.Clashes(m)).ToList())
             ?? Pick(ref rng, common.FamilyAffixes);
         if (fam is null) return;
         // Suffix-only tables ("bury", "ov") have no standalone surname, so borrow a stem to carry them.
         string form = Display(fam, script);
         string gloss = fam.Gloss;
-        if (humanTable.FamilySuffix && humanTable.FamilyAffixes.Contains(fam) && humanTable.GivenStems.Count > 0)
+        if (second.FamilySuffix && second.FamilyAffixes.Contains(fam) && second.GivenStems.Count > 0)
         {
-            var carriers = humanTable.GivenStems.Where(m => GenderOf(m) != -1).ToList();
+            var carriers = second.GivenStems.Where(m => GenderOf(m) != -1).ToList();
             var fresh = carriers.Where(m => !used.Clashes(m)).ToList();
-            var b = Pick(ref rng, fresh.Count > 0 ? fresh : carriers) ?? humanTable.GivenStems[0];
+            var b = Pick(ref rng, fresh.Count > 0 ? fresh : carriers) ?? second.GivenStems[0];
             form = Fuse(Cap(DisplayBase(b, script)), form, dedupe: true);
             gloss = AffixGloss(b.Gloss, fam.Gloss);
         }
-        parts.Add(new NamePart { Form = form, Gloss = gloss + " (human side)", Role = NamePartRoles.Family });
+        // A human second lends a family name; any other folk lends a clan name.
+        // The "(human side)" gloss marks the borrowed human line of a mixed name.
+        var role = secondIsHuman ? NamePartRoles.Family : NamePartRoles.Clan;
+        var note = secondIsHuman ? " (human side)" : string.Empty;
+        parts.Add(new NamePart { Form = form, Gloss = gloss + note, Role = role });
     }
 
     internal static string JoinPerson(CultureData table, List<NamePart> parts)

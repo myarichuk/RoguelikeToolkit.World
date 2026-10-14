@@ -107,6 +107,103 @@ internal static class PlaceNameBuilder
         };
     }
 
+    /// <summary>
+    /// Assembles one hybrid place name for a conquest or settled-nomad city: the
+    /// descriptor comes from the superstrate table, the noun from the substrate
+    /// table, joined by the superstrate's order. The ruling voice names the
+    /// place; the land keeps its old noun.
+    /// </summary>
+    internal static GeneratedName BuildHybridPlace(
+        NameDataStore store, string kind, PlaceContext ctx,
+        CultureData superstrate, CultureData substrate,
+        string race, string culture, int seed, int salt, HashSet<string> tokens, NameScript script)
+    {
+        var common = store.Get(Cultures.FantasyCommon);
+        var rng = Rng.Create(seed, salt ^ (StableHash(kind) * 311) ^ (StableHash(superstrate.Key) * 701) ^ (StableHash(substrate.Key) * 131));
+        var tags = TagsFor(ctx, kind);
+        var kindTags = KindTags(kind);
+
+        // Vocabulary: descriptors from the ruling table (topped up when it opts
+        // in), nouns from the settled table (topped up when it opts in).
+        var descs = superstrate.PlaceFallback ? superstrate.Descriptors.Concat(common.Descriptors).ToList() : superstrate.Descriptors.ToList();
+        var subNouns = substrate.PlaceFallback ? substrate.Nouns.Concat(common.Nouns).ToList() : substrate.Nouns.ToList();
+        if (descs.Count == 0) descs = common.Descriptors.ToList();
+        if (subNouns.Count == 0) subNouns = common.Nouns.ToList();
+
+        // Nouns must fit the kind of place, as in the single-table build.
+        var fitNouns = subNouns.Where(n => kindTags.Any(k => HasTag(n, k))).ToList();
+        if (fitNouns.Count == 0) fitNouns = subNouns.Where(n => RelatedKinds(kind).Any(k => HasTag(n, k))).ToList();
+        if (fitNouns.Count == 0) fitNouns = subNouns;
+
+        // Topped-up tables keep their own voice on their own side.
+        var ownDescs = superstrate.PlaceFallback && !ReferenceEquals(superstrate, common)
+            ? new HashSet<MorphemeYaml>(superstrate.Descriptors, ReferenceEqualityComparer.Instance) : null;
+        var ownNouns = substrate.PlaceFallback && !ReferenceEquals(substrate, common)
+            ? new HashSet<MorphemeYaml>(substrate.Nouns, ReferenceEqualityComparer.Instance) : null;
+        int OwnDesc(MorphemeYaml m) => ownDescs is not null && ownDescs.Contains(m) ? 3 : 1;
+        int OwnNoun(MorphemeYaml m) => ownNouns is not null && ownNouns.Contains(m) ? 3 : 1;
+
+        int DescWeight(MorphemeYaml d)
+        {
+            int overlap = d.Tags.Count(t => tags.Contains(t));
+            int w = d.Tags.Count == 0 ? 1 : overlap > 0 ? 1 + 2 * overlap : 0;
+            return w == 0 ? 5 * CountMatches(d, tokens) : w * OwnDesc(d) + 5 * CountMatches(d, tokens);
+        }
+        int NounWeight(MorphemeYaml n)
+        {
+            int w = 1;
+            for (int i = 0; i < kindTags.Length; i++)
+                if (HasTag(n, kindTags[i])) w += i == 0 ? 3 : 1;
+            w += n.Tags.Count(t => tags.Contains(t) && !kindTags.Contains(t, StringComparer.OrdinalIgnoreCase));
+            return w * OwnNoun(n) + 5 * CountMatches(n, tokens);
+        }
+
+        MorphemeYaml? desc = null, noun = null;
+        for (int i = 0; i < 8; i++)
+        {
+            desc = WeightedPick(ref rng, descs, DescWeight);
+            noun = WeightedPick(ref rng, fitNouns, NounWeight);
+            if (desc is null || noun is null) break;
+            if (Spellings(desc).Any(d => Spellings(noun).Any(n => SharesRoot(d, n)))) continue;
+            var nounWords = NameThemes.Words(noun.Gloss).ToList();
+            if (NameThemes.Words(desc.Gloss).Any(w => nounWords.Any(n => NameThemes.WordMatches(w, n)))) continue;
+            break;
+        }
+        desc ??= new MorphemeYaml { Form = "Ash", Gloss = "ash tree" };
+        noun ??= new MorphemeYaml { Form = "ford", Gloss = "crossing" };
+
+        // The superstrate's language shapes the join.
+        bool nounFirst = superstrate.PlaceOrder.Equals("NounFirst", StringComparison.OrdinalIgnoreCase);
+        if (nounFirst && HasTag(noun, "fem") && superstrate.PlaceMutation.Equals("Soft", StringComparison.OrdinalIgnoreCase))
+            desc = AfterFeminine(desc, noun);
+        var descShown = Display(desc, script);
+        var nounShown = Display(noun, script);
+        var first = CapWord(nounFirst ? nounShown : descShown);
+        var secondRaw = nounFirst ? descShown : nounShown;
+        string join = superstrate.PlaceJoin.ToLowerInvariant();
+        bool spaced = join == "space" || secondRaw.Contains(' ') || secondRaw.Contains('-') || first.Contains(' ');
+        string text = join == "hyphen" || (!spaced && TripleAtSeam(first, secondRaw)) ? first + "-" + secondRaw
+            : spaced ? first + " " + CapWord(secondRaw)
+            : Fuse(first, secondRaw.ToLowerInvariant(), dedupe: false);
+
+        var descPart = new NamePart { Form = CapWord(descShown), Gloss = desc.Gloss, Role = NamePartRoles.Descriptor };
+        var nounPart = new NamePart { Form = CapWord(nounShown), Gloss = noun.Gloss, Role = NamePartRoles.Geography };
+        var parts = nounFirst ? new List<NamePart> { nounPart, descPart } : new List<NamePart> { descPart, nounPart };
+        var near = tags.Where(t => !kindTags.Contains(t, StringComparer.OrdinalIgnoreCase)).ToList();
+        return new GeneratedName
+        {
+            Text = text,
+            Race = race,
+            Culture = culture,
+            Lineage = NormalizeLineage(superstrate.LineageDefault),
+            Provenance = new NameProvenance { Inspiration = "original", Note = $"hybrid {kind} near {string.Join("/", near.Count > 0 ? near : new List<string> { "open land" })}: {superstrate.Key} over {substrate.Key}; {superstrate.Provenance}" },
+            Inspirations = tokens.Where(t => NameThemes.Matches(desc, t) || NameThemes.Matches(noun, t))
+                .OrderBy(t => t, StringComparer.Ordinal).ToArray(),
+            Parts = parts,
+            Seed = seed,
+        };
+    }
+
     /// <summary>A descriptor as it reads after a feminine noun: its feminine form, soft-mutated.</summary>
     internal static MorphemeYaml AfterFeminine(MorphemeYaml desc, MorphemeYaml noun)
     {

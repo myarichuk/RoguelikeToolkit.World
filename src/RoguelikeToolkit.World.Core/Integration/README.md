@@ -8,6 +8,7 @@ Namespace `RoguelikeToolkit.World.Core.Integration`, layer rank 5 (see `docs/ARC
 
 - **QueryOptions**: Carries `History` and `Materialized`; null means pure geography.
 - **IHistoricalContext, TileHistoryModifier, HistoricSite**: Game events projected onto tiles and sites.
+- **CultureDelta, Ethnos**: Drift steps and the drifted people (folk + current culture + deltas), resolved at query time.
 - **IMaterializationStore, MaterializationStore, TileOverride**: Overrides (replacement, not additive) and `MapAddress` to location-id bindings.
 
 ## Rules

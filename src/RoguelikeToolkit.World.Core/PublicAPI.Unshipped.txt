@@ -1670,3 +1670,35 @@ RoguelikeToolkit.World.Core.Tectonics.TectonicPlateGenerationStage.OceanicPolari
 RoguelikeToolkit.World.Core.Tectonics.TectonicPlateGenerationStage.OceanicPolarity.set -> void
 RoguelikeToolkit.World.Core.Tectonics.TectonicPlateGenerationStage.ShearTransform.get -> bool
 RoguelikeToolkit.World.Core.Tectonics.TectonicPlateGenerationStage.ShearTransform.set -> void
+const RoguelikeToolkit.World.Core.Integration.CultureDelta.Collectivism = "collectivism" -> string!
+const RoguelikeToolkit.World.Core.Integration.CultureDelta.Faith = "faith" -> string!
+const RoguelikeToolkit.World.Core.Integration.CultureDelta.Hierarchy = "hierarchy" -> string!
+const RoguelikeToolkit.World.Core.Integration.CultureDelta.Honor = "honor" -> string!
+const RoguelikeToolkit.World.Core.Integration.CultureDelta.Language = "language" -> string!
+const RoguelikeToolkit.World.Core.Integration.CultureDelta.Lineage = "lineage" -> string!
+const RoguelikeToolkit.World.Core.Integration.CultureDelta.Mixed = "mixed" -> string!
+const RoguelikeToolkit.World.Core.Integration.CultureDelta.Subsistence = "subsistence" -> string!
+const RoguelikeToolkit.World.Core.Integration.CultureDelta.Xenophobia = "xenophobia" -> string!
+static RoguelikeToolkit.World.Core.Names.FantasyNameGenerator.GenerateHybridPlace(string! kind, RoguelikeToolkit.World.Core.Names.PlaceContext! ctx, string! superstrateRace, string! superstrateCulture, string! substrateRace, string! substrateCulture, int seed, int salt = 0, string? overrideDir = null, System.Collections.Generic.IEnumerable<string!>? inspiredBy = null, RoguelikeToolkit.World.Core.Names.NameScript script = RoguelikeToolkit.World.Core.Names.NameScript.Native) -> RoguelikeToolkit.World.Core.Names.GeneratedName!
+static RoguelikeToolkit.World.Core.Names.FantasyNameGenerator.GenerateMixedPerson(RoguelikeToolkit.World.Core.Lineage.Ancestry! ancestry, string! culture, RoguelikeToolkit.World.Core.Peoples.PeoplesStore! peoples, int seed, string? lineage = null, bool feminine = false, int salt = 0, string? overrideDir = null, System.Collections.Generic.IEnumerable<string!>? inspiredBy = null, RoguelikeToolkit.World.Core.Names.NameScript script = RoguelikeToolkit.World.Core.Names.NameScript.Native) -> RoguelikeToolkit.World.Core.Names.GeneratedName!
+RoguelikeToolkit.World.Core.Integration.CultureDelta
+RoguelikeToolkit.World.Core.Integration.CultureDelta.Cause.get -> string!
+RoguelikeToolkit.World.Core.Integration.CultureDelta.Cause.init -> void
+RoguelikeToolkit.World.Core.Integration.CultureDelta.CultureDelta() -> void
+RoguelikeToolkit.World.Core.Integration.CultureDelta.CultureDelta(int turn, string! target, string! trait, string! from, string! to, string! cause = "") -> void
+RoguelikeToolkit.World.Core.Integration.CultureDelta.From.get -> string!
+RoguelikeToolkit.World.Core.Integration.CultureDelta.From.init -> void
+RoguelikeToolkit.World.Core.Integration.CultureDelta.Target.get -> string!
+RoguelikeToolkit.World.Core.Integration.CultureDelta.Target.init -> void
+RoguelikeToolkit.World.Core.Integration.CultureDelta.To.get -> string!
+RoguelikeToolkit.World.Core.Integration.CultureDelta.To.init -> void
+RoguelikeToolkit.World.Core.Integration.CultureDelta.Trait.get -> string!
+RoguelikeToolkit.World.Core.Integration.CultureDelta.Trait.init -> void
+RoguelikeToolkit.World.Core.Integration.CultureDelta.Turn.get -> int
+RoguelikeToolkit.World.Core.Integration.CultureDelta.Turn.init -> void
+RoguelikeToolkit.World.Core.Integration.Ethnos
+RoguelikeToolkit.World.Core.Integration.Ethnos.CultureKey.get -> string!
+RoguelikeToolkit.World.Core.Integration.Ethnos.Deltas.get -> System.Collections.Generic.IReadOnlyList<RoguelikeToolkit.World.Core.Integration.CultureDelta>!
+RoguelikeToolkit.World.Core.Integration.Ethnos.Ethnos(string! folk, string! cultureKey, System.Collections.Generic.IEnumerable<RoguelikeToolkit.World.Core.Integration.CultureDelta>? deltas = null) -> void
+RoguelikeToolkit.World.Core.Integration.Ethnos.Folk.get -> string!
+RoguelikeToolkit.World.Core.Integration.Ethnos.Resolve(RoguelikeToolkit.World.Core.Peoples.PeoplesStore! store, int turn) -> RoguelikeToolkit.World.Core.Peoples.CultureDef!

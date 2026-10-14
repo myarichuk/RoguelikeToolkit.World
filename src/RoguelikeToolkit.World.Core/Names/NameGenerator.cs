@@ -1,3 +1,5 @@
+using RoguelikeToolkit.World.Core.Lineage;
+using RoguelikeToolkit.World.Core.Peoples;
 using static RoguelikeToolkit.World.Core.Names.NameText;
 using static RoguelikeToolkit.World.Core.Names.PersonNameBuilder;
 using static RoguelikeToolkit.World.Core.Names.PlaceNameBuilder;
@@ -172,6 +174,60 @@ public static class FantasyNameGenerator
     }
 
     /// <summary>
+    /// Generates a mixed-ancestry person name from lineage shares and the owning
+    /// culture's rule: a share at or above the culture's hypodescent threshold
+    /// names after that folk alone (dominant strategy always does); otherwise the
+    /// given name comes from the steepest share and the family/clan slot from the
+    /// next one, with no <c>half_X</c> key. The same arguments always produce the
+    /// same name for a given set of tables.
+    /// </summary>
+    /// <param name="ancestry">Lineage shares; the steepest share is dominant, ties keep declaration order.</param>
+    /// <param name="culture">Owning culture key (see <see cref="PeoplesStore.Cultures"/>): supplies the hypodescent threshold, the mixed-naming strategy and the lineage default. Blank means human_common.</param>
+    /// <param name="peoples">Folk/culture tables the owning culture is read from.</param>
+    /// <param name="seed">Deterministic seed, echoed in <see cref="GeneratedName.Seed"/>.</param>
+    /// <param name="lineage">Overrides the owning culture's default lineage; null or blank uses it.</param>
+    /// <param name="feminine">Selects feminine given names, patronymic marker and surname forms.</param>
+    /// <param name="salt">Extra number mixed into the seed to get a different name for the same seed.</param>
+    /// <param name="overrideDir">Directory of YAML tables to load instead of <see cref="Shared"/>; reloaded on every call, so avoid it in hot paths.</param>
+    /// <param name="inspiredBy">Theme words that bias which morphemes are picked.</param>
+    /// <param name="script">Script to render the name in.</param>
+    /// <exception cref="ArgumentNullException"><paramref name="ancestry"/> or <paramref name="peoples"/> is null.</exception>
+    /// <exception cref="UnknownPeoplesKeyException">The culture is unknown.</exception>
+    /// <exception cref="UnknownNameKeyException">A folk has no name table.</exception>
+    public static GeneratedName GenerateMixedPerson(
+        Ancestry ancestry, string culture, PeoplesStore peoples, int seed,
+        string? lineage = null, bool feminine = false, int salt = 0,
+        string? overrideDir = null, IEnumerable<string>? inspiredBy = null,
+        NameScript script = NameScript.Native)
+    {
+        if (ancestry is null) throw new ArgumentNullException(nameof(ancestry));
+        if (peoples is null) throw new ArgumentNullException(nameof(peoples));
+        if (string.IsNullOrWhiteSpace(culture)) culture = "human_common";
+        var owning = peoples.GetCulture(culture);
+        var store = overrideDir is null ? Shared : NameDataStore.Load(overrideDir);
+        // The owning culture's naming table voices single-folk renders; a clan
+        // key like dwarven is itself a table, otherwise fall back to fantasy_common.
+        var nameCulture = store.Tables.ContainsKey(owning.NamingTable) ? owning.NamingTable : Cultures.FantasyCommon;
+        var effLineage = string.IsNullOrWhiteSpace(lineage) ? owning.LineageDefault : lineage;
+        var dominant = ancestry.Dominant;
+        var implied = ancestry.ResolveImpliedStatus(owning.DominantShareThreshold);
+        if (!implied.Equals(Ancestry.Mixed, StringComparison.Ordinal)
+            || owning.MixedNaming.Equals("dominant", StringComparison.OrdinalIgnoreCase))
+            return GeneratePerson(dominant, nameCulture, seed,
+                lineage: effLineage, feminine: feminine, salt: salt,
+                overrideDir: overrideDir, inspiredBy: inspiredBy, script: script);
+        var second = ancestry.Shares.Count > 1 ? ancestry.Shares[1].Folk : dominant;
+        var dominantTable = store.Get(TableKey(dominant, nameCulture, store));
+        var secondTable = store.Get(TableKey(second, nameCulture, store));
+        var tokens = NameThemes.Tokenize(inspiredBy);
+        return FirstGood(store, dominantTable, script,
+            attempt => BuildMixed(store, dominantTable, secondTable,
+                second.Equals(FantasyRaces.Human, StringComparison.OrdinalIgnoreCase),
+                owning.LineageDefault, $"{dominant}+{second}", owning.Key,
+                seed, lineage, feminine, salt + attempt * 100003, tokens, script));
+    }
+
+    /// <summary>
     /// Generates a place name of the given kind; the same arguments always produce the same name for a given set of tables.
     /// </summary>
     /// <param name="kind">One of <see cref="PlaceKinds"/>; any other value is treated as a village. This argument, not <see cref="PlaceContext.Kind"/>, selects the kind.</param>
@@ -194,6 +250,43 @@ public static class FantasyNameGenerator
         var tokens = NameThemes.Tokenize(inspiredBy);
         return FirstGood(store, table, script,
             attempt => BuildPlace(store, kind, ctx, race, culture, seed, salt + attempt * 100003, tokens, script));
+    }
+
+    /// <summary>
+    /// Generates a hybrid place name for a conquest or settled-nomad city: the
+    /// descriptor comes from the superstrate (ruling) table, the noun from the
+    /// substrate (settled) table. The same arguments always produce the same name
+    /// for a given set of tables.
+    /// </summary>
+    /// <param name="kind">One of <see cref="PlaceKinds"/>; any other value is treated as a village. This argument, not <see cref="PlaceContext.Kind"/>, selects the kind.</param>
+    /// <param name="ctx">Surroundings the name should reflect.</param>
+    /// <param name="superstrateRace">Race key whose descriptors name the place; blank means human.</param>
+    /// <param name="superstrateCulture">Culture key for the superstrate; must still be valid for non-humans.</param>
+    /// <param name="substrateRace">Race key whose nouns ground the place; blank means human.</param>
+    /// <param name="substrateCulture">Culture key for the substrate; must still be valid for non-humans.</param>
+    /// <param name="seed">Deterministic seed, echoed in <see cref="GeneratedName.Seed"/>.</param>
+    /// <param name="salt">Extra number mixed into the seed to get a different name for the same seed.</param>
+    /// <param name="overrideDir">Directory of YAML tables to load instead of <see cref="Shared"/>; reloaded on every call.</param>
+    /// <param name="inspiredBy">Theme words that bias which morphemes are picked.</param>
+    /// <param name="script">Script to render the name in.</param>
+    /// <exception cref="UnknownNameKeyException">A race or culture has no table.</exception>
+    public static GeneratedName GenerateHybridPlace(
+        string kind, PlaceContext ctx, string superstrateRace, string superstrateCulture,
+        string substrateRace, string substrateCulture,
+        int seed, int salt = 0, string? overrideDir = null, IEnumerable<string>? inspiredBy = null,
+        NameScript script = NameScript.Native)
+    {
+        if (string.IsNullOrWhiteSpace(superstrateRace)) superstrateRace = FantasyRaces.Human;
+        if (string.IsNullOrWhiteSpace(superstrateCulture)) superstrateCulture = Cultures.FantasyCommon;
+        if (string.IsNullOrWhiteSpace(substrateRace)) substrateRace = FantasyRaces.Human;
+        if (string.IsNullOrWhiteSpace(substrateCulture)) substrateCulture = Cultures.FantasyCommon;
+        var store = overrideDir is null ? Shared : NameDataStore.Load(overrideDir);
+        var superstrate = store.Get(TableKey(superstrateRace, superstrateCulture, store));
+        var substrate = store.Get(TableKey(substrateRace, substrateCulture, store));
+        var tokens = NameThemes.Tokenize(inspiredBy);
+        return FirstGood(store, superstrate, script,
+            attempt => BuildHybridPlace(store, kind, ctx, superstrate, substrate,
+                superstrateRace, superstrateCulture, seed, salt + attempt * 100003, tokens, script));
     }
 
     /// <summary>

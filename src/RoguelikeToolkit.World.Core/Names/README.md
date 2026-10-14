@@ -6,7 +6,7 @@ Namespace `RoguelikeToolkit.World.Core.Names`, layer rank 1 (see `docs/ARCHITECT
 
 ## Contents
 
-- **FantasyNameGenerator (NameGenerator.cs)**: Public facade: configuration, catalog queries, `Generate*`.
+- **FantasyNameGenerator (NameGenerator.cs)**: Public facade: configuration, catalog queries, `Generate*` (including `GenerateMixedPerson` and `GenerateHybridPlace`).
 - **PersonNameBuilder, PlaceNameBuilder, MorphemePicker, NameText (internal)**: Assembly, selection and text helpers behind the facade.
 - **NameDataStore, CultureData, Cultures, FantasyRaces, PlaceKinds**: Data model and catalogs.
 - **NameLint**: Quality checks over generated names.
