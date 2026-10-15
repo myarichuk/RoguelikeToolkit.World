@@ -125,6 +125,18 @@ public abstract class Proposal
         public IReadOnlyList<EventParticipant>? Participants { get; init; }
     }
 
+    /// <summary>Records a historic site (a battlefield) on <see cref="Tile"/> for polity <see cref="Proposal.EntityId"/>; a tile that already has a site is left alone.</summary>
+    public sealed class AddSite : Proposal
+    {
+        /// <inheritdoc />
+        public override ProposalKind Kind => ProposalKind.AddSite;
+        /// <summary>Tile the site sits on.</summary>
+        public int Tile { get; init; }
+        /// <summary>Geographic position of the tile.</summary>
+        public GeoCoord Position { get; init; }
+        internal override long? ConflictKey => Tile;
+    }
+
     /// <summary>Sets polity <see cref="Proposal.EntityId"/>'s population index and ruler generation (absolute, not a delta).</summary>
     public sealed class SetPopulation : Proposal
     {

@@ -41,7 +41,6 @@ public class HistoryBenchmarks
         new CultureSeedStage().Execute(_world.Map);
         new PolityFormStage().Execute(_world.Map);
         new HistoryEventsStage().Execute(_world.Map);
-        new WarStage().Execute(_world.Map);
         new ConquestStage().Execute(_world.Map);
         new RebellionStage().Execute(_world.Map);
         new ExchangeStage().Execute(_world.Map);
@@ -86,7 +85,6 @@ public class LargeHistoryBenchmarks
         new CultureSeedStage().Execute(_world.Map);
         new PolityFormStage().Execute(_world.Map);
         new HistoryEventsStage().Execute(_world.Map);
-        new WarStage().Execute(_world.Map);
         new ConquestStage().Execute(_world.Map);
         new RebellionStage().Execute(_world.Map);
         new ExchangeStage().Execute(_world.Map);

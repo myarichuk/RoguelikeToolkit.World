@@ -2,7 +2,7 @@ namespace RoguelikeToolkit.World.Core.History;
 
 /// <summary>
 /// One non-aggression window between two polities: while <paramref name="turn"/> does not exceed
-/// <see cref="UntilTurn"/>, <see cref="WarStage"/> skips raids between the pair. Written by
+/// <see cref="UntilTurn"/>, <see cref="WarOperator"/> skips raids between the pair. Written by
 /// marriage/foster treaties and by submission tributes; never by a map edit.
 /// </summary>
 public sealed class TreatyWindow

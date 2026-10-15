@@ -6,7 +6,7 @@ namespace RoguelikeToolkit.World.Core.History;
 /// <summary>
 /// Order 80: diffuses loanwords and openness along active trade routes. Every turn, in route
 /// order, each route opened by <see cref="TradeRoadOperator"/> and not yet severed by
-/// <see cref="WarStage"/> rolls to carry one exchange: a
+/// <see cref="WarOperator"/> rolls to carry one exchange: a
 /// <see cref="HistoryEventKind.Exchange"/> event (tags <c>loanword</c> and the route tag) plus one
 /// point of openness drift on both endpoint polities (bounded by
 /// <see cref="HistoryDemography.MaxOpennessDrift"/>). Diffusion spends no budget — the road

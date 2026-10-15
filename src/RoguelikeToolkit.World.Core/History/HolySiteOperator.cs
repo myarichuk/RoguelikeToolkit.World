@@ -11,7 +11,7 @@ namespace RoguelikeToolkit.World.Core.History;
 /// highest-surplus owned non-capital tile: the site shelters its polity (see
 /// <see cref="HistoryCatalog.HolyDangerDelta"/>) and relieves a little crowding pressure (the
 /// aura income, abstract). A later war striking the tile trips the desecration response (see
-/// <see cref="WarStage"/>). Raising costs one emergence from this operator's turn budget.
+/// <see cref="WarOperator"/>). Raising costs one emergence from this operator's turn budget.
 /// Every draw is a pure function of <c>(seed, turn, polity, purpose)</c>.
 /// </summary>
 public sealed class HolySiteOperator : IHistoryOperator

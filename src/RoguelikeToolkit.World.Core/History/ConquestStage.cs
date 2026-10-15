@@ -5,7 +5,7 @@ using RoguelikeToolkit.World.Core.Topology;
 namespace RoguelikeToolkit.World.Core.History;
 
 /// <summary>
-/// Order 60: resolves wars into culture overlays. For every war the <see cref="WarStage"/> logged,
+/// Order 60: resolves wars into culture overlays. For every war the <see cref="WarOperator"/> logged,
 /// in log order, a sufficiently stronger attacker (see
 /// <see cref="HistoryDemography.ConquestAdvantage"/>) may impose its culture on the loser: the
 /// loser's <see cref="Polity.CultureOverlay"/> takes the winner's culture key and a

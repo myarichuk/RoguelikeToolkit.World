@@ -14,7 +14,7 @@ namespace RoguelikeToolkit.World.Core.History;
 /// order, surplus-complementary pairs (grain land vs herd/timber land) within trade range roll
 /// to connect: the route follows the cheapest land path preferring river, coastal and low-danger
 /// steps, and is stored as one <see cref="HistoryRoad"/> segment per step. Routes cost one
-/// emergence each; war severs them (<see cref="WarStage"/>) and exchange diffuses along the
+/// emergence each; war severs them (<see cref="WarOperator"/>) and exchange diffuses along the
 /// survivors (<see cref="ExchangeStage"/>). Re-running is idempotent: connected pairs are skipped
 /// and every draw is a pure function of <c>(seed, turn, pair)</c>.
 /// </summary>

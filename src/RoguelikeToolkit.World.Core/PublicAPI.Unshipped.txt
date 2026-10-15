@@ -2136,17 +2136,6 @@ RoguelikeToolkit.World.Core.History.HistoryDemography.FolkParams.LifespanYears.g
 RoguelikeToolkit.World.Core.History.HistoryDemography.FolkParams.LifespanYears.init -> void
 RoguelikeToolkit.World.Core.History.HistoryDemography.FolkParams.MaturationYears.get -> int
 RoguelikeToolkit.World.Core.History.HistoryDemography.FolkParams.MaturationYears.init -> void
-RoguelikeToolkit.World.Core.History.WarStage
-RoguelikeToolkit.World.Core.History.WarStage.WarStage() -> void
-const RoguelikeToolkit.World.Core.History.WarStage.WarPressureScale = 0.4 -> double
-const RoguelikeToolkit.World.Core.History.WarStage.WarXenophobiaScale = 0.0015 -> double
-const RoguelikeToolkit.World.Core.History.WarStage.MaxWarChance = 0.6 -> double
-const RoguelikeToolkit.World.Core.History.WarStage.MinWarPressure = 0.02 -> double
-override RoguelikeToolkit.World.Core.History.WarStage.Name.get -> string!
-override RoguelikeToolkit.World.Core.History.WarStage.Order.get -> int
-override RoguelikeToolkit.World.Core.History.WarStage.Reads.get -> System.Type![]!
-override RoguelikeToolkit.World.Core.History.WarStage.Precondition(RoguelikeToolkit.World.Core.Topology.WorldMap! map, RoguelikeToolkit.World.Core.History.HistoryCatalog! history) -> bool
-override RoguelikeToolkit.World.Core.History.WarStage.Apply(RoguelikeToolkit.World.Core.Topology.WorldMap! map, RoguelikeToolkit.World.Core.History.HistoryCatalog! history, RoguelikeToolkit.World.Core.History.HistoryContext! context) -> void
 RoguelikeToolkit.World.Core.History.ConquestStage
 RoguelikeToolkit.World.Core.History.ConquestStage.ConquestStage() -> void
 const RoguelikeToolkit.World.Core.History.ConquestStage.ConquestChance = 0.5 -> double

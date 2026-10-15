@@ -128,7 +128,7 @@ public sealed class HistoryContext
     /// another, so a shared ledger would let a noisy war starve every later operator: per-operator
     /// ledgers keep each stage's spend isolated. Never touches <see cref="DecisionsSpent"/>.
     /// </summary>
-    /// <param name="operatorName">Stage name (e.g. <c>WarStage</c>); must be non-blank.</param>
+    /// <param name="operatorName">Stage name (e.g. <c>WarOperator</c>); must be non-blank.</param>
     /// <param name="turn">History turn the spend belongs to; must be non-negative.</param>
     public bool TrySpendOperatorDecision(string operatorName, int turn)
     {

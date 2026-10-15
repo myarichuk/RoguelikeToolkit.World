@@ -115,7 +115,7 @@ public sealed class HistoryCatalog : IHistoricalContext
     /// <summary>Lasting grievances between polity pairs (canonical order, one entry per pair); repaid only by treaty, tribute or overlay.</summary>
     public List<GrudgeEntry> Grudges { get; } = new();
 
-    /// <summary>Non-aggression windows between polity pairs; <see cref="WarStage"/> skips windowed pairs.</summary>
+    /// <summary>Non-aggression windows between polity pairs; <see cref="WarOperator"/> skips windowed pairs.</summary>
     public List<TreatyWindow> Treaties { get; } = new();
 
     /// <summary>One faith per polity with a raised tradition, in polity-id order; built by <see cref="FaithStage"/>.</summary>
@@ -189,16 +189,16 @@ public sealed class HistoryCatalog : IHistoricalContext
     /// <paramref name="b"/> (canonical pair order; one entry per pair). Grudges never decay with
     /// time: only <see cref="RepayGrudges"/> clears them.
     /// </summary>
-    public void AddGrudge(int a, int b, int weight)
+    public void AddGrudge(int a, int b, int weight, int turn = -1)
     {
         if (weight <= 0) throw new ArgumentOutOfRangeException(nameof(weight), "Grudge weight must be positive.");
         if (a == b) throw new ArgumentException("A grudge needs two different polities.");
         (int x, int y) = a < b ? (a, b) : (b, a);
         foreach (var entry in Grudges)
         {
-            if (entry.A == x && entry.B == y) { entry.Weight += weight; return; }
+            if (entry.A == x && entry.B == y) { entry.Weight += weight; if (turn >= 0) entry.LastTurn = turn; return; }
         }
-        Grudges.Add(new GrudgeEntry { A = x, B = y, Weight = weight });
+        Grudges.Add(new GrudgeEntry { A = x, B = y, Weight = weight, FirstTurn = turn, LastTurn = turn });
     }
 
     /// <summary>Current grievance weight between <paramref name="a"/> and <paramref name="b"/>, or 0 when repaid or never raised.</summary>

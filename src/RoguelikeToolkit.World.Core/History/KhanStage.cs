@@ -12,7 +12,7 @@ namespace RoguelikeToolkit.World.Core.History;
 /// <see cref="HistoryEventKind.Tribute"/> event, moves pressure from the submitter to the khan,
 /// opens a non-aggression window and repays the pair's grudges; resistance logs an
 /// <see cref="HistoryEventKind.Ultimatum"/> event, raises a grudge and pressures both sides
-/// (the resist-stronger-siege the <see cref="WarStage"/> then reads through the grudge bonus).
+/// (the resist-stronger-siege the <see cref="WarOperator"/> then reads through the grudge bonus).
 /// Each ultimatum costs one decision from this stage's own per-turn budget. Every draw is a pure
 /// function of <c>(seed, turn, khan, purpose)</c>.
 /// </summary>

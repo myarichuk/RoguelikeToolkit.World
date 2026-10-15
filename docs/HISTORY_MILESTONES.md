@@ -345,3 +345,10 @@ run deterministically.
   `-0.1` pressure delta via `AdjustScalar` (clamped at 0 once at commit). Ended polities do not raise sites.
   `HolySiteOperator.FaithFormOf` stays the shared faith-form lookup. `HistoryFaithTests.Operators_EmitTheirEventKinds_AcrossSeeds`
   is red until M1.5 (it needs the full pipeline).
+- Done (War): `WarOperator` replaces `WarStage`. Reads pressure, grudges and windows from the snapshot, so the
+  time-travel leak (legacy mixed closed-form pressure with later-stage grudges) is gone by construction; pressure
+  is the causal scalar (Population's crowding + war bumps), not `PressureAtTurn + EventPressureBonus`. New
+  `AddSite` proposal (battlefield sites; `TurnView.HasSite`), `GrudgeEntry.FirstTurn`/`LastTurn` stamps (set by the
+  driver commit, not yet persisted: M1.4), war and desecration pressure bumps via `AdjustScalar` (clamped once).
+  RoadCut is emitted once per pair per turn and only when an unsevered route exists in the snapshot.
+  Desecration `Cause` is left unset (the war event of the same turn has no stable id yet).

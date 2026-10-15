@@ -4,7 +4,7 @@ namespace RoguelikeToolkit.World.Core.History;
 
 /// <summary>
 /// One deterministic neighbor lookup for the conflict operators: the polity ids owning a tile
-/// adjacent to <paramref name="polityId"/>'s territory, ascending. Shared by <see cref="WarStage"/>
+/// adjacent to <paramref name="polityId"/>'s territory, ascending. Shared by <see cref="WarOperator"/>
 /// and <see cref="KhanStage"/> so both read the same border.
 /// </summary>
 public static class HistoryNeighbors

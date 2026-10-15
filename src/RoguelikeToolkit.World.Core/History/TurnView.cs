@@ -27,6 +27,8 @@ public sealed class TurnView
     /// <summary>One holy site at the snapshot.</summary>
     public readonly record struct HolySiteState(int Tile, int PolityId, GeoCoord Position, bool Active);
 
+    private readonly HashSet<int> _siteTiles = new();
+
     internal TurnView(WorldMap? map, HistoryCatalog history, HistoryContext context, int turn)
     {
         _map = map;
@@ -52,6 +54,7 @@ public sealed class TurnView
         var sites = new List<HolySiteState>(history.HolySites.Count);
         foreach (var s in history.HolySites) sites.Add(new HolySiteState(s.TileIndex, s.PolityId, s.Position, s.Active));
         HolySites = sites;
+        foreach (var s in history.Sites) _siteTiles.Add(s.TileIndex);
     }
 
     /// <summary>
@@ -99,6 +102,9 @@ public sealed class TurnView
         foreach (var p in Polities) if (p.Id == polityId) return p.Scalars[scalarId];
         return Scalars[scalarId].Default;
     }
+
+    /// <summary>True when a historic site (capital, battlefield...) sits on <paramref name="tile"/> at the snapshot.</summary>
+    public bool HasSite(int tile) => _siteTiles.Contains(tile);
 
     /// <summary>Grudge weight between two polities at the snapshot, or 0.</summary>
     public int GrudgeWeight(int a, int b)

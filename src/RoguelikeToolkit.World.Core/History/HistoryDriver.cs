@@ -106,13 +106,17 @@ public sealed class HistoryDriver : HistoryPluginBase
                     history.HolySites.Add(new HistoryHolySite { TileIndex = h.Tile, PolityId = h.EntityId, FoundedTurn = turn, Position = h.Position });
                     break;
                 case Proposal.AddGrudge g:
-                    history.AddGrudge(g.EntityId, g.Other, g.Weight);
+                    history.AddGrudge(g.EntityId, g.Other, g.Weight, turn);
                     break;
                 case Proposal.RepayGrudge g:
                     history.RepayGrudges(g.EntityId, g.Other);
                     break;
                 case Proposal.AddWindow w:
                     history.AddWindow(w.EntityId, w.Other, w.UntilTurn);
+                    break;
+                case Proposal.AddSite st:
+                    if (!history.Sites.Any(x => x.TileIndex == st.Tile))
+                        history.Sites.Add(new HistorySite { TileIndex = st.Tile, PolityId = st.EntityId, FoundedTurn = turn, Position = st.Position, Active = true });
                     break;
                 case Proposal.AppendEvent e:
                     history.AppendLinked(e.EventKind, turn, e.EntityId, e.Tile, e.Tags, e.Cause, e.Participants);
