@@ -16,8 +16,8 @@ namespace RoguelikeToolkit.World.Core.History;
 /// </summary>
 public sealed class HistoryCatalog : IHistoricalContext
 {
-    /// <summary>Persistence schema version, written first by <see cref="Save"/> and checked by <see cref="Load"/>: 1 is the P2a shape (capitals only), 2 adds polity demography and road routes, 3 adds P2c treaty/faith state (grudges, windows, faiths, holy sites, villains, heirs).</summary>
-    public const int SchemaVersion = 3;
+    /// <summary>Persistence schema version, written first by <see cref="Save"/> and checked by <see cref="Load"/>: 1 is the P2a shape (capitals only), 2 adds polity demography and road routes, 3 adds P2c treaty/faith state (grudges, windows, faiths, holy sites, villains, heirs), 4 adds the generic-kernel state (string table, declared scalars and per-polity scalar values, polity lifecycle, event ids, causes, importance and participants, grudge turn stamps).</summary>
+    public const int SchemaVersion = 4;
 
     /// <summary>Planet radius in kilometres, matching <c>World.EarthRadiusKm</c> (kept literal: the root slice is above History).</summary>
     private const double EarthRadiusKm = 6371.0;
@@ -486,6 +486,18 @@ public sealed class HistoryCatalog : IHistoricalContext
         writer.Write(ForkedAtTurn.GetValueOrDefault());
         writer.Write(Compactions);
         writer.Write(DroppedEvents);
+        writer.Write(Strings.Count);
+        for (int i = 0; i < Strings.Count; i++) writer.Write(Strings.NameOf(i));
+        writer.Write(Scalars.Count);
+        for (int i = 0; i < Scalars.Count; i++)
+        {
+            var def = Scalars[i];
+            writer.Write(def.Name);
+            writer.Write(def.Min);
+            writer.Write(def.Max);
+            writer.Write(def.Default);
+        }
+        writer.Write(_nextEventId);
         writer.Write(Polities.Count);
         foreach (var polity in Polities)
         {
@@ -502,6 +514,11 @@ public sealed class HistoryCatalog : IHistoricalContext
             writer.Write(polity.OpennessDrift);
             writer.Write(polity.HeirBornTurn);
             writer.Write(polity.HasVillain);
+            writer.Write(polity.EndedTurn);
+            writer.Write(polity.EndCause);
+            writer.Write(polity.Parent);
+            writer.Write(Scalars.Count);
+            for (int k = 0; k < Scalars.Count; k++) writer.Write(polity.GetScalar(k, Scalars));
         }
         writer.Write(Ownership.Length);
         foreach (int owner in Ownership) writer.Write(owner);
@@ -514,6 +531,15 @@ public sealed class HistoryCatalog : IHistoricalContext
             writer.Write(entry.TileIndex);
             writer.Write(entry.Tags.Count);
             foreach (string tag in entry.Tags) writer.Write(tag ?? string.Empty);
+            writer.Write(entry.Id);
+            writer.Write(entry.Cause);
+            writer.Write((byte)entry.Importance);
+            writer.Write(entry.Participants.Count);
+            foreach (var part in entry.Participants)
+            {
+                writer.Write(part.EntityId);
+                writer.Write(part.Role);
+            }
         }
         writer.Write(Settlements.Count);
         foreach (var settlement in Settlements)
@@ -554,6 +580,8 @@ public sealed class HistoryCatalog : IHistoricalContext
             writer.Write(grudge.A);
             writer.Write(grudge.B);
             writer.Write(grudge.Weight);
+            writer.Write(grudge.FirstTurn);
+            writer.Write(grudge.LastTurn);
         }
         writer.Write(Treaties.Count);
         foreach (var window in Treaties)
@@ -642,6 +670,37 @@ public sealed class HistoryCatalog : IHistoricalContext
             catalog.ForkedAtTurn = hasFork ? forkedAt : null;
             catalog.Compactions = reader.ReadInt32();
             catalog.DroppedEvents = reader.ReadInt32();
+            int nextEventId = 0;
+            if (version >= 4)
+            {
+                int names = CheckedCount(reader.ReadInt32());
+                for (int i = 0; i < names; i++)
+                {
+                    string name = reader.ReadString();
+                    if (string.IsNullOrWhiteSpace(name) || catalog.Strings.Intern(name) != i)
+                        throw new InvalidDataException("Corrupt history catalog (string table).");
+                }
+                int declared = CheckedCount(reader.ReadInt32());
+                for (int i = 0; i < declared; i++)
+                {
+                    string name = reader.ReadString();
+                    double min = reader.ReadDouble(), max = reader.ReadDouble(), def = reader.ReadDouble();
+                    try
+                    {
+                        if (catalog.Scalars.Declare(name, min, max, def).Id != i)
+                            throw new InvalidDataException("Corrupt history catalog (scalar table order).");
+                    }
+                    catch (ArgumentException ex)
+                    {
+                        throw new InvalidDataException("Corrupt history catalog (scalar definition).", ex);
+                    }
+                    catch (InvalidOperationException ex)
+                    {
+                        throw new InvalidDataException("Corrupt history catalog (scalar definition).", ex);
+                    }
+                }
+                nextEventId = reader.ReadInt32();
+            }
             int polities = CheckedCount(reader.ReadInt32());
             for (int i = 0; i < polities; i++)
             {
@@ -667,6 +726,15 @@ public sealed class HistoryCatalog : IHistoricalContext
                     polity.HeirBornTurn = reader.ReadInt32();
                     polity.HasVillain = reader.ReadBoolean();
                 }
+                if (version >= 4)
+                {
+                    polity.EndedTurn = reader.ReadInt32();
+                    polity.EndCause = reader.ReadInt32();
+                    polity.Parent = reader.ReadInt32();
+                    int slots = CheckedCount(reader.ReadInt32());
+                    if (slots > catalog.Scalars.Count) throw new InvalidDataException("Corrupt history catalog (scalar slots).");
+                    for (int k = 0; k < slots; k++) polity.SetScalar(k, reader.ReadDouble(), catalog.Scalars);
+                }
                 catalog.Polities.Add(polity);
             }
             int tiles = CheckedCount(reader.ReadInt32());
@@ -677,17 +745,36 @@ public sealed class HistoryCatalog : IHistoricalContext
             for (int i = 0; i < events; i++)
             {
                 var kind = (HistoryEventKind)reader.ReadByte();
+                int eventTurn = reader.ReadInt32(), eventPolity = reader.ReadInt32(), eventTile = reader.ReadInt32();
+                int tags = CheckedCount(reader.ReadInt32());
+                var tagList = new List<string>(Math.Min(tags, 64));
+                for (int k = 0; k < tags; k++) tagList.Add(reader.ReadString());
+                int id = -1, cause = -1;
+                var importance = EventImportanceMap.Of(kind);
+                List<EventParticipant>? partList = null;
+                if (version >= 4)
+                {
+                    id = reader.ReadInt32();
+                    cause = reader.ReadInt32();
+                    importance = (EventImportance)reader.ReadByte();
+                    int parts = CheckedCount(reader.ReadInt32());
+                    partList = new List<EventParticipant>(Math.Min(parts, 64));
+                    for (int k = 0; k < parts; k++) partList.Add(new EventParticipant(reader.ReadInt32(), reader.ReadInt32()));
+                }
                 var entry = new HistoryEvent
                 {
-                    Kind = kind,
-                    Turn = reader.ReadInt32(),
-                    PolityId = reader.ReadInt32(),
-                    TileIndex = reader.ReadInt32(),
-                    Importance = EventImportanceMap.Of(kind),
+                    Kind = kind, Turn = eventTurn, PolityId = eventPolity, TileIndex = eventTile,
+                    Cause = cause, Importance = importance,
                 };
-                int tags = CheckedCount(reader.ReadInt32());
-                for (int k = 0; k < tags; k++) entry.Tags.Add(reader.ReadString());
-                catalog.Register(entry);
+                entry.Tags.AddRange(tagList);
+                if (partList != null) entry.Participants.AddRange(partList);
+                if (version >= 4)
+                {
+                    entry.Id = id;
+                    catalog.Events.Add(entry);
+                    catalog._eventVersion++;
+                }
+                else catalog.Register(entry);
             }
             int settlements = CheckedCount(reader.ReadInt32());
             for (int i = 0; i < settlements; i++)
@@ -747,7 +834,11 @@ public sealed class HistoryCatalog : IHistoricalContext
             {
                 int grudges = CheckedCount(reader.ReadInt32());
                 for (int i = 0; i < grudges; i++)
-                    catalog.Grudges.Add(new GrudgeEntry { A = reader.ReadInt32(), B = reader.ReadInt32(), Weight = reader.ReadInt32() });
+                {
+                    var grudge = new GrudgeEntry { A = reader.ReadInt32(), B = reader.ReadInt32(), Weight = reader.ReadInt32() };
+                    if (version >= 4) { grudge.FirstTurn = reader.ReadInt32(); grudge.LastTurn = reader.ReadInt32(); }
+                    catalog.Grudges.Add(grudge);
+                }
                 int windows = CheckedCount(reader.ReadInt32());
                 for (int i = 0; i < windows; i++)
                     catalog.Treaties.Add(new TreatyWindow { A = reader.ReadInt32(), B = reader.ReadInt32(), UntilTurn = reader.ReadInt32() });
@@ -790,6 +881,7 @@ public sealed class HistoryCatalog : IHistoricalContext
             for (int i = 0; i < renames; i++) catalog.Overrides.Renames[reader.ReadInt32()] = reader.ReadString();
             int pins = CheckedCount(reader.ReadInt32());
             for (int i = 0; i < pins; i++) catalog.Overrides.PinnedTiles[reader.ReadInt32()] = reader.ReadInt32();
+            if (version >= 4) catalog._nextEventId = nextEventId;
             catalog.ValidateReferences();
             return catalog;
         }
@@ -824,6 +916,24 @@ public sealed class HistoryCatalog : IHistoricalContext
         foreach (var f in Faiths) Check(f.PolityId, "faith", false);
         foreach (var h in HolySites) Check(h.PolityId, "holy site", true);
         foreach (var v in Villains) Check(v.PolityId, "villain", false);
+        foreach (var p in Polities)
+        {
+            Check(p.Parent, "polity parent", true);
+            if (p.EndCause >= Strings.Count || p.EndCause < -1) throw new InvalidDataException($"Corrupt history catalog (polity {p.Id} end cause {p.EndCause}).");
+        }
+        var seenIds = new HashSet<int>();
+        foreach (var e in Events)
+        {
+            if (e.Id >= _nextEventId || e.Id < 0 || !seenIds.Add(e.Id))
+                throw new InvalidDataException($"Corrupt history catalog (event id {e.Id}).");
+            if (e.Cause < -1 || e.Cause >= e.Id) throw new InvalidDataException($"Corrupt history catalog (event {e.Id} cause {e.Cause}).");
+            if (e.Importance > EventImportance.Founding) throw new InvalidDataException($"Corrupt history catalog (event {e.Id} importance).");
+            foreach (var part in e.Participants)
+            {
+                Check(part.EntityId, "event participant", false);
+                if ((uint)part.Role >= (uint)Strings.Count) throw new InvalidDataException($"Corrupt history catalog (event {e.Id} role {part.Role}).");
+            }
+        }
     }
 
     private static int CheckedCount(int count)

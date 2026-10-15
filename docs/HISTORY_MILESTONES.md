@@ -390,3 +390,12 @@ run deterministically.
 - Full Core suite after M1.3: 750 passed, 3 red until M1.5 (`HistoryOperatorsTests.Population_TicksForEveryPolity`,
   `HistoryTests.HistoricalContext_ServesCapitalSites_NoModifiers`, `HistoryTests.Build_FoundsPolities_WithFoundingEventsAndProjections`:
   they need Population and the city post-pass wired through `WorldBuilder`). Other test projects not run yet.
+
+**M1.4 progress.**
+
+- Done (persistence): `HistoryCatalog.SchemaVersion` = 4. Adds the string table, declared scalars, next event id, per-polity
+  lifecycle (`EndedTurn`, `EndCause`, `Parent`) and scalar values (all declared slots), event id / cause / importance /
+  participants, and grudge `FirstTurn`/`LastTurn`. Load validates parents, end causes, event ids (unique, below next id),
+  causes (earlier id), importance and participant ids/roles. v1-v3 files still load through the legacy readers
+  (no regenerate-on-load: the catalog cannot re-run the pipeline); overrides were always persisted in every version.
+  Tests: `HistoryPersistenceV4Tests`.
