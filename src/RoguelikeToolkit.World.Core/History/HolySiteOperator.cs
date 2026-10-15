@@ -7,14 +7,14 @@ using RoguelikeToolkit.World.Core.Topology;
 namespace RoguelikeToolkit.World.Core.History;
 
 /// <summary>
-/// Order 44: raises holy sites. Every founded polity rolls once to raise a shrine on its
+/// Order 44: raises holy sites. On the first simulated turn every living polity rolls once to raise a shrine on its
 /// highest-surplus owned non-capital tile: the site shelters its polity (see
 /// <see cref="HistoryCatalog.HolyDangerDelta"/>) and relieves a little crowding pressure (the
 /// aura income, abstract). A later war striking the tile trips the desecration response (see
-/// <see cref="WarStage"/>). Raising costs one emergence from this stage's own turn-0 budget.
+/// <see cref="WarStage"/>). Raising costs one emergence from this operator's turn budget.
 /// Every draw is a pure function of <c>(seed, turn, polity, purpose)</c>.
 /// </summary>
-public sealed class HolySiteStage : HistoryPluginBase
+public sealed class HolySiteOperator : IHistoryOperator
 {
     /// <summary>Chance a founded polity raises a holy site.</summary>
     public const double HolyChance = 0.5;
@@ -23,39 +23,32 @@ public sealed class HolySiteStage : HistoryPluginBase
     public const double AuraRelief = 0.1;
 
     /// <summary>Diagnostic name, <c>HolySite</c>.</summary>
-    public override string Name => "HolySite";
+    public string Name => "HolySite";
+
     /// <summary><see cref="StageOrder.HolySite"/> (44).</summary>
-    public override int Order => StageOrder.HolySite;
-    /// <summary>None required: ownership alone places the site.</summary>
-    public override Type[] Reads => Array.Empty<Type>();
-    /// <summary>Land capacity (real surplus) and biomes (fallback surplus) for the site pick.</summary>
-    public override Type[] ReadsOptional => new[] { typeof(LandCapacityInfo), typeof(BiomeInfo) };
+    public int Order => StageOrder.HolySite;
 
-    /// <summary>True once polities have formed and no holy site has been raised yet.</summary>
-    public override bool Precondition(WorldMap map, HistoryCatalog history)
-        => history.PolitiesFormed && history.HolySites.Count == 0;
-
-    /// <summary>Raises at most one holy site per founded polity.</summary>
-    public override void Apply(WorldMap map, HistoryCatalog history, HistoryContext context)
+    /// <summary>Raises at most one holy site per living polity, on the first simulated turn only.</summary>
+    public void Propose(TurnView view, ProposalSink sink)
     {
-        context.ResetOperatorBudget(Name);
-        PeoplesStore? store = PeoplesLoader.LoadStore(history);
-        foreach (var polity in history.Polities)
+        if (view.Turn != 1 || view.HolySites.Count > 0) return;
+        var store = view.LoadPeoples();
+        foreach (var polity in view.Polities)
         {
-            var stream = HistoryRng.Create(history.Seed, Name, 0, polity.Id, "found");
+            if (!polity.Alive) continue;
+            var stream = sink.Rng(polity.Id, "found");
             if (stream.NextDouble() >= HolyChance) continue;
-            int tile = BestHolyTile(map, history, polity.Id);
+            int tile = BestHolyTile(view, polity);
             if (tile < 0) continue;
-            if (!context.TrySpendOperatorEmergence(Name, 0)) continue;
-            history.HolySites.Add(new HistoryHolySite
+            if (!sink.TrySpendEmergence()) continue;
+            sink.Emit(new Proposal.AddHolySite
             {
-                TileIndex = tile,
-                PolityId = polity.Id,
-                FoundedTurn = 0,
-                Position = map.DataStore.GetGeoCoord(tile),
+                EntityId = polity.Id,
+                Tile = tile,
+                Position = view.Map.DataStore.GetGeoCoord(tile),
             });
-            polity.Pressure = Math.Max(0, polity.Pressure - AuraRelief);
-            history.AppendEvent(HistoryEventKind.HolyFound, 0, polity.Id, tile,
+            sink.Adjust(polity.Id, ScalarRegistry.Pressure, -AuraRelief);
+            sink.Event(HistoryEventKind.HolyFound, polity.Id, tile,
                 new[] { "holy", $"faith:{FaithFormOf(polity.CultureKey, store)}", $"tile:{tile}" });
         }
     }
@@ -74,20 +67,19 @@ public sealed class HolySiteStage : HistoryPluginBase
         return "animism";
     }
 
-    private static int BestHolyTile(WorldMap map, HistoryCatalog history, int polityId)
+    private static int BestHolyTile(TurnView view, TurnView.PolityState polity)
     {
-        var store = map.DataStore;
+        var store = view.Map.DataStore;
         bool hasCapacity = store.IsLayerRegistered<LandCapacityInfo>();
         var capacity = hasCapacity ? store.GetSpan<LandCapacityInfo>() : default;
         bool hasBiome = !hasCapacity && store.IsLayerRegistered<BiomeInfo>();
         var biomes = hasBiome ? store.GetSpan<BiomeInfo>() : default;
-        int capital = history.Polities[polityId].CapitalTile;
         int best = -1;
         int bestSum = 0;
-        int tiles = Math.Min(store.TileCount, history.Ownership.Length);
+        int tiles = Math.Min(store.TileCount, view.TileCount);
         for (int tile = 0; tile < tiles; tile++)
         {
-            if (history.Ownership[tile] != polityId || tile == capital) continue;
+            if (view.OwnerOf(tile) != polity.Id || tile == polity.CapitalTile) continue;
             int sum;
             if (hasCapacity)
             {

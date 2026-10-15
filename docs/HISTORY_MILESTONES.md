@@ -340,3 +340,8 @@ run deterministically.
 - **Open questions carried over:** pin/rename resolution when a polity splits or ends; turn length
   for shocks; per-settlement population vs per-polity only; whether cultures get their own
   territory or derive from settlement ownership.
+- Done (HolySite): `HolySiteOperator` replaces `HolySiteStage`. It fires only on the first simulated turn (turn 1; legacy
+  used turn 0, so `FoundedTurn` and the `HolyFound` event turn are now 1) while no site exists. Aura relief is a
+  `-0.1` pressure delta via `AdjustScalar` (clamped at 0 once at commit). Ended polities do not raise sites.
+  `HolySiteOperator.FaithFormOf` stays the shared faith-form lookup. `HistoryFaithTests.Operators_EmitTheirEventKinds_AcrossSeeds`
+  is red until M1.5 (it needs the full pipeline).

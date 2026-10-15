@@ -4,7 +4,7 @@ namespace RoguelikeToolkit.World.Core.History;
 
 /// <summary>
 /// One raised holy site: a high-surplus owned tile (never the capital) whose aura shelters its
-/// polity (see <see cref="HolySiteStage"/>) and whose violation trips the desecration response.
+/// polity (see <see cref="HolySiteOperator"/>) and whose violation trips the desecration response.
 /// Projects through <see cref="HistoryCatalog"/> as a shrine-kind game site.
 /// </summary>
 public sealed class HistoryHolySite

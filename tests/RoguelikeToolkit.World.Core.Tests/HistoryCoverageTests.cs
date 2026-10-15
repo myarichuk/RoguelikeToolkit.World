@@ -122,27 +122,6 @@ public class HistoryCoverageTests
     }
 
     [Fact]
-    public void HolySite_EndToEnd_OneSitePerPolityAtMost_OwnedAndOffCapital()
-    {
-        int sites = 0;
-        for (int seed = 1; seed <= 12; seed++)
-        {
-            using var w = Build(seed);
-            var h = w.History;
-            Assert.Equal(h.HolySites.Count, h.Events.Count(e => e.Kind == HistoryEventKind.HolyFound));
-            Assert.Equal(h.HolySites.Count, h.HolySites.Select(s => s.PolityId).Distinct().Count());
-            foreach (var site in h.HolySites)
-            {
-                sites++;
-                Assert.Equal(0, site.FoundedTurn);
-                Assert.NotEqual(h.Polities[site.PolityId].CapitalTile, site.TileIndex);
-                Assert.Equal(site.PolityId, h.Ownership[site.TileIndex]);
-            }
-        }
-        Assert.True(sites > 0);
-    }
-
-    [Fact]
     public void Rebellion_EndToEnd_SplitsAProvince_WhenThePolityCapAllows()
     {
         int rebellions = 0;

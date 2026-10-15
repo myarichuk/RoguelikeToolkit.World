@@ -43,7 +43,7 @@ public sealed class FaithStage : HistoryPluginBase
             var faith = new HistoryFaith
             {
                 PolityId = polity.Id,
-                Form = HolySiteStage.FaithFormOf(polity.CultureKey, store),
+                Form = HolySiteOperator.FaithFormOf(polity.CultureKey, store),
             };
             DrawPowers(history, polity, faith);
             DrawMyths(history, polity, faith);
