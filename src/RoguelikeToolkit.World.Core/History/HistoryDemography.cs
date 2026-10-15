@@ -269,20 +269,25 @@ public static class HistoryDemography
         _ => new[] { 0, 0, 0, 0 },
     };
 
+    /// <summary>Minimum difference in grain share (arable over arable + pasture + timber) for two profiles to trade.</summary>
+    public const double ComplementShareGap = 0.12;
+
     /// <summary>
-    /// True when one profile runs a grain surplus and the other a herd/timber surplus: one side's
-    /// arable beats its pasture + timber by a quarter while the other's pasture + timber beats its
-    /// arable by a quarter (or the mirror). Null, short or empty profiles are never complementary.
+    /// True when the two profiles lean to different sides of the grain/herd-and-timber balance: their
+    /// grain shares (arable over arable + pasture + timber) differ by at least
+    /// <see cref="ComplementShareGap"/>. Polity-wide sums blend every biome, so an absolute grain-over-range
+    /// ratio never fires; the relative gap does. Null, short or empty profiles are never complementary.
     /// </summary>
     /// <param name="first">Surplus profile as <c>[arable, pasture, game, timber]</c>.</param>
     /// <param name="second">Surplus profile as <c>[arable, pasture, game, timber]</c>.</param>
     public static bool AreComplementary(int[]? first, int[]? second)
     {
         if (first is null || second is null || first.Length < 4 || second.Length < 4) return false;
-        int grainA = first[0], rangeA = first[1] + first[3];
-        int grainB = second[0], rangeB = second[1] + second[3];
-        if (grainA + rangeA == 0 || grainB + rangeB == 0) return false;
-        return (grainA >= rangeA * 1.25 && rangeB >= grainB * 1.25)
-            || (rangeA >= grainA * 1.25 && grainB >= rangeB * 1.25);
+        int totalA = first[0] + first[1] + first[3];
+        int totalB = second[0] + second[1] + second[3];
+        if (totalA == 0 || totalB == 0) return false;
+        double shareA = (double)first[0] / totalA;
+        double shareB = (double)second[0] / totalB;
+        return Math.Abs(shareA - shareB) >= ComplementShareGap;
     }
 }

@@ -2126,6 +2126,7 @@ static RoguelikeToolkit.World.Core.History.HistoryDemography.CapacitySum(int ara
 static RoguelikeToolkit.World.Core.History.HistoryDemography.CarryingCapacities(RoguelikeToolkit.World.Core.Storage.WorldDataStore! store, System.Collections.Generic.IReadOnlyList<RoguelikeToolkit.World.Core.History.Polity!>! polities, int[]! ownership) -> double[]!
 static RoguelikeToolkit.World.Core.History.HistoryDemography.BiomeSurplus(RoguelikeToolkit.World.Core.Biomes.BiomeType biome) -> int[]!
 static RoguelikeToolkit.World.Core.History.HistoryDemography.AreComplementary(int[]? first, int[]? second) -> bool
+const RoguelikeToolkit.World.Core.History.HistoryDemography.ComplementShareGap = 0.12 -> double
 RoguelikeToolkit.World.Core.History.HistoryDemography.FolkParams
 RoguelikeToolkit.World.Core.History.HistoryDemography.FolkParams.FolkParams() -> void
 RoguelikeToolkit.World.Core.History.HistoryDemography.FolkParams.FolkParams(double GrowthR, int LifespanYears, int MaturationYears) -> void

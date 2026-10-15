@@ -29,4 +29,29 @@ public class TradeRoadOperatorTests
             Assert.Equal(routes, a.History.Events.Count(e => e.Kind == HistoryEventKind.RoadBuilt));
         }
     }
+
+    [Fact]
+    public void Gate_UsesRelativeGrainShare()
+    {
+        int[] farm = { 100, 20, 0, 20 };
+        int[] herd = { 30, 80, 0, 80 };
+        Assert.True(HistoryDemography.AreComplementary(farm, herd));
+        Assert.True(HistoryDemography.AreComplementary(herd, farm));
+        Assert.False(HistoryDemography.AreComplementary(farm, farm));
+        Assert.False(HistoryDemography.AreComplementary(farm, new[] { 0, 0, 0, 0 }));
+        Assert.False(HistoryDemography.AreComplementary(null, farm));
+    }
+
+    [Fact]
+    public void DefaultWorlds_OpenRoutes()
+    {
+        int worldsWithRoutes = 0;
+        for (int seed = 1; seed <= 6; seed++)
+        {
+            using var w = Build(seed);
+            Run(w);
+            if (w.History.Roads.Count > 0) worldsWithRoutes++;
+        }
+        Assert.True(worldsWithRoutes > 0);
+    }
 }
