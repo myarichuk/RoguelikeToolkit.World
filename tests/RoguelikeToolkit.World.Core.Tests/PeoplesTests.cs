@@ -7,6 +7,24 @@ namespace RoguelikeToolkit.World.Core.Tests;
 public sealed class PeoplesTests
 {
     [Fact]
+    public void Load_NullYamlFields_ThrowPeoplesDataExceptionNotNullReference()
+    {
+        string dir = Path.Combine(Path.GetTempPath(), "peoples-null-" + Guid.NewGuid().ToString("N"));
+        Directory.CreateDirectory(Path.Combine(dir, "Folks"));
+        try
+        {
+            File.WriteAllText(Path.Combine(dir, "Folks", "ogre.yaml"),
+                "Key: ogre\nSapience:\nEmbodiment: large\nHabitatAffinity: hills\nLifespanYears: 60\n" +
+                "MaturationYears: 15\nGrowthR: 0.01\nCompatGroup: giant\nOpennessPrior:\n");
+            Assert.Throws<PeoplesDataException>(() => PeoplesStore.Load(dir));
+        }
+        finally
+        {
+            Directory.Delete(dir, recursive: true);
+        }
+    }
+
+    [Fact]
     public void Load_ReturnsTwoSampleFolks()
     {
         var store = PeoplesStore.Load();

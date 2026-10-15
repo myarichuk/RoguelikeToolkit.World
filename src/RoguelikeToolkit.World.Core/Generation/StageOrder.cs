@@ -47,6 +47,15 @@ public static class StageOrder
     /// <summary>People and time: logistic growth, pressure, succession and trait-drift ticks.</summary>
     public const int Population = 32;
 
+    /// <summary>Holy-site raising: high-surplus owned tiles become shrines with sheltering auras.</summary>
+    public const int HolySite = 44;
+
+    /// <summary>Steppe ultimatum: horde khans demand tribute from weaker neighbors (submit or resist).</summary>
+    public const int Khan = 46;
+
+    /// <summary>Treaty operator: abstract adult-only marriage/foster alliances, refusals log grudges.</summary>
+    public const int Treaty = 48;
+
     /// <summary>War operator: raids between neighboring polities; severs roads, raises pressure.</summary>
     public const int War = 50;
 
@@ -56,8 +65,14 @@ public static class StageOrder
     /// <summary>Rebellion operator: far-flung, oppressed regions break away (bounded by the polity cap).</summary>
     public const int Rebellion = 70;
 
+    /// <summary>Villain operator: long-life actors rise to rule, freezing successions (bounded by the villain cap).</summary>
+    public const int Villain = 76;
+
     /// <summary>Exchange operator: road-volume diffusion (loanwords, openness drift) along active routes.</summary>
     public const int Exchange = 80;
+
+    /// <summary>Faith operator: per-polity forms, pressure-drawn powers and myth slots from the event log.</summary>
+    public const int Faith = 84;
 
     /// <summary>City-history projection: polity capitals become settlements and historic sites. Last history order before the land-use allocation band closes.</summary>
     public const int CityHistoryProject = 91;

@@ -134,6 +134,22 @@ public static class HistoryDemography
     }
 
     /// <summary>
+    /// Successions ticked before <paramref name="turn"/> for a folk: one per generation boundary
+    /// (<see cref="GenerationTurns"/>) strictly below <paramref name="turn"/>.
+    /// </summary>
+    /// <param name="lifespanYears">Folk lifespan in years; must be positive.</param>
+    /// <param name="turnYears">Years per turn; must be positive.</param>
+    /// <param name="turn">Turn to count successions before; must be non-negative.</param>
+    public static int SuccessionsBefore(int lifespanYears, int turnYears, int turn)
+    {
+        if (turn < 0) throw new ArgumentOutOfRangeException(nameof(turn), "Turn cannot be negative.");
+        int generation = GenerationTurns(lifespanYears, turnYears);
+        int successions = 0;
+        for (int t = generation; t < turn; t += generation) successions++;
+        return successions;
+    }
+
+    /// <summary>
     /// War pressure <paramref name="polityId"/> had accumulated by <paramref name="turn"/>: one
     /// <see cref="WarPressureBump"/> per war it attacked or defended with a turn at or before
     /// <paramref name="turn"/>. Lets later operators (conquest, rebellion) read causal pressure

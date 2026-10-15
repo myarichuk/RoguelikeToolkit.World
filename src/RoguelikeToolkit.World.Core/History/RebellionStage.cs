@@ -50,15 +50,7 @@ public sealed class RebellionStage : HistoryPluginBase
     public override void Apply(WorldMap map, HistoryCatalog history, HistoryContext context)
     {
         context.ResetOperatorBudget(Name);
-        PeoplesStore? store = null;
-        try
-        {
-            store = PeoplesStore.Load();
-        }
-        catch (PeoplesDataException)
-        {
-            store = null;
-        }
+        PeoplesStore? store = PeoplesLoader.LoadStore(history);
 
         double separationDot = DetMath.Cos(MinSeparationDegrees * GeoCoord.Deg2Rad);
         double[] capacities = HistoryDemography.CarryingCapacities(map.DataStore, history.Polities, history.Ownership);

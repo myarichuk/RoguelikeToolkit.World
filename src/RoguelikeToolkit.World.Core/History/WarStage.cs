@@ -6,10 +6,13 @@ namespace RoguelikeToolkit.World.Core.History;
 
 /// <summary>
 /// Order 50: raids between neighboring polities. Every turn, in polity order, each crowded
-/// polity rolls against its pressure (plus its founding culture's xenophobia) to raid one
-/// bordering polity: the war appends a <see cref="HistoryEventKind.War"/> event plus a battlefield
-/// site entry on the battlefield tile, severs every trade route between the two capitals (one
-/// <see cref="HistoryEventKind.RoadCut"/> event per route), and pressures both sides. Wars cost one
+/// polity picks a bordering polity and rolls against its pressure (plus its founding culture's
+/// xenophobia, plus the pair's grudge weight) to raid it: the war appends a
+/// <see cref="HistoryEventKind.War"/> event plus a battlefield site entry on the battlefield tile,
+/// severs every trade route between the two capitals (one <see cref="HistoryEventKind.RoadCut"/>
+/// event per route), and pressures both sides. Pairs under a treaty or tribute non-aggression
+/// window are skipped; a battlefield on a holy tile appends a <see cref="HistoryEventKind.Desecration"/>
+/// event and raises grudges (plus a coalition of the holy owner's neighbors). Wars cost one
 /// decision from this stage's own per-turn budget, so a noisy war exhausts only itself. Every draw
 /// is a pure function of <c>(seed, turn, attacker, purpose)</c>: this stage never reads another
 /// operator's draws.
@@ -28,6 +31,15 @@ public sealed class WarStage : HistoryPluginBase
     /// <summary>Minimum crowding pressure before a polity considers raiding.</summary>
     public const double MinWarPressure = 0.02;
 
+    /// <summary>War chance per point of grudge weight between attacker and defender.</summary>
+    public const double GrudgeWarScale = 0.02;
+
+    /// <summary>Grudge weight a desecration raises between the desecrator and the holy owner.</summary>
+    public const int DesecrationGrudge = 3;
+
+    /// <summary>Grudge weight a desecration raises between the desecrator and each of the holy owner's neighbors (the coalition).</summary>
+    public const int DesecrationCoalitionGrudge = 1;
+
     /// <summary>Diagnostic name, <c>War</c>.</summary>
     public override string Name => "War";
     /// <summary><see cref="StageOrder.War"/> (50).</summary>
@@ -43,15 +55,7 @@ public sealed class WarStage : HistoryPluginBase
     public override void Apply(WorldMap map, HistoryCatalog history, HistoryContext context)
     {
         context.ResetOperatorBudget(Name);
-        PeoplesStore? store = null;
-        try
-        {
-            store = PeoplesStore.Load();
-        }
-        catch (PeoplesDataException)
-        {
-            store = null;
-        }
+        PeoplesStore? store = PeoplesLoader.LoadStore(history);
 
         double[] capacities = HistoryDemography.CarryingCapacities(map.DataStore, history.Polities, history.Ownership);
         var xenophobia = new Dictionary<string, int>(StringComparer.OrdinalIgnoreCase);
@@ -72,17 +76,20 @@ public sealed class WarStage : HistoryPluginBase
                     xeno = XenophobiaOf(polity.CultureKey, store);
                     xenophobia[polity.CultureKey] = xeno;
                 }
-                double chance = Math.Min(pressure * WarPressureScale + xeno * WarXenophobiaScale, MaxWarChance);
-                var stream = HistoryRng.Create(history.Seed, Name, turn, attacker, "raid");
-                if (stream.NextDouble() >= chance) continue;
-                var bordering = BorderingPolities(map, history, neighbors, attacker);
+                var bordering = HistoryNeighbors.Bordering(map.DataStore, history.Ownership, attacker);
                 if (bordering.Count == 0) continue;
+                var stream = HistoryRng.Create(history.Seed, Name, turn, attacker, "raid");
                 int defender = bordering[(int)stream.NextUInt((uint)bordering.Count)];
+                if (history.IsWindowed(attacker, defender, turn)) continue;
+                double chance = Math.Min(pressure * WarPressureScale + xeno * WarXenophobiaScale
+                    + history.GrudgeWeight(attacker, defender) * GrudgeWarScale, MaxWarChance);
+                if (stream.NextDouble() >= chance) continue;
                 if (!context.TrySpendOperatorDecision(Name, turn)) continue;
                 int battlefield = BattlefieldTile(map, history, neighbors, attacker, defender);
                 history.AppendEvent(HistoryEventKind.War, turn, attacker, battlefield,
                     new[] { "war", $"attacker:{attacker}", $"defender:{defender}" });
                 AddBattlefieldSite(map, history, attacker, battlefield, turn);
+                CheckDesecration(map, history, attacker, defender, battlefield, turn);
                 SeverRoutes(history, turn, attacker, polity.CapitalTile, history.Polities[defender].CapitalTile);
                 polity.Pressure = Math.Min(polity.Pressure + HistoryDemography.WarPressureBump, HistoryDemography.MaxPressure);
                 history.Polities[defender].Pressure =
@@ -103,22 +110,24 @@ public sealed class WarStage : HistoryPluginBase
         return 30;
     }
 
-    private static List<int> BorderingPolities(
-        WorldMap map, HistoryCatalog history, Span<int> neighbors, int attacker)
+    private static void CheckDesecration(
+        WorldMap map, HistoryCatalog history, int attacker, int defender, int battlefield, int turn)
     {
-        var bordering = new List<int>();
-        for (int tile = 0; tile < map.DataStore.TileCount && tile < history.Ownership.Length; tile++)
+        HistoryHolySite? holy = null;
+        foreach (var site in history.HolySites)
         {
-            if (history.Ownership[tile] != attacker) continue;
-            int adjacent = map.DataStore.GetAdjacent(tile, neighbors);
-            for (int k = 0; k < adjacent; k++)
-            {
-                int owner = history.OwnerOf(neighbors[k]);
-                if (owner >= 0 && owner != attacker && !bordering.Contains(owner)) bordering.Add(owner);
-            }
+            if (site.Active && site.TileIndex == battlefield) { holy = site; break; }
         }
-        bordering.Sort();
-        return bordering;
+        if (holy is null) return;
+        history.AppendEvent(HistoryEventKind.Desecration, turn, attacker, battlefield,
+            new[] { "desecration", $"by:{attacker}", $"holy:{holy.PolityId}", $"tile:{battlefield}" });
+        history.AddGrudge(attacker, holy.PolityId, DesecrationGrudge);
+        foreach (int neighbor in HistoryNeighbors.Bordering(map.DataStore, history.Ownership, holy.PolityId))
+        {
+            if (neighbor != attacker) history.AddGrudge(neighbor, attacker, DesecrationCoalitionGrudge);
+        }
+        history.Polities[attacker].Pressure =
+            Math.Min(history.Polities[attacker].Pressure + HistoryDemography.WarPressureBump, HistoryDemography.MaxPressure);
     }
 
     private static int BattlefieldTile(

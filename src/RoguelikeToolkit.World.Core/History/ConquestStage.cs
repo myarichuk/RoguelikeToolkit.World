@@ -33,15 +33,7 @@ public sealed class ConquestStage : HistoryPluginBase
     public override void Apply(WorldMap map, HistoryCatalog history, HistoryContext context)
     {
         context.ResetOperatorBudget(Name);
-        PeoplesStore? store = null;
-        try
-        {
-            store = PeoplesStore.Load();
-        }
-        catch (PeoplesDataException)
-        {
-            store = null;
-        }
+        PeoplesStore? store = PeoplesLoader.LoadStore(history);
 
         double[] capacities = HistoryDemography.CarryingCapacities(map.DataStore, history.Polities, history.Ownership);
         var wars = new List<HistoryEvent>();
@@ -68,6 +60,7 @@ public sealed class ConquestStage : HistoryPluginBase
             if (stream.NextDouble() >= ConquestChance) continue;
             if (!context.TrySpendOperatorDecision(Name, war.Turn)) continue;
             fallen.CultureOverlay = victor.CultureKey;
+            history.RepayGrudges(winner, loser);
             history.AppendEvent(HistoryEventKind.Conquest, war.Turn, winner, fallen.CapitalTile,
                 new[] { "conquest", $"winner:{winner}", $"loser:{loser}", victor.CultureKey });
         }

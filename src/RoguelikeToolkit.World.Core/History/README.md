@@ -74,6 +74,20 @@ implementing `IHistoricalContext` (one waiver: `History->Integration:HistoryCata
 - **Exchange** (80): active routes diffuse loanwords plus one openness drift per polity per turn
   (capped at ±20). No budget; the network throttles it.
 
+## Treaty, faith, optionals (P2c)
+
+- **HolySite** (44): each founded polity may raise a shrine on its best non-capital tile (shelters it,
+  relieves pressure); a war on that tile logs a desecration and raises grudges plus a coalition.
+- **Khan** (46): horde polities press weaker neighbors once per pair; submit (tribute + window) or
+  resist (grudge + pressure).
+- **Treaty** (48): bordering pairs marry, then foster once heirs are adults (adult gate); refusal logs
+  a grudge. Success opens a non-aggression window and repays grudges.
+- **Villain** (76): long-life folk polities under pressure may gain a villain (capped, agenda,
+  succession frozen).
+- **Faith** (84): form from culture, 2-7 powers from lived events, myth slots; text renders late via
+  `Integration.IMythTextProvider`.
+- Grudges (`GrudgeEntry`) never decay by time; only repayment clears them.
+
 ## Ownership-map spike (P2a)
 
 Decision: the ownership map is a managed `int[]` on the catalog (tile to polity id, -1 unclaimed),

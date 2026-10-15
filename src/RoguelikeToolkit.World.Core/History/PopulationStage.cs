@@ -38,15 +38,7 @@ public sealed class PopulationStage : HistoryPluginBase
     /// <summary>Grows populations, derives pressures and counts successions over the whole span.</summary>
     public override void Apply(WorldMap map, HistoryCatalog history, HistoryContext context)
     {
-        PeoplesStore? store = null;
-        try
-        {
-            store = PeoplesStore.Load();
-        }
-        catch (PeoplesDataException)
-        {
-            store = null;
-        }
+        PeoplesStore? store = PeoplesLoader.LoadStore(history);
 
         double[] capacities = HistoryDemography.CarryingCapacities(map.DataStore, history.Polities, history.Ownership);
         int turns = context.TurnCount;
@@ -62,10 +54,7 @@ public sealed class PopulationStage : HistoryPluginBase
                 population = HistoryDemography.StepPopulation(population, rate, capacity);
             polity.Population = population;
             polity.Pressure = HistoryDemography.PressureOf(population, capacity);
-            int generation = HistoryDemography.GenerationTurns(folk.LifespanYears, context.TurnYears);
-            int successions = 0;
-            for (int turn = generation; turn < turns; turn += generation) successions++;
-            polity.RulerGeneration = successions;
+            polity.RulerGeneration = HistoryDemography.SuccessionsBefore(folk.LifespanYears, context.TurnYears, turns);
         }
     }
 }

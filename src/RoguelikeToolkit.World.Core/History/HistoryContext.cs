@@ -16,6 +16,7 @@ public sealed class HistoryContext
     private int _maxEventsPerTurn = 64;
     private int _maxEvents = 4096;
     private int _maxPolities = 8;
+    private int _maxVillains = 2;
 
     /// <summary>Default peoples roster: one human and one non-human folk, matching the shipped tables.</summary>
     public HistoryContext()
@@ -71,6 +72,13 @@ public sealed class HistoryContext
     {
         get => _maxPolities;
         set => _maxPolities = value >= 0 ? value : throw new ArgumentOutOfRangeException(nameof(value), "MaxPolities cannot be negative.");
+    }
+
+    /// <summary>Upper bound on risen villains (default 2). Zero means no villain ever rises. Must be non-negative.</summary>
+    public int MaxVillains
+    {
+        get => _maxVillains;
+        set => _maxVillains = value >= 0 ? value : throw new ArgumentOutOfRangeException(nameof(value), "MaxVillains cannot be negative.");
     }
 
     /// <summary>The (folk, culture) pairs <see cref="CultureSeedStage"/> seeds the world with, in priority order.</summary>

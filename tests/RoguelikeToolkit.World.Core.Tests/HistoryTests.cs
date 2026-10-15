@@ -61,19 +61,29 @@ public class HistoryTests
         Assert.True(history.CultureSeeded);
         Assert.True(history.PolitiesFormed);
         Assert.NotEmpty(history.Polities);
-        Assert.Equal(history.Polities.Count, history.Events.Count(e => e.Kind == HistoryEventKind.Founding));
+        int foundedAtZero = history.Polities.Count(p => p.FoundedTurn == 0);
+        Assert.Equal(foundedAtZero, history.Events.Count(e => e.Kind == HistoryEventKind.Founding));
         Assert.Equal(history.Polities.Count, history.Settlements.Count);
-        Assert.Equal(history.Polities.Count, history.Sites.Count);
+        Assert.True(history.Sites.Count >= history.Polities.Count);
         Assert.Equal(29, history.SimulatedTurns);
         foreach (var polity in history.Polities)
         {
             Assert.Equal(polity.Id, history.OwnerOf(polity.CapitalTile));
-            var founding = history.EventsOf(polity.Id).Single(e => e.Kind == HistoryEventKind.Founding);
-            Assert.Equal(0, founding.Turn);
-            Assert.Equal(polity.CapitalTile, founding.TileIndex);
-            Assert.Contains(polity.Form.ToString(), founding.Tags);
-            Assert.Contains(polity.FolkKey, founding.Tags);
-            Assert.Contains(polity.CultureKey, founding.Tags);
+            if (polity.FoundedTurn == 0)
+            {
+                var founding = history.EventsOf(polity.Id).Single(e => e.Kind == HistoryEventKind.Founding);
+                Assert.Equal(0, founding.Turn);
+                Assert.Equal(polity.CapitalTile, founding.TileIndex);
+                Assert.Contains(polity.Form.ToString(), founding.Tags);
+                Assert.Contains(polity.FolkKey, founding.Tags);
+                Assert.Contains(polity.CultureKey, founding.Tags);
+            }
+            else
+            {
+                var rebellion = history.Events.Single(e => e.Kind == HistoryEventKind.Rebellion
+                    && e.PolityId == polity.Id && e.Turn == polity.FoundedTurn);
+                Assert.Equal(polity.CapitalTile, rebellion.TileIndex);
+            }
             Assert.Single(history.CitiesOf(polity.Id));
         }
     }
@@ -143,6 +153,16 @@ public class HistoryTests
         Assert.Equal("Test Name", loaded.DisplayNameOf(0));
         Assert.Equal(w.History.Polities.Count, loaded.Polities.Count);
         Assert.Equal(w.History.Ownership, loaded.Ownership);
+    }
+
+    [Fact]
+    public void Load_RejectsOutOfRangePolityReference()
+    {
+        using var w = Build();
+        w.History.Faiths.Add(new HistoryFaith { PolityId = w.History.Polities.Count + 5, Form = "x" });
+        byte[] bytes = w.History.ToBytes();
+        using var stream = new MemoryStream(bytes, writable: false);
+        Assert.Throws<InvalidDataException>(() => HistoryCatalog.Load(stream));
     }
 
     [Fact]

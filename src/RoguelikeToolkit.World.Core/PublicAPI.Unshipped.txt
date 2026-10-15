@@ -124,7 +124,7 @@ RoguelikeToolkit.World.Core.History.HistoryCatalog.Reset() -> void
 RoguelikeToolkit.World.Core.History.HistoryCatalog.Respatialize(RoguelikeToolkit.World.Core.Storage.WorldDataStore! store) -> bool
 RoguelikeToolkit.World.Core.History.HistoryCatalog.Roads.get -> System.Collections.Generic.List<RoguelikeToolkit.World.Core.History.HistoryRoad!>!
 RoguelikeToolkit.World.Core.History.HistoryCatalog.Save(System.IO.Stream! stream) -> void
-const RoguelikeToolkit.World.Core.History.HistoryCatalog.SchemaVersion = 2 -> int
+const RoguelikeToolkit.World.Core.History.HistoryCatalog.SchemaVersion = 3 -> int
 RoguelikeToolkit.World.Core.History.HistoryCatalog.Seed.get -> int
 RoguelikeToolkit.World.Core.History.HistoryCatalog.Seeds.get -> System.Collections.Generic.List<RoguelikeToolkit.World.Core.History.HistoryPeople!>!
 RoguelikeToolkit.World.Core.History.HistoryCatalog.Settlements.get -> System.Collections.Generic.List<RoguelikeToolkit.World.Core.History.HistorySettlement!>!

@@ -85,7 +85,7 @@ public class HistoryOperatorsTests
         Assert.False(context.TrySpendOperatorEmergence("TradeRoad", 1));
         context.ResetOperatorBudget("War");
         Assert.True(context.TrySpendOperatorDecision("War", 1));
-        Assert.True(context.TrySpendOperatorDecision("Conquest", 1));
+        Assert.False(context.TrySpendOperatorDecision("Conquest", 1));
         context.ClearOperatorBudgets();
         Assert.True(context.TrySpendOperatorEmergence("TradeRoad", 1));
     }
@@ -161,7 +161,11 @@ public class HistoryOperatorsTests
         {
             int loser = int.Parse(TagPrefix(entry.Tags, "loser:").Substring(6));
             int winner = int.Parse(TagPrefix(entry.Tags, "winner:").Substring(7));
-            Assert.Equal(history.Polities[winner].CultureKey, history.Polities[loser].CultureOverlay);
+            // A loser conquered twice renders through its latest conqueror; earlier entries stay in the log.
+            var latest = history.Events.Last(e => e.Kind == HistoryEventKind.Conquest
+                && TagPrefix(e.Tags, "loser:") == $"loser:{loser}");
+            if (ReferenceEquals(latest, entry))
+                Assert.Equal(history.Polities[winner].CultureKey, history.Polities[loser].CultureOverlay);
             Assert.Contains(history.Polities[loser].CultureKey, entry.Tags[^1] == history.Polities[winner].CultureKey
                 ? new[] { history.Polities[loser].CultureKey }
                 : new[] { entry.Tags[^1] });
@@ -220,8 +224,8 @@ public class HistoryOperatorsTests
     {
         using var full = Build();
         using var starved = Build(configure: ctx => ctx.MaxDecisionsPerTurn = 0);
-        Assert.Empty(starved.History.Events.Where(e => e.Kind == HistoryEventKind.War));
-        Assert.Empty(starved.History.Events.Where(e => e.Kind == HistoryEventKind.Conquest));
+        Assert.DoesNotContain(starved.History.Events, e => e.Kind == HistoryEventKind.War);
+        Assert.DoesNotContain(starved.History.Events, e => e.Kind == HistoryEventKind.Conquest);
         var fullBuilt = full.History.Events
             .Where(e => e.Kind == HistoryEventKind.RoadBuilt)
             .SelectMany(e => e.Tags).OrderBy(t => t).ToList();

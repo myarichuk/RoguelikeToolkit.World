@@ -218,9 +218,9 @@ public sealed class PeoplesStore
 
     private static void ValidateFolk(string rel, FolkDef data, List<string> problems)
     {
-        if (!data.Sapience.Equals("full", StringComparison.OrdinalIgnoreCase) &&
-            !data.Sapience.Equals("instinct", StringComparison.OrdinalIgnoreCase) &&
-            !data.Sapience.Equals("setting", StringComparison.OrdinalIgnoreCase))
+        if (!string.Equals(data.Sapience, "full", StringComparison.OrdinalIgnoreCase) &&
+            !string.Equals(data.Sapience, "instinct", StringComparison.OrdinalIgnoreCase) &&
+            !string.Equals(data.Sapience, "setting", StringComparison.OrdinalIgnoreCase))
             problems.Add($"{rel}: unknown Sapience '{data.Sapience}' (want Full, Instinct or Setting).");
         if (string.IsNullOrWhiteSpace(data.Embodiment)) problems.Add($"{rel}: Embodiment is blank.");
         if (string.IsNullOrWhiteSpace(data.HabitatAffinity)) problems.Add($"{rel}: HabitatAffinity is blank.");
@@ -240,11 +240,11 @@ public sealed class PeoplesStore
         CheckPrior(rel, nameof(FolkDef.NeuroticismPrior), data.NeuroticismPrior, problems);
     }
 
-    private static void CheckPrior(string rel, string field, string value, List<string> problems)
+    private static void CheckPrior(string rel, string field, string? value, List<string> problems)
     {
-        if (!value.Equals("low", StringComparison.OrdinalIgnoreCase) &&
-            !value.Equals("balanced", StringComparison.OrdinalIgnoreCase) &&
-            !value.Equals("high", StringComparison.OrdinalIgnoreCase))
+        if (!string.Equals(value, "low", StringComparison.OrdinalIgnoreCase) &&
+            !string.Equals(value, "balanced", StringComparison.OrdinalIgnoreCase) &&
+            !string.Equals(value, "high", StringComparison.OrdinalIgnoreCase))
             problems.Add($"{rel}: unknown {field} '{value}' (want low, balanced or high).");
     }
 
@@ -252,9 +252,9 @@ public sealed class PeoplesStore
     {
         if (string.IsNullOrWhiteSpace(data.NamingTable)) problems.Add($"{rel}: NamingTable is blank.");
         if (string.IsNullOrWhiteSpace(data.Subsistence)) problems.Add($"{rel}: Subsistence is blank.");
-        if (!data.LineageDefault.Equals("patrilineal", StringComparison.OrdinalIgnoreCase) &&
-            !data.LineageDefault.Equals("matrilineal", StringComparison.OrdinalIgnoreCase) &&
-            !data.LineageDefault.Equals("bilineal", StringComparison.OrdinalIgnoreCase))
+        if (!string.Equals(data.LineageDefault, "patrilineal", StringComparison.OrdinalIgnoreCase) &&
+            !string.Equals(data.LineageDefault, "matrilineal", StringComparison.OrdinalIgnoreCase) &&
+            !string.Equals(data.LineageDefault, "bilineal", StringComparison.OrdinalIgnoreCase))
             problems.Add($"{rel}: unknown LineageDefault '{data.LineageDefault}' (want Patrilineal, Matrilineal or Bilineal).");
         foreach (var (field, v) in new[]
                  {
@@ -263,9 +263,9 @@ public sealed class PeoplesStore
                  })
             if (v < 0 || v > 100) problems.Add($"{rel}: {field} {v} is out of range (0-100).");
         if (string.IsNullOrWhiteSpace(data.FaithForm)) problems.Add($"{rel}: FaithForm is blank.");
-        if (!data.MixedNaming.Equals("blend", StringComparison.OrdinalIgnoreCase) &&
-            !data.MixedNaming.Equals("dominant", StringComparison.OrdinalIgnoreCase) &&
-            !data.MixedNaming.Equals("hybrid", StringComparison.OrdinalIgnoreCase))
+        if (!string.Equals(data.MixedNaming, "blend", StringComparison.OrdinalIgnoreCase) &&
+            !string.Equals(data.MixedNaming, "dominant", StringComparison.OrdinalIgnoreCase) &&
+            !string.Equals(data.MixedNaming, "hybrid", StringComparison.OrdinalIgnoreCase))
             problems.Add($"{rel}: unknown MixedNaming '{data.MixedNaming}' (want Blend, Dominant or Hybrid).");
         if (double.IsNaN(data.DominantShareThreshold) || data.DominantShareThreshold < 0.5 || data.DominantShareThreshold > 1)
             problems.Add($"{rel}: DominantShareThreshold {data.DominantShareThreshold} is out of range (0.5-1).");
@@ -301,9 +301,9 @@ public sealed class PeoplesStore
                 continue;
             }
             CompatibilityRule rule;
-            if (row.Rule.Equals("blend", StringComparison.OrdinalIgnoreCase)) rule = CompatibilityRule.Blend;
-            else if (row.Rule.Equals("dominant", StringComparison.OrdinalIgnoreCase)) rule = CompatibilityRule.Dominant;
-            else if (row.Rule.Equals("sterile", StringComparison.OrdinalIgnoreCase)) rule = CompatibilityRule.Sterile;
+            if (string.Equals(row.Rule, "blend", StringComparison.OrdinalIgnoreCase)) rule = CompatibilityRule.Blend;
+            else if (string.Equals(row.Rule, "dominant", StringComparison.OrdinalIgnoreCase)) rule = CompatibilityRule.Dominant;
+            else if (string.Equals(row.Rule, "sterile", StringComparison.OrdinalIgnoreCase)) rule = CompatibilityRule.Sterile;
             else
             {
                 problems.Add($"{where}: unknown Rule '{row.Rule}' (want Blend, Dominant or Sterile).");

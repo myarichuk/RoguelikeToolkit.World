@@ -16,8 +16,8 @@ namespace RoguelikeToolkit.World.Core.History;
 /// </summary>
 public sealed class HistoryCatalog : IHistoricalContext
 {
-    /// <summary>Persistence schema version, written first by <see cref="Save"/> and checked by <see cref="Load"/>: 1 is the P2a shape (capitals only), 2 adds polity demography and road routes.</summary>
-    public const int SchemaVersion = 2;
+    /// <summary>Persistence schema version, written first by <see cref="Save"/> and checked by <see cref="Load"/>: 1 is the P2a shape (capitals only), 2 adds polity demography and road routes, 3 adds P2c treaty/faith state (grudges, windows, faiths, holy sites, villains, heirs).</summary>
+    public const int SchemaVersion = 3;
 
     /// <summary>Planet radius in kilometres, matching <c>World.EarthRadiusKm</c> (kept literal: the root slice is above History).</summary>
     private const double EarthRadiusKm = 6371.0;
@@ -61,6 +61,13 @@ public sealed class HistoryCatalog : IHistoricalContext
     /// <summary>Events dropped by the per-turn budget.</summary>
     public int DroppedEvents { get; private set; }
 
+    /// <summary>
+    /// Times an operator fell back to built-in folk numbers because the peoples tables failed to
+    /// load (see <see cref="PeoplesLoader"/>). Zero on a healthy build; nonzero means the data
+    /// layer needs attention, not that the simulation stopped.
+    /// </summary>
+    public int PeoplesFallbacks { get; internal set; }
+
     /// <summary>Compaction passes run against the log cap.</summary>
     public int Compactions { get; private set; }
 
@@ -72,6 +79,21 @@ public sealed class HistoryCatalog : IHistoricalContext
 
     /// <summary>Trade-road segments grouped into capital-to-capital routes (see <see cref="HistoryRoad"/>).</summary>
     public List<HistoryRoad> Roads { get; } = new();
+
+    /// <summary>Lasting grievances between polity pairs (canonical order, one entry per pair); repaid only by treaty, tribute or overlay.</summary>
+    public List<GrudgeEntry> Grudges { get; } = new();
+
+    /// <summary>Non-aggression windows between polity pairs; <see cref="WarStage"/> skips windowed pairs.</summary>
+    public List<TreatyWindow> Treaties { get; } = new();
+
+    /// <summary>One faith per polity with a raised tradition, in polity-id order; built by <see cref="FaithStage"/>.</summary>
+    public List<HistoryFaith> Faiths { get; } = new();
+
+    /// <summary>Raised holy sites; project as shrine-kind game sites while active.</summary>
+    public List<HistoryHolySite> HolySites { get; } = new();
+
+    /// <summary>Risen long-life villains, bounded by <see cref="HistoryContext.MaxVillains"/>.</summary>
+    public List<VillainRecord> Villains { get; } = new();
 
     /// <summary>User renames and pinned tiles; written by the game, never by a stage.</summary>
     public HistoryOverrides Overrides { get; } = new();
@@ -126,6 +148,78 @@ public sealed class HistoryCatalog : IHistoricalContext
     }
 
     /// <summary>
+    /// Adds <paramref name="weight"/> to the grievance between <paramref name="a"/> and
+    /// <paramref name="b"/> (canonical pair order; one entry per pair). Grudges never decay with
+    /// time: only <see cref="RepayGrudges"/> clears them.
+    /// </summary>
+    public void AddGrudge(int a, int b, int weight)
+    {
+        if (weight <= 0) throw new ArgumentOutOfRangeException(nameof(weight), "Grudge weight must be positive.");
+        if (a == b) throw new ArgumentException("A grudge needs two different polities.");
+        (int x, int y) = a < b ? (a, b) : (b, a);
+        foreach (var entry in Grudges)
+        {
+            if (entry.A == x && entry.B == y) { entry.Weight += weight; return; }
+        }
+        Grudges.Add(new GrudgeEntry { A = x, B = y, Weight = weight });
+    }
+
+    /// <summary>Current grievance weight between <paramref name="a"/> and <paramref name="b"/>, or 0 when repaid or never raised.</summary>
+    public int GrudgeWeight(int a, int b)
+    {
+        (int x, int y) = a < b ? (a, b) : (b, a);
+        foreach (var entry in Grudges)
+            if (entry.A == x && entry.B == y) return entry.Weight;
+        return 0;
+    }
+
+    /// <summary>
+    /// Repays every grievance between <paramref name="a"/> and <paramref name="b"/> (treaty,
+    /// tribute or culture overlay settled it). Returns true when an entry was cleared.
+    /// </summary>
+    public bool RepayGrudges(int a, int b)
+    {
+        (int x, int y) = a < b ? (a, b) : (b, a);
+        for (int i = 0; i < Grudges.Count; i++)
+        {
+            if (Grudges[i].A == x && Grudges[i].B == y) { Grudges.RemoveAt(i); return true; }
+        }
+        return false;
+    }
+
+    /// <summary>Adds a non-aggression window between <paramref name="a"/> and <paramref name="b"/> through <paramref name="untilTurn"/> (inclusive).</summary>
+    public void AddWindow(int a, int b, int untilTurn)
+    {
+        if (untilTurn < 0) throw new ArgumentOutOfRangeException(nameof(untilTurn), "Window end cannot be negative.");
+        Treaties.Add(new TreatyWindow { A = a, B = b, UntilTurn = untilTurn });
+    }
+
+    /// <summary>True when a non-aggression window covers <paramref name="turn"/> between <paramref name="a"/> and <paramref name="b"/> (either direction).</summary>
+    public bool IsWindowed(int a, int b, int turn)
+    {
+        foreach (var window in Treaties)
+        {
+            if (turn > window.UntilTurn) continue;
+            if ((window.A == a && window.B == b) || (window.A == b && window.B == a)) return true;
+        }
+        return false;
+    }
+
+    /// <summary>
+    /// Appends an event bypassing the per-turn budget (the log cap still applies).
+    /// Reserved for <see cref="Respatialize"/> provenance (fork markers, site losses): a map edit
+    /// must never lose its own fork marker to a budget the simulation already spent.
+    /// </summary>
+    public void AppendPriorityEvent(HistoryEventKind kind, int turn, int polityId, int tileIndex, IReadOnlyList<string> tags)
+    {
+        if (turn < 0) throw new ArgumentOutOfRangeException(nameof(turn), "Event turn cannot be negative.");
+        var entry = new HistoryEvent { Kind = kind, Turn = turn, PolityId = polityId, TileIndex = tileIndex };
+        if (tags != null) entry.Tags.AddRange(tags);
+        Events.Add(entry);
+        EnforceCap();
+    }
+
+    /// <summary>
     /// Appends an event, enforcing the per-turn budget (excess appends are dropped and counted in
     /// <see cref="DroppedEvents"/>) and the log cap (oldest non-founding events compact first; founding
     /// events are the timeline skeleton and are removed only when nothing else can go). Returns false
@@ -177,11 +271,17 @@ public sealed class HistoryCatalog : IHistoricalContext
         Settlements.Clear();
         Sites.Clear();
         Roads.Clear();
+        Grudges.Clear();
+        Treaties.Clear();
+        Faiths.Clear();
+        HolySites.Clear();
+        Villains.Clear();
         Stale = false;
         ForkedAtTurn = null;
         SimulatedTurns = 0;
         DroppedEvents = 0;
         Compactions = 0;
+        PeoplesFallbacks = 0;
         _appendTurn = int.MinValue;
         _appendCount = 0;
     }
@@ -227,7 +327,7 @@ public sealed class HistoryCatalog : IHistoricalContext
             if (!land && settlement.Active)
             {
                 settlement.Active = false;
-                AppendEvent(HistoryEventKind.SiteLost, SimulatedTurns, settlement.PolityId, settlement.TileIndex,
+                AppendPriorityEvent(HistoryEventKind.SiteLost, SimulatedTurns, settlement.PolityId, settlement.TileIndex,
                     new[] { "settlement" });
             }
             else if (land)
@@ -246,13 +346,28 @@ public sealed class HistoryCatalog : IHistoricalContext
             site.Active = (uint)site.TileIndex < (uint)tileCount
                 && (!hasElev || elev[site.TileIndex].Height >= HistoryTerritory.LandThreshold);
         }
+        foreach (var holy in HolySites)
+        {
+            bool land = (uint)holy.TileIndex < (uint)tileCount
+                && (!hasElev || elev[holy.TileIndex].Height >= HistoryTerritory.LandThreshold);
+            if (!land && holy.Active)
+            {
+                holy.Active = false;
+                AppendPriorityEvent(HistoryEventKind.SiteLost, SimulatedTurns, holy.PolityId, holy.TileIndex,
+                    new[] { "holy" });
+            }
+            else if (land)
+            {
+                holy.Active = true;
+            }
+        }
 
         if (changed)
         {
             ForkedAtTurn = SimulatedTurns;
             int tiles = 0;
             foreach (int owner in next) if (owner >= 0) tiles += 1;
-            AppendEvent(HistoryEventKind.Fork, SimulatedTurns, -1, -1, new[] { $"tiles:{tiles}" });
+            AppendPriorityEvent(HistoryEventKind.Fork, SimulatedTurns, -1, -1, new[] { $"tiles:{tiles}" });
         }
         return changed;
     }
@@ -306,6 +421,8 @@ public sealed class HistoryCatalog : IHistoricalContext
             writer.Write(polity.CultureOverlay ?? string.Empty);
             writer.Write(polity.RulerGeneration);
             writer.Write(polity.OpennessDrift);
+            writer.Write(polity.HeirBornTurn);
+            writer.Write(polity.HasVillain);
         }
         writer.Write(Ownership.Length);
         foreach (int owner in Ownership) writer.Write(owner);
@@ -352,6 +469,49 @@ public sealed class HistoryCatalog : IHistoricalContext
             writer.Write(road.Severed);
             writer.Write(road.SeveredTurn);
         }
+        writer.Write(Grudges.Count);
+        foreach (var grudge in Grudges)
+        {
+            writer.Write(grudge.A);
+            writer.Write(grudge.B);
+            writer.Write(grudge.Weight);
+        }
+        writer.Write(Treaties.Count);
+        foreach (var window in Treaties)
+        {
+            writer.Write(window.A);
+            writer.Write(window.B);
+            writer.Write(window.UntilTurn);
+        }
+        writer.Write(Faiths.Count);
+        foreach (var faith in Faiths)
+        {
+            writer.Write(faith.PolityId);
+            writer.Write(faith.Form ?? string.Empty);
+            writer.Write(faith.Powers.Count);
+            foreach (string power in faith.Powers) writer.Write(power ?? string.Empty);
+            writer.Write(faith.MythSlots.Count);
+            foreach (string slot in faith.MythSlots) writer.Write(slot ?? string.Empty);
+        }
+        writer.Write(HolySites.Count);
+        foreach (var holy in HolySites)
+        {
+            writer.Write(holy.TileIndex);
+            writer.Write(holy.PolityId);
+            writer.Write(holy.FoundedTurn);
+            writer.Write(holy.Position.Latitude);
+            writer.Write(holy.Position.Longitude);
+            writer.Write(holy.Active);
+        }
+        writer.Write(Villains.Count);
+        foreach (var villain in Villains)
+        {
+            writer.Write(villain.Id);
+            writer.Write(villain.PolityId);
+            writer.Write(villain.FolkKey ?? string.Empty);
+            writer.Write(villain.RisenTurn);
+            writer.Write(villain.Agenda ?? string.Empty);
+        }
         var renames = new List<KeyValuePair<int, string>>(Overrides.Renames);
         renames.Sort((a, b) => a.Key.CompareTo(b.Key));
         writer.Write(renames.Count);
@@ -384,8 +544,8 @@ public sealed class HistoryCatalog : IHistoricalContext
             if (magic.Length != 4 || magic[0] != 'H' || magic[1] != 'I' || magic[2] != 'S' || magic[3] != 'T')
                 throw new InvalidDataException("Not a history catalog (bad magic).");
             int version = reader.ReadInt32();
-            if (version != 1 && version != SchemaVersion)
-                throw new InvalidDataException($"Unsupported history schema version {version} (want 1 or {SchemaVersion}).");
+            if (version < 1 || version > SchemaVersion)
+                throw new InvalidDataException($"Unsupported history schema version {version} (want 1-{SchemaVersion}).");
             var catalog = new HistoryCatalog(reader.ReadInt32())
             {
                 MaxEventsPerTurn = reader.ReadInt32(),
@@ -422,6 +582,11 @@ public sealed class HistoryCatalog : IHistoricalContext
                     polity.CultureOverlay = reader.ReadString();
                     polity.RulerGeneration = reader.ReadInt32();
                     polity.OpennessDrift = reader.ReadInt32();
+                }
+                if (version >= 3)
+                {
+                    polity.HeirBornTurn = reader.ReadInt32();
+                    polity.HasVillain = reader.ReadBoolean();
                 }
                 catalog.Polities.Add(polity);
             }
@@ -497,10 +662,54 @@ public sealed class HistoryCatalog : IHistoricalContext
                 road.SeveredTurn = severedTurn;
                 catalog.Roads.Add(road);
             }
+            if (version >= 3)
+            {
+                int grudges = CheckedCount(reader.ReadInt32());
+                for (int i = 0; i < grudges; i++)
+                    catalog.Grudges.Add(new GrudgeEntry { A = reader.ReadInt32(), B = reader.ReadInt32(), Weight = reader.ReadInt32() });
+                int windows = CheckedCount(reader.ReadInt32());
+                for (int i = 0; i < windows; i++)
+                    catalog.Treaties.Add(new TreatyWindow { A = reader.ReadInt32(), B = reader.ReadInt32(), UntilTurn = reader.ReadInt32() });
+                int faiths = CheckedCount(reader.ReadInt32());
+                for (int i = 0; i < faiths; i++)
+                {
+                    var faith = new HistoryFaith { PolityId = reader.ReadInt32(), Form = reader.ReadString() };
+                    int powers = CheckedCount(reader.ReadInt32());
+                    for (int k = 0; k < powers; k++) faith.Powers.Add(reader.ReadString());
+                    int slots = CheckedCount(reader.ReadInt32());
+                    for (int k = 0; k < slots; k++) faith.MythSlots.Add(reader.ReadString());
+                    catalog.Faiths.Add(faith);
+                }
+                int holy = CheckedCount(reader.ReadInt32());
+                for (int i = 0; i < holy; i++)
+                {
+                    catalog.HolySites.Add(new HistoryHolySite
+                    {
+                        TileIndex = reader.ReadInt32(),
+                        PolityId = reader.ReadInt32(),
+                        FoundedTurn = reader.ReadInt32(),
+                        Position = new GeoCoord(reader.ReadDouble(), reader.ReadDouble()),
+                        Active = reader.ReadBoolean(),
+                    });
+                }
+                int villains = CheckedCount(reader.ReadInt32());
+                for (int i = 0; i < villains; i++)
+                {
+                    catalog.Villains.Add(new VillainRecord
+                    {
+                        Id = reader.ReadInt32(),
+                        PolityId = reader.ReadInt32(),
+                        FolkKey = reader.ReadString(),
+                        RisenTurn = reader.ReadInt32(),
+                        Agenda = reader.ReadString(),
+                    });
+                }
+            }
             int renames = CheckedCount(reader.ReadInt32());
             for (int i = 0; i < renames; i++) catalog.Overrides.Renames[reader.ReadInt32()] = reader.ReadString();
             int pins = CheckedCount(reader.ReadInt32());
             for (int i = 0; i < pins; i++) catalog.Overrides.PinnedTiles[reader.ReadInt32()] = reader.ReadInt32();
+            catalog.ValidateReferences();
             return catalog;
         }
         catch (EndOfStreamException ex)
@@ -509,13 +718,40 @@ public sealed class HistoryCatalog : IHistoricalContext
         }
     }
 
+    /// <summary>
+    /// Rejects a loaded catalog whose polity ids point outside <see cref="Polities"/>, so a corrupt
+    /// file throws <see cref="InvalidDataException"/> here instead of failing later in a stage.
+    /// Event, ownership and settlement ids may be -1 (none / unclaimed).
+    /// </summary>
+    private void ValidateReferences()
+    {
+        int count = Polities.Count;
+        void Check(int id, string what, bool allowNone)
+        {
+            if (id >= count || id < (allowNone ? -1 : 0))
+                throw new InvalidDataException($"Corrupt history catalog ({what} references polity {id}, have {count}).");
+        }
+        for (int i = 0; i < Polities.Count; i++)
+            if (Polities[i].Id != i) throw new InvalidDataException($"Corrupt history catalog (polity at index {i} has id {Polities[i].Id}).");
+        foreach (int owner in Ownership) Check(owner, "ownership", true);
+        foreach (var e in Events) Check(e.PolityId, "event", true);
+        foreach (var s in Settlements) Check(s.PolityId, "settlement", true);
+        foreach (var s in Sites) Check(s.PolityId, "site", true);
+        foreach (var r in Roads) Check(r.PolityId, "road", true);
+        foreach (var g in Grudges) { Check(g.A, "grudge", false); Check(g.B, "grudge", false); }
+        foreach (var t in Treaties) { Check(t.A, "treaty", false); Check(t.B, "treaty", false); }
+        foreach (var f in Faiths) Check(f.PolityId, "faith", false);
+        foreach (var h in HolySites) Check(h.PolityId, "holy site", true);
+        foreach (var v in Villains) Check(v.PolityId, "villain", false);
+    }
+
     private static int CheckedCount(int count)
         => count >= 0 ? count : throw new InvalidDataException($"Corrupt history catalog (negative count {count}).");
 
     /// <summary>
     /// War-torn tiles (a war or rebellion battlefield) raise danger by <see cref="WarDangerDelta"/>;
-    /// every other tile has no history modifier. Battlefield tiles come from the event log, so stubbed
-    /// text providers cannot change them.
+    /// sheltered holy tiles lower it by <see cref="HolyDangerDelta"/>; every other tile has no
+    /// history modifier. Both come from tags and state, so stubbed text providers cannot change them.
     /// </summary>
     public bool TryGetTileModifier(int worldTileIndex, out TileHistoryModifier modifier)
     {
@@ -528,6 +764,14 @@ public sealed class HistoryCatalog : IHistoricalContext
                 return true;
             }
         }
+        foreach (var holy in HolySites)
+        {
+            if (holy.Active && holy.TileIndex == worldTileIndex)
+            {
+                modifier = new TileHistoryModifier { DangerDelta = HolyDangerDelta, HabitabilityDelta = 0f };
+                return true;
+            }
+        }
         modifier = default;
         return false;
     }
@@ -535,11 +779,15 @@ public sealed class HistoryCatalog : IHistoricalContext
     /// <summary>Danger added to war-torn tiles (see <see cref="TryGetTileModifier"/>).</summary>
     public const float WarDangerDelta = 2f;
 
+    /// <summary>Danger removed on sheltered holy tiles (see <see cref="TryGetTileModifier"/>).</summary>
+    public const float HolyDangerDelta = -1f;
+
     /// <summary>
     /// Active projected sites within <paramref name="radiusKm"/> of <paramref name="position"/>, nearest
     /// first (ties by tile index). Capitals project as <c>Settlement</c>-kind sites with zero deltas;
     /// war and rebellion battlefields (from the event log) project as <c>Battlefield</c>-kind sites
-    /// carrying <see cref="WarDangerDelta"/>.
+    /// carrying <see cref="WarDangerDelta"/>; raised holy sites project as <c>Shrine</c>-kind sites
+    /// carrying <see cref="HolyDangerDelta"/> (a desecrated holy tile projects as a battlefield).
     /// </summary>
     public IEnumerable<HistoricSite> GetSitesNear(GeoCoord position, double radiusKm)
     {
@@ -563,6 +811,27 @@ public sealed class HistoryCatalog : IHistoricalContext
             projected.Metadata["founded"] = site.FoundedTurn.ToString();
             if (battlefield) projected.Metadata["battle"] = battleTurn.ToString();
             matches.Add((distance, site.TileIndex, projected));
+        }
+        foreach (var holy in HolySites)
+        {
+            if (!holy.Active) continue;
+            double distance = DistanceKm(position, holy.Position);
+            if (double.IsNaN(distance) || distance > radiusKm) continue;
+            bool battlefield = IsBattlefield(holy.TileIndex, out int battleTurn);
+            var projected = new HistoricSite
+            {
+                Id = battlefield ? $"hist-battle-{holy.TileIndex}-{battleTurn}" : $"hist-holy-{holy.TileIndex}",
+                Kind = battlefield ? HistoricSiteKind.Battlefield : HistoricSiteKind.Shrine,
+                TileIndex = holy.TileIndex,
+                Position = holy.Position,
+                DangerDelta = battlefield ? WarDangerDelta : HolyDangerDelta,
+                HabitabilityDelta = 0f,
+            };
+            projected.Metadata["polity"] = holy.PolityId.ToString();
+            projected.Metadata["founded"] = holy.FoundedTurn.ToString();
+            projected.Metadata["holy"] = "true";
+            if (battlefield) projected.Metadata["battle"] = battleTurn.ToString();
+            matches.Add((distance, holy.TileIndex, projected));
         }
         matches.Sort((a, b) =>
         {

@@ -243,10 +243,15 @@ public sealed class WorldBuilder
             pipeline.AddStage(new HistoryEventsStage());
             pipeline.AddStage(new TradeRoadStage());
             pipeline.AddStage(new PopulationStage());
+            pipeline.AddStage(new HolySiteStage());
+            pipeline.AddStage(new KhanStage());
+            pipeline.AddStage(new TreatyStage());
             pipeline.AddStage(new WarStage());
             pipeline.AddStage(new ConquestStage());
             pipeline.AddStage(new RebellionStage());
+            pipeline.AddStage(new VillainStage());
             pipeline.AddStage(new ExchangeStage());
+            pipeline.AddStage(new FaithStage());
             pipeline.AddStage(new CityHistoryProjectStage());
         }
         HydrologyStage? hydrologyStage = null;
