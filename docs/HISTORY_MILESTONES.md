@@ -604,3 +604,12 @@ Diagnostic `HistoryCoverageTests.TuningReport_CaptureWhenRequested` (`HISTORY_TU
 - Captures: 0-2 per world (9 in 25 worlds); razes about 0.3 per world; sacks are the common war outcome. Reads as rare-but-present, no change.
 - Scars: 1-6 per world. Colony/refuge thresholds left as they are; pool leftovers at end of run are at most a few thousand and decay in 3 turns.
 - Verdict: no constant changes. Tuning stays data-driven for M3.
+
+### M2 exit: paper cases (design doc §13)
+
+`PaperCaseTests` (3 seeds each, scripted catastrophe then the real `SettleOperator`):
+
+- **Gurubashi (collapse):** a razed capital leaves a ruin scar and a displaced pool; the pool then founds refuge towns on other tiles; people conserved.
+- **Venice (sack):** a sacked city's survivors found a refuge in the same polity on a different tile; the city stays standing; people conserved.
+
+Not covered here by design: `polity.split` into successors, the faith myth about the fall, merchant-republic form and trade node. Those are M3 (successors/forms), not M2 (people and places).
