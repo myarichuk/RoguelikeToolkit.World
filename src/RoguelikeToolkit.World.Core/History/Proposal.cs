@@ -233,6 +233,8 @@ public abstract class Proposal
         public string EndCause { get; init; } = string.Empty;
         /// <summary>Id of an event from an earlier turn that caused the end, or -1.</summary>
         public int Cause { get; init; } = -1;
+        /// <summary>Share of the people who die in the ending (0..1, default 0) before the rest are released into the pool.</summary>
+        public double LostShare { get; init; }
         internal override long? ConflictKey => Settlement;
     }
 
@@ -300,6 +302,21 @@ public abstract class Proposal
         public int Settlement { get; init; }
         /// <summary>People to settle, in capacity units.</summary>
         public double Amount { get; init; }
+    }
+
+    /// <summary>
+    /// Kills <see cref="Share"/> of the people of standing settlement <see cref="Settlement"/> (owned by polity
+    /// <see cref="Proposal.EntityId"/>); they are recorded in <see cref="HistoryCatalog.PopulationLost"/>. Commits after
+    /// <see cref="ReleasePopulation"/>, so the share applies to whoever stayed.
+    /// </summary>
+    public sealed class KillPopulation : Proposal
+    {
+        /// <inheritdoc />
+        public override ProposalKind Kind => ProposalKind.KillPopulation;
+        /// <summary>Index into <see cref="HistoryCatalog.Settlements"/>.</summary>
+        public int Settlement { get; init; }
+        /// <summary>Fraction of the remaining people who die, in (0, 1].</summary>
+        public double Share { get; init; }
     }
 
     /// <summary>Adds <see cref="Delta"/> to scalar <see cref="ScalarId"/> of polity <see cref="Proposal.EntityId"/>.</summary>

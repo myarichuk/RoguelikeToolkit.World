@@ -173,6 +173,9 @@ public sealed class HistoryDriver : HistoryPluginBase
                 case Proposal.ReleasePopulation rp:
                     if (!TryRelease(history, turn, rp, dirty)) RejectedProposals++;
                     break;
+                case Proposal.KillPopulation kp:
+                    if (!TryKill(history, kp, dirty)) RejectedProposals++;
+                    break;
                 case Proposal.AbsorbDisplaced ab:
                     if (!TryAbsorb(history, ab, dirty)) RejectedProposals++;
                     break;
@@ -254,6 +257,19 @@ public sealed class HistoryDriver : HistoryPluginBase
         if (!(amount > 0)) return false;
         settlement.Population -= amount;
         Displace(history, turn, rp.Settlement, amount, rp.Cause);
+        dirty.Add(settlement.PolityId);
+        return true;
+    }
+
+    private static bool TryKill(HistoryCatalog history, Proposal.KillPopulation kp, HashSet<int> dirty)
+    {
+        if ((uint)kp.Settlement >= (uint)history.Settlements.Count || !(kp.Share > 0) || kp.Share > 1) return false;
+        var settlement = history.Settlements[kp.Settlement];
+        if (settlement.Ended || settlement.PolityId != kp.EntityId) return false;
+        double dead = settlement.Population * kp.Share;
+        if (!(dead > 0)) return false;
+        settlement.Population -= dead;
+        history.PopulationLost += dead;
         dirty.Add(settlement.PolityId);
         return true;
     }
@@ -350,8 +366,10 @@ public sealed class HistoryDriver : HistoryPluginBase
         int ended = history.AppendLinked(HistoryEventKind.SettlementEnded, turn, settlement.PolityId, settlement.TileIndex,
             new[] { $"settlement:{ens.Settlement}", ens.EndCause }, ens.Cause, null);
         double people = settlement.Population;
+        double dead = people * Math.Clamp(ens.LostShare, 0, 1);
+        history.PopulationLost += dead;
         settlement.Population = 0;
-        Displace(history, turn, ens.Settlement, people, ended);
+        Displace(history, turn, ens.Settlement, people - dead, ended);
         dirty.Add(settlement.PolityId);
         return true;
     }

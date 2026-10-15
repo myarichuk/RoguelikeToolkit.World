@@ -48,4 +48,6 @@ public enum ProposalKind
     ReleasePopulation = 19,
     /// <summary>Settle people from the displaced pool into a standing settlement.</summary>
     AbsorbDisplaced = 20,
+    /// <summary>People of a standing settlement die (the only other non-conserving sink besides pool decay).</summary>
+    KillPopulation = 21,
 }

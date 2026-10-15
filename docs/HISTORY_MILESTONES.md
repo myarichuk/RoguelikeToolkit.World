@@ -520,3 +520,12 @@ people vanish (no producer ends settlements yet).
 - `SettleOperator` now settles the pool first, per polity: a group of at least `RefugeFoundShare` (0.5) of the polity's mean standing-settlement population founds one `Refuge` hamlet per turn (under `MaxSettlementsPerPolity`; spends one emergence). Sites prefer CitySiteScorer candidates tagged `high` or `water` (defensible / coastal), RNG among the top 3; the parent is the group's origin settlement if standing, else the nearest. Every other group is `AbsorbDisplaced` into the standing same-polity settlement nearest its origin. A turn that founds a refuge does not also found a colony for that polity.
 - Deviation from the design note: the threshold is relative to mean settlement population, not to catchment capacity, because capacity is not exposed to operators. Revisit with per-settlement pressure at M2.5.
 - Same-polity only until M2.9. Nothing real ends settlements yet, so the corpus is unchanged (expected, verified by the suite). Tests: `RefugeSettlingTests` (3: large group founds a refuge and conserves, small group merges, determinism), driven by a synthetic releaser.
+
+### M2.5A progress (shock resolver)
+
+- `Shock` (kind, severity 0..1, footprint Tile / Radius / Polity / Global, casualty and displacement shares, tags) and the static `ShockResolver.Resolve(view, sink, shock)`. Any operator or plugin builds a `Shock`; the resolver emits proposals only.
+- Per standing settlement in the footprint: intensity = severity x reach (linear falloff for Radius) x defence (tier: hamlet 1.2 .. city 0.7; role: capital 0.8, post 0.7, refuge 1.15). A roll from `Rng(settlement, "shock:" + kind)` (so `(seed, operator, turn, settlement, purpose)`) below the intensity strikes it.
+- Struck: `ReleasePopulation` of `Displacement x intensity` plus the new `KillPopulation` (kind 21, commits after release so its share applies to those who stayed; the dead go to `PopulationLost`). At intensity >= 0.8 the settlement is abandoned: `EndSettlement` with the new `LostShare` (dead recorded as lost, the rest released into the pool, so the refuge flow of M2.4C takes over).
+- One `HistoryEventKind.Shock` (19) event per shock that struck anyone: tags `shock:{kind}`, `severity:`, `struck:`; tile = epicentre.
+- No producer yet (hazard maps are M2.6), so real runs and the corpus do not move. Conservation holds: the shock tests check standing + pool + lost before and after.
+- Per-settlement pressure is the next slice (M2.5B).

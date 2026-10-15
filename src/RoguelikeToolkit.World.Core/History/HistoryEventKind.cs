@@ -46,4 +46,6 @@ public enum HistoryEventKind : byte
     SettlementFounded = 17,
     /// <summary>A settlement ended (razed, abandoned...). Tags <c>settlement:{index}</c> and the cause key; the tile is the site.</summary>
     SettlementEnded = 18,
+    /// <summary>A shock struck places (earthquake, plague, flood...). Tags <c>shock:{kind}</c>, <c>severity:{0.00}</c> and <c>struck:{count}</c>; the tile is the epicentre. Struck settlements log their own ends.</summary>
+    Shock = 19,
 }

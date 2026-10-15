@@ -41,4 +41,6 @@ public static class EventKinds
     public static readonly EventKind SettlementFounded = HistoryEventKind.SettlementFounded;
     /// <summary>A settlement ended.</summary>
     public static readonly EventKind SettlementEnded = HistoryEventKind.SettlementEnded;
+    /// <summary>A shock struck places.</summary>
+    public static readonly EventKind Shock = HistoryEventKind.Shock;
 }
