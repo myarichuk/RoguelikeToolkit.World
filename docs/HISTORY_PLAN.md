@@ -83,6 +83,7 @@ Scope tags: **[CORE]** = `RoguelikeToolkit.World.Core` library (and its tests); 
 - People/time: logistic growth `r` vs `LandCapacity` K → pressure; generations-per-folk in turns (human ~3, dwarf ~8, elf ~30); succession and trait drift tick in turns.
 - Validate: budget test (noisy war starves nothing); no operator reads another's RNG draws; perf budget holds.
 - Landed as: War (50), Conquest overlay (60), Rebellion (70), TradeRoad builder (30; cut in war → pressure both sides), Exchange (80), plus Population (32) for people/time — all looping turns 1..`TurnCount`-1 behind the driver (28). Annual-`r` compounded per turn vs K (biome-surplus fallback); generations human 3 / dwarf 8 via lifespan power law; successions per generation; trait drift via Exchange openness (±20). Per-operator per-turn ledgers (decisions: war/conquest; emergences: roads/rebellion; exchange: none). Catalog schema v2; battlefields project with danger +2. Tests: starved-war isolation, determinism, round-trip.
+- Superseded by M1.5: the operators now run turn-major behind one `HistoryDriver` (stage 28) registered by `StandardHistory.Register`; `HistoryEventsStage` is gone, schema is v4. See `HISTORY_MILESTONES.md`.
 
 ### P2c [CORE] — Treaty, faith, optionals
 
@@ -91,6 +92,7 @@ Scope tags: **[CORE]** = `RoguelikeToolkit.World.Core` library (and its tests); 
 - Faith sub-model: form per culture (animism/shamanism/ancestor/poly/heno/mono) + 2–7 powers with domains from pressures + myth slots; add `Integration/IMythTextProvider` (Core deterministic templates; game-side LLM optional, tags as contract). Extend `HistoricSiteKind` only if needed (`HolySite`, `TreatyStone`).
 - Validate: villain cap test; adult-gate rejection test; stubbed-text determinism for faith.
 - Landed as: HolySite (44), Khan (46), Treaty (48), Villain (76), Faith (84), each with its own per-turn ledger; grudges never decay by time (only repaid by treaty, tribute or conquest overlay); War reads grudges and trips desecration on holy tiles; villains need a 200y+ folk, freeze the polity's succession count at the rise turn and are capped by `MaxVillains` (default 2); `IMythTextProvider` + `TemplateMythTextProvider` in `Integration`. Catalog schema v3. Tests: `HistoryFaithTests`.
+- Superseded by M1.5: Faith and CityHistoryProject are driver post-passes; grudges, windows and villains are proposals committed by the kernel (see `HISTORY_MILESTONES.md`).
 
 ### P3 [CORE] — Demote `Names` to leaf renderer
 
