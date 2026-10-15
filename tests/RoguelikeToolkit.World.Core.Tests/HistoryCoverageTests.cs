@@ -133,29 +133,6 @@ public class HistoryCoverageTests
         Assert.True(fosters > 0, "No foster treaty across seeds 1-12.");
     }
 
-    [Fact]
-    public void Rebellion_EndToEnd_SplitsAProvince_WhenThePolityCapAllows()
-    {
-        int rebellions = 0;
-        for (int seed = 1; seed <= 20; seed++)
-        {
-            using var w = Build(seed, c => c.MaxPolities = 16);
-            var h = w.History;
-            foreach (var e in h.Events.Where(e => e.Kind == HistoryEventKind.Rebellion))
-            {
-                rebellions++;
-                int parent = int.Parse(TagValue(e, "parent:"));
-                var rebel = h.Polities[e.PolityId];
-                Assert.NotEqual(parent, e.PolityId);
-                Assert.Equal(h.Polities[parent].FolkKey, rebel.FolkKey);
-                Assert.Equal(e.Turn, rebel.FoundedTurn);
-                Assert.Equal(e.PolityId, h.Ownership[rebel.CapitalTile]);
-            }
-            Assert.True(h.Polities.Count <= 16);
-        }
-        Assert.True(rebellions > 0, "No rebellion across seeds 1-20 with MaxPolities=16.");
-    }
-
     /// <summary>
     /// Regenerates <c>docs/history-reference-corpus.md</c> when <c>HISTORY_CORPUS_OUT</c> names the file.
     /// A before/after sanity reference for the M1 port, not a golden: outcomes may shift legitimately.

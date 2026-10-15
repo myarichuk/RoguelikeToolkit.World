@@ -12,7 +12,7 @@ public sealed class HistoryHolySite
     /// <summary>Planet tile the site sits on.</summary>
     public int TileIndex { get; init; }
     /// <summary>Owning polity id.</summary>
-    public int PolityId { get; init; }
+    public int PolityId { get; set; }
     /// <summary>History turn the site was raised on.</summary>
     public int FoundedTurn { get; init; }
     /// <summary>Geographic position of the tile, stored at founding time so queries need no tile store.</summary>

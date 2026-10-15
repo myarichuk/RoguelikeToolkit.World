@@ -36,6 +36,7 @@ public sealed class TurnView
         Turn = turn;
         Seed = history.Seed;
         TurnYears = context.TurnYears;
+        MaxPolities = context.MaxPolities;
         Scalars = history.Scalars;
         _ownership = (int[])history.Ownership.Clone();
         var polities = new List<PolityState>(history.Polities.Count);
@@ -71,6 +72,9 @@ public sealed class TurnView
 
     /// <summary>Years per turn.</summary>
     public int TurnYears { get; }
+
+    /// <summary>The polity cap: the commit refuses founding past it.</summary>
+    public int MaxPolities { get; }
 
     /// <summary>Declared scalars; <see cref="PolityState.Scalars"/> is indexed by their ids.</summary>
     public ScalarRegistry Scalars { get; }

@@ -155,6 +155,27 @@ public abstract class Proposal
         public int HeirBornTurn { get; init; }
     }
 
+    /// <summary>
+    /// Founds polity <see cref="Proposal.EntityId"/> (the next free id) with capital <see cref="CapitalTile"/>.
+    /// The commit rejects it when the id is not the next one or the polity cap is full, then re-floods
+    /// ownership from every capital (user pins win) and syncs holy-site owners.
+    /// </summary>
+    public sealed class AddPolity : Proposal
+    {
+        /// <inheritdoc />
+        public override ProposalKind Kind => ProposalKind.AddPolity;
+        /// <summary>Government form.</summary>
+        public PolityForm Form { get; init; }
+        /// <summary>Capital tile.</summary>
+        public int CapitalTile { get; init; }
+        /// <summary>Founding folk key.</summary>
+        public string FolkKey { get; init; } = string.Empty;
+        /// <summary>Founding culture key.</summary>
+        public string CultureKey { get; init; } = string.Empty;
+        /// <summary>Parent polity id, or -1.</summary>
+        public int Parent { get; init; } = -1;
+    }
+
     /// <summary>Sets polity <see cref="Proposal.EntityId"/>'s population index and ruler generation (absolute, not a delta).</summary>
     public sealed class SetPopulation : Proposal
     {

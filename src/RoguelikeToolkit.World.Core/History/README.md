@@ -34,7 +34,7 @@ implementing `IHistoricalContext` (one waiver: `History->Integration:HistoryCata
   `Precondition`/`Apply`; missing attachments make a stage a silent no-op.
 - **CultureSeedStage** (26) / **PolityFormStage** (27) / **HistoryEventsStage** (28, turn driver,
   head of the 28..90 operator band) / **TradeRoadOperator** (30) / **PopulationOperator** (32) /
-  **WarOperator** (50) / **ConquestOperator** (60) / **RebellionStage** (70) / **ExchangeStage** (80) /
+  **WarOperator** (50) / **ConquestOperator** (60) / **RebellionOperator** (70) / **ExchangeStage** (80) /
   **CityHistoryProjectStage** (91).
 
 ## Rules

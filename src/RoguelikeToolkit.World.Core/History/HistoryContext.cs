@@ -146,7 +146,7 @@ public sealed class HistoryContext
     /// <see cref="MaxEmergencesPerTurn"/>); returns false (spending nothing) when that operator
     /// exhausted its budget for <paramref name="turn"/>. Never touches <see cref="EmergencesSpent"/>.
     /// </summary>
-    /// <param name="operatorName">Stage name (e.g. <c>RebellionStage</c>); must be non-blank.</param>
+    /// <param name="operatorName">Stage name (e.g. <c>RebellionOperator</c>); must be non-blank.</param>
     /// <param name="turn">History turn the spend belongs to; must be non-negative.</param>
     public bool TrySpendOperatorEmergence(string operatorName, int turn)
     {

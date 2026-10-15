@@ -71,10 +71,10 @@ public sealed class HistoryDriver : HistoryPluginBase
             op.Propose(view, new ProposalSink(op.Name, turn, history.Seed, context, own));
             proposals.AddRange(own);
         }
-        Commit(history, turn, proposals);
+        Commit(map, history, context, turn, proposals);
     }
 
-    private void Commit(HistoryCatalog history, int turn, List<Proposal> proposals)
+    private void Commit(WorldMap map, HistoryCatalog history, HistoryContext context, int turn, List<Proposal> proposals)
     {
         proposals.Sort(static (a, b) =>
         {
@@ -85,6 +85,7 @@ public sealed class HistoryDriver : HistoryPluginBase
             c = string.CompareOrdinal(a.Operator, b.Operator);
             return c != 0 ? c : a.Sequence.CompareTo(b.Sequence);
         });
+        if (AddPolities(map, history, context, turn, proposals)) proposals.RemoveAll(static p => p is Proposal.AddPolity);
         var claimed = new HashSet<(ProposalKind, long)>();
         var deltas = new SortedDictionary<(int Polity, int Scalar), double>();
         foreach (var p in proposals)
@@ -145,5 +146,41 @@ public sealed class HistoryDriver : HistoryPluginBase
             if (polity == null) continue;
             polity.SetScalar(scalarId, polity.GetScalar(scalarId, history.Scalars) + delta, history.Scalars);
         }
+    }
+
+    /// <summary>
+    /// Structural pre-pass: founds the turn's new polities in id order (ids must be contiguous and the
+    /// polity cap holds), then re-floods ownership from every capital and syncs holy-site owners.
+    /// Returns true when the turn had any <see cref="Proposal.AddPolity"/> (all of them are consumed).
+    /// </summary>
+    private bool AddPolities(WorldMap map, HistoryCatalog history, HistoryContext context, int turn, List<Proposal> proposals)
+    {
+        bool any = false;
+        bool founded = false;
+        foreach (var p in proposals)
+        {
+            if (p is not Proposal.AddPolity ap) continue;
+            any = true;
+            if (ap.EntityId != history.Polities.Count || history.Polities.Count >= context.MaxPolities) { RejectedProposals++; continue; }
+            history.Polities.Add(new Polity
+            {
+                Id = ap.EntityId, Form = ap.Form, CapitalTile = ap.CapitalTile, FolkKey = ap.FolkKey,
+                CultureKey = ap.CultureKey, FoundedTurn = turn, Parent = ap.Parent,
+            });
+            founded = true;
+        }
+        if (!founded) return any;
+        var capitals = new List<int>(history.Polities.Count);
+        foreach (var polity in history.Polities) capitals.Add(polity.CapitalTile);
+        var pins = new Dictionary<int, int>();
+        foreach (var kv in history.Overrides.PinnedTiles)
+            if (kv.Value >= 0 && kv.Value < history.Polities.Count) pins[kv.Key] = kv.Value;
+        history.Ownership = HistoryTerritory.AssignOwners(map.DataStore, capitals, pins);
+        foreach (var site in history.HolySites)
+        {
+            int owner = history.OwnerOf(site.TileIndex);
+            if (owner >= 0) site.PolityId = owner;
+        }
+        return any;
     }
 }

@@ -211,7 +211,7 @@ same-turn cross-operator reactions; borders cached and invalidated only when own
   ownership (legacy used ownership at order 32 for the whole span); unseeded polities seed and step in
   their first turn; ended polities are not grown; Villain/Faith now read causal pressure, not
   final-crowding-plus-all-bumps. Closed-form equality with `PopulationAtTurn` holds for static ownership
-  (tested). Rebellion port must still set the rebel's founding population (legacy `RebellionStage.cs:151`).
+  (tested). Rebellion port must still set the rebel's founding population (legacy `RebellionOperator.cs:151`).
 - The legacy stage list in `WorldBuilder` no longer runs Population; Population-dependent legacy tests are
   red until M1.5 wires the driver.
 
@@ -366,3 +366,11 @@ run deterministically.
   a polity marries at most once per turn (local set replaces the legacy sequential heir check). Refusal grudge
   weight tag is snapshot weight plus the refusal. `IsHeirAdult` takes the heir birth turn. The Treaty coverage
   test now runs the operator through the driver on the built world.
+- Done (Rebellion): `RebellionOperator` replaces `RebellionStage`. New `AddPolity` proposal, applied in a structural
+  pre-pass of the commit (ids must be the next free id, the polity cap is enforced there and counted in
+  `RejectedProposals`), followed by one ownership re-flood from all capitals (user pins win) and a holy-site owner
+  sync (`HistoryHolySite.PolityId` is now settable). `HistoryDriver.Commit` now takes the map and context;
+  `TurnView.MaxPolities`. Behaviour changes on purpose: the rebel is born with population 0 and pressure at its
+  default, and `PopulationOperator` seeds it on the next turn (legacy seeded `InitialShare` of capacity
+  immediately); pressure is the causal scalar; several rebellions in one turn all read the same snapshot ownership.
+  The two legacy rebellion tests (coverage + cap) are replaced by `RebellionOperatorTests` with a forced tight-culture fixture.

@@ -2136,19 +2136,6 @@ RoguelikeToolkit.World.Core.History.HistoryDemography.FolkParams.LifespanYears.g
 RoguelikeToolkit.World.Core.History.HistoryDemography.FolkParams.LifespanYears.init -> void
 RoguelikeToolkit.World.Core.History.HistoryDemography.FolkParams.MaturationYears.get -> int
 RoguelikeToolkit.World.Core.History.HistoryDemography.FolkParams.MaturationYears.init -> void
-RoguelikeToolkit.World.Core.History.RebellionStage
-RoguelikeToolkit.World.Core.History.RebellionStage.RebellionStage() -> void
-const RoguelikeToolkit.World.Core.History.RebellionStage.MinRebelTiles = 8 -> int
-const RoguelikeToolkit.World.Core.History.RebellionStage.MinSeparationDegrees = 12 -> double
-const RoguelikeToolkit.World.Core.History.RebellionStage.OppressionThreshold = 0.35 -> double
-const RoguelikeToolkit.World.Core.History.RebellionStage.TightnessThreshold = 60 -> int
-const RoguelikeToolkit.World.Core.History.RebellionStage.RebelChance = 0.3 -> double
-override RoguelikeToolkit.World.Core.History.RebellionStage.Name.get -> string!
-override RoguelikeToolkit.World.Core.History.RebellionStage.Order.get -> int
-override RoguelikeToolkit.World.Core.History.RebellionStage.Reads.get -> System.Type![]!
-override RoguelikeToolkit.World.Core.History.RebellionStage.ReadsOptional.get -> System.Type![]!
-override RoguelikeToolkit.World.Core.History.RebellionStage.Precondition(RoguelikeToolkit.World.Core.Topology.WorldMap! map, RoguelikeToolkit.World.Core.History.HistoryCatalog! history) -> bool
-override RoguelikeToolkit.World.Core.History.RebellionStage.Apply(RoguelikeToolkit.World.Core.Topology.WorldMap! map, RoguelikeToolkit.World.Core.History.HistoryCatalog! history, RoguelikeToolkit.World.Core.History.HistoryContext! context) -> void
 RoguelikeToolkit.World.Core.History.ExchangeStage
 RoguelikeToolkit.World.Core.History.ExchangeStage.ExchangeStage() -> void
 const RoguelikeToolkit.World.Core.History.ExchangeStage.ExchangeChance = 0.5 -> double

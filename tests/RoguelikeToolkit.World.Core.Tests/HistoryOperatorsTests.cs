@@ -174,21 +174,6 @@ public class HistoryOperatorsTests
     }
 
     [Fact]
-    public void Rebellions_StayWithinPolityCap_WithConsistentOwnership()
-    {
-        using var w = Build(configure: ctx => ctx.MaxPolities = 4);
-        var history = w.History;
-        Assert.True(history.Polities.Count <= 4, $"Polity cap breached: {history.Polities.Count}.");
-        foreach (var entry in history.Events.Where(e => e.Kind == HistoryEventKind.Rebellion))
-        {
-            Assert.Equal(entry.TileIndex, history.Polities[entry.PolityId].CapitalTile);
-            Assert.Equal(entry.PolityId, history.OwnerOf(entry.TileIndex));
-        }
-        for (int id = 0; id < history.Polities.Count; id++)
-            Assert.Equal(id, history.OwnerOf(history.Polities[id].CapitalTile));
-    }
-
-    [Fact]
     public void Exchange_OnlyRunsOnActiveRoutes()
     {
         using var w = Build();

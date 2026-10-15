@@ -32,4 +32,6 @@ public enum ProposalKind
     SetOverlay = 11,
     /// <summary>Record the birth turn of a polity's treaty heir.</summary>
     SetHeir = 12,
+    /// <summary>Found a new polity. Applied in a structural pre-pass, before every other proposal of the turn.</summary>
+    AddPolity = 13,
 }
