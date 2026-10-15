@@ -110,6 +110,7 @@ public class HistoryCoverageTests
         for (int seed = 1; seed <= 12; seed++)
         {
             using var w = Build(seed);
+            new HistoryDriver().AddOperator(new TreatyOperator()).Apply(w.Map, w.History, new HistoryContext());
             var h = w.History;
             foreach (var e in h.Events)
             {

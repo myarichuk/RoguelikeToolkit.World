@@ -30,4 +30,6 @@ public enum ProposalKind
     AddSite = 10,
     /// <summary>Set a polity's culture overlay.</summary>
     SetOverlay = 11,
+    /// <summary>Record the birth turn of a polity's treaty heir.</summary>
+    SetHeir = 12,
 }

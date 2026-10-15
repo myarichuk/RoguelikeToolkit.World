@@ -122,6 +122,10 @@ public sealed class HistoryDriver : HistoryPluginBase
                     var overlaid = history.Polities.Find(p => p.Id == so.EntityId);
                     if (overlaid != null) overlaid.CultureOverlay = so.Culture;
                     break;
+                case Proposal.SetHeir sh:
+                    var heirOwner = history.Polities.Find(p => p.Id == sh.EntityId);
+                    if (heirOwner != null) heirOwner.HeirBornTurn = sh.HeirBornTurn;
+                    break;
                 case Proposal.AppendEvent e:
                     history.AppendLinked(e.EventKind, turn, e.EntityId, e.Tile, e.Tags, e.Cause, e.Participants);
                     break;

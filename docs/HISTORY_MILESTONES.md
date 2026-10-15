@@ -362,3 +362,7 @@ run deterministically.
   RepayGrudge + AddWindow + pressure deltas; resistance emits AddGrudge + pressure deltas.
   `PolityState.FoundedTurn` added. `HistoryCoverageTests.Khan_*` now drive the operator through the driver
   (with `PopulationOperator`); the grudge-after-ultimatum check allows a later tribute in the reverse direction to repay it.
+- Done (Treaty): `TreatyOperator` replaces `TreatyStage`. New `SetHeir` proposal and `PolityState.HeirBornTurn`;
+  a polity marries at most once per turn (local set replaces the legacy sequential heir check). Refusal grudge
+  weight tag is snapshot weight plus the refusal. `IsHeirAdult` takes the heir birth turn. The Treaty coverage
+  test now runs the operator through the driver on the built world.

@@ -85,11 +85,9 @@ public class HistoryFaithTests
     [Fact]
     public void HeirAdultGate_NeedsAnHeirOldEnough()
     {
-        var noHeir = new Polity { Id = 0 };
-        Assert.False(TreatyStage.IsHeirAdult(noHeir, turn: 10, turnYears: 10, maturationYears: 16));
-        var heir = new Polity { Id = 1, HeirBornTurn = 2 };
-        Assert.False(TreatyStage.IsHeirAdult(heir, turn: 3, turnYears: 10, maturationYears: 16));
-        Assert.True(TreatyStage.IsHeirAdult(heir, turn: 4, turnYears: 10, maturationYears: 16));
+        Assert.False(TreatyOperator.IsHeirAdult(-1, turn: 10, turnYears: 10, maturationYears: 16));
+        Assert.False(TreatyOperator.IsHeirAdult(2, turn: 3, turnYears: 10, maturationYears: 16));
+        Assert.True(TreatyOperator.IsHeirAdult(2, turn: 4, turnYears: 10, maturationYears: 16));
     }
 
     [Fact]

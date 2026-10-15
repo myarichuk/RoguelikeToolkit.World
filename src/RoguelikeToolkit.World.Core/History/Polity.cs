@@ -71,8 +71,8 @@ public sealed class Polity
     public int OpennessDrift { get; set; }
     /// <summary>
     /// History turn the treaty heir was born on, or -1 when no marriage treaty has produced one.
-    /// Set by <c>TreatyStage</c>; foster treaties admit the heir only once adult (see
-    /// <c>TreatyStage.IsHeirAdult</c>), so child fostering is refused with a grudge.
+    /// Set by <c>TreatyOperator</c>; foster treaties admit the heir only once adult (see
+    /// <c>TreatyOperator.IsHeirAdult</c>), so child fostering is refused with a grudge.
     /// </summary>
     public int HeirBornTurn { get; set; } = -1;
     /// <summary>True once a <c>VillainStage</c> villain rose to rule this polity; successions freeze at the rise turn.</summary>

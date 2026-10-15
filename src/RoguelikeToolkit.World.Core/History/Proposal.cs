@@ -146,6 +146,15 @@ public abstract class Proposal
         public string Culture { get; init; } = string.Empty;
     }
 
+    /// <summary>Records that polity <see cref="Proposal.EntityId"/>'s treaty heir was born on <see cref="HeirBornTurn"/>.</summary>
+    public sealed class SetHeir : Proposal
+    {
+        /// <inheritdoc />
+        public override ProposalKind Kind => ProposalKind.SetHeir;
+        /// <summary>Turn the heir was born.</summary>
+        public int HeirBornTurn { get; init; }
+    }
+
     /// <summary>Sets polity <see cref="Proposal.EntityId"/>'s population index and ruler generation (absolute, not a delta).</summary>
     public sealed class SetPopulation : Proposal
     {

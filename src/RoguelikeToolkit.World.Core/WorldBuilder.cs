@@ -241,7 +241,6 @@ public sealed class WorldBuilder
             pipeline.AddStage(new CultureSeedStage());
             pipeline.AddStage(new PolityFormStage());
             pipeline.AddStage(new HistoryEventsStage());
-            pipeline.AddStage(new TreatyStage());
             pipeline.AddStage(new RebellionStage());
             pipeline.AddStage(new VillainStage());
             pipeline.AddStage(new ExchangeStage());
