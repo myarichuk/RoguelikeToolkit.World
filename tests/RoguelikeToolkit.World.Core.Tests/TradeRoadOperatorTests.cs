@@ -4,7 +4,7 @@ namespace RoguelikeToolkit.World.Core.Tests;
 
 public class TradeRoadOperatorTests
 {
-    private static World Build(int seed) => new WorldBuilder().WithSize(3).WithSeed(seed).WithUserEdits().WithHistory().Build();
+    private static World Build(int seed) => new WorldBuilder().WithSize(3).WithSeed(seed).WithUserEdits().WithHistoryDriver(d => d.Clear()).Build();
 
     private static void Run(World w)
         => new HistoryDriver().AddOperator(new TradeRoadOperator()).Apply(w.Map, w.History, new HistoryContext());

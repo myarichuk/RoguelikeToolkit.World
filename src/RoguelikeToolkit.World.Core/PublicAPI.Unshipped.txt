@@ -115,7 +115,7 @@ RoguelikeToolkit.World.Core.History.HistoryCatalog.Reset() -> void
 RoguelikeToolkit.World.Core.History.HistoryCatalog.Respatialize(RoguelikeToolkit.World.Core.Storage.WorldDataStore! store) -> bool
 RoguelikeToolkit.World.Core.History.HistoryCatalog.Roads.get -> System.Collections.Generic.List<RoguelikeToolkit.World.Core.History.HistoryRoad!>!
 RoguelikeToolkit.World.Core.History.HistoryCatalog.Save(System.IO.Stream! stream) -> void
-const RoguelikeToolkit.World.Core.History.HistoryCatalog.SchemaVersion = 3 -> int
+const RoguelikeToolkit.World.Core.History.HistoryCatalog.SchemaVersion = 4 -> int
 RoguelikeToolkit.World.Core.History.HistoryCatalog.Seed.get -> int
 RoguelikeToolkit.World.Core.History.HistoryCatalog.Seeds.get -> System.Collections.Generic.List<RoguelikeToolkit.World.Core.History.HistoryPeople!>!
 RoguelikeToolkit.World.Core.History.HistoryCatalog.Settlements.get -> System.Collections.Generic.List<RoguelikeToolkit.World.Core.History.HistorySettlement!>!
@@ -163,13 +163,6 @@ RoguelikeToolkit.World.Core.History.HistoryEventKind
 RoguelikeToolkit.World.Core.History.HistoryEventKind.Fork = 1 -> RoguelikeToolkit.World.Core.History.HistoryEventKind
 RoguelikeToolkit.World.Core.History.HistoryEventKind.Founding = 0 -> RoguelikeToolkit.World.Core.History.HistoryEventKind
 RoguelikeToolkit.World.Core.History.HistoryEventKind.SiteLost = 2 -> RoguelikeToolkit.World.Core.History.HistoryEventKind
-RoguelikeToolkit.World.Core.History.HistoryEventsStage
-RoguelikeToolkit.World.Core.History.HistoryEventsStage.HistoryEventsStage() -> void
-override RoguelikeToolkit.World.Core.History.HistoryEventsStage.Apply(RoguelikeToolkit.World.Core.Topology.WorldMap! map, RoguelikeToolkit.World.Core.History.HistoryCatalog! history, RoguelikeToolkit.World.Core.History.HistoryContext! context) -> void
-override RoguelikeToolkit.World.Core.History.HistoryEventsStage.Name.get -> string!
-override RoguelikeToolkit.World.Core.History.HistoryEventsStage.Order.get -> int
-override RoguelikeToolkit.World.Core.History.HistoryEventsStage.Precondition(RoguelikeToolkit.World.Core.Topology.WorldMap! map, RoguelikeToolkit.World.Core.History.HistoryCatalog! history) -> bool
-override RoguelikeToolkit.World.Core.History.HistoryEventsStage.Reads.get -> System.Type![]!
 RoguelikeToolkit.World.Core.History.HistoryOverrides
 RoguelikeToolkit.World.Core.History.HistoryOverrides.Clear() -> void
 RoguelikeToolkit.World.Core.History.HistoryOverrides.ClearRename(int polityId) -> bool

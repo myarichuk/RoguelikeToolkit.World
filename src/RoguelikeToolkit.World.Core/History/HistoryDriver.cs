@@ -44,6 +44,9 @@ public sealed class HistoryDriver : HistoryPluginBase
         return this;
     }
 
+    /// <summary>Removes every registered operator and post-pass (for hosts and tests that supply their own ruleset).</summary>
+    public HistoryDriver Clear() { _operators.Clear(); _postPasses.Clear(); return this; }
+
     /// <summary>True once polities have formed (even when zero formed on an all-ocean world).</summary>
     public override bool Precondition(WorldMap map, HistoryCatalog history) => history.PolitiesFormed;
 

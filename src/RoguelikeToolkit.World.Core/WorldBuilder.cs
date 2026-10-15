@@ -30,6 +30,7 @@ public sealed class WorldBuilder
     private bool _landUse;
     private bool _history = true;
     private readonly HistoryContext _historyConfig = new();
+    private Action<HistoryDriver>? _driverConfig;
     private bool _climateRefresh = true;
     private bool _islandChains = true;
     private bool _balancedPlates = true;
@@ -197,6 +198,18 @@ public sealed class WorldBuilder
     /// </summary>
     public WorldBuilder WithHistory(Action<HistoryContext>? configure = null) { _history = true; configure?.Invoke(_historyConfig); return this; }
 
+    /// <summary>
+    /// Adds operators or post-passes to the history driver, which already carries <see cref="StandardHistory"/>.
+    /// Registration order never changes the result; names must be unique among the registered operators.
+    /// </summary>
+    public WorldBuilder WithHistoryDriver(Action<HistoryDriver> configure)
+    {
+        ArgumentNullException.ThrowIfNull(configure);
+        _history = true;
+        _driverConfig += configure;
+        return this;
+    }
+
     /// <summary>Skips the history stages (orders 26..91); the world still carries an empty <c>History</c> catalog.</summary>
     public WorldBuilder WithoutHistory() { _history = false; return this; }
 
@@ -240,7 +253,9 @@ public sealed class WorldBuilder
             map.SetAttachment(_historyConfig);
             pipeline.AddStage(new CultureSeedStage());
             pipeline.AddStage(new PolityFormStage());
-            pipeline.AddStage(new HistoryEventsStage());
+            var driver = StandardHistory.Register(new HistoryDriver());
+            _driverConfig?.Invoke(driver);
+            pipeline.AddStage(driver);
         }
         HydrologyStage? hydrologyStage = null;
         PlanetParameters planet = new PlanetParameters();

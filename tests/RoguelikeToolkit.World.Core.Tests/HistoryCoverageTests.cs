@@ -12,7 +12,7 @@ public class HistoryCoverageTests
 
     private static World Build(int seed, Action<HistoryContext>? configure = null)
     {
-        var builder = new WorldBuilder().WithSize(Size).WithSeed(seed).WithUserEdits();
+        var builder = new WorldBuilder().WithSize(Size).WithSeed(seed).WithUserEdits().WithHistoryDriver(d => d.Clear());
         if (configure != null) builder.WithHistory(configure);
         return builder.Build();
     }

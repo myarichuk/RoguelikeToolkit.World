@@ -161,7 +161,7 @@ public sealed class HistoryContext
 
     /// <summary>
     /// Forgets <paramref name="operatorName"/>'s ledger, so a re-run starts from a full budget.
-    /// Each operator calls this first in <c>Apply</c>; the turn driver (<c>HistoryEventsStage</c>)
+    /// Each operator calls this first in <c>Apply</c>; the turn driver (<c>HistoryDriver</c>)
     /// calls <see cref="ClearOperatorBudgets"/> for the whole band.
     /// </summary>
     /// <param name="operatorName">Stage name; must be non-blank.</param>

@@ -40,7 +40,7 @@ public class HistoryBenchmarks
         _world.Map.SetAttachment(context);
         new CultureSeedStage().Execute(_world.Map);
         new PolityFormStage().Execute(_world.Map);
-        new HistoryEventsStage().Execute(_world.Map);
+        StandardHistory.Register(new HistoryDriver()).Apply(_world.Map, history, context);
         return history.Polities.Count;
     }
 
@@ -80,7 +80,7 @@ public class LargeHistoryBenchmarks
         _world.Map.SetAttachment(context);
         new CultureSeedStage().Execute(_world.Map);
         new PolityFormStage().Execute(_world.Map);
-        new HistoryEventsStage().Execute(_world.Map);
+        StandardHistory.Register(new HistoryDriver()).Apply(_world.Map, history, context);
         return history.Polities.Count;
     }
 }

@@ -32,10 +32,14 @@ implementing `IHistoricalContext` (one waiver: `History->Integration:HistoryCata
 - **HistoryTerritory**: the one deterministic ownership function (nearest-capital flood fill, pins win).
 - **IHistoryPlugin** / **HistoryPluginBase**: history stages as pipeline stages with
   `Precondition`/`Apply`; missing attachments make a stage a silent no-op.
-- **CultureSeedStage** (26) / **PolityFormStage** (27) / **HistoryEventsStage** (28, turn driver,
-  head of the 28..90 operator band) / **TradeRoadOperator** (30) / **PopulationOperator** (32) /
-  **WarOperator** (50) / **ConquestOperator** (60) / **RebellionOperator** (70) / **ExchangeOperator** (80) /
-  **CityHistoryProjectPostPass** (91).
+- **CultureSeedStage** (26) / **PolityFormStage** (27) / **HistoryDriver** (28): the turn-major driver.
+  Per turn it snapshots the catalog into a `TurnView`, runs every `IHistoryOperator`, and commits the
+  proposals in canonical order (entity, kind, operator, sequence), so registration order never changes
+  bytes. After the last turn it runs the `IHistoryPostPass`es.
+- **StandardHistory** registers the built-in ruleset: Population (32), TradeRoad (30), HolySite (44),
+  Khan (46), Treaty (48), War (50), Conquest (60), Rebellion (70), Villain (76), Exchange (80), and the
+  post-passes Faith and CityHistoryProject. `WorldBuilder.WithHistoryDriver` adds to it; `HistoryDriver.Clear`
+  starts from an empty ruleset.
 
 ## Rules
 

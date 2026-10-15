@@ -17,9 +17,12 @@ public class HistoryFaithTests
         return builder.Build();
     }
 
+    private static World Bare(int seed)
+        => new WorldBuilder().WithSize(Size).WithSeed(seed).WithUserEdits().WithHistoryDriver(d => d.Clear()).Build();
+
     private static World BuildWithVillains(int seed, int maxVillains)
     {
-        var w = Build(seed);
+        var w = Bare(seed);
         new HistoryDriver()
             .AddOperator(new PopulationOperator())
             .AddOperator(new WarOperator())
@@ -44,7 +47,7 @@ public class HistoryFaithTests
 
     private static World BuildFull(int seed)
     {
-        var w = Build(seed);
+        var w = Bare(seed);
         new HistoryDriver()
             .AddOperator(new PopulationOperator())
             .AddOperator(new HolySiteOperator())

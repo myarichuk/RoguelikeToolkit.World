@@ -399,3 +399,16 @@ run deterministically.
   causes (earlier id), importance and participant ids/roles. v1-v3 files still load through the legacy readers
   (no regenerate-on-load: the catalog cannot re-run the pipeline); overrides were always persisted in every version.
   Tests: `HistoryPersistenceV4Tests`.
+
+
+**M1.5 progress (switch):** `StandardHistory.Register` registers the ten operators and two post-passes; `WorldBuilder` now adds
+a `HistoryDriver` carrying them (`WithHistoryDriver(Action<HistoryDriver>)` adds more; `HistoryDriver.Clear()` for bare rulesets,
+used by the per-operator tests). `HistoryEventsStage` is deleted. All test projects green (Core 760, MapEditor.Engine 48,
+Presentation 103, Scripting.Jint 27; Benchmarks and AotSmoke build). New `HistoryAcceptanceTests`: determinism + round trip on the
+standard ruleset, and **prefix stability** (TurnCount 12 equals the turn < 12 events of TurnCount 30; the grudge leak is gone).
+Corpus re-baselined (`docs/history-reference-corpus.md`, 25 worlds): roads 0 -> 12 (all severed), RoadBuilt/RoadCut 0 -> 3,
+Exchange 0 -> 10 (Finding B fix, intended); War 587 -> 969, Conquest 46 -> 88, Desecration 33 -> 56, sites 356 -> 509, grudges 68 -> 81
+(pressure is now the causal scalar from Population crowding plus war bumps, war battlefields are `AddSite` proposals, and grudges
+are weighed turn by turn instead of end-state; wars are the largest shift and worth a second look at M2 tuning); villains 50 -> 49;
+all other kinds identical. Remaining: size-7 perf check against the 5 s budget, `HISTORY_PLAN.md` P2 notes, compat-rule validation and
+pinned-capital handling (move to M2 unless trivial), `StageOrder` constants stay (operators use them as `Order`).

@@ -4,7 +4,7 @@ namespace RoguelikeToolkit.World.Core.Tests;
 
 public class RebellionOperatorTests
 {
-    private static World Build(int seed) => new WorldBuilder().WithSize(3).WithSeed(seed).WithUserEdits().WithHistory().Build();
+    private static World Build(int seed) => new WorldBuilder().WithSize(3).WithSeed(seed).WithUserEdits().WithHistoryDriver(d => d.Clear()).Build();
 
     /// <summary>Default worlds never produce rebellions (finding A), so force a tight culture on every polity.</summary>
     private static void MakeTight(HistoryCatalog h)

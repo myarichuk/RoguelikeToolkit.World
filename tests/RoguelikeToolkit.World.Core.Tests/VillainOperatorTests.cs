@@ -4,7 +4,7 @@ namespace RoguelikeToolkit.World.Core.Tests;
 
 public class VillainOperatorTests
 {
-    private static World Build(int seed) => new WorldBuilder().WithSize(3).WithSeed(seed).WithUserEdits().WithHistory().Build();
+    private static World Build(int seed) => new WorldBuilder().WithSize(3).WithSeed(seed).WithUserEdits().WithHistoryDriver(d => d.Clear()).Build();
 
     /// <summary>Make every polity a long-lived folk so villains can rise.</summary>
     private static void MakeDwarves(HistoryCatalog h)
