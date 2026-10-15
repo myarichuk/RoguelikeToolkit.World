@@ -118,6 +118,10 @@ public sealed class HistoryDriver : HistoryPluginBase
                     if (!history.Sites.Any(x => x.TileIndex == st.Tile))
                         history.Sites.Add(new HistorySite { TileIndex = st.Tile, PolityId = st.EntityId, FoundedTurn = turn, Position = st.Position, Active = true });
                     break;
+                case Proposal.SetOverlay so:
+                    var overlaid = history.Polities.Find(p => p.Id == so.EntityId);
+                    if (overlaid != null) overlaid.CultureOverlay = so.Culture;
+                    break;
                 case Proposal.AppendEvent e:
                     history.AppendLinked(e.EventKind, turn, e.EntityId, e.Tile, e.Tags, e.Cause, e.Participants);
                     break;

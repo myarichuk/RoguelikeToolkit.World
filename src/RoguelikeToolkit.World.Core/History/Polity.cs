@@ -59,7 +59,7 @@ public sealed class Polity
     }
     /// <summary>
     /// Winning culture key after a conquest, or empty when the polity renders through its founding
-    /// <see cref="CultureKey"/>. Set by <c>ConquestStage</c>; the <c>Names</c> leaf resolves it late.
+    /// <see cref="CultureKey"/>. Set by <c>ConquestOperator</c>; the <c>Names</c> leaf resolves it late.
     /// </summary>
     public string CultureOverlay { get; set; } = string.Empty;
     /// <summary>How many successions have ticked (one per folk generation); advanced by <c>PopulationOperator</c>.</summary>

@@ -352,3 +352,7 @@ run deterministically.
   driver commit, not yet persisted: M1.4), war and desecration pressure bumps via `AdjustScalar` (clamped once).
   RoadCut is emitted once per pair per turn and only when an unsevered route exists in the snapshot.
   Desecration `Cause` is left unset (the war event of the same turn has no stable id yet).
+- Done (Conquest): `ConquestOperator` replaces `ConquestStage`. Resolves wars logged on the *previous* turn
+  (accepted one-turn lag), compares snapshot populations (legacy used closed-form `PopulationAtTurn` at the war
+  turn), and cites the war event as `Cause` (first event with a cause). New `SetOverlay` proposal;
+  `TurnView.PolityState.CultureOverlay`. Repay-grudge and event ride along in the same commit.

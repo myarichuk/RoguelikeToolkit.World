@@ -1,0 +1,77 @@
+using RoguelikeToolkit.World.Core.Generation;
+using RoguelikeToolkit.World.Core.Peoples;
+using RoguelikeToolkit.World.Core.Topology;
+
+namespace RoguelikeToolkit.World.Core.History;
+
+/// <summary>
+/// Order 60: resolves wars into culture overlays. For every war the <see cref="WarOperator"/> logged
+/// the turn before, a sufficiently stronger attacker (see
+/// <see cref="HistoryDemography.ConquestAdvantage"/>) may impose its culture on the loser: the
+/// loser's <see cref="Polity.CultureOverlay"/> takes the winner's culture key and a
+/// <see cref="HistoryEventKind.Conquest"/> event records the transfer for the <c>Names</c> leaf,
+/// which renders the losing polity through the winning table late. Conquests cost one decision
+/// from this operator's own per-turn budget. No tile changes hands: conquest is a cultural overlay,
+/// so the ownership projection stays valid.
+/// </summary>
+public sealed class ConquestOperator : IHistoryOperator
+{
+    /// <summary>Chance a qualifying victory becomes an overlay (the rest stay raids).</summary>
+    public const double ConquestChance = 0.5;
+
+    private PeoplesStore? _store;
+    private bool _storeLoaded;
+
+    /// <summary>Diagnostic name, <c>Conquest</c>.</summary>
+    public string Name => "Conquest";
+
+    /// <summary><see cref="StageOrder.Conquest"/> (60).</summary>
+    public int Order => StageOrder.Conquest;
+
+    /// <summary>Resolves the wars logged on the previous turn (a same-turn war is seen one turn later).</summary>
+    public void Propose(TurnView view, ProposalSink sink)
+    {
+        var polities = view.Polities;
+        if (polities.Count < 2) return;
+        if (!_storeLoaded)
+        {
+            _store = view.LoadPeoples();
+            _storeLoaded = true;
+        }
+        foreach (var victor in polities)
+        {
+            foreach (var war in view.EventsOf(victor.Id))
+            {
+                if (war.Kind != HistoryEventKind.War || war.Turn != view.Turn - 1) continue;
+                int winner = victor.Id;
+                if (!TryDefender(war, out int loser)) continue;
+                if ((uint)loser >= (uint)polities.Count || winner == loser) continue;
+                var fallen = polities[loser];
+                if (!fallen.Alive || fallen.CultureOverlay == victor.CultureKey) continue;
+                if (victor.Population < HistoryDemography.ConquestAdvantage * fallen.Population) continue;
+                var stream = sink.Rng(loser, "overlay");
+                if (stream.NextDouble() >= ConquestChance) continue;
+                if (!sink.TrySpendDecision()) continue;
+                sink.Emit(new Proposal.SetOverlay { EntityId = loser, Culture = victor.CultureKey });
+                sink.Emit(new Proposal.RepayGrudge { EntityId = winner, Other = loser });
+                sink.Event(HistoryEventKind.Conquest, winner, fallen.CapitalTile,
+                    new[] { "conquest", $"winner:{winner}", $"loser:{loser}", victor.CultureKey }, war.Id);
+            }
+        }
+    }
+
+    private static bool TryDefender(HistoryEvent war, out int defender)
+    {
+        defender = -1;
+        foreach (string tag in war.Tags)
+        {
+            if (tag.StartsWith("defender:", StringComparison.Ordinal)
+                && int.TryParse(tag.Substring(9), out int id))
+            {
+                defender = id;
+                return true;
+            }
+        }
+        return false;
+    }
+}

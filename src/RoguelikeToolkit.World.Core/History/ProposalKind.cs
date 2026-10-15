@@ -28,4 +28,6 @@ public enum ProposalKind
     SetPopulation = 9,
     /// <summary>Record a historic site (battlefield) on a tile.</summary>
     AddSite = 10,
+    /// <summary>Set a polity's culture overlay.</summary>
+    SetOverlay = 11,
 }

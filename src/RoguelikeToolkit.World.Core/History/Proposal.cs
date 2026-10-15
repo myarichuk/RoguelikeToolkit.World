@@ -137,6 +137,15 @@ public abstract class Proposal
         internal override long? ConflictKey => Tile;
     }
 
+    /// <summary>Sets polity <see cref="Proposal.EntityId"/>'s culture overlay to <see cref="Culture"/> (empty clears it).</summary>
+    public sealed class SetOverlay : Proposal
+    {
+        /// <inheritdoc />
+        public override ProposalKind Kind => ProposalKind.SetOverlay;
+        /// <summary>Culture key the polity is rendered through.</summary>
+        public string Culture { get; init; } = string.Empty;
+    }
+
     /// <summary>Sets polity <see cref="Proposal.EntityId"/>'s population index and ruler generation (absolute, not a delta).</summary>
     public sealed class SetPopulation : Proposal
     {

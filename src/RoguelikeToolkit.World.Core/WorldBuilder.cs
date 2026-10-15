@@ -243,7 +243,6 @@ public sealed class WorldBuilder
             pipeline.AddStage(new HistoryEventsStage());
             pipeline.AddStage(new KhanStage());
             pipeline.AddStage(new TreatyStage());
-            pipeline.AddStage(new ConquestStage());
             pipeline.AddStage(new RebellionStage());
             pipeline.AddStage(new VillainStage());
             pipeline.AddStage(new ExchangeStage());
