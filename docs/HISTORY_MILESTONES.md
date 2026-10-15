@@ -617,3 +617,9 @@ Not covered here by design: `polity.split` into successors, the faith myth about
 ### M2 exit: determinism, round-trip, caps
 
 `HistoryExitChecksTests` runs full standard histories at HazardRate 3: same seed gives identical `ToBytes` (3 seeds), different seeds differ, save/load is byte-for-byte with scars, ended settlements, refuges and the displaced pool intact, and the event log stays within `MaxEvents` (per-turn check allows 8 over `MaxEventsPerTurn` for priority appends). The `V4_RoundTripsKernelState_ByteForByte` failure seen mid-M2 was stale: it passes at HEAD.
+
+### M2 closed: full regression
+
+- Core 832/832, MapEditor.Engine 48/48, Presentation 103/103, Scripting.Jint 27/27, AotSmoke OK.
+- `LargeHistoryBenchmarks.History_Size7` (Release): 721 ms mean, 249 MB allocated. Budget 5 s. It was about 400 ms at M2.3; the growth comes from M2.4–M2.10 (scars, refuges, placement scoring). No action needed, but this is the baseline for M3.
+- Hand-off to M3: backlog above, including the RS0016 PublicAPI audit.
