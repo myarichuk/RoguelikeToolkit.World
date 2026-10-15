@@ -412,3 +412,4 @@ Exchange 0 -> 10 (Finding B fix, intended); War 587 -> 969, Conquest 46 -> 88, D
 are weighed turn by turn instead of end-state; wars are the largest shift and worth a second look at M2 tuning); villains 50 -> 49;
 all other kinds identical. Remaining: size-7 perf check against the 5 s budget, `HISTORY_PLAN.md` P2 notes, compat-rule validation and
 pinned-capital handling (move to M2 unless trivial), `StageOrder` constants stay (operators use them as `Order`).
+Perf (Debug build, size 7, seed 42, one-off timing): full build 13.9 s vs 10.7 s without history, so the history band costs about 3.2 s, inside the 5 s budget (Release numbers via `LargeHistoryBenchmarks` still to record).
