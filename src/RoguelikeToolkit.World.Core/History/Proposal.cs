@@ -191,6 +191,13 @@ public abstract class Proposal
         public int RulerGeneration { get; init; }
     }
 
+    /// <summary>Raises polity <see cref="Proposal.EntityId"/>'s openness drift by one, bounded by <see cref="HistoryDemography.MaxOpennessDrift"/>.</summary>
+    public sealed class DriftOpenness : Proposal
+    {
+        /// <inheritdoc />
+        public override ProposalKind Kind => ProposalKind.DriftOpenness;
+    }
+
     /// <summary>Sets polity <see cref="Proposal.EntityId"/>'s population index and ruler generation (absolute, not a delta).</summary>
     public sealed class SetPopulation : Proposal
     {

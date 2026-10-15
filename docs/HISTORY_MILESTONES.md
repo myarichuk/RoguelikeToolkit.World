@@ -378,3 +378,7 @@ run deterministically.
   `SetPopulation` and its ruler generation wins); the commit enforces `MaxVillains` and one villain per polity.
   `PopulationOperator` now keeps `RulerGeneration` frozen for a polity with a villain (legacy relied on stage
   order). `TurnView` gains `MaxVillains`, `VillainCount`, `PolityState.HasVillain`/`RulerGeneration`.
+- Done (Exchange): `ExchangeOperator` replaces `ExchangeStage`. New `DriftOpenness` proposal (bounded +1 per polity per
+  turn, deduped in the operator). Active routes come from the snapshot, so an exchange can occur on the very turn a
+  war severs the route (simultaneous under A1); route RNG key is `endA*100003+endB` (stable as routes accrue, legacy
+  used the index in the end-of-run route list). Remaining in M1.3: Faith and CityHistoryProject as post-passes.

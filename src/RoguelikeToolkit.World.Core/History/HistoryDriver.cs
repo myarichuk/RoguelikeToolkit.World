@@ -137,6 +137,10 @@ public sealed class HistoryDriver : HistoryPluginBase
                     ruled.HasVillain = true;
                     ruled.RulerGeneration = av.RulerGeneration;
                     break;
+                case Proposal.DriftOpenness dr:
+                    var drifting = history.Polities.Find(p => p.Id == dr.EntityId);
+                    if (drifting != null && drifting.OpennessDrift < HistoryDemography.MaxOpennessDrift) drifting.OpennessDrift++;
+                    break;
                 case Proposal.AppendEvent e:
                     history.AppendLinked(e.EventKind, turn, e.EntityId, e.Tile, e.Tags, e.Cause, e.Participants);
                     break;

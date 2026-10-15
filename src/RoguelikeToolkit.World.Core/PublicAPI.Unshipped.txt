@@ -2136,11 +2136,3 @@ RoguelikeToolkit.World.Core.History.HistoryDemography.FolkParams.LifespanYears.g
 RoguelikeToolkit.World.Core.History.HistoryDemography.FolkParams.LifespanYears.init -> void
 RoguelikeToolkit.World.Core.History.HistoryDemography.FolkParams.MaturationYears.get -> int
 RoguelikeToolkit.World.Core.History.HistoryDemography.FolkParams.MaturationYears.init -> void
-RoguelikeToolkit.World.Core.History.ExchangeStage
-RoguelikeToolkit.World.Core.History.ExchangeStage.ExchangeStage() -> void
-const RoguelikeToolkit.World.Core.History.ExchangeStage.ExchangeChance = 0.5 -> double
-override RoguelikeToolkit.World.Core.History.ExchangeStage.Name.get -> string!
-override RoguelikeToolkit.World.Core.History.ExchangeStage.Order.get -> int
-override RoguelikeToolkit.World.Core.History.ExchangeStage.Reads.get -> System.Type![]!
-override RoguelikeToolkit.World.Core.History.ExchangeStage.Precondition(RoguelikeToolkit.World.Core.Topology.WorldMap! map, RoguelikeToolkit.World.Core.History.HistoryCatalog! history) -> bool
-override RoguelikeToolkit.World.Core.History.ExchangeStage.Apply(RoguelikeToolkit.World.Core.Topology.WorldMap! map, RoguelikeToolkit.World.Core.History.HistoryCatalog! history, RoguelikeToolkit.World.Core.History.HistoryContext! context) -> void

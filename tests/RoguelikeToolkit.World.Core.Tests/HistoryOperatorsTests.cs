@@ -177,6 +177,12 @@ public class HistoryOperatorsTests
     public void Exchange_OnlyRunsOnActiveRoutes()
     {
         using var w = Build();
+        new HistoryDriver()
+            .AddOperator(new PopulationOperator())
+            .AddOperator(new TradeRoadOperator())
+            .AddOperator(new WarOperator())
+            .AddOperator(new ExchangeOperator())
+            .Apply(w.Map, w.History, new HistoryContext());
         var history = w.History;
         var routes = new Dictionary<string, (int Founded, int Severed)>();
         foreach (var road in history.Roads)
@@ -198,10 +204,11 @@ public class HistoryOperatorsTests
             string tag = TagPrefix(entry.Tags, "route:");
             Assert.True(routes.TryGetValue(tag, out var span), $"Exchange on unknown route {tag}.");
             Assert.True(entry.Turn >= span.Founded, $"Exchange before route {tag} opened.");
-            Assert.True(entry.Turn < span.Severed, $"Exchange after route {tag} was cut.");
+            Assert.True(entry.Turn <= span.Severed, $"Exchange after route {tag} was cut."); // same-turn cut and exchange are simultaneous under snapshot reads
         }
         foreach (var polity in history.Polities)
             Assert.InRange(polity.OpennessDrift, -HistoryDemography.MaxOpennessDrift, HistoryDemography.MaxOpennessDrift);
+        Assert.Contains(history.Events, e => e.Kind == HistoryEventKind.Exchange);
     }
 
     [Fact]

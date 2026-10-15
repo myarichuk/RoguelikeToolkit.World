@@ -15,7 +15,7 @@ namespace RoguelikeToolkit.World.Core.History;
 /// to connect: the route follows the cheapest land path preferring river, coastal and low-danger
 /// steps, and is stored as one <see cref="HistoryRoad"/> segment per step. Routes cost one
 /// emergence each; war severs them (<see cref="WarOperator"/>) and exchange diffuses along the
-/// survivors (<see cref="ExchangeStage"/>). Re-running is idempotent: connected pairs are skipped
+/// survivors (<see cref="ExchangeOperator"/>). Re-running is idempotent: connected pairs are skipped
 /// and every draw is a pure function of <c>(seed, turn, pair)</c>.
 /// </summary>
 public sealed class TradeRoadOperator : IHistoryOperator

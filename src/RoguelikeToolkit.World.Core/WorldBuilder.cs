@@ -241,7 +241,6 @@ public sealed class WorldBuilder
             pipeline.AddStage(new CultureSeedStage());
             pipeline.AddStage(new PolityFormStage());
             pipeline.AddStage(new HistoryEventsStage());
-            pipeline.AddStage(new ExchangeStage());
             pipeline.AddStage(new FaithStage());
             pipeline.AddStage(new CityHistoryProjectStage());
         }

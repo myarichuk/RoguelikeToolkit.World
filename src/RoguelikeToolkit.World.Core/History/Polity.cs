@@ -66,7 +66,7 @@ public sealed class Polity
     public int RulerGeneration { get; set; }
     /// <summary>
     /// Accumulated openness drift from road-volume exchange (-<c>HistoryDemography.MaxOpennessDrift</c>
-    /// to +<c>HistoryDemography.MaxOpennessDrift</c>); advanced by <c>ExchangeStage</c>.
+    /// to +<c>HistoryDemography.MaxOpennessDrift</c>); advanced by <c>ExchangeOperator</c>.
     /// </summary>
     public int OpennessDrift { get; set; }
     /// <summary>

@@ -3,7 +3,7 @@ namespace RoguelikeToolkit.World.Core.History;
 /// <summary>
 /// One trade-road segment between two adjacent tiles on a route between two capitals, kept by a
 /// polity. Filled by <c>TradeRoadOperator</c> from surplus-complementary pairs (river, coastal and
-/// low-danger steps preferred) and severed in war; <c>ExchangeStage</c> diffuses along the
+/// low-danger steps preferred) and severed in war; <c>ExchangeOperator</c> diffuses along the
 /// segments still active. The settlement adapter (P4a) reads road access from here. Segments of
 /// one route share <see cref="RouteA"/>, <see cref="RouteB"/> and <see cref="FoundedTurn"/>.
 /// </summary>

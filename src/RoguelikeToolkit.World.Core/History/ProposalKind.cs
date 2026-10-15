@@ -36,4 +36,6 @@ public enum ProposalKind
     AddPolity = 13,
     /// <summary>A villain rises to rule a polity; applied after population so its ruler generation wins.</summary>
     AddVillain = 14,
+    /// <summary>Nudge a polity's openness drift up by one, up to the bound.</summary>
+    DriftOpenness = 15,
 }
