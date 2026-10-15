@@ -161,4 +161,29 @@ public class HistoryCoverageTests
         }
         File.WriteAllText(path, sb.ToString());
     }
+
+    /// <summary>
+    /// Writes M2 tuning aggregates (wipe-outs, settlement end causes, shock/war counts, scars) when
+    /// <c>HISTORY_TUNING_OUT</c> names a file. Diagnostic only; asserts nothing.
+    /// </summary>
+    [Fact]
+    public void TuningReport_CaptureWhenRequested()
+    {
+        string? path = Environment.GetEnvironmentVariable("HISTORY_TUNING_OUT");
+        if (string.IsNullOrEmpty(path)) return;
+        var sb = new System.Text.StringBuilder();
+        sb.AppendLine("size seed polities living homeless settl standing founded ended captured shocks wars scars lost pool endCauses");
+        var grid = Enumerable.Range(1, 20).Select(s => (Size: 3, Seed: s)).Concat(Enumerable.Range(1, 5).Select(s => (Size: 4, Seed: s)));
+        foreach (var (size, seed) in grid)
+        {
+            using var w = new WorldBuilder().WithSize(size).WithSeed(seed).WithUserEdits().Build();
+            var h = w.History;
+            var living = h.Polities.Where(p => p.Alive).ToList();
+            int homeless = living.Count(p => !h.Settlements.Any(s => s.Active && s.PolityId == p.Id));
+            var causes = h.Settlements.Where(s => s.Ended).GroupBy(s => s.EndCause).Select(g => g.Key + ":" + g.Count());
+            int E(HistoryEventKind k) => h.Events.Count(e => e.Kind == k);
+            sb.AppendLine($"{size} {seed} {h.Polities.Count} {living.Count} {homeless} {h.Settlements.Count} {h.Settlements.Count(s => s.Active)} {E(HistoryEventKind.SettlementFounded)} {E(HistoryEventKind.SettlementEnded)} {E(HistoryEventKind.SettlementCaptured)} {E(HistoryEventKind.Shock)} {E(HistoryEventKind.War)} {h.Scars.Count} {h.PopulationLost:F0} {h.Displaced.Sum(d => d.Amount):F0} {string.Join(",", causes)}");
+        }
+        File.WriteAllText(path, sb.ToString());
+    }
 }

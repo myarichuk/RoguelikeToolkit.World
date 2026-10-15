@@ -594,3 +594,13 @@ people vanish (no producer ends settlements yet).
 - `TurnView.Scars` / `ScarState` expose scars to operators.
 - Corpus re-baselined (12 lines changed). Tests: `SettlePlacementTests` (2). Core suite 809 expected.
 - Not done: weights for rivers/resources/faith (scorer reasons already cover water); tuning of weights.
+
+### M2 exit: tuning check (corpus, 25 worlds)
+
+Diagnostic `HistoryCoverageTests.TuningReport_CaptureWhenRequested` (`HISTORY_TUNING_OUT=<file>`) prints per-world wipe-outs, settlement end causes, captures, shocks, wars, scars, lost and pool population.
+
+- Wipe-outs: 0 of 200 polities end homeless; asylum never fires in standard worlds (still covered by unit tests).
+- Settlements per world: 16-44 standing, 0-6 ended (famine, earthquake, tsunami, flood, volcano, razed); no plague ends (plague kills population, it does not abandon).
+- Captures: 0-2 per world (9 in 25 worlds); razes about 0.3 per world; sacks are the common war outcome. Reads as rare-but-present, no change.
+- Scars: 1-6 per world. Colony/refuge thresholds left as they are; pool leftovers at end of run are at most a few thousand and decay in 3 turns.
+- Verdict: no constant changes. Tuning stays data-driven for M3.
