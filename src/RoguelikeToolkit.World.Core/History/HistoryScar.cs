@@ -16,6 +16,8 @@ public sealed class HistoryScar
     public const string PlaguePit = "plague_pit";
     /// <summary>Scar left by drought or famine.</summary>
     public const string ScorchedField = "scorched_field";
+    /// <summary>Scar left on the tile where a war was fought.</summary>
+    public const string Battlefield = "battlefield";
     /// <summary>Scar left by an earthquake or a flood.</summary>
     public const string Fissure = "fissure";
 

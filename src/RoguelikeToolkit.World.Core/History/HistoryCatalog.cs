@@ -1085,9 +1085,9 @@ public sealed class HistoryCatalog : IHistoricalContext
     /// <summary>Habitability removed on scarred tiles other than plain ruins (see <see cref="TryGetTileModifier"/>).</summary>
     public const float ScarHabitabilityDelta = -0.25f;
 
-    private static float ScarDanger(string kind) => kind == HistoryScar.Ruin ? 0f : ScarDangerDelta;
+    private static float ScarDanger(string kind) => kind == HistoryScar.Ruin ? 0f : kind == HistoryScar.Battlefield ? WarDangerDelta : ScarDangerDelta;
 
-    private static float ScarHabitability(string kind) => kind == HistoryScar.Ruin ? 0f : ScarHabitabilityDelta;
+    private static float ScarHabitability(string kind) => kind == HistoryScar.Ruin || kind == HistoryScar.Battlefield ? 0f : ScarHabitabilityDelta;
 
     /// <summary>Danger removed on sheltered holy tiles (see <see cref="TryGetTileModifier"/>).</summary>
     public const float HolyDangerDelta = -1f;
@@ -1149,10 +1149,11 @@ public sealed class HistoryCatalog : IHistoricalContext
             if (!scar.Active) continue;
             double distance = DistanceKm(position, scar.Position);
             if (double.IsNaN(distance) || distance > radiusKm) continue;
+            bool fought = scar.Kind == HistoryScar.Battlefield;
             var projected = new HistoricSite
             {
-                Id = $"hist-scar-{scar.TileIndex}-{scar.Kind}",
-                Kind = HistoricSiteKind.Ruin,
+                Id = fought ? $"hist-battle-{scar.TileIndex}-{scar.FoundedTurn}" : $"hist-scar-{scar.TileIndex}-{scar.Kind}",
+                Kind = fought ? HistoricSiteKind.Battlefield : HistoricSiteKind.Ruin,
                 TileIndex = scar.TileIndex,
                 Position = scar.Position,
                 DangerDelta = ScarDanger(scar.Kind),
@@ -1161,6 +1162,7 @@ public sealed class HistoryCatalog : IHistoricalContext
             projected.Metadata["polity"] = scar.PolityId.ToString();
             projected.Metadata["founded"] = scar.FoundedTurn.ToString();
             projected.Metadata["scar"] = scar.Kind;
+            if (fought) projected.Metadata["battle"] = scar.FoundedTurn.ToString();
             if (scar.Cause.Length > 0) projected.Metadata["cause"] = scar.Cause;
             matches.Add((distance, scar.TileIndex, projected));
         }

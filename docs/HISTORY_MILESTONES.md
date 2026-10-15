@@ -623,3 +623,13 @@ Not covered here by design: `polity.split` into successors, the faith myth about
 - Core 832/832, MapEditor.Engine 48/48, Presentation 103/103, Scripting.Jint 27/27, AotSmoke OK.
 - `LargeHistoryBenchmarks.History_Size7` (Release): 721 ms mean, 249 MB allocated. Budget 5 s. It was about 400 ms at M2.3; the growth comes from M2.4–M2.10 (scars, refuges, placement scoring). No action needed, but this is the baseline for M3.
 - Hand-off to M3: backlog above, including the RS0016 PublicAPI audit.
+
+## M3 progress
+
+### M3.1 battlefield sites folded into scars
+
+- `WarOperator` now emits `AddScar{battlefield, cause war}` on the battlefield tile (skipped where a capital site already stands, as before). `Proposal.AddSite` has no producer left; it stays until the M3.10 API audit.
+- `HistoryScar.Battlefield` projects as a `Battlefield`-kind site (`hist-battle-{tile}-{turn}`, metadata `battle`, `scar`, `cause`), danger `WarDangerDelta`, no habitability change. The event-based projection for capitals and holy tiles is unchanged.
+- `AddScar.ConflictKey` is now per tile **and** kind (it was per tile), so a battlefield and a ruin on one tile in one turn both land.
+- `SettleOperator` placement ignores battlefield scars: wars are frequent and must not shrink the placeable map. Only the shock scars (x0.25) and ruins (x1.5) weigh in.
+- Corpus re-baselined (site and scar columns). Tests: `BattlefieldScarTests` (2); two war tests accept a scar as well as a site.

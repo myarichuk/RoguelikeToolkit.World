@@ -228,7 +228,7 @@ public sealed class SettleOperator : IHistoryOperator
             bool blasted = false, ruin = false;
             foreach (var sc in view.Scars)
             {
-                if (!sc.Active) continue;
+                if (!sc.Active || sc.Kind == HistoryScar.Battlefield) continue;
                 if (sc.Kind == HistoryScar.Ruin) { if (sc.Tile == c.TileIndex) ruin = true; }
                 else if (Vector3D.Dot(v, vectors[sc.Tile]) >= scarDot) blasted = true;
             }

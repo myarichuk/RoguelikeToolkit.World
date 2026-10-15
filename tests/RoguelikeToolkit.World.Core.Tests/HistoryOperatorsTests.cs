@@ -144,7 +144,7 @@ public class HistoryOperatorsTests
         foreach (var war in wars)
         {
             int defender = int.Parse(TagPrefix(war.Tags, "defender:").Substring(9));
-            Assert.Contains(history.Sites, s => s.TileIndex == war.TileIndex);
+            Assert.True(history.Sites.Any(s => s.TileIndex == war.TileIndex) || history.Scars.Any(s => s.TileIndex == war.TileIndex && s.Kind == HistoryScar.Battlefield));
             Assert.True(history.TryGetTileModifier(war.TileIndex, out var modifier));
             Assert.Equal(HistoryCatalog.WarDangerDelta, modifier.DangerDelta);
             Assert.True(history.Polities[war.PolityId].Pressure > 0, "Attacker carries no pressure.");

@@ -9,7 +9,7 @@ namespace RoguelikeToolkit.World.Core.History;
 /// Order 50: raids between neighboring polities. Every turn, in polity order, each crowded
 /// polity picks a bordering polity and rolls against its pressure (plus its founding culture's
 /// xenophobia, plus the pair's grudge weight) to raid it: the war appends a
-/// <see cref="HistoryEventKind.War"/> event plus a battlefield site entry on the battlefield tile,
+/// <see cref="HistoryEventKind.War"/> event plus a `battlefield` scar on the battlefield tile,
 /// severs every trade route between the two capitals (one <see cref="HistoryEventKind.RoadCut"/>
 /// event per route), and pressures both sides. Pairs under a treaty or tribute non-aggression
 /// window are skipped; a battlefield on a holy tile appends a <see cref="HistoryEventKind.Desecration"/>
@@ -110,10 +110,12 @@ public sealed class WarOperator : IHistoryOperator
                 new[] { "war", $"attacker:{attacker}", $"defender:{defender}" });
             if (!view.HasSite(battlefield) && sitedNow.Add(battlefield))
             {
-                sink.Emit(new Proposal.AddSite
+                sink.Emit(new Proposal.AddScar
                 {
                     EntityId = attacker,
                     Tile = battlefield,
+                    ScarKind = HistoryScar.Battlefield,
+                    Cause = "war",
                     Position = map.DataStore.GetGeoCoord(battlefield),
                 });
             }

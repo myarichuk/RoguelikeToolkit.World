@@ -137,7 +137,7 @@ public abstract class Proposal
         internal override long? ConflictKey => Tile;
     }
 
-    /// <summary>Leaves a <see cref="HistoryScar"/> of <see cref="ScarKind"/> on <see cref="Tile"/> for polity <see cref="Proposal.EntityId"/>; a tile that already carries that kind is left alone.</summary>
+    /// <summary>Leaves a <see cref="HistoryScar"/> of <see cref="ScarKind"/> on <see cref="Tile"/> for polity <see cref="Proposal.EntityId"/>; a tile that already carries that kind is left alone. Conflicts per tile and kind.</summary>
     public sealed class AddScar : Proposal
     {
         /// <inheritdoc />
@@ -150,7 +150,15 @@ public abstract class Proposal
         public string ScarKind { get; init; } = HistoryScar.Ruin;
         /// <summary>The shock kind or end cause behind it.</summary>
         public string Cause { get; init; } = string.Empty;
-        internal override long? ConflictKey => Tile;
+        // Per tile and kind: a battlefield and a ruin on the same tile in one turn must both land.
+        internal override long? ConflictKey => ((long)Tile << 32) | KindHash(ScarKind);
+
+        private static uint KindHash(string kind)
+        {
+            uint h = 2166136261;
+            foreach (char c in kind) h = (h ^ c) * 16777619;
+            return h;
+        }
     }
 
     /// <summary>Polity <see cref="Proposal.EntityId"/> takes standing settlement <see cref="Settlement"/> from its owner. Tile ownership is unchanged: the settlement is an enclave. Rejected if the captor is dead or at the settlement cap. Conflicts per settlement.</summary>

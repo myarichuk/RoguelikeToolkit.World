@@ -33,7 +33,7 @@ public class WarOperatorTests
                 int defender = int.Parse(war.Tags.First(t => t.StartsWith("defender:")).Substring(9));
                 Assert.NotEqual(war.PolityId, defender);
                 Assert.InRange(war.Turn, 1, h.SimulatedTurns);
-                Assert.True(h.Sites.Any(s => s.TileIndex == war.TileIndex));
+                Assert.True(h.Sites.Any(s => s.TileIndex == war.TileIndex) || h.Scars.Any(s => s.TileIndex == war.TileIndex && s.Kind == HistoryScar.Battlefield));
             }
             foreach (var cut in h.Events.Where(e => e.Kind == HistoryEventKind.RoadCut))
                 Assert.True(h.Roads.Any(r => r.Severed));
