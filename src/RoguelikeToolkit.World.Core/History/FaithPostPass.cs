@@ -5,14 +5,14 @@ using RoguelikeToolkit.World.Core.Topology;
 namespace RoguelikeToolkit.World.Core.History;
 
 /// <summary>
-/// Order 84: faith. Runs after every conflict operator, so each polity's faith reads its whole
+/// Order 84 (post-pass): faith. Runs once after the last turn, so each polity's faith reads its whole
 /// lived history: the culture's faith form, two to seven power domains drawn from the pressures
 /// the polity lived under (wars, road cuts, desecrations, treaties, tribute, villains), and myth
 /// slots (origin plus one trauma slot per remembered disaster). Data and tags only: text renders
 /// late through <see cref="Integration.IMythTextProvider"/>, so stubbing the provider never
 /// changes the event log. One <see cref="HistoryEventKind.Myth"/> event records each faith.
 /// </summary>
-public sealed class FaithStage : HistoryPluginBase
+public sealed class FaithPostPass : IHistoryPostPass
 {
     /// <summary>Fewest powers a faith carries.</summary>
     public const int MinPowers = 2;
@@ -24,19 +24,12 @@ public sealed class FaithStage : HistoryPluginBase
     public const int MaxTraumaSlots = 3;
 
     /// <summary>Diagnostic name, <c>Faith</c>.</summary>
-    public override string Name => "Faith";
-    /// <summary><see cref="StageOrder.Faith"/> (84).</summary>
-    public override int Order => StageOrder.Faith;
-    /// <summary>None: faith reads the event log and polity state.</summary>
-    public override Type[] Reads => Array.Empty<Type>();
+    public string Name => "Faith";
 
-    /// <summary>True once polities have formed and no faith has been raised yet.</summary>
-    public override bool Precondition(WorldMap map, HistoryCatalog history)
-        => history.PolitiesFormed && history.Faiths.Count == 0;
-
-    /// <summary>Builds one faith per polity in polity-id order.</summary>
-    public override void Apply(WorldMap map, HistoryCatalog history, HistoryContext context)
+    /// <summary>Builds one faith per polity in polity-id order; a no-op once faiths exist.</summary>
+    public void Run(WorldMap map, HistoryCatalog history, HistoryContext context)
     {
+        if (history.Faiths.Count > 0) return;
         PeoplesStore? store = PeoplesLoader.LoadStore(history);
         foreach (var polity in history.Polities)
         {
@@ -70,6 +63,7 @@ public sealed class FaithStage : HistoryPluginBase
                 case HistoryEventKind.Tribute: tributes++; break;
             }
         }
+        if (wars == 0 && history.Events.Any(e => e.Kind == HistoryEventKind.War && e.Tags.Contains($"defender:{polity.Id}"))) wars++;
         if (wars > 0) domains.Add("war");
         if (cuts > 0) domains.Add("trade");
         if (desecrations > 0) domains.Add("vengeance");

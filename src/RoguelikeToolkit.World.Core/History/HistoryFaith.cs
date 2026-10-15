@@ -11,7 +11,7 @@ public sealed class HistoryFaith
     public int PolityId { get; init; }
     /// <summary>Faith form from the polity culture (animism, ancestor, polytheism, ...).</summary>
     public string Form { get; init; } = string.Empty;
-    /// <summary>Two to seven power domains (war, harvest, sea, ...); see <see cref="FaithStage"/>.</summary>
+    /// <summary>Two to seven power domains (war, harvest, sea, ...); see <see cref="FaithPostPass"/>.</summary>
     public List<string> Powers { get; } = new();
     /// <summary>Myth slots (<c>origin:{folk}</c>, <c>trauma:war:{n}</c>, ...) the text layer renders.</summary>
     public List<string> MythSlots { get; } = new();

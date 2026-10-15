@@ -382,3 +382,11 @@ run deterministically.
   turn, deduped in the operator). Active routes come from the snapshot, so an exchange can occur on the very turn a
   war severs the route (simultaneous under A1); route RNG key is `endA*100003+endB` (stable as routes accrue, legacy
   used the index in the end-of-run route list). Remaining in M1.3: Faith and CityHistoryProject as post-passes.
+- Done (post-passes): `FaithPostPass` and `CityHistoryProjectPostPass` (`IHistoryPostPass`, run once after the last
+  turn; both no-op when their lists are already filled) replace `FaithStage` and `CityHistoryProjectStage`. Faith now
+  also counts a war the polity only defended (event tag `defender:`), the absorbed review finding; participant
+  roles replace the tag scan at M3. M1.3 is complete: the `WorldBuilder` pipeline is now CultureSeed, PolityForm,
+  HistoryEventsStage and everything else waits for the driver wiring at M1.5.
+- Full Core suite after M1.3: 750 passed, 3 red until M1.5 (`HistoryOperatorsTests.Population_TicksForEveryPolity`,
+  `HistoryTests.HistoricalContext_ServesCapitalSites_NoModifiers`, `HistoryTests.Build_FoundsPolities_WithFoundingEventsAndProjections`:
+  they need Population and the city post-pass wired through `WorldBuilder`). Other test projects not run yet.

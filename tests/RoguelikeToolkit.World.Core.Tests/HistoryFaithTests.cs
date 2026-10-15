@@ -42,12 +42,42 @@ public class HistoryFaithTests
         Assert.True(StageOrder.Faith < StageOrder.CityHistoryProject);
     }
 
+    private static World BuildFull(int seed)
+    {
+        var w = Build(seed);
+        new HistoryDriver()
+            .AddOperator(new PopulationOperator())
+            .AddOperator(new HolySiteOperator())
+            .AddOperator(new TradeRoadOperator())
+            .AddOperator(new WarOperator())
+            .AddOperator(new ConquestOperator())
+            .AddOperator(new TreatyOperator())
+            .AddOperator(new ExchangeOperator())
+            .AddPostPass(new FaithPostPass())
+            .AddPostPass(new CityHistoryProjectPostPass())
+            .Apply(w.Map, w.History, new HistoryContext());
+        return w;
+    }
+
+    [Fact]
+    public void PostPasses_ProjectCitiesAndFaiths_Once()
+    {
+        using var w = BuildFull(42);
+        var h = w.History;
+        Assert.Equal(h.Polities.Count, h.Settlements.Count);
+        Assert.Equal(h.Polities.Count, h.Faiths.Count);
+        new FaithPostPass().Run(w.Map, h, new HistoryContext());
+        new CityHistoryProjectPostPass().Run(w.Map, h, new HistoryContext());
+        Assert.Equal(h.Polities.Count, h.Settlements.Count);
+        Assert.Equal(h.Polities.Count, h.Faiths.Count);
+    }
+
     [Fact]
     public void Faith_EveryPolityHasBoundedPowersAndOneMythEvent()
     {
         foreach (int seed in Seeds)
         {
-            using var w = Build(seed);
+            using var w = BuildFull(seed);
             var h = w.History;
             Assert.Equal(h.Polities.Count, h.Faiths.Count);
             Assert.Equal(h.Polities.Count, h.Events.Count(e => e.Kind == HistoryEventKind.Myth));
@@ -153,7 +183,7 @@ public class HistoryFaithTests
         var seen = new HashSet<HistoryEventKind>();
         for (int seed = 1; seed <= 12; seed++)
         {
-            using var w = Build(seed);
+            using var w = BuildFull(seed);
             foreach (var e in w.History.Events) seen.Add(e.Kind);
         }
         Assert.Contains(HistoryEventKind.Myth, seen);
@@ -172,7 +202,7 @@ public class HistoryFaithTests
     [Fact]
     public void MythText_RendersFromTags_WithoutTouchingHistory()
     {
-        using var w = Build();
+        using var w = BuildFull(42);
         byte[] before = w.History.ToBytes();
         var provider = new TemplateMythTextProvider();
         var faith = w.History.Faiths[0];

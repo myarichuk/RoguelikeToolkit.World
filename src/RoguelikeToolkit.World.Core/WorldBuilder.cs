@@ -241,8 +241,6 @@ public sealed class WorldBuilder
             pipeline.AddStage(new CultureSeedStage());
             pipeline.AddStage(new PolityFormStage());
             pipeline.AddStage(new HistoryEventsStage());
-            pipeline.AddStage(new FaithStage());
-            pipeline.AddStage(new CityHistoryProjectStage());
         }
         HydrologyStage? hydrologyStage = null;
         PlanetParameters planet = new PlanetParameters();

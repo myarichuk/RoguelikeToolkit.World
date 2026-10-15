@@ -118,7 +118,7 @@ public sealed class HistoryCatalog : IHistoricalContext
     /// <summary>Non-aggression windows between polity pairs; <see cref="WarOperator"/> skips windowed pairs.</summary>
     public List<TreatyWindow> Treaties { get; } = new();
 
-    /// <summary>One faith per polity with a raised tradition, in polity-id order; built by <see cref="FaithStage"/>.</summary>
+    /// <summary>One faith per polity with a raised tradition, in polity-id order; built by <see cref="FaithPostPass"/>.</summary>
     public List<HistoryFaith> Faiths { get; } = new();
 
     /// <summary>Raised holy sites; project as shrine-kind game sites while active.</summary>

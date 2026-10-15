@@ -41,7 +41,6 @@ public class HistoryBenchmarks
         new CultureSeedStage().Execute(_world.Map);
         new PolityFormStage().Execute(_world.Map);
         new HistoryEventsStage().Execute(_world.Map);
-        new CityHistoryProjectStage().Execute(_world.Map);
         return history.Polities.Count;
     }
 
@@ -82,7 +81,6 @@ public class LargeHistoryBenchmarks
         new CultureSeedStage().Execute(_world.Map);
         new PolityFormStage().Execute(_world.Map);
         new HistoryEventsStage().Execute(_world.Map);
-        new CityHistoryProjectStage().Execute(_world.Map);
         return history.Polities.Count;
     }
 }

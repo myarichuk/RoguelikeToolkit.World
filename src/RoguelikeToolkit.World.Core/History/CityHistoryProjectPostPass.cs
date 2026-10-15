@@ -1,4 +1,3 @@
-using RoguelikeToolkit.World.Core.Elevation;
 using RoguelikeToolkit.World.Core.Generation;
 using RoguelikeToolkit.World.Core.Settlement;
 using RoguelikeToolkit.World.Core.Topology;
@@ -6,33 +5,24 @@ using RoguelikeToolkit.World.Core.Topology;
 namespace RoguelikeToolkit.World.Core.History;
 
 /// <summary>
-/// Order 91: projects polity capitals onto the map as settlements and historic sites (one of each
+/// Order 91 (post-pass): projects polity capitals onto the map as settlements and historic sites (one of each
 /// per polity, founded at turn 0). Habitability snapshots the capacity layer when registered and
 /// 0.5 otherwise; the settlement adapter (P4a) and the editor history panel read these lists.
 /// Re-running is a no-op once projected; map edits re-resolve through
 /// <see cref="HistoryCatalog.Respatialize"/> instead.
 /// </summary>
-public sealed class CityHistoryProjectStage : HistoryPluginBase
+public sealed class CityHistoryProjectPostPass : IHistoryPostPass
 {
     /// <summary>Fallback habitability when no capacity layer is registered.</summary>
     public const float DefaultHabitability = 0.5f;
 
     /// <summary>Diagnostic name, <c>CityHistoryProject</c>.</summary>
-    public override string Name => "CityHistoryProject";
-    /// <summary><see cref="StageOrder.CityHistoryProject"/> (91).</summary>
-    public override int Order => StageOrder.CityHistoryProject;
-    /// <summary>Elevation (unused directly, but projection follows the physics the world finally has).</summary>
-    public override Type[] Reads => new[] { typeof(ElevationInfo) };
-    /// <summary>Land capacity for the habitability snapshot; absent layers fall back to <see cref="DefaultHabitability"/>.</summary>
-    public override Type[] ReadsOptional => new[] { typeof(LandCapacityInfo) };
+    public string Name => "CityHistoryProject";
 
-    /// <summary>True once polities have formed and nothing is projected yet.</summary>
-    public override bool Precondition(WorldMap map, HistoryCatalog history)
-        => history.PolitiesFormed && history.Settlements.Count == 0;
-
-    /// <summary>Projects one settlement and one site per polity capital.</summary>
-    public override void Apply(WorldMap map, HistoryCatalog history, HistoryContext context)
+    /// <summary>Projects one settlement and one site per polity capital; a no-op once projected.</summary>
+    public void Run(WorldMap map, HistoryCatalog history, HistoryContext context)
     {
+        if (history.Settlements.Count > 0) return;
         var store = map.DataStore;
         bool hasCapacity = store.IsLayerRegistered<LandCapacityInfo>();
         var capacity = hasCapacity ? store.GetSpan<LandCapacityInfo>() : default;

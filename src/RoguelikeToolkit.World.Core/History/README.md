@@ -35,7 +35,7 @@ implementing `IHistoricalContext` (one waiver: `History->Integration:HistoryCata
 - **CultureSeedStage** (26) / **PolityFormStage** (27) / **HistoryEventsStage** (28, turn driver,
   head of the 28..90 operator band) / **TradeRoadOperator** (30) / **PopulationOperator** (32) /
   **WarOperator** (50) / **ConquestOperator** (60) / **RebellionOperator** (70) / **ExchangeOperator** (80) /
-  **CityHistoryProjectStage** (91).
+  **CityHistoryProjectPostPass** (91).
 
 ## Rules
 
