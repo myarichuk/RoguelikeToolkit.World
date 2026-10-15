@@ -90,6 +90,7 @@ Scope tags: **[CORE]** = `RoguelikeToolkit.World.Core` library (and its tests); 
 - Optionals: Grudge ledger (non-decaying casus belli until repaid; decay in turns), Holy site (aura income + desecration tripwire → coalition), Villain (long-life actor, agenda, no succession, capped budget share), Khan ultimatum (submit-and-pay vs resist-stronger-siege).
 - Faith sub-model: form per culture (animism/shamanism/ancestor/poly/heno/mono) + 2–7 powers with domains from pressures + myth slots; add `Integration/IMythTextProvider` (Core deterministic templates; game-side LLM optional, tags as contract). Extend `HistoricSiteKind` only if needed (`HolySite`, `TreatyStone`).
 - Validate: villain cap test; adult-gate rejection test; stubbed-text determinism for faith.
+- Landed as: HolySite (44), Khan (46), Treaty (48), Villain (76), Faith (84), each with its own per-turn ledger; grudges never decay by time (only repaid by treaty, tribute or conquest overlay); War reads grudges and trips desecration on holy tiles; villains need a 200y+ folk, freeze the polity's succession count at the rise turn and are capped by `MaxVillains` (default 2); `IMythTextProvider` + `TemplateMythTextProvider` in `Integration`. Catalog schema v3. Tests: `HistoryFaithTests`.
 
 ### P3 [CORE] — Demote `Names` to leaf renderer
 
@@ -113,6 +114,8 @@ Scope tags: **[CORE]** = `RoguelikeToolkit.World.Core` library (and its tests); 
 - Validate: Vitest for engine/protocol changes; Playwright E2E (`e2e/*.cjs`) generate → select polity → cities + timeline render.
 
 ## Next steps (agreed, unscoped — scope/effects to be pinned before implementation)
+
+> Under review: `docs/HISTORY_GENERIC_MODEL.md` (draft) proposes a generic entity/event/shock model, settlement lifecycle and extension API that would supersede the fixed-stage assumptions below and in P3/P4. Not yet agreed.
 
 - P2b+ point-wonder builder: temple/palace/granary/harbor as point sites with small modifiers + tags (same hook as battlefield sites). Triggers: faith form/holy status, war victories, treaty signings, famous actors. Famous = leaders, politicians, military officers, identified by role-fit scores + event participation. Wonders carry mechanical trait shifts that fade over time (e.g. a warlike monument pushes warlike up, then decays). Open: decay rate/shape, per-turn budget.
 - P2b+ imperial-road upgrade: raise exchange chance + small endpoint habitability on existing routes. Open: upgrade cost/trigger, stacking with base roads.
