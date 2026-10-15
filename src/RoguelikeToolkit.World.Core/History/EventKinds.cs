@@ -37,4 +37,8 @@ public static class EventKinds
     public static readonly EventKind Tribute = HistoryEventKind.Tribute;
     /// <summary>A faith rendered as tags.</summary>
     public static readonly EventKind Myth = HistoryEventKind.Myth;
+    /// <summary>A settlement was founded.</summary>
+    public static readonly EventKind SettlementFounded = HistoryEventKind.SettlementFounded;
+    /// <summary>A settlement ended.</summary>
+    public static readonly EventKind SettlementEnded = HistoryEventKind.SettlementEnded;
 }

@@ -38,4 +38,8 @@ public enum ProposalKind
     AddVillain = 14,
     /// <summary>Nudge a polity's openness drift up by one, up to the bound.</summary>
     DriftOpenness = 15,
+    /// <summary>Found a settlement for a polity.</summary>
+    AddSettlement = 16,
+    /// <summary>End a standing settlement.</summary>
+    EndSettlement = 17,
 }

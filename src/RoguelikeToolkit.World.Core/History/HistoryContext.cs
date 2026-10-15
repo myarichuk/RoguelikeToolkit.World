@@ -13,6 +13,7 @@ public sealed class HistoryContext
     private int _turnCount = 30;
     private int _maxDecisionsPerTurn = 8;
     private int _maxEmergencesPerTurn = 4;
+    private int _maxSettlementsPerPolity = 6;
     private int _maxEventsPerTurn = 64;
     private int _maxEvents = 4096;
     private int _maxPolities = 8;
@@ -79,6 +80,13 @@ public sealed class HistoryContext
     {
         get => _maxVillains;
         set => _maxVillains = value >= 0 ? value : throw new ArgumentOutOfRangeException(nameof(value), "MaxVillains cannot be negative.");
+    }
+
+    /// <summary>Upper bound on standing settlements per polity, capital included (default 6). Must be non-negative.</summary>
+    public int MaxSettlementsPerPolity
+    {
+        get => _maxSettlementsPerPolity;
+        set => _maxSettlementsPerPolity = value >= 0 ? value : throw new ArgumentOutOfRangeException(nameof(value), "MaxSettlementsPerPolity cannot be negative.");
     }
 
     /// <summary>The (folk, culture) pairs <see cref="CultureSeedStage"/> seeds the world with, in priority order.</summary>

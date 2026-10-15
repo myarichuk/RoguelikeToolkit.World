@@ -191,6 +191,46 @@ public abstract class Proposal
         public int RulerGeneration { get; init; }
     }
 
+    /// <summary>
+    /// Founds a settlement for polity <see cref="Proposal.EntityId"/> on <see cref="Tile"/> and logs
+    /// <see cref="HistoryEventKind.SettlementFounded"/>. The commit refuses it for an unknown or ended polity, a tile
+    /// the polity does not own, a tile that already holds a standing settlement, or a polity at
+    /// <see cref="HistoryContext.MaxSettlementsPerPolity"/>. Conflicts per tile.
+    /// </summary>
+    public sealed class AddSettlement : Proposal
+    {
+        /// <inheritdoc />
+        public override ProposalKind Kind => ProposalKind.AddSettlement;
+        /// <summary>Planet tile of the settlement.</summary>
+        public int Tile { get; init; }
+        /// <summary>Why the settlement exists.</summary>
+        public SettlementRole Role { get; init; } = SettlementRole.Colony;
+        /// <summary>Starting size class.</summary>
+        public SettlementTier Tier { get; init; } = SettlementTier.Hamlet;
+        /// <summary>Index of the settlement this one grows out of, or -1.</summary>
+        public int Parent { get; init; } = -1;
+        /// <summary>Id of an event from an earlier turn that caused the founding, or -1.</summary>
+        public int Cause { get; init; } = -1;
+        internal override long? ConflictKey => Tile;
+    }
+
+    /// <summary>
+    /// Ends the standing settlement at index <see cref="Settlement"/> (owned by polity <see cref="Proposal.EntityId"/>)
+    /// with <see cref="EndCause"/> and logs <see cref="HistoryEventKind.SettlementEnded"/>. Conflicts per settlement.
+    /// </summary>
+    public sealed class EndSettlement : Proposal
+    {
+        /// <inheritdoc />
+        public override ProposalKind Kind => ProposalKind.EndSettlement;
+        /// <summary>Index into <see cref="HistoryCatalog.Settlements"/>.</summary>
+        public int Settlement { get; init; }
+        /// <summary>Short cause key (<c>razed</c>, <c>abandoned</c>, ...).</summary>
+        public string EndCause { get; init; } = string.Empty;
+        /// <summary>Id of an event from an earlier turn that caused the end, or -1.</summary>
+        public int Cause { get; init; } = -1;
+        internal override long? ConflictKey => Settlement;
+    }
+
     /// <summary>Raises polity <see cref="Proposal.EntityId"/>'s openness drift by one, bounded by <see cref="HistoryDemography.MaxOpennessDrift"/>.</summary>
     public sealed class DriftOpenness : Proposal
     {

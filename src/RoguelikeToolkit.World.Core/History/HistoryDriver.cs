@@ -144,6 +144,12 @@ public sealed class HistoryDriver : HistoryPluginBase
                     var drifting = history.Polities.Find(p => p.Id == dr.EntityId);
                     if (drifting != null && drifting.OpennessDrift < HistoryDemography.MaxOpennessDrift) drifting.OpennessDrift++;
                     break;
+                case Proposal.AddSettlement ads:
+                    if (!TryFoundSettlement(map, history, context, turn, ads)) RejectedProposals++;
+                    break;
+                case Proposal.EndSettlement ens:
+                    if (!TryEndSettlement(history, turn, ens)) RejectedProposals++;
+                    break;
                 case Proposal.AppendEvent e:
                     history.AppendLinked(e.EventKind, turn, e.EntityId, e.Tile, e.Tags, e.Cause, e.Participants);
                     break;
@@ -163,6 +169,46 @@ public sealed class HistoryDriver : HistoryPluginBase
             if (polity == null) continue;
             polity.SetScalar(scalarId, polity.GetScalar(scalarId, history.Scalars) + delta, history.Scalars);
         }
+    }
+
+    private static bool TryFoundSettlement(WorldMap map, HistoryCatalog history, HistoryContext context, int turn, Proposal.AddSettlement ads)
+    {
+        var owner = history.Polities.Find(p => p.Id == ads.EntityId);
+        if (owner == null || !owner.Alive) return false;
+        if ((uint)ads.Tile >= (uint)history.Ownership.Length || history.Ownership[ads.Tile] != owner.Id) return false;
+        if (ads.Parent < -1 || ads.Parent >= history.Settlements.Count) return false;
+        int standing = 0;
+        foreach (var s in history.Settlements)
+        {
+            if (s.Ended) continue;
+            if (s.TileIndex == ads.Tile) return false;
+            if (s.PolityId == owner.Id) standing++;
+        }
+        if (standing >= context.MaxSettlementsPerPolity) return false;
+        int index = history.Settlements.Count;
+        var store = map.DataStore;
+        history.Settlements.Add(new HistorySettlement
+        {
+            TileIndex = ads.Tile, PolityId = owner.Id, FoundedTurn = turn, Position = store.GetGeoCoord(ads.Tile),
+            Habitability = CapitalSettlements.HabitabilityOf(store, ads.Tile), Active = true,
+            Tier = ads.Tier, Role = ads.Role, Parent = ads.Parent,
+        });
+        var tags = new List<string> { $"settlement:{index}", $"role:{ads.Role}" };
+        if (ads.Parent >= 0) tags.Add($"from:{ads.Parent}");
+        history.AppendLinked(HistoryEventKind.SettlementFounded, turn, owner.Id, ads.Tile, tags, ads.Cause, null);
+        return true;
+    }
+
+    private static bool TryEndSettlement(HistoryCatalog history, int turn, Proposal.EndSettlement ens)
+    {
+        if ((uint)ens.Settlement >= (uint)history.Settlements.Count) return false;
+        var settlement = history.Settlements[ens.Settlement];
+        if (settlement.Ended || settlement.PolityId != ens.EntityId) return false;
+        settlement.EndedTurn = turn;
+        settlement.EndCause = ens.EndCause;
+        history.AppendLinked(HistoryEventKind.SettlementEnded, turn, settlement.PolityId, settlement.TileIndex,
+            new[] { $"settlement:{ens.Settlement}", ens.EndCause }, ens.Cause, null);
+        return true;
     }
 
     /// <summary>

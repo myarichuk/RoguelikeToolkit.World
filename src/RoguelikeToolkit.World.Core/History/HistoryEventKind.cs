@@ -42,4 +42,8 @@ public enum HistoryEventKind : byte
     Tribute = 15,
     /// <summary>A polity's faith rendered as tags: form, powers and myth slots. The text contract for <c>IMythTextProvider</c>; stubbing it never changes the log.</summary>
     Myth = 16,
+    /// <summary>A settlement was founded. Tags <c>settlement:{index}</c>, <c>role:{role}</c> and, when it grew out of another, <c>from:{index}</c>; the tile is the site. Capitals are covered by <see cref="Founding"/>.</summary>
+    SettlementFounded = 17,
+    /// <summary>A settlement ended (razed, abandoned...). Tags <c>settlement:{index}</c> and the cause key; the tile is the site.</summary>
+    SettlementEnded = 18,
 }

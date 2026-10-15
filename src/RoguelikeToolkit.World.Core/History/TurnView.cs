@@ -27,6 +27,9 @@ public sealed class TurnView
     /// <summary>One holy site at the snapshot.</summary>
     public readonly record struct HolySiteState(int Tile, int PolityId, GeoCoord Position, bool Active);
 
+    /// <summary>One settlement at the snapshot; <see cref="Index"/> is its position in <see cref="HistoryCatalog.Settlements"/>.</summary>
+    public readonly record struct SettlementState(int Index, int Tile, int PolityId, SettlementTier Tier, SettlementRole Role, int Parent, int FoundedTurn, bool Ended);
+
     private readonly HashSet<int> _siteTiles = new();
 
     internal TurnView(WorldMap? map, HistoryCatalog history, HistoryContext context, int turn)
@@ -57,6 +60,14 @@ public sealed class TurnView
         var sites = new List<HolySiteState>(history.HolySites.Count);
         foreach (var s in history.HolySites) sites.Add(new HolySiteState(s.TileIndex, s.PolityId, s.Position, s.Active));
         HolySites = sites;
+        var settlements = new List<SettlementState>(history.Settlements.Count);
+        for (int i = 0; i < history.Settlements.Count; i++)
+        {
+            var s = history.Settlements[i];
+            settlements.Add(new SettlementState(i, s.TileIndex, s.PolityId, s.Tier, s.Role, s.Parent, s.FoundedTurn, s.Ended));
+        }
+        Settlements = settlements;
+        MaxSettlementsPerPolity = context.MaxSettlementsPerPolity;
         foreach (var s in history.Sites) _siteTiles.Add(s.TileIndex);
     }
 
@@ -83,6 +94,12 @@ public sealed class TurnView
 
     /// <summary>Villains risen so far at the snapshot.</summary>
     public int VillainCount { get; }
+
+    /// <summary>The per-polity cap on standing settlements.</summary>
+    public int MaxSettlementsPerPolity { get; }
+
+    /// <summary>Every settlement (including ended ones) in founding order.</summary>
+    public IReadOnlyList<SettlementState> Settlements { get; }
 
     /// <summary>Declared scalars; <see cref="PolityState.Scalars"/> is indexed by their ids.</summary>
     public ScalarRegistry Scalars { get; }
