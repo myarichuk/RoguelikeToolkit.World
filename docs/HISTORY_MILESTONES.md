@@ -111,6 +111,19 @@ No behaviour change; old stages still run.
 
 Exit: new types unit-tested; old pipeline unchanged; PublicAPI baseline updated for new types.
 
+**M1.1 progress.**
+
+- Done (commit "M1.1a"): `StringTable` (seeded so built-in ids equal the enum values), `EventKind` /
+  `EventKinds`, `EventImportance` / `EventImportanceMap`, `EventParticipant`; `HistoryEvent` gains
+  stable `Id`, `Cause` (an event **Id**, not a list index, so compaction cannot shift references),
+  `Importance`, `Participants`; `Polity` gains `EndedTurn`, `EndCause`, `Parent`, `Alive`; compaction
+  is by importance and protects cited causes; `HistoryCatalog.Strings` and internal `AppendLinked`.
+  New fields are in-memory only until the M1.4 save; loads renumber ids in log order.
+- Remaining: declared-scalar store (`pressure` first, `Polity.Pressure` as a view) and the per-tile /
+  per-entity event indexes replacing the scans in `TryGetTileModifier` / `IsBattlefield`.
+- PublicAPI: the repo already carries a large RS0016 warning backlog (not an error); the new public
+  types are not added to `PublicAPI.Unshipped.txt` yet. Clear it in the M3 audit, or earlier if wanted.
+
 ### M1.2 Driver and operator contract (M)
 
 - **`IHistoryOperator`:** `Name`, `Order` (determines registration/evaluation order only; outcomes

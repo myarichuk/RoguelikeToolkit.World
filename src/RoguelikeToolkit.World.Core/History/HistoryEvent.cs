@@ -7,6 +7,12 @@ namespace RoguelikeToolkit.World.Core.History;
 /// </summary>
 public sealed class HistoryEvent
 {
+    /// <summary>
+    /// Stable id within the catalog (assigned on append, never reused, survives compaction), or -1 for an
+    /// event not yet in a log. <see cref="Cause"/> refers to it, so compaction cannot shift references.
+    /// In-memory only until the schema v4 save (M1.4); loads renumber in log order.
+    /// </summary>
+    public int Id { get; internal set; } = -1;
     /// <summary>What happened.</summary>
     public HistoryEventKind Kind { get; init; }
     /// <summary>History turn the event lands on.</summary>
@@ -15,6 +21,12 @@ public sealed class HistoryEvent
     public int PolityId { get; init; } = -1;
     /// <summary>Planet tile the event sits on, or -1 when it is not attached to a tile.</summary>
     public int TileIndex { get; init; } = -1;
+    /// <summary>Id of the event that caused this one, or -1. A cited event is protected from compaction.</summary>
+    public int Cause { get; init; } = -1;
+    /// <summary>Compaction class; defaults from <see cref="EventImportanceMap"/>.</summary>
+    public EventImportance Importance { get; init; }
+    /// <summary>Entities involved and their roles; empty for events that only carry tags.</summary>
+    public List<EventParticipant> Participants { get; } = new();
     /// <summary>Machine-readable detail (form, folk and culture keys for a founding); the rendering contract, never prose.</summary>
     public List<string> Tags { get; } = new();
 }

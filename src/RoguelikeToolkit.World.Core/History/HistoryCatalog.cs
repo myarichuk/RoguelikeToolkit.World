@@ -49,6 +49,11 @@ public sealed class HistoryCatalog : IHistoricalContext
     /// <summary>Owner polity id per planet tile (-1 unclaimed); sized by <see cref="PolityFormStage"/>.</summary>
     public int[] Ownership { get; internal set; } = Array.Empty<int>();
 
+    /// <summary>Interned identifiers (event kinds, roles); seeded with the built-in kinds.</summary>
+    public StringTable Strings { get; } = new();
+
+    private int _nextEventId;
+
     /// <summary>Append-only event log (foundings, forks, losses); compacts beyond <see cref="MaxEvents"/>.</summary>
     public List<HistoryEvent> Events { get; } = new();
 
@@ -213,9 +218,8 @@ public sealed class HistoryCatalog : IHistoricalContext
     public void AppendPriorityEvent(HistoryEventKind kind, int turn, int polityId, int tileIndex, IReadOnlyList<string> tags)
     {
         if (turn < 0) throw new ArgumentOutOfRangeException(nameof(turn), "Event turn cannot be negative.");
-        var entry = new HistoryEvent { Kind = kind, Turn = turn, PolityId = polityId, TileIndex = tileIndex };
-        if (tags != null) entry.Tags.AddRange(tags);
-        Events.Add(entry);
+        var entry = NewEvent(kind, turn, polityId, tileIndex, tags);
+        Register(entry);
         EnforceCap();
     }
 
@@ -226,30 +230,69 @@ public sealed class HistoryCatalog : IHistoricalContext
     /// when the budget dropped the event.
     /// </summary>
     public bool AppendEvent(HistoryEventKind kind, int turn, int polityId, int tileIndex, IReadOnlyList<string> tags)
+        => AppendLinked(kind, turn, polityId, tileIndex, tags, -1, null) >= 0;
+
+    /// <summary>
+    /// Budgeted append that also records a <paramref name="cause"/> (an event <see cref="HistoryEvent.Id"/>,
+    /// or -1) and participants. Returns the new event's id, or -1 when the per-turn budget dropped it.
+    /// </summary>
+    internal int AppendLinked(HistoryEventKind kind, int turn, int polityId, int tileIndex,
+        IReadOnlyList<string> tags, int cause, IReadOnlyList<EventParticipant>? participants)
     {
         if (turn < 0) throw new ArgumentOutOfRangeException(nameof(turn), "Event turn cannot be negative.");
         if (turn != _appendTurn) { _appendTurn = turn; _appendCount = 0; }
-        if (_appendCount >= MaxEventsPerTurn) { DroppedEvents++; return false; }
+        if (_appendCount >= MaxEventsPerTurn) { DroppedEvents++; return -1; }
         _appendCount++;
-        var entry = new HistoryEvent { Kind = kind, Turn = turn, PolityId = polityId, TileIndex = tileIndex };
-        if (tags != null) entry.Tags.AddRange(tags);
-        Events.Add(entry);
+        var entry = NewEvent(kind, turn, polityId, tileIndex, tags, cause);
+        if (participants != null) entry.Participants.AddRange(participants);
+        Register(entry);
+        int id = entry.Id;
         EnforceCap();
-        return true;
+        return id;
     }
 
+    private static HistoryEvent NewEvent(HistoryEventKind kind, int turn, int polityId, int tileIndex, IReadOnlyList<string> tags, int cause = -1)
+    {
+        var entry = new HistoryEvent
+        {
+            Kind = kind, Turn = turn, PolityId = polityId, TileIndex = tileIndex,
+            Importance = EventImportanceMap.Of(kind), Cause = cause,
+        };
+        if (tags != null) entry.Tags.AddRange(tags);
+        return entry;
+    }
+
+    private void Register(HistoryEvent entry)
+    {
+        entry.Id = _nextEventId++;
+        Events.Add(entry);
+    }
+
+    /// <summary>
+    /// Compacts to <see cref="MaxEvents"/>: the oldest <see cref="EventImportance.Minor"/> event goes
+    /// first, then the oldest structural one, then the oldest founding one. An event that a retained
+    /// event cites as its cause is skipped while anything uncited is left; only when every candidate is
+    /// cited does the oldest of the lowest class go, so the cap always holds.
+    /// </summary>
     private void EnforceCap()
     {
         if (Events.Count <= MaxEvents) return;
         bool removed = false;
         while (Events.Count > MaxEvents)
         {
-            int victim = -1;
-            for (int i = 0; i < Events.Count; i++)
+            var cited = new HashSet<int>();
+            foreach (var e in Events) if (e.Cause >= 0) cited.Add(e.Cause);
+            int victim = -1, fallback = -1;
+            for (var tier = EventImportance.Minor; tier <= EventImportance.Founding && victim < 0; tier++)
             {
-                if (Events[i].Kind != HistoryEventKind.Founding) { victim = i; break; }
+                for (int i = 0; i < Events.Count; i++)
+                {
+                    if (Events[i].Importance != tier) continue;
+                    if (fallback < 0) fallback = i;
+                    if (!cited.Contains(Events[i].Id)) { victim = i; break; }
+                }
             }
-            Events.RemoveAt(victim >= 0 ? victim : 0);
+            Events.RemoveAt(victim >= 0 ? victim : Math.Max(fallback, 0));
             removed = true;
         }
         if (removed) Compactions++;
@@ -268,6 +311,7 @@ public sealed class HistoryCatalog : IHistoricalContext
         PolitiesFormed = false;
         Ownership = Array.Empty<int>();
         Events.Clear();
+        _nextEventId = 0;
         Settlements.Clear();
         Sites.Clear();
         Roads.Clear();
@@ -597,16 +641,18 @@ public sealed class HistoryCatalog : IHistoricalContext
             int events = CheckedCount(reader.ReadInt32());
             for (int i = 0; i < events; i++)
             {
+                var kind = (HistoryEventKind)reader.ReadByte();
                 var entry = new HistoryEvent
                 {
-                    Kind = (HistoryEventKind)reader.ReadByte(),
+                    Kind = kind,
                     Turn = reader.ReadInt32(),
                     PolityId = reader.ReadInt32(),
                     TileIndex = reader.ReadInt32(),
+                    Importance = EventImportanceMap.Of(kind),
                 };
                 int tags = CheckedCount(reader.ReadInt32());
                 for (int k = 0; k < tags; k++) entry.Tags.Add(reader.ReadString());
-                catalog.Events.Add(entry);
+                catalog.Register(entry);
             }
             int settlements = CheckedCount(reader.ReadInt32());
             for (int i = 0; i < settlements; i++)

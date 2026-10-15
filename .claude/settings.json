@@ -1,0 +1,12 @@
+{
+  "permissions": {
+    "deny": [
+      "Read(**/bin/**)",
+      "Read(**/obj/**)",
+      "Read(./BenchmarkDotNet.Artifacts/**)",
+      "Read(**/TestResults/**)",
+      "Read(./.serena/cache/**)",
+      "Read(./CHANGELOG.md)"
+    ]
+  }
+}
