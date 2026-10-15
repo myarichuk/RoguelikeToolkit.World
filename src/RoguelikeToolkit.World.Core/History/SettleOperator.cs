@@ -108,6 +108,11 @@ public sealed class SettleOperator : IHistoryOperator
             if (!founded && standing < view.MaxSettlementsPerPolity && group.Amount >= RefugeFoundShare * mean
                 && TryFoundRefuge(view, sink, polityId, group, vectors, minDot)) { founded = true; continue; }
             int origin = group.Origin;
+            if (standing == 0)
+            {
+                ProposeAsylum(view, sink, group, vectors);
+                continue;
+            }
             int best = -1, bestRoomy = -1;
             double nearest = double.NegativeInfinity, nearestRoomy = double.NegativeInfinity;
             foreach (var s in view.Settlements)
@@ -124,6 +129,28 @@ public sealed class SettleOperator : IHistoryOperator
                 sink.Emit(new Proposal.AbsorbDisplaced { EntityId = polityId, Group = group.Index, Settlement = best, Amount = group.Amount });
         }
         return founded;
+    }
+
+    /// <summary>
+    /// A polity with no standing settlement cannot take its people back: the group asks the nearest standing
+    /// settlement of any living polity, preferring one with room (cross-polity asylum). With nobody standing it decays to the lost.
+    /// </summary>
+    private static void ProposeAsylum(TurnView view, ProposalSink sink, TurnView.DisplacedState group, ReadOnlySpan<Vector3D> vectors)
+    {
+        if ((uint)group.Origin >= (uint)view.Settlements.Count) return;
+        var from = vectors[view.Settlements[group.Origin].Tile];
+        int best = -1, bestRoomy = -1;
+        double nearest = double.NegativeInfinity, nearestRoomy = double.NegativeInfinity;
+        foreach (var s in view.Settlements)
+        {
+            if (s.Ended || s.PolityId == group.PolityId || !view.Polities[s.PolityId].Alive) continue;
+            double dot = Vector3D.Dot(vectors[s.Tile], from);
+            if (dot > nearest) { nearest = dot; best = s.Index; }
+            if (dot > nearestRoomy && view.SettlementPressure(s.Index) < PressureThreshold) { nearestRoomy = dot; bestRoomy = s.Index; }
+        }
+        if (bestRoomy >= 0) best = bestRoomy;
+        if (best >= 0)
+            sink.Emit(new Proposal.AbsorbDisplaced { EntityId = group.PolityId, Group = group.Index, Settlement = best, Amount = group.Amount });
     }
 
     private bool TryFoundRefuge(TurnView view, ProposalSink sink, int polityId, TurnView.DisplacedState group,

@@ -576,3 +576,10 @@ people vanish (no producer ends settlements yet).
 - Tests changed on purpose: demography comparison dropped from `StarvedWar_...` (wars now change populations), parent-polity check skips captured settlements, founding-event count in the cap test counts colonies only, capitals test restricted to capitals.
 - Corpus re-baselined: SettlementEnded 50→63, SettlementCaptured 8, War 764. Core suite 806 green.
 - Still open for M2.9: cross-polity asylum, battlefield scars (kept on the AddSite path).
+
+## M2.9B progress (cross-polity asylum)
+
+- A polity with no standing settlement can no longer take its displaced people home. `SettleOperator.ProposeAsylum` sends each such group to the nearest standing settlement of any other living polity, preferring one under `PressureThreshold`.
+- `TryAbsorb` accepts a foreign target only when the group's own polity has no standing settlement; a polity that still has one cannot send people abroad. The pool invariant is untouched (pool to standing).
+- The corpus did not change: homeless polities are rare in the default worlds. Core suite: 807 green.
+- Left for later: the settlement-level plague/war interplay is tuned only by the corpus; the strict full-run ledger test and the Gurubashi/Venice cases stay in the M2 exit.

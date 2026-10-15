@@ -287,7 +287,13 @@ public sealed class HistoryDriver : HistoryPluginBase
         if ((uint)ab.Group >= (uint)history.Displaced.Count || (uint)ab.Settlement >= (uint)history.Settlements.Count || !(ab.Amount > 0)) return false;
         var group = history.Displaced[ab.Group];
         var target = history.Settlements[ab.Settlement];
-        if (target.Ended || target.PolityId != ab.EntityId || group.PolityId != ab.EntityId) return false;
+        if (target.Ended || group.PolityId != ab.EntityId) return false;
+        if (target.PolityId != ab.EntityId)
+        {
+            // Asylum: a polity with no standing settlement of its own may place its people in another's.
+            foreach (var s in history.Settlements)
+                if (!s.Ended && s.PolityId == ab.EntityId) return false;
+        }
         double moved = Math.Min(group.Amount, ab.Amount);
         if (!(moved > 0)) return false;
         group.Amount -= moved;

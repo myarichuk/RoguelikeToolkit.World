@@ -66,6 +66,21 @@ public class DisplacedPoolTests
     }
 
     [Fact]
+    public void Asylum_LetsAHomelessPolityPlaceItsPeopleElsewhere_AndConserves()
+    {
+        using var w = Bare();
+        Seed(w);
+        var ctx = new HistoryContext { DisplacedDecayTurns = 50 };
+        double before = Total(w.History);
+        Run(w, ctx, 1, _ => new Proposal[] { new Proposal.EndSettlement { EntityId = 0, Settlement = 0, EndCause = "razed" } });
+        Assert.Equal(100, w.History.Displaced.Sum(g => g.Amount), 6);
+        Run(w, ctx, 2, _ => new Proposal[] { new Proposal.AbsorbDisplaced { EntityId = 0, Group = 0, Settlement = 1, Amount = 1000 } });
+        Assert.Empty(w.History.Displaced);
+        Assert.Equal(200, w.History.Settlements[1].Population, 6);
+        Assert.Equal(before, Total(w.History), 6);
+    }
+
+    [Fact]
     public void EndSettlement_ReleasesItsPeople_AndStaleGroupsReturnHome()
     {
         using var w = Bare();
