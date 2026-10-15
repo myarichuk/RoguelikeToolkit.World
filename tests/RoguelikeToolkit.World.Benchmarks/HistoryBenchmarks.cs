@@ -42,7 +42,6 @@ public class HistoryBenchmarks
         new PolityFormStage().Execute(_world.Map);
         new HistoryEventsStage().Execute(_world.Map);
         new TradeRoadStage().Execute(_world.Map);
-        new PopulationStage().Execute(_world.Map);
         new WarStage().Execute(_world.Map);
         new ConquestStage().Execute(_world.Map);
         new RebellionStage().Execute(_world.Map);
@@ -89,7 +88,6 @@ public class LargeHistoryBenchmarks
         new PolityFormStage().Execute(_world.Map);
         new HistoryEventsStage().Execute(_world.Map);
         new TradeRoadStage().Execute(_world.Map);
-        new PopulationStage().Execute(_world.Map);
         new WarStage().Execute(_world.Map);
         new ConquestStage().Execute(_world.Map);
         new RebellionStage().Execute(_world.Map);

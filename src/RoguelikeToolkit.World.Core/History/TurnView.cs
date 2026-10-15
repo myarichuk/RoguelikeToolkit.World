@@ -1,4 +1,5 @@
 using RoguelikeToolkit.World.Core.Primitives;
+using RoguelikeToolkit.World.Core.Topology;
 
 namespace RoguelikeToolkit.World.Core.History;
 
@@ -10,6 +11,7 @@ namespace RoguelikeToolkit.World.Core.History;
 /// </summary>
 public sealed class TurnView
 {
+    private readonly WorldMap? _map;
     private readonly HistoryCatalog _history;
     private readonly int[] _ownership;
     private readonly Dictionary<(int, int), int> _grudges = new();
@@ -25,8 +27,9 @@ public sealed class TurnView
     /// <summary>One holy site at the snapshot.</summary>
     public readonly record struct HolySiteState(int Tile, int PolityId, GeoCoord Position, bool Active);
 
-    internal TurnView(HistoryCatalog history, HistoryContext context, int turn)
+    internal TurnView(WorldMap? map, HistoryCatalog history, HistoryContext context, int turn)
     {
+        _map = map;
         _history = history;
         Turn = turn;
         Seed = history.Seed;
@@ -51,6 +54,12 @@ public sealed class TurnView
         HolySites = sites;
     }
 
+    /// <summary>
+    /// The world map. Terrain and capacity layers do not change during history, so reading them keeps the
+    /// snapshot semantics; ownership must still be read through <see cref="OwnerOf"/>.
+    /// </summary>
+    public WorldMap Map => _map ?? throw new InvalidOperationException("This view was built without a map.");
+
     /// <summary>The turn being simulated; the snapshot is the state at the end of <c>Turn - 1</c>.</summary>
     public int Turn { get; }
 
@@ -71,6 +80,12 @@ public sealed class TurnView
 
     /// <summary>Holy sites in founding order.</summary>
     public IReadOnlyList<HolySiteState> HolySites { get; }
+
+    /// <summary>The snapshot ownership array (do not mutate); internal until the plugin API audit.</summary>
+    internal int[] OwnershipSnapshot() => _ownership;
+
+    /// <summary>Loads the peoples tables, counting a fallback on the catalog when they fail.</summary>
+    internal Peoples.PeoplesStore? LoadPeoples() => PeoplesLoader.LoadStore(_history);
 
     /// <summary>Owner polity id of <paramref name="tile"/>, or -1.</summary>
     public int OwnerOf(int tile) => (uint)tile < (uint)_ownership.Length ? _ownership[tile] : -1;

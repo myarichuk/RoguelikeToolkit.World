@@ -1,4 +1,5 @@
 using RoguelikeToolkit.World.Core.History;
+using RoguelikeToolkit.World.Core.Topology;
 using Xunit;
 
 namespace RoguelikeToolkit.World.Core.Tests;
@@ -166,6 +167,6 @@ public class HistoryDriverTests
         private readonly Action<HistoryCatalog> _run;
         public PostProbe(Action<HistoryCatalog> run) { _run = run; }
         public string Name => "Probe";
-        public void Run(HistoryCatalog history, HistoryContext context) => _run(history);
+        public void Run(WorldMap map, HistoryCatalog history, HistoryContext context) => _run(history);
     }
 }

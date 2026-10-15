@@ -52,16 +52,16 @@ public sealed class HistoryDriver : HistoryPluginBase
     {
         context.ClearOperatorBudgets();
         RejectedProposals = 0;
-        for (int turn = 1; turn < context.TurnCount; turn++) RunTurn(history, context, turn);
+        for (int turn = 1; turn < context.TurnCount; turn++) RunTurn(map, history, context, turn);
         history.SimulatedTurns = context.TurnCount > 0 ? context.TurnCount - 1 : 0;
-        foreach (var pass in _postPasses) pass.Run(history, context);
+        foreach (var pass in _postPasses) pass.Run(map, history, context);
     }
 
     /// <summary>Runs one turn: snapshot, propose, commit.</summary>
-    public void RunTurn(HistoryCatalog history, HistoryContext context, int turn)
+    public void RunTurn(WorldMap map, HistoryCatalog history, HistoryContext context, int turn)
     {
         context.BeginTurn(turn);
-        var view = new TurnView(history, context, turn);
+        var view = new TurnView(map, history, context, turn);
         var proposals = new List<Proposal>();
         var ordered = new List<IHistoryOperator>(_operators);
         ordered.Sort(static (a, b) => a.Order != b.Order ? a.Order.CompareTo(b.Order) : string.CompareOrdinal(a.Name, b.Name));
@@ -116,6 +116,10 @@ public sealed class HistoryDriver : HistoryPluginBase
                     break;
                 case Proposal.AppendEvent e:
                     history.AppendLinked(e.EventKind, turn, e.EntityId, e.Tile, e.Tags, e.Cause, e.Participants);
+                    break;
+                case Proposal.SetPopulation sp:
+                    var target = history.Polities.Find(p => p.Id == sp.EntityId);
+                    if (target != null) { target.Population = sp.Population; target.RulerGeneration = sp.RulerGeneration; }
                     break;
                 case Proposal.AdjustScalar a:
                     var k = (a.EntityId, a.ScalarId);

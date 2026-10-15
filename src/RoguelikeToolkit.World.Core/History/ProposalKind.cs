@@ -24,4 +24,6 @@ public enum ProposalKind
     AppendEvent = 7,
     /// <summary>Add a delta to a declared scalar.</summary>
     AdjustScalar = 8,
+    /// <summary>Set a polity's population index and ruler generation.</summary>
+    SetPopulation = 9,
 }

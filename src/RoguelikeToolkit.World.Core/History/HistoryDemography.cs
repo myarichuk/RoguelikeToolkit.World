@@ -202,8 +202,18 @@ public static class HistoryDemography
     {
         ArgumentNullException.ThrowIfNull(store);
         ArgumentNullException.ThrowIfNull(polities);
+        return CarryingCapacities(store, polities.Count, ownership);
+    }
+
+    /// <summary>Same as the polity-list overload, for callers that hold only the polity count (snapshot views).</summary>
+    /// <param name="store">Tile store holding the optional capacity/biome layers.</param>
+    /// <param name="polityCount">Number of polities; a polity's id is its index.</param>
+    /// <param name="ownership">Owner polity id per tile.</param>
+    public static double[] CarryingCapacities(WorldDataStore store, int polityCount, int[] ownership)
+    {
+        ArgumentNullException.ThrowIfNull(store);
         ArgumentNullException.ThrowIfNull(ownership);
-        var capacities = new double[polities.Count];
+        var capacities = new double[polityCount];
         bool hasCapacity = store.IsLayerRegistered<LandCapacityInfo>();
         var capacity = hasCapacity ? store.GetSpan<LandCapacityInfo>() : default;
         bool hasBiome = !hasCapacity && store.IsLayerRegistered<BiomeInfo>();

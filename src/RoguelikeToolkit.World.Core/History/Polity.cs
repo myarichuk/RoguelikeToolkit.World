@@ -22,7 +22,7 @@ public sealed class Polity
     public int FoundedTurn { get; init; }
     /// <summary>
     /// Abstract population index (people-equivalents, not a census): grown by
-    /// <c>PopulationStage</c> from the territory's carrying capacity. Wars and conquests read it,
+    /// <c>PopulationOperator</c> from the territory's carrying capacity. Wars and conquests read it,
     /// never a name or a table.
     /// </summary>
     public double Population { get; set; }
@@ -62,7 +62,7 @@ public sealed class Polity
     /// <see cref="CultureKey"/>. Set by <c>ConquestStage</c>; the <c>Names</c> leaf resolves it late.
     /// </summary>
     public string CultureOverlay { get; set; } = string.Empty;
-    /// <summary>How many successions have ticked (one per folk generation); advanced by <c>PopulationStage</c>.</summary>
+    /// <summary>How many successions have ticked (one per folk generation); advanced by <c>PopulationOperator</c>.</summary>
     public int RulerGeneration { get; set; }
     /// <summary>
     /// Accumulated openness drift from road-volume exchange (-<c>HistoryDemography.MaxOpennessDrift</c>

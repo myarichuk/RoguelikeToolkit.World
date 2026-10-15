@@ -199,6 +199,20 @@ Behaviour that changes on purpose: no time-travel grudges; global event cap; one
 same-turn cross-operator reactions; borders cached and invalidated only when ownership changes
 (performance, outcome-neutral).
 
+**M1.3 progress.**
+
+- Done (Population): `PopulationOperator` replaces `PopulationStage`. Map access: `HistoryDriver.RunTurn`,
+  `IHistoryPostPass.Run` and `TurnView.Map` now carry the `WorldMap` (terrain and capacity layers are
+  immutable during history; ownership still comes from the snapshot). New `SetPopulation` proposal
+  (absolute population + ruler generation); pressure moves by the *change* in crowding via `AdjustScalar`,
+  so war bumps stack on top. Behaviour changes on purpose: capacity is recomputed per turn from current
+  ownership (legacy used ownership at order 32 for the whole span); unseeded polities seed and step in
+  their first turn; ended polities are not grown; Villain/Faith now read causal pressure, not
+  final-crowding-plus-all-bumps. Closed-form equality with `PopulationAtTurn` holds for static ownership
+  (tested). Rebellion port must still set the rebel's founding population (legacy `RebellionStage.cs:151`).
+- The legacy stage list in `WorldBuilder` no longer runs Population; Population-dependent legacy tests are
+  red until M1.5 wires the driver.
+
 ### M1.4 Persistence, schema v4 (M)
 
 - Save: string table; events with participants, cause, importance; polity lifecycle fields;

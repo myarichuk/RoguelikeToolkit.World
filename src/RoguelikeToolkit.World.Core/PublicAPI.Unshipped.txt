@@ -2146,14 +2146,6 @@ override RoguelikeToolkit.World.Core.History.TradeRoadStage.Reads.get -> System.
 override RoguelikeToolkit.World.Core.History.TradeRoadStage.ReadsOptional.get -> System.Type![]!
 override RoguelikeToolkit.World.Core.History.TradeRoadStage.Precondition(RoguelikeToolkit.World.Core.Topology.WorldMap! map, RoguelikeToolkit.World.Core.History.HistoryCatalog! history) -> bool
 override RoguelikeToolkit.World.Core.History.TradeRoadStage.Apply(RoguelikeToolkit.World.Core.Topology.WorldMap! map, RoguelikeToolkit.World.Core.History.HistoryCatalog! history, RoguelikeToolkit.World.Core.History.HistoryContext! context) -> void
-RoguelikeToolkit.World.Core.History.PopulationStage
-RoguelikeToolkit.World.Core.History.PopulationStage.PopulationStage() -> void
-override RoguelikeToolkit.World.Core.History.PopulationStage.Name.get -> string!
-override RoguelikeToolkit.World.Core.History.PopulationStage.Order.get -> int
-override RoguelikeToolkit.World.Core.History.PopulationStage.Reads.get -> System.Type![]!
-override RoguelikeToolkit.World.Core.History.PopulationStage.ReadsOptional.get -> System.Type![]!
-override RoguelikeToolkit.World.Core.History.PopulationStage.Precondition(RoguelikeToolkit.World.Core.Topology.WorldMap! map, RoguelikeToolkit.World.Core.History.HistoryCatalog! history) -> bool
-override RoguelikeToolkit.World.Core.History.PopulationStage.Apply(RoguelikeToolkit.World.Core.Topology.WorldMap! map, RoguelikeToolkit.World.Core.History.HistoryCatalog! history, RoguelikeToolkit.World.Core.History.HistoryContext! context) -> void
 RoguelikeToolkit.World.Core.History.WarStage
 RoguelikeToolkit.World.Core.History.WarStage.WarStage() -> void
 const RoguelikeToolkit.World.Core.History.WarStage.WarPressureScale = 0.4 -> double

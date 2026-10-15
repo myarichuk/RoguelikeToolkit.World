@@ -242,7 +242,6 @@ public sealed class WorldBuilder
             pipeline.AddStage(new PolityFormStage());
             pipeline.AddStage(new HistoryEventsStage());
             pipeline.AddStage(new TradeRoadStage());
-            pipeline.AddStage(new PopulationStage());
             pipeline.AddStage(new HolySiteStage());
             pipeline.AddStage(new KhanStage());
             pipeline.AddStage(new TreatyStage());

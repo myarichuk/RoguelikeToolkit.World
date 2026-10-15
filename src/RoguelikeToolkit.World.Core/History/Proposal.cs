@@ -125,6 +125,17 @@ public abstract class Proposal
         public IReadOnlyList<EventParticipant>? Participants { get; init; }
     }
 
+    /// <summary>Sets polity <see cref="Proposal.EntityId"/>'s population index and ruler generation (absolute, not a delta).</summary>
+    public sealed class SetPopulation : Proposal
+    {
+        /// <inheritdoc />
+        public override ProposalKind Kind => ProposalKind.SetPopulation;
+        /// <summary>New population index.</summary>
+        public double Population { get; init; }
+        /// <summary>New count of ruler successions so far.</summary>
+        public int RulerGeneration { get; init; }
+    }
+
     /// <summary>Adds <see cref="Delta"/> to scalar <see cref="ScalarId"/> of polity <see cref="Proposal.EntityId"/>.</summary>
     public sealed class AdjustScalar : Proposal
     {
