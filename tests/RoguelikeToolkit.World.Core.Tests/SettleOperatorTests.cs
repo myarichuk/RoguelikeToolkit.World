@@ -41,8 +41,12 @@ public class SettleOperatorTests
                 Assert.InRange(s.Parent, 0, i - 1);
                 Assert.Equal(s.PolityId, h.Settlements[s.Parent].PolityId);
                 for (int j = 0; j < i; j++)
+                {
+                    // Land of a settlement already abandoned (e.g. by a shock) may be resettled.
+                    if (h.Settlements[j].Ended && h.Settlements[j].EndedTurn < s.FoundedTurn) continue;
                     Assert.True(Core.Primitives.Vector3D.Dot(vectors[s.TileIndex], vectors[h.Settlements[j].TileIndex]) < minDot,
                         $"Settlement {i} sits within the spacing of {j}.");
+                }
             }
         }
         Assert.True(colonies > 0, "No colony was founded across seeds 1-6.");

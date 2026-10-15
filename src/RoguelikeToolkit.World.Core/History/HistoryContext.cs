@@ -18,6 +18,7 @@ public sealed class HistoryContext
     private int _maxEvents = 4096;
     private int _maxPolities = 8;
     private int _maxVillains = 2;
+    private double _hazardRate = 1;
 
     /// <summary>Default peoples roster: one human and one non-human folk, matching the shipped tables.</summary>
     public HistoryContext()
@@ -91,6 +92,13 @@ public sealed class HistoryContext
 
     /// <summary>Turns a displaced group waits for a taker before the pool re-absorbs it into its origin polity (or records it lost). Default 3.</summary>
     public int DisplacedDecayTurns { get; set; } = 3;
+
+    /// <summary>Multiplier on every hazard's per-turn chance (default 1; 0 switches physics-driven shocks off). Must be non-negative.</summary>
+    public double HazardRate
+    {
+        get => _hazardRate;
+        set => _hazardRate = value >= 0 ? value : throw new ArgumentOutOfRangeException(nameof(value), "HazardRate cannot be negative.");
+    }
 
     /// <summary>The (folk, culture) pairs <see cref="CultureSeedStage"/> seeds the world with, in priority order.</summary>
     public List<HistoryPeople> Peoples { get; } = new();

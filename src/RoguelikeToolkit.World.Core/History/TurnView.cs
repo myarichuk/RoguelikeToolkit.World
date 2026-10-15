@@ -79,6 +79,7 @@ public sealed class TurnView
         DisplacedPool = pool;
         DisplacedDecayTurns = context.DisplacedDecayTurns;
         MaxSettlementsPerPolity = context.MaxSettlementsPerPolity;
+        HazardRate = context.HazardRate;
         foreach (var s in history.Sites) _siteTiles.Add(s.TileIndex);
     }
 
@@ -108,6 +109,9 @@ public sealed class TurnView
 
     /// <summary>The per-polity cap on standing settlements.</summary>
     public int MaxSettlementsPerPolity { get; }
+
+    /// <summary>Multiplier on hazard chances for this run (see <see cref="HistoryContext.HazardRate"/>).</summary>
+    public double HazardRate { get; }
 
     /// <summary>Every settlement (including ended ones) in founding order.</summary>
     public IReadOnlyList<SettlementState> Settlements { get; }

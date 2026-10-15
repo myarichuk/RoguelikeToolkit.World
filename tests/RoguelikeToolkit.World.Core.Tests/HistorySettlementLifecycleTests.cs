@@ -8,7 +8,8 @@ public class HistorySettlementLifecycleTests
     [Fact]
     public void Capitals_StartAsStandingCapitalCities()
     {
-        using var w = new WorldBuilder().WithSize(3).WithSeed(42).WithUserEdits().Build();
+        // Shocks abandon settlements; pin them off to check the founding state.
+        using var w = new WorldBuilder().WithSize(3).WithSeed(42).WithUserEdits().WithHistory(c => c.HazardRate = 0).Build();
         Assert.NotEmpty(w.History.Settlements);
         foreach (var s in w.History.Settlements)
         {

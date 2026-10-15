@@ -50,6 +50,9 @@ public static class StageOrder
     /// <summary>Settle operator: colonization into owned frontier land, after the population step.</summary>
     public const int Settle = 34;
 
+    /// <summary>Hazard operator: physics-driven shocks (quake, volcano, tsunami, flood, drought) drawn against the hazard maps.</summary>
+    public const int Hazard = 36;
+
     /// <summary>Holy-site raising: high-surplus owned tiles become shrines with sheltering auras.</summary>
     public const int HolySite = 44;
 

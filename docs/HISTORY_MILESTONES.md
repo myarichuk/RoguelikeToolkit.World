@@ -535,3 +535,12 @@ people vanish (no producer ends settlements yet).
 - `TurnView.SettlementCapacity(index)` and `SettlementPressure(index)` (people over catchment capacity), computed once per view from `HistoryDemography.SettlementCapacities`; 0 for ended or unknown settlements. Capacity is now visible to operators.
 - Consumers: refugees merged by `SettleOperator` go to the nearest settlement still below `PressureThreshold` (nearest at all as a fallback); `ShockResolver` exposure rises by up to 30% for crowded settlements (+15% per unit pressure, capped at 2).
 - Not changed: colony triggering stays on polity pressure, and the refuge founding threshold stays relative to mean settlement population (tuning both on per-settlement pressure waits for real shock producers in M2.6, to avoid moving the corpus blind). The pool is empty in real runs, so the corpus does not move.
+
+### M2.6A progress (hazard maps and the Hazard operator)
+
+- `HazardMaps` (pure function of terrain; seed only picks volcanic vents): earthquake (plate boundaries on land: convergent 1.0, transform 0.8, divergent 0.4, falling off over 6 rings), volcano (convergent arcs and rifts, thinned to `VentShare` 0.35), tsunami (coastal land beside seismic sea floor), flood (river tiles by sqrt discharge and low ground), drought (dry, rain-seasonal land). Missing layers contribute nothing.
+- `HazardOperator` (order 36, `StageOrder.Hazard`): per kind and per standing settlement not already covered by a shock of that kind this turn, a stream per (seed, Hazard, turn, settlement, kind) is drawn against `HazardRate * hazard(tile) / ReturnPeriod`. Hits spend an operator emergence and hand a Radius `Shock` centred on the settlement to `ShockResolver`. Drawing from settlements instead of from the empty map was chosen after a first cut where 8 shocks in 10 worlds hit anything. Return periods (turns at hazard 1): earthquake 36, volcano 30, tsunami 40, flood 20, drought 20.
+- `HistoryContext.HazardRate` (default 1, 0 = off) via `TurnView.HazardRate`.
+- Re-baseline (25 worlds): SettlementFounded 407 -> 436, SettlementEnded 0 -> 35, Shock events 172 (about 7 per world), War 759 -> 753, Conquest 76 -> 75, sites 491 -> 490. Ten-seed probe: roughly 6 shocks and 1.5 abandoned settlements per world, refuges form.
+- Test adjustments: the founding-state test pins `HazardRate = 0`; the colony spacing test ignores settlements abandoned before the colony was founded (resettling a ruin is allowed).
+- Still to do in M2.6B: famine (polity pressure), plague (density and route connectivity), scars come in M2.7.
