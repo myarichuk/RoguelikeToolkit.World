@@ -31,6 +31,7 @@ public sealed class ExchangeOperator : IHistoryOperator
         var routes = new Dictionary<(int EndA, int EndB), bool>();
         foreach (var road in view.Roads)
         {
+            if (road.PolityId >= 0) continue; // spurs are internal to one polity; only trunks diffuse culture
             var route = (road.RouteA, road.RouteB);
             routes[route] = routes.TryGetValue(route, out bool active) ? active && !road.Severed : !road.Severed;
         }

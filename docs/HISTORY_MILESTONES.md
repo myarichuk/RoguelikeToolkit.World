@@ -557,3 +557,11 @@ people vanish (no producer ends settlements yet).
 - Producers in `ShockResolver`: an abandoned settlement always leaves a `ruin` (cause = shock kind); a settlement hit at `ScarIntensity` 0.5 or more takes the shock's `Shock.Scar`. `HazardOperator` maps earthquake -> fissure, volcano -> crater, drought -> scorched_field, plague -> plague_pit; the rest leave none.
 - Projection: `GetSitesNear` returns scars as `Ruin`-kind sites (`hist-scar-{tile}-{kind}`, metadata `scar`, `cause`, `polity`, `founded`); `TryGetTileModifier` adds `ScarDangerDelta` 1 and `ScarHabitabilityDelta` -0.25 for non-ruin scars (ruins are neutral).
 - Tests: `HistoryScarTests` (4). Battlefield scars stay on the existing War/AddSite path; folding them in is left for M2.9.
+
+## M2.8 progress (roads between settlements)
+
+- `TradeRoadOperator` now has two phases. Trunks (capital to capital, surplus-complementary pairs) are unchanged. Spurs are new: a standing settlement with no route yet roads itself (`SpurChance` 0.25 per turn, `SpurRangeDegrees` 12, one emergence) to its parent, else its nearest standing neighbour of the same polity. Spur segments carry `PolityId` = the owner, and route endpoints are settlement tiles, so `RouteA`/`RouteB` are no longer always capitals.
+- `ExchangeOperator` skips roads with `PolityId >= 0`, so only trunks diffuse culture and openness. Spurs are internal to one polity.
+- `HazardOperator` plague: links are now the live routes touching the settlement's own tile (cap 4). The old check compared `road.PolityId` with the settlement's polity, and trunks carry -1, so it never counted any link.
+- Spurs are not severed by war yet. That comes with M2.9, which severs routes by settlement.
+- Corpus re-baselined. Core suite: 805 green.

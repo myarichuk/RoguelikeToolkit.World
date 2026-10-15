@@ -98,7 +98,7 @@ public sealed class HazardOperator : IHistoryOperator
         _ => null,
     };
 
-    /// <summary>Plague odds: bigger tiers are denser, and a polity with many open roads spreads contagion faster.</summary>
+    /// <summary>Plague odds: bigger tiers are denser, and a settlement on many live routes catches contagion faster.</summary>
     private static double PlagueHazard(TurnView view, TurnView.SettlementState s)
     {
         double density = s.Tier switch
@@ -108,10 +108,10 @@ public sealed class HazardOperator : IHistoryOperator
             SettlementTier.Town => 0.7,
             _ => 1.0,
         };
-        int open = 0;
+        var routes = new HashSet<(int, int)>();
         foreach (var road in view.Roads)
-            if (!road.Severed && road.PolityId == s.PolityId) open++;
-        double links = Math.Min(open, 8) / 8.0;
+            if (!road.Severed && (road.RouteA == s.Tile || road.RouteB == s.Tile)) routes.Add((road.RouteA, road.RouteB));
+        double links = Math.Min(routes.Count, 4) / 4.0;
         return density * (0.5 + 0.5 * links);
     }
 }

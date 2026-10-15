@@ -29,6 +29,12 @@ public sealed class TradeRoadOperator : IHistoryOperator
     /// <summary>Trade range in degrees of arc between capitals.</summary>
     public const double TradeRangeDegrees = 30.0;
 
+    /// <summary>Per-settlement, per-turn chance to build a spur to its own polity's network.</summary>
+    public const double SpurChance = 0.25;
+
+    /// <summary>Longest spur in degrees of arc between the two settlements.</summary>
+    public const double SpurRangeDegrees = 12.0;
+
     /// <summary>Diagnostic name, <c>TradeRoad</c>.</summary>
     public string Name => "TradeRoad";
 
@@ -39,14 +45,20 @@ public sealed class TradeRoadOperator : IHistoryOperator
     public void Propose(TurnView view, ProposalSink sink)
     {
         var polities = view.Polities;
-        if (polities.Count < 2) return;
         var store = view.Map.DataStore;
         var profiles = SurplusProfiles(store, view);
         double rangeDot = DetMath.Cos(TradeRangeDegrees * GeoCoord.Deg2Rad);
         var vectors = store.GetTileVectors();
         var routes = new HashSet<(int, int)>();
         foreach (var road in view.Roads) routes.Add((road.RouteA, road.RouteB));
+        if (polities.Count >= 2) ProposeTrunks(view, sink, store, polities, profiles, vectors, rangeDot, routes);
+        ProposeSpurs(view, sink, store, vectors, routes);
+    }
 
+    private static void ProposeTrunks(
+        TurnView view, ProposalSink sink, WorldDataStore store, IReadOnlyList<TurnView.PolityState> polities,
+        int[][] profiles, ReadOnlySpan<Vector3D> vectors, double rangeDot, HashSet<(int, int)> routes)
+    {
         for (int a = 0; a < polities.Count; a++)
         {
             var pa = polities[a];
@@ -69,7 +81,57 @@ public sealed class TradeRoadOperator : IHistoryOperator
                     sink.Emit(new Proposal.AddRoad { EntityId = -1, TileA = path[i], TileB = path[i + 1], RouteA = endA, RouteB = endB });
                 sink.Event(HistoryEventKind.RoadBuilt, a, pa.CapitalTile,
                     new[] { "road", "built", HistoryDemography.RouteTag(endA, endB) });
+                routes.Add((endA, endB));
             }
+        }
+    }
+
+    /// <summary>
+    /// A standing settlement with no route yet roads itself to its parent, else its nearest
+    /// standing neighbour of the same polity, so the polity's settlements form one network the
+    /// capitals' trunk routes plug into. Spurs belong to the polity (<c>PolityId</c> &gt;= 0).
+    /// </summary>
+    private static void ProposeSpurs(
+        TurnView view, ProposalSink sink, WorldDataStore store, ReadOnlySpan<Vector3D> vectors, HashSet<(int, int)> routes)
+    {
+        double rangeDot = DetMath.Cos(SpurRangeDegrees * GeoCoord.Deg2Rad);
+        var linked = new HashSet<int>();
+        foreach (var (a, b) in routes) { linked.Add(a); linked.Add(b); }
+        foreach (var s in view.Settlements)
+        {
+            if (s.Ended || s.PolityId < 0 || linked.Contains(s.Tile)) continue;
+            var stream = sink.Rng(1_000_000 + s.Index, "spur");
+            if (stream.NextDouble() >= SpurChance) continue;
+            int target = -1;
+            if (s.Parent >= 0 && s.Parent < view.Settlements.Count)
+            {
+                var parent = view.Settlements[s.Parent];
+                if (!parent.Ended && parent.PolityId == s.PolityId && parent.Tile != s.Tile
+                    && Vector3D.Dot(vectors[s.Tile], vectors[parent.Tile]) >= rangeDot) target = parent.Tile;
+            }
+            if (target < 0)
+            {
+                double best = rangeDot;
+                foreach (var o in view.Settlements)
+                {
+                    if (o.Ended || o.PolityId != s.PolityId || o.Index == s.Index || o.Tile == s.Tile) continue;
+                    double dot = Vector3D.Dot(vectors[s.Tile], vectors[o.Tile]);
+                    if (dot > best) { best = dot; target = o.Tile; }
+                }
+            }
+            if (target < 0) continue;
+            List<int>? path = FindRoute(store, s.Tile, target);
+            if (path is null) continue;
+            if (!sink.TrySpendEmergence()) return;
+            int endA = Math.Min(s.Tile, target);
+            int endB = Math.Max(s.Tile, target);
+            for (int i = 0; i + 1 < path.Count; i++)
+                sink.Emit(new Proposal.AddRoad { EntityId = s.PolityId, TileA = path[i], TileB = path[i + 1], RouteA = endA, RouteB = endB });
+            sink.Event(HistoryEventKind.RoadBuilt, s.PolityId, s.Tile,
+                new[] { "road", "built", "spur", HistoryDemography.RouteTag(endA, endB) });
+            routes.Add((endA, endB));
+            linked.Add(s.Tile);
+            linked.Add(target);
         }
     }
 

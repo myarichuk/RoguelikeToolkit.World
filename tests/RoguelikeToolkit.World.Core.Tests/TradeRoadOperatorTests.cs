@@ -21,13 +21,31 @@ public class TradeRoadOperatorTests
             Assert.Equal(a.History.Roads.Count, b.History.Roads.Count);
             foreach (var road in a.History.Roads)
             {
-                Assert.Equal(-1, road.PolityId);
                 Assert.True(road.RouteA < road.RouteB);
                 Assert.InRange(road.FoundedTurn, 1, a.History.SimulatedTurns);
             }
             var routes = a.History.Roads.Select(r => (r.RouteA, r.RouteB)).Distinct().Count();
             Assert.Equal(routes, a.History.Events.Count(e => e.Kind == HistoryEventKind.RoadBuilt));
         }
+    }
+
+    [Fact]
+    public void Spurs_ConnectSettlementsOfOnePolity()
+    {
+        int spurs = 0;
+        for (int seed = 1; seed <= 6; seed++)
+        {
+            using var w = new WorldBuilder().WithSize(3).WithSeed(seed).WithUserEdits().WithHistory(c => c.HazardRate = 0).Build();
+            var standingTiles = w.History.Settlements.ToDictionary(s => s.TileIndex, s => s.PolityId);
+            foreach (var route in w.History.Roads.Where(r => r.PolityId >= 0).GroupBy(r => (r.RouteA, r.RouteB)))
+            {
+                spurs++;
+                int owner = route.First().PolityId;
+                Assert.Equal(owner, standingTiles[route.Key.RouteA]);
+                Assert.Equal(owner, standingTiles[route.Key.RouteB]);
+            }
+        }
+        Assert.True(spurs > 0);
     }
 
     [Fact]
