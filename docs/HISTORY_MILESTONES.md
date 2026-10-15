@@ -127,6 +127,22 @@ Exit: new types unit-tested; old pipeline unchanged; PublicAPI baseline updated 
 - PublicAPI: the repo already carries a large RS0016 warning backlog (not an error); the new public
   types are not added to `PublicAPI.Unshipped.txt` yet. Clear it in the M3 audit, or earlier if wanted.
 
+**M1.2 progress.**
+
+- Done (commit "M1.2"): `IHistoryOperator`, `IHistoryPostPass`, `Proposal` (nested typed proposals:
+  ReassignTile, AddRoad, SeverRoute, AddHolySite, AddGrudge, RepayGrudge, AddWindow, AppendEvent,
+  AdjustScalar) with `ProposalKind` (its numeric order is the commit order within an entity),
+  `TurnView` (copies polities/scalars/ownership/grudges/windows/roads/sites; events via index queries),
+  `ProposalSink` (emit, operator-scoped `Rng(entity, purpose)`, budgets), `HistoryDriver` (order 28,
+  not yet wired; `AddOperator` / `AddPostPass`, `RunTurn`, `RejectedProposals`). Commit sorts by
+  (entity, kind, operator name, sequence), rejects a second proposal on the same structural resource
+  (tile / road tile pair / route), appends events in canonical order so the per-turn cap is global, and
+  sums scalar deltas then clamps once.
+- Deferred to the ports that need them: AddPolity (Rebellion), set-overlay, mark-ended, grudge turn
+  stamps (War). Event `Cause` in a proposal must be an event from an earlier turn. `WithHistory`
+  registration and `StandardHistory` land in M1.5 with the switch-over.
+
+
 ### M1.2 Driver and operator contract (M)
 
 - **`IHistoryOperator`:** `Name`, `Order` (determines registration/evaluation order only; outcomes
