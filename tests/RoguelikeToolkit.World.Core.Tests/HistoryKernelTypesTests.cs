@@ -102,4 +102,46 @@ public class HistoryKernelTypesTests
         polity.EndedTurn = 5;
         Assert.False(polity.Alive);
     }
+
+    [Fact]
+    public void Pressure_IsAViewOverTheScalarStore_AndClamps()
+    {
+        var polity = new Polity { Id = 0 };
+        Assert.Equal(0.0, polity.Pressure);
+        polity.Pressure = 5.0;
+        Assert.Equal(HistoryDemography.MaxPressure, polity.Pressure);
+        Assert.Equal(HistoryDemography.MaxPressure, polity.GetScalar(ScalarRegistry.Pressure));
+        polity.Pressure = -1.0;
+        Assert.Equal(0.0, polity.Pressure);
+    }
+
+    [Fact]
+    public void ScalarRegistry_DeclaresDense_AndRejectsConflicts()
+    {
+        var reg = new ScalarRegistry();
+        var wealth = reg.Declare("wealth", 0, 10, 3);
+        Assert.Equal(1, wealth.Id);
+        Assert.Same(wealth, reg.Declare("wealth", 0, 10, 3));
+        Assert.Throws<InvalidOperationException>(() => reg.Declare("wealth", 0, 5, 3));
+        var polity = new Polity { Id = 0 };
+        Assert.Equal(3, polity.GetScalar(wealth.Id, reg));
+        polity.SetScalar(wealth.Id, 99, reg);
+        Assert.Equal(10, polity.GetScalar(wealth.Id, reg));
+        Assert.Equal(0.0, polity.Pressure);
+    }
+
+    [Fact]
+    public void EventIndexes_MatchLogScans_AfterAppendAndCompaction()
+    {
+        var history = new HistoryCatalog(1);
+        history.SyncBudgets(64, 5);
+        for (int t = 0; t < 12; t++)
+            history.AppendEvent(t % 2 == 0 ? HistoryEventKind.War : HistoryEventKind.Myth, t, t % 3, t % 4, Array.Empty<string>());
+        for (int tile = 0; tile < 4; tile++)
+            Assert.Equal(history.Events.Where(e => e.TileIndex == tile), history.EventsAtTile(tile));
+        for (int p = 0; p < 3; p++)
+            Assert.Equal(history.Events.Where(e => e.PolityId == p), history.EventsOf(p));
+        history.Reset();
+        Assert.Empty(history.EventsAtTile(0));
+    }
 }

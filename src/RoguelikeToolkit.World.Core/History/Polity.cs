@@ -30,7 +30,33 @@ public sealed class Polity
     /// Crowding pressure 0..<c>HistoryDemography.MaxPressure</c>: how far the population has pushed
     /// past comfortable density, plus war and road-cut bumps. Drives war, conquest and rebellion.
     /// </summary>
-    public double Pressure { get; set; }
+    public double Pressure
+    {
+        get => GetScalar(ScalarRegistry.Pressure);
+        set => SetScalar(ScalarRegistry.Pressure, value);
+    }
+
+    private double[] _scalars = Array.Empty<double>();
+
+    /// <summary>Reads a declared scalar; an unset one reads as its declared default.</summary>
+    public double GetScalar(int id, ScalarRegistry? registry = null)
+    {
+        if (id < _scalars.Length) return _scalars[id];
+        return (registry ?? ScalarRegistry.Builtin)[id].Default;
+    }
+
+    /// <summary>Writes a declared scalar, clamped to its declared range.</summary>
+    public void SetScalar(int id, double value, ScalarRegistry? registry = null)
+    {
+        var reg = registry ?? ScalarRegistry.Builtin;
+        if (id >= _scalars.Length)
+        {
+            int old = _scalars.Length;
+            Array.Resize(ref _scalars, Math.Max(id + 1, reg.Count));
+            for (int i = old; i < _scalars.Length; i++) _scalars[i] = reg[i].Default;
+        }
+        _scalars[id] = reg[id].Clamp(value);
+    }
     /// <summary>
     /// Winning culture key after a conquest, or empty when the polity renders through its founding
     /// <see cref="CultureKey"/>. Set by <c>ConquestStage</c>; the <c>Names</c> leaf resolves it late.

@@ -119,8 +119,11 @@ Exit: new types unit-tested; old pipeline unchanged; PublicAPI baseline updated 
   `Importance`, `Participants`; `Polity` gains `EndedTurn`, `EndCause`, `Parent`, `Alive`; compaction
   is by importance and protects cited causes; `HistoryCatalog.Strings` and internal `AppendLinked`.
   New fields are in-memory only until the M1.4 save; loads renumber ids in log order.
-- Remaining: declared-scalar store (`pressure` first, `Polity.Pressure` as a view) and the per-tile /
-  per-entity event indexes replacing the scans in `TryGetTileModifier` / `IsBattlefield`.
+- Done (commit "M1.1b"): `ScalarDef` / `ScalarRegistry` (`pressure` = id 0, clamped 0..`MaxPressure`);
+  `Polity.Pressure` is a view over `GetScalar` / `SetScalar` (unset reads as the declared default;
+  `HistoryCatalog.Scalars` holds declared extras); lazily built per-tile and per-polity event indexes
+  (`EventsAtTile`, `EventsOf`) invalidated on append, compaction and reset, now used by
+  `TryGetTileModifier` / `IsBattlefield`. M1.1 is complete; scalars are not persisted until M1.4.
 - PublicAPI: the repo already carries a large RS0016 warning backlog (not an error); the new public
   types are not added to `PublicAPI.Unshipped.txt` yet. Clear it in the M3 audit, or earlier if wanted.
 

@@ -57,6 +57,33 @@ public sealed class HistoryCatalog : IHistoricalContext
     /// <summary>Append-only event log (foundings, forks, losses); compacts beyond <see cref="MaxEvents"/>.</summary>
     public List<HistoryEvent> Events { get; } = new();
 
+    /// <summary>Declared polity scalars (pressure is built in).</summary>
+    public ScalarRegistry Scalars { get; } = new();
+
+    private int _indexVersion = -1, _eventVersion, _indexedCount = -1;
+    private readonly Dictionary<int, List<HistoryEvent>> _byTile = new();
+    private readonly Dictionary<int, List<HistoryEvent>> _byPolity = new();
+
+    private void EnsureEventIndex()
+    {
+        if (_indexVersion == _eventVersion && _indexedCount == Events.Count) return;
+        _byTile.Clear();
+        _byPolity.Clear();
+        foreach (var e in Events)
+        {
+            Index(_byTile, e.TileIndex, e);
+            Index(_byPolity, e.PolityId, e);
+        }
+        _indexVersion = _eventVersion;
+        _indexedCount = Events.Count;
+    }
+
+    private static void Index(Dictionary<int, List<HistoryEvent>> map, int key, HistoryEvent e)
+    {
+        if (!map.TryGetValue(key, out var list)) map[key] = list = new List<HistoryEvent>();
+        list.Add(e);
+    }
+
     /// <summary>Per-turn event budget synced from the context (default 64).</summary>
     public int MaxEventsPerTurn { get; internal set; } = 64;
 
@@ -143,13 +170,18 @@ public sealed class HistoryCatalog : IHistoricalContext
         return list;
     }
 
+    /// <summary>Every logged event at <paramref name="tileIndex"/>, oldest first (indexed, not a log scan).</summary>
+    public IReadOnlyList<HistoryEvent> EventsAtTile(int tileIndex)
+    {
+        EnsureEventIndex();
+        return _byTile.TryGetValue(tileIndex, out var list) ? list : Array.Empty<HistoryEvent>();
+    }
+
     /// <summary>Every logged event of <paramref name="polityId"/>, oldest first.</summary>
     public IReadOnlyList<HistoryEvent> EventsOf(int polityId)
     {
-        var list = new List<HistoryEvent>();
-        foreach (var e in Events)
-            if (e.PolityId == polityId) list.Add(e);
-        return list;
+        EnsureEventIndex();
+        return _byPolity.TryGetValue(polityId, out var list) ? list : Array.Empty<HistoryEvent>();
     }
 
     /// <summary>
@@ -266,6 +298,7 @@ public sealed class HistoryCatalog : IHistoricalContext
     {
         entry.Id = _nextEventId++;
         Events.Add(entry);
+        _eventVersion++;
     }
 
     /// <summary>
@@ -293,6 +326,7 @@ public sealed class HistoryCatalog : IHistoricalContext
                 }
             }
             Events.RemoveAt(victim >= 0 ? victim : Math.Max(fallback, 0));
+            _eventVersion++;
             removed = true;
         }
         if (removed) Compactions++;
@@ -311,6 +345,7 @@ public sealed class HistoryCatalog : IHistoricalContext
         PolitiesFormed = false;
         Ownership = Array.Empty<int>();
         Events.Clear();
+        _eventVersion++;
         _nextEventId = 0;
         Settlements.Clear();
         Sites.Clear();
@@ -801,9 +836,8 @@ public sealed class HistoryCatalog : IHistoricalContext
     /// </summary>
     public bool TryGetTileModifier(int worldTileIndex, out TileHistoryModifier modifier)
     {
-        foreach (var entry in Events)
+        foreach (var entry in EventsAtTile(worldTileIndex))
         {
-            if (entry.TileIndex != worldTileIndex) continue;
             if (entry.Kind == HistoryEventKind.War || entry.Kind == HistoryEventKind.Rebellion)
             {
                 modifier = new TileHistoryModifier { DangerDelta = WarDangerDelta, HabitabilityDelta = 0f };
@@ -891,9 +925,8 @@ public sealed class HistoryCatalog : IHistoricalContext
     {
         battleTurn = 0;
         bool found = false;
-        foreach (var entry in Events)
+        foreach (var entry in EventsAtTile(tileIndex))
         {
-            if (entry.TileIndex != tileIndex) continue;
             if (entry.Kind != HistoryEventKind.War && entry.Kind != HistoryEventKind.Rebellion) continue;
             if (!found || entry.Turn < battleTurn)
             {
