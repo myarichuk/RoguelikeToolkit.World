@@ -613,3 +613,7 @@ Diagnostic `HistoryCoverageTests.TuningReport_CaptureWhenRequested` (`HISTORY_TU
 - **Venice (sack):** a sacked city's survivors found a refuge in the same polity on a different tile; the city stays standing; people conserved.
 
 Not covered here by design: `polity.split` into successors, the faith myth about the fall, merchant-republic form and trade node. Those are M3 (successors/forms), not M2 (people and places).
+
+### M2 exit: determinism, round-trip, caps
+
+`HistoryExitChecksTests` runs full standard histories at HazardRate 3: same seed gives identical `ToBytes` (3 seeds), different seeds differ, save/load is byte-for-byte with scars, ended settlements, refuges and the displaced pool intact, and the event log stays within `MaxEvents` (per-turn check allows 8 over `MaxEventsPerTurn` for priority appends). The `V4_RoundTripsKernelState_ByteForByte` failure seen mid-M2 was stale: it passes at HEAD.
