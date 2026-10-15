@@ -83,10 +83,20 @@ public sealed class HazardOperator : IHistoryOperator
                     RadiusDegrees = def.RadiusDegrees,
                     Casualty = def.Casualty,
                     Displacement = def.Displacement,
+                    Scar = ScarOf(def.Kind),
                 });
             }
         }
     }
+
+    private static string? ScarOf(string kind) => kind switch
+    {
+        HazardMaps.Earthquake => HistoryScar.Fissure,
+        HazardMaps.Volcano => HistoryScar.Crater,
+        HazardMaps.Drought => HistoryScar.ScorchedField,
+        Plague => HistoryScar.PlaguePit,
+        _ => null,
+    };
 
     /// <summary>Plague odds: bigger tiers are denser, and a polity with many open roads spreads contagion faster.</summary>
     private static double PlagueHazard(TurnView view, TurnView.SettlementState s)

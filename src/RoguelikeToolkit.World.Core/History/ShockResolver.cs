@@ -16,6 +16,9 @@ public static class ShockResolver
     /// <summary>Intensity at which a struck settlement is abandoned instead of merely hurt.</summary>
     public const double AbandonIntensity = 0.8;
 
+    /// <summary>Intensity at which a struck settlement also takes the shock's scar, if it has one.</summary>
+    public const double ScarIntensity = 0.5;
+
     /// <summary>Resolves <paramref name="shock"/> against <paramref name="view"/>'s standing settlements; returns how many were struck.</summary>
     public static int Resolve(TurnView view, ProposalSink sink, Shock shock)
     {
@@ -58,8 +61,11 @@ public static class ShockResolver
             if (intensity >= AbandonIntensity)
             {
                 sink.Emit(new Proposal.EndSettlement { EntityId = s.PolityId, Settlement = s.Index, EndCause = shock.Kind, LostShare = casualty });
+                EmitScar(view, sink, s, HistoryScar.Ruin, shock.Kind);
                 continue;
             }
+            if (intensity >= ScarIntensity && !string.IsNullOrWhiteSpace(shock.Scar))
+                EmitScar(view, sink, s, shock.Scar!, shock.Kind);
             if (displaced > 0)
                 sink.Emit(new Proposal.ReleasePopulation { EntityId = s.PolityId, Settlement = s.Index, Share = displaced });
             double remaining = 1 - displaced;
@@ -77,6 +83,16 @@ public static class ShockResolver
         sink.Event(HistoryEventKind.Shock, shock.PolityId >= 0 ? shock.PolityId : ownerPolity, shock.Tile, tags);
         return struck;
     }
+
+    private static void EmitScar(TurnView view, ProposalSink sink, TurnView.SettlementState s, string kind, string cause)
+        => sink.Emit(new Proposal.AddScar
+        {
+            EntityId = s.PolityId,
+            Tile = s.Tile,
+            Position = view.Map.DataStore.GetGeoCoord(s.Tile),
+            ScarKind = kind,
+            Cause = cause,
+        });
 
     /// <summary>How exposed a settlement is: bigger tiers and fortified roles shrug harm off, hamlets, refuges and crowded places feel more of it.</summary>
     private static double Defence(TurnView view, TurnView.SettlementState s)

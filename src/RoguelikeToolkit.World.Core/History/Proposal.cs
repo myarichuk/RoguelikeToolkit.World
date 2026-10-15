@@ -137,6 +137,22 @@ public abstract class Proposal
         internal override long? ConflictKey => Tile;
     }
 
+    /// <summary>Leaves a <see cref="HistoryScar"/> of <see cref="ScarKind"/> on <see cref="Tile"/> for polity <see cref="Proposal.EntityId"/>; a tile that already carries that kind is left alone.</summary>
+    public sealed class AddScar : Proposal
+    {
+        /// <inheritdoc />
+        public override ProposalKind Kind => ProposalKind.AddScar;
+        /// <summary>Tile the scar sits on.</summary>
+        public int Tile { get; init; }
+        /// <summary>Geographic position of the tile.</summary>
+        public GeoCoord Position { get; init; }
+        /// <summary>What is left behind (<see cref="HistoryScar.Ruin"/>, <see cref="HistoryScar.Crater"/>...); must be non-blank.</summary>
+        public string ScarKind { get; init; } = HistoryScar.Ruin;
+        /// <summary>The shock kind or end cause behind it.</summary>
+        public string Cause { get; init; } = string.Empty;
+        internal override long? ConflictKey => Tile;
+    }
+
     /// <summary>Sets polity <see cref="Proposal.EntityId"/>'s culture overlay to <see cref="Culture"/> (empty clears it).</summary>
     public sealed class SetOverlay : Proposal
     {

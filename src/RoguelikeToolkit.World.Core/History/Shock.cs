@@ -30,6 +30,9 @@ public sealed class Shock
     /// <summary>Share of a struck settlement's people who flee into the displaced pool at full intensity.</summary>
     public double Displacement { get; init; } = 0.4;
 
+    /// <summary>Scar kind (<see cref="HistoryScar.Crater"/>...) left on a settlement hit at <see cref="ShockResolver.ScarIntensity"/> or more, or null for none. An abandoned settlement always leaves a <see cref="HistoryScar.Ruin"/>.</summary>
+    public string? Scar { get; init; }
+
     /// <summary>Extra tags carried on the shock event (<c>magical</c>, <c>divine</c>...).</summary>
     public IReadOnlyList<string> Tags { get; init; } = Array.Empty<string>();
 }

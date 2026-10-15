@@ -549,3 +549,11 @@ people vanish (no producer ends settlements yet).
 
 - `HazardOperator` now carries a hazard function per kind. Two state-driven kinds join the map-driven five: **famine** (return period 8, radius 2 degrees, casualty 0.30, displacement 0.40; hazard = settlement pressure above 1.0, clamped to 1) and **plague** (return period 30, radius 6, casualty 0.40, displacement 0.10; hazard = tier density hamlet 0.2 / village 0.4 / town 0.7 / city 1.0, scaled 0.5..1.0 by the polity's open roads up to 8). Route-borne spreading is deferred to M2.8 (roads between settlements). `HazardOperator.Kinds` lists all seven.
 - Re-baseline (25 worlds): SettlementFounded 436 -> 462, SettlementEnded 35 -> 50, Shock events 172 -> 241 (about 10 per world), War 758, Conquest 74, sites 489.
+
+### M2.7 progress (scars)
+
+- `HistoryScar` {Tile, Polity, Turn, Kind, Cause, Position, Active} in `HistoryCatalog.Scars` (append-only, schema v8, tile-edit refresh like sites). Kinds: `ruin`, `crater`, `plague_pit`, `scorched_field`, `fissure`; plugins may use their own keys.
+- `Proposal.AddScar` (kind 22, conflict per tile; a tile that already carries the same kind is left alone).
+- Producers in `ShockResolver`: an abandoned settlement always leaves a `ruin` (cause = shock kind); a settlement hit at `ScarIntensity` 0.5 or more takes the shock's `Shock.Scar`. `HazardOperator` maps earthquake -> fissure, volcano -> crater, drought -> scorched_field, plague -> plague_pit; the rest leave none.
+- Projection: `GetSitesNear` returns scars as `Ruin`-kind sites (`hist-scar-{tile}-{kind}`, metadata `scar`, `cause`, `polity`, `founded`); `TryGetTileModifier` adds `ScarDangerDelta` 1 and `ScarHabitabilityDelta` -0.25 for non-ruin scars (ruins are neutral).
+- Tests: `HistoryScarTests` (4). Battlefield scars stay on the existing War/AddSite path; folding them in is left for M2.9.

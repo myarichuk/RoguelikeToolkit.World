@@ -17,7 +17,7 @@ namespace RoguelikeToolkit.World.Core.History;
 public sealed class HistoryCatalog : IHistoricalContext
 {
     /// <summary>Persistence schema version, written first by <see cref="Save"/> and checked by <see cref="Load"/>: 1 is the P2a shape (capitals only), 2 adds polity demography and road routes, 3 adds P2c treaty/faith state (grudges, windows, faiths, holy sites, villains, heirs), 4 adds the generic-kernel state (string table, declared scalars and per-polity scalar values, polity lifecycle, event ids, causes, importance and participants, grudge turn stamps).</summary>
-    public const int SchemaVersion = 7;
+    public const int SchemaVersion = 8;
 
     /// <summary>Planet radius in kilometres, matching <c>World.EarthRadiusKm</c> (kept literal: the root slice is above History).</summary>
     private const double EarthRadiusKm = 6371.0;
@@ -129,6 +129,9 @@ public sealed class HistoryCatalog : IHistoricalContext
 
     /// <summary>Raised holy sites; project as shrine-kind game sites while active.</summary>
     public List<HistoryHolySite> HolySites { get; } = new();
+
+    /// <summary>Lasting marks left by shocks (ruins, craters, plague pits); append-only.</summary>
+    public List<HistoryScar> Scars { get; } = new();
 
     /// <summary>Risen long-life villains, bounded by <see cref="HistoryContext.MaxVillains"/>.</summary>
     public List<VillainRecord> Villains { get; } = new();
@@ -362,6 +365,7 @@ public sealed class HistoryCatalog : IHistoricalContext
         Treaties.Clear();
         Faiths.Clear();
         HolySites.Clear();
+        Scars.Clear();
         Villains.Clear();
         Stale = false;
         ForkedAtTurn = null;
@@ -432,6 +436,11 @@ public sealed class HistoryCatalog : IHistoricalContext
         {
             site.Active = (uint)site.TileIndex < (uint)tileCount
                 && (!hasElev || elev[site.TileIndex].Height >= HistoryTerritory.LandThreshold);
+        }
+        foreach (var scar in Scars)
+        {
+            scar.Active = (uint)scar.TileIndex < (uint)tileCount
+                && (!hasElev || elev[scar.TileIndex].Height >= HistoryTerritory.LandThreshold);
         }
         foreach (var holy in HolySites)
         {
@@ -634,6 +643,18 @@ public sealed class HistoryCatalog : IHistoricalContext
             writer.Write(holy.Position.Latitude);
             writer.Write(holy.Position.Longitude);
             writer.Write(holy.Active);
+        }
+        writer.Write(Scars.Count);
+        foreach (var scar in Scars)
+        {
+            writer.Write(scar.TileIndex);
+            writer.Write(scar.PolityId);
+            writer.Write(scar.FoundedTurn);
+            writer.Write(scar.Kind);
+            writer.Write(scar.Cause);
+            writer.Write(scar.Position.Latitude);
+            writer.Write(scar.Position.Longitude);
+            writer.Write(scar.Active);
         }
         writer.Write(Villains.Count);
         foreach (var villain in Villains)
@@ -916,6 +937,23 @@ public sealed class HistoryCatalog : IHistoricalContext
                         Active = reader.ReadBoolean(),
                     });
                 }
+                if (version >= 8)
+                {
+                    int scars = CheckedCount(reader.ReadInt32());
+                    for (int i = 0; i < scars; i++)
+                    {
+                        catalog.Scars.Add(new HistoryScar
+                        {
+                            TileIndex = reader.ReadInt32(),
+                            PolityId = reader.ReadInt32(),
+                            FoundedTurn = reader.ReadInt32(),
+                            Kind = reader.ReadString(),
+                            Cause = reader.ReadString(),
+                            Position = new GeoCoord(reader.ReadDouble(), reader.ReadDouble()),
+                            Active = reader.ReadBoolean(),
+                        });
+                    }
+                }
                 int villains = CheckedCount(reader.ReadInt32());
                 for (int i = 0; i < villains; i++)
                 {
@@ -978,6 +1016,7 @@ public sealed class HistoryCatalog : IHistoricalContext
         foreach (var t in Treaties) { Check(t.A, "treaty", false); Check(t.B, "treaty", false); }
         foreach (var f in Faiths) Check(f.PolityId, "faith", false);
         foreach (var h in HolySites) Check(h.PolityId, "holy site", true);
+        foreach (var sc in Scars) Check(sc.PolityId, "scar", true);
         foreach (var v in Villains) Check(v.PolityId, "villain", false);
         foreach (var p in Polities)
         {
@@ -1025,12 +1064,30 @@ public sealed class HistoryCatalog : IHistoricalContext
                 return true;
             }
         }
+        foreach (var scar in Scars)
+        {
+            if (scar.Active && scar.TileIndex == worldTileIndex)
+            {
+                modifier = new TileHistoryModifier { DangerDelta = ScarDanger(scar.Kind), HabitabilityDelta = ScarHabitability(scar.Kind) };
+                return true;
+            }
+        }
         modifier = default;
         return false;
     }
 
     /// <summary>Danger added to war-torn tiles (see <see cref="TryGetTileModifier"/>).</summary>
     public const float WarDangerDelta = 2f;
+
+    /// <summary>Danger added on scarred tiles other than plain ruins (see <see cref="TryGetTileModifier"/>).</summary>
+    public const float ScarDangerDelta = 1f;
+
+    /// <summary>Habitability removed on scarred tiles other than plain ruins (see <see cref="TryGetTileModifier"/>).</summary>
+    public const float ScarHabitabilityDelta = -0.25f;
+
+    private static float ScarDanger(string kind) => kind == HistoryScar.Ruin ? 0f : ScarDangerDelta;
+
+    private static float ScarHabitability(string kind) => kind == HistoryScar.Ruin ? 0f : ScarHabitabilityDelta;
 
     /// <summary>Danger removed on sheltered holy tiles (see <see cref="TryGetTileModifier"/>).</summary>
     public const float HolyDangerDelta = -1f;
@@ -1040,7 +1097,8 @@ public sealed class HistoryCatalog : IHistoricalContext
     /// first (ties by tile index). Capitals project as <c>Settlement</c>-kind sites with zero deltas;
     /// war and rebellion battlefields (from the event log) project as <c>Battlefield</c>-kind sites
     /// carrying <see cref="WarDangerDelta"/>; raised holy sites project as <c>Shrine</c>-kind sites
-    /// carrying <see cref="HolyDangerDelta"/> (a desecrated holy tile projects as a battlefield).
+    /// carrying <see cref="HolyDangerDelta"/> (a desecrated holy tile projects as a battlefield); scars project as
+    /// <c>Ruin</c>-kind sites with a <c>scar</c> metadata key (non-ruin scars add <see cref="ScarDangerDelta"/>).
     /// </summary>
     public IEnumerable<HistoricSite> GetSitesNear(GeoCoord position, double radiusKm)
     {
@@ -1085,6 +1143,26 @@ public sealed class HistoryCatalog : IHistoricalContext
             projected.Metadata["holy"] = "true";
             if (battlefield) projected.Metadata["battle"] = battleTurn.ToString();
             matches.Add((distance, holy.TileIndex, projected));
+        }
+        foreach (var scar in Scars)
+        {
+            if (!scar.Active) continue;
+            double distance = DistanceKm(position, scar.Position);
+            if (double.IsNaN(distance) || distance > radiusKm) continue;
+            var projected = new HistoricSite
+            {
+                Id = $"hist-scar-{scar.TileIndex}-{scar.Kind}",
+                Kind = HistoricSiteKind.Ruin,
+                TileIndex = scar.TileIndex,
+                Position = scar.Position,
+                DangerDelta = ScarDanger(scar.Kind),
+                HabitabilityDelta = ScarHabitability(scar.Kind),
+            };
+            projected.Metadata["polity"] = scar.PolityId.ToString();
+            projected.Metadata["founded"] = scar.FoundedTurn.ToString();
+            projected.Metadata["scar"] = scar.Kind;
+            if (scar.Cause.Length > 0) projected.Metadata["cause"] = scar.Cause;
+            matches.Add((distance, scar.TileIndex, projected));
         }
         matches.Sort((a, b) =>
         {

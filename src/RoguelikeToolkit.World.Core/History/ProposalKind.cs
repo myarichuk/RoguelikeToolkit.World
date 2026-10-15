@@ -50,4 +50,6 @@ public enum ProposalKind
     AbsorbDisplaced = 20,
     /// <summary>People of a standing settlement die (the only other non-conserving sink besides pool decay).</summary>
     KillPopulation = 21,
+    /// <summary>Leave a scar (ruin, crater, plague pit...) on a tile.</summary>
+    AddScar = 22,
 }
