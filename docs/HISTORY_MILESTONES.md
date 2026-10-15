@@ -413,3 +413,5 @@ are weighed turn by turn instead of end-state; wars are the largest shift and wo
 all other kinds identical. Remaining: size-7 perf check against the 5 s budget, `HISTORY_PLAN.md` P2 notes, compat-rule validation and
 pinned-capital handling (move to M2 unless trivial), `StageOrder` constants stay (operators use them as `Order`).
 Perf (Debug build, size 7, seed 42, one-off timing): full build 13.9 s vs 10.7 s without history, so the history band costs about 3.2 s, inside the 5 s budget (Release numbers via `LargeHistoryBenchmarks` still to record).
+
+**Release perf (M1.5):** `LargeHistoryBenchmarks.History_Size7` = 400 ms mean (±87 ms CI), 147.6 MB allocated, against the 5 s budget.
