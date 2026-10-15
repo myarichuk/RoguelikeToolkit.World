@@ -9,6 +9,7 @@ public static class StandardHistory
         ArgumentNullException.ThrowIfNull(driver);
         return driver
             .AddOperator(new PopulationOperator())
+            .AddOperator(new SettleOperator())
             .AddOperator(new TradeRoadOperator())
             .AddOperator(new HolySiteOperator())
             .AddOperator(new KhanOperator())

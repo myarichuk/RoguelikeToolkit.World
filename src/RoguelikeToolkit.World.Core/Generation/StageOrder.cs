@@ -47,6 +47,9 @@ public static class StageOrder
     /// <summary>People and time: logistic growth, pressure, succession and trait-drift ticks.</summary>
     public const int Population = 32;
 
+    /// <summary>Settle operator: colonization into owned frontier land, after the population step.</summary>
+    public const int Settle = 34;
+
     /// <summary>Holy-site raising: high-surplus owned tiles become shrines with sheltering auras.</summary>
     public const int HolySite = 44;
 

@@ -14,10 +14,13 @@ public class HistorySettlementLifecycleTests
         {
             Assert.False(s.Ended);
             Assert.Equal(-1, s.EndedTurn);
-            Assert.Equal(SettlementRole.Capital, s.Role);
-            Assert.Equal(SettlementTier.City, s.Tier);
-            Assert.Equal(-1, s.Parent);
+            if (s.Role == SettlementRole.Capital)
+            {
+                Assert.Equal(SettlementTier.City, s.Tier);
+                Assert.Equal(-1, s.Parent);
+            }
         }
+        Assert.Equal(w.History.Polities.Count, w.History.Settlements.Count(s => s.Role == SettlementRole.Capital));
     }
 
     [Fact]

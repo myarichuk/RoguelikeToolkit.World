@@ -139,4 +139,15 @@ public class HistorySettlementProposalTests
         Assert.Equal(new[] { w.History.Polities.Count }, seen);
         Assert.Equal(6, new HistoryContext().MaxSettlementsPerPolity);
     }
+
+    [Fact]
+    public void ReassignedTile_MovesItsStandingSettlementToTheNewOwner()
+    {
+        using var w = Bare();
+        int tile = OwnedNonCapitalTile(w, 0);
+        Run(w, new HistoryContext(), _ => new Proposal[] { new Proposal.AddSettlement { EntityId = 0, Tile = tile } });
+        int index = w.History.Settlements.Count - 1;
+        Run(w, new HistoryContext(), _ => new Proposal[] { new Proposal.ReassignTile { EntityId = 1, Tile = tile } }, turn: 2);
+        Assert.Equal(1, w.History.Settlements[index].PolityId);
+    }
 }

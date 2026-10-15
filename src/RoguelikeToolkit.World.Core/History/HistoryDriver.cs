@@ -91,13 +91,14 @@ public sealed class HistoryDriver : HistoryPluginBase
         if (AddPolities(map, history, context, turn, proposals)) proposals.RemoveAll(static p => p is Proposal.AddPolity);
         var claimed = new HashSet<(ProposalKind, long)>();
         var deltas = new SortedDictionary<(int Polity, int Scalar), double>();
+        bool reassigned = false;
         foreach (var p in proposals)
         {
             if (p.ConflictKey is long key && !claimed.Add((p.Kind, key))) { RejectedProposals++; continue; }
             switch (p)
             {
                 case Proposal.ReassignTile r:
-                    if ((uint)r.Tile < (uint)history.Ownership.Length) history.Ownership[r.Tile] = r.EntityId;
+                    if ((uint)r.Tile < (uint)history.Ownership.Length) { history.Ownership[r.Tile] = r.EntityId; reassigned = true; }
                     break;
                 case Proposal.AddRoad r:
                     history.Roads.Add(new HistoryRoad { TileA = r.TileA, TileB = r.TileB, PolityId = r.EntityId, RouteA = r.RouteA, RouteB = r.RouteB, FoundedTurn = turn });
@@ -163,11 +164,23 @@ public sealed class HistoryDriver : HistoryPluginBase
                     break;
             }
         }
+        if (reassigned) SyncSettlementOwners(history);
         foreach (var ((polityId, scalarId), delta) in deltas)
         {
             var polity = history.Polities.Find(p => p.Id == polityId);
             if (polity == null) continue;
             polity.SetScalar(scalarId, polity.GetScalar(scalarId, history.Scalars) + delta, history.Scalars);
+        }
+    }
+
+    /// <summary>Standing settlements follow the owner of the tile they stand on (until conquest moves them on purpose, M2.9).</summary>
+    private static void SyncSettlementOwners(HistoryCatalog history)
+    {
+        foreach (var settlement in history.Settlements)
+        {
+            if (settlement.Ended) continue;
+            int owner = history.OwnerOf(settlement.TileIndex);
+            if (owner >= 0) settlement.PolityId = owner;
         }
     }
 

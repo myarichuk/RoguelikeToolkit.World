@@ -452,3 +452,26 @@ Slices, each its own commit:
 
 Open choices, defaulted unless you object: `MaxSettlementsPerPolity = 6`, spacing 3 hops, pressure
 threshold 0.6, relief 0.15 per founding; capitals get no founding event.
+
+### M2.3 progress (settle operator, colonization)
+
+- **A** (08bf93c): capital settlements are created with their polity (formation step and `AddPolity`
+  commit); `CityHistoryProject` projects only capital sites. Rebel capitals now carry their real
+  founded turn. Also fixed the netstandard2.1 build (`Enum.IsDefined` overload from M2.1).
+- **B** (a981af0): `AddSettlement` (16) and `EndSettlement` (17) proposals; the commit validates
+  (owned tile, no standing settlement on it, per-polity cap `MaxSettlementsPerPolity` = 6, valid
+  parent) and appends `SettlementFounded` (17) / `SettlementEnded` (18) itself. `TurnView.Settlements`.
+- **C**: `SettleOperator` (order 34, `StageOrder.Settle`), registered in `StandardHistory`. A polity at
+  pressure >= 1.0 and under the cap founds one hamlet colony per turn on an owned tile picked
+  (RNG among the top 3) from `CitySiteScorer` candidates at least 4 degrees from any standing settlement;
+  parent = nearest own settlement; sheds 0.4 pressure; one operator emergence per founding. Candidates
+  come from rivers/water catalogs rebuilt via `HydrologyStage.PopulateCatalogs` once per run (turn 1).
+  Standing settlements follow tile ownership on `ReassignTile` (stopgap until M2.9).
+- **Tuning note:** the first cut (threshold 0.6, relief 0.15) filled every polity to the cap; pressure
+  in default worlds is driven mostly by war bumps (population alone peaks under 1.0).
+- **Corpus re-baseline** (25 worlds, sizes 3-4, before -> after): SettlementFounded 0 -> 531, War 969 -> 836,
+  Conquest 88 -> 77, Desecration 56 -> 52, sites 509 -> 495. Colonization sheds pressure, which partly
+  undoes the M1.5 war-count jump (587 -> 969). Core 776 green; MapEditor.Engine 48, Presentation 103,
+  Scripting.Jint 27 green. Release perf not re-measured yet (re-check at M2 close).
+- Not done: other founding sources (economic node, military post, religious, nomad), EndSettlement
+  producers, tier growth, the displaced pool (M2.4). `CitiesOf` now returns colonies too.

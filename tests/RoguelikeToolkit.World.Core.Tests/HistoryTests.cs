@@ -63,7 +63,7 @@ public class HistoryTests
         Assert.NotEmpty(history.Polities);
         int foundedAtZero = history.Polities.Count(p => p.FoundedTurn == 0);
         Assert.Equal(foundedAtZero, history.Events.Count(e => e.Kind == HistoryEventKind.Founding));
-        Assert.Equal(history.Polities.Count, history.Settlements.Count);
+        Assert.Equal(history.Polities.Count, history.Settlements.Count(s => s.Role == SettlementRole.Capital));
         Assert.True(history.Sites.Count >= history.Polities.Count);
         Assert.Equal(29, history.SimulatedTurns);
         foreach (var polity in history.Polities)
@@ -84,7 +84,7 @@ public class HistoryTests
                     && e.PolityId == polity.Id && e.Turn == polity.FoundedTurn);
                 Assert.Equal(polity.CapitalTile, rebellion.TileIndex);
             }
-            Assert.Single(history.CitiesOf(polity.Id));
+            Assert.Single(history.CitiesOf(polity.Id), c => c.Role == SettlementRole.Capital);
         }
     }
 
