@@ -29,6 +29,8 @@ public sealed class HistorySettlement
     public SettlementRole Role { get; set; } = SettlementRole.Capital;
     /// <summary>Index into <see cref="HistoryCatalog.Settlements"/> of the settlement this one was founded from, or -1.</summary>
     public int Parent { get; set; } = -1;
+    /// <summary>People living here, in the same capacity units as <see cref="Polity.Population"/>; a standing polity's population is the sum over its standing settlements.</summary>
+    public double Population { get; set; }
     /// <summary>True once <see cref="EndedTurn"/> is set; a historical fact, unlike the physical <see cref="Active"/> flag.</summary>
     public bool Ended => EndedTurn >= 0;
 }

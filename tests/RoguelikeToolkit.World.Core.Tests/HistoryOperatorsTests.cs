@@ -214,8 +214,9 @@ public class HistoryOperatorsTests
     [Fact]
     public void StarvedWar_LeavesRoadBuildingUntouched()
     {
-        using var full = Build();
-        using var starved = Build(configure: ctx => ctx.MaxDecisionsPerTurn = 0);
+        // Colonies split population by catchment, and wars drive colonization, so pin it off to compare demography.
+        using var full = Build(configure: ctx => ctx.MaxSettlementsPerPolity = 1);
+        using var starved = Build(configure: ctx => { ctx.MaxDecisionsPerTurn = 0; ctx.MaxSettlementsPerPolity = 1; });
         Assert.DoesNotContain(starved.History.Events, e => e.Kind == HistoryEventKind.War);
         Assert.DoesNotContain(starved.History.Events, e => e.Kind == HistoryEventKind.Conquest);
         var fullBuilt = full.History.Events

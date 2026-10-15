@@ -17,7 +17,7 @@ namespace RoguelikeToolkit.World.Core.History;
 public sealed class HistoryCatalog : IHistoricalContext
 {
     /// <summary>Persistence schema version, written first by <see cref="Save"/> and checked by <see cref="Load"/>: 1 is the P2a shape (capitals only), 2 adds polity demography and road routes, 3 adds P2c treaty/faith state (grudges, windows, faiths, holy sites, villains, heirs), 4 adds the generic-kernel state (string table, declared scalars and per-polity scalar values, polity lifecycle, event ids, causes, importance and participants, grudge turn stamps).</summary>
-    public const int SchemaVersion = 5;
+    public const int SchemaVersion = 6;
 
     /// <summary>Planet radius in kilometres, matching <c>World.EarthRadiusKm</c> (kept literal: the root slice is above History).</summary>
     private const double EarthRadiusKm = 6371.0;
@@ -556,6 +556,7 @@ public sealed class HistoryCatalog : IHistoricalContext
             writer.Write((byte)settlement.Tier);
             writer.Write((byte)settlement.Role);
             writer.Write(settlement.Parent);
+            writer.Write(settlement.Population);
         }
         writer.Write(Sites.Count);
         foreach (var site in Sites)
@@ -801,6 +802,7 @@ public sealed class HistoryCatalog : IHistoricalContext
                     settlement.Role = (SettlementRole)reader.ReadByte();
                     settlement.Parent = reader.ReadInt32();
                 }
+                if (version >= 6) settlement.Population = reader.ReadDouble();
                 catalog.Settlements.Add(settlement);
             }
             int sites = CheckedCount(reader.ReadInt32());

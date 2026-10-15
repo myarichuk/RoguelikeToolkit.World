@@ -475,3 +475,32 @@ threshold 0.6, relief 0.15 per founding; capitals get no founding event.
   Scripting.Jint 27 green. Release perf not re-measured yet (re-check at M2 close).
 - Not done: other founding sources (economic node, military post, religious, nomad), EndSettlement
   producers, tier growth, the displaced pool (M2.4). `CitiesOf` now returns colonies too.
+
+## M2.4 design (stored settlement population, displaced pool)
+
+Decision (per-settlement population vs per-polity only): **stored per-settlement population**, so
+local effects (famine, plague, sack) act on one settlement and the macro picture is their sum.
+`Polity.Population` stays as the polity's stock but is always the sum over its standing settlements
+(re-summed at commit for every polity a proposal touched); a polity with no standing settlement
+keeps the legacy single-stock path.
+
+- **A (this slice):** `HistorySettlement.Population` (schema v6). `HistoryDemography.SettlementCapacities`
+  gives each standing settlement its catchment capacity (a polity with one settlement gets the whole
+  polity capacity; with several, each owned tile counts toward the nearest standing settlement, so
+  the settlements sum to the polity). `PopulationOperator` steps each settlement logistically against
+  its own capacity and emits `GrowSettlement` (kind 18, a delta so it commutes with colony seeding).
+  A colony is seeded at commit with `ColonistShare` (15%) of its parent's population (moved, not created).
+  Pressure stays polity-level (`PressureOf(sum pop, polity capacity)`, which is the capacity-weighted
+  mean of the settlement pressures); a max over settlements was tried and cut colonization and wars
+  too far (War 836 -> 656). Per-settlement pressure returns with the shock resolver (M2.5).
+- **B:** the displaced pool ledger (`ReleasePopulation`, `AbsorbDisplaced`, persisted), `EndSettlement`
+  auto-releases the settlement's people, pool decay (explicit loss sink).
+- **C:** refugee settling as a `SettleOperator` source (Refuge role, defensible/coastal candidates).
+
+### M2.4A progress
+
+Corpus re-baseline (25 worlds, before -> after): SettlementFounded 531 -> 407, War 836 -> 759,
+Conquest 77 -> 76, sites 495 -> 491. Colonies now split capacity and population, so wars no
+longer leave populations untouched: `StarvedWar_LeavesRoadBuildingUntouched` pins
+`MaxSettlementsPerPolity = 1` to compare demography. Known gap until 2.4B: an ended settlement's
+people vanish (no producer ends settlements yet).

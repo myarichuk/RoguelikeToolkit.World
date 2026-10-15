@@ -28,7 +28,7 @@ public sealed class TurnView
     public readonly record struct HolySiteState(int Tile, int PolityId, GeoCoord Position, bool Active);
 
     /// <summary>One settlement at the snapshot; <see cref="Index"/> is its position in <see cref="HistoryCatalog.Settlements"/>.</summary>
-    public readonly record struct SettlementState(int Index, int Tile, int PolityId, SettlementTier Tier, SettlementRole Role, int Parent, int FoundedTurn, bool Ended);
+    public readonly record struct SettlementState(int Index, int Tile, int PolityId, SettlementTier Tier, SettlementRole Role, int Parent, int FoundedTurn, bool Ended, double Population = 0);
 
     private readonly HashSet<int> _siteTiles = new();
 
@@ -64,7 +64,7 @@ public sealed class TurnView
         for (int i = 0; i < history.Settlements.Count; i++)
         {
             var s = history.Settlements[i];
-            settlements.Add(new SettlementState(i, s.TileIndex, s.PolityId, s.Tier, s.Role, s.Parent, s.FoundedTurn, s.Ended));
+            settlements.Add(new SettlementState(i, s.TileIndex, s.PolityId, s.Tier, s.Role, s.Parent, s.FoundedTurn, s.Ended, s.Population));
         }
         Settlements = settlements;
         MaxSettlementsPerPolity = context.MaxSettlementsPerPolity;

@@ -35,25 +35,60 @@ public sealed class PopulationOperator : IHistoryOperator
         }
 
         double[] capacities = HistoryDemography.CarryingCapacities(view.Map.DataStore, polities.Count, view.OwnershipSnapshot());
+        double[] settlementCaps = HistoryDemography.SettlementCapacities(view.Map.DataStore, view.OwnershipSnapshot(), view.Settlements, capacities);
+        var standing = new List<TurnView.SettlementState>();
         foreach (var polity in polities)
         {
             if (!polity.Alive) continue;
             var folk = HistoryDemography.ResolveFolk(polity.FolkKey, _store);
             double rate = HistoryDemography.AnnualToTurnRate(folk.GrowthR, view.TurnYears);
             double capacity = capacities[polity.Id];
-            double before = polity.Population > 0
-                ? polity.Population
-                : Math.Max(capacity * HistoryDemography.InitialShare, HistoryDemography.MinPopulation);
-            double after = HistoryDemography.StepPopulation(before, rate, capacity);
+            standing.Clear();
+            foreach (var s in view.Settlements)
+                if (!s.Ended && s.PolityId == polity.Id) standing.Add(s);
+
+            double afterTotal, pressureBefore, pressureAfter;
+            if (standing.Count == 0)
+            {
+                double before = polity.Population > 0
+                    ? polity.Population
+                    : Math.Max(capacity * HistoryDemography.InitialShare, HistoryDemography.MinPopulation);
+                afterTotal = HistoryDemography.StepPopulation(before, rate, capacity);
+                pressureBefore = HistoryDemography.PressureOf(before, capacity);
+                pressureAfter = HistoryDemography.PressureOf(afterTotal, capacity);
+            }
+            else
+            {
+                double storedSum = 0, standingCap = 0;
+                foreach (var s in standing) { storedSum += s.Population; standingCap += settlementCaps[s.Index]; }
+                afterTotal = 0;
+                double beforeTotal = 0;
+                foreach (var s in standing)
+                {
+                    double cap = settlementCaps[s.Index];
+                    double init = Math.Max(cap * HistoryDemography.InitialShare, HistoryDemography.MinPopulation);
+                    double before;
+                    if (storedSum > 0) before = s.Population > 0 ? s.Population : init;
+                    else if (polity.Population > 0)
+                        before = polity.Population * (standingCap > 0 ? cap / standingCap : 1.0 / standing.Count);
+                    else before = init;
+                    double after = HistoryDemography.StepPopulation(before, rate, cap);
+                    afterTotal += after;
+                    beforeTotal += before;
+                    sink.Emit(new Proposal.GrowSettlement { EntityId = polity.Id, Settlement = s.Index, Delta = after - s.Population });
+                }
+                pressureBefore = HistoryDemography.PressureOf(beforeTotal, capacity);
+                pressureAfter = HistoryDemography.PressureOf(afterTotal, capacity);
+            }
             sink.Emit(new Proposal.SetPopulation
             {
                 EntityId = polity.Id,
-                Population = after,
+                Population = afterTotal,
                 RulerGeneration = polity.HasVillain
                     ? polity.RulerGeneration
                     : HistoryDemography.SuccessionsBefore(folk.LifespanYears, view.TurnYears, view.Turn + 1),
             });
-            double pressureDelta = HistoryDemography.PressureOf(after, capacity) - HistoryDemography.PressureOf(before, capacity);
+            double pressureDelta = pressureAfter - pressureBefore;
             if (pressureDelta != 0) sink.Adjust(polity.Id, ScalarRegistry.Pressure, pressureDelta);
         }
     }

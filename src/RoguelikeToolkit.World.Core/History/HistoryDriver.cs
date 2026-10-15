@@ -92,6 +92,7 @@ public sealed class HistoryDriver : HistoryPluginBase
         var claimed = new HashSet<(ProposalKind, long)>();
         var deltas = new SortedDictionary<(int Polity, int Scalar), double>();
         bool reassigned = false;
+        var dirty = new HashSet<int>();
         foreach (var p in proposals)
         {
             if (p.ConflictKey is long key && !claimed.Add((p.Kind, key))) { RejectedProposals++; continue; }
@@ -158,13 +159,25 @@ public sealed class HistoryDriver : HistoryPluginBase
                     var target = history.Polities.Find(p => p.Id == sp.EntityId);
                     if (target != null) { target.Population = sp.Population; target.RulerGeneration = sp.RulerGeneration; }
                     break;
+                case Proposal.GrowSettlement gs:
+                    if ((uint)gs.Settlement < (uint)history.Settlements.Count)
+                    {
+                        var grown = history.Settlements[gs.Settlement];
+                        if (!grown.Ended && grown.PolityId == gs.EntityId)
+                        {
+                            grown.Population = Math.Max(0, grown.Population + gs.Delta);
+                            dirty.Add(grown.PolityId);
+                        }
+                    }
+                    break;
                 case Proposal.AdjustScalar a:
                     var k = (a.EntityId, a.ScalarId);
                     deltas[k] = deltas.GetValueOrDefault(k) + a.Delta;
                     break;
             }
         }
-        if (reassigned) SyncSettlementOwners(history);
+        if (reassigned) SyncSettlementOwners(history, dirty);
+        ResyncPopulations(history, dirty, reassigned);
         foreach (var ((polityId, scalarId), delta) in deltas)
         {
             var polity = history.Polities.Find(p => p.Id == polityId);
@@ -174,13 +187,34 @@ public sealed class HistoryDriver : HistoryPluginBase
     }
 
     /// <summary>Standing settlements follow the owner of the tile they stand on (until conquest moves them on purpose, M2.9).</summary>
-    private static void SyncSettlementOwners(HistoryCatalog history)
+    private static void SyncSettlementOwners(HistoryCatalog history, HashSet<int> dirty)
     {
         foreach (var settlement in history.Settlements)
         {
             if (settlement.Ended) continue;
             int owner = history.OwnerOf(settlement.TileIndex);
-            if (owner >= 0) settlement.PolityId = owner;
+            if (owner < 0 || owner == settlement.PolityId) continue;
+            dirty.Add(settlement.PolityId);
+            dirty.Add(owner);
+            settlement.PolityId = owner;
+        }
+    }
+
+    /// <summary>A polity with standing settlements carries their summed population (its stock is the sum, never a second ledger).</summary>
+    private static void ResyncPopulations(HistoryCatalog history, HashSet<int> dirty, bool all)
+    {
+        if (dirty.Count == 0) return;
+        var sums = new Dictionary<int, double>();
+        foreach (var settlement in history.Settlements)
+        {
+            if (settlement.Ended) continue;
+            if (!all && !dirty.Contains(settlement.PolityId)) continue;
+            sums[settlement.PolityId] = sums.GetValueOrDefault(settlement.PolityId) + settlement.Population;
+        }
+        foreach (var (polityId, sum) in sums)
+        {
+            var polity = history.Polities.Find(p => p.Id == polityId);
+            if (polity != null) polity.Population = sum;
         }
     }
 
@@ -206,6 +240,16 @@ public sealed class HistoryDriver : HistoryPluginBase
             Habitability = CapitalSettlements.HabitabilityOf(store, ads.Tile), Active = true,
             Tier = ads.Tier, Role = ads.Role, Parent = ads.Parent,
         });
+        if (ads.Parent >= 0)
+        {
+            var parent = history.Settlements[ads.Parent];
+            if (!parent.Ended && parent.PolityId == owner.Id)
+            {
+                double seed = parent.Population * HistoryDemography.ColonistShare;
+                parent.Population -= seed;
+                history.Settlements[index].Population = seed;
+            }
+        }
         var tags = new List<string> { $"settlement:{index}", $"role:{ads.Role}" };
         if (ads.Parent >= 0) tags.Add($"from:{ads.Parent}");
         history.AppendLinked(HistoryEventKind.SettlementFounded, turn, owner.Id, ads.Tile, tags, ads.Cause, null);

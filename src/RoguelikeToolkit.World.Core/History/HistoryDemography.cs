@@ -19,6 +19,9 @@ public static class HistoryDemography
     /// <summary>Share of carrying capacity a polity starts with at founding.</summary>
     public const double InitialShare = 0.1;
 
+    /// <summary>Share of a parent settlement's population that walks out with a new colony.</summary>
+    public const double ColonistShare = 0.15;
+
     /// <summary>Floor under a living polity's population index.</summary>
     public const double MinPopulation = 1.0;
 
@@ -241,6 +244,68 @@ public static class HistoryDemography
             capacities[owner] += sum;
         }
         return capacities;
+    }
+
+    /// <summary>
+    /// Carrying capacity of every standing settlement, by settlement index (0 for ended ones). A polity with one
+    /// standing settlement gives it the polity's whole capacity; with several, each owned tile counts toward the
+    /// nearest standing settlement of its owner (its catchment), so the settlements of a polity sum to the polity.
+    /// </summary>
+    /// <param name="store">Tile store holding the optional capacity/biome layers.</param>
+    /// <param name="ownership">Owner polity id per tile.</param>
+    /// <param name="settlements">Settlement snapshot (index order).</param>
+    /// <param name="polityCapacities">Per-polity totals from <see cref="CarryingCapacities(WorldDataStore, int, int[])"/>.</param>
+    public static double[] SettlementCapacities(WorldDataStore store, int[] ownership,
+        IReadOnlyList<TurnView.SettlementState> settlements, double[] polityCapacities)
+    {
+        var result = new double[settlements.Count];
+        var byPolity = new Dictionary<int, List<int>>();
+        foreach (var s in settlements)
+        {
+            if (s.Ended) continue;
+            if (!byPolity.TryGetValue(s.PolityId, out var list)) byPolity[s.PolityId] = list = new List<int>();
+            list.Add(s.Index);
+        }
+        bool multi = false;
+        foreach (var (polity, list) in byPolity)
+        {
+            if (list.Count == 1) { if ((uint)polity < (uint)polityCapacities.Length) result[list[0]] = polityCapacities[polity]; }
+            else multi = true;
+        }
+        if (!multi) return result;
+
+        bool hasCapacity = store.IsLayerRegistered<LandCapacityInfo>();
+        var capacity = hasCapacity ? store.GetSpan<LandCapacityInfo>() : default;
+        bool hasBiome = !hasCapacity && store.IsLayerRegistered<BiomeInfo>();
+        var biomes = hasBiome ? store.GetSpan<BiomeInfo>() : default;
+        if (!hasCapacity && !hasBiome) return result;
+        var vectors = store.GetTileVectors();
+        int tiles = Math.Min(store.TileCount, ownership.Length);
+        for (int tile = 0; tile < tiles; tile++)
+        {
+            int owner = ownership[tile];
+            if (owner < 0 || !byPolity.TryGetValue(owner, out var list) || list.Count < 2) continue;
+            int sum;
+            if (hasCapacity)
+            {
+                var cell = capacity[tile];
+                sum = CapacitySum(cell.Arable, cell.Pasture, cell.Game, cell.Timber);
+            }
+            else
+            {
+                var profile = BiomeSurplus(biomes[tile].Biome);
+                sum = CapacitySum(profile[0], profile[1], profile[2], profile[3]);
+            }
+            int best = list[0];
+            double bestDot = double.NegativeInfinity;
+            foreach (int index in list)
+            {
+                double dot = Primitives.Vector3D.Dot(vectors[tile], vectors[settlements[index].Tile]);
+                if (dot > bestDot) { bestDot = dot; best = index; }
+            }
+            result[best] += sum;
+        }
+        return result;
     }
 
     /// <summary>

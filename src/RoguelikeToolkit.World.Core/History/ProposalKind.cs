@@ -42,4 +42,6 @@ public enum ProposalKind
     AddSettlement = 16,
     /// <summary>End a standing settlement.</summary>
     EndSettlement = 17,
+    /// <summary>Add a signed amount to a standing settlement's population.</summary>
+    GrowSettlement = 18,
 }

@@ -249,6 +249,21 @@ public abstract class Proposal
         public int RulerGeneration { get; init; }
     }
 
+    /// <summary>
+    /// Adds <see cref="Delta"/> to the population of standing settlement <see cref="Settlement"/> (owned by polity
+    /// <see cref="Proposal.EntityId"/>); the result is floored at zero and the owner's total is re-summed at commit.
+    /// A delta, not an absolute, so it commutes with a colony taking its seed from the same settlement.
+    /// </summary>
+    public sealed class GrowSettlement : Proposal
+    {
+        /// <inheritdoc />
+        public override ProposalKind Kind => ProposalKind.GrowSettlement;
+        /// <summary>Index into <see cref="HistoryCatalog.Settlements"/>.</summary>
+        public int Settlement { get; init; }
+        /// <summary>Signed population change.</summary>
+        public double Delta { get; init; }
+    }
+
     /// <summary>Adds <see cref="Delta"/> to scalar <see cref="ScalarId"/> of polity <see cref="Proposal.EntityId"/>.</summary>
     public sealed class AdjustScalar : Proposal
     {
