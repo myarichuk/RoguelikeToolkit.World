@@ -415,3 +415,7 @@ pinned-capital handling (move to M2 unless trivial), `StageOrder` constants stay
 Perf (Debug build, size 7, seed 42, one-off timing): full build 13.9 s vs 10.7 s without history, so the history band costs about 3.2 s, inside the 5 s budget (Release numbers via `LargeHistoryBenchmarks` still to record).
 
 **Release perf (M1.5):** `LargeHistoryBenchmarks.History_Size7` = 400 ms mean (±87 ms CI), 147.6 MB allocated, against the 5 s budget.
+
+### M2.1 progress (settlement as entity, fields only)
+
+`HistorySettlement` gained `EndedTurn`, `EndCause`, `Tier` (`SettlementTier`), `Role` (`SettlementRole`) and `Parent`; `PolityId` is now settable so conquest can transfer a settlement. `Ended` (historical) is separate from `Active` (physical, re-resolved on edits). Schema v5; v1-v4 load with capital defaults. No behaviour change: capitals are still the only settlements, corpus unchanged. M2.2 note: `CitySiteScorer.Score` is already a pure ranked-candidate function of the map, so no new scorer is needed; the settle operator will call it with a history-aware filter. Capital-founding events are deferred to M2.3 (they would change the event log, so they ship with the settle operator and a corpus re-baseline). Core 763 green.

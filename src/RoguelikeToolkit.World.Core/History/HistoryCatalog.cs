@@ -17,7 +17,7 @@ namespace RoguelikeToolkit.World.Core.History;
 public sealed class HistoryCatalog : IHistoricalContext
 {
     /// <summary>Persistence schema version, written first by <see cref="Save"/> and checked by <see cref="Load"/>: 1 is the P2a shape (capitals only), 2 adds polity demography and road routes, 3 adds P2c treaty/faith state (grudges, windows, faiths, holy sites, villains, heirs), 4 adds the generic-kernel state (string table, declared scalars and per-polity scalar values, polity lifecycle, event ids, causes, importance and participants, grudge turn stamps).</summary>
-    public const int SchemaVersion = 4;
+    public const int SchemaVersion = 5;
 
     /// <summary>Planet radius in kilometres, matching <c>World.EarthRadiusKm</c> (kept literal: the root slice is above History).</summary>
     private const double EarthRadiusKm = 6371.0;
@@ -551,6 +551,11 @@ public sealed class HistoryCatalog : IHistoricalContext
             writer.Write(settlement.Position.Longitude);
             writer.Write(settlement.Habitability);
             writer.Write(settlement.Active);
+            writer.Write(settlement.EndedTurn);
+            writer.Write(settlement.EndCause);
+            writer.Write((byte)settlement.Tier);
+            writer.Write((byte)settlement.Role);
+            writer.Write(settlement.Parent);
         }
         writer.Write(Sites.Count);
         foreach (var site in Sites)
@@ -779,7 +784,7 @@ public sealed class HistoryCatalog : IHistoricalContext
             int settlements = CheckedCount(reader.ReadInt32());
             for (int i = 0; i < settlements; i++)
             {
-                catalog.Settlements.Add(new HistorySettlement
+                var settlement = new HistorySettlement
                 {
                     TileIndex = reader.ReadInt32(),
                     PolityId = reader.ReadInt32(),
@@ -787,7 +792,16 @@ public sealed class HistoryCatalog : IHistoricalContext
                     Position = new GeoCoord(reader.ReadDouble(), reader.ReadDouble()),
                     Habitability = reader.ReadSingle(),
                     Active = reader.ReadBoolean(),
-                });
+                };
+                if (version >= 5)
+                {
+                    settlement.EndedTurn = reader.ReadInt32();
+                    settlement.EndCause = reader.ReadString();
+                    settlement.Tier = (SettlementTier)reader.ReadByte();
+                    settlement.Role = (SettlementRole)reader.ReadByte();
+                    settlement.Parent = reader.ReadInt32();
+                }
+                catalog.Settlements.Add(settlement);
             }
             int sites = CheckedCount(reader.ReadInt32());
             for (int i = 0; i < sites; i++)
@@ -908,7 +922,12 @@ public sealed class HistoryCatalog : IHistoricalContext
             if (Polities[i].Id != i) throw new InvalidDataException($"Corrupt history catalog (polity at index {i} has id {Polities[i].Id}).");
         foreach (int owner in Ownership) Check(owner, "ownership", true);
         foreach (var e in Events) Check(e.PolityId, "event", true);
-        foreach (var s in Settlements) Check(s.PolityId, "settlement", true);
+        foreach (var s in Settlements)
+        {
+            Check(s.PolityId, "settlement", true);
+            if (s.Parent < -1 || s.Parent >= Settlements.Count || !Enum.IsDefined(s.Tier) || !Enum.IsDefined(s.Role))
+                throw new InvalidDataException("Corrupt history catalog (settlement lifecycle).");
+        }
         foreach (var s in Sites) Check(s.PolityId, "site", true);
         foreach (var r in Roads) Check(r.PolityId, "road", true);
         foreach (var g in Grudges) { Check(g.A, "grudge", false); Check(g.B, "grudge", false); }
