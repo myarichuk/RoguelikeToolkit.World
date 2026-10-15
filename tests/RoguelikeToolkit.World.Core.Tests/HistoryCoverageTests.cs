@@ -33,6 +33,10 @@ public class HistoryCoverageTests
         }
     }
 
+    private static void RunKhan(World w)
+        => new HistoryDriver().AddOperator(new PopulationOperator()).AddOperator(new KhanOperator())
+            .Apply(w.Map, w.History, new HistoryContext());
+
     private static bool HasTag(HistoryEvent e, string tag) => e.Tags.Contains(tag);
 
     [Fact]
@@ -44,24 +48,31 @@ public class HistoryCoverageTests
             using var w = Build(seed);
             var h = w.History;
             MakeHordes(h);
-            var context = new HistoryContext();
-            new KhanStage().Apply(w.Map, h, context);
+            RunKhan(w);
             foreach (var e in h.Events)
             {
                 if (e.Kind == HistoryEventKind.Tribute)
                 {
                     tributes++;
                     Assert.Contains(h.Treaties, win => win.UntilTurn >= e.Turn);
-                    Assert.Equal(0, h.GrudgeWeight(
-                        int.Parse(e.Tags.First(t => t.StartsWith("to:")).Substring(3)),
-                        int.Parse(e.Tags.First(t => t.StartsWith("from:")).Substring(5))));
+                    int to = int.Parse(e.Tags.First(t => t.StartsWith("to:")).Substring(3));
+                    int from = int.Parse(e.Tags.First(t => t.StartsWith("from:")).Substring(5));
+                    // A later khan event between the pair (reverse direction) may legitimately raise a new grudge.
+                    bool reraised = h.Events.Any(u => !ReferenceEquals(u, e) && u.Turn >= e.Turn && u.Kind == HistoryEventKind.Ultimatum
+                        && ((u.Tags.Contains($"khan:{to}") && u.Tags.Contains($"weak:{from}"))
+                            || (u.Tags.Contains($"khan:{from}") && u.Tags.Contains($"weak:{to}"))));
+                    if (!reraised) Assert.Equal(0, h.GrudgeWeight(to, from));
                 }
                 if (e.Kind == HistoryEventKind.Ultimatum)
                 {
                     ultimatums++;
                     int khan = int.Parse(e.Tags.First(t => t.StartsWith("khan:")).Substring(5));
                     int weak = int.Parse(e.Tags.First(t => t.StartsWith("weak:")).Substring(5));
-                    Assert.True(h.GrudgeWeight(khan, weak) >= KhanStage.ResistGrudge);
+                    // A later tribute between the pair (in either direction) legitimately repays the grudge.
+                    bool repaid = h.Events.Any(t => t.Kind == HistoryEventKind.Tribute && t.Turn >= e.Turn
+                        && ((t.Tags.Contains($"from:{weak}") && t.Tags.Contains($"to:{khan}"))
+                            || (t.Tags.Contains($"from:{khan}") && t.Tags.Contains($"to:{weak}"))));
+                    if (!repaid) Assert.True(h.GrudgeWeight(khan, weak) >= KhanOperator.ResistGrudge);
                 }
             }
         }
@@ -76,7 +87,7 @@ public class HistoryCoverageTests
             using var w = Build(seed);
             var h = w.History;
             MakeHordes(h);
-            new KhanStage().Apply(w.Map, h, new HistoryContext());
+            RunKhan(w);
             var pairs = new List<string>();
             foreach (var e in h.Events)
             {

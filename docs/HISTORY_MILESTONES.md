@@ -78,7 +78,7 @@ Exit: tests green, corpus committed, coupling list written.
   (compare per-region or normalised profiles) as its own small commit with a forced-route test, so
   the port stays reviewable.
 - **Coupling list (tests that depend on stage-major structure):**
-  - `HistoryCoverageTests.Khan_*`: call `new KhanStage().Apply(...)` directly; rewrite to drive
+  - `HistoryCoverageTests.Khan_*`: call `new KhanOperator().Apply(...)` directly; rewrite to drive
     the Khan operator through the driver in M1.3.
   - `OperatorBudgets_ArePerOperatorPerTurn`: tests the `HistoryContext` budget API
     (`ResetOperatorBudget`, `ClearOperatorBudgets`); keep the API or retarget at the sink budgets.
@@ -356,3 +356,9 @@ run deterministically.
   (accepted one-turn lag), compares snapshot populations (legacy used closed-form `PopulationAtTurn` at the war
   turn), and cites the war event as `Cause` (first event with a cause). New `SetOverlay` proposal;
   `TurnView.PolityState.CultureOverlay`. Repay-grudge and event ride along in the same commit.
+- Done (Khan): `KhanOperator` replaces `KhanStage`. Populations come from the snapshot (legacy used closed-form
+  `PopulationAtTurn`); "pressed once per ordered pair" is derived from the event log (`Tribute from:` /
+  `Ultimatum weak:`) instead of a local set, so the operator holds no per-run state. Submission emits
+  RepayGrudge + AddWindow + pressure deltas; resistance emits AddGrudge + pressure deltas.
+  `PolityState.FoundedTurn` added. `HistoryCoverageTests.Khan_*` now drive the operator through the driver
+  (with `PopulationOperator`); the grudge-after-ultimatum check allows a later tribute in the reverse direction to repay it.

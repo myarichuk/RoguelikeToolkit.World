@@ -154,10 +154,10 @@ public class HistoryFaithTests
     [Fact]
     public void Khan_SubmitChance_GrowsWithAdvantage_AndIsCapped()
     {
-        Assert.False(KhanStage.DecideOutcome(0.5, ratio: 1.0));
-        Assert.True(KhanStage.DecideOutcome(0.5, ratio: 2.0));
-        Assert.False(KhanStage.DecideOutcome(KhanStage.MaxSubmitChance, ratio: 1000));
-        Assert.True(KhanStage.DecideOutcome(KhanStage.MaxSubmitChance - 0.01, ratio: 1000));
+        Assert.False(KhanOperator.DecideOutcome(0.5, ratio: 1.0));
+        Assert.True(KhanOperator.DecideOutcome(0.5, ratio: 2.0));
+        Assert.False(KhanOperator.DecideOutcome(KhanOperator.MaxSubmitChance, ratio: 1000));
+        Assert.True(KhanOperator.DecideOutcome(KhanOperator.MaxSubmitChance - 0.01, ratio: 1000));
     }
 
     [Fact]
