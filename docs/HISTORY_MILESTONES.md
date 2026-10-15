@@ -504,3 +504,12 @@ Conquest 77 -> 76, sites 495 -> 491. Colonies now split capacity and population,
 longer leave populations untouched: `StarvedWar_LeavesRoadBuildingUntouched` pins
 `MaxSettlementsPerPolity = 1` to compare demography. Known gap until 2.4B: an ended settlement's
 people vanish (no producer ends settlements yet).
+
+### M2.4B progress (displaced pool)
+
+- `DisplacedGroup { PolityId, Culture, Turn, Amount, Origin, Cause }` on `HistoryCatalog.Displaced`, plus `PopulationLost` (the only non-conserving sink). Schema v7 (block written right after the settlements).
+- Proposals `ReleasePopulation` (19: share of a standing settlement's people into the pool) and `AbsorbDisplaced` (20: pool into a standing settlement of the same polity; clamped to the group's remainder; cross-polity asylum waits for M2.9). Refusals count in `RejectedProposals`.
+- `EndSettlement` commit auto-releases the settlement's whole population (group `Cause` = the `SettlementEnded` event id), so no producer can leak people. A polity that lost its last standing settlement gets stock 0.
+- Pool decay in the commit (`HistoryContext.DisplacedDecayTurns`, default 3): stale groups settle into the origin polity's first standing settlement, else are recorded in `PopulationLost`. Drained groups are dropped at end of commit.
+- `TurnView.DisplacedPool` / `DisplacedState`. Tests: `DisplacedPoolTests` (5). No corpus movement expected (nothing ends settlements yet). Core 785 green; netstandard2.1 build clean.
+- Next: M2.4C refugee settling in `SettleOperator`.

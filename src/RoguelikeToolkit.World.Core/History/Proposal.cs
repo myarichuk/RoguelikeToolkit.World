@@ -264,6 +264,39 @@ public abstract class Proposal
         public double Delta { get; init; }
     }
 
+    /// <summary>
+    /// Moves <see cref="Share"/> (0..1] of standing settlement <see cref="Settlement"/>'s people (owned by polity
+    /// <see cref="Proposal.EntityId"/>) into the displaced pool.
+    /// </summary>
+    public sealed class ReleasePopulation : Proposal
+    {
+        /// <inheritdoc />
+        public override ProposalKind Kind => ProposalKind.ReleasePopulation;
+        /// <summary>Index into <see cref="HistoryCatalog.Settlements"/>.</summary>
+        public int Settlement { get; init; }
+        /// <summary>Fraction of the settlement's people that leave, in (0, 1].</summary>
+        public double Share { get; init; } = 1;
+        /// <summary>Id of an event from an earlier turn that caused the exodus, or -1.</summary>
+        public int Cause { get; init; } = -1;
+    }
+
+    /// <summary>
+    /// Settles up to <see cref="Amount"/> people of displaced group <see cref="Group"/> into standing settlement
+    /// <see cref="Settlement"/>. Both must belong to polity <see cref="Proposal.EntityId"/> (cross-polity asylum comes with M2.9);
+    /// the amount is clamped to what the group still holds at commit.
+    /// </summary>
+    public sealed class AbsorbDisplaced : Proposal
+    {
+        /// <inheritdoc />
+        public override ProposalKind Kind => ProposalKind.AbsorbDisplaced;
+        /// <summary>Index into <see cref="HistoryCatalog.Displaced"/> at the snapshot.</summary>
+        public int Group { get; init; }
+        /// <summary>Index into <see cref="HistoryCatalog.Settlements"/> that takes them in.</summary>
+        public int Settlement { get; init; }
+        /// <summary>People to settle, in capacity units.</summary>
+        public double Amount { get; init; }
+    }
+
     /// <summary>Adds <see cref="Delta"/> to scalar <see cref="ScalarId"/> of polity <see cref="Proposal.EntityId"/>.</summary>
     public sealed class AdjustScalar : Proposal
     {

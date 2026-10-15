@@ -89,6 +89,9 @@ public sealed class HistoryContext
         set => _maxSettlementsPerPolity = value >= 0 ? value : throw new ArgumentOutOfRangeException(nameof(value), "MaxSettlementsPerPolity cannot be negative.");
     }
 
+    /// <summary>Turns a displaced group waits for a taker before the pool re-absorbs it into its origin polity (or records it lost). Default 3.</summary>
+    public int DisplacedDecayTurns { get; set; } = 3;
+
     /// <summary>The (folk, culture) pairs <see cref="CultureSeedStage"/> seeds the world with, in priority order.</summary>
     public List<HistoryPeople> Peoples { get; } = new();
 

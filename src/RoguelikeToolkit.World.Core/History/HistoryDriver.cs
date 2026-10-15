@@ -150,7 +150,7 @@ public sealed class HistoryDriver : HistoryPluginBase
                     if (!TryFoundSettlement(map, history, context, turn, ads)) RejectedProposals++;
                     break;
                 case Proposal.EndSettlement ens:
-                    if (!TryEndSettlement(history, turn, ens)) RejectedProposals++;
+                    if (!TryEndSettlement(history, turn, ens, dirty)) RejectedProposals++;
                     break;
                 case Proposal.AppendEvent e:
                     history.AppendLinked(e.EventKind, turn, e.EntityId, e.Tile, e.Tags, e.Cause, e.Participants);
@@ -170,6 +170,12 @@ public sealed class HistoryDriver : HistoryPluginBase
                         }
                     }
                     break;
+                case Proposal.ReleasePopulation rp:
+                    if (!TryRelease(history, turn, rp, dirty)) RejectedProposals++;
+                    break;
+                case Proposal.AbsorbDisplaced ab:
+                    if (!TryAbsorb(history, ab, dirty)) RejectedProposals++;
+                    break;
                 case Proposal.AdjustScalar a:
                     var k = (a.EntityId, a.ScalarId);
                     deltas[k] = deltas.GetValueOrDefault(k) + a.Delta;
@@ -177,6 +183,7 @@ public sealed class HistoryDriver : HistoryPluginBase
             }
         }
         if (reassigned) SyncSettlementOwners(history, dirty);
+        DecayDisplaced(history, context, turn, dirty);
         ResyncPopulations(history, dirty, reassigned);
         foreach (var ((polityId, scalarId), delta) in deltas)
         {
@@ -216,6 +223,73 @@ public sealed class HistoryDriver : HistoryPluginBase
             var polity = history.Polities.Find(p => p.Id == polityId);
             if (polity != null) polity.Population = sum;
         }
+        // A polity that lost its last standing settlement keeps no stock: its people are in the pool now.
+        foreach (int id in dirty)
+        {
+            if (sums.ContainsKey(id)) continue;
+            var polity = history.Polities.Find(p => p.Id == id);
+            if (polity == null) continue;
+            foreach (var settlement in history.Settlements)
+                if (settlement.PolityId == id && settlement.Ended) { polity.Population = 0; break; }
+        }
+    }
+
+    private static void Displace(HistoryCatalog history, int turn, int settlementIndex, double amount, int cause)
+    {
+        if (!(amount > 0)) return;
+        var settlement = history.Settlements[settlementIndex];
+        string culture = history.Polities.Find(p => p.Id == settlement.PolityId)?.CultureKey ?? string.Empty;
+        history.Displaced.Add(new DisplacedGroup
+        {
+            PolityId = settlement.PolityId, Culture = culture, Turn = turn, Amount = amount, Origin = settlementIndex, Cause = cause,
+        });
+    }
+
+    private static bool TryRelease(HistoryCatalog history, int turn, Proposal.ReleasePopulation rp, HashSet<int> dirty)
+    {
+        if ((uint)rp.Settlement >= (uint)history.Settlements.Count || !(rp.Share > 0) || rp.Share > 1) return false;
+        var settlement = history.Settlements[rp.Settlement];
+        if (settlement.Ended || settlement.PolityId != rp.EntityId) return false;
+        double amount = settlement.Population * rp.Share;
+        if (!(amount > 0)) return false;
+        settlement.Population -= amount;
+        Displace(history, turn, rp.Settlement, amount, rp.Cause);
+        dirty.Add(settlement.PolityId);
+        return true;
+    }
+
+    private static bool TryAbsorb(HistoryCatalog history, Proposal.AbsorbDisplaced ab, HashSet<int> dirty)
+    {
+        if ((uint)ab.Group >= (uint)history.Displaced.Count || (uint)ab.Settlement >= (uint)history.Settlements.Count || !(ab.Amount > 0)) return false;
+        var group = history.Displaced[ab.Group];
+        var target = history.Settlements[ab.Settlement];
+        if (target.Ended || target.PolityId != ab.EntityId || group.PolityId != ab.EntityId) return false;
+        double moved = Math.Min(group.Amount, ab.Amount);
+        if (!(moved > 0)) return false;
+        group.Amount -= moved;
+        target.Population += moved;
+        dirty.Add(target.PolityId);
+        return true;
+    }
+
+    /// <summary>
+    /// Ages the pool: a group nobody took in for <see cref="HistoryContext.DisplacedDecayTurns"/> turns is settled by decree
+    /// into its origin polity's first standing settlement, or recorded as lost when that polity has none. Drained groups are dropped.
+    /// </summary>
+    private static void DecayDisplaced(HistoryCatalog history, HistoryContext context, int turn, HashSet<int> dirty)
+    {
+        if (history.Displaced.Count == 0) return;
+        foreach (var group in history.Displaced)
+        {
+            if (!(group.Amount > 0) || turn - group.Turn < context.DisplacedDecayTurns) continue;
+            HistorySettlement? home = null;
+            foreach (var s in history.Settlements)
+                if (!s.Ended && s.PolityId == group.PolityId) { home = s; break; }
+            if (home != null) { home.Population += group.Amount; dirty.Add(home.PolityId); }
+            else history.PopulationLost += group.Amount;
+            group.Amount = 0;
+        }
+        history.Displaced.RemoveAll(static g => !(g.Amount > 0));
     }
 
     private static bool TryFoundSettlement(WorldMap map, HistoryCatalog history, HistoryContext context, int turn, Proposal.AddSettlement ads)
@@ -256,15 +330,19 @@ public sealed class HistoryDriver : HistoryPluginBase
         return true;
     }
 
-    private static bool TryEndSettlement(HistoryCatalog history, int turn, Proposal.EndSettlement ens)
+    private static bool TryEndSettlement(HistoryCatalog history, int turn, Proposal.EndSettlement ens, HashSet<int> dirty)
     {
         if ((uint)ens.Settlement >= (uint)history.Settlements.Count) return false;
         var settlement = history.Settlements[ens.Settlement];
         if (settlement.Ended || settlement.PolityId != ens.EntityId) return false;
         settlement.EndedTurn = turn;
         settlement.EndCause = ens.EndCause;
-        history.AppendLinked(HistoryEventKind.SettlementEnded, turn, settlement.PolityId, settlement.TileIndex,
+        int ended = history.AppendLinked(HistoryEventKind.SettlementEnded, turn, settlement.PolityId, settlement.TileIndex,
             new[] { $"settlement:{ens.Settlement}", ens.EndCause }, ens.Cause, null);
+        double people = settlement.Population;
+        settlement.Population = 0;
+        Displace(history, turn, ens.Settlement, people, ended);
+        dirty.Add(settlement.PolityId);
         return true;
     }
 

@@ -44,4 +44,8 @@ public enum ProposalKind
     EndSettlement = 17,
     /// <summary>Add a signed amount to a standing settlement's population.</summary>
     GrowSettlement = 18,
+    /// <summary>Move a share of a standing settlement's people into the displaced pool.</summary>
+    ReleasePopulation = 19,
+    /// <summary>Settle people from the displaced pool into a standing settlement.</summary>
+    AbsorbDisplaced = 20,
 }

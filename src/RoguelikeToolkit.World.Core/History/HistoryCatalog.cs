@@ -17,7 +17,7 @@ namespace RoguelikeToolkit.World.Core.History;
 public sealed class HistoryCatalog : IHistoricalContext
 {
     /// <summary>Persistence schema version, written first by <see cref="Save"/> and checked by <see cref="Load"/>: 1 is the P2a shape (capitals only), 2 adds polity demography and road routes, 3 adds P2c treaty/faith state (grudges, windows, faiths, holy sites, villains, heirs), 4 adds the generic-kernel state (string table, declared scalars and per-polity scalar values, polity lifecycle, event ids, causes, importance and participants, grudge turn stamps).</summary>
-    public const int SchemaVersion = 6;
+    public const int SchemaVersion = 7;
 
     /// <summary>Planet radius in kilometres, matching <c>World.EarthRadiusKm</c> (kept literal: the root slice is above History).</summary>
     private const double EarthRadiusKm = 6371.0;
@@ -105,6 +105,12 @@ public sealed class HistoryCatalog : IHistoricalContext
 
     /// <summary>Projected settlements (P2a: one capital each).</summary>
     public List<HistorySettlement> Settlements { get; } = new();
+
+    /// <summary>People between settlements: released by ended or shrinking settlements, not yet absorbed elsewhere.</summary>
+    public List<DisplacedGroup> Displaced { get; } = new();
+
+    /// <summary>People who left the pool without settling (a stale group whose polity was gone); the only non-conserving sink.</summary>
+    public double PopulationLost { get; internal set; }
 
     /// <summary>Projected historic sites (P2a: one capital site each).</summary>
     public List<HistorySite> Sites { get; } = new();
@@ -348,6 +354,8 @@ public sealed class HistoryCatalog : IHistoricalContext
         _eventVersion++;
         _nextEventId = 0;
         Settlements.Clear();
+        Displaced.Clear();
+        PopulationLost = 0;
         Sites.Clear();
         Roads.Clear();
         Grudges.Clear();
@@ -558,6 +566,17 @@ public sealed class HistoryCatalog : IHistoricalContext
             writer.Write(settlement.Parent);
             writer.Write(settlement.Population);
         }
+        writer.Write(Displaced.Count);
+        foreach (var group in Displaced)
+        {
+            writer.Write(group.PolityId);
+            writer.Write(group.Culture);
+            writer.Write(group.Turn);
+            writer.Write(group.Amount);
+            writer.Write(group.Origin);
+            writer.Write(group.Cause);
+        }
+        writer.Write(PopulationLost);
         writer.Write(Sites.Count);
         foreach (var site in Sites)
         {
@@ -805,6 +824,23 @@ public sealed class HistoryCatalog : IHistoricalContext
                 if (version >= 6) settlement.Population = reader.ReadDouble();
                 catalog.Settlements.Add(settlement);
             }
+            if (version >= 7)
+            {
+                int displaced = CheckedCount(reader.ReadInt32());
+                for (int i = 0; i < displaced; i++)
+                {
+                    catalog.Displaced.Add(new DisplacedGroup
+                    {
+                        PolityId = reader.ReadInt32(),
+                        Culture = reader.ReadString(),
+                        Turn = reader.ReadInt32(),
+                        Amount = reader.ReadDouble(),
+                        Origin = reader.ReadInt32(),
+                        Cause = reader.ReadInt32(),
+                    });
+                }
+                catalog.PopulationLost = reader.ReadDouble();
+            }
             int sites = CheckedCount(reader.ReadInt32());
             for (int i = 0; i < sites; i++)
             {
@@ -929,6 +965,12 @@ public sealed class HistoryCatalog : IHistoricalContext
             Check(s.PolityId, "settlement", true);
             if (s.Parent < -1 || s.Parent >= Settlements.Count || !Enum.IsDefined(typeof(SettlementTier), s.Tier) || !Enum.IsDefined(typeof(SettlementRole), s.Role))
                 throw new InvalidDataException("Corrupt history catalog (settlement lifecycle).");
+        }
+        foreach (var g in Displaced)
+        {
+            Check(g.PolityId, "displaced group", false);
+            if (g.Origin < 0 || g.Origin >= Settlements.Count || !(g.Amount >= 0) || double.IsInfinity(g.Amount))
+                throw new InvalidDataException("Corrupt history catalog (displaced group).");
         }
         foreach (var s in Sites) Check(s.PolityId, "site", true);
         foreach (var r in Roads) Check(r.PolityId, "road", true);

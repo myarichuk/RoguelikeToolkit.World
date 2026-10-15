@@ -30,6 +30,9 @@ public sealed class TurnView
     /// <summary>One settlement at the snapshot; <see cref="Index"/> is its position in <see cref="HistoryCatalog.Settlements"/>.</summary>
     public readonly record struct SettlementState(int Index, int Tile, int PolityId, SettlementTier Tier, SettlementRole Role, int Parent, int FoundedTurn, bool Ended, double Population = 0);
 
+    /// <summary>One displaced group at the snapshot; <see cref="Index"/> is its position in <see cref="HistoryCatalog.Displaced"/>.</summary>
+    public readonly record struct DisplacedState(int Index, int PolityId, string Culture, int Turn, double Amount, int Origin, int Cause);
+
     private readonly HashSet<int> _siteTiles = new();
 
     internal TurnView(WorldMap? map, HistoryCatalog history, HistoryContext context, int turn)
@@ -67,6 +70,14 @@ public sealed class TurnView
             settlements.Add(new SettlementState(i, s.TileIndex, s.PolityId, s.Tier, s.Role, s.Parent, s.FoundedTurn, s.Ended, s.Population));
         }
         Settlements = settlements;
+        var pool = new List<DisplacedState>(history.Displaced.Count);
+        for (int i = 0; i < history.Displaced.Count; i++)
+        {
+            var g = history.Displaced[i];
+            pool.Add(new DisplacedState(i, g.PolityId, g.Culture, g.Turn, g.Amount, g.Origin, g.Cause));
+        }
+        DisplacedPool = pool;
+        DisplacedDecayTurns = context.DisplacedDecayTurns;
         MaxSettlementsPerPolity = context.MaxSettlementsPerPolity;
         foreach (var s in history.Sites) _siteTiles.Add(s.TileIndex);
     }
@@ -100,6 +111,12 @@ public sealed class TurnView
 
     /// <summary>Every settlement (including ended ones) in founding order.</summary>
     public IReadOnlyList<SettlementState> Settlements { get; }
+
+    /// <summary>People between settlements at the snapshot (released, not yet absorbed).</summary>
+    public IReadOnlyList<DisplacedState> DisplacedPool { get; }
+
+    /// <summary>Turns a displaced group waits before the pool settles it by decree.</summary>
+    public int DisplacedDecayTurns { get; }
 
     /// <summary>Declared scalars; <see cref="PolityState.Scalars"/> is indexed by their ids.</summary>
     public ScalarRegistry Scalars { get; }
