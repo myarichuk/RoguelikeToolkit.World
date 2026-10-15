@@ -47,7 +47,7 @@ public static class ShockResolver
                     reach = 1 - angle / (shock.RadiusDegrees * GeoCoord.Deg2Rad);
                     break;
             }
-            double intensity = Math.Clamp(severity * reach * Defence(s), 0, 1);
+            double intensity = Math.Clamp(severity * reach * Defence(view, s), 0, 1);
             if (!(intensity > 0)) continue;
             var rng = sink.Rng(s.Index, "shock:" + shock.Kind);
             if (rng.NextDouble() >= intensity) continue;
@@ -78,8 +78,8 @@ public static class ShockResolver
         return struck;
     }
 
-    /// <summary>How exposed a settlement is: bigger tiers and fortified roles shrug harm off, hamlets and refuges feel all of it.</summary>
-    private static double Defence(TurnView.SettlementState s)
+    /// <summary>How exposed a settlement is: bigger tiers and fortified roles shrug harm off, hamlets, refuges and crowded places feel more of it.</summary>
+    private static double Defence(TurnView view, TurnView.SettlementState s)
     {
         double tier = s.Tier switch
         {
@@ -95,6 +95,8 @@ public static class ShockResolver
             SettlementRole.Refuge => 1.15,
             _ => 1.0,
         };
-        return tier * role;
+        // Crowding makes harm spread: up to +30% at twice the catchment capacity.
+        double crowding = 1 + 0.15 * Math.Min(view.SettlementPressure(s.Index), 2.0);
+        return tier * role * crowding;
     }
 }

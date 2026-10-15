@@ -529,3 +529,9 @@ people vanish (no producer ends settlements yet).
 - One `HistoryEventKind.Shock` (19) event per shock that struck anyone: tags `shock:{kind}`, `severity:`, `struck:`; tile = epicentre.
 - No producer yet (hazard maps are M2.6), so real runs and the corpus do not move. Conservation holds: the shock tests check standing + pool + lost before and after.
 - Per-settlement pressure is the next slice (M2.5B).
+
+### M2.5B progress (per-settlement pressure)
+
+- `TurnView.SettlementCapacity(index)` and `SettlementPressure(index)` (people over catchment capacity), computed once per view from `HistoryDemography.SettlementCapacities`; 0 for ended or unknown settlements. Capacity is now visible to operators.
+- Consumers: refugees merged by `SettleOperator` go to the nearest settlement still below `PressureThreshold` (nearest at all as a fallback); `ShockResolver` exposure rises by up to 30% for crowded settlements (+15% per unit pressure, capped at 2).
+- Not changed: colony triggering stays on polity pressure, and the refuge founding threshold stays relative to mean settlement population (tuning both on per-settlement pressure waits for real shock producers in M2.6, to avoid moving the corpus blind). The pool is empty in real runs, so the corpus does not move.

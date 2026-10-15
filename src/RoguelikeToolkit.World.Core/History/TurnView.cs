@@ -112,6 +112,30 @@ public sealed class TurnView
     /// <summary>Every settlement (including ended ones) in founding order.</summary>
     public IReadOnlyList<SettlementState> Settlements { get; }
 
+    private double[]? _settlementCapacities;
+
+    /// <summary>
+    /// Catchment capacity of standing settlement <paramref name="settlement"/> at the snapshot (0 for an ended or unknown one):
+    /// the polity's carrying capacity split among its settlements by the tiles nearest each (see
+    /// <see cref="HistoryDemography.SettlementCapacities"/>). Computed once per view.
+    /// </summary>
+    public double SettlementCapacity(int settlement)
+    {
+        if ((uint)settlement >= (uint)Settlements.Count) return 0;
+        if (_settlementCapacities == null)
+        {
+            double[] polityCaps = HistoryDemography.CarryingCapacities(Map.DataStore, Polities.Count, _ownership);
+            _settlementCapacities = HistoryDemography.SettlementCapacities(Map.DataStore, _ownership, Settlements, polityCaps);
+        }
+        return _settlementCapacities[settlement];
+    }
+
+    /// <summary>Crowding pressure of standing settlement <paramref name="settlement"/>: its people over its catchment capacity (0 when it has none).</summary>
+    public double SettlementPressure(int settlement)
+        => (uint)settlement < (uint)Settlements.Count
+            ? HistoryDemography.PressureOf(Settlements[settlement].Population, SettlementCapacity(settlement))
+            : 0;
+
     /// <summary>People between settlements at the snapshot (released, not yet absorbed).</summary>
     public IReadOnlyList<DisplacedState> DisplacedPool { get; }
 

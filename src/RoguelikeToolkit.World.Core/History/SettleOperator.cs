@@ -94,7 +94,7 @@ public sealed class SettleOperator : IHistoryOperator
     /// <summary>
     /// Settles the polity's displaced groups: a group of at least <see cref="RefugeFoundShare"/> of the mean settlement
     /// population founds a <see cref="SettlementRole.Refuge"/> (one per turn, defensible or coastal sites first) when the
-    /// polity is under its cap; every other group merges into the standing settlement nearest its origin. Returns true
+    /// polity is under its cap; every other group merges into the nearest standing settlement below <see cref="PressureThreshold"/> (else the nearest at all). Returns true
     /// when a refuge was proposed this turn.
     /// </summary>
     private bool ProposeRefuge(TurnView view, ProposalSink sink, int polityId, int standing, double standingPeople,
@@ -108,15 +108,18 @@ public sealed class SettleOperator : IHistoryOperator
             if (!founded && standing < view.MaxSettlementsPerPolity && group.Amount >= RefugeFoundShare * mean
                 && TryFoundRefuge(view, sink, polityId, group, vectors, minDot)) { founded = true; continue; }
             int origin = group.Origin;
-            int best = -1;
-            double nearest = double.NegativeInfinity;
+            int best = -1, bestRoomy = -1;
+            double nearest = double.NegativeInfinity, nearestRoomy = double.NegativeInfinity;
             foreach (var s in view.Settlements)
             {
                 if (s.Ended || s.PolityId != polityId) continue;
                 double dot = (uint)origin < (uint)view.Settlements.Count
                     ? Vector3D.Dot(vectors[s.Tile], vectors[view.Settlements[origin].Tile]) : 0;
                 if (dot > nearest) { nearest = dot; best = s.Index; }
+                if (dot > nearestRoomy && view.SettlementPressure(s.Index) < PressureThreshold) { nearestRoomy = dot; bestRoomy = s.Index; }
             }
+            // Refugees prefer the nearest settlement that still has room; an already crowded one takes them only as a last resort.
+            if (bestRoomy >= 0) best = bestRoomy;
             if (best >= 0)
                 sink.Emit(new Proposal.AbsorbDisplaced { EntityId = polityId, Group = group.Index, Settlement = best, Amount = group.Amount });
         }
