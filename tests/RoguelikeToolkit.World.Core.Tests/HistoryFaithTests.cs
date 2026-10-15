@@ -17,6 +17,17 @@ public class HistoryFaithTests
         return builder.Build();
     }
 
+    private static World BuildWithVillains(int seed, int maxVillains)
+    {
+        var w = Build(seed);
+        new HistoryDriver()
+            .AddOperator(new PopulationOperator())
+            .AddOperator(new WarOperator())
+            .AddOperator(new VillainOperator())
+            .Apply(w.Map, w.History, new HistoryContext { MaxVillains = maxVillains });
+        return w;
+    }
+
     [Fact]
     public void StageOrders_SitBetweenTheOperators()
     {
@@ -56,9 +67,9 @@ public class HistoryFaithTests
     {
         foreach (int seed in Seeds)
         {
-            using var none = Build(seed, c => c.MaxVillains = 0);
+            using var none = BuildWithVillains(seed, 0);
             Assert.Empty(none.History.Villains);
-            using var one = Build(seed, c => c.MaxVillains = 1);
+            using var one = BuildWithVillains(seed, 1);
             Assert.True(one.History.Villains.Count <= 1);
         }
     }
@@ -68,7 +79,7 @@ public class HistoryFaithTests
     {
         foreach (int seed in Seeds)
         {
-            using var w = Build(seed, c => c.MaxVillains = 4);
+            using var w = BuildWithVillains(seed, 4);
             var h = w.History;
             foreach (var villain in h.Villains)
             {

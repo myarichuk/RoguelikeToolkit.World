@@ -75,7 +75,7 @@ public sealed class Polity
     /// <c>TreatyOperator.IsHeirAdult</c>), so child fostering is refused with a grudge.
     /// </summary>
     public int HeirBornTurn { get; set; } = -1;
-    /// <summary>True once a <c>VillainStage</c> villain rose to rule this polity; successions freeze at the rise turn.</summary>
+    /// <summary>True once a <c>VillainOperator</c> villain rose to rule this polity; successions freeze at the rise turn.</summary>
     public bool HasVillain { get; set; }
     /// <summary>History turn the polity ended (collapsed, absorbed), or -1 while alive. Unused by the ported operators in M1.</summary>
     public int EndedTurn { get; set; } = -1;

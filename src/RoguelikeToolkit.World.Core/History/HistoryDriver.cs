@@ -127,6 +127,16 @@ public sealed class HistoryDriver : HistoryPluginBase
                     var heirOwner = history.Polities.Find(p => p.Id == sh.EntityId);
                     if (heirOwner != null) heirOwner.HeirBornTurn = sh.HeirBornTurn;
                     break;
+                case Proposal.AddVillain av:
+                    var ruled = history.Polities.Find(p => p.Id == av.EntityId);
+                    if (ruled == null || ruled.HasVillain || history.Villains.Count >= context.MaxVillains) { RejectedProposals++; break; }
+                    history.Villains.Add(new VillainRecord
+                    {
+                        Id = history.Villains.Count, PolityId = ruled.Id, FolkKey = ruled.FolkKey, RisenTurn = turn, Agenda = av.Agenda,
+                    });
+                    ruled.HasVillain = true;
+                    ruled.RulerGeneration = av.RulerGeneration;
+                    break;
                 case Proposal.AppendEvent e:
                     history.AppendLinked(e.EventKind, turn, e.EntityId, e.Tile, e.Tags, e.Cause, e.Participants);
                     break;

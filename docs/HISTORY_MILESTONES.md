@@ -374,3 +374,7 @@ run deterministically.
   default, and `PopulationOperator` seeds it on the next turn (legacy seeded `InitialShare` of capacity
   immediately); pressure is the causal scalar; several rebellions in one turn all read the same snapshot ownership.
   The two legacy rebellion tests (coverage + cap) are replaced by `RebellionOperatorTests` with a forced tight-culture fixture.
+- Done (Villain): `VillainOperator` replaces `VillainStage`. New `AddVillain` proposal (kind 14, so it commits after
+  `SetPopulation` and its ruler generation wins); the commit enforces `MaxVillains` and one villain per polity.
+  `PopulationOperator` now keeps `RulerGeneration` frozen for a polity with a villain (legacy relied on stage
+  order). `TurnView` gains `MaxVillains`, `VillainCount`, `PolityState.HasVillain`/`RulerGeneration`.

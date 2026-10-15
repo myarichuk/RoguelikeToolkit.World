@@ -176,6 +176,21 @@ public abstract class Proposal
         public int Parent { get; init; } = -1;
     }
 
+    /// <summary>
+    /// A villain with <see cref="Agenda"/> rises to rule polity <see cref="Proposal.EntityId"/> and freezes its ruler
+    /// generation at <see cref="RulerGeneration"/>. The commit refuses it past <see cref="HistoryContext.MaxVillains"/>
+    /// or for a polity that already has one.
+    /// </summary>
+    public sealed class AddVillain : Proposal
+    {
+        /// <inheritdoc />
+        public override ProposalKind Kind => ProposalKind.AddVillain;
+        /// <summary>Agenda driving the villain.</summary>
+        public string Agenda { get; init; } = string.Empty;
+        /// <summary>Ruler generation the polity freezes at.</summary>
+        public int RulerGeneration { get; init; }
+    }
+
     /// <summary>Sets polity <see cref="Proposal.EntityId"/>'s population index and ruler generation (absolute, not a delta).</summary>
     public sealed class SetPopulation : Proposal
     {

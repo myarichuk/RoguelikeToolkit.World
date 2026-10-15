@@ -34,4 +34,6 @@ public enum ProposalKind
     SetHeir = 12,
     /// <summary>Found a new polity. Applied in a structural pre-pass, before every other proposal of the turn.</summary>
     AddPolity = 13,
+    /// <summary>A villain rises to rule a polity; applied after population so its ruler generation wins.</summary>
+    AddVillain = 14,
 }

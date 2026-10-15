@@ -2,7 +2,7 @@ namespace RoguelikeToolkit.World.Core.History;
 
 /// <summary>
 /// One long-life actor ruling a polity: agenda-driven, exempt from succession (see
-/// <see cref="VillainStage"/>, which freezes the polity's ruler generation at the rise turn),
+/// <see cref="VillainOperator"/>, which freezes the polity's ruler generation at the rise turn),
 /// and bounded by <see cref="HistoryContext.MaxVillains"/> plus the stage's own budget share.
 /// </summary>
 public sealed class VillainRecord

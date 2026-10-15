@@ -19,7 +19,7 @@ public sealed class TurnView
 
     /// <summary>One polity at the snapshot: identity, lifecycle and a copy of its scalars.</summary>
     public sealed record PolityState(int Id, PolityForm Form, int CapitalTile, string FolkKey, string CultureKey,
-        bool Alive, int Parent, double Population, IReadOnlyList<double> Scalars, string CultureOverlay = "", int FoundedTurn = 0, int HeirBornTurn = -1);
+        bool Alive, int Parent, double Population, IReadOnlyList<double> Scalars, string CultureOverlay = "", int FoundedTurn = 0, int HeirBornTurn = -1, bool HasVillain = false, int RulerGeneration = 0);
 
     /// <summary>One road segment at the snapshot.</summary>
     public readonly record struct RoadState(int TileA, int TileB, int PolityId, int RouteA, int RouteB, bool Severed);
@@ -37,6 +37,8 @@ public sealed class TurnView
         Seed = history.Seed;
         TurnYears = context.TurnYears;
         MaxPolities = context.MaxPolities;
+        MaxVillains = context.MaxVillains;
+        VillainCount = history.Villains.Count;
         Scalars = history.Scalars;
         _ownership = (int[])history.Ownership.Clone();
         var polities = new List<PolityState>(history.Polities.Count);
@@ -44,7 +46,7 @@ public sealed class TurnView
         {
             var scalars = new double[history.Scalars.Count];
             for (int i = 0; i < scalars.Length; i++) scalars[i] = p.GetScalar(i, history.Scalars);
-            polities.Add(new PolityState(p.Id, p.Form, p.CapitalTile, p.FolkKey, p.CultureKey, p.Alive, p.Parent, p.Population, scalars, p.CultureOverlay ?? string.Empty, p.FoundedTurn, p.HeirBornTurn));
+            polities.Add(new PolityState(p.Id, p.Form, p.CapitalTile, p.FolkKey, p.CultureKey, p.Alive, p.Parent, p.Population, scalars, p.CultureOverlay ?? string.Empty, p.FoundedTurn, p.HeirBornTurn, p.HasVillain, p.RulerGeneration));
         }
         Polities = polities;
         foreach (var g in history.Grudges) _grudges[(g.A, g.B)] = g.Weight;
@@ -75,6 +77,12 @@ public sealed class TurnView
 
     /// <summary>The polity cap: the commit refuses founding past it.</summary>
     public int MaxPolities { get; }
+
+    /// <summary>The villain cap: the commit refuses a rise past it.</summary>
+    public int MaxVillains { get; }
+
+    /// <summary>Villains risen so far at the snapshot.</summary>
+    public int VillainCount { get; }
 
     /// <summary>Declared scalars; <see cref="PolityState.Scalars"/> is indexed by their ids.</summary>
     public ScalarRegistry Scalars { get; }
