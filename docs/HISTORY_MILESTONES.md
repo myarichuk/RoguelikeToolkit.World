@@ -92,6 +92,8 @@ Exit: tests green, corpus committed, coupling list written.
   - `Conquests_OnlyOverlayCultures`, `Wars_HaveBattlefields_AndPressureBothSides`: outcome-shaped,
     expected to hold; re-check after the Conquest one-turn delay.
 
+**M1.3 progress (TradeRoad):** `TradeRoadOperator` (order 30) replaces `TradeRoadStage`; reads the ownership snapshot per turn, emits one `AddRoad` per segment plus a `RoadBuilt` event. Behaviour unchanged (gate bug B still open, fixed in the next commit).
+
 ### M1.1 Additive kernel types (M)
 
 No behaviour change; old stages still run.

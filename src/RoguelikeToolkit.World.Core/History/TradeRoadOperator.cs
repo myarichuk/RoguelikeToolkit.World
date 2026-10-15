@@ -18,7 +18,7 @@ namespace RoguelikeToolkit.World.Core.History;
 /// survivors (<see cref="ExchangeStage"/>). Re-running is idempotent: connected pairs are skipped
 /// and every draw is a pure function of <c>(seed, turn, pair)</c>.
 /// </summary>
-public sealed class TradeRoadStage : HistoryPluginBase
+public sealed class TradeRoadOperator : IHistoryOperator
 {
     /// <summary>Per-pair, per-turn chance to open a route once everything else lines up.</summary>
     public const double RoadChance = 0.15;
@@ -30,75 +30,53 @@ public sealed class TradeRoadStage : HistoryPluginBase
     public const double TradeRangeDegrees = 30.0;
 
     /// <summary>Diagnostic name, <c>TradeRoad</c>.</summary>
-    public override string Name => "TradeRoad";
+    public string Name => "TradeRoad";
+
     /// <summary><see cref="StageOrder.TradeRoad"/> (30).</summary>
-    public override int Order => StageOrder.TradeRoad;
-    /// <summary>Elevation (the land mask and the coastal bonus).</summary>
-    public override Type[] Reads => new[] { typeof(ElevationInfo) };
-    /// <summary>Hydrology (rivers), biomes (danger) and land capacity (surplus); absent layers fall back to neutral values.</summary>
-    public override Type[] ReadsOptional => new[] { typeof(HydrologyInfo), typeof(BiomeInfo), typeof(LandCapacityInfo) };
+    public int Order => StageOrder.TradeRoad;
 
-    /// <summary>True once polities have formed and at least two could trade.</summary>
-    public override bool Precondition(WorldMap map, HistoryCatalog history)
-        => history.PolitiesFormed && history.Polities.Count >= 2;
-
-    /// <summary>Opens routes turn by turn over the whole span.</summary>
-    public override void Apply(WorldMap map, HistoryCatalog history, HistoryContext context)
+    /// <summary>Proposes this turn's new routes from the snapshot.</summary>
+    public void Propose(TurnView view, ProposalSink sink)
     {
-        context.ResetOperatorBudget(Name);
-        var store = map.DataStore;
-        var profiles = SurplusProfiles(store, history);
+        var polities = view.Polities;
+        if (polities.Count < 2) return;
+        var store = view.Map.DataStore;
+        var profiles = SurplusProfiles(store, view);
         double rangeDot = DetMath.Cos(TradeRangeDegrees * GeoCoord.Deg2Rad);
         var vectors = store.GetTileVectors();
+        var routes = new HashSet<(int, int)>();
+        foreach (var road in view.Roads) routes.Add((road.RouteA, road.RouteB));
 
-        for (int turn = 1; turn < context.TurnCount; turn++)
+        for (int a = 0; a < polities.Count; a++)
         {
-            for (int a = 0; a < history.Polities.Count; a++)
+            var pa = polities[a];
+            if (!pa.Alive) continue;
+            for (int b = a + 1; b < polities.Count; b++)
             {
-                for (int b = a + 1; b < history.Polities.Count; b++)
-                {
-                    var pa = history.Polities[a];
-                    var pb = history.Polities[b];
-                    int endA = Math.Min(pa.CapitalTile, pb.CapitalTile);
-                    int endB = Math.Max(pa.CapitalTile, pb.CapitalTile);
-                    if (RouteExists(history, endA, endB)) continue;
-                    if (!HistoryDemography.AreComplementary(profiles[a], profiles[b])) continue;
-                    if (Vector3D.Dot(vectors[pa.CapitalTile], vectors[pb.CapitalTile]) < rangeDot) continue;
-                    var stream = HistoryRng.Create(history.Seed, Name, turn, a * 100003 + b, "open");
-                    if (stream.NextDouble() >= RoadChance) continue;
-                    List<int>? path = FindRoute(store, history, pa.CapitalTile, pb.CapitalTile);
-                    if (path is null) continue;
-                    if (!context.TrySpendOperatorEmergence(Name, turn)) continue;
-                    for (int i = 0; i + 1 < path.Count; i++)
-                    {
-                        history.Roads.Add(new HistoryRoad
-                        {
-                            TileA = path[i],
-                            TileB = path[i + 1],
-                            PolityId = -1,
-                            RouteA = endA,
-                            RouteB = endB,
-                            FoundedTurn = turn,
-                        });
-                    }
-                    history.AppendEvent(HistoryEventKind.RoadBuilt, turn, a, pa.CapitalTile,
-                        new[] { "road", "built", HistoryDemography.RouteTag(endA, endB) });
-                }
+                var pb = polities[b];
+                if (!pb.Alive) continue;
+                int endA = Math.Min(pa.CapitalTile, pb.CapitalTile);
+                int endB = Math.Max(pa.CapitalTile, pb.CapitalTile);
+                if (routes.Contains((endA, endB))) continue;
+                if (!HistoryDemography.AreComplementary(profiles[a], profiles[b])) continue;
+                if (Vector3D.Dot(vectors[pa.CapitalTile], vectors[pb.CapitalTile]) < rangeDot) continue;
+                var stream = sink.Rng(a * 100003 + b, "open");
+                if (stream.NextDouble() >= RoadChance) continue;
+                List<int>? path = FindRoute(store, pa.CapitalTile, pb.CapitalTile);
+                if (path is null) continue;
+                if (!sink.TrySpendEmergence()) continue;
+                for (int i = 0; i + 1 < path.Count; i++)
+                    sink.Emit(new Proposal.AddRoad { EntityId = -1, TileA = path[i], TileB = path[i + 1], RouteA = endA, RouteB = endB });
+                sink.Event(HistoryEventKind.RoadBuilt, a, pa.CapitalTile,
+                    new[] { "road", "built", HistoryDemography.RouteTag(endA, endB) });
             }
         }
     }
 
-    private static bool RouteExists(HistoryCatalog history, int endA, int endB)
-    {
-        foreach (var road in history.Roads)
-            if (road.RouteA == endA && road.RouteB == endB) return true;
-        return false;
-    }
-
     private static int[][] SurplusProfiles(
-        WorldDataStore store, HistoryCatalog history)
+        WorldDataStore store, TurnView view)
     {
-        var profiles = new int[history.Polities.Count][];
+        var profiles = new int[view.Polities.Count][];
         for (int i = 0; i < profiles.Length; i++) profiles[i] = new int[4];
         bool hasCapacity = store.IsLayerRegistered<LandCapacityInfo>();
         var capacity = hasCapacity ? store.GetSpan<LandCapacityInfo>() : default;
@@ -106,7 +84,7 @@ public sealed class TradeRoadStage : HistoryPluginBase
         var biomes = hasBiome ? store.GetSpan<BiomeInfo>() : default;
         for (int tile = 0; tile < store.TileCount; tile++)
         {
-            int owner = history.OwnerOf(tile);
+            int owner = view.OwnerOf(tile);
             if ((uint)owner >= (uint)profiles.Length) continue;
             int[] profile;
             if (hasCapacity)
@@ -128,7 +106,7 @@ public sealed class TradeRoadStage : HistoryPluginBase
         return profiles;
     }
 
-    private static List<int>? FindRoute(WorldDataStore store, HistoryCatalog history, int from, int to)
+    private static List<int>? FindRoute(WorldDataStore store, int from, int to)
     {
         int n = store.TileCount;
         if ((uint)from >= (uint)n || (uint)to >= (uint)n || from == to) return null;

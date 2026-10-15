@@ -33,7 +33,7 @@ implementing `IHistoricalContext` (one waiver: `History->Integration:HistoryCata
 - **IHistoryPlugin** / **HistoryPluginBase**: history stages as pipeline stages with
   `Precondition`/`Apply`; missing attachments make a stage a silent no-op.
 - **CultureSeedStage** (26) / **PolityFormStage** (27) / **HistoryEventsStage** (28, turn driver,
-  head of the 28..90 operator band) / **TradeRoadStage** (30) / **PopulationOperator** (32) /
+  head of the 28..90 operator band) / **TradeRoadOperator** (30) / **PopulationOperator** (32) /
   **WarStage** (50) / **ConquestStage** (60) / **RebellionStage** (70) / **ExchangeStage** (80) /
   **CityHistoryProjectStage** (91).
 
