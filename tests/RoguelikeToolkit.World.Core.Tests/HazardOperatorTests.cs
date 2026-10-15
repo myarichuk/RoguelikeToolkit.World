@@ -46,7 +46,7 @@ public class HazardOperatorTests
                 shocks++;
                 string kind = e.Tags.First(t => t.StartsWith("shock:", StringComparison.Ordinal)).Substring(6);
                 kinds.Add(kind);
-                Assert.Contains(kind, HazardMaps.Kinds);
+                Assert.Contains(kind, HazardOperator.Kinds);
                 Assert.Contains(e.Tags, t => t.StartsWith("struck:", StringComparison.Ordinal));
             }
             ended += h.Settlements.Count(s => s.Ended);
@@ -55,6 +55,8 @@ public class HazardOperatorTests
             Assert.True(h.PopulationLost >= 0);
         }
         Assert.True(shocks > 0, "No shock fired in ten worlds.");
+        Assert.Contains(HazardOperator.Famine, kinds);
+        Assert.Contains(HazardOperator.Plague, kinds);
         Assert.True(kinds.Count >= 3, "Shock kinds: " + string.Join(",", kinds));
         Assert.True(ended > 0, "No settlement was ever abandoned.");
     }

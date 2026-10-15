@@ -4,7 +4,7 @@ using RoguelikeToolkit.World.Core.Primitives;
 namespace RoguelikeToolkit.World.Core.History;
 
 /// <summary>
-/// Order 36: the physics-driven shock producer. Each turn, for each kind in <see cref="HazardMaps.Kinds"/> and each
+/// Order 36: the shock producer (physics maps plus famine and plague). Each turn, for each kind in <see cref="HazardMaps.Kinds"/> and each
 /// standing settlement not already inside a shock of that kind this turn, a stream per
 /// <c>(seed, "Hazard", turn, settlement, kind)</c> is drawn against <c>HazardRate · hazard(tile) / ReturnPeriod</c>, the
 /// return period being the mean wait, in turns, of a settlement sitting on a hazard-1 tile. A hit spends one operator
@@ -14,15 +14,29 @@ namespace RoguelikeToolkit.World.Core.History;
 /// </summary>
 public sealed class HazardOperator : IHistoryOperator
 {
-    private sealed record HazardDef(string Kind, double ReturnPeriod, double RadiusDegrees, double Casualty, double Displacement);
+    /// <summary>Kind key of famines: crowded settlements, where people outrun the catchment.</summary>
+    public const string Famine = "famine";
+    /// <summary>Kind key of plagues: dense, well-connected settlements.</summary>
+    public const string Plague = "plague";
+
+    private sealed record HazardDef(string Kind, double ReturnPeriod, double RadiusDegrees, double Casualty, double Displacement,
+        Func<TurnView, TurnView.SettlementState, HazardMaps, double> Hazard);
 
     private static readonly HazardDef[] Defs =
     {
-        new(HazardMaps.Earthquake, 36, 6.0, 0.25, 0.35),
-        new(HazardMaps.Volcano, 30, 4.0, 0.30, 0.50),
-        new(HazardMaps.Tsunami, 40, 3.0, 0.35, 0.40),
-        new(HazardMaps.Flood, 20, 3.0, 0.10, 0.30),
-        new(HazardMaps.Drought, 20, 10.0, 0.10, 0.50),
+        new(HazardMaps.Earthquake, 36, 6.0, 0.25, 0.35, (_, s, maps) => maps.Of(HazardMaps.Earthquake, s.Tile)),
+        new(HazardMaps.Volcano, 30, 4.0, 0.30, 0.50, (_, s, maps) => maps.Of(HazardMaps.Volcano, s.Tile)),
+        new(HazardMaps.Tsunami, 40, 3.0, 0.35, 0.40, (_, s, maps) => maps.Of(HazardMaps.Tsunami, s.Tile)),
+        new(HazardMaps.Flood, 20, 3.0, 0.10, 0.30, (_, s, maps) => maps.Of(HazardMaps.Flood, s.Tile)),
+        new(HazardMaps.Drought, 20, 10.0, 0.10, 0.50, (_, s, maps) => maps.Of(HazardMaps.Drought, s.Tile)),
+        new(Famine, 8, 2.0, 0.30, 0.40, (v, s, _) => Math.Clamp(v.SettlementPressure(s.Index) - 1.0, 0, 1)),
+        new(Plague, 30, 6.0, 0.40, 0.10, (v, s, _) => PlagueHazard(v, s)),
+    };
+
+    /// <summary>Every kind this operator can produce, map-driven kinds first.</summary>
+    public static IReadOnlyList<string> Kinds { get; } = new[]
+    {
+        HazardMaps.Earthquake, HazardMaps.Volcano, HazardMaps.Tsunami, HazardMaps.Flood, HazardMaps.Drought, Famine, Plague,
     };
 
     private HazardMaps? _maps;
@@ -42,13 +56,13 @@ public sealed class HazardOperator : IHistoryOperator
         for (int i = 0; i < Defs.Length; i++)
         {
             var def = Defs[i];
-            if (!(_maps.Total(def.Kind) > 0)) continue;
+            if (def.Kind is not (Famine or Plague) && !(_maps.Total(def.Kind) > 0)) continue;
             double cosRadius = DetMath.Cos(def.RadiusDegrees * GeoCoord.Deg2Rad);
             var hit = new List<int>();
             foreach (var s in view.Settlements)
             {
                 if (s.Ended) continue;
-                double hazard = _maps.Of(def.Kind, s.Tile);
+                double hazard = def.Hazard(view, s, _maps);
                 if (!(hazard > 0)) continue;
                 var rng = sink.Rng(s.Index, "hazard:" + def.Kind);
                 double roll = rng.NextDouble();
@@ -72,5 +86,22 @@ public sealed class HazardOperator : IHistoryOperator
                 });
             }
         }
+    }
+
+    /// <summary>Plague odds: bigger tiers are denser, and a polity with many open roads spreads contagion faster.</summary>
+    private static double PlagueHazard(TurnView view, TurnView.SettlementState s)
+    {
+        double density = s.Tier switch
+        {
+            SettlementTier.Hamlet => 0.2,
+            SettlementTier.Village => 0.4,
+            SettlementTier.Town => 0.7,
+            _ => 1.0,
+        };
+        int open = 0;
+        foreach (var road in view.Roads)
+            if (!road.Severed && road.PolityId == s.PolityId) open++;
+        double links = Math.Min(open, 8) / 8.0;
+        return density * (0.5 + 0.5 * links);
     }
 }

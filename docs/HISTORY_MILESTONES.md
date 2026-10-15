@@ -544,3 +544,8 @@ people vanish (no producer ends settlements yet).
 - Re-baseline (25 worlds): SettlementFounded 407 -> 436, SettlementEnded 0 -> 35, Shock events 172 (about 7 per world), War 759 -> 753, Conquest 76 -> 75, sites 491 -> 490. Ten-seed probe: roughly 6 shocks and 1.5 abandoned settlements per world, refuges form.
 - Test adjustments: the founding-state test pins `HazardRate = 0`; the colony spacing test ignores settlements abandoned before the colony was founded (resettling a ruin is allowed).
 - Still to do in M2.6B: famine (polity pressure), plague (density and route connectivity), scars come in M2.7.
+
+### M2.6B progress (famine and plague)
+
+- `HazardOperator` now carries a hazard function per kind. Two state-driven kinds join the map-driven five: **famine** (return period 8, radius 2 degrees, casualty 0.30, displacement 0.40; hazard = settlement pressure above 1.0, clamped to 1) and **plague** (return period 30, radius 6, casualty 0.40, displacement 0.10; hazard = tier density hamlet 0.2 / village 0.4 / town 0.7 / city 1.0, scaled 0.5..1.0 by the polity's open roads up to 8). Route-borne spreading is deferred to M2.8 (roads between settlements). `HazardOperator.Kinds` lists all seven.
+- Re-baseline (25 worlds): SettlementFounded 436 -> 462, SettlementEnded 35 -> 50, Shock events 172 -> 241 (about 10 per world), War 758, Conquest 74, sites 489.
