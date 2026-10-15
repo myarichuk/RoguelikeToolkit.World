@@ -25,6 +25,8 @@ public sealed class SettleOperator : IHistoryOperator
     public const double MinSpacingDegrees = 4.0;
     /// <summary>How many of the best eligible candidates the pick chooses among.</summary>
     public const int PickAmong = 3;
+    /// <summary>A pool group at least this fraction of the polity's mean settlement population founds a refuge; smaller ones merge into a standing settlement.</summary>
+    public const double RefugeFoundShare = 0.5;
     private const int CandidateLimit = 4000;
 
     private List<CitySiteScore>? _candidates;
@@ -47,10 +49,12 @@ public sealed class SettleOperator : IHistoryOperator
         foreach (var polity in view.Polities)
         {
             if (!polity.Alive) continue;
-            if (view.ScalarOf(polity.Id, ScalarRegistry.Pressure) < PressureThreshold) continue;
             int standing = 0;
+            double standingPeople = 0;
             foreach (var s in view.Settlements)
-                if (!s.Ended && s.PolityId == polity.Id) standing++;
+                if (!s.Ended && s.PolityId == polity.Id) { standing++; standingPeople += s.Population; }
+            if (ProposeRefuge(view, sink, polity.Id, standing, standingPeople, vectors, minDot)) continue;
+            if (view.ScalarOf(polity.Id, ScalarRegistry.Pressure) < PressureThreshold) continue;
             if (standing >= view.MaxSettlementsPerPolity) continue;
 
             var eligible = new List<(CitySiteScore Site, int Parent, double Dot)>();
@@ -85,6 +89,82 @@ public sealed class SettleOperator : IHistoryOperator
             });
             sink.Adjust(polity.Id, ScalarRegistry.Pressure, -PressureRelief);
         }
+    }
+
+    /// <summary>
+    /// Settles the polity's displaced groups: a group of at least <see cref="RefugeFoundShare"/> of the mean settlement
+    /// population founds a <see cref="SettlementRole.Refuge"/> (one per turn, defensible or coastal sites first) when the
+    /// polity is under its cap; every other group merges into the standing settlement nearest its origin. Returns true
+    /// when a refuge was proposed this turn.
+    /// </summary>
+    private bool ProposeRefuge(TurnView view, ProposalSink sink, int polityId, int standing, double standingPeople,
+        ReadOnlySpan<Vector3D> vectors, double minDot)
+    {
+        bool founded = false;
+        double mean = standing > 0 ? standingPeople / standing : 0;
+        foreach (var group in view.DisplacedPool)
+        {
+            if (group.PolityId != polityId || !(group.Amount > 0)) continue;
+            if (!founded && standing < view.MaxSettlementsPerPolity && group.Amount >= RefugeFoundShare * mean
+                && TryFoundRefuge(view, sink, polityId, group, vectors, minDot)) { founded = true; continue; }
+            int origin = group.Origin;
+            int best = -1;
+            double nearest = double.NegativeInfinity;
+            foreach (var s in view.Settlements)
+            {
+                if (s.Ended || s.PolityId != polityId) continue;
+                double dot = (uint)origin < (uint)view.Settlements.Count
+                    ? Vector3D.Dot(vectors[s.Tile], vectors[view.Settlements[origin].Tile]) : 0;
+                if (dot > nearest) { nearest = dot; best = s.Index; }
+            }
+            if (best >= 0)
+                sink.Emit(new Proposal.AbsorbDisplaced { EntityId = polityId, Group = group.Index, Settlement = best, Amount = group.Amount });
+        }
+        return founded;
+    }
+
+    private bool TryFoundRefuge(TurnView view, ProposalSink sink, int polityId, TurnView.DisplacedState group,
+        ReadOnlySpan<Vector3D> vectors, double minDot)
+    {
+        if (_candidates == null || _candidates.Count == 0) return false;
+        var preferred = new List<(CitySiteScore Site, int Parent)>();
+        var fallback = new List<(CitySiteScore Site, int Parent)>();
+        foreach (var site in _candidates)
+        {
+            if (preferred.Count == PickAmong) break;
+            if (view.OwnerOf(site.TileIndex) != polityId) continue;
+            bool spaced = true;
+            int parent = -1;
+            double nearest = double.NegativeInfinity;
+            foreach (var s in view.Settlements)
+            {
+                if (s.Ended) continue;
+                double dot = Vector3D.Dot(vectors[site.TileIndex], vectors[s.Tile]);
+                if (dot >= minDot) { spaced = false; break; }
+                if (s.PolityId == polityId && dot > nearest) { nearest = dot; parent = s.Index; }
+            }
+            if (!spaced) continue;
+            if ((uint)group.Origin < (uint)view.Settlements.Count && !view.Settlements[group.Origin].Ended
+                && view.Settlements[group.Origin].PolityId == polityId) parent = group.Origin;
+            bool safe = site.Reasons.Contains("high", StringComparison.Ordinal) || site.Reasons.Contains("water", StringComparison.Ordinal);
+            if (safe) preferred.Add((site, parent));
+            else if (fallback.Count < PickAmong) fallback.Add((site, parent));
+        }
+        var pool = preferred.Count > 0 ? preferred : fallback;
+        if (pool.Count == 0 || !sink.TrySpendEmergence()) return false;
+        var rng = HistoryRng.Create(view.Seed, nameof(SettleOperator), view.Turn, polityId, "refuge");
+        var chosen = pool[(int)rng.NextUInt((uint)pool.Count)];
+        sink.Emit(new Proposal.AddSettlement
+        {
+            EntityId = polityId,
+            Tile = chosen.Site.TileIndex,
+            Role = SettlementRole.Refuge,
+            Tier = SettlementTier.Hamlet,
+            Parent = chosen.Parent,
+            Cause = group.Cause,
+            FromGroup = group.Index,
+        });
+        return true;
     }
 
     private static List<CitySiteScore> RankCandidates(TurnView view)

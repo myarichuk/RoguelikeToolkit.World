@@ -211,6 +211,11 @@ public abstract class Proposal
         public int Parent { get; init; } = -1;
         /// <summary>Id of an event from an earlier turn that caused the founding, or -1.</summary>
         public int Cause { get; init; } = -1;
+        /// <summary>
+        /// Index into <see cref="HistoryCatalog.Displaced"/> of a pool group of this polity whose whole remainder seeds the new
+        /// settlement (a refuge), or -1 for the usual parent colonist share. A bad or foreign group falls back to -1.
+        /// </summary>
+        public int FromGroup { get; init; } = -1;
         internal override long? ConflictKey => Tile;
     }
 

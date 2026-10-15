@@ -147,7 +147,7 @@ public sealed class HistoryDriver : HistoryPluginBase
                     if (drifting != null && drifting.OpennessDrift < HistoryDemography.MaxOpennessDrift) drifting.OpennessDrift++;
                     break;
                 case Proposal.AddSettlement ads:
-                    if (!TryFoundSettlement(map, history, context, turn, ads)) RejectedProposals++;
+                    if (!TryFoundSettlement(map, history, context, turn, ads, dirty)) RejectedProposals++;
                     break;
                 case Proposal.EndSettlement ens:
                     if (!TryEndSettlement(history, turn, ens, dirty)) RejectedProposals++;
@@ -292,7 +292,7 @@ public sealed class HistoryDriver : HistoryPluginBase
         history.Displaced.RemoveAll(static g => !(g.Amount > 0));
     }
 
-    private static bool TryFoundSettlement(WorldMap map, HistoryCatalog history, HistoryContext context, int turn, Proposal.AddSettlement ads)
+    private static bool TryFoundSettlement(WorldMap map, HistoryCatalog history, HistoryContext context, int turn, Proposal.AddSettlement ads, HashSet<int> dirty)
     {
         var owner = history.Polities.Find(p => p.Id == ads.EntityId);
         if (owner == null || !owner.Alive) return false;
@@ -314,7 +314,17 @@ public sealed class HistoryDriver : HistoryPluginBase
             Habitability = CapitalSettlements.HabitabilityOf(store, ads.Tile), Active = true,
             Tier = ads.Tier, Role = ads.Role, Parent = ads.Parent,
         });
-        if (ads.Parent >= 0)
+        HistorySettlement? seeded = null;
+        if ((uint)ads.FromGroup < (uint)history.Displaced.Count && history.Displaced[ads.FromGroup].PolityId == owner.Id
+            && history.Displaced[ads.FromGroup].Amount > 0)
+        {
+            var group = history.Displaced[ads.FromGroup];
+            history.Settlements[index].Population = group.Amount;
+            group.Amount = 0;
+            seeded = history.Settlements[index];
+            dirty.Add(owner.Id);
+        }
+        if (seeded == null && ads.Parent >= 0)
         {
             var parent = history.Settlements[ads.Parent];
             if (!parent.Ended && parent.PolityId == owner.Id)

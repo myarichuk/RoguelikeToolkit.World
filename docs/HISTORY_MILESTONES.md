@@ -513,3 +513,10 @@ people vanish (no producer ends settlements yet).
 - Pool decay in the commit (`HistoryContext.DisplacedDecayTurns`, default 3): stale groups settle into the origin polity's first standing settlement, else are recorded in `PopulationLost`. Drained groups are dropped at end of commit.
 - `TurnView.DisplacedPool` / `DisplacedState`. Tests: `DisplacedPoolTests` (5). No corpus movement expected (nothing ends settlements yet). Core 785 green; netstandard2.1 build clean.
 - Next: M2.4C refugee settling in `SettleOperator`.
+
+### M2.4C progress (refugee settling)
+
+- `Proposal.AddSettlement.FromGroup` (default -1): when it names a pool group of the founding polity with people left, the whole remainder seeds the new settlement (moved, not created) instead of the parent's `ColonistShare`. A bad or foreign group falls back to the colony path. The commit marks the polity dirty so the stock re-sums.
+- `SettleOperator` now settles the pool first, per polity: a group of at least `RefugeFoundShare` (0.5) of the polity's mean standing-settlement population founds one `Refuge` hamlet per turn (under `MaxSettlementsPerPolity`; spends one emergence). Sites prefer CitySiteScorer candidates tagged `high` or `water` (defensible / coastal), RNG among the top 3; the parent is the group's origin settlement if standing, else the nearest. Every other group is `AbsorbDisplaced` into the standing same-polity settlement nearest its origin. A turn that founds a refuge does not also found a colony for that polity.
+- Deviation from the design note: the threshold is relative to mean settlement population, not to catchment capacity, because capacity is not exposed to operators. Revisit with per-settlement pressure at M2.5.
+- Same-polity only until M2.9. Nothing real ends settlements yet, so the corpus is unchanged (expected, verified by the suite). Tests: `RefugeSettlingTests` (3: large group founds a refuge and conserves, small group merges, determinism), driven by a synthetic releaser.
