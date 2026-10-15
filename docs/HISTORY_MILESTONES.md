@@ -583,3 +583,14 @@ people vanish (no producer ends settlements yet).
 - `TryAbsorb` accepts a foreign target only when the group's own polity has no standing settlement; a polity that still has one cannot send people abroad. The pool invariant is untouched (pool to standing).
 - The corpus did not change: homeless polities are rare in the default worlds. Core suite: 807 green.
 - Left for later: the settlement-level plague/war interplay is tuned only by the corpus; the strict full-run ledger test and the Gurubashi/Venice cases stay in the M2 exit.
+
+### M2.10 progress (P4a shrink: history decides placement)
+
+- `CitySiteScorer` stays a pure candidate generator (map only, no history input). `SettleOperator` no longer takes the first
+  `PickAmong` spaced candidates: it scans up to `ScanLimit` (24) spaced candidates and `BestByHistory` ranks them by
+  scorer score x history weight, then picks randomly among the best `PickAmong` (3) on the same rng stream as before.
+- Weights: active non-ruin scar within `ScarRadiusDegrees` (3) x0.25; a ruin on the tile x1.5 (resettlement); a live
+  (unsevered) route end within `RouteRadiusDegrees` (6) x1.3. Applies to colonies and refuges.
+- `TurnView.Scars` / `ScarState` expose scars to operators.
+- Corpus re-baselined (12 lines changed). Tests: `SettlePlacementTests` (2). Core suite 809 expected.
+- Not done: weights for rivers/resources/faith (scorer reasons already cover water); tuning of weights.

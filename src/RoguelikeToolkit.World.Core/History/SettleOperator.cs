@@ -27,6 +27,18 @@ public sealed class SettleOperator : IHistoryOperator
     public const int PickAmong = 3;
     /// <summary>A pool group at least this fraction of the polity's mean settlement population founds a refuge; smaller ones merge into a standing settlement.</summary>
     public const double RefugeFoundShare = 0.5;
+    /// <summary>How many spaced candidates are weighed by history before the best <see cref="PickAmong"/> are kept.</summary>
+    public const int ScanLimit = 24;
+    /// <summary>Weight of a candidate on blasted ground (an active crater, plague pit, scorched field or fissure within <see cref="ScarRadiusDegrees"/>).</summary>
+    public const double ScarredWeight = 0.25;
+    /// <summary>Weight of a candidate on a ruin: people return to old sites.</summary>
+    public const double RuinWeight = 1.5;
+    /// <summary>Weight of a candidate near a live trade route (within <see cref="RouteRadiusDegrees"/> of its end).</summary>
+    public const double RouteWeight = 1.3;
+    /// <summary>Angular reach, in degrees, of a non-ruin scar.</summary>
+    public const double ScarRadiusDegrees = 3.0;
+    /// <summary>Angular reach, in degrees, of a route end.</summary>
+    public const double RouteRadiusDegrees = 6.0;
     private const int CandidateLimit = 4000;
 
     private List<CitySiteScore>? _candidates;
@@ -73,12 +85,13 @@ public sealed class SettleOperator : IHistoryOperator
                 }
                 if (!spaced || parent < 0) continue;
                 eligible.Add((site, parent, nearest));
-                if (eligible.Count == PickAmong) break;
+                if (eligible.Count == ScanLimit) break;
             }
             if (eligible.Count == 0) continue;
             if (!sink.TrySpendEmergence()) return;
             var rng = HistoryRng.Create(view.Seed, nameof(SettleOperator), view.Turn, polity.Id, "site");
-            var chosen = eligible[(int)rng.NextUInt((uint)eligible.Count)];
+            var best = BestByHistory(view, eligible, e => e.Site, vectors);
+            var chosen = best[(int)rng.NextUInt((uint)best.Count)];
             sink.Emit(new Proposal.AddSettlement
             {
                 EntityId = polity.Id,
@@ -161,7 +174,7 @@ public sealed class SettleOperator : IHistoryOperator
         var fallback = new List<(CitySiteScore Site, int Parent)>();
         foreach (var site in _candidates)
         {
-            if (preferred.Count == PickAmong) break;
+            if (preferred.Count == ScanLimit) break;
             if (view.OwnerOf(site.TileIndex) != polityId) continue;
             bool spaced = true;
             int parent = -1;
@@ -178,12 +191,13 @@ public sealed class SettleOperator : IHistoryOperator
                 && view.Settlements[group.Origin].PolityId == polityId) parent = group.Origin;
             bool safe = site.Reasons.Contains("high", StringComparison.Ordinal) || site.Reasons.Contains("water", StringComparison.Ordinal);
             if (safe) preferred.Add((site, parent));
-            else if (fallback.Count < PickAmong) fallback.Add((site, parent));
+            else if (fallback.Count < ScanLimit) fallback.Add((site, parent));
         }
         var pool = preferred.Count > 0 ? preferred : fallback;
         if (pool.Count == 0 || !sink.TrySpendEmergence()) return false;
         var rng = HistoryRng.Create(view.Seed, nameof(SettleOperator), view.Turn, polityId, "refuge");
-        var chosen = pool[(int)rng.NextUInt((uint)pool.Count)];
+        var best = BestByHistory(view, pool, e => e.Site, vectors);
+        var chosen = best[(int)rng.NextUInt((uint)best.Count)];
         sink.Emit(new Proposal.AddSettlement
         {
             EntityId = polityId,
@@ -195,6 +209,42 @@ public sealed class SettleOperator : IHistoryOperator
             FromGroup = group.Index,
         });
         return true;
+    }
+
+    /// <summary>
+    /// Ranks spaced candidates by scorer score times a history weight (scarred ground avoided, ruins reoccupied, live routes
+    /// favoured) and returns the best <see cref="PickAmong"/>; ties keep scorer order, so the result is deterministic.
+    /// </summary>
+    internal static List<T> BestByHistory<T>(TurnView view, List<T> items, Func<T, CitySiteScore> site, ReadOnlySpan<Vector3D> vectors)
+    {
+        double scarDot = DetMath.Cos(ScarRadiusDegrees * GeoCoord.Deg2Rad);
+        double routeDot = DetMath.Cos(RouteRadiusDegrees * GeoCoord.Deg2Rad);
+        var ranked = new List<(T Item, double Weight, int Order)>(items.Count);
+        for (int i = 0; i < items.Count; i++)
+        {
+            var c = site(items[i]);
+            var v = vectors[c.TileIndex];
+            double w = c.Score;
+            bool blasted = false, ruin = false;
+            foreach (var sc in view.Scars)
+            {
+                if (!sc.Active) continue;
+                if (sc.Kind == HistoryScar.Ruin) { if (sc.Tile == c.TileIndex) ruin = true; }
+                else if (Vector3D.Dot(v, vectors[sc.Tile]) >= scarDot) blasted = true;
+            }
+            if (blasted) w *= ScarredWeight;
+            else if (ruin) w *= RuinWeight;
+            foreach (var r in view.Roads)
+            {
+                if (r.Severed) continue;
+                if (Vector3D.Dot(v, vectors[r.TileA]) >= routeDot || Vector3D.Dot(v, vectors[r.TileB]) >= routeDot) { w *= RouteWeight; break; }
+            }
+            ranked.Add((items[i], w, i));
+        }
+        ranked.Sort((a, b) => a.Weight != b.Weight ? b.Weight.CompareTo(a.Weight) : a.Order.CompareTo(b.Order));
+        var result = new List<T>(PickAmong);
+        for (int i = 0; i < ranked.Count && i < PickAmong; i++) result.Add(ranked[i].Item);
+        return result;
     }
 
     private static List<CitySiteScore> RankCandidates(TurnView view)

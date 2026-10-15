@@ -24,6 +24,9 @@ public sealed class TurnView
     /// <summary>One road segment at the snapshot.</summary>
     public readonly record struct RoadState(int TileA, int TileB, int PolityId, int RouteA, int RouteB, bool Severed);
 
+    /// <summary>One scar at the snapshot.</summary>
+    public readonly record struct ScarState(int Tile, int PolityId, string Kind, bool Active);
+
     /// <summary>One holy site at the snapshot.</summary>
     public readonly record struct HolySiteState(int Tile, int PolityId, GeoCoord Position, bool Active);
 
@@ -81,7 +84,13 @@ public sealed class TurnView
         MaxSettlementsPerPolity = context.MaxSettlementsPerPolity;
         HazardRate = context.HazardRate;
         foreach (var s in history.Sites) _siteTiles.Add(s.TileIndex);
+        var scars = new List<ScarState>(history.Scars.Count);
+        foreach (var sc in history.Scars) scars.Add(new ScarState(sc.TileIndex, sc.PolityId, sc.Kind, sc.Active));
+        Scars = scars;
     }
+
+    /// <summary>Every scar (ruins, craters, plague pits...) at the snapshot.</summary>
+    public IReadOnlyList<ScarState> Scars { get; }
 
     /// <summary>
     /// The world map. Terrain and capacity layers do not change during history, so reading them keeps the
