@@ -1,5 +1,6 @@
 using RoguelikeToolkit.World.Core.Generation;
 using RoguelikeToolkit.World.Core.Peoples;
+using RoguelikeToolkit.World.Core.Primitives;
 using RoguelikeToolkit.World.Core.Topology;
 
 namespace RoguelikeToolkit.World.Core.History;
@@ -39,6 +40,24 @@ public sealed class WarOperator : IHistoryOperator
 
     /// <summary>Grudge weight a desecration raises between the desecrator and each of the holy owner's neighbors (the coalition).</summary>
     public const int DesecrationCoalitionGrudge = 1;
+
+    /// <summary>Chance a raid also takes the nearest defending settlement outright, when the attacker is strong enough and it is not a capital.</summary>
+    public const double CaptureChance = 0.2;
+
+    /// <summary>Chance a raid razes the nearest defending settlement, when the attacker is strong enough and it is not a capital.</summary>
+    public const double RazeChance = 0.1;
+
+    /// <summary>Chance a raid that neither takes nor razes sacks the nearest defending settlement.</summary>
+    public const double SackChance = 0.5;
+
+    /// <summary>Share of a sacked settlement's people who die.</summary>
+    public const double SackCasualty = 0.08;
+
+    /// <summary>Share of a sacked settlement's people who flee into the displaced pool.</summary>
+    public const double SackDisplacement = 0.15;
+
+    /// <summary>Share of a razed settlement's people who die before the rest flee.</summary>
+    public const double RazeCasualty = 0.3;
 
     private readonly Dictionary<string, int> _xenophobia = new(StringComparer.OrdinalIgnoreCase);
     private PeoplesStore? _store;
@@ -100,8 +119,68 @@ public sealed class WarOperator : IHistoryOperator
             }
             CheckDesecration(view, sink, ownership, attacker, defender, battlefield);
             SeverRoutes(view, sink, severedNow, attacker, polity.CapitalTile, polities[defender].CapitalTile);
+            Assault(view, sink, severedNow, polity, polities[defender], battlefield);
             sink.Adjust(attacker, ScalarRegistry.Pressure, HistoryDemography.WarPressureBump);
             sink.Adjust(defender, ScalarRegistry.Pressure, HistoryDemography.WarPressureBump);
+        }
+    }
+
+    /// <summary>
+    /// The raid reaches the defender's settlement nearest the battlefield. A stronger attacker
+    /// (<see cref="HistoryDemography.ConquestAdvantage"/>) may take it or raze it; a capital is only ever sacked.
+    /// Otherwise the settlement may be sacked: some die, some flee into the displaced pool.
+    /// </summary>
+    private static void Assault(
+        TurnView view, ProposalSink sink, HashSet<(int, int)> severedNow, TurnView.PolityState attacker, TurnView.PolityState defender, int battlefield)
+    {
+        var vectors = view.Map.DataStore.GetTileVectors();
+        if ((uint)battlefield >= (uint)vectors.Length) return;
+        TurnView.SettlementState target = default;
+        double best = double.NegativeInfinity;
+        bool found = false;
+        foreach (var s in view.Settlements)
+        {
+            if (s.Ended || s.PolityId != defender.Id) continue;
+            double dot = Vector3D.Dot(vectors[battlefield], vectors[s.Tile]);
+            if (dot > best) { best = dot; target = s; found = true; }
+        }
+        if (!found) return;
+        var rng = sink.Rng(attacker.Id, "assault");
+        double roll = rng.NextDouble();
+        int attackerStanding = 0;
+        foreach (var s in view.Settlements)
+            if (!s.Ended && s.PolityId == attacker.Id) attackerStanding++;
+        bool canHold = attackerStanding < view.MaxSettlementsPerPolity;
+        bool strong = target.Role != SettlementRole.Capital
+            && attacker.Population >= HistoryDemography.ConquestAdvantage * Math.Max(defender.Population, 1);
+        if (strong && canHold && roll < CaptureChance)
+        {
+            sink.Emit(new Proposal.CaptureSettlement { EntityId = attacker.Id, Settlement = target.Index });
+            sink.Event(HistoryEventKind.SettlementCaptured, attacker.Id, target.Tile,
+                new[] { $"settlement:{target.Index}", $"from:{defender.Id}", $"to:{attacker.Id}" });
+            return;
+        }
+        if (strong && roll < CaptureChance + RazeChance)
+        {
+            sink.Emit(new Proposal.EndSettlement { EntityId = defender.Id, Settlement = target.Index, EndCause = "razed", LostShare = RazeCasualty });
+            sink.Emit(new Proposal.AddScar
+            {
+                EntityId = defender.Id, Tile = target.Tile, ScarKind = HistoryScar.Ruin, Cause = "war",
+                Position = view.Map.DataStore.GetGeoCoord(target.Tile),
+            });
+            var live = new HashSet<(int, int)>();
+            foreach (var road in view.Roads)
+                if (!road.Severed && (road.RouteA == target.Tile || road.RouteB == target.Tile)) live.Add((road.RouteA, road.RouteB));
+            foreach (var (a, b) in live) SeverRoutes(view, sink, severedNow, attacker.Id, a, b);
+            return;
+        }
+        if (roll < CaptureChance + RazeChance + SackChance * (1 - CaptureChance - RazeChance))
+        {
+            sink.Emit(new Proposal.ReleasePopulation { EntityId = defender.Id, Settlement = target.Index, Share = SackDisplacement });
+            sink.Emit(new Proposal.KillPopulation
+            {
+                EntityId = defender.Id, Settlement = target.Index, Share = Math.Min(1, SackCasualty / (1 - SackDisplacement)),
+            });
         }
     }
 

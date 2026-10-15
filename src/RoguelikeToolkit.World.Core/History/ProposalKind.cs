@@ -52,4 +52,6 @@ public enum ProposalKind
     KillPopulation = 21,
     /// <summary>Leave a scar (ruin, crater, plague pit...) on a tile.</summary>
     AddScar = 22,
+    /// <summary>A settlement changes hands in war.</summary>
+    CaptureSettlement = 23,
 }

@@ -8,10 +8,10 @@ public class HistorySettlementLifecycleTests
     [Fact]
     public void Capitals_StartAsStandingCapitalCities()
     {
-        // Shocks abandon settlements; pin them off to check the founding state.
+        // Shocks abandon settlements; pin them off to check the founding state (wars never end capitals).
         using var w = new WorldBuilder().WithSize(3).WithSeed(42).WithUserEdits().WithHistory(c => c.HazardRate = 0).Build();
         Assert.NotEmpty(w.History.Settlements);
-        foreach (var s in w.History.Settlements)
+        foreach (var s in w.History.Settlements.Where(s => s.Role == SettlementRole.Capital))
         {
             Assert.False(s.Ended);
             Assert.Equal(-1, s.EndedTurn);

@@ -92,6 +92,7 @@ public sealed class HistoryDriver : HistoryPluginBase
         var claimed = new HashSet<(ProposalKind, long)>();
         var deltas = new SortedDictionary<(int Polity, int Scalar), double>();
         bool reassigned = false;
+        var reassignedTiles = new HashSet<int>();
         var dirty = new HashSet<int>();
         foreach (var p in proposals)
         {
@@ -99,7 +100,7 @@ public sealed class HistoryDriver : HistoryPluginBase
             switch (p)
             {
                 case Proposal.ReassignTile r:
-                    if ((uint)r.Tile < (uint)history.Ownership.Length) { history.Ownership[r.Tile] = r.EntityId; reassigned = true; }
+                    if ((uint)r.Tile < (uint)history.Ownership.Length) { history.Ownership[r.Tile] = r.EntityId; reassigned = true; reassignedTiles.Add(r.Tile); }
                     break;
                 case Proposal.AddRoad r:
                     history.Roads.Add(new HistoryRoad { TileA = r.TileA, TileB = r.TileB, PolityId = r.EntityId, RouteA = r.RouteA, RouteB = r.RouteB, FoundedTurn = turn });
@@ -180,6 +181,9 @@ public sealed class HistoryDriver : HistoryPluginBase
                 case Proposal.KillPopulation kp:
                     if (!TryKill(history, kp, dirty)) RejectedProposals++;
                     break;
+                case Proposal.CaptureSettlement cap:
+                    if (!TryCapture(history, context, cap, dirty)) RejectedProposals++;
+                    break;
                 case Proposal.AbsorbDisplaced ab:
                     if (!TryAbsorb(history, ab, dirty)) RejectedProposals++;
                     break;
@@ -189,7 +193,7 @@ public sealed class HistoryDriver : HistoryPluginBase
                     break;
             }
         }
-        if (reassigned) SyncSettlementOwners(history, dirty);
+        if (reassigned) SyncSettlementOwners(history, reassignedTiles, dirty);
         DecayDisplaced(history, context, turn, dirty);
         ResyncPopulations(history, dirty, reassigned);
         foreach (var ((polityId, scalarId), delta) in deltas)
@@ -200,12 +204,12 @@ public sealed class HistoryDriver : HistoryPluginBase
         }
     }
 
-    /// <summary>Standing settlements follow the owner of the tile they stand on (until conquest moves them on purpose, M2.9).</summary>
-    private static void SyncSettlementOwners(HistoryCatalog history, HashSet<int> dirty)
+    /// <summary>A settlement on a tile that just changed owner follows the new owner; settlements captured in war stay with their captor until their own tile is reassigned.</summary>
+    private static void SyncSettlementOwners(HistoryCatalog history, HashSet<int> tiles, HashSet<int> dirty)
     {
         foreach (var settlement in history.Settlements)
         {
-            if (settlement.Ended) continue;
+            if (settlement.Ended || !tiles.Contains(settlement.TileIndex)) continue;
             int owner = history.OwnerOf(settlement.TileIndex);
             if (owner < 0 || owner == settlement.PolityId) continue;
             dirty.Add(settlement.PolityId);
@@ -357,6 +361,23 @@ public sealed class HistoryDriver : HistoryPluginBase
         var tags = new List<string> { $"settlement:{index}", $"role:{ads.Role}" };
         if (ads.Parent >= 0) tags.Add($"from:{ads.Parent}");
         history.AppendLinked(HistoryEventKind.SettlementFounded, turn, owner.Id, ads.Tile, tags, ads.Cause, null);
+        return true;
+    }
+
+    private static bool TryCapture(HistoryCatalog history, HistoryContext context, Proposal.CaptureSettlement cap, HashSet<int> dirty)
+    {
+        if ((uint)cap.Settlement >= (uint)history.Settlements.Count) return false;
+        var settlement = history.Settlements[cap.Settlement];
+        if (settlement.Ended || settlement.PolityId == cap.EntityId || settlement.Role == SettlementRole.Capital) return false;
+        var captor = history.Polities.Find(p => p.Id == cap.EntityId);
+        if (captor == null || !captor.Alive) return false;
+        int standing = 0;
+        foreach (var s in history.Settlements)
+            if (!s.Ended && s.PolityId == captor.Id) standing++;
+        if (standing >= context.MaxSettlementsPerPolity) return false;
+        dirty.Add(settlement.PolityId);
+        dirty.Add(captor.Id);
+        settlement.PolityId = captor.Id;
         return true;
     }
 

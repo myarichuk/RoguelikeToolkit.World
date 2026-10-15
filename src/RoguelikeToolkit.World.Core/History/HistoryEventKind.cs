@@ -48,4 +48,6 @@ public enum HistoryEventKind : byte
     SettlementEnded = 18,
     /// <summary>A shock struck places (earthquake, plague, flood...). Tags <c>shock:{kind}</c>, <c>severity:{0.00}</c> and <c>struck:{count}</c>; the tile is the epicentre. Struck settlements log their own ends.</summary>
     Shock = 19,
+    /// <summary>A war took a settlement from its owner. Tags <c>settlement:{index}</c>, <c>from:{polity}</c> and <c>to:{polity}</c>; the tile is the settlement. The event's polity is the captor.</summary>
+    SettlementCaptured = 20,
 }

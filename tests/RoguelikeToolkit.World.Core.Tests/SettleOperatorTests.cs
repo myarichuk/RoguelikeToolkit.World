@@ -39,7 +39,10 @@ public class SettleOperatorTests
                 Assert.Equal(SettlementTier.Hamlet, s.Tier);
                 Assert.InRange(s.FoundedTurn, 1, 29);
                 Assert.InRange(s.Parent, 0, i - 1);
-                Assert.Equal(s.PolityId, h.Settlements[s.Parent].PolityId);
+                // A war may have carried either settlement off to its captor.
+                bool captured = h.Events.Any(e => e.Kind == HistoryEventKind.SettlementCaptured
+                    && (e.Tags.Contains($"settlement:{i}") || e.Tags.Contains($"settlement:{s.Parent}")));
+                if (!captured) Assert.Equal(s.PolityId, h.Settlements[s.Parent].PolityId);
                 for (int j = 0; j < i; j++)
                 {
                     // Land of a settlement already abandoned (e.g. by a shock) may be resettled.
@@ -62,7 +65,7 @@ public class SettleOperatorTests
             foreach (var polity in h.Polities)
                 Assert.True(h.Settlements.Count(s => s.PolityId == polity.Id && !s.Ended) <= 2);
             Assert.Equal(h.Settlements.Count(s => s.Role == SettlementRole.Colony),
-                h.Events.Count(e => e.Kind == HistoryEventKind.SettlementFounded));
+                h.Events.Count(e => e.Kind == HistoryEventKind.SettlementFounded && e.Tags.Contains("role:Colony")));
         }
     }
 

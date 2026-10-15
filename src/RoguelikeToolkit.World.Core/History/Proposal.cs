@@ -153,6 +153,16 @@ public abstract class Proposal
         internal override long? ConflictKey => Tile;
     }
 
+    /// <summary>Polity <see cref="Proposal.EntityId"/> takes standing settlement <see cref="Settlement"/> from its owner. Tile ownership is unchanged: the settlement is an enclave. Rejected if the captor is dead or at the settlement cap. Conflicts per settlement.</summary>
+    public sealed class CaptureSettlement : Proposal
+    {
+        /// <inheritdoc />
+        public override ProposalKind Kind => ProposalKind.CaptureSettlement;
+        /// <summary>Index into <see cref="HistoryCatalog.Settlements"/>.</summary>
+        public int Settlement { get; init; }
+        internal override long? ConflictKey => Settlement;
+    }
+
     /// <summary>Sets polity <see cref="Proposal.EntityId"/>'s culture overlay to <see cref="Culture"/> (empty clears it).</summary>
     public sealed class SetOverlay : Proposal
     {

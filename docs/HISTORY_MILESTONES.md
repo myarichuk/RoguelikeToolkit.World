@@ -565,3 +565,14 @@ people vanish (no producer ends settlements yet).
 - `HazardOperator` plague: links are now the live routes touching the settlement's own tile (cap 4). The old check compared `road.PolityId` with the settlement's polity, and trunks carry -1, so it never counted any link.
 - Spurs are not severed by war yet. That comes with M2.9, which severs routes by settlement.
 - Corpus re-baselined. Core suite: 805 green.
+
+## M2.9A progress (war reaches settlements)
+
+- `WarOperator.Assault` runs after each raid: it takes the defender's standing settlement nearest the battlefield and rolls a dedicated `assault` stream. A stronger attacker (`ConquestAdvantage`, and under the settlement cap) may **capture** it (`CaptureChance` 0.2) or **raze** it (`RazeChance` 0.1); a capital is only ever sacked. Otherwise the settlement is **sacked** (`SackChance` 0.5): `SackCasualty` 0.08 die, `SackDisplacement` 0.15 flee into the displaced pool.
+- Raze: `EndSettlement{razed, LostShare 0.3}`, a `ruin` scar with cause `war`, and every live route touching the tile is severed.
+- Capture: new `Proposal.CaptureSettlement` (kind 23, conflicts per settlement; rejected for a dead captor, a capital, or a captor at `MaxSettlementsPerPolity`) plus a new `HistoryEventKind.SettlementCaptured` (20). Tile ownership is deliberately unchanged: ownership must stay equal to the flood of the capitals, or `Recompute` reports a fork. A captured settlement is an enclave.
+- The owner-sync stopgap is replaced: `SyncSettlementOwners` now only moves settlements whose own tile was reassigned in that commit, so captures stick.
+- The operator emits the `SettlementCaptured` event whether or not the commit later accepts the capture (a same-turn cap race); in practice rare.
+- Tests changed on purpose: demography comparison dropped from `StarvedWar_...` (wars now change populations), parent-polity check skips captured settlements, founding-event count in the cap test counts colonies only, capitals test restricted to capitals.
+- Corpus re-baselined: SettlementEnded 50→63, SettlementCaptured 8, War 764. Core suite 806 green.
+- Still open for M2.9: cross-polity asylum, battlefield scars (kept on the AddSite path).

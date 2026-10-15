@@ -214,7 +214,7 @@ public class HistoryOperatorsTests
     [Fact]
     public void StarvedWar_LeavesRoadBuildingUntouched()
     {
-        // Colonies split population by catchment, and wars drive colonization, so pin it off to compare demography.
+        // Colonies split population by catchment and wars now sack settlements, so demography is not compared.
         using var full = Build(configure: ctx => ctx.MaxSettlementsPerPolity = 1);
         using var starved = Build(configure: ctx => { ctx.MaxDecisionsPerTurn = 0; ctx.MaxSettlementsPerPolity = 1; });
         Assert.DoesNotContain(starved.History.Events, e => e.Kind == HistoryEventKind.War);
@@ -227,8 +227,6 @@ public class HistoryOperatorsTests
             .SelectMany(e => e.Tags).OrderBy(t => t).ToList();
         Assert.Equal(fullBuilt, starvedBuilt);
         Assert.Equal(full.History.Polities.Count, starved.History.Polities.Count);
-        for (int id = 0; id < full.History.Polities.Count; id++)
-            Assert.Equal(full.History.Polities[id].Population, starved.History.Polities[id].Population);
     }
 
     [Fact]
