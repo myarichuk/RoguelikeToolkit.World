@@ -419,3 +419,36 @@ Perf (Debug build, size 7, seed 42, one-off timing): full build 13.9 s vs 10.7 s
 ### M2.1 progress (settlement as entity, fields only)
 
 `HistorySettlement` gained `EndedTurn`, `EndCause`, `Tier` (`SettlementTier`), `Role` (`SettlementRole`) and `Parent`; `PolityId` is now settable so conquest can transfer a settlement. `Ended` (historical) is separate from `Active` (physical, re-resolved on edits). Schema v5; v1-v4 load with capital defaults. No behaviour change: capitals are still the only settlements, corpus unchanged. M2.2 note: `CitySiteScorer.Score` is already a pure ranked-candidate function of the map, so no new scorer is needed; the settle operator will call it with a history-aware filter. Capital-founding events are deferred to M2.3 (they would change the event log, so they ship with the settle operator and a corpus re-baseline). Core 763 green.
+
+### M2.3 design (settle operator) — proposed
+
+Findings that shape it: settlements are projected at order 91, after every turn, so operators cannot
+see them; `CitySiteScorer.Score` scans the whole map per call (cache the ranked list per operator
+instance, the map is static during history); `Polity.Population` is an index against tile capacity,
+not a head count.
+
+Slices, each its own commit:
+
+- **A. Settlements exist during the turn loop (no behaviour change).** Capital settlements are
+  created where polities are created: `PolityFormStage` (turn 0) and the `AddPolity` commit
+  (rebellion). `CityHistoryProject` keeps the habitability/site projection but no longer creates
+  settlements. Capitals emit no extra event (the polity `Founding` event already covers them), so
+  the corpus does not move. `TurnView` gains `Settlements` (immutable `SettlementState` records).
+- **B. `AddSettlement` / `EndSettlement` proposals** (kinds 16, 17, after `AddVillain`). The commit
+  creates/ends the entity and appends `SettlementFounded` / `SettlementEnded` events itself
+  (atomic: no event without an entity). Conflict key = tile; the commit rejects a tile that already
+  holds a standing settlement, a polity over `MaxSettlementsPerPolity`, or a tile the polity does
+  not own. Tests per rule.
+- **C. `SettleOperator`, colonization source only.** Per polity with pressure over a threshold:
+  take the cached candidate list, keep tiles the polity owns, at least `MinSettlementSpacing` hops
+  from any standing settlement, rank by score + frontier distance, spend one emergence from the
+  operator budget, propose `AddSettlement` (role Colony, tier Hamlet, parent = nearest own
+  settlement) plus a pressure `AdjustScalar` relief. RNG tie-breaks via `HistoryRng(seed,
+  "settle", turn, polity)`. Registered in `StandardHistory`; this is the first behaviour change, so
+  the corpus is re-baselined and documented.
+- **D+ (later milestones items).** Other sources (economic node, military post, religious, nomad)
+  are further operators/rules on the same proposal; the displaced pool (M2.4) adds per-settlement
+  population and the conserved ledger, and refugee settling becomes another source.
+
+Open choices, defaulted unless you object: `MaxSettlementsPerPolity = 6`, spacing 3 hops, pressure
+threshold 0.6, relief 0.15 per founding; capitals get no founding event.

@@ -925,7 +925,7 @@ public sealed class HistoryCatalog : IHistoricalContext
         foreach (var s in Settlements)
         {
             Check(s.PolityId, "settlement", true);
-            if (s.Parent < -1 || s.Parent >= Settlements.Count || !Enum.IsDefined(s.Tier) || !Enum.IsDefined(s.Role))
+            if (s.Parent < -1 || s.Parent >= Settlements.Count || !Enum.IsDefined(typeof(SettlementTier), s.Tier) || !Enum.IsDefined(typeof(SettlementRole), s.Role))
                 throw new InvalidDataException("Corrupt history catalog (settlement lifecycle).");
         }
         foreach (var s in Sites) Check(s.PolityId, "site", true);

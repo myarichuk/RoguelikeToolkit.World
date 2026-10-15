@@ -108,7 +108,7 @@ public sealed class PolityFormStage : HistoryPluginBase
                 folk = pair.FolkKey;
                 culture = pair.CultureKey;
             }
-            history.Polities.Add(new Polity
+            var founded = new Polity
             {
                 Id = id,
                 Form = form,
@@ -116,7 +116,9 @@ public sealed class PolityFormStage : HistoryPluginBase
                 FolkKey = folk,
                 CultureKey = culture,
                 FoundedTurn = 0,
-            });
+            };
+            history.Polities.Add(founded);
+            CapitalSettlements.Add(store, history, founded, 0);
             var tags = new List<string> { form.ToString(), folk, culture };
             history.AppendEvent(HistoryEventKind.Founding, 0, id, tile, tags);
         }

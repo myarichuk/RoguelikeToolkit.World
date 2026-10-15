@@ -179,11 +179,13 @@ public sealed class HistoryDriver : HistoryPluginBase
             if (p is not Proposal.AddPolity ap) continue;
             any = true;
             if (ap.EntityId != history.Polities.Count || history.Polities.Count >= context.MaxPolities) { RejectedProposals++; continue; }
-            history.Polities.Add(new Polity
+            var polity = new Polity
             {
                 Id = ap.EntityId, Form = ap.Form, CapitalTile = ap.CapitalTile, FolkKey = ap.FolkKey,
                 CultureKey = ap.CultureKey, FoundedTurn = turn, Parent = ap.Parent,
-            });
+            };
+            history.Polities.Add(polity);
+            CapitalSettlements.Add(map.DataStore, history, polity, turn);
             founded = true;
         }
         if (!founded) return any;

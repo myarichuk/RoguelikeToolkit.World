@@ -47,4 +47,20 @@ public class HistorySettlementLifecycleTests
         using var stream = new MemoryStream(bytes, writable: false);
         Assert.Throws<InvalidDataException>(() => HistoryCatalog.Load(stream));
     }
+
+    [Fact]
+    public void CapitalSettlements_ExistBeforeAnyTurnRuns()
+    {
+        using var w = new WorldBuilder().WithSize(3).WithSeed(42).WithUserEdits().WithHistoryDriver(d => d.Clear()).Build();
+        Assert.NotEmpty(w.History.Polities);
+        Assert.Equal(w.History.Polities.Count, w.History.Settlements.Count);
+        foreach (var polity in w.History.Polities)
+        {
+            var settlement = w.History.Settlements[polity.Id];
+            Assert.Equal(polity.CapitalTile, settlement.TileIndex);
+            Assert.Equal(polity.Id, settlement.PolityId);
+            Assert.Equal(polity.FoundedTurn, settlement.FoundedTurn);
+            Assert.Equal(SettlementRole.Capital, settlement.Role);
+        }
+    }
 }
