@@ -645,3 +645,14 @@ Not covered here by design: `polity.split` into successors, the faith myth about
 - New `Proposal.ChangeTier` (conflicts per settlement; commit refuses jumps, foreign owners and capitals below the floor) and `HistoryEventKind.SettlementTierChanged` (21) with tags `settlement:{i}`, `up|down`, `from:`, `to:`. No schema change: tier was already persisted.
 - Behaviour change: colonies founded as hamlets can now reach City, and tier now feeds shock defence and plague density. Corpus: 542 tier events over 25 worlds (about 22 per world). Core 840 green.
 - Not done: thresholds are stateless; a dwell-time rule would need a persisted last-change turn (schema bump).
+
+### M3.4 other founding sources
+
+- New `FoundingSources` (internal), called from `SettleOperator` after the refuge step so all sources share one candidate list. One special founding per polity per turn, each rolled with a pure `(seed, turn, polity, source)` draw and each spending one emergence.
+  - **Post** (garrison): 4% per turn when a living grudge rival, not under a treaty window, has a settlement within 8°; prefers "high" ground; at most 2 per polity.
+  - **Shrine** (pilgrimage): 15% per turn per active own holy site with no shrine within its 4° radius.
+  - **Node** (route): 6% per turn; river or water site within 3° of an own live road end; at most 2 per polity.
+  - **Sedentarization**: a Horde that still holds only its seat after 20 turns founds a Colony (10% per turn), preferring river or water.
+- `Proposal.AddSettlement.Why` adds a `why:garrison|pilgrimage|route|sedentarized` tag to `SettlementFounded`. No schema change.
+- Corpus (40 worlds, sizes 3 and 4): 123 pilgrimage, 20 garrison, 18 route, 0 sedentarized (hordes rarely sit at one settlement after 20 turns; the path is untested by full runs). Colonies 640, refuges 52. Re-baselined.
+- Tier and shock defence already key off role, so posts and shrines pick up their weights with no further change.

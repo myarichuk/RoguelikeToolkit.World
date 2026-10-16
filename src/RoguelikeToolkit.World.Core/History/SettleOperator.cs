@@ -13,7 +13,8 @@ namespace RoguelikeToolkit.World.Core.History;
 /// chosen among the best-scoring <see cref="CitySiteScorer"/> candidates that keep
 /// <see cref="MinSpacingDegrees"/> from every standing settlement, and sheds <see cref="PressureRelief"/> of
 /// pressure for it. Each founding spends one operator emergence. The candidate list is a pure function of the
-/// map, computed on turn 1 (or the first turn run) and reused.
+/// map, computed on turn 1 (or the first turn run) and reused. Garrison posts, pilgrimage shrines, route nodes and
+/// horde sedentarization (see <see cref="FoundingSources"/>) draw on the same candidates.
 /// </summary>
 public sealed class SettleOperator : IHistoryOperator
 {
@@ -70,6 +71,7 @@ public sealed class SettleOperator : IHistoryOperator
             foreach (var s in view.Settlements)
                 if (!s.Ended && s.PolityId == polity.Id) { standing++; standingPeople += s.Population; }
             if (ProposeRefuge(view, sink, polity.Id, standing, standingPeople, vectors, minDot)) continue;
+            if (FoundingSources.Propose(view, sink, polity, _candidates, vectors, minDot)) continue;
             if (view.ScalarOf(polity.Id, ScalarRegistry.Pressure) < PressureThreshold) continue;
             if (standing >= view.MaxSettlementsPerPolity) continue;
 

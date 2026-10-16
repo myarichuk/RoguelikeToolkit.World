@@ -369,6 +369,7 @@ public sealed class HistoryDriver : HistoryPluginBase
         }
         var tags = new List<string> { $"settlement:{index}", $"role:{ads.Role}" };
         if (ads.Parent >= 0) tags.Add($"from:{ads.Parent}");
+        if (!string.IsNullOrEmpty(ads.Why)) tags.Add($"why:{ads.Why}");
         history.AppendLinked(HistoryEventKind.SettlementFounded, turn, owner.Id, ads.Tile, tags, ads.Cause, null);
         return true;
     }

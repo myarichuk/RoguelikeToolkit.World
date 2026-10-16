@@ -266,6 +266,8 @@ public abstract class Proposal
         /// settlement (a refuge), or -1 for the usual parent colonist share. A bad or foreign group falls back to -1.
         /// </summary>
         public int FromGroup { get; init; } = -1;
+        /// <summary>Optional founding motive logged as a <c>why:</c> tag (garrison, pilgrimage, route, sedentarized), or empty.</summary>
+        public string Why { get; init; } = "";
         internal override long? ConflictKey => Tile;
     }
 
