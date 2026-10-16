@@ -15,6 +15,10 @@ public static class SettlementScoring
     public const double Base = 1.0;
     /// <summary>Bonus when water is on or beside the tile, or within the scorer's search radius.</summary>
     public const double FreshWater = 1.0;
+    /// <summary>Extra bonus when a river runs on or beside the tile: reliable fresh water, irrigation and river fishing, on top of <see cref="FreshWater"/>.</summary>
+    public const double River = 0.5;
+    /// <summary>Extra bonus when open sea or a lake touches the tile (not frozen all year): fishing and a harbour, on top of <see cref="FreshWater"/>.</summary>
+    public const double Fishing = 0.25;
     /// <summary>Bonus for plains, forest, savanna and Mediterranean biomes.</summary>
     public const double Fertile = 0.5;
     /// <summary>Penalty (negative) for tundra, mountain, canyon and desert biomes.</summary>
@@ -36,10 +40,12 @@ public static class SettlementScoring
     /// <summary>Score for one tile. When <paramref name="reasons"/> is given, the terms that applied are appended.</summary>
     public static double Score(
         bool water, BiomeType biome, float elevation, int effectiveDanger, float habitabilityDelta,
-        List<string>? reasons = null, bool winterIce = false)
+        List<string>? reasons = null, bool winterIce = false, bool river = false, bool fishing = false)
     {
         double score = Base;
         if (water) { score += FreshWater; reasons?.Add("water"); }
+        if (river) { score += River; reasons?.Add("river"); }
+        if (fishing) { score += Fishing; reasons?.Add("fishing"); }
         if (biome is BiomeType.Plains or BiomeType.Forest or BiomeType.Savanna or BiomeType.Mediterranean) { score += Fertile; reasons?.Add("fertile"); }
         if (biome is BiomeType.Tundra or BiomeType.Mountain or BiomeType.Canyon || BiomeClassifier.IsDesert(biome)) { score += Harsh; reasons?.Add("harsh"); }
         if (winterIce) { score += WinterIce; reasons?.Add("winter-ice"); }

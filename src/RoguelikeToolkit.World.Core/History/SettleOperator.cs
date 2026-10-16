@@ -37,6 +37,10 @@ public sealed class SettleOperator : IHistoryOperator
     public const double RouteWeight = 1.3;
     /// <summary>Angular reach, in degrees, of a non-ruin scar.</summary>
     public const double ScarRadiusDegrees = 3.0;
+    /// <summary>Weight of a candidate near an active holy site (within <see cref="HolySiteRadiusDegrees"/>): pilgrims and the faithful settle around shrines.</summary>
+    public const double HolySiteWeight = 1.2;
+    /// <summary>Angular radius, in degrees, of the holy-site pull.</summary>
+    public const double HolySiteRadiusDegrees = 4.0;
     /// <summary>Angular reach, in degrees, of a route end.</summary>
     public const double RouteRadiusDegrees = 6.0;
     private const int CandidateLimit = 4000;
@@ -219,6 +223,7 @@ public sealed class SettleOperator : IHistoryOperator
     {
         double scarDot = DetMath.Cos(ScarRadiusDegrees * GeoCoord.Deg2Rad);
         double routeDot = DetMath.Cos(RouteRadiusDegrees * GeoCoord.Deg2Rad);
+        double holyDot = DetMath.Cos(HolySiteRadiusDegrees * GeoCoord.Deg2Rad);
         var ranked = new List<(T Item, double Weight, int Order)>(items.Count);
         for (int i = 0; i < items.Count; i++)
         {
@@ -238,6 +243,10 @@ public sealed class SettleOperator : IHistoryOperator
             {
                 if (r.Severed) continue;
                 if (Vector3D.Dot(v, vectors[r.TileA]) >= routeDot || Vector3D.Dot(v, vectors[r.TileB]) >= routeDot) { w *= RouteWeight; break; }
+            }
+            foreach (var h in view.HolySites)
+            {
+                if (h.Active && Vector3D.Dot(v, vectors[h.Tile]) >= holyDot) { w *= HolySiteWeight; break; }
             }
             ranked.Add((items[i], w, i));
         }

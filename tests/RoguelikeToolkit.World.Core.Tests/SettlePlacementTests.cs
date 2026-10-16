@@ -46,4 +46,24 @@ public class SettlePlacementTests
         var ranked = SettleOperator.BestByHistory(view, items, s => s, world.Map.DataStore.GetTileVectors());
         Assert.Equal(new[] { 10, n / 4, n / 2 }, ranked.Select(s => s.TileIndex).ToArray());
     }
+
+    [Fact]
+    public void ActiveHolySite_PullsSettlement_InactiveDoesNot()
+    {
+        var (w, h, _) = Fixture(_ => { });
+        using var world = w;
+        int n = world.Map.DataStore.TileCount;
+        int far = 10, shrine = n / 2;
+        var holy = new HistoryHolySite { TileIndex = shrine, PolityId = 0, FoundedTurn = 1, Position = world.Map.DataStore.GetGeoCoord(shrine) };
+        h.HolySites.Add(holy);
+        var vectors = world.Map.DataStore.GetTileVectors();
+        var items = new List<CitySiteScore> { Site(far, 1.0), Site(shrine, 0.9) };
+
+        var pulled = SettleOperator.BestByHistory(new TurnView(world.Map, h, new HistoryContext(), 30), items, s => s, vectors);
+        Assert.Equal(shrine, pulled[0].TileIndex);
+
+        holy.Active = false;
+        var flat = SettleOperator.BestByHistory(new TurnView(world.Map, h, new HistoryContext(), 30), items, s => s, vectors);
+        Assert.Equal(far, flat[0].TileIndex);
+    }
 }

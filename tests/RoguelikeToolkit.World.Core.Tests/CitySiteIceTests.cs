@@ -98,4 +98,17 @@ public class CitySiteIceTests
         Assert.NotEmpty(sites);
         Assert.DoesNotContain(sites, s => s.Reasons.Split(',').Contains("winter-ice") && s.Biome == BiomeType.Ocean);
     }
+
+    [Fact]
+    public void RiverAndFishing_AddTheirWeights_AndTagTheReasons()
+    {
+        var baseR = new List<string>();
+        var wet = new List<string>();
+        double a = SettlementScoring.Score(true, BiomeType.Plains, 0.1f, 0, 0f, baseR);
+        double b = SettlementScoring.Score(true, BiomeType.Plains, 0.1f, 0, 0f, wet, river: true, fishing: true);
+        Assert.Equal(SettlementScoring.River + SettlementScoring.Fishing, b - a, 9);
+        Assert.Contains("river", wet);
+        Assert.Contains("fishing", wet);
+        Assert.DoesNotContain("river", baseR);
+    }
 }

@@ -95,6 +95,7 @@ public static class CitySiteScorer
             bool water = waterTiles.Contains(i);
             // Tile-level hydro/sea membership is already in waterTiles.
             bool touchesSeasonalIce = false, touchesOtherWater = water;
+            bool river = riverTiles.Contains(i), fishing = false;
             if (!water)
             {
                 int adj = store.GetAdjacent(i, neighbors);
@@ -103,6 +104,8 @@ public static class CitySiteScorer
                     int n = neighbors[k];
                     if (!waterTiles.Contains(n)) continue;
                     water = true;
+                    if (riverTiles.Contains(n)) river = true;
+                    else if (ice[n] != SeaIceKind.Seasonal) fishing = true;
                     if (ice[n] == SeaIceKind.Seasonal) touchesSeasonalIce = true;
                     else touchesOtherWater = true;
                 }
@@ -121,7 +124,7 @@ public static class CitySiteScorer
             if (filter.RequireFreshWater && !water) continue;
 
             var reasons = new List<string>();
-            double score = SettlementScoring.Score(water, biome, h, effDanger, habDelta, reasons, winterIce);
+            double score = SettlementScoring.Score(water, biome, h, effDanger, habDelta, reasons, winterIce, river, fishing);
             if (habDelta != 0) reasons.Add("history");
             if (dangerDelta != 0) reasons.Add("past-events");
 

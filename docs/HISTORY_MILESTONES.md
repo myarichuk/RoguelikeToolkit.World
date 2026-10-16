@@ -633,3 +633,9 @@ Not covered here by design: `polity.split` into successors, the faith myth about
 - `AddScar.ConflictKey` is now per tile **and** kind (it was per tile), so a battlefield and a ruin on one tile in one turn both land.
 - `SettleOperator` placement ignores battlefield scars: wars are frequent and must not shrink the placeable map. Only the shock scars (x0.25) and ruins (x1.5) weigh in.
 - Corpus re-baselined (site and scar columns). Tests: `BattlefieldScarTests` (2); two war tests accept a scar as well as a site.
+
+### M3.2 placement weights: rivers, fishing, faith
+- Scorer (`SettlementScoring`, `CitySiteScorer`): `River` (+0.5, river on or beside the tile) and `Fishing` (+0.25, open sea or lake beside it, not seasonal ice) on top of `FreshWater`; reasons `river`, `fishing`. This changes every planet-scale site score, not only history runs.
+- `SettleOperator.BestByHistory`: `HolySiteWeight` x1.2 within `HolySiteRadiusDegrees` (4) of an active holy site.
+- Resources are deferred to the economy plugin (Core has no resource data). A river-mouth-on-trade-route term goes with M3.7.
+- Corpus re-baselined; Core 836/836.
