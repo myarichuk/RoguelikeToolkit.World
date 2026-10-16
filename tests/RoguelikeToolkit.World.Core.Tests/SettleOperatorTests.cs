@@ -44,7 +44,8 @@ public class SettleOperatorTests
                 // A war may have carried either settlement off to its captor.
                 bool captured = h.Events.Any(e => e.Kind == HistoryEventKind.SettlementCaptured
                     && (e.Tags.Contains($"settlement:{i}") || e.Tags.Contains($"settlement:{s.Parent}")));
-                if (!captured) Assert.Equal(s.PolityId, h.Settlements[s.Parent].PolityId);
+                bool collapsed = h.Events.Any(e => e.Kind == HistoryEventKind.PolityCollapsed); // successors split the parent's settlements
+                if (!captured && !collapsed) Assert.Equal(s.PolityId, h.Settlements[s.Parent].PolityId);
                 for (int j = 0; j < i; j++)
                 {
                     // Land of a settlement already abandoned (e.g. by a shock) may be resettled.

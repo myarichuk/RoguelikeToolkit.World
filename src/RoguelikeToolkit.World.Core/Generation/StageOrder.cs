@@ -74,6 +74,9 @@ public static class StageOrder
     /// <summary>Rebellion operator: far-flung, oppressed regions break away (bounded by the polity cap).</summary>
     public const int Rebellion = 70;
 
+    /// <summary>Collapse operator: an overextended, crowded polity breaks into successors and ends.</summary>
+    public const int Collapse = 72;
+
     /// <summary>Villain operator: long-life actors rise to rule, freezing successions (bounded by the villain cap).</summary>
     public const int Villain = 76;
 

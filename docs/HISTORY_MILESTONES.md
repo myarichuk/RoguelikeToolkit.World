@@ -662,3 +662,13 @@ Not covered here by design: `polity.split` into successors, the faith myth about
 - **Pinned capitals:** `HistoryTerritory.AssignOwners` now ignores a pin on any polity's capital tile. Before, such a pin took the seed away from its polity, which stayed alive owning nothing. The capital wins; the pin is kept but inert. A pin on a tile of an ended polity, and what happens to pins when a polity splits (M3.6), are still open.
 - **Compat rules:** the loader already rejected blank, self-paired, duplicate and unknown-rule rows. It now also reports a user-supplied (override-dir) row that names a folk with no definition, since a typo there silently left the pair blending. Shipped rows are exempt on purpose: they rule on demon and angel, which have no folk file yet.
 - No generation output changes (no pins in generated worlds), so the corpus is untouched.
+
+### M3.6 polity collapse and successors
+
+- New `CollapseOperator` (order 72) and `Proposal.SplitPolity`. A polity with 20+ tiles, 4+ standing settlements and pressure 0.7+ collapses at 5% per turn. Its 2-3 outlying settlements (farthest from the old capital and from each other) become capitals of successor polities (`LooseAssociation`, same folk and culture, `Parent` set). The parent ends (`EndedTurn`, end cause `collapse`), its capital settlement is razed (30% die, the rest go to the displaced pool for refugee settlement), and ownership is re-flooded.
+- New event `HistoryEventKind.PolityCollapsed` (22) with tags `collapse` and `successor:{id}`. New `HistoryContext.MaxSuccessors` (default 6): a separate budget from `MaxPolities`, because founding is capped at the living-polity count and collapse replaces a polity. No schema change: `EndedTurn`, `EndCause` and `Parent` were already persisted.
+- **Pins and renames, decided:** a pin naming an ended polity stays stored but does nothing; its tile goes to whichever successor the flood reaches (`HistoryCatalog.FloodOwnership`, now shared by `Respatialize` and the commit). A rename stays on the dead polity's id and is not inherited by successors; they render as new polities. This answers the plan's open question with "successor by flood, rename not inherited".
+- The razed seat leaves a `ruin` scar with cause `collapse`. Tests that assumed one owner per colony family, shrine-owns-a-holy-site, or war-only razings now allow for collapse.
+- Standing settlements of the ended polity pass to the successor that owns their tile.
+- Still open: a **merge** or absorb of one polity into another, and the faith myth about the fall (M3.8).
+

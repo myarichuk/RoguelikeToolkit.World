@@ -377,6 +377,29 @@ public sealed class HistoryCatalog : IHistoricalContext
         _appendCount = 0;
     }
 
+    /// <summary>Counts polities founded by a collapse (their parent has ended).</summary>
+    internal int SuccessorCount()
+    {
+        int count = 0;
+        foreach (var p in Polities)
+            if (p.Parent >= 0 && !Polities[p.Parent].Alive) count++;
+        return count;
+    }
+
+    /// <summary>
+    /// Floods tile ownership from the capitals of living polities. An ended polity seeds nothing, and a user pin that
+    /// names one is kept in <see cref="Overrides"/> but inert: its tile goes to whichever successor the flood reaches.
+    /// </summary>
+    internal int[] FloodOwnership(WorldDataStore store)
+    {
+        var capitals = new List<int>(Polities.Count);
+        foreach (var p in Polities) capitals.Add(p.Alive ? p.CapitalTile : -1);
+        var pins = new Dictionary<int, int>();
+        foreach (var kv in Overrides.PinnedTiles)
+            if (kv.Value >= 0 && kv.Value < Polities.Count && Polities[kv.Value].Alive) pins[kv.Key] = kv.Value;
+        return HistoryTerritory.AssignOwners(store, capitals, pins);
+    }
+
     /// <summary>
     /// Re-resolves only the spatial projection against the current physics: ownership is reassigned
     /// from capitals (user pins win), settlement habitability is re-snapshotted, and drowned sites go
@@ -389,14 +412,7 @@ public sealed class HistoryCatalog : IHistoricalContext
     {
         ArgumentNullException.ThrowIfNull(store);
         int tileCount = store.TileCount;
-        var capitals = new List<int>(Polities.Count);
-        foreach (var p in Polities) capitals.Add(p.CapitalTile);
-        var pins = new Dictionary<int, int>();
-        foreach (var kv in Overrides.PinnedTiles)
-        {
-            if (kv.Value >= 0 && kv.Value < Polities.Count) pins[kv.Key] = kv.Value;
-        }
-        int[] next = HistoryTerritory.AssignOwners(store, capitals, pins);
+        int[] next = FloodOwnership(store);
         bool changed = next.Length != Ownership.Length;
         if (!changed)
         {

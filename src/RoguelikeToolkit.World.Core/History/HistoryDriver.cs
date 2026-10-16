@@ -88,12 +88,13 @@ public sealed class HistoryDriver : HistoryPluginBase
             c = string.CompareOrdinal(a.Operator, b.Operator);
             return c != 0 ? c : a.Sequence.CompareTo(b.Sequence);
         });
-        if (AddPolities(map, history, context, turn, proposals)) proposals.RemoveAll(static p => p is Proposal.AddPolity);
+        var dirty = new HashSet<int>();
+        if (AddPolities(map, history, context, turn, proposals, dirty))
+            proposals.RemoveAll(static p => p is Proposal.AddPolity or Proposal.SplitPolity);
         var claimed = new HashSet<(ProposalKind, long)>();
         var deltas = new SortedDictionary<(int Polity, int Scalar), double>();
         bool reassigned = false;
         var reassignedTiles = new HashSet<int>();
-        var dirty = new HashSet<int>();
         foreach (var p in proposals)
         {
             if (p.ConflictKey is long key && !claimed.Add((p.Kind, key))) { RejectedProposals++; continue; }
@@ -426,13 +427,14 @@ public sealed class HistoryDriver : HistoryPluginBase
 
     /// <summary>
     /// Structural pre-pass: founds the turn's new polities in id order (ids must be contiguous and the
-    /// polity cap holds), then re-floods ownership from every capital and syncs holy-site owners.
-    /// Returns true when the turn had any <see cref="Proposal.AddPolity"/> (all of them are consumed).
+    /// polity cap holds), applies the turn's <see cref="Proposal.SplitPolity"/> collapses, then re-floods ownership
+    /// from every living capital and syncs holy-site owners. Returns true when the turn had any
+    /// <see cref="Proposal.AddPolity"/> or <see cref="Proposal.SplitPolity"/> (all of them are consumed).
     /// </summary>
-    private bool AddPolities(WorldMap map, HistoryCatalog history, HistoryContext context, int turn, List<Proposal> proposals)
+    private bool AddPolities(WorldMap map, HistoryCatalog history, HistoryContext context, int turn, List<Proposal> proposals, HashSet<int> dirty)
     {
         bool any = false;
-        bool founded = false;
+        bool changed = false;
         foreach (var p in proposals)
         {
             if (p is not Proposal.AddPolity ap) continue;
@@ -445,20 +447,89 @@ public sealed class HistoryDriver : HistoryPluginBase
             };
             history.Polities.Add(polity);
             CapitalSettlements.Add(map.DataStore, history, polity, turn);
-            founded = true;
+            changed = true;
         }
-        if (!founded) return any;
-        var capitals = new List<int>(history.Polities.Count);
-        foreach (var polity in history.Polities) capitals.Add(polity.CapitalTile);
-        var pins = new Dictionary<int, int>();
-        foreach (var kv in history.Overrides.PinnedTiles)
-            if (kv.Value >= 0 && kv.Value < history.Polities.Count) pins[kv.Key] = kv.Value;
-        history.Ownership = HistoryTerritory.AssignOwners(map.DataStore, capitals, pins);
+        var split = new List<(Polity Parent, List<int> Successors)>();
+        foreach (var p in proposals)
+        {
+            if (p is not Proposal.SplitPolity sp) continue;
+            any = true;
+            if (!TrySplit(map, history, context, turn, sp, dirty, split)) { RejectedProposals++; continue; }
+            changed = true;
+        }
+        if (!changed) return any;
+        history.Ownership = history.FloodOwnership(map.DataStore);
         foreach (var site in history.HolySites)
         {
             int owner = history.OwnerOf(site.TileIndex);
             if (owner >= 0) site.PolityId = owner;
         }
+        foreach (var (parent, successors) in split) HandOver(history, parent, successors, dirty);
         return any;
+    }
+
+    private static bool TrySplit(WorldMap map, HistoryCatalog history, HistoryContext context, int turn, Proposal.SplitPolity sp,
+        HashSet<int> dirty, List<(Polity Parent, List<int> Successors)> split)
+    {
+        if ((uint)sp.EntityId >= (uint)history.Polities.Count) return false;
+        var parent = history.Polities[sp.EntityId];
+        if (!parent.Alive) return false;
+        int room = context.MaxSuccessors - history.SuccessorCount();
+        var tiles = new List<int>();
+        foreach (int tile in sp.SuccessorTiles)
+        {
+            if (tiles.Count >= room) break;
+            if (tile == parent.CapitalTile || tiles.Contains(tile) || history.OwnerOf(tile) != parent.Id) continue;
+            tiles.Add(tile);
+        }
+        if (tiles.Count < 2) return false;
+
+        // The old seat falls with the state; its people go into the displaced pool.
+        for (int i = 0; i < history.Settlements.Count; i++)
+        {
+            var seat = history.Settlements[i];
+            if (seat.Ended || seat.PolityId != parent.Id || seat.TileIndex != parent.CapitalTile) continue;
+            TryEndSettlement(history, turn, new Proposal.EndSettlement { EntityId = parent.Id, Settlement = i, EndCause = "razed", LostShare = 0.3 }, dirty);
+            if (!history.Scars.Any(x => x.TileIndex == seat.TileIndex && x.Kind == HistoryScar.Ruin))
+                history.Scars.Add(new HistoryScar { TileIndex = seat.TileIndex, PolityId = parent.Id, FoundedTurn = turn, Kind = HistoryScar.Ruin, Cause = "collapse", Position = seat.Position });
+        }
+        parent.EndedTurn = turn;
+        parent.EndCause = history.Strings.Intern(string.IsNullOrWhiteSpace(sp.EndCause) ? "collapse" : sp.EndCause);
+        parent.Population = 0;
+        var ids = new List<int>(tiles.Count);
+        var tags = new List<string> { "collapse" };
+        foreach (int tile in tiles)
+        {
+            var successor = new Polity
+            {
+                Id = history.Polities.Count, Form = PolityForm.LooseAssociation, CapitalTile = tile, FolkKey = parent.FolkKey,
+                CultureKey = parent.CultureKey, CultureOverlay = parent.CultureOverlay, FoundedTurn = turn, Parent = parent.Id,
+            };
+            history.Polities.Add(successor);
+            ids.Add(successor.Id);
+            tags.Add($"successor:{successor.Id}");
+            bool seated = false;
+            foreach (var s in history.Settlements)
+                if (!s.Ended && s.PolityId == parent.Id && s.TileIndex == tile) { seated = true; break; }
+            if (!seated) CapitalSettlements.Add(map.DataStore, history, successor, turn);
+            dirty.Add(successor.Id);
+        }
+        dirty.Add(parent.Id);
+        history.AppendLinked(HistoryEventKind.PolityCollapsed, turn, parent.Id, parent.CapitalTile, tags, -1, null);
+        split.Add((parent, ids));
+        return true;
+    }
+
+    /// <summary>After the re-flood, every standing settlement of a collapsed polity follows the tile owner (or the first successor when the tile fell outside every successor's reach).</summary>
+    private static void HandOver(HistoryCatalog history, Polity parent, List<int> successors, HashSet<int> dirty)
+    {
+        foreach (var settlement in history.Settlements)
+        {
+            if (settlement.Ended || settlement.PolityId != parent.Id) continue;
+            int owner = history.OwnerOf(settlement.TileIndex);
+            if (!successors.Contains(owner)) owner = successors[0];
+            settlement.PolityId = owner;
+            dirty.Add(owner);
+        }
     }
 }

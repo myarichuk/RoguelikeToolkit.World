@@ -56,4 +56,6 @@ public enum ProposalKind
     CaptureSettlement = 23,
     /// <summary>Move a standing settlement one step up or down the tier ladder.</summary>
     ChangeTier = 24,
+    /// <summary>A polity ends and its territory passes to successor polities. Applied in the structural pre-pass.</summary>
+    SplitPolity = 25,
 }

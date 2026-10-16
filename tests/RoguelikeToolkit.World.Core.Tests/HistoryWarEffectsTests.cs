@@ -23,11 +23,11 @@ public class HistoryWarEffectsTests
                 Assert.Equal(e.TileIndex, s.TileIndex);
                 Assert.NotEqual(SettlementRole.Capital, s.Role);
             }
-            foreach (var s in h.Settlements.Where(s => s.EndCause == "razed"))
+            // A collapsing polity's seat is razed too, with a "collapse" ruin; wars never raze a capital.
+            foreach (var s in h.Settlements.Where(s => s.EndCause == "razed" && s.Role != SettlementRole.Capital))
             {
                 razed++;
                 Assert.Contains(h.Scars, sc => sc.TileIndex == s.TileIndex && sc.Kind == HistoryScar.Ruin && sc.Cause == "war");
-                Assert.NotEqual(SettlementRole.Capital, s.Role);
             }
         }
         Assert.True(captured + razed > 0, "No settlement was captured or razed across seeds 1-12.");

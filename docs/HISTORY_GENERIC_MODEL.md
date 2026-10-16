@@ -316,8 +316,8 @@ The ambition is breadth, not depth: aggregates at 10-year turns, small tiers. Su
   by the new ownership model.
 - Event-log cap with importance classes: exact retention rules.
 - Whether cultures need their own flood-fill/territory or are derived from settlement ownership.
-- How a pin or rename resolves when its polity splits, merges or ends (successor by capital tile?
-  by largest share of the pinned tiles? orphaned and surfaced to the user?).
+- How a pin or rename resolves when its polity merges (split and end are decided in M3.6: a pin on an ended
+  polity is inert and the tile goes to the successor the flood reaches; a rename is not inherited).
 - Driver read rule: decided, A1 (snapshot/commit), see 8. Open detail: the canonical commit order
   for conflicting proposals is decided: entity id, then proposal kind (ties by operator name, then
   proposal sequence). Step-level breakdown of M1–M4: `HISTORY_MILESTONES.md`.

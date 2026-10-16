@@ -52,4 +52,6 @@ public enum HistoryEventKind : byte
     SettlementCaptured = 20,
     /// <summary>A settlement moved one step on the tier ladder. Tags <c>settlement:{index}</c>, <c>up</c> or <c>down</c>, <c>from:{tier}</c> and <c>to:{tier}</c>; the tile is the settlement.</summary>
     SettlementTierChanged = 21,
+    /// <summary>A polity collapsed into successors. Tags <c>collapse</c> and one <c>successor:{id}</c> per successor; the tile is the old capital.</summary>
+    PolityCollapsed = 22,
 }

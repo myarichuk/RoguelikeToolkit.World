@@ -18,6 +18,7 @@ public sealed class HistoryContext
     private int _maxEvents = 4096;
     private int _maxPolities = 8;
     private int _maxVillains = 2;
+    private int _maxSuccessors = 6;
     private double _hazardRate = 1;
 
     /// <summary>Default peoples roster: one human and one non-human folk, matching the shipped tables.</summary>
@@ -74,6 +75,17 @@ public sealed class HistoryContext
     {
         get => _maxPolities;
         set => _maxPolities = value >= 0 ? value : throw new ArgumentOutOfRangeException(nameof(value), "MaxPolities cannot be negative.");
+    }
+
+    /// <summary>
+    /// Upper bound on successor polities collapses may found over a whole history (default 6). Founding by
+    /// <see cref="MaxPolities"/> and by collapse are separate budgets: a collapse ends a polity, so it is not held to the
+    /// living-polity count. Zero means no polity ever collapses. Must be non-negative.
+    /// </summary>
+    public int MaxSuccessors
+    {
+        get => _maxSuccessors;
+        set => _maxSuccessors = value >= 0 ? value : throw new ArgumentOutOfRangeException(nameof(value), "MaxSuccessors cannot be negative.");
     }
 
     /// <summary>Upper bound on risen villains (default 2). Zero means no villain ever rises. Must be non-negative.</summary>

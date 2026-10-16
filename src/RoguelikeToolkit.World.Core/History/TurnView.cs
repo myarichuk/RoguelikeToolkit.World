@@ -47,6 +47,7 @@ public sealed class TurnView
         TurnYears = context.TurnYears;
         MaxPolities = context.MaxPolities;
         MaxVillains = context.MaxVillains;
+        MaxSuccessors = context.MaxSuccessors;
         VillainCount = history.Villains.Count;
         Scalars = history.Scalars;
         _ownership = (int[])history.Ownership.Clone();
@@ -112,6 +113,9 @@ public sealed class TurnView
 
     /// <summary>The villain cap: the commit refuses a rise past it.</summary>
     public int MaxVillains { get; }
+
+    /// <summary>Cap on collapse successors over the whole history (<see cref="HistoryContext.MaxSuccessors"/>).</summary>
+    public int MaxSuccessors { get; }
 
     /// <summary>Villains risen so far at the snapshot.</summary>
     public int VillainCount { get; }

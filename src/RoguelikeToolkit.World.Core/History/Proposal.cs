@@ -227,6 +227,23 @@ public abstract class Proposal
     }
 
     /// <summary>
+    /// Ends polity <see cref="Proposal.EntityId"/> in a collapse: one successor polity is founded on each tile of
+    /// <see cref="SuccessorTiles"/> (ids are assigned by the commit, in order), the old capital settlement is razed, and
+    /// ownership is re-flooded from the living capitals, so the old territory (and any pin on it) passes to the successors.
+    /// Rejected when the polity is not alive, fewer than two successors fit under the polity cap, or a tile is not owned by it.
+    /// </summary>
+    public sealed class SplitPolity : Proposal
+    {
+        /// <inheritdoc />
+        public override ProposalKind Kind => ProposalKind.SplitPolity;
+        /// <summary>Capital tiles of the successors, owned by the splitting polity and not its capital.</summary>
+        public IReadOnlyList<int> SuccessorTiles { get; init; } = Array.Empty<int>();
+        /// <summary>Short cause key stored as the polity's end cause (default <c>collapse</c>).</summary>
+        public string EndCause { get; init; } = "collapse";
+        internal override long? ConflictKey => EntityId;
+    }
+
+    /// <summary>
     /// A villain with <see cref="Agenda"/> rises to rule polity <see cref="Proposal.EntityId"/> and freezes its ruler
     /// generation at <see cref="RulerGeneration"/>. The commit refuses it past <see cref="HistoryContext.MaxVillains"/>
     /// or for a polity that already has one.
