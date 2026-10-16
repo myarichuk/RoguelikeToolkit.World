@@ -40,6 +40,9 @@ public sealed class SettleOperator : IHistoryOperator
     public const double ScarRadiusDegrees = 3.0;
     /// <summary>Weight of a candidate near an active holy site (within <see cref="HolySiteRadiusDegrees"/>): pilgrims and the faithful settle around shrines.</summary>
     public const double HolySiteWeight = 1.2;
+
+    /// <summary>Placement weight of a river mouth (river and open water both beside the tile) on a live route: the trade-node site.</summary>
+    public const double RiverMouthWeight = 1.25;
     /// <summary>Angular radius, in degrees, of the holy-site pull.</summary>
     public const double HolySiteRadiusDegrees = 4.0;
     /// <summary>Angular reach, in degrees, of a route end.</summary>
@@ -244,7 +247,11 @@ public sealed class SettleOperator : IHistoryOperator
             foreach (var r in view.Roads)
             {
                 if (r.Severed) continue;
-                if (Vector3D.Dot(v, vectors[r.TileA]) >= routeDot || Vector3D.Dot(v, vectors[r.TileB]) >= routeDot) { w *= RouteWeight; break; }
+                if (Vector3D.Dot(v, vectors[r.TileA]) >= routeDot || Vector3D.Dot(v, vectors[r.TileB]) >= routeDot) {
+                    w *= RouteWeight;
+                    if (c.Reasons.Contains("river", StringComparison.Ordinal) && c.Reasons.Contains("fishing", StringComparison.Ordinal)) w *= RiverMouthWeight;
+                    break;
+                }
             }
             foreach (var h in view.HolySites)
             {

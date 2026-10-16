@@ -115,6 +115,8 @@ public class CollapseOperatorTests
                 var successors = h.Polities.Where(p => p.Parent == parent.Id).ToList();
                 Assert.InRange(successors.Count, 2, CollapseOperator.MaxPerCollapse + 1);
                 Assert.Contains(successors, s => h.Ownership.Contains(s.Id));
+                Assert.All(successors, s => Assert.Equal(
+                    PolityFormStage.IsCoastal(w.Map.DataStore, s.CapitalTile) ? PolityForm.MerchantRepublic : PolityForm.LooseAssociation, s.Form));
             }
             using var again = new WorldBuilder().WithSize(3).WithSeed(seed).WithHistory().Build();
             Assert.Equal(h.Polities.Count, again.History.Polities.Count);

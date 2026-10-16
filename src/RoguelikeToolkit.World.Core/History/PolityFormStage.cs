@@ -140,6 +140,17 @@ public sealed class PolityFormStage : HistoryPluginBase
         return PolityForm.LooseAssociation;
     }
 
+    /// <summary>True when a land tile touches open water; the test that makes a collapse successor a trading state.</summary>
+    internal static bool IsCoastal(WorldDataStore store, int tile)
+    {
+        var elev = store.GetSpan<ElevationInfo>();
+        Span<int> neighbors = stackalloc int[6];
+        int adjacent = store.GetAdjacent(tile, neighbors);
+        for (int k = 0; k < adjacent; k++)
+            if (elev[neighbors[k]].Height < HistoryTerritory.LandThreshold) return true;
+        return false;
+    }
+
     private static int ScoreTile(
         WorldDataStore store,
         Span<ElevationInfo> elev,

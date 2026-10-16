@@ -24,6 +24,8 @@ internal static class FoundingSources
     public const int SedentarizeAge = 20;
     /// <summary>Most posts and nodes one polity holds.</summary>
     public const int RoleCap = 2;
+    /// <summary>A <see cref="PolityForm.MerchantRepublic"/> founds route nodes this many times as often and holds one more.</summary>
+    public const double RepublicNodeFactor = 2.0;
     /// <summary>A post stands within this angular distance of a rival settlement.</summary>
     public const double PostRangeDegrees = 8.0;
     /// <summary>A node stands within this angular distance of an own road end.</summary>
@@ -60,7 +62,8 @@ internal static class FoundingSources
                 (site, v, vs) => Vector3D.Dot(v, hv) >= holyDot, preferHigh: false)) return true;
         }
 
-        if (nodes < RoleCap && Roll(view, polity, "node") < NodeChance)
+        bool republic = polity.Form == PolityForm.MerchantRepublic;
+        if (nodes < RoleCap + (republic ? 1 : 0) && Roll(view, polity, "node") < NodeChance * (republic ? RepublicNodeFactor : 1.0))
         {
             double near = DetMath.Cos(NodeRangeDegrees * GeoCoord.Deg2Rad);
             if (TryFound(view, sink, polity, candidates, vectors, minDot, SettlementRole.Node, "route", "node",

@@ -502,7 +502,7 @@ public sealed class HistoryDriver : HistoryPluginBase
         {
             var successor = new Polity
             {
-                Id = history.Polities.Count, Form = PolityForm.LooseAssociation, CapitalTile = tile, FolkKey = parent.FolkKey,
+                Id = history.Polities.Count, Form = PolityFormStage.IsCoastal(map.DataStore, tile) ? PolityForm.MerchantRepublic : PolityForm.LooseAssociation, CapitalTile = tile, FolkKey = parent.FolkKey,
                 CultureKey = parent.CultureKey, CultureOverlay = parent.CultureOverlay, FoundedTurn = turn, Parent = parent.Id,
             };
             history.Polities.Add(successor);

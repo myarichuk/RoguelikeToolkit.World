@@ -672,3 +672,12 @@ Not covered here by design: `polity.split` into successors, the faith myth about
 - Standing settlements of the ended polity pass to the successor that owns their tile.
 - Still open: a **merge** or absorb of one polity into another, and the faith myth about the fall (M3.8).
 
+
+### M3.7 merchant-republic successors, trade nodes, river-mouth placement
+
+- `PolityForm.MerchantRepublic` and `SettlementRole.Node` already existed (founding form; M3.4 route nodes), so this slice wires the Venice case rather than adding types. No schema change.
+- Collapse successors take their form from the capital tile: touching open water makes a `MerchantRepublic`, else `LooseAssociation` (`PolityFormStage.IsCoastal`). A sacked state's coastal remnants become trading states.
+- Republics found route nodes at twice `NodeChance` and hold one more node (`FoundingSources.RepublicNodeFactor`, `RoleCap + 1`).
+- Placement: `SettleOperator.RiverMouthWeight` (x1.25) on top of `RouteWeight` for a site with river and fishing reasons on a live route (a river mouth). Applies to every history founding that ranks through `BestByHistory`.
+- Form still never changes after founding; "the sack makes the republic" is expressed through which successors form, not a form-change proposal. A `ChangeForm` proposal stays out of scope.
+- Test: successor form follows `IsCoastal` across 20 seeds. Corpus re-baselined.
