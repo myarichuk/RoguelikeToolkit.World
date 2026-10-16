@@ -50,4 +50,6 @@ public enum HistoryEventKind : byte
     Shock = 19,
     /// <summary>A war took a settlement from its owner. Tags <c>settlement:{index}</c>, <c>from:{polity}</c> and <c>to:{polity}</c>; the tile is the settlement. The event's polity is the captor.</summary>
     SettlementCaptured = 20,
+    /// <summary>A settlement moved one step on the tier ladder. Tags <c>settlement:{index}</c>, <c>up</c> or <c>down</c>, <c>from:{tier}</c> and <c>to:{tier}</c>; the tile is the settlement.</summary>
+    SettlementTierChanged = 21,
 }

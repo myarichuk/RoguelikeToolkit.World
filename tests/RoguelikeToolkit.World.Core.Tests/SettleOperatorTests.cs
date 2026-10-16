@@ -36,7 +36,9 @@ public class SettleOperatorTests
                 var s = h.Settlements[i];
                 if (s.Role != SettlementRole.Colony) continue;
                 colonies++;
-                Assert.Equal(SettlementTier.Hamlet, s.Tier);
+                // Founded as hamlets; only the tier operator (M3.3) moves them, and it logs each step.
+                if (!h.Events.Any(e => e.Kind == HistoryEventKind.SettlementTierChanged && e.Tags.Contains($"settlement:{i}")))
+                    Assert.Equal(SettlementTier.Hamlet, s.Tier);
                 Assert.InRange(s.FoundedTurn, 1, 29);
                 Assert.InRange(s.Parent, 0, i - 1);
                 // A war may have carried either settlement off to its captor.

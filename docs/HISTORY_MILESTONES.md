@@ -639,3 +639,9 @@ Not covered here by design: `polity.split` into successors, the faith myth about
 - `SettleOperator.BestByHistory`: `HolySiteWeight` x1.2 within `HolySiteRadiusDegrees` (4) of an active holy site.
 - Resources are deferred to the economy plugin (Core has no resource data). A river-mouth-on-trade-route term goes with M3.7.
 - Corpus re-baselined; Core 836/836.
+
+### M3.3 tier growth and decline with hysteresis
+- `TierOperator` (order 35, `StageOrder.Tier`): a settlement's fill (people over catchment capacity) moves it one tier per turn. Up thresholds hamlet..city 0 / 0.25 / 0.5 / 0.8; down thresholds 0.12 / 0.3 / 0.5, well under the up ones, so a settlement near a boundary holds (hysteresis). Settlements younger than 10 turns keep their starting tier; capitals never fall below Town.
+- New `Proposal.ChangeTier` (conflicts per settlement; commit refuses jumps, foreign owners and capitals below the floor) and `HistoryEventKind.SettlementTierChanged` (21) with tags `settlement:{i}`, `up|down`, `from:`, `to:`. No schema change: tier was already persisted.
+- Behaviour change: colonies founded as hamlets can now reach City, and tier now feeds shock defence and plague density. Corpus: 542 tier events over 25 worlds (about 22 per world). Core 840 green.
+- Not done: thresholds are stateless; a dwell-time rule would need a persisted last-change turn (schema bump).

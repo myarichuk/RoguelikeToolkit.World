@@ -45,4 +45,6 @@ public static class EventKinds
     public static readonly EventKind Shock = HistoryEventKind.Shock;
     /// <summary>A war took a settlement.</summary>
     public static readonly EventKind SettlementCaptured = HistoryEventKind.SettlementCaptured;
+    /// <summary>A settlement grew or shrank one tier.</summary>
+    public static readonly EventKind SettlementTierChanged = HistoryEventKind.SettlementTierChanged;
 }

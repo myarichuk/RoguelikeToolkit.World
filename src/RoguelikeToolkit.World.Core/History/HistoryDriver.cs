@@ -184,6 +184,9 @@ public sealed class HistoryDriver : HistoryPluginBase
                 case Proposal.CaptureSettlement cap:
                     if (!TryCapture(history, context, cap, dirty)) RejectedProposals++;
                     break;
+                case Proposal.ChangeTier ct:
+                    if (!TryChangeTier(history, turn, ct)) RejectedProposals++;
+                    break;
                 case Proposal.AbsorbDisplaced ab:
                     if (!TryAbsorb(history, ab, dirty)) RejectedProposals++;
                     break;
@@ -384,6 +387,21 @@ public sealed class HistoryDriver : HistoryPluginBase
         dirty.Add(settlement.PolityId);
         dirty.Add(captor.Id);
         settlement.PolityId = captor.Id;
+        return true;
+    }
+
+    private static bool TryChangeTier(HistoryCatalog history, int turn, Proposal.ChangeTier ct)
+    {
+        if ((uint)ct.Settlement >= (uint)history.Settlements.Count) return false;
+        var settlement = history.Settlements[ct.Settlement];
+        if (settlement.Ended || settlement.PolityId != ct.EntityId) return false;
+        int step = (int)ct.Tier - (int)settlement.Tier;
+        if (Math.Abs(step) != 1 || !Enum.IsDefined(typeof(SettlementTier), ct.Tier)) return false;
+        if (settlement.Role == SettlementRole.Capital && ct.Tier < TierOperator.CapitalFloor) return false;
+        var from = settlement.Tier;
+        settlement.Tier = ct.Tier;
+        history.AppendLinked(HistoryEventKind.SettlementTierChanged, turn, settlement.PolityId, settlement.TileIndex,
+            new[] { $"settlement:{ct.Settlement}", step > 0 ? "up" : "down", $"from:{from}", $"to:{ct.Tier}" }, -1, null);
         return true;
     }
 

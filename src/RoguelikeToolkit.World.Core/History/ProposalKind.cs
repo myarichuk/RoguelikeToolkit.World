@@ -54,4 +54,6 @@ public enum ProposalKind
     AddScar = 22,
     /// <summary>A settlement changes hands in war.</summary>
     CaptureSettlement = 23,
+    /// <summary>Move a standing settlement one step up or down the tier ladder.</summary>
+    ChangeTier = 24,
 }

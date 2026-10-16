@@ -171,6 +171,22 @@ public abstract class Proposal
         internal override long? ConflictKey => Settlement;
     }
 
+    /// <summary>
+    /// Moves standing settlement <see cref="Settlement"/> (owned by polity <see cref="Proposal.EntityId"/>) to <see cref="Tier"/> and logs
+    /// <see cref="HistoryEventKind.SettlementTierChanged"/>. The commit refuses anything but a one-step change, a capital below
+    /// <see cref="TierOperator.CapitalFloor"/>, and an ended or foreign settlement. Conflicts per settlement.
+    /// </summary>
+    public sealed class ChangeTier : Proposal
+    {
+        /// <inheritdoc />
+        public override ProposalKind Kind => ProposalKind.ChangeTier;
+        /// <summary>Index into <see cref="HistoryCatalog.Settlements"/>.</summary>
+        public int Settlement { get; init; }
+        /// <summary>The new size class, one step from the current one.</summary>
+        public SettlementTier Tier { get; init; }
+        internal override long? ConflictKey => Settlement;
+    }
+
     /// <summary>Sets polity <see cref="Proposal.EntityId"/>'s culture overlay to <see cref="Culture"/> (empty clears it).</summary>
     public sealed class SetOverlay : Proposal
     {

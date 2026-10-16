@@ -50,6 +50,9 @@ public static class StageOrder
     /// <summary>Settle operator: colonization into owned frontier land, after the population step.</summary>
     public const int Settle = 34;
 
+    /// <summary>Tier operator: settlements grow and shrink along the tier ladder with the people they hold.</summary>
+    public const int Tier = 35;
+
     /// <summary>Hazard operator: physics-driven shocks (quake, volcano, tsunami, flood, drought) drawn against the hazard maps.</summary>
     public const int Hazard = 36;
 

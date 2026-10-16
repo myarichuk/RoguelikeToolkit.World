@@ -10,6 +10,7 @@ public static class StandardHistory
         return driver
             .AddOperator(new PopulationOperator())
             .AddOperator(new SettleOperator())
+            .AddOperator(new TierOperator())
             .AddOperator(new HazardOperator())
             .AddOperator(new TradeRoadOperator())
             .AddOperator(new HolySiteOperator())
