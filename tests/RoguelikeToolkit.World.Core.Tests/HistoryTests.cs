@@ -240,6 +240,19 @@ public class HistoryTests
     }
 
     [Fact]
+    public void PinOnACapitalTile_IsIgnored_SoNoPolityIsLeftLandless()
+    {
+        using var w = Build();
+        Assert.True(w.History.Polities.Count >= 2);
+        int victim = 0, thief = 1;
+        int capital = w.History.Polities[victim].CapitalTile;
+        w.History.Overrides.PinTile(capital, thief);
+        w.Recompute();
+        Assert.Equal(victim, w.History.OwnerOf(capital));
+        Assert.Contains(w.History.Ownership, o => o == victim);
+    }
+
+    [Fact]
     public void Overrides_SurviveRecompute_AndPinsWin()
     {
         using var w = Build();

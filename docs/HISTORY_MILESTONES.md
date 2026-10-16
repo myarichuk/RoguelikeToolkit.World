@@ -656,3 +656,9 @@ Not covered here by design: `polity.split` into successors, the faith myth about
 - `Proposal.AddSettlement.Why` adds a `why:garrison|pilgrimage|route|sedentarized` tag to `SettlementFounded`. No schema change.
 - Corpus (40 worlds, sizes 3 and 4): 123 pilgrimage, 20 garrison, 18 route, 0 sedentarized (hordes rarely sit at one settlement after 20 turns; the path is untested by full runs). Colonies 640, refuges 52. Re-baselined.
 - Tier and shock defence already key off role, so posts and shrines pick up their weights with no further change.
+
+### M3.5 pinned capitals and compat-rule validation
+
+- **Pinned capitals:** `HistoryTerritory.AssignOwners` now ignores a pin on any polity's capital tile. Before, such a pin took the seed away from its polity, which stayed alive owning nothing. The capital wins; the pin is kept but inert. A pin on a tile of an ended polity, and what happens to pins when a polity splits (M3.6), are still open.
+- **Compat rules:** the loader already rejected blank, self-paired, duplicate and unknown-rule rows. It now also reports a user-supplied (override-dir) row that names a folk with no definition, since a typo there silently left the pair blending. Shipped rows are exempt on purpose: they rule on demon and angel, which have no folk file yet.
+- No generation output changes (no pins in generated worlds), so the corpus is untouched.

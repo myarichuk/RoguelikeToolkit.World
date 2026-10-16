@@ -25,6 +25,24 @@ public sealed class PeoplesTests
     }
 
     [Fact]
+    public void CompatRule_FromDisk_NamingAnUnknownFolk_IsReported()
+    {
+        string dir = Path.Combine(Path.GetTempPath(), "peoples-compat-" + Guid.NewGuid().ToString("N"));
+        Directory.CreateDirectory(dir);
+        try
+        {
+            File.WriteAllText(Path.Combine(dir, "compat.yaml"), "Rules:\n  - FolkA: human\n    FolkB: dwraf\n    Rule: sterile\n");
+            var store = PeoplesStore.LoadLenient(dir, out var problems);
+            Assert.Contains(problems, p => p.Contains("unknown folk 'dwraf'", StringComparison.Ordinal));
+            Assert.NotNull(store);
+        }
+        finally
+        {
+            Directory.Delete(dir, recursive: true);
+        }
+    }
+
+    [Fact]
     public void Load_ReturnsTwoSampleFolks()
     {
         var store = PeoplesStore.Load();

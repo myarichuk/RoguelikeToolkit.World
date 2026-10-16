@@ -19,7 +19,7 @@ public static class HistoryTerritory
     /// Assigns every tile an owner: the index into <paramref name="capitals"/> of the nearest capital by
     /// tile-graph distance (multi-source flood fill, ties to the lowest capital index), or -1 for water
     /// and unreachable land. Pins (<paramref name="pinnedTiles"/>, tile to owner) win over the flood fill
-    /// and are ignored on water or out-of-range tiles. Pure function of its inputs.
+    /// and are ignored on water, on out-of-range tiles and on capital tiles (a capital always keeps its own polity). Pure function of its inputs.
     /// </summary>
     /// <param name="store">Tile store (elevation span for the land mask, adjacency for the flood fill).</param>
     /// <param name="capitals">Capital tiles in polity-id order.</param>
@@ -37,9 +37,11 @@ public static class HistoryTerritory
 
         if (pinnedTiles != null)
         {
+            // A capital tile always belongs to its own polity: a pin on it would leave that polity landless.
+            var capitalTiles = new HashSet<int>(capitals);
             foreach (var kv in pinnedTiles)
             {
-                if ((uint)kv.Key >= (uint)n) continue;
+                if ((uint)kv.Key >= (uint)n || capitalTiles.Contains(kv.Key)) continue;
                 if (kv.Value < 0 || kv.Value >= capitals.Count) continue;
                 if (hasElev && elev[kv.Key].Height < LandThreshold) continue;
                 owners[kv.Key] = kv.Value;

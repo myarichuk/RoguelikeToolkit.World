@@ -20,6 +20,8 @@ public sealed class PeoplesStore
     /// <summary>Pairwise offspring rules from <c>compat.yaml</c>; unlisted pairs blend.</summary>
     public CompatibilityMatrix Compatibility { get; } = new();
 
+    private readonly List<(string Where, string Folk)> _compatRefs = new();
+
     /// <summary>
     /// The generated folk index: every shipped folk key, sorted. This replaces the
     /// hand-maintained <c>FantasyRaces.All</c> list as the folk registry (which stays as a shim).
@@ -106,6 +108,8 @@ public sealed class PeoplesStore
                     embeddedKeys, diskKeys, ref diskCompat);
             }
         }
+        foreach (var (where, folk) in store._compatRefs)
+            if (!store.Folks.ContainsKey(folk)) problems.Add($"{where}: unknown folk '{folk}' (a typo here would silently leave the pair blending).");
         return store;
     }
 
@@ -137,7 +141,7 @@ public sealed class PeoplesStore
                 problems.Add($"{rel}: invalid YAML: {ex.Message}");
                 return;
             }
-            ValidateCompat(rel, compat, store.Compatibility, problems);
+            ValidateCompat(rel, compat, store.Compatibility, problems, fromDisk ? store._compatRefs : null);
             return;
         }
         bool isFolk = rel.StartsWith("Folks/", StringComparison.OrdinalIgnoreCase);
@@ -278,7 +282,7 @@ public sealed class PeoplesStore
             if (v < -100 || v > 100) problems.Add($"{rel}: {field} {v} is out of range (-100-100).");
     }
 
-    private static void ValidateCompat(string rel, CompatData? data, CompatibilityMatrix matrix, List<string> problems)
+    private static void ValidateCompat(string rel, CompatData? data, CompatibilityMatrix matrix, List<string> problems, List<(string Where, string Folk)>? refs)
     {
         if (data is null || data.Rules is null)
         {
@@ -318,6 +322,9 @@ public sealed class PeoplesStore
                 continue;
             }
             matrix.With(row.FolkA, row.FolkB, rule);
+            // Only user-supplied rows are checked: the shipped table deliberately rules on folks that have no file yet (demon, angel).
+            refs?.Add((where, row.FolkA.Trim()));
+            refs?.Add((where, row.FolkB.Trim()));
         }
     }
 
