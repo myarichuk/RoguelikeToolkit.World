@@ -9,7 +9,7 @@ namespace RoguelikeToolkit.World.Core.History;
 /// and the culture fallbacks beside it. The count keeps a corrupt data layer visible instead of
 /// silently simulating on fallback numbers.
 /// </summary>
-internal static class PeoplesLoader
+public static class PeoplesLoader
 {
     /// <summary>Loads the peoples tables, counting a fallback on <paramref name="history"/> when they fail.</summary>
     public static PeoplesStore? LoadStore(HistoryCatalog history)

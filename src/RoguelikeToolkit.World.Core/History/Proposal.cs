@@ -125,18 +125,6 @@ public abstract class Proposal
         public IReadOnlyList<EventParticipant>? Participants { get; init; }
     }
 
-    /// <summary>Records a historic site (a battlefield) on <see cref="Tile"/> for polity <see cref="Proposal.EntityId"/>; a tile that already has a site is left alone.</summary>
-    public sealed class AddSite : Proposal
-    {
-        /// <inheritdoc />
-        public override ProposalKind Kind => ProposalKind.AddSite;
-        /// <summary>Tile the site sits on.</summary>
-        public int Tile { get; init; }
-        /// <summary>Geographic position of the tile.</summary>
-        public GeoCoord Position { get; init; }
-        internal override long? ConflictKey => Tile;
-    }
-
     /// <summary>Leaves a <see cref="HistoryScar"/> of <see cref="ScarKind"/> on <see cref="Tile"/> for polity <see cref="Proposal.EntityId"/>; a tile that already carries that kind is left alone. Conflicts per tile and kind.</summary>
     public sealed class AddScar : Proposal
     {

@@ -112,6 +112,16 @@ public sealed class ArchitectureTests(ITestOutputHelper output)
         Assert.True(edges.Count == 0, string.Join(Environment.NewLine, edges.Select(e => $"{e.From}->{e.To}:{e.File}")));
     }
 
+    [Fact]
+    public void Core_ExposesInternals_OnlyToItsTests()
+    {
+        // Host projects (MapEditor.Engine, Presentation, Jint, plugins) build against the public surface only.
+        var csproj = Path.Combine(CoreDir(), "RoguelikeToolkit.World.Core.csproj");
+        var visible = Regex.Matches(File.ReadAllText(csproj), "<InternalsVisibleTo Include=\"([^\"]+)\"").Select(m => m.Groups[1].Value).ToList();
+        Assert.Equal(new[] { "RoguelikeToolkit.World.Core.Tests" }, visible);
+        Assert.DoesNotContain(SourceFiles(), f => f.Text.Contains("InternalsVisibleTo(", StringComparison.Ordinal));
+    }
+
     /// <summary>Report mode: prints slice cycles. Not asserted yet, because the domain slices read each other's layer structs both ways.</summary>
     [Fact]
     public void Report_SliceCycles()
@@ -150,10 +160,16 @@ public sealed class ArchitectureTests(ITestOutputHelper output)
         return dot < 0 ? name : name[..dot];
     }
 
-    private static List<SourceFile> SourceFiles([CallerFilePath] string here = "")
+    private static string CoreDir([CallerFilePath] string here = "")
     {
         var core = Path.GetFullPath(Path.Combine(Path.GetDirectoryName(here)!, "..", "..", "src", "RoguelikeToolkit.World.Core"));
         Assert.True(Directory.Exists(core), $"Core sources not found at {core}");
+        return core;
+    }
+
+    private static List<SourceFile> SourceFiles([CallerFilePath] string here = "")
+    {
+        var core = CoreDir(here);
         var list = new List<SourceFile>();
         foreach (var path in Directory.EnumerateFiles(core, "*.cs", SearchOption.AllDirectories))
         {

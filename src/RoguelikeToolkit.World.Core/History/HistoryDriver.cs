@@ -122,10 +122,6 @@ public sealed class HistoryDriver : HistoryPluginBase
                 case Proposal.AddWindow w:
                     history.AddWindow(w.EntityId, w.Other, w.UntilTurn);
                     break;
-                case Proposal.AddSite st:
-                    if (!history.Sites.Any(x => x.TileIndex == st.Tile))
-                        history.Sites.Add(new HistorySite { TileIndex = st.Tile, PolityId = st.EntityId, FoundedTurn = turn, Position = st.Position, Active = true });
-                    break;
                 case Proposal.AddScar sc:
                     if (!string.IsNullOrWhiteSpace(sc.ScarKind) && !history.Scars.Any(x => x.TileIndex == sc.Tile && x.Kind == sc.ScarKind))
                         history.Scars.Add(new HistoryScar { TileIndex = sc.Tile, PolityId = sc.EntityId, FoundedTurn = turn, Kind = sc.ScarKind, Cause = sc.Cause ?? string.Empty, Position = sc.Position });

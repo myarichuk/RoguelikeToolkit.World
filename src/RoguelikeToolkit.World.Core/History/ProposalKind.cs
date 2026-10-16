@@ -26,8 +26,6 @@ public enum ProposalKind
     AdjustScalar = 8,
     /// <summary>Set a polity's population index and ruler generation.</summary>
     SetPopulation = 9,
-    /// <summary>Record a historic site (battlefield) on a tile.</summary>
-    AddSite = 10,
     /// <summary>Set a polity's culture overlay.</summary>
     SetOverlay = 11,
     /// <summary>Record the birth turn of a polity's treaty heir.</summary>

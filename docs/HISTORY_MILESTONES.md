@@ -699,3 +699,10 @@ Not covered here by design: `polity.split` into successors, the faith myth about
 - `MaxSuccessors` needs no change: only collapse sets `Parent`, so a dead parent always means a collapse, and a successor that is later absorbed still counts toward the cap on successors founded.
 - The absorbed seat keeps its `Capital` role under the absorber (roles record origin), so an absorber can list several capital-role cities.
 - Tests in `CollapseOperatorTests`: handover and refusals, the absorption myth, and a 20-seed invariant run. The collapse invariant test now filters on end cause `collapse`. Seed-42 fixtures that assumed every polity survives were loosened (`HistoryTests`, `HistorySettlementLifecycleTests`, `SettleOperatorTests`, `HistoryOperatorsTests`). Corpus re-baselined with a `PolityAbsorbed` column.
+
+### M3.10 public API audit (M3 step 1)
+
+- `PublicAPI.Unshipped.txt` regenerated for the history work since M2.1 (about 880 lines; RS0016/RS0017 are now clean for both target frameworks). The `HistoryDemography`, `HistoryNeighbors` and `HistoryTerritory` helpers were already public; `PeoplesLoader` is now public too, since an economy plugin needs the same shared peoples load and fallback count.
+- `Proposal.AddSite`, `ProposalKind.AddSite` and the driver case are removed (no producer since M3.1; no users, so no compatibility shim).
+- `ArchitectureTests.Core_ExposesInternals_OnlyToItsTests`: the only `InternalsVisibleTo` is the Core test project, so hosts build against the public surface by construction.
+- Still open in M3: the plugin state bag, reserved ordering bands, the reference plugin host and sample, then the economy plugin. New History types stay unstable until the economy plugin ships.
