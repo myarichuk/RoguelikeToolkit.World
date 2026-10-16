@@ -681,3 +681,21 @@ Not covered here by design: `polity.split` into successors, the faith myth about
 - Placement: `SettleOperator.RiverMouthWeight` (x1.25) on top of `RouteWeight` for a site with river and fishing reasons on a live route (a river mouth). Applies to every history founding that ranks through `BestByHistory`.
 - Form still never changes after founding; "the sack makes the republic" is expressed through which successors form, not a form-change proposal. A `ChangeForm` proposal stays out of scope.
 - Test: successor form follows `IsCoastal` across 20 seeds. Corpus re-baselined.
+
+### M3.8 faith myth about the fall
+
+- `FaithPostPass.DrawMyths` adds two slots, outside the `MaxTraumaSlots` cap so a war-heavy history cannot crowd them out: `fall:self:{turn}` on the faith of a polity that ended by `collapse`, and `fall:parent:{turn}` on each successor's faith (parent ended by `collapse`). Powers are unchanged.
+- `TemplateMythTextProvider` renders both (the dead state's "the power turned its face away", the heirs' "the remnant it kept alive"); other providers get the tags as before. No schema change: slots are already persisted strings.
+- Only the `Myth` event tags change, so only collapse worlds differ in the corpus.
+- Test: `CollapseOperatorTests.Faith_RemembersTheFall_InTheDeadStateAndItsSuccessors`.
+- Closes the Gurubashi paper case except a merge/absorb of one polity into another (still open).
+
+### M3.9 polity absorption (merge)
+
+- New `AbsorbOperator` (order 73) and `Proposal.AbsorbPolity { EntityId, Into }`. A polity that has stood 10+ turns (`MinAge`) and owns at most 8 tiles is absorbed at 4% per turn by its largest bordering living neighbour of the same folk that owns at least 3x as many tiles (lowest id on a tie). A polity taking part in one absorption takes part in no other that turn.
+- The commit ends the absorbed polity (`EndedTurn`, end cause `absorbed`), adds its population to the absorber, re-floods ownership, then gives the absorbed polity's former tiles and standing settlements to the absorber. Holy sites follow the tile owner, as after a collapse. Pins on the absorbed polity stay stored but inert, as for collapse.
+- New event `HistoryEventKind.PolityAbsorbed` (23): tags `absorbed` and `into:{id}`, the event's polity is the absorbed one. New `StageOrder.Absorb`. No schema change: `EndedTurn` and `EndCause` were already persisted.
+- Faith: `FaithPostPass.DrawMyths` adds `absorbed:self:{turn}` on the absorbed polity's faith and `absorbed:into:{turn}` on the absorber's faith (one per absorbed polity), outside the trauma cap. `TemplateMythTextProvider` renders both. Only `Myth` event tags change, so the corpus counts are unchanged.
+- `MaxSuccessors` needs no change: only collapse sets `Parent`, so a dead parent always means a collapse, and a successor that is later absorbed still counts toward the cap on successors founded.
+- The absorbed seat keeps its `Capital` role under the absorber (roles record origin), so an absorber can list several capital-role cities.
+- Tests in `CollapseOperatorTests`: handover and refusals, the absorption myth, and a 20-seed invariant run. The collapse invariant test now filters on end cause `collapse`. Seed-42 fixtures that assumed every polity survives were loosened (`HistoryTests`, `HistorySettlementLifecycleTests`, `SettleOperatorTests`, `HistoryOperatorsTests`). Corpus re-baselined with a `PolityAbsorbed` column.

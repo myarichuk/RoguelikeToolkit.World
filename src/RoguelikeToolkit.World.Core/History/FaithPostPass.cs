@@ -96,5 +96,21 @@ public sealed class FaithPostPass : IHistoryPostPass
             faith.MythSlots.Add(slot);
             traumas++;
         }
+        // The fall of a state is its own myth, outside the trauma cap so a war-heavy history cannot crowd it out.
+        if (EndedByCollapse(history, polity)) faith.MythSlots.Add($"fall:self:{polity.EndedTurn}");
+        if (polity.Parent >= 0 && polity.Parent < history.Polities.Count && EndedByCollapse(history, history.Polities[polity.Parent]))
+            faith.MythSlots.Add($"fall:parent:{history.Polities[polity.Parent].EndedTurn}");
+        // Absorption: the swallowed state remembers it, and the absorber remembers each one it swallowed.
+        if (EndedBy(history, polity, "absorbed")) faith.MythSlots.Add($"absorbed:self:{polity.EndedTurn}");
+        string into = $"into:{polity.Id}";
+        foreach (var e in history.Events)
+            if (e.Kind == HistoryEventKind.PolityAbsorbed && e.Tags.Contains(into))
+                faith.MythSlots.Add($"absorbed:into:{e.Turn}");
     }
+
+    private static bool EndedByCollapse(HistoryCatalog history, Polity polity)
+        => EndedBy(history, polity, "collapse");
+
+    private static bool EndedBy(HistoryCatalog history, Polity polity, string cause)
+        => !polity.Alive && polity.EndCause >= 0 && history.Strings.NameOf(polity.EndCause) == cause;
 }

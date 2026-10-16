@@ -58,4 +58,6 @@ public enum ProposalKind
     ChangeTier = 24,
     /// <summary>A polity ends and its territory passes to successor polities. Applied in the structural pre-pass.</summary>
     SplitPolity = 25,
+    /// <summary>A polity ends and a neighbour takes over its land and settlements. Applied in the structural pre-pass.</summary>
+    AbsorbPolity = 26,
 }

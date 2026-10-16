@@ -49,4 +49,6 @@ public static class EventKinds
     public static readonly EventKind SettlementTierChanged = HistoryEventKind.SettlementTierChanged;
     /// <summary>A polity collapsed into successors.</summary>
     public static readonly EventKind PolityCollapsed = HistoryEventKind.PolityCollapsed;
+    /// <summary>A polity was absorbed by a neighbour.</summary>
+    public static readonly EventKind PolityAbsorbed = HistoryEventKind.PolityAbsorbed;
 }

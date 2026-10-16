@@ -54,4 +54,6 @@ public enum HistoryEventKind : byte
     SettlementTierChanged = 21,
     /// <summary>A polity collapsed into successors. Tags <c>collapse</c> and one <c>successor:{id}</c> per successor; the tile is the old capital.</summary>
     PolityCollapsed = 22,
+    /// <summary>A polity was absorbed by a neighbour. Tags <c>absorbed</c> and <c>into:{id}</c>; the event's polity is the absorbed one and the tile is its old capital.</summary>
+    PolityAbsorbed = 23,
 }

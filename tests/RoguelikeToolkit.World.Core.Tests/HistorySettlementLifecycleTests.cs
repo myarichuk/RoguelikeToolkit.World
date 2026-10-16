@@ -11,17 +11,23 @@ public class HistorySettlementLifecycleTests
         // Shocks abandon settlements; pin them off to check the founding state (wars never end capitals).
         using var w = new WorldBuilder().WithSize(3).WithSeed(42).WithUserEdits().WithHistory(c => c.HazardRate = 0).Build();
         Assert.NotEmpty(w.History.Settlements);
-        foreach (var s in w.History.Settlements.Where(s => s.Role == SettlementRole.Capital))
+        foreach (var s in w.History.Settlements.Where(s => s.Role == SettlementRole.Capital && w.History.Polities[s.PolityId].Alive && w.History.Polities[s.PolityId].CapitalTile == s.TileIndex && w.History.Polities[s.PolityId].FoundedTurn == 0))
         {
             Assert.False(s.Ended);
             Assert.Equal(-1, s.EndedTurn);
             if (s.Role == SettlementRole.Capital)
             {
-                Assert.Equal(SettlementTier.City, s.Tier);
+                // Founded as a city; only the tier operator moves it (never below the capital floor), and it logs each step.
+                int index = w.History.Settlements.IndexOf(s);
+                if (!w.History.Events.Any(e => e.Kind == HistoryEventKind.SettlementTierChanged && e.Tags.Contains($"settlement:{index}")))
+                    Assert.Equal(SettlementTier.City, s.Tier);
+                else Assert.True(s.Tier >= TierOperator.CapitalFloor);
                 Assert.Equal(-1, s.Parent);
             }
         }
-        Assert.Equal(w.History.Polities.Count, w.History.Settlements.Count(s => s.Role == SettlementRole.Capital));
+        // Collapse successors may take over a standing settlement instead of founding a new seat.
+        Assert.True(w.History.Settlements.Count(s => s.Role == SettlementRole.Capital) <= w.History.Polities.Count);
+        Assert.All(w.History.Polities.Where(p => p.Alive), p => Assert.Contains(w.History.Settlements, s => !s.Ended && s.TileIndex == p.CapitalTile));
     }
 
     [Fact]

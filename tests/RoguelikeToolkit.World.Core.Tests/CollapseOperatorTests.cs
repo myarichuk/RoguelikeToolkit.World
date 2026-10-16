@@ -67,6 +67,30 @@ public class CollapseOperatorTests
     }
 
     [Fact]
+    public void Faith_RemembersTheFall_InTheDeadStateAndItsSuccessors()
+    {
+        using var w = Bare();
+        var tiles = TwoTiles(w);
+        int before = w.History.Polities.Count;
+        Split(w, tiles);
+
+        new FaithPostPass().Run(w.Map, w.History, new HistoryContext());
+
+        var dead = w.History.Faiths.Single(f => f.PolityId == 0);
+        Assert.Contains("fall:self:30", dead.MythSlots);
+        Assert.DoesNotContain(dead.MythSlots, s => s.StartsWith("fall:parent"));
+        for (int i = 0; i < 2; i++)
+        {
+            var heir = w.History.Faiths.Single(f => f.PolityId == before + i);
+            Assert.Contains("fall:parent:30", heir.MythSlots);
+            Assert.DoesNotContain(heir.MythSlots, s => s.StartsWith("fall:self"));
+        }
+        var provider = new RoguelikeToolkit.World.Core.Integration.TemplateMythTextProvider();
+        Assert.Contains("turn 30", provider.Render(dead.Form, "fall:self:30", dead.Powers));
+        Assert.Contains("turn 30", provider.Render(dead.Form, "fall:parent:30", dead.Powers));
+    }
+
+    [Fact]
     public void Split_Refuses_OneSuccessor_ForeignTiles_AndAnEndedParent()
     {
         using var w = Bare();
@@ -106,7 +130,7 @@ public class CollapseOperatorTests
         {
             using var w = new WorldBuilder().WithSize(3).WithSeed(seed).WithHistory().Build();
             var h = w.History;
-            foreach (var parent in h.Polities.Where(p => !p.Alive))
+            foreach (var parent in h.Polities.Where(p => !p.Alive && h.Strings.NameOf(p.EndCause) == "collapse"))
             {
                 collapses++;
                 Assert.DoesNotContain(parent.Id, h.Ownership);
@@ -123,5 +147,75 @@ public class CollapseOperatorTests
             Assert.True(h.Ownership.AsSpan().SequenceEqual(again.History.Ownership));
         }
         Assert.True(collapses > 0, "no collapse in 20 seeds; the trigger is unreachable");
+    }
+
+    private static void Absorb(World w, int gone, int into, int turn = 30)
+        => new HistoryDriver()
+            .AddOperator(new Script(_ => new Proposal[] { new Proposal.AbsorbPolity { EntityId = gone, Into = into } }))
+            .RunTurn(w.Map, w.History, new HistoryContext(), turn);
+
+    [Fact]
+    public void Faith_RemembersAbsorption_InTheSwallowedStateAndTheAbsorber()
+    {
+        using var w = new WorldBuilder().WithSize(3).WithSeed(42).WithUserEdits().WithHistoryDriver(d => d.Clear()).Build();
+        Assert.True(w.History.Polities.Count >= 2, "need two polities");
+        Absorb(w, 1, 0);
+
+        new FaithPostPass().Run(w.Map, w.History, new HistoryContext());
+
+        var gone = w.History.Faiths.Single(f => f.PolityId == 1);
+        var taker = w.History.Faiths.Single(f => f.PolityId == 0);
+        Assert.Contains("absorbed:self:30", gone.MythSlots);
+        Assert.DoesNotContain(taker.MythSlots, s => s.StartsWith("absorbed:self"));
+        Assert.Contains("absorbed:into:30", taker.MythSlots);
+        var provider = new RoguelikeToolkit.World.Core.Integration.TemplateMythTextProvider();
+        Assert.Contains("turn 30", provider.Render(gone.Form, "absorbed:self:30", gone.Powers));
+        Assert.Contains("turn 30", provider.Render(taker.Form, "absorbed:into:30", taker.Powers));
+    }
+
+    [Fact]
+    public void Absorb_EndsThePolity_AndHandsLandAndSettlementsToTheAbsorber()
+    {
+        using var w = new WorldBuilder().WithSize(3).WithSeed(42).WithUserEdits().WithHistoryDriver(d => d.Clear()).Build();
+        Assert.True(w.History.Polities.Count >= 2, "need two polities");
+        var landed = w.History.Ownership.Count(o => o == 0);
+        var other = w.History.Ownership.Count(o => o == 1);
+        Absorb(w, 1, 0);
+
+        var gone = w.History.Polities[1];
+        Assert.False(gone.Alive);
+        Assert.Equal(30, gone.EndedTurn);
+        Assert.Equal("absorbed", w.History.Strings.NameOf(gone.EndCause));
+        Assert.DoesNotContain(1, w.History.Ownership);
+        Assert.Equal(landed + other, w.History.Ownership.Count(o => o == 0));
+        Assert.All(w.History.Settlements.Where(s => !s.Ended), s => Assert.NotEqual(1, s.PolityId));
+        Assert.Contains(w.History.Events, e => e.Kind == HistoryEventKind.PolityAbsorbed && e.Tags.Contains("into:0"));
+
+        int count = w.History.Events.Count;
+        Absorb(w, 1, 0, 31); // already gone
+        Absorb(w, 0, 0, 31); // itself
+        Assert.Equal(count, w.History.Events.Count);
+        Assert.True(w.History.Polities[0].Alive);
+    }
+
+    [Fact]
+    public void FullRun_Absorptions_KeepEveryInvariant()
+    {
+        int absorbed = 0;
+        for (int seed = 1; seed <= 20; seed++)
+        {
+            using var w = new WorldBuilder().WithSize(3).WithSeed(seed).WithHistory().Build();
+            var h = w.History;
+            foreach (var gone in h.Polities.Where(p => !p.Alive && h.Strings.NameOf(p.EndCause) == "absorbed"))
+            {
+                absorbed++;
+                Assert.DoesNotContain(gone.Id, h.Ownership);
+                Assert.All(h.Settlements.Where(s => !s.Ended), s => Assert.NotEqual(gone.Id, s.PolityId));
+                var ev = h.Events.Single(e => e.Kind == HistoryEventKind.PolityAbsorbed && e.PolityId == gone.Id);
+                int into = int.Parse(ev.Tags.Single(t => t.StartsWith("into:")).Substring(5));
+                Assert.Equal(gone.FolkKey, h.Polities[into].FolkKey);
+            }
+        }
+        Assert.True(absorbed > 0, "no absorption in 20 seeds; the trigger is unreachable");
     }
 }

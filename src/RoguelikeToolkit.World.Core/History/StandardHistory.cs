@@ -20,6 +20,7 @@ public static class StandardHistory
             .AddOperator(new ConquestOperator())
             .AddOperator(new RebellionOperator())
             .AddOperator(new CollapseOperator())
+            .AddOperator(new AbsorbOperator())
             .AddOperator(new VillainOperator())
             .AddOperator(new ExchangeOperator())
             .AddPostPass(new FaithPostPass())

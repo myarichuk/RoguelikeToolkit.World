@@ -102,7 +102,7 @@ public class HistoryOperatorsTests
     public void Population_TicksForEveryPolity()
     {
         using var w = Build();
-        foreach (var polity in w.History.Polities)
+        foreach (var polity in w.History.Polities.Where(p => p.Alive))
         {
             Assert.True(polity.Population > 0, $"Polity {polity.Id} has no population.");
             Assert.InRange(polity.Pressure, 0, HistoryDemography.MaxPressure);
@@ -176,7 +176,8 @@ public class HistoryOperatorsTests
     [Fact]
     public void Exchange_OnlyRunsOnActiveRoutes()
     {
-        using var w = Build();
+        // A bare world: the standard history would already have run these turns, and replaying them over it breaks the route spans.
+        using var w = new WorldBuilder().WithSize(Size).WithSeed(Seed).WithUserEdits().WithHistoryDriver(d => d.Clear()).Build();
         new HistoryDriver()
             .AddOperator(new PopulationOperator())
             .AddOperator(new TradeRoadOperator())

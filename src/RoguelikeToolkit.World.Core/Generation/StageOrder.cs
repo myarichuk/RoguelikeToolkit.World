@@ -77,6 +77,9 @@ public static class StageOrder
     /// <summary>Collapse operator: an overextended, crowded polity breaks into successors and ends.</summary>
     public const int Collapse = 72;
 
+    /// <summary>Absorb operator: a small polity folds into a larger neighbour of its own folk.</summary>
+    public const int Absorb = 73;
+
     /// <summary>Villain operator: long-life actors rise to rule, freezing successions (bounded by the villain cap).</summary>
     public const int Villain = 76;
 

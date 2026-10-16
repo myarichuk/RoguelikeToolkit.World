@@ -63,12 +63,13 @@ public class HistoryTests
         Assert.NotEmpty(history.Polities);
         int foundedAtZero = history.Polities.Count(p => p.FoundedTurn == 0);
         Assert.Equal(foundedAtZero, history.Events.Count(e => e.Kind == HistoryEventKind.Founding));
-        Assert.Equal(history.Polities.Count, history.Settlements.Count(s => s.Role == SettlementRole.Capital));
+        // Collapse successors may take over a standing settlement instead of founding a new seat.
+        Assert.True(history.Settlements.Count(s => s.Role == SettlementRole.Capital) <= history.Polities.Count);
         Assert.True(history.Sites.Count >= history.Polities.Count);
         Assert.Equal(29, history.SimulatedTurns);
         foreach (var polity in history.Polities)
         {
-            Assert.Equal(polity.Id, history.OwnerOf(polity.CapitalTile));
+            if (polity.Alive) Assert.Equal(polity.Id, history.OwnerOf(polity.CapitalTile));
             if (polity.FoundedTurn == 0)
             {
                 var founding = history.EventsOf(polity.Id).Single(e => e.Kind == HistoryEventKind.Founding);
@@ -80,11 +81,15 @@ public class HistoryTests
             }
             else
             {
-                var rebellion = history.Events.Single(e => e.Kind == HistoryEventKind.Rebellion
+                // Born in a rebellion, or as a collapse successor (which has no rebellion event).
+                var rebellion = history.Events.SingleOrDefault(e => e.Kind == HistoryEventKind.Rebellion
                     && e.PolityId == polity.Id && e.Turn == polity.FoundedTurn);
-                Assert.Equal(polity.CapitalTile, rebellion.TileIndex);
+                if (rebellion != null) Assert.Equal(polity.CapitalTile, rebellion.TileIndex);
+                else Assert.Contains(history.Events, e => e.Kind == HistoryEventKind.PolityCollapsed && e.Tags.Contains($"successor:{polity.Id}"));
             }
-            Assert.Single(history.CitiesOf(polity.Id), c => c.Role == SettlementRole.Capital);
+            // An absorber also holds the seats of the polities it took, so it may list more than one capital-role city.
+            if (polity.Alive && !history.Events.Any(e => e.Kind == HistoryEventKind.PolityCollapsed && e.Tags.Contains($"successor:{polity.Id}")))
+                Assert.Contains(history.CitiesOf(polity.Id), c => c.Role == SettlementRole.Capital);
         }
     }
 
@@ -258,7 +263,8 @@ public class HistoryTests
         using var w = Build();
         Assert.True(w.History.Polities.Count >= 2, "Seed 42 size 3 must form at least two polities for the pin test.");
         int tile = OwnedLandTile(w);
-        int other = (w.History.OwnerOf(tile) + 1) % w.History.Polities.Count;
+        int owner = w.History.OwnerOf(tile);
+        int other = w.History.Polities.First(p => p.Alive && p.Id != owner).Id; // a pin on an ended polity is inert
         w.History.Overrides.RenamePolity(other, "Pinned Ones");
         w.History.Overrides.PinTile(tile, other);
         w.Recompute();

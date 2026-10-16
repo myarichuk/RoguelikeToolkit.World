@@ -244,6 +244,20 @@ public abstract class Proposal
     }
 
     /// <summary>
+    /// Ends polity <see cref="Proposal.EntityId"/> by absorption into <see cref="Into"/>: the land it owned, its standing
+    /// settlements and its holy sites pass to the absorber, and its end cause is <c>absorbed</c>. Rejected when either polity
+    /// is not alive, they are the same, or the absorbed one was founded this turn.
+    /// </summary>
+    public sealed class AbsorbPolity : Proposal
+    {
+        /// <inheritdoc />
+        public override ProposalKind Kind => ProposalKind.AbsorbPolity;
+        /// <summary>Id of the polity that takes over.</summary>
+        public int Into { get; init; }
+        internal override long? ConflictKey => EntityId;
+    }
+
+    /// <summary>
     /// A villain with <see cref="Agenda"/> rises to rule polity <see cref="Proposal.EntityId"/> and freezes its ruler
     /// generation at <see cref="RulerGeneration"/>. The commit refuses it past <see cref="HistoryContext.MaxVillains"/>
     /// or for a polity that already has one.

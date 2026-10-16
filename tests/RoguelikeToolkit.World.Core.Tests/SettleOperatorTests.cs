@@ -66,7 +66,11 @@ public class SettleOperatorTests
             using var w = Build(seed, ctx => ctx.MaxSettlementsPerPolity = 2);
             var h = w.History;
             foreach (var polity in h.Polities)
+            {
+                // The cap limits founding; an absorber inherits the absorbed polity's settlements on top of it.
+                if (h.Events.Any(e => e.Kind == HistoryEventKind.PolityAbsorbed && e.Tags.Contains($"into:{polity.Id}"))) continue;
                 Assert.True(h.Settlements.Count(s => s.PolityId == polity.Id && !s.Ended) <= 2);
+            }
             Assert.Equal(h.Settlements.Count(s => s.Role == SettlementRole.Colony),
                 h.Events.Count(e => e.Kind == HistoryEventKind.SettlementFounded && e.Tags.Contains("role:Colony")));
         }

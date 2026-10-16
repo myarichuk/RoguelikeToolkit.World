@@ -2,7 +2,7 @@ namespace RoguelikeToolkit.World.Core.Integration;
 
 /// <summary>
 /// Late renderer for faith myths. History stores only tags (<c>origin:{folk}</c>,
-/// <c>trauma:war:{turn}</c>, ...); a game may supply an LLM-backed provider, while
+/// <c>trauma:war:{turn}</c>, <c>fall:self|parent:{turn}</c>, <c>absorbed:self|into:{turn}</c>, ...); a game may supply an LLM-backed provider, while
 /// <see cref="TemplateMythTextProvider"/> is the deterministic Core default. The simulation
 /// never reads the returned text, so any provider (including one returning empty strings) leaves
 /// the event log identical.
