@@ -35,7 +35,7 @@ const RoguelikeToolkit.World.Core.History.HazardOperator.Plague = "plague" -> st
 const RoguelikeToolkit.World.Core.History.HistoryCatalog.HolyDangerDelta = -1 -> float
 const RoguelikeToolkit.World.Core.History.HistoryCatalog.ScarDangerDelta = 1 -> float
 const RoguelikeToolkit.World.Core.History.HistoryCatalog.ScarHabitabilityDelta = -0.25 -> float
-const RoguelikeToolkit.World.Core.History.HistoryCatalog.SchemaVersion = 8 -> int
+const RoguelikeToolkit.World.Core.History.HistoryCatalog.SchemaVersion = 9 -> int
 const RoguelikeToolkit.World.Core.History.HistoryDemography.ColonistShare = 0.15 -> double
 const RoguelikeToolkit.World.Core.History.HistoryScar.Battlefield = "battlefield" -> string!
 const RoguelikeToolkit.World.Core.History.HistoryScar.Crater = "crater" -> string!
@@ -54,6 +54,7 @@ const RoguelikeToolkit.World.Core.History.KhanOperator.TributeIncome = 0.05 -> d
 const RoguelikeToolkit.World.Core.History.KhanOperator.TributeRelief = 0.1 -> double
 const RoguelikeToolkit.World.Core.History.KhanOperator.TributeWindowTurns = 5 -> int
 const RoguelikeToolkit.World.Core.History.KhanOperator.UltimatumChance = 0.35 -> double
+const RoguelikeToolkit.World.Core.History.PluginStateBag.MaxKeyLength = 128 -> int
 const RoguelikeToolkit.World.Core.History.RebellionOperator.MinRebelTiles = 8 -> int
 const RoguelikeToolkit.World.Core.History.RebellionOperator.MinSeparationDegrees = 12 -> double
 const RoguelikeToolkit.World.Core.History.RebellionOperator.OppressionThreshold = 0.35 -> double
@@ -230,6 +231,7 @@ RoguelikeToolkit.World.Core.History.HistoryCatalog.GrudgeWeight(int a, int b) ->
 RoguelikeToolkit.World.Core.History.HistoryCatalog.HolySites.get -> System.Collections.Generic.List<RoguelikeToolkit.World.Core.History.HistoryHolySite!>!
 RoguelikeToolkit.World.Core.History.HistoryCatalog.IsWindowed(int a, int b, int turn) -> bool
 RoguelikeToolkit.World.Core.History.HistoryCatalog.PeoplesFallbacks.get -> int
+RoguelikeToolkit.World.Core.History.HistoryCatalog.PluginState.get -> RoguelikeToolkit.World.Core.History.PluginStateBag!
 RoguelikeToolkit.World.Core.History.HistoryCatalog.PopulationLost.get -> double
 RoguelikeToolkit.World.Core.History.HistoryCatalog.RepayGrudges(int a, int b) -> bool
 RoguelikeToolkit.World.Core.History.HistoryCatalog.Scalars.get -> RoguelikeToolkit.World.Core.History.ScalarRegistry!
@@ -344,6 +346,20 @@ RoguelikeToolkit.World.Core.History.KhanOperator.Name.get -> string!
 RoguelikeToolkit.World.Core.History.KhanOperator.Order.get -> int
 RoguelikeToolkit.World.Core.History.KhanOperator.Propose(RoguelikeToolkit.World.Core.History.TurnView! view, RoguelikeToolkit.World.Core.History.ProposalSink! sink) -> void
 RoguelikeToolkit.World.Core.History.PeoplesLoader
+RoguelikeToolkit.World.Core.History.PluginStateBag
+RoguelikeToolkit.World.Core.History.PluginStateBag.Count.get -> int
+RoguelikeToolkit.World.Core.History.PluginStateBag.Keys.get -> System.Collections.Generic.IEnumerable<string!>!
+RoguelikeToolkit.World.Core.History.PluginStateBag.Notes.get -> System.Collections.Generic.IReadOnlyList<string!>!
+RoguelikeToolkit.World.Core.History.PluginStateBag.PluginStateBag() -> void
+RoguelikeToolkit.World.Core.History.PluginStateBag.Remove(string! key) -> bool
+RoguelikeToolkit.World.Core.History.PluginStateBag.Reset(string! key, int version, System.ReadOnlySpan<byte> data, string! reason) -> void
+RoguelikeToolkit.World.Core.History.PluginStateBag.Set(string! key, int version, System.ReadOnlySpan<byte> data) -> void
+RoguelikeToolkit.World.Core.History.PluginStateBag.TryRead(string! key, int expectedVersion, out byte[]! data) -> RoguelikeToolkit.World.Core.History.PluginStateLookup
+RoguelikeToolkit.World.Core.History.PluginStateBag.VersionOf(string! key) -> int?
+RoguelikeToolkit.World.Core.History.PluginStateLookup
+RoguelikeToolkit.World.Core.History.PluginStateLookup.Found = 1 -> RoguelikeToolkit.World.Core.History.PluginStateLookup
+RoguelikeToolkit.World.Core.History.PluginStateLookup.Missing = 0 -> RoguelikeToolkit.World.Core.History.PluginStateLookup
+RoguelikeToolkit.World.Core.History.PluginStateLookup.VersionMismatch = 2 -> RoguelikeToolkit.World.Core.History.PluginStateLookup
 RoguelikeToolkit.World.Core.History.Polity.Alive.get -> bool
 RoguelikeToolkit.World.Core.History.Polity.EndCause.get -> int
 RoguelikeToolkit.World.Core.History.Polity.EndCause.set -> void

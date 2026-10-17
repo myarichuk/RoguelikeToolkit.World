@@ -16,8 +16,8 @@ namespace RoguelikeToolkit.World.Core.History;
 /// </summary>
 public sealed class HistoryCatalog : IHistoricalContext
 {
-    /// <summary>Persistence schema version, written first by <see cref="Save"/> and checked by <see cref="Load"/>: 1 is the P2a shape (capitals only), 2 adds polity demography and road routes, 3 adds P2c treaty/faith state (grudges, windows, faiths, holy sites, villains, heirs), 4 adds the generic-kernel state (string table, declared scalars and per-polity scalar values, polity lifecycle, event ids, causes, importance and participants, grudge turn stamps).</summary>
-    public const int SchemaVersion = 8;
+    /// <summary>Persistence schema version, written first by <see cref="Save"/> and checked by <see cref="Load"/>: 1 is the P2a shape (capitals only), 2 adds polity demography and road routes, 3 adds P2c treaty/faith state (grudges, windows, faiths, holy sites, villains, heirs), 4 adds the generic-kernel state (string table, declared scalars and per-polity scalar values, polity lifecycle, event ids, causes, importance and participants, grudge turn stamps), 9 adds the plugin state bag (keyed versioned blobs and reset notes).</summary>
+    public const int SchemaVersion = 9;
 
     /// <summary>Planet radius in kilometres, matching <c>World.EarthRadiusKm</c> (kept literal: the root slice is above History).</summary>
     private const double EarthRadiusKm = 6371.0;
@@ -138,6 +138,9 @@ public sealed class HistoryCatalog : IHistoricalContext
 
     /// <summary>User renames and pinned tiles; written by the game, never by a stage.</summary>
     public HistoryOverrides Overrides { get; } = new();
+
+    /// <summary>Plugin-owned keyed blobs; saved with the catalog and untouched by <see cref="Respatialize"/>.</summary>
+    public PluginStateBag PluginState { get; } = new();
 
     /// <summary>True after a map edit re-resolved the projection without resimulating history.</summary>
     public bool Stale { get; set; }
@@ -697,6 +700,16 @@ public sealed class HistoryCatalog : IHistoricalContext
             writer.Write(kv.Key);
             writer.Write(kv.Value);
         }
+        writer.Write(PluginState.Count);
+        foreach (var (key, version, data) in PluginState.Entries())
+        {
+            writer.Write(key);
+            writer.Write(version);
+            writer.Write(data.Length);
+            writer.Write(data);
+        }
+        writer.Write(PluginState.Notes.Count);
+        foreach (string note in PluginState.Notes) writer.Write(note);
     }
 
     /// <summary>
@@ -987,6 +1000,23 @@ public sealed class HistoryCatalog : IHistoricalContext
             for (int i = 0; i < renames; i++) catalog.Overrides.Renames[reader.ReadInt32()] = reader.ReadString();
             int pins = CheckedCount(reader.ReadInt32());
             for (int i = 0; i < pins; i++) catalog.Overrides.PinnedTiles[reader.ReadInt32()] = reader.ReadInt32();
+            if (version >= 9)
+            {
+                int blobs = CheckedCount(reader.ReadInt32());
+                for (int i = 0; i < blobs; i++)
+                {
+                    string key = reader.ReadString();
+                    int blobVersion = reader.ReadInt32();
+                    int length = CheckedCount(reader.ReadInt32());
+                    if (length > 64 * 1024 * 1024 || (stream.CanSeek && length > stream.Length - stream.Position)) throw new InvalidDataException("Truncated history catalog.");
+                    byte[] data = reader.ReadBytes(length);
+                    if (data.Length != length) throw new InvalidDataException("Truncated history catalog.");
+                    try { catalog.PluginState.Set(key, blobVersion, data); }
+                    catch (ArgumentException ex) { throw new InvalidDataException("Corrupt history catalog (plugin state key).", ex); }
+                }
+                int notes = CheckedCount(reader.ReadInt32());
+                for (int i = 0; i < notes; i++) catalog.PluginState.AddNote(reader.ReadString());
+            }
             if (version >= 4) catalog._nextEventId = nextEventId;
             catalog.ValidateReferences();
             return catalog;

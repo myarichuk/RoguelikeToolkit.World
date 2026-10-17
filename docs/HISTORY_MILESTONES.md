@@ -705,4 +705,11 @@ Not covered here by design: `polity.split` into successors, the faith myth about
 - `PublicAPI.Unshipped.txt` regenerated for the history work since M2.1 (about 880 lines; RS0016/RS0017 are now clean for both target frameworks). The `HistoryDemography`, `HistoryNeighbors` and `HistoryTerritory` helpers were already public; `PeoplesLoader` is now public too, since an economy plugin needs the same shared peoples load and fallback count.
 - `Proposal.AddSite`, `ProposalKind.AddSite` and the driver case are removed (no producer since M3.1; no users, so no compatibility shim).
 - `ArchitectureTests.Core_ExposesInternals_OnlyToItsTests`: the only `InternalsVisibleTo` is the Core test project, so hosts build against the public surface by construction.
-- Still open in M3: the plugin state bag, reserved ordering bands, the reference plugin host and sample, then the economy plugin. New History types stay unstable until the economy plugin ships.
+- Still open in M3: reserved ordering bands, the reference plugin host and sample, then the economy plugin. New History types stay unstable until the economy plugin ships.
+
+### M3.11 plugin state bag (M3 step 2)
+
+- `HistoryCatalog.PluginState` (`PluginStateBag`): keyed, versioned byte blobs, saved after the overrides (schema 9, older files load with an empty bag). Keys sort ordinally, so saves stay deterministic. `Respatialize` never touches it.
+- A version mismatch is reported (`PluginStateLookup.VersionMismatch`), never guessed: the plugin migrates, or calls `Reset(key, version, data, reason)`, which appends a persisted note. Keys: non-blank, at most 128 characters; blobs are copied in and out.
+- Load rejects negative or oversize blob lengths and truncation as `InvalidDataException`.
+- Still open in M3: reserved ordering bands and ledger names, the reference plugin host and sample, then the economy plugin.
