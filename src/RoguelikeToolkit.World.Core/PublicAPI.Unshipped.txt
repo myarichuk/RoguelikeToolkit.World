@@ -37,6 +37,9 @@ const RoguelikeToolkit.World.Core.History.HistoryCatalog.ScarDangerDelta = 1 -> 
 const RoguelikeToolkit.World.Core.History.HistoryCatalog.ScarHabitabilityDelta = -0.25 -> float
 const RoguelikeToolkit.World.Core.History.HistoryCatalog.SchemaVersion = 9 -> int
 const RoguelikeToolkit.World.Core.History.HistoryDemography.ColonistShare = 0.15 -> double
+const RoguelikeToolkit.World.Core.History.HistoryNaming.NamespaceSeparator = '/' -> char
+const RoguelikeToolkit.World.Core.History.HistoryNaming.PluginOrderMax = 899 -> int
+const RoguelikeToolkit.World.Core.History.HistoryNaming.PluginOrderMin = 100 -> int
 const RoguelikeToolkit.World.Core.History.HistoryScar.Battlefield = "battlefield" -> string!
 const RoguelikeToolkit.World.Core.History.HistoryScar.Crater = "crater" -> string!
 const RoguelikeToolkit.World.Core.History.HistoryScar.Fissure = "fissure" -> string!
@@ -251,6 +254,7 @@ RoguelikeToolkit.World.Core.History.HistoryContext.MaxVillains.get -> int
 RoguelikeToolkit.World.Core.History.HistoryContext.MaxVillains.set -> void
 RoguelikeToolkit.World.Core.History.HistoryDriver
 RoguelikeToolkit.World.Core.History.HistoryDriver.AddOperator(RoguelikeToolkit.World.Core.History.IHistoryOperator! op) -> RoguelikeToolkit.World.Core.History.HistoryDriver!
+RoguelikeToolkit.World.Core.History.HistoryDriver.AddPluginOperator(RoguelikeToolkit.World.Core.History.IHistoryOperator! op) -> RoguelikeToolkit.World.Core.History.HistoryDriver!
 RoguelikeToolkit.World.Core.History.HistoryDriver.AddPostPass(RoguelikeToolkit.World.Core.History.IHistoryPostPass! pass) -> RoguelikeToolkit.World.Core.History.HistoryDriver!
 RoguelikeToolkit.World.Core.History.HistoryDriver.Clear() -> RoguelikeToolkit.World.Core.History.HistoryDriver!
 RoguelikeToolkit.World.Core.History.HistoryDriver.HistoryDriver() -> void
@@ -297,6 +301,7 @@ RoguelikeToolkit.World.Core.History.HistoryHolySite.Position.get -> RoguelikeToo
 RoguelikeToolkit.World.Core.History.HistoryHolySite.Position.init -> void
 RoguelikeToolkit.World.Core.History.HistoryHolySite.TileIndex.get -> int
 RoguelikeToolkit.World.Core.History.HistoryHolySite.TileIndex.init -> void
+RoguelikeToolkit.World.Core.History.HistoryNaming
 RoguelikeToolkit.World.Core.History.HistoryNeighbors
 RoguelikeToolkit.World.Core.History.HistoryScar
 RoguelikeToolkit.World.Core.History.HistoryScar.Active.get -> bool
@@ -619,6 +624,7 @@ RoguelikeToolkit.World.Core.History.ScalarDef.ScalarDef(int Id, string! Name, do
 RoguelikeToolkit.World.Core.History.ScalarRegistry
 RoguelikeToolkit.World.Core.History.ScalarRegistry.Count.get -> int
 RoguelikeToolkit.World.Core.History.ScalarRegistry.Declare(string! name, double min, double max, double defaultValue) -> RoguelikeToolkit.World.Core.History.ScalarDef!
+RoguelikeToolkit.World.Core.History.ScalarRegistry.DeclarePlugin(string! name, double min, double max, double defaultValue) -> RoguelikeToolkit.World.Core.History.ScalarDef!
 RoguelikeToolkit.World.Core.History.ScalarRegistry.ScalarRegistry() -> void
 RoguelikeToolkit.World.Core.History.ScalarRegistry.this[int id].get -> RoguelikeToolkit.World.Core.History.ScalarDef!
 RoguelikeToolkit.World.Core.History.ScalarRegistry.TryGet(string! name, out RoguelikeToolkit.World.Core.History.ScalarDef! def) -> bool
@@ -1080,6 +1086,9 @@ abstract RoguelikeToolkit.World.Core.History.HistoryPluginBase.Reads.get -> Syst
 static RoguelikeToolkit.World.Core.History.HistoryDemography.CarryingCapacities(RoguelikeToolkit.World.Core.Storage.WorldDataStore! store, int polityCount, int[]! ownership) -> double[]!
 static RoguelikeToolkit.World.Core.History.HistoryDemography.SettlementCapacities(RoguelikeToolkit.World.Core.Storage.WorldDataStore! store, int[]! ownership, System.Collections.Generic.IReadOnlyList<RoguelikeToolkit.World.Core.History.TurnView.SettlementState>! settlements, double[]! polityCapacities) -> double[]!
 static RoguelikeToolkit.World.Core.History.HistoryDemography.SuccessionsBefore(int lifespanYears, int turnYears, int turn) -> int
+static RoguelikeToolkit.World.Core.History.HistoryNaming.IsPluginName(string? name) -> bool
+static RoguelikeToolkit.World.Core.History.HistoryNaming.RequirePluginName(string? name, string! paramName) -> void
+static RoguelikeToolkit.World.Core.History.HistoryNaming.RequirePluginOrder(int order, string! paramName) -> void
 static RoguelikeToolkit.World.Core.History.HistoryNeighbors.Bordering(RoguelikeToolkit.World.Core.Storage.WorldDataStore! store, int[]! ownership, int polityId) -> System.Collections.Generic.List<int>!
 static RoguelikeToolkit.World.Core.History.PeoplesLoader.LoadStore(RoguelikeToolkit.World.Core.History.HistoryCatalog! history) -> RoguelikeToolkit.World.Core.Peoples.PeoplesStore?
 static RoguelikeToolkit.World.Core.History.ShockResolver.Resolve(RoguelikeToolkit.World.Core.History.TurnView! view, RoguelikeToolkit.World.Core.History.ProposalSink! sink, RoguelikeToolkit.World.Core.History.Shock! shock) -> int

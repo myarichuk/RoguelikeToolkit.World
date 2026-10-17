@@ -42,6 +42,13 @@ public sealed class ScalarRegistry
         return def;
     }
 
+    /// <summary>Declares a plugin scalar; the name must be <c>namespace/name</c> so it cannot shadow a built-in.</summary>
+    public ScalarDef DeclarePlugin(string name, double min, double max, double defaultValue)
+    {
+        HistoryNaming.RequirePluginName(name, nameof(name));
+        return Declare(name, min, max, defaultValue);
+    }
+
     /// <summary>Looks up a scalar by name.</summary>
     public bool TryGet(string name, out ScalarDef def)
     {

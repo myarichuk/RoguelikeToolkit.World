@@ -34,6 +34,18 @@ public sealed class HistoryDriver : HistoryPluginBase
         return this;
     }
 
+    /// <summary>
+    /// Registers a plugin operator: its name must be <c>namespace/name</c> and its order inside the
+    /// <see cref="HistoryNaming"/> plugin band, so it cannot collide with a built-in.
+    /// </summary>
+    public HistoryDriver AddPluginOperator(IHistoryOperator op)
+    {
+        ArgumentNullException.ThrowIfNull(op);
+        HistoryNaming.RequirePluginName(op.Name, nameof(op));
+        HistoryNaming.RequirePluginOrder(op.Order, nameof(op));
+        return AddOperator(op);
+    }
+
     /// <summary>Registers a post-pass; names must be unique.</summary>
     public HistoryDriver AddPostPass(IHistoryPostPass pass)
     {

@@ -713,3 +713,10 @@ Not covered here by design: `polity.split` into successors, the faith myth about
 - A version mismatch is reported (`PluginStateLookup.VersionMismatch`), never guessed: the plugin migrates, or calls `Reset(key, version, data, reason)`, which appends a persisted note. Keys: non-blank, at most 128 characters; blobs are copied in and out.
 - Load rejects negative or oversize blob lengths and truncation as `InvalidDataException`.
 - Still open in M3: reserved ordering bands and ledger names, the reference plugin host and sample, then the economy plugin.
+
+## M3.12 reserved ordering band and plugin names (M3 step 3)
+
+- `HistoryNaming` (public): plugin operators run at order `100..899` (`PluginOrderMin`/`PluginOrderMax`); built-ins stay below 100 (asserted by a test). Plugin operator, scalar and state-bag names are `namespace/name`; built-ins use bare names, so the two cannot collide.
+- `HistoryDriver.AddPluginOperator` and `ScalarRegistry.DeclarePlugin` enforce the rules. Plain `AddOperator`/`Declare` are unchanged (tests and hosts that supply a whole ruleset keep working). Order still only decides when `Propose` runs, never outcomes, so the band is a collision guard, not a determinism rule.
+- Plugin state keys follow the same `namespace/name` convention (documented, not enforced, since the bag's key rule is shared).
+- Still open in M3: the reference plugin host and sample, then the economy plugin.
