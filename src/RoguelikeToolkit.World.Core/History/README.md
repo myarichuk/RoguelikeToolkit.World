@@ -36,10 +36,33 @@ implementing `IHistoricalContext` (one waiver: `History->Integration:HistoryCata
   Per turn it snapshots the catalog into a `TurnView`, runs every `IHistoryOperator`, and commits the
   proposals in canonical order (entity, kind, operator, sequence), so registration order never changes
   bytes. After the last turn it runs the `IHistoryPostPass`es.
+- **PluginStateBag** / **HistoryNaming**: keyed versioned blobs saved with the catalog, and the `namespace/name` and order-band rules for plugins.
 - **StandardHistory** registers the built-in ruleset: Population (32), TradeRoad (30), HolySite (44),
   Khan (46), Treaty (48), War (50), Conquest (60), Rebellion (70), Villain (76), Exchange (80), and the
   post-passes Faith and CityHistoryProject. `WorldBuilder.WithHistoryDriver` adds to it; `HistoryDriver.Clear`
   starts from an empty ruleset.
+
+## Writing a plugin
+
+A plugin is a set of operators, optional scalars and optional post-passes, all outside Core and built on the
+public API. Two samples: `samples/HistoryPlugin` (one operator, one scalar) and `samples/EconomyPlugin`
+(five scalars, two operators, plugin events, a cumulative state-bag ledger).
+
+1. **Name everything `namespace/name`** (`HistoryNaming`): operators, scalars, event kinds, state keys.
+   Operators run at orders 100..899 (built-ins sit below 100). Order only decides when `Propose` runs, never outcomes.
+2. **Declare scalars** with `ScalarRegistry.DeclarePlugin` through `WorldBuilder.WithHistoryScalars`, and add
+   operators with `HistoryDriver.AddPluginOperator` through `WorldBuilder.WithHistoryDriver`. Declaration order fixes
+   scalar ids, and the catalog saves the definitions.
+3. **Read the `TurnView`, emit proposals.** The view is the end of the previous turn and read-only. Emit through the
+   `ProposalSink`: `Adjust` (scalar deltas, summed then clamped once), `Event`, `PluginEvent` (your own kind, in your
+   namespace), `SetState` (a blob in the plugin state bag, in your namespace), `Rng(entity, purpose)` for draws and
+   `TrySpendDecision`/`TrySpendEmergence` for budgets. Nothing you propose is visible until the next turn.
+4. **Persist private data** in the state bag (`ProposalSink.SetState`, `TurnView.ReadPluginState`, or
+   `HistoryCatalog.PluginState` from a post-pass). Blobs are versioned; a mismatch reads as `VersionMismatch` and a
+   plugin may `Reset` with a recorded note. Blobs survive `Respatialize` and save/load.
+5. **Be inert when your scalars are missing.** Resolve scalars with `view.Scalars.TryGet` and return early, so a
+   host without the plugin generates bytes identical to the base preset (both samples have a test for this).
+6. **Hosts** register plugins before generating: `MapEditor.Engine.HistoryPluginHost.Register(operators, scalars)`.
 
 ## Rules
 

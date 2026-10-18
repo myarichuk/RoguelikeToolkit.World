@@ -750,3 +750,8 @@ Not covered here by design: `polity.split` into successors, the faith myth about
 - **Tests:** `PluginEventAndStateTests` (round trip, namespace rule, built-ins refused); the economy tests cover the plugin use.
 - Land-use capacity staying optional needed no API change (`BiomeSurplus` is already public).
 - M3 is done. New History types may now leave unstable status. Next is M4, which starts only if M3 showed what the C# API cannot express cheaply; it showed nothing that needs data or scripting so far.
+
+## M3.16 stabilization
+
+- The History types carry no unstable marker in code (the "unstable" note was a planning rule), so nothing was un-marked. `PublicAPI.Shipped.txt` stays as is until a release is cut; the backlog lives in `Unshipped`.
+- `History/README.md` gained a "Writing a plugin" section built from the two samples, and lists the plugin state bag and naming rules.
