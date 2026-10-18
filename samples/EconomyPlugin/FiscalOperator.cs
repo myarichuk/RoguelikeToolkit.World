@@ -18,10 +18,14 @@ public sealed class FiscalOperator : IHistoryOperator
     public const double TaxStep = 0.05;
     /// <summary>Unrest above which a state cuts tax to calm the people.</summary>
     public const double CalmUnrest = 0.5;
+    /// <summary>A state stops cutting tax below this rate: unrest from scarcity or graft is not tax-driven, and a free state is no calmer.</summary>
+    public const double MinCutTax = 0.1;
     /// <summary>Unrest above which it leaks into pressure.</summary>
     public const double UnrestLeak = 0.5;
     /// <summary>Pressure added per unit of unrest above <see cref="UnrestLeak"/>.</summary>
     public const double LeakRate = 0.2;
+    /// <summary>Unrest per turn per unit of scarcity (pressure over the crowding start).</summary>
+    public const double ScarcityUnrest = 0.3;
     /// <summary>Graft level that prompts an enforcement drive.</summary>
     public const double GraftLimit = 0.3;
     /// <summary>Treasury needed for an enforcement drive.</summary>
@@ -61,7 +65,7 @@ public sealed class FiscalOperator : IHistoryOperator
 
             if (atWar && wealth < WarChestFloor && sink.TrySpendDecision())
                 sink.Adjust(id, h.Tax, TaxStep);
-            else if (unrest > CalmUnrest && sink.TrySpendDecision())
+            else if (unrest > CalmUnrest && tax > MinCutTax && sink.TrySpendDecision())
                 sink.Adjust(id, h.Tax, -TaxStep);
             else
                 sink.Adjust(id, h.Tax, Math.Clamp(EconomyScalars.BaseTax - tax, -0.01, 0.01));
@@ -72,7 +76,7 @@ public sealed class FiscalOperator : IHistoryOperator
                 sink.Adjust(id, h.Corruption, -0.1);
             }
 
-            double unrestDelta = (tax - EconomyScalars.BaseTax) * 0.4 + scarcity * 0.5 + corruption * 0.05
+            double unrestDelta = (tax - EconomyScalars.BaseTax) * 0.4 + scarcity * ScarcityUnrest + corruption * 0.05
                 + (atWar ? 0.05 : 0) - 0.03;
             sink.Adjust(id, h.Unrest, unrestDelta);
             double next = Math.Clamp(unrest + unrestDelta, 0, 1);

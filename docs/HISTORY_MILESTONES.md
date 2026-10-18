@@ -755,3 +755,10 @@ Not covered here by design: `polity.split` into successors, the faith myth about
 
 - The History types carry no unstable marker in code (the "unstable" note was a planning rule), so nothing was un-marked. `PublicAPI.Shipped.txt` stays as is until a release is cut; the backlog lives in `Unshipped`.
 - `History/README.md` gained a "Writing a plugin" section built from the two samples, and lists the plugin state bag and naming rules.
+
+## M3.17 economy tuning
+
+Probed six seeds (size 4, 29 turns) and compared with the base preset.
+- **Found:** a state with unrest driven by scarcity cut its tax to 0 and stayed in unrest 1 (cutting tax does not calm scarcity). Fix: tax is only cut above `MinCutTax` (0.1), and scarcity feeds unrest at 0.3 per unit instead of 0.5. After: tax medians stay at the 0.2 baseline, the floor is about 0.06, unrest medians sit between 0 and 0.56.
+- **Wealth** spreads 27..1000 across polities (the cap is reached in one seed only), corruption 0.10..0.15, estates 0.16..0.47.
+- **Rebellion:** zero rebellions in these seeds with or without the plugin. The built-in gate (far province, tight culture, 8+ tiles) is what blocks it, so the unrest leak into `pressure` shows up as different polity counts (9 vs 11 alive on seed 3), not as extra rebellions. Left as is; loosening Rebellion is a base-preset change and out of the plugin's scope.
