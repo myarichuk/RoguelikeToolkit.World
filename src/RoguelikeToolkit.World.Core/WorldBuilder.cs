@@ -31,6 +31,7 @@ public sealed class WorldBuilder
     private bool _history = true;
     private readonly HistoryContext _historyConfig = new();
     private Action<HistoryDriver>? _driverConfig;
+    private Action<ScalarRegistry>? _scalarConfig;
     private bool _climateRefresh = true;
     private bool _islandChains = true;
     private bool _balancedPlates = true;
@@ -210,6 +211,19 @@ public sealed class WorldBuilder
         return this;
     }
 
+    /// <summary>
+    /// Declares extra polity scalars before any polity forms, so plugin operators added with
+    /// <see cref="WithHistoryDriver"/> can read and adjust them. Use <see cref="ScalarRegistry.DeclarePlugin"/>;
+    /// the declaration order fixes the scalar ids, so call it the same way for the same seed.
+    /// </summary>
+    public WorldBuilder WithHistoryScalars(Action<ScalarRegistry> configure)
+    {
+        ArgumentNullException.ThrowIfNull(configure);
+        _history = true;
+        _scalarConfig += configure;
+        return this;
+    }
+
     /// <summary>Skips the history stages (orders 26..91); the world still carries an empty <c>History</c> catalog.</summary>
     public WorldBuilder WithoutHistory() { _history = false; return this; }
 
@@ -249,6 +263,7 @@ public sealed class WorldBuilder
         if (_history)
         {
             history = new HistoryCatalog(_seed);
+            _scalarConfig?.Invoke(history.Scalars);
             map.SetAttachment(history);
             map.SetAttachment(_historyConfig);
             pipeline.AddStage(new CultureSeedStage());

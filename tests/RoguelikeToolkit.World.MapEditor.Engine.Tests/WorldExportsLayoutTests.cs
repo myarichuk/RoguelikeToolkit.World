@@ -159,6 +159,7 @@ public class WorldExportsLayoutTests
         {
             ["water"] = SettlementScoring.FreshWater, ["fertile"] = SettlementScoring.Fertile, ["harsh"] = SettlementScoring.Harsh,
             ["winter-ice"] = SettlementScoring.WinterIce, ["high"] = SettlementScoring.HighGround,
+            ["river"] = SettlementScoring.River, ["fishing"] = SettlementScoring.Fishing,
         };
         for (int i = 0; i < reasons.Length; i++)
         {
