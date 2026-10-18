@@ -58,4 +58,6 @@ public enum ProposalKind
     SplitPolity = 25,
     /// <summary>A polity ends and a neighbour takes over its land and settlements. Applied in the structural pre-pass.</summary>
     AbsorbPolity = 26,
+    /// <summary>Store a blob in the plugin state bag.</summary>
+    SetPluginState = 27,
 }

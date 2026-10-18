@@ -23,6 +23,8 @@
   <ItemGroup>
     <!-- The [JSExport] methods are ordinary statics; the editor's engine is exercised here on the host runtime. -->
     <ProjectReference Include="..\..\src\RoguelikeToolkit.World.MapEditor.Engine\RoguelikeToolkit.World.MapEditor.Engine.csproj" />
+    <ProjectReference Include="..\..\samples\HistoryPlugin\HistoryPlugin.csproj" />
+    <ProjectReference Include="..\..\samples\EconomyPlugin\EconomyPlugin.csproj" />
   </ItemGroup>
 
 </Project>

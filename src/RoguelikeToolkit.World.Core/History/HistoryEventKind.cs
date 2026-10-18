@@ -56,4 +56,6 @@ public enum HistoryEventKind : byte
     PolityCollapsed = 22,
     /// <summary>A polity was absorbed by a neighbour. Tags <c>absorbed</c> and <c>into:{id}</c>; the event's polity is the absorbed one and the tile is its old capital.</summary>
     PolityAbsorbed = 23,
+    /// <summary>An event defined by a plugin. <see cref="HistoryEvent.PluginKind"/> names it (<c>namespace/name</c>); the tags carry the detail.</summary>
+    Plugin = 24,
 }

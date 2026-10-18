@@ -17,5 +17,7 @@
   </Folder>
   <Folder Name="/samples/">
     <Project Path="samples/DesertPlugin/DesertPlugin.csproj" />
+    <Project Path="samples/HistoryPlugin/HistoryPlugin.csproj" />
+    <Project Path="samples/EconomyPlugin/EconomyPlugin.csproj" />
   </Folder>
 </Solution>

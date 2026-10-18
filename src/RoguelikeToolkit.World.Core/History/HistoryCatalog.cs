@@ -16,8 +16,8 @@ namespace RoguelikeToolkit.World.Core.History;
 /// </summary>
 public sealed class HistoryCatalog : IHistoricalContext
 {
-    /// <summary>Persistence schema version, written first by <see cref="Save"/> and checked by <see cref="Load"/>: 1 is the P2a shape (capitals only), 2 adds polity demography and road routes, 3 adds P2c treaty/faith state (grudges, windows, faiths, holy sites, villains, heirs), 4 adds the generic-kernel state (string table, declared scalars and per-polity scalar values, polity lifecycle, event ids, causes, importance and participants, grudge turn stamps), 9 adds the plugin state bag (keyed versioned blobs and reset notes).</summary>
-    public const int SchemaVersion = 9;
+    /// <summary>Persistence schema version, written first by <see cref="Save"/> and checked by <see cref="Load"/>: 1 is the P2a shape (capitals only), 2 adds polity demography and road routes, 3 adds P2c treaty/faith state (grudges, windows, faiths, holy sites, villains, heirs), 4 adds the generic-kernel state (string table, declared scalars and per-polity scalar values, polity lifecycle, event ids, causes, importance and participants, grudge turn stamps), 9 adds the plugin state bag (keyed versioned blobs and reset notes), 10 adds plugin event kinds (a name after the kind byte of a <see cref="HistoryEventKind.Plugin"/> event).</summary>
+    public const int SchemaVersion = 10;
 
     /// <summary>Planet radius in kilometres, matching <c>World.EarthRadiusKm</c> (kept literal: the root slice is above History).</summary>
     private const double EarthRadiusKm = 6371.0;
@@ -281,13 +281,13 @@ public sealed class HistoryCatalog : IHistoricalContext
     /// or -1) and participants. Returns the new event's id, or -1 when the per-turn budget dropped it.
     /// </summary>
     internal int AppendLinked(HistoryEventKind kind, int turn, int polityId, int tileIndex,
-        IReadOnlyList<string> tags, int cause, IReadOnlyList<EventParticipant>? participants)
+        IReadOnlyList<string> tags, int cause, IReadOnlyList<EventParticipant>? participants, string pluginKind = "")
     {
         if (turn < 0) throw new ArgumentOutOfRangeException(nameof(turn), "Event turn cannot be negative.");
         if (turn != _appendTurn) { _appendTurn = turn; _appendCount = 0; }
         if (_appendCount >= MaxEventsPerTurn) { DroppedEvents++; return -1; }
         _appendCount++;
-        var entry = NewEvent(kind, turn, polityId, tileIndex, tags, cause);
+        var entry = NewEvent(kind, turn, polityId, tileIndex, tags, cause, pluginKind);
         if (participants != null) entry.Participants.AddRange(participants);
         Register(entry);
         int id = entry.Id;
@@ -295,12 +295,12 @@ public sealed class HistoryCatalog : IHistoricalContext
         return id;
     }
 
-    private static HistoryEvent NewEvent(HistoryEventKind kind, int turn, int polityId, int tileIndex, IReadOnlyList<string> tags, int cause = -1)
+    private static HistoryEvent NewEvent(HistoryEventKind kind, int turn, int polityId, int tileIndex, IReadOnlyList<string> tags, int cause = -1, string pluginKind = "")
     {
         var entry = new HistoryEvent
         {
             Kind = kind, Turn = turn, PolityId = polityId, TileIndex = tileIndex,
-            Importance = EventImportanceMap.Of(kind), Cause = cause,
+            Importance = EventImportanceMap.Of(kind), Cause = cause, PluginKind = pluginKind,
         };
         if (tags != null) entry.Tags.AddRange(tags);
         return entry;
@@ -562,6 +562,7 @@ public sealed class HistoryCatalog : IHistoricalContext
         foreach (var entry in Events)
         {
             writer.Write((byte)entry.Kind);
+            if (entry.Kind == HistoryEventKind.Plugin) writer.Write(entry.PluginKind);
             writer.Write(entry.Turn);
             writer.Write(entry.PolityId);
             writer.Write(entry.TileIndex);
@@ -820,6 +821,7 @@ public sealed class HistoryCatalog : IHistoricalContext
             for (int i = 0; i < events; i++)
             {
                 var kind = (HistoryEventKind)reader.ReadByte();
+                string pluginKind = kind == HistoryEventKind.Plugin ? reader.ReadString() : string.Empty;
                 int eventTurn = reader.ReadInt32(), eventPolity = reader.ReadInt32(), eventTile = reader.ReadInt32();
                 int tags = CheckedCount(reader.ReadInt32());
                 var tagList = new List<string>(Math.Min(tags, 64));
@@ -838,7 +840,7 @@ public sealed class HistoryCatalog : IHistoricalContext
                 }
                 var entry = new HistoryEvent
                 {
-                    Kind = kind, Turn = eventTurn, PolityId = eventPolity, TileIndex = eventTile,
+                    Kind = kind, Turn = eventTurn, PolityId = eventPolity, TileIndex = eventTile, PluginKind = pluginKind,
                     Cause = cause, Importance = importance,
                 };
                 entry.Tags.AddRange(tagList);

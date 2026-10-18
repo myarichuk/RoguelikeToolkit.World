@@ -51,4 +51,6 @@ public static class EventKinds
     public static readonly EventKind PolityCollapsed = HistoryEventKind.PolityCollapsed;
     /// <summary>A polity was absorbed by a neighbour.</summary>
     public static readonly EventKind PolityAbsorbed = HistoryEventKind.PolityAbsorbed;
+    /// <summary>A plugin-defined event; the name is on <see cref="HistoryEvent.PluginKind"/>.</summary>
+    public static readonly EventKind Plugin = HistoryEventKind.Plugin;
 }

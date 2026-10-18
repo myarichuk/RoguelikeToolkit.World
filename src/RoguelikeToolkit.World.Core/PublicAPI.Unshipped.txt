@@ -35,7 +35,7 @@ const RoguelikeToolkit.World.Core.History.HazardOperator.Plague = "plague" -> st
 const RoguelikeToolkit.World.Core.History.HistoryCatalog.HolyDangerDelta = -1 -> float
 const RoguelikeToolkit.World.Core.History.HistoryCatalog.ScarDangerDelta = 1 -> float
 const RoguelikeToolkit.World.Core.History.HistoryCatalog.ScarHabitabilityDelta = -0.25 -> float
-const RoguelikeToolkit.World.Core.History.HistoryCatalog.SchemaVersion = 9 -> int
+const RoguelikeToolkit.World.Core.History.HistoryCatalog.SchemaVersion = 10 -> int
 const RoguelikeToolkit.World.Core.History.HistoryDemography.ColonistShare = 0.15 -> double
 const RoguelikeToolkit.World.Core.History.HistoryNaming.NamespaceSeparator = '/' -> char
 const RoguelikeToolkit.World.Core.History.HistoryNaming.PluginOrderMax = 899 -> int
@@ -140,6 +140,7 @@ override RoguelikeToolkit.World.Core.History.Proposal.ReleasePopulation.Kind.get
 override RoguelikeToolkit.World.Core.History.Proposal.RepayGrudge.Kind.get -> RoguelikeToolkit.World.Core.History.ProposalKind
 override RoguelikeToolkit.World.Core.History.Proposal.SetHeir.Kind.get -> RoguelikeToolkit.World.Core.History.ProposalKind
 override RoguelikeToolkit.World.Core.History.Proposal.SetOverlay.Kind.get -> RoguelikeToolkit.World.Core.History.ProposalKind
+override RoguelikeToolkit.World.Core.History.Proposal.SetPluginState.Kind.get -> RoguelikeToolkit.World.Core.History.ProposalKind
 override RoguelikeToolkit.World.Core.History.Proposal.SetPopulation.Kind.get -> RoguelikeToolkit.World.Core.History.ProposalKind
 override RoguelikeToolkit.World.Core.History.Proposal.SeverRoute.Kind.get -> RoguelikeToolkit.World.Core.History.ProposalKind
 override RoguelikeToolkit.World.Core.History.Proposal.SplitPolity.Kind.get -> RoguelikeToolkit.World.Core.History.ProposalKind
@@ -266,10 +267,13 @@ RoguelikeToolkit.World.Core.History.HistoryEvent.Id.get -> int
 RoguelikeToolkit.World.Core.History.HistoryEvent.Importance.get -> RoguelikeToolkit.World.Core.History.EventImportance
 RoguelikeToolkit.World.Core.History.HistoryEvent.Importance.init -> void
 RoguelikeToolkit.World.Core.History.HistoryEvent.Participants.get -> System.Collections.Generic.List<RoguelikeToolkit.World.Core.History.EventParticipant>!
+RoguelikeToolkit.World.Core.History.HistoryEvent.PluginKind.get -> string!
+RoguelikeToolkit.World.Core.History.HistoryEvent.PluginKind.init -> void
 RoguelikeToolkit.World.Core.History.HistoryEventKind.Desecration = 12 -> RoguelikeToolkit.World.Core.History.HistoryEventKind
 RoguelikeToolkit.World.Core.History.HistoryEventKind.Grudge = 10 -> RoguelikeToolkit.World.Core.History.HistoryEventKind
 RoguelikeToolkit.World.Core.History.HistoryEventKind.HolyFound = 11 -> RoguelikeToolkit.World.Core.History.HistoryEventKind
 RoguelikeToolkit.World.Core.History.HistoryEventKind.Myth = 16 -> RoguelikeToolkit.World.Core.History.HistoryEventKind
+RoguelikeToolkit.World.Core.History.HistoryEventKind.Plugin = 24 -> RoguelikeToolkit.World.Core.History.HistoryEventKind
 RoguelikeToolkit.World.Core.History.HistoryEventKind.PolityAbsorbed = 23 -> RoguelikeToolkit.World.Core.History.HistoryEventKind
 RoguelikeToolkit.World.Core.History.HistoryEventKind.PolityCollapsed = 22 -> RoguelikeToolkit.World.Core.History.HistoryEventKind
 RoguelikeToolkit.World.Core.History.HistoryEventKind.SettlementCaptured = 20 -> RoguelikeToolkit.World.Core.History.HistoryEventKind
@@ -482,6 +486,8 @@ RoguelikeToolkit.World.Core.History.Proposal.AppendEvent.EventKind.get -> Roguel
 RoguelikeToolkit.World.Core.History.Proposal.AppendEvent.EventKind.init -> void
 RoguelikeToolkit.World.Core.History.Proposal.AppendEvent.Participants.get -> System.Collections.Generic.IReadOnlyList<RoguelikeToolkit.World.Core.History.EventParticipant>?
 RoguelikeToolkit.World.Core.History.Proposal.AppendEvent.Participants.init -> void
+RoguelikeToolkit.World.Core.History.Proposal.AppendEvent.PluginKind.get -> string!
+RoguelikeToolkit.World.Core.History.Proposal.AppendEvent.PluginKind.init -> void
 RoguelikeToolkit.World.Core.History.Proposal.AppendEvent.Tags.get -> System.Collections.Generic.IReadOnlyList<string!>!
 RoguelikeToolkit.World.Core.History.Proposal.AppendEvent.Tags.init -> void
 RoguelikeToolkit.World.Core.History.Proposal.AppendEvent.Tile.get -> int
@@ -549,6 +555,14 @@ RoguelikeToolkit.World.Core.History.Proposal.SetOverlay
 RoguelikeToolkit.World.Core.History.Proposal.SetOverlay.Culture.get -> string!
 RoguelikeToolkit.World.Core.History.Proposal.SetOverlay.Culture.init -> void
 RoguelikeToolkit.World.Core.History.Proposal.SetOverlay.SetOverlay() -> void
+RoguelikeToolkit.World.Core.History.Proposal.SetPluginState
+RoguelikeToolkit.World.Core.History.Proposal.SetPluginState.Data.get -> byte[]!
+RoguelikeToolkit.World.Core.History.Proposal.SetPluginState.Data.init -> void
+RoguelikeToolkit.World.Core.History.Proposal.SetPluginState.Key.get -> string!
+RoguelikeToolkit.World.Core.History.Proposal.SetPluginState.Key.init -> void
+RoguelikeToolkit.World.Core.History.Proposal.SetPluginState.SetPluginState() -> void
+RoguelikeToolkit.World.Core.History.Proposal.SetPluginState.Version.get -> int
+RoguelikeToolkit.World.Core.History.Proposal.SetPluginState.Version.init -> void
 RoguelikeToolkit.World.Core.History.Proposal.SetPopulation
 RoguelikeToolkit.World.Core.History.Proposal.SetPopulation.Population.get -> double
 RoguelikeToolkit.World.Core.History.Proposal.SetPopulation.Population.init -> void
@@ -591,6 +605,7 @@ RoguelikeToolkit.World.Core.History.ProposalKind.ReleasePopulation = 19 -> Rogue
 RoguelikeToolkit.World.Core.History.ProposalKind.RepayGrudge = 5 -> RoguelikeToolkit.World.Core.History.ProposalKind
 RoguelikeToolkit.World.Core.History.ProposalKind.SetHeir = 12 -> RoguelikeToolkit.World.Core.History.ProposalKind
 RoguelikeToolkit.World.Core.History.ProposalKind.SetOverlay = 11 -> RoguelikeToolkit.World.Core.History.ProposalKind
+RoguelikeToolkit.World.Core.History.ProposalKind.SetPluginState = 27 -> RoguelikeToolkit.World.Core.History.ProposalKind
 RoguelikeToolkit.World.Core.History.ProposalKind.SetPopulation = 9 -> RoguelikeToolkit.World.Core.History.ProposalKind
 RoguelikeToolkit.World.Core.History.ProposalKind.SeverRoute = 2 -> RoguelikeToolkit.World.Core.History.ProposalKind
 RoguelikeToolkit.World.Core.History.ProposalKind.SplitPolity = 25 -> RoguelikeToolkit.World.Core.History.ProposalKind
@@ -599,7 +614,9 @@ RoguelikeToolkit.World.Core.History.ProposalSink.Adjust(int polityId, int scalar
 RoguelikeToolkit.World.Core.History.ProposalSink.Emit(RoguelikeToolkit.World.Core.History.Proposal! proposal) -> void
 RoguelikeToolkit.World.Core.History.ProposalSink.Event(RoguelikeToolkit.World.Core.History.HistoryEventKind kind, int polityId, int tile, System.Collections.Generic.IReadOnlyList<string!>! tags, int cause = -1, System.Collections.Generic.IReadOnlyList<RoguelikeToolkit.World.Core.History.EventParticipant>? participants = null) -> void
 RoguelikeToolkit.World.Core.History.ProposalSink.OperatorName.get -> string!
+RoguelikeToolkit.World.Core.History.ProposalSink.PluginEvent(string! pluginKind, int polityId, int tile, System.Collections.Generic.IReadOnlyList<string!>! tags, int cause = -1, System.Collections.Generic.IReadOnlyList<RoguelikeToolkit.World.Core.History.EventParticipant>? participants = null) -> void
 RoguelikeToolkit.World.Core.History.ProposalSink.Rng(int entityId, string! purpose) -> RoguelikeToolkit.World.Core.Primitives.Rng
+RoguelikeToolkit.World.Core.History.ProposalSink.SetState(string! key, int version, System.ReadOnlySpan<byte> data) -> void
 RoguelikeToolkit.World.Core.History.ProposalSink.TrySpendDecision() -> bool
 RoguelikeToolkit.World.Core.History.ProposalSink.TrySpendEmergence() -> bool
 RoguelikeToolkit.World.Core.History.ProposalSink.Turn.get -> int
@@ -778,6 +795,7 @@ RoguelikeToolkit.World.Core.History.TurnView.PolityState.RulerGeneration.get -> 
 RoguelikeToolkit.World.Core.History.TurnView.PolityState.RulerGeneration.init -> void
 RoguelikeToolkit.World.Core.History.TurnView.PolityState.Scalars.get -> System.Collections.Generic.IReadOnlyList<double>!
 RoguelikeToolkit.World.Core.History.TurnView.PolityState.Scalars.init -> void
+RoguelikeToolkit.World.Core.History.TurnView.ReadPluginState(string! key, int expectedVersion, out byte[]! data) -> RoguelikeToolkit.World.Core.History.PluginStateLookup
 RoguelikeToolkit.World.Core.History.TurnView.Roads.get -> System.Collections.Generic.IReadOnlyList<RoguelikeToolkit.World.Core.History.TurnView.RoadState>!
 RoguelikeToolkit.World.Core.History.TurnView.RoadState
 RoguelikeToolkit.World.Core.History.TurnView.RoadState.PolityId.get -> int
@@ -894,6 +912,7 @@ RoguelikeToolkit.World.Core.Tectonics.TectonicPlateGenerationStage.SeedSpacing.g
 RoguelikeToolkit.World.Core.Tectonics.TectonicPlateGenerationStage.SeedSpacing.set -> void
 RoguelikeToolkit.World.Core.WorldBuilder.WithBalancedPlates(bool enabled = true) -> RoguelikeToolkit.World.Core.WorldBuilder!
 RoguelikeToolkit.World.Core.WorldBuilder.WithHistoryDriver(System.Action<RoguelikeToolkit.World.Core.History.HistoryDriver!>! configure) -> RoguelikeToolkit.World.Core.WorldBuilder!
+RoguelikeToolkit.World.Core.WorldBuilder.WithHistoryScalars(System.Action<RoguelikeToolkit.World.Core.History.ScalarRegistry!>! configure) -> RoguelikeToolkit.World.Core.WorldBuilder!
 RoguelikeToolkit.World.Core.WorldBuilder.WithLegacyPlates() -> RoguelikeToolkit.World.Core.WorldBuilder!
 RoguelikeToolkit.World.Core.WorldBuilder.WithHistory(System.Action<RoguelikeToolkit.World.Core.History.HistoryContext!>? configure = null) -> RoguelikeToolkit.World.Core.WorldBuilder!
 RoguelikeToolkit.World.Core.WorldBuilder.WithoutHistory() -> RoguelikeToolkit.World.Core.WorldBuilder!
@@ -977,6 +996,7 @@ static readonly RoguelikeToolkit.World.Core.History.EventKinds.Founding -> Rogue
 static readonly RoguelikeToolkit.World.Core.History.EventKinds.Grudge -> RoguelikeToolkit.World.Core.History.EventKind
 static readonly RoguelikeToolkit.World.Core.History.EventKinds.HolyFound -> RoguelikeToolkit.World.Core.History.EventKind
 static readonly RoguelikeToolkit.World.Core.History.EventKinds.Myth -> RoguelikeToolkit.World.Core.History.EventKind
+static readonly RoguelikeToolkit.World.Core.History.EventKinds.Plugin -> RoguelikeToolkit.World.Core.History.EventKind
 static readonly RoguelikeToolkit.World.Core.History.EventKinds.PolityAbsorbed -> RoguelikeToolkit.World.Core.History.EventKind
 static readonly RoguelikeToolkit.World.Core.History.EventKinds.PolityCollapsed -> RoguelikeToolkit.World.Core.History.EventKind
 static readonly RoguelikeToolkit.World.Core.History.EventKinds.Rebellion -> RoguelikeToolkit.World.Core.History.EventKind
@@ -1087,6 +1107,7 @@ static RoguelikeToolkit.World.Core.History.HistoryDemography.CarryingCapacities(
 static RoguelikeToolkit.World.Core.History.HistoryDemography.SettlementCapacities(RoguelikeToolkit.World.Core.Storage.WorldDataStore! store, int[]! ownership, System.Collections.Generic.IReadOnlyList<RoguelikeToolkit.World.Core.History.TurnView.SettlementState>! settlements, double[]! polityCapacities) -> double[]!
 static RoguelikeToolkit.World.Core.History.HistoryDemography.SuccessionsBefore(int lifespanYears, int turnYears, int turn) -> int
 static RoguelikeToolkit.World.Core.History.HistoryNaming.IsPluginName(string? name) -> bool
+static RoguelikeToolkit.World.Core.History.HistoryNaming.NamespaceOf(string! name) -> string!
 static RoguelikeToolkit.World.Core.History.HistoryNaming.RequirePluginName(string? name, string! paramName) -> void
 static RoguelikeToolkit.World.Core.History.HistoryNaming.RequirePluginOrder(int order, string! paramName) -> void
 static RoguelikeToolkit.World.Core.History.HistoryNeighbors.Bordering(RoguelikeToolkit.World.Core.Storage.WorldDataStore! store, int[]! ownership, int polityId) -> System.Collections.Generic.List<int>!

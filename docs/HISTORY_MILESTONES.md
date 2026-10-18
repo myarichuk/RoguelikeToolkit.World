@@ -720,3 +720,33 @@ Not covered here by design: `polity.split` into successors, the faith myth about
 - `HistoryDriver.AddPluginOperator` and `ScalarRegistry.DeclarePlugin` enforce the rules. Plain `AddOperator`/`Declare` are unchanged (tests and hosts that supply a whole ruleset keep working). Order still only decides when `Propose` runs, never outcomes, so the band is a collision guard, not a determinism rule.
 - Plugin state keys follow the same `namespace/name` convention (documented, not enforced, since the bag's key rule is shared).
 - Still open in M3: the reference plugin host and sample, then the economy plugin.
+
+## M3.13 reference plugin host and sample (M3 step 4)
+
+- **Host:** `MapEditor.Engine.HistoryPluginHost` is the extension point. A custom engine build calls `Register(operators, scalars)` before `Generate`, and every world applies the plugins through the builder. With nothing registered the engine generates the base history.
+- **Gap found (step 6):** `WithHistoryDriver` runs after the catalog exists but a plugin had no way to declare scalars before polities form. Added `WorldBuilder.WithHistoryScalars(Action<ScalarRegistry>)`.
+- **Sample:** `samples/HistoryPlugin` (`GranaryOperator`, `sample/granary`, order 500, scalar `sample/grain`) uses only the public API: `DeclareScalars`, `Register`, `Propose(TurnView, ProposalSink)`.
+- **Tests:** `HistoryPluginHostTests` covers scalar declaration, determinism and save/load round trip, and that no plugin means bytes identical to a plain build. Also fixed a stale `CitySiteReasons` test that did not know the `river` and `fishing` terms (M3.2).
+- Operators cannot write the state bag (it hangs off the catalog, not the view); a plugin that needs durable private state writes it from a post-pass. The economy plugin will show whether that is enough.
+- Still open in M3: the economy plugin.
+
+## M3.14 economy plugin (M3 step 5)
+
+`samples/EconomyPlugin` is built only on the public API and registered through `HistoryPluginHost` (`Register(Economy.Register, Economy.DeclareScalars)`).
+
+- **Scalars:** `econ/wealth` (0..1000), `econ/tax` (0..0.6), `econ/corruption`, `econ/unrest`, `econ/estates` (0..1).
+- **`econ/economy` (order 300):** per living polity, output from owned land (land-use layer when registered, else `HistoryDemography.BiomeSurplus`), boosted by standing roads, cut by scarcity (pressure over `CrowdingStart`). Revenue is output x tax x (1 - corruption) x estates drag, minus upkeep. Estates entrench above a wealth line; corruption creeps with estates.
+- **`econ/fiscal` (order 400):** reads last turn's `War` events (both sides pay a war cost), raises tax when the war chest is empty, cuts it when unrest is high, otherwise drifts to the baseline; spends on enforcement against graft. Unrest grows from heavy tax, scarcity, graft and war, and unrest above 0.5 is added to `pressure`, which Rebellion and Collapse already read.
+- **Resource-war cause tags:** when an attacker's war target holds 1.25x or more of a resource it lacks, an `econ/resource-war` plugin event tagged `resource:{kind}` cites the war event as its `Cause`.
+- **Trade volume by resource:** the economy operator keeps a cumulative ledger in the state bag (`econ/trade` v1): per standing polity-pair route, each turn adds half the smaller stock of each resource. `TradeLedger.Read` decodes it.
+- **Tests (`EconomyPluginTests`):** five scalars declared and in range, deterministic, save/load round trip, ledger survives load, no plugin means bytes identical to the base preset, unrest changes outcomes, resource wars cite a real war.
+- **Gaps found (step 6):** all closed in M3.15 (below).
+
+## M3.15 closing the plugin gaps (M3 step 6)
+
+- **Plugin event kinds:** `HistoryEventKind.Plugin` (24) plus `HistoryEvent.PluginKind`, a `namespace/name` string. `ProposalSink.PluginEvent(kind, ...)` emits one; the kind must sit in the emitting operator's own namespace, so built-ins cannot use it. Importance defaults to Structural. Catalog schema 10 writes the name after the kind byte of a Plugin event.
+- **Operator-written state:** `ProposalSink.SetState(key, version, data)` emits `Proposal.SetPluginState` (`ProposalKind.SetPluginState`), applied at commit with the same namespace rule; with several writers the canonical commit order decides. `TurnView.ReadPluginState` reads the bag as of the snapshot, so a read-modify-write across turns is deterministic and a single-writer ledger needs no post-pass.
+- **Economy plugin** now uses both: the resource-war cause is an `econ/resource-war` plugin event, and the trade ledger is cumulative and written by the economy operator (the post-pass is gone).
+- **Tests:** `PluginEventAndStateTests` (round trip, namespace rule, built-ins refused); the economy tests cover the plugin use.
+- Land-use capacity staying optional needed no API change (`BiomeSurplus` is already public).
+- M3 is done. New History types may now leave unstable status. Next is M4, which starts only if M3 showed what the C# API cannot express cheaply; it showed nothing that needs data or scripting so far.

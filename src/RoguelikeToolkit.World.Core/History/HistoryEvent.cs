@@ -15,6 +15,8 @@ public sealed class HistoryEvent
     public int Id { get; internal set; } = -1;
     /// <summary>What happened.</summary>
     public HistoryEventKind Kind { get; init; }
+    /// <summary>For <see cref="HistoryEventKind.Plugin"/> events, the plugin's kind name (<c>namespace/name</c>); empty for built-ins.</summary>
+    public string PluginKind { get; init; } = string.Empty;
     /// <summary>History turn the event lands on.</summary>
     public int Turn { get; init; }
     /// <summary>Acting polity id, or -1 when the event belongs to no polity (e.g. a fork marker).</summary>

@@ -90,6 +90,13 @@ public sealed class TurnView
         Scars = scars;
     }
 
+    /// <summary>
+    /// Reads a plugin state blob as it stood at the snapshot (operators write it through <see cref="ProposalSink.SetState"/>,
+    /// which lands at commit, so this is stable for the whole turn).
+    /// </summary>
+    public PluginStateLookup ReadPluginState(string key, int expectedVersion, out byte[] data)
+        => _history.PluginState.TryRead(key, expectedVersion, out data);
+
     /// <summary>Every scar (ruins, craters, plague pits...) at the snapshot.</summary>
     public IReadOnlyList<ScarState> Scars { get; }
 

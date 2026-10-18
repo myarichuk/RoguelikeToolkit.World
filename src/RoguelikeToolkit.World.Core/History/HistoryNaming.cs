@@ -26,6 +26,14 @@ public static class HistoryNaming
         return i > 0 && i < name.Length - 1 && name.IndexOf(NamespaceSeparator, i + 1) < 0 && name.Trim() == name;
     }
 
+    /// <summary>The namespace part of a plugin name, or the whole string when it has no separator.</summary>
+    public static string NamespaceOf(string name)
+    {
+        ArgumentNullException.ThrowIfNull(name);
+        int i = name.IndexOf(NamespaceSeparator);
+        return i < 0 ? name : name.Substring(0, i);
+    }
+
     /// <summary>Throws unless <paramref name="name"/> is a plugin name (<c>namespace/name</c>).</summary>
     public static void RequirePluginName(string? name, string paramName)
     {

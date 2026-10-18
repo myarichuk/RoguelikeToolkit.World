@@ -167,7 +167,10 @@ public sealed class HistoryDriver : HistoryPluginBase
                     if (!TryEndSettlement(history, turn, ens, dirty)) RejectedProposals++;
                     break;
                 case Proposal.AppendEvent e:
-                    history.AppendLinked(e.EventKind, turn, e.EntityId, e.Tile, e.Tags, e.Cause, e.Participants);
+                    history.AppendLinked(e.EventKind, turn, e.EntityId, e.Tile, e.Tags, e.Cause, e.Participants, e.PluginKind);
+                    break;
+                case Proposal.SetPluginState sps:
+                    history.PluginState.Set(sps.Key, sps.Version, sps.Data);
                     break;
                 case Proposal.SetPopulation sp:
                     var target = history.Polities.Find(p => p.Id == sp.EntityId);

@@ -49,6 +49,39 @@ public sealed class ProposalSink
     public void Adjust(int polityId, int scalarId, double delta)
         => Emit(new Proposal.AdjustScalar { EntityId = polityId, ScalarId = scalarId, Delta = delta });
 
+    /// <summary>
+    /// Emits an event of a plugin-defined kind. <paramref name="pluginKind"/> must be <c>namespace/name</c> in the
+    /// emitting operator's own namespace.
+    /// </summary>
+    public void PluginEvent(string pluginKind, int polityId, int tile, IReadOnlyList<string> tags, int cause = -1,
+        IReadOnlyList<EventParticipant>? participants = null)
+    {
+        RequireOwnName(pluginKind, nameof(pluginKind));
+        Emit(new Proposal.AppendEvent
+        {
+            EntityId = polityId, EventKind = HistoryEventKind.Plugin, PluginKind = pluginKind,
+            Tile = tile, Tags = tags, Cause = cause, Participants = participants,
+        });
+    }
+
+    /// <summary>
+    /// Stores a blob in the plugin state bag at commit. <paramref name="key"/> must be <c>namespace/name</c> in the
+    /// emitting operator's own namespace; when several operators write one key in a turn the canonical order decides.
+    /// </summary>
+    public void SetState(string key, int version, ReadOnlySpan<byte> data)
+    {
+        RequireOwnName(key, nameof(key));
+        Emit(new Proposal.SetPluginState { Key = key, Version = version, Data = data.ToArray() });
+    }
+
+    private void RequireOwnName(string name, string paramName)
+    {
+        HistoryNaming.RequirePluginName(name, paramName);
+        if (!HistoryNaming.IsPluginName(OperatorName)
+            || !string.Equals(HistoryNaming.NamespaceOf(name), HistoryNaming.NamespaceOf(OperatorName), StringComparison.Ordinal))
+            throw new ArgumentException($"'{name}' is outside operator '{OperatorName}' namespace.", paramName);
+    }
+
     /// <summary>Emits an event append.</summary>
     public void Event(HistoryEventKind kind, int polityId, int tile, IReadOnlyList<string> tags, int cause = -1,
         IReadOnlyList<EventParticipant>? participants = null)

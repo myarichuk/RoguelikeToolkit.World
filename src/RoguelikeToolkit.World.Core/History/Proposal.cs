@@ -115,6 +115,8 @@ public abstract class Proposal
         public override ProposalKind Kind => ProposalKind.AppendEvent;
         /// <summary>What happened.</summary>
         public HistoryEventKind EventKind { get; init; }
+        /// <summary>The plugin kind name when <see cref="EventKind"/> is <see cref="HistoryEventKind.Plugin"/>; empty otherwise.</summary>
+        public string PluginKind { get; init; } = string.Empty;
         /// <summary>Planet tile of the event, or -1.</summary>
         public int Tile { get; init; } = -1;
         /// <summary>Id of an event from an earlier turn that caused this one, or -1.</summary>
@@ -399,5 +401,21 @@ public abstract class Proposal
         public int ScalarId { get; init; }
         /// <summary>Signed amount; all deltas to one scalar in a turn are summed, then clamped once.</summary>
         public double Delta { get; init; }
+    }
+
+    /// <summary>
+    /// Stores <see cref="Data"/> in the plugin state bag under <see cref="Key"/> at <see cref="Version"/>. Later writes win in
+    /// canonical commit order; the key's namespace must be the emitting operator's (the sink checks).
+    /// </summary>
+    public sealed class SetPluginState : Proposal
+    {
+        /// <inheritdoc />
+        public override ProposalKind Kind => ProposalKind.SetPluginState;
+        /// <summary>State bag key, <c>namespace/name</c>.</summary>
+        public string Key { get; init; } = string.Empty;
+        /// <summary>Blob format version.</summary>
+        public int Version { get; init; }
+        /// <summary>The blob; copied on commit.</summary>
+        public byte[] Data { get; init; } = Array.Empty<byte>();
     }
 }
