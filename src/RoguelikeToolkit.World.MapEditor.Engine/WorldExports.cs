@@ -399,6 +399,10 @@ public static partial class WorldExports
         return result;
     }
 
+    /// <summary>The world's history as JSON for a panel (see <see cref="HistorySummary"/>); empty scalars and polities when history is off.</summary>
+    [JSExport]
+    public static string HistorySummaryJson() => HistorySummary.ToJson(Current.History);
+
     /// <summary>Name styles as <c>race\tculture\tlabel</c>, UI order.</summary>
     [JSExport]
     public static string[] NameStyles()

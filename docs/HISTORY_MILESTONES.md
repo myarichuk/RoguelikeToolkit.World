@@ -771,3 +771,10 @@ founded, so a default world could never rebel. Rebels now have their own allowan
 (default 3): below `MaxPolities` they fill free slots as before, and above it they may found up to `MaxRebellions` polities
 over the whole history (`HistoryCatalog.RebelCount`: polities whose parent was still standing when they were founded).
 Default worlds now see 3 rebellions each; the base preset's bytes change accordingly (no saved histories to migrate).
+
+### M3.19 Editor history summary (engine half)
+
+`MapEditor.Engine.HistorySummary` and the `WorldExports.HistorySummaryJson` export give an editor panel a plugin-agnostic read
+of history: declared scalars with ranges, each polity's values, plugin event kinds with counts and the plugin state keys.
+The TypeScript panel is not built: the shipped editor never enables history (`Generate` only turns it on when a host
+registers a plugin), and showing it needs a history field in the document model and the worker protocol first.
