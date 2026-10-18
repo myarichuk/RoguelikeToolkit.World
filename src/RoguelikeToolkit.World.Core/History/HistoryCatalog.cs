@@ -380,6 +380,15 @@ public sealed class HistoryCatalog : IHistoricalContext
         _appendCount = 0;
     }
 
+    /// <summary>Counts polities that broke away from a parent that was still standing when they were founded.</summary>
+    internal int RebelCount()
+    {
+        int count = 0;
+        foreach (var p in Polities)
+            if (p.Parent >= 0 && Polities[p.Parent].EndedTurn != p.FoundedTurn) count++;
+        return count;
+    }
+
     /// <summary>Counts polities founded by a collapse (their parent has ended).</summary>
     internal int SuccessorCount()
     {

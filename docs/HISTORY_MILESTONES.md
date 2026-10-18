@@ -762,3 +762,12 @@ Probed six seeds (size 4, 29 turns) and compared with the base preset.
 - **Found:** a state with unrest driven by scarcity cut its tax to 0 and stayed in unrest 1 (cutting tax does not calm scarcity). Fix: tax is only cut above `MinCutTax` (0.1), and scarcity feeds unrest at 0.3 per unit instead of 0.5. After: tax medians stay at the 0.2 baseline, the floor is about 0.06, unrest medians sit between 0 and 0.56.
 - **Wealth** spreads 27..1000 across polities (the cap is reached in one seed only), corruption 0.10..0.15, estates 0.16..0.47.
 - **Rebellion:** zero rebellions in these seeds with or without the plugin. The built-in gate (far province, tight culture, 8+ tiles) is what blocks it, so the unrest leak into `pressure` shows up as different polity counts (9 vs 11 alive on seed 3), not as extra rebellions. Left as is; loosening Rebellion is a base-preset change and out of the plugin's scope.
+
+### M3.18 Rebellion unblocked
+
+Probing six size-4 seeds showed every Rebellion gate passing (8+ tiles, collectivism, pressure, 12° separation) while the
+final `MaxPolities` check always refused: the founding stage fills the cap at turn 0, and the cap counted every polity ever
+founded, so a default world could never rebel. Rebels now have their own allowance, `HistoryContext.MaxRebellions`
+(default 3): below `MaxPolities` they fill free slots as before, and above it they may found up to `MaxRebellions` polities
+over the whole history (`HistoryCatalog.RebelCount`: polities whose parent was still standing when they were founded).
+Default worlds now see 3 rebellions each; the base preset's bytes change accordingly (no saved histories to migrate).

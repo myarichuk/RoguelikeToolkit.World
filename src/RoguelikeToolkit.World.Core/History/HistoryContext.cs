@@ -19,6 +19,7 @@ public sealed class HistoryContext
     private int _maxPolities = 8;
     private int _maxVillains = 2;
     private int _maxSuccessors = 6;
+    private int _maxRebellions = 3;
     private double _hazardRate = 1;
 
     /// <summary>Default peoples roster: one human and one non-human folk, matching the shipped tables.</summary>
@@ -86,6 +87,18 @@ public sealed class HistoryContext
     {
         get => _maxSuccessors;
         set => _maxSuccessors = value >= 0 ? value : throw new ArgumentOutOfRangeException(nameof(value), "MaxSuccessors cannot be negative.");
+    }
+
+    /// <summary>
+    /// Headroom for rebel provinces above the founding cap (default 3). The initial polities fill <see cref="MaxPolities"/>,
+    /// so rebels get their own allowance: the total number of polities (ended ones included) may reach
+    /// <see cref="MaxPolities"/> + <see cref="MaxSuccessors"/> + <see cref="MaxRebellions"/>. Zero means no rebellion ever
+    /// founds a polity. Must be non-negative.
+    /// </summary>
+    public int MaxRebellions
+    {
+        get => _maxRebellions;
+        set => _maxRebellions = value >= 0 ? value : throw new ArgumentOutOfRangeException(nameof(value), "MaxRebellions cannot be negative.");
     }
 
     /// <summary>Upper bound on risen villains (default 2). Zero means no villain ever rises. Must be non-negative.</summary>

@@ -44,7 +44,8 @@ public sealed class FoundingSourcesTests
     {
         for (int seed = 1; seed <= 12; seed++)
         {
-            using var w = new WorldBuilder().WithSize(3).WithSeed(seed).WithUserEdits().Build();
+            // Rebels take holy-site tiles from their parent, so this invariant is checked without them.
+            using var w = new WorldBuilder().WithSize(3).WithSeed(seed).WithUserEdits().WithHistory(c => c.MaxRebellions = 0).Build();
             var h = w.History;
             // After a collapse a shrine may sit in a successor that owns no holy site of its own.
             if (h.Events.Any(e => e.Kind == HistoryEventKind.PolityCollapsed)) continue;

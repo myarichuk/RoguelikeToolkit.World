@@ -48,6 +48,8 @@ public sealed class TurnView
         MaxPolities = context.MaxPolities;
         MaxVillains = context.MaxVillains;
         MaxSuccessors = context.MaxSuccessors;
+        MaxRebellions = context.MaxRebellions;
+        RebelCount = history.RebelCount();
         VillainCount = history.Villains.Count;
         Scalars = history.Scalars;
         _ownership = (int[])history.Ownership.Clone();
@@ -123,6 +125,12 @@ public sealed class TurnView
 
     /// <summary>Cap on collapse successors over the whole history (<see cref="HistoryContext.MaxSuccessors"/>).</summary>
     public int MaxSuccessors { get; }
+
+    /// <summary>Rebellion headroom above the founding cap (<see cref="HistoryContext.MaxRebellions"/>).</summary>
+    public int MaxRebellions { get; }
+
+    /// <summary>Polities that have broken away from a standing parent so far at the snapshot.</summary>
+    public int RebelCount { get; }
 
     /// <summary>Villains risen so far at the snapshot.</summary>
     public int VillainCount { get; }

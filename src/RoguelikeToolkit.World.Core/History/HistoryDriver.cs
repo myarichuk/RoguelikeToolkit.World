@@ -436,9 +436,16 @@ public sealed class HistoryDriver : HistoryPluginBase
         return true;
     }
 
+    private static bool HasRoom(HistoryCatalog history, HistoryContext context, Proposal.AddPolity ap)
+    {
+        if (history.Polities.Count < context.MaxPolities) return true;
+        return (uint)ap.Parent < (uint)history.Polities.Count && history.Polities[ap.Parent].Alive
+            && history.RebelCount() < context.MaxRebellions;
+    }
+
     /// <summary>
     /// Structural pre-pass: founds the turn's new polities in id order (ids must be contiguous and the
-    /// polity cap holds), applies the turn's <see cref="Proposal.SplitPolity"/> collapses, then re-floods ownership
+    /// founding cap holds, with rebels allowed up to <see cref="HistoryContext.MaxRebellions"/> above it), applies the turn's <see cref="Proposal.SplitPolity"/> collapses, then re-floods ownership
     /// from every living capital and syncs holy-site owners. Returns true when the turn had any
     /// <see cref="Proposal.AddPolity"/> or <see cref="Proposal.SplitPolity"/> (all of them are consumed).
     /// </summary>
@@ -450,7 +457,7 @@ public sealed class HistoryDriver : HistoryPluginBase
         {
             if (p is not Proposal.AddPolity ap) continue;
             any = true;
-            if (ap.EntityId != history.Polities.Count || history.Polities.Count >= context.MaxPolities) { RejectedProposals++; continue; }
+            if (ap.EntityId != history.Polities.Count || !HasRoom(history, context, ap)) { RejectedProposals++; continue; }
             var polity = new Polity
             {
                 Id = ap.EntityId, Form = ap.Form, CapitalTile = ap.CapitalTile, FolkKey = ap.FolkKey,

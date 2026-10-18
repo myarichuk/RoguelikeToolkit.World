@@ -13,8 +13,9 @@ namespace RoguelikeToolkit.World.Core.History;
 /// break away: the rebel capital is its most distant owned tile, ownership is re-flooded by the driver commit from
 /// all capitals (user pins win, exactly like <see cref="HistoryTerritory"/>), and a
 /// <see cref="HistoryEventKind.Rebellion"/> event records the parent. Rebellions cost one
-/// emergence from this operator's own per-turn budget and never exceed
-/// <see cref="HistoryContext.MaxPolities"/> total polities.
+/// emergence from this operator's own per-turn budget and fill free slots below
+/// <see cref="HistoryContext.MaxPolities"/>, and once the founding cap is reached they have their own allowance of
+/// <see cref="HistoryContext.MaxRebellions"/> over the whole history.
 /// </summary>
 public sealed class RebellionOperator : IHistoryOperator
 {
@@ -63,7 +64,7 @@ public sealed class RebellionOperator : IHistoryOperator
 
         foreach (var polity in polities)
         {
-            if (polities.Count + founded >= view.MaxPolities) return;
+            if (polities.Count + founded >= view.MaxPolities && view.RebelCount + founded >= view.MaxRebellions) return;
             if (!polity.Alive || polity.FoundedTurn >= view.Turn) continue;
             int parent = polity.Id;
             if (owned[parent] < MinRebelTiles) continue;

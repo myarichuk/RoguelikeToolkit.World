@@ -21,13 +21,13 @@ public class RebellionOperatorTests
         }
     }
 
-    private static void Run(World w, int maxPolities)
+    private static void Run(World w, int maxPolities, int maxRebellions = 0)
         => new HistoryDriver()
             .AddOperator(new PopulationOperator())
             .AddOperator(new HolySiteOperator())
             .AddOperator(new WarOperator())
             .AddOperator(new RebellionOperator())
-            .Apply(w.Map, w.History, new HistoryContext { MaxPolities = maxPolities });
+            .Apply(w.Map, w.History, new HistoryContext { MaxPolities = maxPolities, MaxRebellions = maxRebellions });
 
     [Fact]
     public void Rebels_SplitAProvince_WithConsistentOwnershipAndCap()
@@ -68,8 +68,23 @@ public class RebellionOperatorTests
             using var w = Build(seed);
             MakeTight(w.History);
             int start = w.History.Polities.Count;
-            Run(w, start + 1);
+            Run(w, start, maxRebellions: 1);
             Assert.True(w.History.Polities.Count <= start + 1);
         }
+    }
+
+    [Fact]
+    public void DefaultHistory_HasRebellions_WithinTheirOwnAllowance()
+    {
+        int rebellions = 0;
+        for (int seed = 1; seed <= 12; seed++)
+        {
+            using var w = new WorldBuilder().WithSize(4).WithSeed(seed).WithHistory().Build();
+            var h = w.History;
+            int n = h.Events.Count(e => e.Kind == HistoryEventKind.Rebellion);
+            Assert.True(n <= new HistoryContext().MaxRebellions);
+            rebellions += n;
+        }
+        Assert.True(rebellions > 0, "no rebellion in 12 default worlds; the founding cap is still blocking them");
     }
 }

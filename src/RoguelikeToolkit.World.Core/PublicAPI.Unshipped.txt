@@ -247,6 +247,8 @@ RoguelikeToolkit.World.Core.History.HistoryContext.DisplacedDecayTurns.get -> in
 RoguelikeToolkit.World.Core.History.HistoryContext.DisplacedDecayTurns.set -> void
 RoguelikeToolkit.World.Core.History.HistoryContext.HazardRate.get -> double
 RoguelikeToolkit.World.Core.History.HistoryContext.HazardRate.set -> void
+RoguelikeToolkit.World.Core.History.HistoryContext.MaxRebellions.get -> int
+RoguelikeToolkit.World.Core.History.HistoryContext.MaxRebellions.set -> void
 RoguelikeToolkit.World.Core.History.HistoryContext.MaxSettlementsPerPolity.get -> int
 RoguelikeToolkit.World.Core.History.HistoryContext.MaxSettlementsPerPolity.set -> void
 RoguelikeToolkit.World.Core.History.HistoryContext.MaxSuccessors.get -> int
@@ -760,6 +762,7 @@ RoguelikeToolkit.World.Core.History.TurnView.HolySiteState.Tile.init -> void
 RoguelikeToolkit.World.Core.History.TurnView.IsWindowed(int a, int b) -> bool
 RoguelikeToolkit.World.Core.History.TurnView.Map.get -> RoguelikeToolkit.World.Core.Topology.WorldMap!
 RoguelikeToolkit.World.Core.History.TurnView.MaxPolities.get -> int
+RoguelikeToolkit.World.Core.History.TurnView.MaxRebellions.get -> int
 RoguelikeToolkit.World.Core.History.TurnView.MaxSettlementsPerPolity.get -> int
 RoguelikeToolkit.World.Core.History.TurnView.MaxSuccessors.get -> int
 RoguelikeToolkit.World.Core.History.TurnView.MaxVillains.get -> int
@@ -796,6 +799,7 @@ RoguelikeToolkit.World.Core.History.TurnView.PolityState.RulerGeneration.init ->
 RoguelikeToolkit.World.Core.History.TurnView.PolityState.Scalars.get -> System.Collections.Generic.IReadOnlyList<double>!
 RoguelikeToolkit.World.Core.History.TurnView.PolityState.Scalars.init -> void
 RoguelikeToolkit.World.Core.History.TurnView.ReadPluginState(string! key, int expectedVersion, out byte[]! data) -> RoguelikeToolkit.World.Core.History.PluginStateLookup
+RoguelikeToolkit.World.Core.History.TurnView.RebelCount.get -> int
 RoguelikeToolkit.World.Core.History.TurnView.Roads.get -> System.Collections.Generic.IReadOnlyList<RoguelikeToolkit.World.Core.History.TurnView.RoadState>!
 RoguelikeToolkit.World.Core.History.TurnView.RoadState
 RoguelikeToolkit.World.Core.History.TurnView.RoadState.PolityId.get -> int

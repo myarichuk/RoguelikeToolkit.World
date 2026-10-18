@@ -136,7 +136,8 @@ public class CollapseOperatorTests
                 Assert.DoesNotContain(parent.Id, h.Ownership);
                 Assert.All(h.Settlements.Where(s => !s.Ended), s => Assert.NotEqual(parent.Id, s.PolityId));
                 Assert.All(h.HolySites, s => Assert.NotEqual(parent.Id, s.PolityId));
-                var successors = h.Polities.Where(p => p.Parent == parent.Id).ToList();
+                var rebels = h.Events.Where(e => e.Kind == HistoryEventKind.Rebellion).Select(e => e.PolityId).ToHashSet();
+                var successors = h.Polities.Where(p => p.Parent == parent.Id && !rebels.Contains(p.Id)).ToList();
                 Assert.InRange(successors.Count, 2, CollapseOperator.MaxPerCollapse + 1);
                 Assert.Contains(successors, s => h.Ownership.Contains(s.Id));
                 Assert.All(successors, s => Assert.Equal(
