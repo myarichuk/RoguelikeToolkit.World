@@ -11,6 +11,11 @@ on:
       - 'src/RoguelikeToolkit.World.Core/**'
       - '.github/workflows/pages.yml'
   workflow_dispatch:
+    inputs:
+      aot:
+        description: 'AOT-compile the engine (faster world generation, larger download; needs the wasm-tools workload). Pushes always use AOT.'
+        type: boolean
+        default: true
 
 permissions:
   contents: read
@@ -39,12 +44,29 @@ jobs:
         cache-dependency-path: src/RoguelikeToolkit.World.MapEditor/package-lock.json
     # Publishes the engine into public/_framework, then npm ci + tsc + vite build into dist/ (base './', so the
     # site works under /<repo>/ with no path rewriting).
-    - name: Build
+    # AOT compiles Core to native WebAssembly instead of interpreting its IL in the browser: world generation is several times
+    # faster, at the price of a larger download and a slower build. If the AOT build fails, the interpreted build ships instead.
+    - name: Install the wasm-tools workload
+      if: ${{ github.event_name != 'workflow_dispatch' || inputs.aot }}
+      continue-on-error: true
+      run: dotnet workload install wasm-tools
+    - name: Build (AOT)
+      id: aot
+      if: ${{ github.event_name != 'workflow_dispatch' || inputs.aot }}
+      continue-on-error: true
+      working-directory: src/RoguelikeToolkit.World.MapEditor
+      run: ./build.sh --aot
+    - name: Build (interpreted)
+      if: ${{ steps.aot.outcome != 'success' }}
       working-directory: src/RoguelikeToolkit.World.MapEditor
       run: ./build.sh
     - name: Test
       working-directory: src/RoguelikeToolkit.World.MapEditor
       run: npm test
+    # Pages does not serve the pre-compressed .br/.gz copies dotnet publish writes next to each file (it compresses on its own
+    # and ignores them), so they only inflate the artifact and the upload.
+    - name: Drop pre-compressed copies Pages would not serve
+      run: find src/RoguelikeToolkit.World.MapEditor/dist/_framework \( -name '*.br' -o -name '*.gz' \) -delete
     - name: Keep Pages from running Jekyll (it would drop the _framework folder)
       run: touch src/RoguelikeToolkit.World.MapEditor/dist/.nojekyll
     - uses: actions/configure-pages@v5
