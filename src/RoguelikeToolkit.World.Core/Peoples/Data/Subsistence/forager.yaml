@@ -1,0 +1,16 @@
+Key: forager
+DisplayName: "Forager"
+Sedentary: false
+Arable: 0
+Pasture: 0
+Game: 3
+Timber: 1
+Fish: 1.5
+Defensibility: 0.5
+Coast: 0.5
+River: 1
+Road: -0.5
+Exploits:
+  - { Resource: fishery, Value: 1 }
+  - { Resource: lumber, Value: 0.5 }
+  - { Resource: salt, Value: 0.5 }

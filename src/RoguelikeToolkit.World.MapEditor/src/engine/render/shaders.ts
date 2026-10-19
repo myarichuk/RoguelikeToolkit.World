@@ -294,11 +294,25 @@ layout(location = 1) in vec4 iPosSize;     // x, y, w, h (mu)
 layout(location = 2) in vec4 iAnchorRot;   // ax, ay, rotation, flip(+-1)
 layout(location = 3) in vec4 iUv;          // u0, v0, u1, v1
 layout(location = 4) in float iAlpha;
+layout(location = 5) in vec2 iLod;        // class (0 always, 1 scatter, 2 relief, 3 sea decor), key in [0, 1): lower stays longer
 uniform vec2 uCanvas, uCenter;
-uniform float uZoom, uOffset;
+uniform float uZoom, uOffset, uDpr;
 out vec2 vUv;
 out float vAlpha;
+
+// Zoom level of detail: the share of a class drawn grows with how tall its stamps are on screen
+// (CSS px), and each stamp shows while its key is under that share, fading over a short band. Out
+// at the overview, forests and scrub drop to the biome colour, ranges keep their biggest peaks.
+float lodShare(float cls, float px) {
+  if (cls < 0.5) return 2.0;
+  if (cls < 1.5) return smoothstep(3.0, 10.0, px);
+  if (cls < 2.5) return 0.3 + 0.7 * smoothstep(4.0, 20.0, px);
+  return smoothstep(6.0, 16.0, px);
+}
+
 void main() {
+  float lod = clamp((lodShare(iLod.x, iPosSize.w * uZoom / uDpr) - iLod.y) / 0.06, 0.0, 1.0);
+  if (lod <= 0.0) { gl_Position = vec4(2.0, 2.0, 2.0, 1.0); vUv = vec2(0.0); vAlpha = 0.0; return; }
   vec2 local = (aCorner - iAnchorRot.xy) * iPosSize.zw;
   local.x *= iAnchorRot.w;
   float c = cos(iAnchorRot.z), s = sin(iAnchorRot.z);
@@ -306,7 +320,7 @@ void main() {
   vec2 sp = (mu - uCenter) * uZoom + 0.5 * uCanvas;
   gl_Position = vec4(sp.x / uCanvas.x * 2.0 - 1.0, 1.0 - sp.y / uCanvas.y * 2.0, 0.0, 1.0);
   vUv = mix(iUv.xy, iUv.zw, aCorner);
-  vAlpha = iAlpha;
+  vAlpha = iAlpha * lod;
 }`;
 
 export const FS_STAMP = `#version 300 es
@@ -332,27 +346,88 @@ layout(location = 2) in float aHalfW;   // half width (mu)
 layout(location = 3) in float aSide;    // -1 | +1
 uniform vec2 uCanvas, uCenter;
 uniform float uZoom, uOffset, uWidthScale;
+uniform float uInkPx;   // bank ink width (px)
+uniform int uPass;      // 0: the whole ribbon in ink; 1: the water inside the banks
 out float vEdge;
 out float vHalfPx;
+out float vFade;
 void main() {
   float want = aHalfW * uWidthScale * uZoom;
   float hp = max(want, 0.9);
+  // The water pass is the ribbon less its banks; a river too thin for both stays a pen line.
+  if (uPass == 1) hp = max(want - uInkPx, 0.0);
   vec2 mu = aPos + vec2(uOffset, 0.0) + aNormal * aSide * (hp / uZoom);
   vec2 sp = (mu - uCenter) * uZoom + 0.5 * uCanvas;
   gl_Position = vec4(sp.x / uCanvas.x * 2.0 - 1.0, 1.0 - sp.y / uCanvas.y * 2.0, 0.0, 1.0);
   vEdge = aSide;
-  vHalfPx = hp * clamp(want / 0.9, 0.3, 1.0);   // < 1: alpha fade for sub-pixel rivers
+  vHalfPx = hp;
+  vFade = clamp(want / 0.9, 0.3, 1.0);   // < 1: alpha fade for sub-pixel rivers
 }`;
 
+/**
+ * Rivers in two passes over the same ribbons: all of them in bank ink, then all of their water
+ * inset by the bank width. Where reaches meet, the second pass paints over the first's banks, so
+ * a confluence opens into one channel instead of crossing ink lines.
+ */
 export const FS_RIVER = `#version 300 es
 precision highp float;
+precision highp int;
 uniform vec3 uColor;
+uniform int uPass;
 in float vEdge;
 in float vHalfPx;
+in float vFade;
 out vec4 oColor;
 void main() {
-  float hp = max(vHalfPx, 0.9);
-  float a = 1.0 - smoothstep(1.0 - 1.0 / hp, 1.0, abs(vEdge));
-  a *= clamp(vHalfPx / 0.9, 0.3, 1.0);
+  if (uPass == 1 && vHalfPx < 0.35) discard;
+  float hp = max(vHalfPx, 0.5);
+  float a = 1.0 - smoothstep(max(0.0, 1.0 - 0.9 / hp), 1.0, abs(vEdge));
+  a *= uPass == 0 ? vFade : clamp(vHalfPx / 0.9, 0.0, 1.0);
+  oColor = vec4(uColor * a, a);
+}`;
+
+export const VS_ROAD = `#version 300 es
+layout(location = 0) in vec2 aPos;      // centerline point (mu)
+layout(location = 1) in vec2 aNormal;   // unit (miter) normal
+layout(location = 2) in float aHalfW;   // half width (mu)
+layout(location = 3) in float aSide;    // -1 | +1
+layout(location = 4) in float aAlong;   // distance from the road's start (mu)
+layout(location = 5) in float aStyle;   // 0 trunk (solid), 1 spur (dashed), 2 severed (dotted)
+uniform vec2 uCanvas, uCenter;
+uniform float uZoom, uOffset, uWidthScale;
+out float vEdge;
+out float vHalfPx;
+out float vAlong;
+flat out float vStyle;
+void main() {
+  float hp = max(aHalfW * uWidthScale * uZoom, 0.8);
+  vec2 mu = aPos + vec2(uOffset, 0.0) + aNormal * aSide * (hp / uZoom);
+  vec2 sp = (mu - uCenter) * uZoom + 0.5 * uCanvas;
+  gl_Position = vec4(sp.x / uCanvas.x * 2.0 - 1.0, 1.0 - sp.y / uCanvas.y * 2.0, 0.0, 1.0);
+  vEdge = aSide; vHalfPx = hp; vAlong = aAlong; vStyle = aStyle;
+}`;
+
+/** Roads are one inked pass: solid trunks, dashed spurs, dotted severed ones; a pattern too fine to read at this zoom turns into a faint solid line. */
+export const FS_ROAD = `#version 300 es
+precision highp float;
+uniform vec3 uColor;
+uniform float uZoom;
+in float vEdge;
+in float vHalfPx;
+in float vAlong;
+flat in float vStyle;
+out vec4 oColor;
+void main() {
+  float hp = max(vHalfPx, 0.5);
+  float a = 1.0 - smoothstep(max(0.0, 1.0 - 0.9 / hp), 1.0, abs(vEdge));
+  if (vStyle > 0.5) {
+    float on = vStyle < 1.5 ? 4.2 : 1.2, period = vStyle < 1.5 ? 6.2 : 3.4;
+    float k = on / period;
+    float u = fract(vAlong / period);
+    float dash = smoothstep(0.0, 0.08, u) * (1.0 - smoothstep(k, k + 0.08, u));
+    float legible = smoothstep(2.5, 5.0, period * uZoom);
+    a *= mix(0.75, dash, legible);
+    if (vStyle > 1.5) a *= 0.7;
+  }
   oColor = vec4(uColor * a, a);
 }`;

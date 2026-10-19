@@ -36,8 +36,11 @@
     "grain": 0.035,
     "stains": 0.06,
     "innerCoast": 0.55,
-    "river": "#3e6170",
+    "river": "#9dbab6",
     "riverWidth": 1.0,
+    "riverInkWidth": 0.3,
+    "road": "#6e4d2e",
+    "roadWidth": 1.0,
     "frame": "#38302a"
    },
    "biomes": {
@@ -205,6 +208,39 @@
      "haloWidth": 3,
      "minZoom": 0,
      "sizeExp": 0
+    },
+    "shrine": {
+     "font": "serif",
+     "size": 8.5,
+     "spacing": 0.0,
+     "uppercase": false,
+     "fill": "#2b2119",
+     "halo": "#ece0c2",
+     "haloWidth": 1.0,
+     "minZoom": 1.6,
+     "sizeExp": 0
+    },
+    "ruin": {
+     "font": "italic",
+     "size": 8,
+     "spacing": 0.0,
+     "uppercase": false,
+     "fill": "#2b2119",
+     "halo": "#ece0c2",
+     "haloWidth": 1.0,
+     "minZoom": 1.6,
+     "sizeExp": 0
+    },
+    "battlefield": {
+     "font": "italic",
+     "size": 8,
+     "spacing": 0.0,
+     "uppercase": false,
+     "fill": "#2b2119",
+     "halo": "#ece0c2",
+     "haloWidth": 1.0,
+     "minZoom": 1.6,
+     "sizeExp": 0
     }
    },
    "ui": {
@@ -247,8 +283,12 @@
     "grain": 0.015,
     "stains": 0.0,
     "innerCoast": 0.25,
-    "river": "#3d86bf",
+    "river": "#8cc2e2",
     "riverWidth": 1.1,
+    "riverInk": "#2f5f80",
+    "riverInkWidth": 0.28,
+    "road": "#6b4a2a",
+    "roadWidth": 1.0,
     "frame": "#2c3a46"
    },
    "biomes": {
@@ -416,6 +456,39 @@
      "haloWidth": 3,
      "minZoom": 0,
      "sizeExp": 0
+    },
+    "shrine": {
+     "font": "serif",
+     "size": 8.5,
+     "spacing": 0.0,
+     "uppercase": false,
+     "fill": "#2f2622",
+     "halo": "#fbf6e8",
+     "haloWidth": 1.0,
+     "minZoom": 1.6,
+     "sizeExp": 0
+    },
+    "ruin": {
+     "font": "italic",
+     "size": 8,
+     "spacing": 0.0,
+     "uppercase": false,
+     "fill": "#2f2622",
+     "halo": "#fbf6e8",
+     "haloWidth": 1.0,
+     "minZoom": 1.6,
+     "sizeExp": 0
+    },
+    "battlefield": {
+     "font": "italic",
+     "size": 8,
+     "spacing": 0.0,
+     "uppercase": false,
+     "fill": "#2f2622",
+     "halo": "#fbf6e8",
+     "haloWidth": 1.0,
+     "minZoom": 1.6,
+     "sizeExp": 0
     }
    },
    "ui": {
@@ -458,8 +531,12 @@
     "grain": 0.03,
     "stains": 0.04,
     "innerCoast": 0.3,
-    "river": "#6f97c4",
+    "river": "#24384f",
     "riverWidth": 1.0,
+    "riverInk": "#7f9cbc",
+    "riverInkWidth": 0.28,
+    "road": "#c8b283",
+    "roadWidth": 1.0,
     "frame": "#0b1018"
    },
    "biomes": {
@@ -626,6 +703,39 @@
      "halo": "#1c2533",
      "haloWidth": 3,
      "minZoom": 0,
+     "sizeExp": 0
+    },
+    "shrine": {
+     "font": "serif",
+     "size": 8.5,
+     "spacing": 0.0,
+     "uppercase": false,
+     "fill": "#e2e8f0",
+     "halo": "#1c2533",
+     "haloWidth": 1.0,
+     "minZoom": 1.6,
+     "sizeExp": 0
+    },
+    "ruin": {
+     "font": "italic",
+     "size": 8,
+     "spacing": 0.0,
+     "uppercase": false,
+     "fill": "#e2e8f0",
+     "halo": "#1c2533",
+     "haloWidth": 1.0,
+     "minZoom": 1.6,
+     "sizeExp": 0
+    },
+    "battlefield": {
+     "font": "italic",
+     "size": 8,
+     "spacing": 0.0,
+     "uppercase": false,
+     "fill": "#e2e8f0",
+     "halo": "#1c2533",
+     "haloWidth": 1.0,
+     "minZoom": 1.6,
      "sizeExp": 0
     }
    },
@@ -977,53 +1087,48 @@
  ],
  "rules": [
   {
-   "id": "peaks",
-   "assets": [
-    "core.mountainSnow"
-   ],
-   "elevation": [
-    0.72,
-    9
-   ],
-   "spacing": 9,
-   "density": 0.95,
-   "scale": [
-    0.9,
-    1.25
-   ],
-   "scaleWithElevation": 0.72
-  },
-  {
    "id": "mountains",
    "assets": [
     "core.mountain"
    ],
+   "tiers": [
+    {
+     "above": 0.72,
+     "assets": [
+      "core.mountainSnow"
+     ]
+    }
+   ],
+   "layout": "relief",
+   "ridge": 0.6,
    "elevation": [
     0.47,
-    0.72
+    9
    ],
    "spacing": 8.5,
-   "density": 0.92,
+   "density": 1,
    "scale": [
-    0.75,
-    1.15
-   ],
-   "scaleWithElevation": 0.47
+    0.55,
+    1.5
+   ]
   },
   {
    "id": "hills",
    "assets": [
     "core.hill"
    ],
+   "layout": "relief",
+   "ridge": 0.25,
+   "clump": 0.5,
    "elevation": [
     0.3,
     0.47
    ],
    "spacing": 9,
-   "density": 0.45,
+   "density": 0.7,
    "scale": [
-    0.8,
-    1.15
+    0.65,
+    1.25
    ]
   },
   {
@@ -1261,6 +1366,12 @@
   ],
   "port": [
    "core.port"
+  ],
+  "ruin": [
+   "core.ruins"
+  ],
+  "shrine": [
+   "core.temple"
   ]
  },
  "fonts": {

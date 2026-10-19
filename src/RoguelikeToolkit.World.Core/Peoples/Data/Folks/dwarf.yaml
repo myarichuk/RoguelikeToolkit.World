@@ -12,3 +12,6 @@ ConscientiousnessPrior: high
 ExtraversionPrior: low
 AgreeablenessPrior: balanced
 NeuroticismPrior: balanced
+Subsistence:
+  - artisan
+  - highland

@@ -12,6 +12,8 @@ import { MAP_W, kmPerMu, mapToLonLatDeg } from '../core/geo';
 import { isGeneratedFeatureId, type MapDocument } from '../doc/MapDocument';
 import type { FeatureEntity, RiverEntity } from '../doc/types';
 
+/** Places history left behind: not settlements, drawn as points. */
+const SITE_KINDS = new Set<FeatureEntity['kind']>(['ruin', 'shrine', 'battlefield']);
 const AREA_KINDS = new Set<FeatureEntity['kind']>(['lake', 'sea', 'ocean', 'mountain', 'valley', 'forest']);
 
 const num = (v: number): string => (Math.abs(v) < 5e-7 ? 0 : v).toFixed(6);
@@ -98,6 +100,8 @@ export function wktRows(doc: Pick<MapDocument, 'rivers' | 'features'>): WktRow[]
         wkt, layer: 'areas', kind: f.kind, name: f.name, id: f.id,
         attrs: attrs({ tiles: f.tiles?.length, extent_km: f.extent > 0 ? Math.round(f.extent * kmPerMu(f.y)) : undefined, anchor: 'label' }),
       });
+    } else if (SITE_KINDS.has(f.kind)) {
+      rows.push({ wkt, layer: 'sites', kind: f.kind, name: f.name, id: f.id, attrs: attrs({ weight: f.weight }) });
     } else {
       rows.push({ wkt, layer: 'settlements', kind: f.kind, name: f.name, id: f.id, attrs: attrs({ weight: f.weight }) });
     }

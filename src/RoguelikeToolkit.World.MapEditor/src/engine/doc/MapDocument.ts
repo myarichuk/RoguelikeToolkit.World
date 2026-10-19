@@ -3,8 +3,9 @@ import { MAP_H, MAP_W, type Rect } from '../core/geo';
 import type { RasterTarget } from '../commands/RasterEdit';
 import type { NameStyle } from '../world/protocol';
 import type { Raster, TileEdits } from '../world/edits';
+import { featureMask, maskHas, tileRowSpans, type FeatureMask } from '../features/featureMask';
 import { EntityStore } from './EntityStore';
-import { DEFAULT_SETTINGS, type DocSettings, type FeatureEntity, type LabelEntity, type RiverEntity, type StampEntity } from './types';
+import { DEFAULT_SETTINGS, type DocSettings, type FeatureEntity, type LabelEntity, type RiverEntity, type RoadEntity, type StampEntity } from './types';
 
 export type RasterLayer = 'elevation' | 'biome' | 'warmth' | 'wetness' | 'landuse';
 
@@ -56,8 +57,11 @@ export class MapDocument {
   readonly stamps = new EntityStore<StampEntity>();
   readonly labels = new EntityStore<LabelEntity>();
   readonly rivers = new EntityStore<RiverEntity>();
+  readonly roads = new EntityStore<RoadEntity>();
   readonly events = new Emitter<{ raster: { layer: RasterLayer; rect: Rect }; settings: DocSettings; reset: MapDocument }>();
   private featureByTile: Map<number, string[]> | null = null;
+  private readonly masks = new Map<string, FeatureMask | null>();
+  private tileRows: Int32Array | null = null;
   /** Null for hand-made maps (no engine world behind them), so there is nothing to re-derive. */
   physics: PhysicsState | null = null;
   /**
@@ -78,7 +82,8 @@ export class MapDocument {
     public readonly biome: Uint8Array,
     public readonly world: WorldReference,
   ) {
-    this.features.events.on('change', () => { this.featureByTile = null; });
+    this.features.events.on('change', () => { this.featureByTile = null; this.masks.clear(); });
+    this.events.on('raster', ({ layer }) => { if (layer === 'elevation' || layer === 'biome') this.masks.clear(); });
   }
 
   static empty(): MapDocument {
@@ -134,10 +139,8 @@ export class MapDocument {
     return this.world.tile[yi * this.width + xi];
   }
 
-  /** Area features containing a pixel (via its tile). */
-  featuresAt(x: number, y: number): FeatureEntity[] {
-    const t = this.tileAt(x, y);
-    if (t < 0) return [];
+  /** Area features owning a tile (rivers excluded). */
+  featuresOnTile(t: number): FeatureEntity[] {
     if (!this.featureByTile) {
       const m = new Map<number, string[]>();
       for (const f of this.features.all()) {
@@ -147,6 +150,38 @@ export class MapDocument {
       this.featureByTile = m;
     }
     return (this.featureByTile.get(t) ?? []).map((id) => this.features.get(id)!).filter(Boolean);
+  }
+
+  /** An area feature's footprint as drawn (see features/featureMask.ts), cached until its rasters or the features change. */
+  maskOf(id: string): FeatureMask | null {
+    if (!this.masks.has(id)) {
+      const f = this.features.get(id);
+      this.tileRows ??= tileRowSpans(this.world.tile, this.width, this.world.tilePlate.length);
+      this.masks.set(id, f ? featureMask({ width: this.width, height: this.height, elevation: this.elevation, biome: this.biome, tile: this.world.tile, owners: (t) => this.featuresOnTile(t), rows: this.tileRows }, f) : null);
+    }
+    return this.masks.get(id)!;
+  }
+
+  /**
+   * Area features containing a pixel as drawn: the owners of the tiles around it, kept when their
+   * drawn footprint covers it (a shore pixel may sit on a land tile, a lake no longer fills its tile).
+   */
+  featuresAt(x: number, y: number): FeatureEntity[] {
+    if (this.tileAt(x, y) < 0) return [];
+    const seen = new Set<string>(), out: FeatureEntity[] = [];
+    for (let dy = -16; dy <= 16; dy += 8) {
+      for (let dx = -16; dx <= 16; dx += 8) {
+        const t = this.tileAt(x + dx, y + dy);
+        if (t < 0) continue;
+        for (const f of this.featuresOnTile(t)) {
+          if (seen.has(f.id)) continue;
+          seen.add(f.id);
+          const m = this.maskOf(f.id);
+          if (m && maskHas(m, x, y)) out.push(f);
+        }
+      }
+    }
+    return out;
   }
 
   elevationAt(x: number, y: number): number {

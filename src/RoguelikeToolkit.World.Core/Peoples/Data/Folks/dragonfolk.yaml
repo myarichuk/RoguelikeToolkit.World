@@ -1,0 +1,17 @@
+Key: dragonfolk
+DisplayName: "Dragonfolk"
+Sapience: Full
+Embodiment: humanoid
+HabitatAffinity: mountain
+LifespanYears: 300
+MaturationYears: 35
+GrowthR: 0.02
+CompatGroup: reptile
+OpennessPrior: balanced
+ConscientiousnessPrior: high
+ExtraversionPrior: low
+AgreeablenessPrior: low
+NeuroticismPrior: low
+Subsistence:
+  - highland
+  - artisan

@@ -1,0 +1,15 @@
+Key: pastoral
+DisplayName: "Pastoral"
+Sedentary: false
+Arable: 0.5
+Pasture: 3
+Game: 1
+Timber: 0
+Fish: 0
+Defensibility: 0
+Coast: 0
+River: 1
+Road: 0.5
+Exploits:
+  - { Resource: range, Value: 3 }
+  - { Resource: salt, Value: 1.5 }

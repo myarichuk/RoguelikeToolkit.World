@@ -3,7 +3,7 @@ import { widenClimate } from '../world/climate';
 import { editsFromRows, editsToRows, type EditRow } from '../world/edits';
 import { migrateLegacyLandUse } from '../world/landuse';
 import { isGeneratedFeatureId, MapDocument } from './MapDocument';
-import { DEFAULT_SETTINGS, type DocSettings, type FeatureEntity, type LabelEntity, type RiverEntity, type StampEntity } from './types';
+import { DEFAULT_SETTINGS, type DocSettings, type FeatureEntity, type LabelEntity, type RiverEntity, type RoadEntity, type StampEntity } from './types';
 
 // .wmap: gzip( "WMAP" | u32 version | u32 headerLength | header JSON (utf-8) | pad to 8 | blobs ).
 // The header carries settings, entities and a blob table; rasters go as raw little-endian typed
@@ -31,6 +31,7 @@ interface Header {
   stamps: StampEntity[];
   labels: LabelEntity[];
   rivers: RiverEntity[];
+  roads?: RoadEntity[];
   physics?: { edits: EditRow[]; generated: string[]; tombstones: FeatureEntity[] };
   blobs: { name: BlobName; type: keyof typeof CTORS; offset: number; length: number }[];
 }
@@ -54,7 +55,7 @@ export function encodeDocument(doc: MapDocument): Uint8Array {
   }
   const header: Header = {
     format: 'wmap', version: WMAP_VERSION, width: doc.width, height: doc.height, settings: doc.settings, styles: doc.world.styles,
-    features: [...doc.features.all()], stamps: [...doc.stamps.all()], labels: [...doc.labels.all()].map(labelOut), rivers: [...doc.rivers.all()],
+    features: [...doc.features.all()], stamps: [...doc.stamps.all()], labels: [...doc.labels.all()].map(labelOut), rivers: [...doc.rivers.all()], roads: [...doc.roads.all()],
     physics: doc.physics ? { edits: editsToRows(doc.physics.edits), generated: [...doc.physics.generated], tombstones: [...doc.physics.tombstones.values()] } : undefined,
     blobs,
   };
@@ -110,6 +111,7 @@ export function decodeDocument(bytes: Uint8Array): MapDocument {
   doc.stamps.reset(header.stamps ?? []);
   doc.labels.reset((header.labels ?? []).map(labelIn));
   doc.rivers.reset(header.rivers ?? []);
+  doc.roads.reset(header.roads ?? []);
   // The cache is only good for the world it was computed on: a length that does not match the tile count is dropped.
   const capacity = header.blobs.some((b) => b.name === 'capacity') ? blob<Uint8Array>('capacity') : undefined;
   const goodCapacity = capacity && capacity.length === (doc.world.tileXY.length / 2) * 5 ? capacity : undefined;

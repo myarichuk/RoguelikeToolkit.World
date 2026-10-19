@@ -1,0 +1,22 @@
+Key: dogfolk_pack
+DisplayName: "Dogfolk · Pack"
+NamingTable: dogfolk
+Subsistence: pastoral
+LineageDefault: Patrilineal
+Xenophobia: 30
+HierarchyClaim: 60
+Collectivism: 90
+Honor: 80
+FaithForm: ancestor
+MixedNaming: Dominant
+DominantShareThreshold: 0.75
+OpennessOffset: 0
+ConscientiousnessOffset: 0
+ExtraversionOffset: 0
+AgreeablenessOffset: 0
+NeuroticismOffset: 0
+FormAffinity:
+  Horde: 35
+  Kingdom: 30
+  LooseAssociation: 30
+  MerchantRepublic: 5

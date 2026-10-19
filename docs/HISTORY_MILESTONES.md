@@ -778,3 +778,217 @@ Default worlds now see 3 rebellions each; the base preset's bytes change accordi
 of history: declared scalars with ranges, each polity's values, plugin event kinds with counts and the plugin state keys.
 The TypeScript panel is not built: the shipped editor never enables history (`Generate` only turns it on when a host
 registers a plugin), and showing it needs a history field in the document model and the worker protocol first.
+
+### M3.20 Per-turn timeline and editor history exports (groundwork for a time-scrubbing panel)
+
+`HistoryCatalog.Ownership` is end-state only, so a panel could not draw borders at turn T. Core now records a timeline
+(`HistoryCatalog.Timeline`, `HistoryTimeline`), and the engine exports everything a panel pulls in batch.
+- **Core timeline:** `HistoryDriver.Apply` snapshots the turn-0 ownership as `BaseOwnership` and samples every living
+  polity; after each turn's commit it logs every tile whose owner differs from the turn's `TurnView` snapshot as a
+  `TerritoryChange(turn, tile, owner)` (this covers proposal reassignments and structural re-floods alike) and appends one
+  `PolitySample` per living polity (population plus every declared scalar, plugin ones included).
+  `HistoryCatalog.OwnershipAt(turn)` replays base + changes; at `SimulatedTurns` it equals `Ownership`.
+  `Respatialize` logs its re-flood at the head turn so that identity holds after a map edit. A `RunTurn` driven by hand
+  outside `Apply` drops the timeline rather than leave it describing a different catalog. `Reset` clears it.
+- **Schema 11:** base ownership, changes and samples are saved after the plugin state bag. Load validates base size and
+  owners, change order (by turn, then tile; only the head turn may restart, for a respatialize batch), tile and owner
+  ranges, sample order, polity ids, width (at most the declared scalar count: a scalar declared later reads as its
+  default) and finite values. Older files load with an empty timeline.
+- **Tests:** `HistoryTimelineTests` (replay equals the final map; each change is a real change; samples cover every turn for
+  every living polity with every scalar; a 12-turn run records the prefix of a 30-turn run's timeline; determinism and
+  byte round-trip; respatialize at the head; reset; no-history worlds; corrupt-timeline rejection). Determinism,
+  round-trip and prefix-stability suites are unchanged and green.
+- **Engine:** `WorldExports.ConfigureHistory(enabled, turnCount, turnYears, maxPolities)` (validated with `HistoryContext`'s
+  setters; a bad call keeps the previous config) applies to the next `Generate` with or without a plugin; off means off
+  (plugins are skipped, since registering a driver would switch history back on). `ResetHistoryConfig` restores Core's defaults.
+  `Generate`'s signature is unchanged, so the TS worker still works. New exports, all one typed array per call
+  (`WorldExports.History.cs`): `HistoryInfo` (sizes), `HistoryOwnershipAt(turn)` and `HistoryOwnershipBase` (one int per
+  tile), `HistoryTerritoryChanges` (triples), `HistoryPolities` + `HistoryPolityKeys`, `HistorySettlements` +
+  `HistorySettlementEndCauses`, `HistoryRoads`, `HistoryScars` + `HistoryScarKinds`, `HistoryEvents(start, count)` +
+  `HistoryEventText(start, count)` (paged; id, kind, turn, polity, tile, cause, importance, participants; plugin kind and
+  tags in the text page), `HistoryStrings`, `HistoryEventKindNames`, `HistoryPolitySeries`. Strides are public constants and
+  are pinned in `WorldExportsLayoutTests`; behaviour in `WorldExportsHistoryTests`.
+- **Not done:** the TypeScript panel and worker protocol. Settlement owners are end-state only (a captured settlement shows
+  its captor at every turn); a panel can colour by `HistoryOwnershipAt` at the settlement's tile instead, or a later step
+  can log settlement owner changes the same way.
+
+## M5 — resource-driven siting: works, catchments and what a place is worth (in progress: M5.1 done)
+
+**Goal.** Make *why here* matter. Founding, conquest and flight should follow what a polity's culture can exploit near a
+site: water, food land, herds, timber, fish, ore. Mines, quarries, fisheries and herd ranges become history features with
+their own founding and loss, and not only end-state decoration.
+
+**What already exists (and what history ignores).**
+- `DepositCatalog` has 14 `DepositType`s, including Uranium, Oil, Gas and Bauxite. `PolityFormStage` uses deposits only
+  as "a deposit on the tile" when it scores a capital.
+- `LandCapacityInfo` holds Arable, Pasture, Game, Timber and Fish, 0–255 per tile. History sums the first four into one
+  carrying-capacity number (`HistoryDemography.CapacitySum`), the same for every culture.
+- `CitySiteScorer` / `SettlementScoring` score water, river, fishing, biome, height and danger. They ignore capacity and
+  deposits. `SettleOperator.BestByHistory` then weights scars, ruins, routes and holy sites.
+- `WarOperator` attacks the defender's settlement *nearest* the attacker, whatever it is worth.
+- Refuges prefer "defensible or coastal" candidates. Defensibility is not modelled beyond that.
+- `CultureDef.Subsistence` is free text (`agrarian`, `artisan`) that nothing reads. `PolityForm.Horde` exists, and the
+  Khan operator drives it.
+- The local `MineInjector` places a mine for every deposit on the parent tile, whoever lives there.
+
+### Design
+
+1. **Subsistence profiles (data).** `Peoples/Data/Subsistence/*.yaml`, referenced by `CultureDef.Subsistence`, which
+   becomes a key validated at load:
+   - `yields`: weights for arable, pasture, game, timber and fish (for example, pastoral = pasture 1.0, arable 0.2).
+   - `exploits`: the deposit kinds and works this people works, each with a value (for example, artisan/dwarf = iron,
+     copper, tin, silver, gold, gems, plus quarry).
+   - `prefers`: terrain terms, namely defensibility, coast, river and road, each with a weight.
+   - `sedentary`: whether it founds towns or only ranges. This is the herding nomad, who never opens a mine.
+
+   Starter set: agrarian, pastoral, artisan, maritime, forager, highland (pasture + game + defensibility).
+2. **Resource definitions (data), with the fantasy gate.** `Data/Resources/*.yaml` maps each `DepositType` to an `era`
+   (`ancient` | `medieval` | `industrial`) and a base value. `HistoryContext.MaxResourceEra` defaults to `medieval`, so
+   Uranium, Oil, Gas and Bauxite stay in the catalog but no fantasy polity exploits them. Coal is `medieval` and low value.
+   Plugins can add resources and works kinds.
+3. **One site-value function (Core).** `SiteValue(polity, tile)` sums the profile's yields over the tile's catchment (a
+   radius of a few tiles) and adds:
+   - the value of exploitable deposits in reach;
+   - the profile's terrain terms: defensibility from slope, height and ruggedness; coast or lake; distance to a live road;
+   - the existing `SettlementScoring` water and danger terms.
+
+   It is pure and deterministic, it is computed per (culture profile, tile), and it is cached per turn the way
+   `_candidates` is today. Every caller uses it: capital formation, colonies, garrison and route posts, horde
+   sedentarization, and refuges.
+4. **Works as history entities.** A new `HistoryWork` record holds tile, kind (mine:<deposit>, quarry, fishery, lumber,
+   range), polity, settlement, founded turn, ended turn and end cause. A `WorksOperator` (or a pass in Settle) opens a work
+   when a settlement's catchment holds something its profile exploits. Opening is capped per settlement, and the work's
+   owner follows tile ownership. Events: `WorkOpened`, `WorkSeized` (the owner changed by conquest), `WorkAbandoned` (the
+   settlement ended, or the new owner's culture does not exploit it). Works are logged in the timeline and exported to the
+   editor. The local `MineInjector` reads active history works first and falls back to deposits.
+5. **Desire for conquest.** `WarOperator` picks a target by `SiteValue` to the *attacker's* profile minus a distance cost,
+   not by nearness alone. A rich mine town becomes a war aim, and a horde raids pasture and herds rather than mines.
+   Captures and razes carry the work with them, and the events record it ("seized the silver mines of X").
+6. **Flight to the hills.** Refuge siting weights defensibility against the threat: distance from the attacker's
+   territory, and height or ruggedness. A refuge cluster in high country that survives N turns can be the seed of a
+   rebellion. When it is, the successor switches its `Polity.Subsistence` to *highland*, the profile that best fits its
+   land, so "highlanders" emerge from history rather than being placed by hand.
+7. **Herding land.** For pastoral profiles, settlements claim catchment tiles as `LandActivity.Grazing`, and hordes' ranges
+   are the polity's high-pasture tiles. Land-use resolution reads these, so the map shows herd ranges where herders lived.
+
+### Steps
+
+- **M5.1 Data:** the subsistence and resource schemas (including `lifetimeTurns`), the loaders, validation, the era gate
+  and the `FolkDef.Subsistence` allow-list. `CultureDef.Subsistence` becomes a checked key. No behaviour change.
+- **M5.2 `SiteValue`:** the defensibility layer stage, the catchment (half the spacing, with the neighbour floor), and the
+  function, with tests: a pastoral profile ranks steppe above farmland, an artisan profile ranks an ore hill above a
+  plain, and the era gate hides uranium. Capital formation and colony siting switch to it. Goldens are re-baselined once.
+- **M5.3 Works:** the entity, operator, events (including exhaustion), the mining-town founding source and
+  `SettlementRole.Works`, a schema bump, timeline logging, round-trip and validation, and engine exports. When the
+  operator loads the store, it runs `ResourceDeposits.Problems(store)`, counts a bad deposit name the way
+  `PeoplesFallbacks` counts a failed load, and skips that resource. A typo in an override must not silently become a
+  resource that never opens.
+- **M5.4 Conquest by value:** war target choice, works following captures, events.
+- **M5.5 Refuge defensibility and highland successors:** add `Polity.Subsistence` (a schema bump), and successors choose
+  the best-fitting profile their folk allows. It also does two checks that M5.1 left open:
+  - **Pairing:** run `PeoplesStore.PairingProblem` for every `HistoryContext.Peoples` pair when polities first take a
+    profile, and reject or fall back on a pair the folk doesn't allow. `CultureSeedStage` never loads the store, so the
+    check belongs where the profile is first read.
+  - **Drift:** a `CultureDelta.Subsistence` drift must name a loaded profile that the folk allows. Today
+    `Ethnos.Resolve` copies it as free text.
+- **M5.6 Grazing ranges into land use,** and the local `MineInjector` reading history works.
+- **Exit:** corpus tuning on 25 worlds. Expect dwarf polities to cluster on ore and highlands, herders on steppe, maritime
+  peoples on fish coasts, and the share of wars aimed at works to be visible but not dominant.
+
+### Decisions (settled 2026-10-19)
+
+- **Decided: Core or plugin.** Core owns the resource data, `SiteValue`, works and the era gate, and exposes them read-only
+  to plugins (`TurnView` accessors, a public works list, events). Plugins may register their own resource or works kinds as
+  data. Core never reads plugin state, and it gives plugins no hook into its siting math. Output, yields and trade stay in
+  the economy plugin, which reads Core's works.
+- **Decided: catchment radius.** The catchment is an angular radius of `MinSpacingDegrees / 2`, so it does not depend on
+  world resolution and neighbouring catchments barely overlap. It never covers less than the tile plus its direct
+  neighbours, so coarse worlds still see past their own tile.
+- **Decided: works and settlements.** A work is a separate `HistoryWork` entity owned by a settlement. It has no population
+  and does not count toward the settlement cap. A new founding source in `FoundingSources` founds a mining town (a
+  settlement with the new `SettlementRole.Works`) when a work's value is high and its polity's nearest settlement is
+  farther than the catchment. That town then owns the work.
+- **Decided: exhaustion.** A resource definition may set `lifetimeTurns`, which `DepositSize` scales; a resource without it
+  never runs out, and neither do quarries, fisheries or ranges. A spent work ends with `WorkAbandoned: exhausted`. The
+  history records the deposit as spent, and the planet `DepositCatalog` is not changed. A mining town that loses its work
+  declines through the existing tier hysteresis, and its people go to the displaced pool.
+- **Decided: defensibility.** A new derived layer stage (like `LandCapacityStage`) stores one byte per tile, built from
+  height, slope, local relief across neighbours, and water on several sides (peninsula, island, river bend). `SiteValue`,
+  plugins, the editor (as an overlay) and the local-scale tools all read that same layer.
+- **Decided: highland successors.** Add `Polity.Subsistence`, a profile key that defaults to the culture's profile. A
+  successor, rebel or secession polity takes whichever allowed profile best fits its core land (by `SiteValue` over its
+  territory), so mountain refuges give *highland*, steppe gives *pastoral* and coasts give *maritime*. The polity keeps its
+  culture's names and values, and the naming code is not touched. It is saved with the polity, so this needs a schema
+  bump. (`CultureOverlay` is conquest's naming overlay and is not reused.)
+- **Decided: folk limits.** `FolkDef.Subsistence` lists the profiles a folk may take; empty means any (for example, dwarf
+  = artisan, highland). The loader checks that every listed profile exists. Cultures don't name a folk, so whether a
+  culture's default profile is in its folk's list is checked per (folk, culture) pair with
+  `PeoplesStore.PairingProblem`: at seeding, and when a successor chooses a profile (M5.5). Successors choose only within
+  the list. Folks add no exploits of their own; what a people works comes only from its profile.
+- **Decided: era gate.** M5 uses a single world-wide `HistoryContext.MaxResourceEra`, defaulting to `medieval`. Every
+  resource definition already carries its `era`, so eras that advance by turn, or a per-polity technology level that
+  spreads along roads, can come later as their own milestone without migrating the data.
+
+### M5.1 progress: subsistence and resource data (done, no behaviour change)
+
+- **Where the data lives.** The new tables are part of `PeoplesStore`, in `Peoples/Data/Subsistence/*.yaml`
+  (`SubsistenceDef`) and `Peoples/Data/Resources/*.yaml` (`ResourceDef`), not in a separate store. That way the
+  cross-file checks (culture → profile, folk → profile, profile → resource) run in the one post-load pass. The override
+  directory also replaces a profile or resource by key, just as it does for folks and cultures, and one strict `Load` or
+  `LoadLenient` reports every problem together. `LoadOne` now routes all four keyed folders through a single generic
+  reader.
+- **Profiles.** Six profiles ship: agrarian, pastoral, artisan, maritime, forager and highland. Each carries:
+  - `Sedentary`;
+  - yield weights on the `LandCapacityInfo` channels, 0–10;
+  - terrain weights for defensibility, coast, river and road, −10–10;
+  - an `Exploits` list of resource keys with values, each key once.
+
+  Pastoral works only `range` and `salt`, so nomads don't mine.
+- **Resources.** One resource ships per `DepositType` (14), plus four surface works: quarry, lumber (timber), fishery
+  (fish) and range (pasture). Each carries:
+  - `Era`: ancient, medieval or industrial. Uranium, oil, gas and bauxite are industrial; coal is medieval and cheap.
+  - `Value`, 0–100.
+  - `LifetimeTurns`, where 0 means it never runs out. The loader rejects it on anything but a deposit, and rejects a
+    resource that sets both a deposit and a yield.
+- **Deposit binding sits in History.** Peoples sits below Lithosphere in the `ArchitectureTests` layering, so
+  `ResourceDef.Deposit` stays a name. Peoples checks only that no two resources claim the same name.
+  `History.ResourceDeposits` binds the name to a `DepositType` (`TryGetDeposit`) and lists the names that don't bind
+  (`Problems`). This avoids adding a layering waiver. M5.3 calls it when works open.
+- **Era gate.** `ResourceEra { Ancient, Medieval, Industrial }` and `HistoryContext.MaxResourceEra` (default `Medieval`,
+  validated) are in place. `PeoplesStore.ExploitsOf(profile, maxEra)` is the gate. Nothing reads the setting yet.
+- **Folk allow-list.** `FolkDef.Subsistence` is the allow-list, where empty means any. Dwarf is artisan and highland;
+  human is empty. `CultureDef.Subsistence` is now a checked key.
+- **Pairing check (deviation from the decision above).** Cultures don't name a folk, so the loader can't reject a
+  culture whose default profile is outside its folk's list. Instead:
+  - `PeoplesStore.PairingProblem(folk, culture)` and `AllowsSubsistence(folk, profile)` check each pair.
+  - The default roster passes.
+  - `CultureSeedStage` does not call it yet, because seeding never loads the store. M5.5 wires it in where polities pick
+    a profile (see the M5.5 step).
+- **Not checked yet.** Runtime `CultureDelta.Subsistence` drift still writes free text. M5.5 adds the check, and M5.3
+  adds the deposit-name check to the works operator.
+- **Tests:** `PeoplesResourceTests`, 10 tests.
+- **Results:** Core 893 passing (883 + 10), Engine 68 passing.
+
+### M5.7 Races as founding peoples, form affinity and pinned founders (editor-driven)
+
+- **Data.** Ten more folks (elf_high, elf_wood, elf_dark, orc, halfling, gnome, lizardfolk, dragonfolk, catfolk, dogfolk) and one
+  culture each (`elven_high`, `elven_wood`, `elven_dark`, `orcish_horde`, `halfling_hearth`, `gnomish_burrow`, `lizardfolk_marsh`,
+  `dragonfolk_aerie`, `catfolk_prowl`, `dogfolk_pack`). Each folk's allow-list and each culture's default profile pass
+  `PairingProblem`. Folk keys equal the name-table race keys, so a realm's places are named in its folk's tongue. Angels, demons
+  and elementals stay name-only. `human_common` and `dwarven_clan` are unchanged, so default worlds are byte-identical.
+- **Form affinity.** `CultureDef.FormAffinity` (form name -> weight 0-100). `History.FormAffinity` binds the names to
+  `PolityForm` (Peoples sits below History) and `Problems(store)` reports unknown names. `PolityFormStage` draws a polity's
+  form from the weights, multiplying the land's own pick by `LandBonus` (3); no affinity = the land decides, from a separate RNG
+  stream, so cultures without one draw exactly what they did.
+- **Founders.** `HistoryContext.Founders`: founder i becomes polity i, with an optional folk, culture, form and capital
+  (latitude/longitude, snapped to the nearest free land tile and exempt from the spacing rule). A folk alone takes the roster's
+  culture for it, a culture alone the roster's folk; either with no roster entry is rejected, as are more founders than
+  `MaxPolities`. Not persisted: the polities they produce are.
+- **Engine.** `ConfigureHistoryPeoples`, `ConfigureHistoryFounders`, `HistoryPeoples` (the pairs the wizard offers, with
+  affinity) and `HistoryFormNames`; `ResetHistoryConfig` clears roster and founders.
+- **Editor.** The World tab's *Realms* section sets history length, realm count, the peoples roster and per-realm pins.
+  Choosing a people adds a name style of its race so its places are named in that tongue. `DocSettings.history` records it, so
+  Apply physics regenerates the same history.
+- **Tests:** Core 903 (`HistoryFoundersTests`), Engine 73.
+- **Not done:** a modal step-by-step "new world" wizard (the section is the same choices in the sidebar), picking a capital by
+  clicking the map, and per-people affinity overrides (the seeds list is persisted, so that needs a schema bump).

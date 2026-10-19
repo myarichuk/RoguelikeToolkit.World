@@ -12,7 +12,8 @@ export function TopBar() {
     <header className={styles.topbar}>
       <div className={styles.brand}>World Map Editor</div>
       <div className={styles.menu} role="group" aria-label="File">
-        <button onClick={vm.newBlank} title="Blank ocean to paint on">New</button>
+        <button onClick={() => vms.wizard.show()} title="Plan a planet, its lands and peoples, then create it">New world…</button>
+        <button onClick={vm.newBlank} title="Blank ocean to paint on">Blank</button>
         <button onClick={() => void vm.open()} title="Ctrl+O">Open…</button>
         <button className={dirty ? styles.dirty : ''} onClick={() => void vm.save()} title="Ctrl+S">Save{dirty && <span className={styles.badge}>Unsaved</span>}</button>
         <ExportMenu />

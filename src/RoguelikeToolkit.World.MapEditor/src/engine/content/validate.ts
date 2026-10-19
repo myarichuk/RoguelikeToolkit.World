@@ -61,6 +61,13 @@ export function validatePack(raw: unknown): { pack?: ContentPack; errors: string
     if (arr(r.assets, `${p}.assets`)) r.assets.forEach((a, j) => str(a, `${p}.assets[${j}]`));
     else errors.push(`${p}.assets: required`);
     if (typeof r.spacing === 'number' && r.spacing < 1) errors.push(`${p}.spacing: must be >= 1 map unit`);
+    if (r.layout !== undefined && r.layout !== 'grid' && r.layout !== 'relief') errors.push(`${p}.layout: "grid" or "relief"`);
+    num(r.ridge, `${p}.ridge`, true); num(r.clump, `${p}.clump`, true);
+    if (r.tiers !== undefined && arr(r.tiers, `${p}.tiers`)) r.tiers.forEach((t, j) => {
+      if (!obj(t, `${p}.tiers[${j}]`)) return;
+      num(t.above, `${p}.tiers[${j}].above`);
+      if (arr(t.assets, `${p}.tiers[${j}].assets`)) t.assets.forEach((a, k) => str(a, `${p}.tiers[${j}].assets[${k}]`));
+    });
   });
   if (raw.fonts !== undefined && obj(raw.fonts, 'fonts')) for (const [k, v] of Object.entries(raw.fonts)) str(v, `fonts.${k}`);
   return errors.length ? { errors } : { pack: raw as unknown as ContentPack, errors };

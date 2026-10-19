@@ -1,0 +1,22 @@
+Key: lizardfolk_marsh
+DisplayName: "Lizardfolk · Marsh"
+NamingTable: lizardfolk
+Subsistence: forager
+LineageDefault: Matrilineal
+Xenophobia: 60
+HierarchyClaim: 40
+Collectivism: 90
+Honor: 50
+FaithForm: animism
+MixedNaming: Dominant
+DominantShareThreshold: 0.75
+OpennessOffset: 0
+ConscientiousnessOffset: 0
+ExtraversionOffset: 0
+AgreeablenessOffset: 0
+NeuroticismOffset: 0
+FormAffinity:
+  LooseAssociation: 60
+  Horde: 20
+  Kingdom: 15
+  MerchantRepublic: 5

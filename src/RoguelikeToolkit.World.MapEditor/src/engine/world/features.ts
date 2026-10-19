@@ -10,6 +10,8 @@ import {
   type DepositType, type FeatureKind, type FeatureSet, type MapFeature, type NameStyle, type RiverGeometry,
 } from './protocol';
 
+import { historyPicks, historySites, type HistoryInput } from './historySettlements';
+
 export interface CatalogInput {
   seed: number;
   vectors: Float64Array;
@@ -25,12 +27,19 @@ export interface CatalogInput {
   waterBodies: Int32Array;
   ranges: Int32Array;
   deposits: Int32Array;
-  /** (tile, score*1000) pairs, best first. */
   /** Per-tile count of raster pixels reading as water. When present, lakes covering no water pixel are dropped as phantoms. */
   waterPixels?: ArrayLike<number>;
+  /** (tile, score*1000) pairs, best first. */
   citySites: Int32Array;
+  /**
+   * The map's elevation raster (water below 0), when there is one: river ends are clipped to the
+   * drawn shore instead of the tile chain's guess at it.
+   */
+  elevation?: { data: ArrayLike<number>; width: number; height: number };
   /** One comma-joined list of scoring terms per site, same order as `citySites` pairs. */
   citySiteReasons: string[];
+  /** When present and not empty, history is the source of truth for inhabited places: its settlements replace the site search. */
+  history?: HistoryInput;
   styles: NameStyle[];
 }
 
@@ -171,6 +180,16 @@ export function extractFeatures(c: CatalogInput): FeatureSet {
     list.push(d);
   }
 
+  // A realm names its places in its own folk's tongue: the polity's founding folk picks among the chosen name styles of that race.
+  const folkOf = new Map<number, string>();
+  if (c.history?.polityIds && c.history.polityFolk) for (let i = 0; i < c.history.polityIds.length; i++) folkOf.set(c.history.polityIds[i], c.history.polityFolk[i]);
+  const styleOfPolity = (polity: number): number | undefined => {
+    const folk = folkOf.get(polity);
+    if (!folk) return undefined;
+    const of: number[] = [];
+    c.styles.forEach((s, i) => { if (s.race === folk) of.push(i); });
+    return of.length ? of[hash2(c.seed, 0x5017 + polity) % of.length] : undefined;
+  };
   const styleOf = (t: number) => styleIndexForPlate(c.seed, c.tilePlate[t] & 0xffff, c.styles.length);
   const near = (t: number, pred: (u: number) => boolean) => {
     if (pred(t)) return true;
@@ -223,8 +242,8 @@ export function extractFeatures(c: CatalogInput): FeatureSet {
   };
 
   const features: MapFeature[] = [];
-  const add = (key: string, kind: FeatureKind, anchor: number, shape: Shape, weight: number, details: [string, string][], extra: Partial<MapFeature> = {}) => {
-    const style = styleOf(anchor);
+  const add = (key: string, kind: FeatureKind, anchor: number, shape: Shape, weight: number, details: [string, string][], extra: Partial<MapFeature> = {}, polity = -1) => {
+    const style = styleOfPolity(polity) ?? styleOf(anchor);
     const s = c.styles[style] ?? { race: 'human', culture: 'fantasy_common', label: 'Common' };
     const facts: [string, string][] = [...details];
     if (kind !== 'deposit') facts.push(['Culture', s.label]);
@@ -237,42 +256,100 @@ export function extractFeatures(c: CatalogInput): FeatureSet {
   };
 
   // --- Rivers ---------------------------------------------------------------------------------
+  // Lake tiles are ponded land (height >= 0), so `isLand` alone would read a river ending in a lake
+  // as ending on dry ground: a confluence, and the river would run on to the lake's middle.
+  const lakeTile = new Uint8Array(n);
+  for (const b of records(c.waterBodies, 2)) if (b.head[1] === WaterKind.Lake) for (const t of b.items) lakeTile[t] = 1;
+  const isWater = (t: number) => !isLand(t) || lakeTile[t] === 1;
+  const raster = c.elevation;
+  const wetAt = raster
+    ? (x: number, y: number) => {
+      const W = raster.width, xi = ((Math.floor(x) % W) + W) % W, yi = Math.floor(y);
+      return yi >= 0 && yi < raster.height && raster.data[yi * W + xi] < 0;
+    }
+    : null;
   let minFlow = Infinity;
   for (const r of records(c.rivers, 3)) for (const t of r.items) if (c.flow[t] > 0) minFlow = Math.min(minFlow, c.flow[t]);
-  const rivers: RiverGeometry[] = [];
-  for (const r of records(c.rivers, 3)) {
-    const [id, terminal] = r.head;
-    const path = Array.from(r.items).filter(inMap);
-    if (path.length < 3) continue;
-    const rng = mulberry32(hash2(c.seed, 0x5a11 + id));
+  const widthAt = (t: number) => Math.min(5, 0.8 + 0.7 * Math.log(1 + c.flow[t] / minFlow)); // drawn map units: headwaters ~0.8 mu (a pen line: all bank ink), great rivers ~3.5 mu
+  const reaches = [...records(c.rivers, 3)].map((r) => ({
+    id: r.head[0], terminal: r.head[1], items: r.items, path: Array.from(r.items).filter(inMap),
+    // A reach ending on dry land without dying in a sink joins a parent reach at a confluence
+    // (Core reports the parent's terminal and stops the path one tile short of the parent). The
+    // true tail decides: the in-map path may be cut short by the Mercator edge.
+    tributary: r.head[1] !== RIVER_SINK && !isWater(r.items[r.items.length - 1]),
+    points: null as Float32Array | null,
+  }));
+  const ownerOf = new Int32Array(n).fill(-1);
+  reaches.forEach((r, i) => { for (const t of r.path) if (ownerOf[t] < 0) ownerOf[t] = i; });
+  // Parents before tributaries (Core lists a tributary after the reach it was trimmed against), so a
+  // tributary can end on its parent's drawn line instead of a tile short of it.
+  const order = reaches.map((_, i) => i).sort((a, b) => Number(reaches[a].tributary) - Number(reaches[b].tributary) || a - b);
+  for (const ri of order) {
+    const r = reaches[ri], path = r.path;
+    if (path.length < 2 || (path.length < 3 && !r.tributary)) continue;
+    const rng = mulberry32(hash2(c.seed, 0x5a11 + r.id));
     const pts: number[] = [];
-    let prevX = xy[path[0] * 2], lengthKm = 0;
+    let prevX = xy[path[0] * 2];
     for (let i = 0; i < path.length; i++) {
       const t = path[i];
-      if (i > 0) lengthKm += greatCircleKm(path[i - 1], t);
       let x = xy[t * 2];
       x = prevX + dxWrap(prevX, x); prevX = x;
       let y = xy[t * 2 + 1];
-      const w = Math.min(6, 1.6 + 0.9 * Math.log(1 + c.flow[t] / minFlow)); // drawn map units: headwaters ~1.6 mu, great rivers ~4 mu (the river shader fades sub-pixel lines)
-      // The terminal tile is open water: stop halfway, at the coast.
-      if (i === path.length - 1 && !isLand(t) && pts.length >= 3) {
+      // The terminal tile is open water: stop halfway, at the shore (the raster clip below refines it).
+      if (i === path.length - 1 && isWater(t) && pts.length >= 3) {
         x = (x + pts[pts.length - 3]) / 2; y = (y + pts[pts.length - 2]) / 2;
       }
-      pts.push(x, y, w);
+      pts.push(x, y, widthAt(t));
     }
-    rivers.push({ points: meander(pts, rng) });
-    // A reach ending on dry land without dying in a sink joins a parent reach at a confluence
-    // (Core reports the parent's terminal): it is a tributary, not a river mouth. Short ones are
-    // headwater trickles starting and ending in the hills, so they are drawn but not named.
-    // The true tail decides: the in-map path may be cut short by the Mercator edge.
-    const tributary = terminal !== RIVER_SINK && c.heights[r.items[r.items.length - 1]] >= 0;
-    if (tributary && path.length < MIN_NAMED_CONFLUENCE_TILES) continue;
+    let joined = false;
+    if (r.tributary && path[path.length - 1] === r.items[r.items.length - 1]) {
+      const join = confluence(path[path.length - 1], ri, pts[pts.length - 3], pts[pts.length - 2]);
+      if (join) { pts.push(prevX + dxWrap(prevX, join.x), join.y, Math.min(pts[pts.length - 1], join.w * 0.8)); joined = true; }
+    }
+    if (pts.length < 9) continue;
+    let line = meander(pts, rng, joined);
+    if (wetAt) line = clipToLand(line, wetAt, !r.tributary);
+    line = taperHead(line);
+    r.points = r.tributary || r.terminal === RIVER_SINK ? line : flareMouth(line);
+  }
+
+  /**
+   * Where a tributary ending at `tail` (drawn end at tx, ty) meets its parent's drawn line: the
+   * parent reach on the lowest tile next to it, at the drawn point nearest the tributary's end, so
+   * it runs straight in instead of hooking round to the parent tile's center.
+   */
+  function confluence(tail: number, self: number, tx: number, ty: number): { x: number; y: number; w: number } | null {
+    let best = -1;
+    for (let k = adj.start[tail]; k < adj.start[tail + 1]; k++) {
+      const u = adj.list[k], o = ownerOf[u];
+      if (o < 0 || o === self || !reaches[o].points) continue;
+      if (best < 0 || c.heights[u] < c.heights[best]) best = u;
+    }
+    if (best < 0) return null;
+    const p = reaches[ownerOf[best]].points!;
+    let bi = 0, bd = Infinity;
+    for (let i = 0; i < p.length; i += 3) {
+      const d = dxWrap(tx, p[i]) ** 2 + (p[i + 1] - ty) ** 2;
+      if (d < bd) { bd = d; bi = i; }
+    }
+    return { x: p[bi], y: p[bi + 1], w: p[bi + 2] };
+  }
+
+  const rivers: RiverGeometry[] = [];
+  for (const r of reaches) {
+    if (!r.points) continue;
+    rivers.push({ points: r.points });
+    const path = r.path;
+    // Short tributaries are headwater trickles starting and ending in the hills: drawn but not named.
+    if (r.tributary && path.length < MIN_NAMED_CONFLUENCE_TILES) continue;
+    let lengthKm = 0;
+    for (let i = 1; i < path.length; i++) lengthKm += greatCircleKm(path[i - 1], path[i]);
     const mid = path[Math.floor(path.length * 0.55)];
     const mouth = path[path.length - 1];
-    add(`river:${id}`, 'river', mid, { x: xy[mid * 2], y: xy[mid * 2 + 1], angle: 0, extent: 0 }, path.length, [
+    add(`river:${r.id}`, 'river', mid, { x: xy[mid * 2], y: xy[mid * 2 + 1], angle: 0, extent: 0 }, path.length, [
       ['Length', `${fmtInt(lengthKm * 1.25)} km`], // ×1.25: tile chains cut meanders short
       ['Discharge at mouth', (c.flow[mouth] / minFlow).toFixed(0) + ' × source'],
-      ['Flows into', tributary ? 'another river' : (TERMINAL[terminal] ?? 'unknown')],
+      ['Flows into', r.tributary ? 'another river' : (TERMINAL[r.terminal] ?? 'unknown')],
       ['Source elevation', (c.heights[path[0]] as number).toFixed(2)],
     ], { river: rivers.length - 1, tiles: Int32Array.from(path) });
   }
@@ -307,7 +384,8 @@ export function extractFeatures(c: CatalogInput): FeatureSet {
   // --- Ranges and valleys ---------------------------------------------------------------------
   for (const r of records(c.ranges, 2)) {
     const [id, kind] = r.head;
-    const tiles = Array.from(r.items).filter(inMap);
+    // Core's ranges and valleys may run over lakes and inlets: the named area is the land part.
+    const tiles = Array.from(r.items).filter((t) => inMap(t) && isLand(t) && !lakeTiles.has(t));
     if (tiles.length < 4 || kind === RangeKind.Playa) continue;
     const anchor = central(tiles, xy);
     const facts = areaFacts(tiles, false);
@@ -334,7 +412,7 @@ export function extractFeatures(c: CatalogInput): FeatureSet {
     { kind: 'town', count: 42, spacing: 0.11 },
     { kind: 'village', count: 90, spacing: 0.065 },
   ];
-  const picked: { tile: number; kind: FeatureKind; score: number; reasons: string }[] = [];
+  const picked: { tile: number; kind: FeatureKind; score: number; reasons: string; polity?: number }[] = [];
   const far = (t: number, rad: number) => {
     const cos = Math.cos(rad);
     for (const p of picked) {
@@ -343,7 +421,16 @@ export function extractFeatures(c: CatalogInput): FeatureSet {
     }
     return true;
   };
-  for (const tier of tiers) {
+  // History, when the world has one, decides who lives where: its settlements are the places, the site search is not consulted.
+  const fromHistory = !!c.history && c.history.settlements.length > 0;
+  const historyFacts = new Map<number, [string, string][]>();
+  if (fromHistory) {
+    for (const h of historyPicks(c.history!, (t) => inMap(t) && !lakeTiles.has(t))) {
+      picked.push({ tile: h.tile, kind: h.kind, score: NaN, reasons: '', polity: h.polity });
+      historyFacts.set(h.tile, h.facts);
+    }
+  }
+  for (const tier of fromHistory ? [] : tiers) {
     let placed = 0;
     for (let i = 0; i < c.citySites.length && placed < tier.count; i += 2) {
       const t = c.citySites[i];
@@ -362,7 +449,7 @@ export function extractFeatures(c: CatalogInput): FeatureSet {
   }
   const hasCapital = new Set<number>();
   for (const p of picked) {
-    if (p.kind !== 'city' || hasCapital.has(landmass[p.tile])) continue;
+    if (fromHistory || p.kind !== 'city' || hasCapital.has(landmass[p.tile])) continue;
     hasCapital.add(landmass[p.tile]); p.kind = 'capital';
   }
   const tierWeight: Partial<Record<FeatureKind, number>> = { capital: 4, city: 3, town: 2, village: 1 };
@@ -378,12 +465,25 @@ export function extractFeatures(c: CatalogInput): FeatureSet {
     for (const d of depositsAt.get(t) ?? []) res.add(DEPOSIT_LABEL[d.type]);
     add(`settlement:${t}`, p.kind, t, shape, tierWeight[p.kind] ?? 1, [
       ['Rank', tierName[p.kind] ?? p.kind],
-      ['Site score', p.score.toFixed(2)],
+      ...(fromHistory ? historyFacts.get(t) ?? [] : [['Site score', p.score.toFixed(2)] as [string, string]]),
       ...(p.reasons ? [['Site factors', p.reasons] as [string, string]] : []),
       ['Water access', access],
       ...pointFacts(t),
       ...(res.size ? [['Nearby resources', [...res].join(', ')] as [string, string]] : []),
-    ]);
+    ], {}, p.polity ?? -1);
+  }
+
+  // --- What history left: ruins, holy sites, battlefields ------------------------------------------
+  if (fromHistory) {
+    const settled = new Set(picked.map((p) => p.tile));
+    const weight: Partial<Record<FeatureKind, number>> = { shrine: 1.5, ruin: 1, battlefield: 0.8 };
+    const title: Partial<Record<FeatureKind, string>> = { shrine: 'Holy site', ruin: 'Ruin', battlefield: 'Battlefield' };
+    for (const h of historySites(c.history!, settled, (t) => inMap(t) && isLand(t) && !lakeTiles.has(t))) {
+      const t = h.tile, rng = mulberry32(hash2(c.seed, 0x6800 + t));
+      add(`site:${t}`, h.kind, t, { x: xy[t * 2] + (rng() - 0.5) * 4, y: xy[t * 2 + 1] + (rng() - 0.5) * 4, angle: 0, extent: 0 }, weight[h.kind] ?? 1, [
+        ['Rank', title[h.kind] ?? h.kind], ...h.facts, ...pointFacts(t),
+      ], {}, h.polity);
+    }
   }
 
   // --- Deposits: point features, filterable by type ---------------------------------------------
@@ -401,7 +501,7 @@ export function extractFeatures(c: CatalogInput): FeatureSet {
     features[features.length - 1].name = DEPOSIT_LABEL[type];
   }
 
-  return { features, rivers };
+  return { features, rivers, roads: [] };
 }
 
 function hashKey(key: string): number {
@@ -492,9 +592,9 @@ export function oceanBasins(body: ArrayLike<number>, adj: Adjacency, depth: Int3
 
 /**
  * Turns a tile-center chain into a drawn river: midpoints pushed sideways (meanders, alternating
- * with noise), then Chaikin smoothing. Widths interpolate along; the source tapers to a hairline.
+ * with noise), then Chaikin smoothing. Widths interpolate along; both ends stay where they were.
  */
-export function meander(pts: number[], rng: () => number): Float32Array {
+export function meander(pts: number[], rng: () => number, calmEnd = false): Float32Array {
   const out: number[] = [];
   const m = pts.length / 3;
   for (let i = 0; i < m; i++) {
@@ -503,7 +603,8 @@ export function meander(pts: number[], rng: () => number): Float32Array {
     if (i === m - 1) break;
     const nx = pts[i * 3 + 3], ny = pts[i * 3 + 4], nw = pts[i * 3 + 5];
     const dx = nx - x, dy = ny - y;
-    const side = (i % 2 === 0 ? 1 : -1) * (0.12 + 0.2 * rng());
+    // A calm end (a tributary's run into its parent) stays straight, so it meets the parent cleanly.
+    const side = calmEnd && i === m - 2 ? 0 : (i % 2 === 0 ? 1 : -1) * (0.12 + 0.2 * rng());
     out.push((x + nx) / 2 - dy * side, (y + ny) / 2 + dx * side, (w + nw) / 2);
   }
   let cur = out;
@@ -518,7 +619,49 @@ export function meander(pts: number[], rng: () => number): Float32Array {
     next.push(cur[cur.length - 3], cur[cur.length - 2], cur[cur.length - 1]);
     cur = next;
   }
-  const total = cur.length / 3;
-  for (let i = 0; i < Math.min(total, 12); i++) cur[i * 3 + 2] *= 0.3 + 0.7 * (i / 12);
   return new Float32Array(cur);
+}
+
+/** Arc length (map units) over which a river's source widens from a hairline to its channel. */
+const HEAD_TAPER_MU = 9;
+
+/** Narrows the first `HEAD_TAPER_MU` of a drawn river (x, y, w triples) to a hairline at its source. */
+export function taperHead(p: Float32Array): Float32Array {
+  let s = 0;
+  for (let i = 0; i < p.length; i += 3) {
+    if (i) s += Math.hypot(p[i] - p[i - 3], p[i + 1] - p[i - 2]);
+    if (s >= HEAD_TAPER_MU) break;
+    const t = s / HEAD_TAPER_MU;
+    p[i + 2] *= 0.2 + 0.8 * t * (2 - t);
+  }
+  return p;
+}
+
+/** Arc length (map units) over which a river widens into its mouth. */
+const MOUTH_FLARE_MU = 8;
+
+/** Widens the last `MOUTH_FLARE_MU` of a river (x, y, w triples) by up to half, as it opens into the sea or a lake. */
+export function flareMouth(p: Float32Array): Float32Array {
+  let s = 0;
+  for (let i = p.length - 3; i >= 0; i -= 3) {
+    if (i < p.length - 3) s += Math.hypot(p[i] - p[i + 3], p[i + 1] - p[i + 4]);
+    if (s >= MOUTH_FLARE_MU) break;
+    const t = 1 - s / MOUTH_FLARE_MU;
+    p[i + 2] *= 1 + 0.5 * t * t;
+  }
+  return p;
+}
+
+/**
+ * Trims a drawn river (x, y, w triples) to the land it crosses: a run of points in water at the
+ * mouth (when `mouth`) or at the source (a lake's outflow) is cut to the first point past the shore,
+ * so the ribbon meets the coastline instead of running on into the lake or sea.
+ */
+export function clipToLand(p: Float32Array, wet: (x: number, y: number) => boolean, mouth: boolean): Float32Array {
+  const m = p.length / 3;
+  let a = 0, b = m - 1;
+  while (a < m - 1 && wet(p[a * 3], p[a * 3 + 1])) a++;
+  if (mouth) while (b > a && wet(p[b * 3], p[b * 3 + 1])) b--;
+  a = Math.max(0, a - 1); b = Math.min(m - 1, b + 1);
+  return a === 0 && b === m - 1 ? p : p.slice(a * 3, (b + 1) * 3);
 }

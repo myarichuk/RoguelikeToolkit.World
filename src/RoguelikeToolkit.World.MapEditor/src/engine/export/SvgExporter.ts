@@ -2,8 +2,9 @@ import { MAP_H, MAP_W, lonLatToMap } from '../core/geo';
 import type { AssetLibrary } from '../content/AssetLibrary';
 import type { Theme } from '../content/types';
 import type { MapDocument } from '../doc/MapDocument';
-import type { LabelEntity, RiverEntity, StampEntity } from '../doc/types';
+import type { LabelEntity, RiverEntity, RoadEntity, StampEntity } from '../doc/types';
 import { DEPOSIT_MARKERS } from '../render/Overlay';
+import { RIVER_INK_MU } from '../render/RiverLayer';
 import type { TerrainPipeline } from '../render/TerrainPipeline';
 import type { ViewSettings } from '../render/ViewSettings';
 import type { FontLibrary } from '../text/FontLibrary';
@@ -16,6 +17,7 @@ export interface SvgExportOptions {
   landTexture: boolean;
   ripples: boolean;
   rivers: boolean;
+  roads: boolean;
   stamps: boolean;
   labels: boolean;
   resources: boolean;
@@ -25,7 +27,7 @@ export interface SvgExportOptions {
 }
 
 export const svgOptionsFromView = (v: ViewSettings): SvgExportOptions => ({
-  landTexture: true, ripples: v.layers.ripples, rivers: v.layers.rivers, stamps: v.layers.stamps, labels: v.layers.labels,
+  landTexture: true, ripples: v.layers.ripples, rivers: v.layers.rivers, roads: v.layers.roads, stamps: v.layers.stamps, labels: v.layers.labels,
   resources: v.layers.resources && v.kinds.deposit, graticule: v.layers.graticule, tolerance: 0.35,
 });
 
@@ -101,8 +103,25 @@ export async function exportSvg(input: SvgExportInput, o: SvgExportOptions): Pro
   });
   if (o.rivers) {
     out.layer('Rivers', () => {
-      const d = [...doc.rivers.all()].map((r) => riverPath(r, m.riverWidth)).join('');
-      if (d) out.raw(`<path d="${d}" fill="${m.river}" fill-rule="nonzero"/>`);
+      // As on screen: every ribbon in bank ink, then every channel's water inset by the banks, so confluences open into one channel.
+      const ink = m.riverInkWidth ?? RIVER_INK_MU;
+      const banks = [...doc.rivers.all()].map((r) => riverPath(r, m.riverWidth)).join('');
+      const water = [...doc.rivers.all()].map((r) => riverPath(r, m.riverWidth, ink)).join('');
+      if (banks) out.raw(`<path d="${banks}" fill="${m.riverInk ?? m.landInk}" fill-rule="nonzero"/>`);
+      if (water) out.raw(`<path d="${water}" fill="${m.river}" fill-rule="nonzero"/>`);
+    });
+  }
+  if (o.roads) {
+    out.layer('Roads', () => {
+      // As on screen: trunks solid, spurs dashed, severed ones dotted, all in the road ink.
+      const style: Record<string, { dash: string; opacity: number }> = { trunk: { dash: '', opacity: 1 }, spur: { dash: '4 2', opacity: 1 }, severed: { dash: '1 3', opacity: 0.7 } };
+      for (const kind of ['trunk', 'spur', 'severed']) {
+        const list = [...doc.roads.all()].filter((r) => (r.severed >= 0 ? 'severed' : r.kind === 'trunk' ? 'trunk' : 'spur') === kind);
+        const d = list.map(roadPath).join('');
+        if (!d) continue;
+        const w = (kind === 'trunk' ? 1.1 : 0.8) * (m.roadWidth ?? 1), s = style[kind];
+        out.raw(`<path d="${d}" fill="none" stroke="${m.road ?? m.landInk}" stroke-width="${f(w)}" stroke-linejoin="round" stroke-linecap="round"${s.dash ? ` stroke-dasharray="${s.dash}"` : ''}${s.opacity < 1 ? ` stroke-opacity="${s.opacity}"` : ''}/>`);
+      }
     });
   }
   out.layer('Coastline', () => {
@@ -173,8 +192,8 @@ function defineSymbols(out: SvgWriter, stamps: Iterable<StampEntity>, lib: Asset
   return ids;
 }
 
-/** A river ribbon as one closed polygon (left bank down, right bank back), wrapped copies included. */
-export function riverPath(r: RiverEntity, widthMul: number): string {
+/** A river ribbon as one closed polygon (left bank down, right bank back), wrapped copies included; `inset` narrows each side (the water inside the banks). */
+export function riverPath(r: RiverEntity, widthMul: number, inset = 0): string {
   const p = r.points, n = p.length / 3;
   if (n < 2) return '';
   const left: string[] = [], right: string[] = [];
@@ -188,12 +207,28 @@ export function riverPath(r: RiverEntity, widthMul: number): string {
       const a = Math.max(0, i - 1), b = Math.min(n - 1, i + 1);
       let tx = p[b * 3] - p[a * 3], ty = p[b * 3 + 1] - p[a * 3 + 1];
       const len = Math.hypot(tx, ty) || 1; tx /= len; ty /= len;
-      const hw = Math.max(0.18, (p[i * 3 + 2] * widthMul) / 2);
+      const hw = inset > 0 ? Math.max(0, (p[i * 3 + 2] * widthMul) / 2 - inset) : Math.max(0.18, (p[i * 3 + 2] * widthMul) / 2);
       const x = p[i * 3] + off, y = p[i * 3 + 1];
       left.push(`${f(x - ty * hw)} ${f(y + tx * hw)}`);
       right.push(`${f(x + ty * hw)} ${f(y - tx * hw)}`);
     }
     d += `M${left.join('L')}L${right.reverse().join('L')}Z`;
+  }
+  return d;
+}
+
+/** A road as an open polyline, wrapped copies included. */
+export function roadPath(r: RoadEntity): string {
+  const p = r.points, n = p.length / 3;
+  if (n < 2) return '';
+  let lo = Infinity, hi = -Infinity;
+  for (let i = 0; i < n; i++) { lo = Math.min(lo, p[i * 3]); hi = Math.max(hi, p[i * 3]); }
+  let d = '';
+  for (const off of [-MAP_W, 0, MAP_W]) {
+    if (hi + off < 0 || lo + off > MAP_W) continue;
+    const pts: string[] = [];
+    for (let i = 0; i < n; i++) pts.push(`${f(p[i * 3] + off)} ${f(p[i * 3 + 1])}`);
+    d += `M${pts.join('L')}`;
   }
   return d;
 }

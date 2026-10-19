@@ -2,10 +2,12 @@ import { MAP_H, MAP_W, rectUnion, type Rect } from '../core/geo';
 import type { AssetLibrary } from '../content/AssetLibrary';
 import type { BiomeDef, Theme } from '../content/types';
 import type { MapDocument } from '../doc/MapDocument';
+import type { FeatureMask } from '../features/featureMask';
 import { composeBiomes } from '../world/landuse';
 import { Camera } from './Camera';
 import { FULLSCREEN_VS, bind, compile, rgb, texture, type Program } from './gl';
-import { RiverLayer } from './RiverLayer';
+import { RIVER_INK_MU, RiverLayer } from './RiverLayer';
+import { RoadLayer } from './RoadLayer';
 import { FS_DISPLAY } from './shaders';
 import { StampLayer } from './StampLayer';
 import { TerrainPipeline } from './TerrainPipeline';
@@ -26,6 +28,7 @@ export class MapRenderer {
   private readonly display: Program;
   private readonly stamps: StampLayer;
   private readonly rivers: RiverLayer;
+  private readonly roads: RoadLayer;
   private readonly vao: WebGLVertexArrayObject;
   private readonly plateTex: WebGLTexture;
   private readonly maskTex: WebGLTexture;
@@ -41,6 +44,7 @@ export class MapRenderer {
   private dirty: { elevation: Rect | null; biome: Rect | null; color: boolean; full: boolean } = { elevation: null, biome: null, color: false, full: false };
   private stampsDirty = true;
   private riversDirty = true;
+  private roadsDirty = true;
   private raf = 0;
   private unsubscribe: (() => void)[] = [];
   /** Called after the GL frame, for the 2D overlay. */
@@ -57,6 +61,7 @@ export class MapRenderer {
     this.display = compile(gl, FULLSCREEN_VS, FS_DISPLAY);
     this.stamps = new StampLayer(gl);
     this.rivers = new RiverLayer(gl);
+    this.roads = new RoadLayer(gl);
     this.vao = gl.createVertexArray()!;
     this.plateTex = texture(gl, { w: MAP_W, h: MAP_H, internal: gl.R32UI, format: gl.RED_INTEGER, type: gl.UNSIGNED_INT });
     this.maskTex = texture(gl, { w: MAP_W, h: MAP_H, internal: gl.RG8, format: gl.RG, type: gl.UNSIGNED_BYTE, filter: gl.LINEAR });
@@ -73,7 +78,7 @@ export class MapRenderer {
     this.uploadPlates(doc);
     this.clearMask();
     this.dirty = { elevation: null, biome: null, color: true, full: true };
-    this.stampsDirty = this.riversDirty = true;
+    this.stampsDirty = this.riversDirty = this.roadsDirty = true;
     this.unsubscribe = [
       doc.events.on('raster', ({ layer, rect }) => {
         if (layer !== 'elevation' && layer !== 'biome' && layer !== 'landuse') return; // climate paint is overlay-only
@@ -91,6 +96,7 @@ export class MapRenderer {
       }),
       doc.stamps.events.on('change', () => { this.stampsDirty = true; this.requestRender(); }),
       doc.rivers.events.on('change', () => { this.riversDirty = true; this.requestRender(); }),
+      doc.roads.events.on('change', () => { this.roadsDirty = true; this.requestRender(); }),
     ];
     this.requestRender();
   }
@@ -122,18 +128,18 @@ export class MapRenderer {
   setHiddenStamps(ids: Iterable<string>): void { this.stamps.hidden = new Set(ids); this.stampsDirty = true; this.requestRender(); }
 
   /** Selection (channel r) and hover (channel g) masks from tile sets; null clears. */
-  setMasks(selected: Iterable<number> | null, hovered: Iterable<number> | null): void {
-    const doc = this.doc;
-    if (!doc) return;
-    const sel = toLookup(selected, doc.world.tilePlate.length), hov = toLookup(hovered, doc.world.tilePlate.length);
-    const m = this.mask, tile = doc.world.tile;
-    this.hasMask = !!(sel || hov);
+  /** Selection (red channel) and hover (green) outlines from features' drawn footprints. */
+  setMasks(selected: FeatureMask | null, hovered: FeatureMask | null): void {
+    const m = this.mask;
+    this.hasMask = !!(selected || hovered);
     if (!this.hasMask) { this.clearMask(); this.requestRender(); return; }
-    for (let i = 0; i < tile.length; i++) {
-      const t = tile[i];
-      m[i * 2] = sel && t >= 0 && sel[t] ? 255 : 0;
-      m[i * 2 + 1] = hov && t >= 0 && hov[t] ? 255 : 0;
-    }
+    m.fill(0);
+    const put = (fm: FeatureMask | null, ch: number) => {
+      if (!fm) return;
+      const base = fm.y0 * MAP_W;
+      for (let i = 0; i < fm.data.length; i++) if (fm.data[i]) m[(base + i) * 2 + ch] = 255;
+    };
+    put(selected, 0); put(hovered, 1);
     const gl = this.gl;
     gl.bindTexture(gl.TEXTURE_2D, this.maskTex);
     gl.texSubImage2D(gl.TEXTURE_2D, 0, 0, 0, MAP_W, MAP_H, gl.RG, gl.UNSIGNED_BYTE, m);
@@ -165,6 +171,7 @@ export class MapRenderer {
     if (this.lib) this.stamps.syncAtlas(this.lib);
     if (this.stampsDirty && this.lib) { this.stamps.rebuild(doc.stamps.all(), this.lib); this.stampsDirty = false; this.stats.stamps = doc.stamps.size; }
     if (this.riversDirty) { this.rivers.rebuild(doc.rivers.all()); this.riversDirty = false; }
+    if (this.roadsDirty) { this.roads.rebuild(doc.roads.all()); this.roadsDirty = false; }
 
     const gl = this.gl, cam = this.camera, th = this.theme.map, v = this.view;
     gl.bindFramebuffer(gl.FRAMEBUFFER, null);
@@ -183,7 +190,8 @@ export class MapRenderer {
       uVivid: this.vividTex, uMask: this.maskTex, uBiome: this.terrain.biomeTex, uPlate: this.plateTex,
     });
     gl.drawArrays(gl.TRIANGLES, 0, 3);
-    if (v.layers.rivers) this.rivers.draw(cam, th.river, th.riverWidth);
+    if (v.layers.rivers) this.rivers.draw(cam, th.river, th.riverInk ?? th.landInk, th.riverInkWidth ?? RIVER_INK_MU, th.riverWidth);
+    if (v.layers.roads) this.roads.draw(cam, th.road ?? th.landInk, th.roadWidth ?? 1);
     if (v.layers.stamps && v.base === 'styled') this.stamps.draw(cam);
     this.stats.frameMs = performance.now() - t0;
     this.onAfterFrame?.();
@@ -227,12 +235,4 @@ export class MapRenderer {
     if (this.raf) cancelAnimationFrame(this.raf);
     this.terrain.dispose();
   }
-}
-
-function toLookup(tiles: Iterable<number> | null, n: number): Uint8Array | null {
-  if (!tiles) return null;
-  const out = new Uint8Array(Math.max(n, 1));
-  let any = false;
-  for (const t of tiles) if (t >= 0 && t < out.length) { out[t] = 1; any = true; }
-  return any ? out : null;
 }

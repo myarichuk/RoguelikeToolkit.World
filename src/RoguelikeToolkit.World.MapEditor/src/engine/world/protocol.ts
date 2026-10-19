@@ -8,17 +8,19 @@ export interface NameStyle { race: string; culture: string; label: string; }
 /** Kinds of map features the editor can select, filter, label and inspect. */
 export type FeatureKind =
   | 'capital' | 'city' | 'town' | 'village'
+  | 'ruin' | 'shrine' | 'battlefield'
   | 'river' | 'lake' | 'sea' | 'ocean'
   | 'mountain' | 'valley' | 'forest'
   | 'deposit';
 
 export const FEATURE_KINDS: readonly FeatureKind[] = [
-  'capital', 'city', 'town', 'village', 'river', 'lake', 'sea', 'ocean', 'mountain', 'valley', 'forest', 'deposit',
+  'capital', 'city', 'town', 'village', 'ruin', 'shrine', 'battlefield', 'river', 'lake', 'sea', 'ocean', 'mountain', 'valley', 'forest', 'deposit',
 ];
 
 /** Name generator kind for a feature kind (Core's PlaceKinds); deposits are not named. */
 export const NAME_KIND: Record<Exclude<FeatureKind, 'deposit'>, string> = {
   capital: 'city', city: 'city', town: 'town', village: 'village',
+  ruin: 'village', shrine: 'hold', battlefield: 'camp',
   river: 'river', lake: 'lake', sea: 'sea', ocean: 'sea',
   mountain: 'mountain', valley: 'valley', forest: 'forest',
 };
@@ -60,7 +62,22 @@ export interface RiverGeometry {
   points: Float32Array;
 }
 
-export interface FeatureSet { features: MapFeature[]; rivers: RiverGeometry[]; }
+export interface RoadGeometry {
+  /** x, y, width triples in map units along the road, x unwrapped (may leave [0, MAP_W)). */
+  points: Float32Array;
+  /** 'trunk' (a route between capitals, no keeper) or 'spur' (kept by a polity); a plugin's roads arrive as one of these. */
+  kind: string;
+  /** Keeper polity id, -1 for a trunk route. */
+  keeper: number;
+  /** Turn the road was cut (war), -1 while intact. */
+  severed: number;
+  /** Turn the road was built (a time scrubber shows it from then until `severed`). */
+  founded: number;
+  /** The route's end tiles (the smaller then the larger). */
+  from: number; to: number;
+}
+
+export interface FeatureSet { features: MapFeature[]; rivers: RiverGeometry[]; roads: RoadGeometry[]; }
 
 export interface WorldSnapshot {
   seed: number; size: number; plates: number; tileCount: number;
@@ -118,6 +135,27 @@ export interface ClimateModelSettings {
 export const CLIMATE_MODEL_DEFAULTS: Readonly<ClimateModelSettings> = { climateRefresh: true, meridionalWind: 0.3, windCellBlend: 0, oceanHeat: 1, oceanRain: 2, aeolian: 4 };
 export const CLIMATE_MODEL_LIMITS = { meridionalWind: [0, 0.6], windCellBlend: [0, 1], oceanHeat: [0, 2], oceanRain: [0, 4], aeolian: [0, 8] } as const;
 
+/** One pinned founding polity (see Core's HistoryFounder): a blank folk or culture is drawn, form -1 follows culture affinity and land, null coordinates leave the capital to the site scoring. */
+export interface FounderPin { folk: string; culture: string; form: number; lat: number | null; lon: number | null; }
+
+/** How a world's history is run and who founds it. */
+export interface HistorySettings {
+  enabled: boolean;
+  /** Turns simulated and years per turn. */
+  turns: number;
+  years: number;
+  /** Founding polities (pinned founders count toward it). */
+  maxPolities: number;
+  /** Peoples (`folk`, `culture`) the unpinned founders are drawn from; empty = Core's default roster (human, dwarf). */
+  roster: { folk: string; culture: string }[];
+  founders: FounderPin[];
+}
+
+export const DEFAULT_HISTORY: HistorySettings = { enabled: true, turns: 30, years: 10, maxPolities: 8, roster: [], founders: [] };
+
+/** A people a world can be founded by (the engine's `HistoryPeoples`). `affinity` is `Form:weight` pairs, empty when the land alone decides. */
+export interface PeopleOption { folk: string; culture: string; folkName: string; cultureName: string; subsistence: string; affinity: { form: string; weight: number }[]; }
+
 export interface GenerateParams {
   seed: number;
   size: number;
@@ -128,6 +166,8 @@ export interface GenerateParams {
   model?: ClimateModelSettings;
   /** Name styles (`race|culture`) cultures are drawn from, one per plate; empty = DEFAULT_STYLES. */
   styles: string[];
+  /** Absent = DEFAULT_HISTORY. */
+  history?: HistorySettings;
 }
 
 export interface RecomputeParams extends GenerateParams {
@@ -150,7 +190,8 @@ export type WorkerRequest =
   | { id: number; type: 'generate'; params: GenerateParams }
   | { id: number; type: 'recompute'; params: RecomputeParams }
   | { id: number; type: 'names'; requests: NameRequest[] }
-  | { id: number; type: 'styles' };
+  | { id: number; type: 'styles' }
+  | { id: number; type: 'peoples' };
 
 export type WorkerResponse =
   | { id: number; ok: true; type: 'init'; bootMs: number }
@@ -158,6 +199,7 @@ export type WorkerResponse =
   | { id: number; ok: true; type: 'recompute'; world: WorldSnapshot }
   | { id: number; ok: true; type: 'names'; names: string[] }
   | { id: number; ok: true; type: 'styles'; styles: NameStyle[] }
+  | { id: number; ok: true; type: 'peoples'; peoples: PeopleOption[]; forms: string[] }
   | { id: number; ok: false; error: string };
 
 /** Transferable buffers of a snapshot (zero-copy handoff). */
@@ -165,6 +207,7 @@ export function snapshotTransfer(w: WorldSnapshot): Transferable[] {
   const r = w.rasters;
   const out: Transferable[] = [r.elevation.buffer, r.biome.buffer, r.tile.buffer, r.waterPixels.buffer, w.tilePlate.buffer, w.plateDrift.buffer, w.tileXY.buffer, w.capacity.buffer, w.seaIce.buffer, w.climate.buffer];
   for (const rv of w.features.rivers) out.push(rv.points.buffer);
+  for (const rd of w.features.roads) out.push(rd.points.buffer);
   for (const f of w.features.features) if (f.tiles) out.push(f.tiles.buffer);
   return out;
 }

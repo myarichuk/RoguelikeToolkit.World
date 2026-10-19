@@ -1,0 +1,18 @@
+Key: orc
+DisplayName: "Orc"
+Sapience: Full
+Embodiment: humanoid
+HabitatAffinity: mountain
+LifespanYears: 55
+MaturationYears: 12
+GrowthR: 0.07
+CompatGroup: orc
+OpennessPrior: low
+ConscientiousnessPrior: balanced
+ExtraversionPrior: high
+AgreeablenessPrior: low
+NeuroticismPrior: high
+Subsistence:
+  - pastoral
+  - highland
+  - forager

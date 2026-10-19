@@ -6,6 +6,7 @@ import { ShellViewModel } from './ShellViewModel';
 import { ThemeEditorViewModel } from './ThemeEditorViewModel';
 import { ToolsViewModel } from './ToolsViewModel';
 import type { FileService } from './ViewModel';
+import { WizardViewModel } from './WizardViewModel';
 import { ViewFiltersViewModel } from './ViewFiltersViewModel';
 
 export interface ViewModels {
@@ -16,13 +17,16 @@ export interface ViewModels {
   inspector: InspectorViewModel;
   theme: ThemeEditorViewModel;
   packs: PacksViewModel;
+  wizard: WizardViewModel;
 }
 
 /** One view model per panel, all over the same Editor facade. */
 export function createViewModels(editor: Editor, files: FileService): ViewModels {
+  const generate = new GenerateViewModel(editor);
   return {
     shell: new ShellViewModel(editor, files),
-    generate: new GenerateViewModel(editor),
+    generate,
+    wizard: new WizardViewModel(editor, generate),
     filters: new ViewFiltersViewModel(editor),
     tools: new ToolsViewModel(editor),
     inspector: new InspectorViewModel(editor),

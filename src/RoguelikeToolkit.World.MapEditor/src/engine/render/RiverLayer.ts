@@ -3,6 +3,9 @@ import type { Camera } from './Camera';
 import { bind, compile, rgb, type Program } from './gl';
 import { FS_RIVER, VS_RIVER } from './shaders';
 
+/** Default width (map units) of the inked banks either side of a river's water. */
+export const RIVER_INK_MU = 0.3;
+
 /** Builds ribbon geometry for river polylines (x, y, w triples): two vertices per point, miter normals. */
 export function riverMesh(rivers: Iterable<RiverEntity>): { verts: Float32Array; index: Uint32Array } {
   const v: number[] = [];
@@ -62,19 +65,24 @@ export class RiverLayer {
     this.count = index.length;
   }
 
-  draw(cam: Camera, color: string, widthScale: number): void {
+  /** Banks in `ink` (`inkMu` wide, at least a hairline), water in `color` inside them. */
+  draw(cam: Camera, color: string, ink: string, inkMu: number, widthScale: number): void {
     if (!this.count) return;
     const gl = this.gl;
     gl.enable(gl.BLEND);
     gl.blendFunc(gl.ONE, gl.ONE_MINUS_SRC_ALPHA);
     gl.bindVertexArray(this.vao);
-    bind(gl, this.prog, { uCanvas: [cam.width, cam.height], uCenter: [cam.cx, cam.cy], uZoom: cam.zoom, uWidthScale: widthScale, uColor: rgb(color) }, {});
-    // Rivers are stored unwrapped and may span past the map edge: draw one extra copy each side.
-    for (const off of cam.copies(1024)) {
-      gl.uniform1f(this.prog.u.uOffset, off);
-      gl.drawElements(gl.TRIANGLES, this.count, gl.UNSIGNED_INT, 0);
+    const inkPx = Math.max(0.75 * cam.dpr, inkMu * cam.zoom);
+    for (const pass of [0, 1]) {
+      bind(gl, this.prog, { uCanvas: [cam.width, cam.height], uCenter: [cam.cx, cam.cy], uZoom: cam.zoom, uWidthScale: widthScale, uColor: rgb(pass ? color : ink), uInkPx: inkPx, uPass: { i: pass } }, {});
+      // Rivers are stored unwrapped and may span past the map edge: draw one extra copy each side.
+      for (const off of cam.copies(1024)) {
+        gl.uniform1f(this.prog.u.uOffset, off);
+        gl.drawElements(gl.TRIANGLES, this.count, gl.UNSIGNED_INT, 0);
+      }
     }
     gl.bindVertexArray(null);
     gl.disable(gl.BLEND);
   }
+
 }

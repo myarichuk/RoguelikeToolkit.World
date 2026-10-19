@@ -1,0 +1,18 @@
+Key: gnome
+DisplayName: "Gnome"
+Sapience: Full
+Embodiment: humanoid
+HabitatAffinity: mountain
+LifespanYears: 250
+MaturationYears: 30
+GrowthR: 0.03
+CompatGroup: small
+OpennessPrior: high
+ConscientiousnessPrior: high
+ExtraversionPrior: balanced
+AgreeablenessPrior: balanced
+NeuroticismPrior: balanced
+Subsistence:
+  - artisan
+  - agrarian
+  - highland

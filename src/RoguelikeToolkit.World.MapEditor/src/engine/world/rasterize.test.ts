@@ -67,4 +67,22 @@ describe('rasterize', () => {
     expect(min).toBeLessThan(0);
     expect(min).toBeGreaterThanOrEqual(-0.15);
   });
+
+  it('keeps a lake on its own tile instead of flooding every face around it', () => {
+    const { vectors, faces } = icosphere(3);
+    const n = vectors.length / 3;
+    const lakeDepth = new Float64Array(n);
+    const t0 = 40;
+    lakeDepth[t0] = 0.15;
+    const r = rasterize({ vectors, faces, heights: new Float64Array(n).fill(0.25), biomes: new Uint8Array(n).fill(1), lakeDepth }, MAP_W, MAP_H);
+    let own = 0, wet = 0, wetOwn = 0;
+    for (let i = 0; i < r.tile.length; i++) {
+      const w = r.elevation[i] < 0;
+      if (r.tile[i] === t0) { own++; if (w) wetOwn++; }
+      if (w) wet++;
+    }
+    expect(wet).toBeGreaterThan(own * 0.5);              // the lake fills most of its tile...
+    expect(wet).toBeLessThan(own * 1.25);                // ...and not the ring of neighbours (the old fill drew ~3x)
+    expect(wetOwn / wet).toBeGreaterThan(0.8);
+  });
 });

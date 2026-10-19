@@ -121,41 +121,77 @@ export function layoutLabel(font: opentype.Font, inp: LayoutInput): LabelGeometr
   return { d, bounds: { x0, y0, x1, y1 }, width };
 }
 
-/** Arc-length parametrized polyline baseline centered on the path's midpoint, extrapolated past its ends. */
+/**
+ * Baseline along a polyline (a river), as a function of arc length from the text's center. The
+ * path is resampled, smoothed over about two cap heights (a name follows the river's course, not
+ * each meander) and offset to the side above it; glyphs are then spaced by arc length along that
+ * offset line, so they keep even spacing on the inside of a bend instead of piling up. The result
+ * is centered on the path's midpoint and extrapolated straight past its ends.
+ */
 function pathBaseline(path: number[], textWidth: number, offset: number): (t: number) => { x: number; y: number; a: number } {
-  let pts: [number, number][] = [];
-  for (let i = 0; i + 1 < path.length; i += 2) pts.push([path[i], path[i + 1]]);
-  if (pts[pts.length - 1][0] < pts[0][0]) pts = pts.reverse(); // read left to right
+  let raw: [number, number][] = [];
+  for (let i = 0; i + 1 < path.length; i += 2) raw.push([path[i], path[i + 1]]);
+  if (raw[raw.length - 1][0] < raw[0][0]) raw = raw.reverse(); // read left to right
+  const step = Math.max(0.25, offset * 0.2);
+  const line = smooth(resample(raw, step), Math.max(1, Math.round((offset * 2) / step)));
+  // Offset to the left of the direction of travel (above, for left-to-right text).
+  const off: [number, number][] = line.map((p, i) => {
+    const a = line[Math.max(0, i - 1)], b = line[Math.min(line.length - 1, i + 1)];
+    const ang = Math.atan2(b[1] - a[1], b[0] - a[0]);
+    return [p[0] + Math.sin(ang) * offset, p[1] - Math.cos(ang) * offset];
+  });
   const cum = [0];
-  for (let i = 1; i < pts.length; i++) cum.push(cum[i - 1] + Math.hypot(pts[i][0] - pts[i - 1][0], pts[i][1] - pts[i - 1][1]));
-  const total = cum[cum.length - 1] || 1;
-  // End directions for extrapolation (first/last non-degenerate segment; +x when the path is a point).
+  for (let i = 1; i < off.length; i++) cum.push(cum[i - 1] + Math.hypot(off[i][0] - off[i - 1][0], off[i][1] - off[i - 1][1]));
+  const total = cum[cum.length - 1];
   const dir = (a: [number, number], b: [number, number]): [number, number] => {
     const dx = b[0] - a[0], dy = b[1] - a[1], l = Math.hypot(dx, dy);
     return l > 0 ? [dx / l, dy / l] : [1, 0];
   };
-  let si = 0;
-  while (si < pts.length - 2 && pts[si + 1][0] === pts[si][0] && pts[si + 1][1] === pts[si][1]) si++;
-  let ei = pts.length - 1;
-  while (ei > 1 && pts[ei][0] === pts[ei - 1][0] && pts[ei][1] === pts[ei - 1][1]) ei--;
-  const sDir = dir(pts[si], pts[si + 1]), eDir = dir(pts[ei - 1], pts[ei]);
+  const sDir = off.length > 1 ? dir(off[0], off[1]) : [1, 0] as [number, number];
+  const eDir = off.length > 1 ? dir(off[off.length - 2], off[off.length - 1]) : [1, 0] as [number, number];
   const at = (s: number): [number, number] => {
-    // A name longer than its river keeps going straight past the segment instead of piling its glyphs at the ends.
-    if (s <= 0) return [pts[0][0] + sDir[0] * s, pts[0][1] + sDir[1] * s];
-    if (s >= total) { const d = s - total, l = pts[pts.length - 1]; return [l[0] + eDir[0] * d, l[1] + eDir[1] * d]; }
-    const t = s;
-    let i = 1;
-    while (i < cum.length - 1 && cum[i] < t) i++;
-    const seg = cum[i] - cum[i - 1] || 1, f = (t - cum[i - 1]) / seg;
-    return [pts[i - 1][0] + (pts[i][0] - pts[i - 1][0]) * f, pts[i - 1][1] + (pts[i][1] - pts[i - 1][1]) * f];
+    // A name longer than its river keeps going straight past the ends instead of piling its glyphs there.
+    if (s <= 0 || off.length < 2) return [off[0][0] + sDir[0] * s, off[0][1] + sDir[1] * s];
+    if (s >= total) { const d = s - total, l = off[off.length - 1]; return [l[0] + eDir[0] * d, l[1] + eDir[1] * d]; }
+    let lo = 1, hi = cum.length - 1;
+    while (lo < hi) { const mid = (lo + hi) >> 1; if (cum[mid] < s) lo = mid + 1; else hi = mid; }
+    const seg = cum[lo] - cum[lo - 1] || 1, f = (s - cum[lo - 1]) / seg;
+    return [off[lo - 1][0] + (off[lo][0] - off[lo - 1][0]) * f, off[lo - 1][1] + (off[lo][1] - off[lo - 1][1]) * f];
   };
-  const center = total / 2, win = Math.max(textWidth * 0.08, 1.5);
+  const center = total / 2, win = Math.max(textWidth * 0.04, offset * 0.5);
   return (t) => {
     const s = center + t;
     const [ax, ay] = at(s - win), [bx, by] = at(s + win);
-    const a = Math.atan2(by - ay, bx - ax);
     const [x, y] = at(s);
-    // Sit just above the path (rivers are drawn on it).
-    return { x: x + Math.sin(a) * offset, y: y - Math.cos(a) * offset, a };
+    return { x, y, a: Math.atan2(by - ay, bx - ax) };
   };
+}
+
+/** Points every `step` map units along a polyline (ends kept). */
+function resample(pts: [number, number][], step: number): [number, number][] {
+  const out: [number, number][] = [pts[0]];
+  let carry = 0;
+  for (let i = 1; i < pts.length; i++) {
+    const [ax, ay] = pts[i - 1], [bx, by] = pts[i];
+    const len = Math.hypot(bx - ax, by - ay);
+    let d = step - carry;
+    while (d <= len) { const f = d / len; out.push([ax + (bx - ax) * f, ay + (by - ay) * f]); d += step; }
+    carry = len - (d - step);
+  }
+  const last = pts[pts.length - 1], tail = out[out.length - 1];
+  if (tail[0] !== last[0] || tail[1] !== last[1]) out.push(last);
+  return out;
+}
+
+/** Three passes of a moving average of radius `r` points (indices clamped at the ends). */
+function smooth(pts: [number, number][], r: number): [number, number][] {
+  let cur = pts;
+  for (let pass = 0; pass < 3; pass++) {
+    cur = cur.map((_, i) => {
+      let sx = 0, sy = 0, n = 0;
+      for (let k = i - r; k <= i + r; k++) { const p = cur[Math.max(0, Math.min(cur.length - 1, k))]; sx += p[0]; sy += p[1]; n++; }
+      return [sx / n, sy / n] as [number, number];
+    });
+  }
+  return cur;
 }

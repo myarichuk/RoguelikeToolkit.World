@@ -9,6 +9,7 @@ import { Properties } from './Properties';
 import { Toolbar } from './Toolbar';
 import { TopBar } from './TopBar';
 import { ViewPanel } from './ViewPanel';
+import { NewWorldWizard } from './wizard/NewWorldWizard';
 import styles from './App.module.css';
 
 const TABS = [
@@ -53,6 +54,7 @@ export function App() {
       <main className={styles.center}><MapView /></main>
       <Properties />
       <StatusBar />
+      <NewWorldWizard />
       {shell.error && <div className={styles.toast} role="alert"><b>Error</b><pre>{shell.error}</pre><button className="dismiss" onClick={vms.shell.dismissError}><small>Dismiss</small></button></div>}
     </div>
   );

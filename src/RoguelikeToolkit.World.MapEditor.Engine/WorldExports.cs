@@ -54,7 +54,8 @@ public static partial class WorldExports
         // The unrefreshed pipeline was calibrated at a river threshold of 1; 0.92 is for the refreshed climate (see WithClimateRefresh).
         if (!climateRefresh) builder.WithHydrology(h => h.RiverThresholdScale = 1f);
         if (plates > 0) builder.WithPlateCount(plates);
-        HistoryPluginHost.Apply(builder);
+        // History off means off: plugins would switch it back on (WithHistoryDriver enables history), so they are skipped.
+        if (ApplyHistoryConfig(builder)) HistoryPluginHost.Apply(builder);
 
         // Configuration is validated above (a bad request keeps the current world). From here the old world is
         // retired before the heavy build, which keeps the peak-memory profile WASM needs, but it is never left

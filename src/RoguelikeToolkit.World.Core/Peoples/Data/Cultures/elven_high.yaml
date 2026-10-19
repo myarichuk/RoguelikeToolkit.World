@@ -1,0 +1,22 @@
+Key: elven_high
+DisplayName: "High elf · Court"
+NamingTable: elf_high
+Subsistence: agrarian
+LineageDefault: Bilineal
+Xenophobia: 50
+HierarchyClaim: 70
+Collectivism: 40
+Honor: 70
+FaithForm: polytheism
+MixedNaming: Dominant
+DominantShareThreshold: 0.75
+OpennessOffset: 0
+ConscientiousnessOffset: 0
+ExtraversionOffset: 0
+AgreeablenessOffset: 0
+NeuroticismOffset: 0
+FormAffinity:
+  Kingdom: 40
+  LooseAssociation: 30
+  MerchantRepublic: 25
+  Horde: 5

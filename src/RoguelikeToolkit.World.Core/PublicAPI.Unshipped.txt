@@ -35,7 +35,7 @@ const RoguelikeToolkit.World.Core.History.HazardOperator.Plague = "plague" -> st
 const RoguelikeToolkit.World.Core.History.HistoryCatalog.HolyDangerDelta = -1 -> float
 const RoguelikeToolkit.World.Core.History.HistoryCatalog.ScarDangerDelta = 1 -> float
 const RoguelikeToolkit.World.Core.History.HistoryCatalog.ScarHabitabilityDelta = -0.25 -> float
-const RoguelikeToolkit.World.Core.History.HistoryCatalog.SchemaVersion = 10 -> int
+const RoguelikeToolkit.World.Core.History.HistoryCatalog.SchemaVersion = 11 -> int
 const RoguelikeToolkit.World.Core.History.HistoryDemography.ColonistShare = 0.15 -> double
 const RoguelikeToolkit.World.Core.History.HistoryNaming.NamespaceSeparator = '/' -> char
 const RoguelikeToolkit.World.Core.History.HistoryNaming.PluginOrderMax = 899 -> int
@@ -3051,3 +3051,122 @@ RoguelikeToolkit.World.Core.History.HistoryDemography.FolkParams.LifespanYears.g
 RoguelikeToolkit.World.Core.History.HistoryDemography.FolkParams.LifespanYears.init -> void
 RoguelikeToolkit.World.Core.History.HistoryDemography.FolkParams.MaturationYears.get -> int
 RoguelikeToolkit.World.Core.History.HistoryDemography.FolkParams.MaturationYears.init -> void
+RoguelikeToolkit.World.Core.History.HistoryCatalog.OwnershipAt(int turn) -> int[]!
+RoguelikeToolkit.World.Core.History.HistoryCatalog.Timeline.get -> RoguelikeToolkit.World.Core.History.HistoryTimeline!
+RoguelikeToolkit.World.Core.History.HistoryTimeline
+RoguelikeToolkit.World.Core.History.HistoryTimeline.BaseOwnership.get -> int[]!
+RoguelikeToolkit.World.Core.History.HistoryTimeline.Changes.get -> System.Collections.Generic.IReadOnlyList<RoguelikeToolkit.World.Core.History.TerritoryChange>!
+RoguelikeToolkit.World.Core.History.HistoryTimeline.HistoryTimeline() -> void
+RoguelikeToolkit.World.Core.History.HistoryTimeline.OwnershipAt(int turn, int[]! current) -> int[]!
+RoguelikeToolkit.World.Core.History.HistoryTimeline.Recorded.get -> bool
+RoguelikeToolkit.World.Core.History.HistoryTimeline.Samples.get -> System.Collections.Generic.IReadOnlyList<RoguelikeToolkit.World.Core.History.PolitySample!>!
+RoguelikeToolkit.World.Core.History.HistoryTimeline.SamplesOf(int polityId) -> System.Collections.Generic.IReadOnlyList<RoguelikeToolkit.World.Core.History.PolitySample!>!
+RoguelikeToolkit.World.Core.History.PolitySample
+RoguelikeToolkit.World.Core.History.PolitySample.PolitySample() -> void
+RoguelikeToolkit.World.Core.History.PolitySample.PolityId.get -> int
+RoguelikeToolkit.World.Core.History.PolitySample.PolityId.init -> void
+RoguelikeToolkit.World.Core.History.PolitySample.Population.get -> double
+RoguelikeToolkit.World.Core.History.PolitySample.Population.init -> void
+RoguelikeToolkit.World.Core.History.PolitySample.Scalars.get -> double[]!
+RoguelikeToolkit.World.Core.History.PolitySample.Scalars.init -> void
+RoguelikeToolkit.World.Core.History.PolitySample.Turn.get -> int
+RoguelikeToolkit.World.Core.History.PolitySample.Turn.init -> void
+RoguelikeToolkit.World.Core.History.TerritoryChange
+RoguelikeToolkit.World.Core.History.TerritoryChange.Owner.get -> int
+RoguelikeToolkit.World.Core.History.TerritoryChange.Owner.init -> void
+RoguelikeToolkit.World.Core.History.TerritoryChange.TerritoryChange() -> void
+RoguelikeToolkit.World.Core.History.TerritoryChange.TerritoryChange(int Turn, int Tile, int Owner) -> void
+RoguelikeToolkit.World.Core.History.TerritoryChange.Tile.get -> int
+RoguelikeToolkit.World.Core.History.TerritoryChange.Tile.init -> void
+RoguelikeToolkit.World.Core.History.TerritoryChange.Turn.get -> int
+RoguelikeToolkit.World.Core.History.TerritoryChange.Turn.init -> void
+RoguelikeToolkit.World.Core.History.HistoryContext.MaxResourceEra.get -> RoguelikeToolkit.World.Core.Peoples.ResourceEra
+RoguelikeToolkit.World.Core.History.HistoryContext.MaxResourceEra.set -> void
+RoguelikeToolkit.World.Core.Peoples.FolkDef.Subsistence.get -> System.Collections.Generic.List<string!>!
+RoguelikeToolkit.World.Core.Peoples.FolkDef.Subsistence.set -> void
+RoguelikeToolkit.World.Core.Peoples.PeoplesStore.Subsistence.get -> System.Collections.Generic.Dictionary<string!, RoguelikeToolkit.World.Core.Peoples.SubsistenceDef!>!
+RoguelikeToolkit.World.Core.Peoples.PeoplesStore.Resources.get -> System.Collections.Generic.Dictionary<string!, RoguelikeToolkit.World.Core.Peoples.ResourceDef!>!
+RoguelikeToolkit.World.Core.Peoples.PeoplesStore.GetSubsistence(string! key) -> RoguelikeToolkit.World.Core.Peoples.SubsistenceDef!
+RoguelikeToolkit.World.Core.Peoples.PeoplesStore.GetResource(string! key) -> RoguelikeToolkit.World.Core.Peoples.ResourceDef!
+RoguelikeToolkit.World.Core.Peoples.PeoplesStore.ExploitsOf(string! subsistenceKey, RoguelikeToolkit.World.Core.Peoples.ResourceEra maxEra) -> System.Collections.Generic.IReadOnlyList<RoguelikeToolkit.World.Core.Peoples.SubsistenceExploit!>!
+RoguelikeToolkit.World.Core.Peoples.PeoplesStore.AllowsSubsistence(string! folkKey, string! subsistenceKey) -> bool
+RoguelikeToolkit.World.Core.Peoples.PeoplesStore.PairingProblem(string! folkKey, string! cultureKey) -> string?
+RoguelikeToolkit.World.Core.Peoples.ResourceEra
+RoguelikeToolkit.World.Core.Peoples.ResourceEra.Ancient = 0 -> RoguelikeToolkit.World.Core.Peoples.ResourceEra
+RoguelikeToolkit.World.Core.Peoples.ResourceEra.Medieval = 1 -> RoguelikeToolkit.World.Core.Peoples.ResourceEra
+RoguelikeToolkit.World.Core.Peoples.ResourceEra.Industrial = 2 -> RoguelikeToolkit.World.Core.Peoples.ResourceEra
+RoguelikeToolkit.World.Core.Peoples.SubsistenceExploit
+RoguelikeToolkit.World.Core.Peoples.SubsistenceExploit.SubsistenceExploit() -> void
+RoguelikeToolkit.World.Core.Peoples.SubsistenceExploit.Resource.get -> string!
+RoguelikeToolkit.World.Core.Peoples.SubsistenceExploit.Resource.set -> void
+RoguelikeToolkit.World.Core.Peoples.SubsistenceExploit.Value.get -> double
+RoguelikeToolkit.World.Core.Peoples.SubsistenceExploit.Value.set -> void
+RoguelikeToolkit.World.Core.Peoples.SubsistenceDef
+RoguelikeToolkit.World.Core.Peoples.SubsistenceDef.SubsistenceDef() -> void
+RoguelikeToolkit.World.Core.Peoples.SubsistenceDef.Key.get -> string!
+RoguelikeToolkit.World.Core.Peoples.SubsistenceDef.Key.set -> void
+RoguelikeToolkit.World.Core.Peoples.SubsistenceDef.DisplayName.get -> string!
+RoguelikeToolkit.World.Core.Peoples.SubsistenceDef.DisplayName.set -> void
+RoguelikeToolkit.World.Core.Peoples.SubsistenceDef.Sedentary.get -> bool
+RoguelikeToolkit.World.Core.Peoples.SubsistenceDef.Sedentary.set -> void
+RoguelikeToolkit.World.Core.Peoples.SubsistenceDef.Arable.get -> double
+RoguelikeToolkit.World.Core.Peoples.SubsistenceDef.Arable.set -> void
+RoguelikeToolkit.World.Core.Peoples.SubsistenceDef.Pasture.get -> double
+RoguelikeToolkit.World.Core.Peoples.SubsistenceDef.Pasture.set -> void
+RoguelikeToolkit.World.Core.Peoples.SubsistenceDef.Game.get -> double
+RoguelikeToolkit.World.Core.Peoples.SubsistenceDef.Game.set -> void
+RoguelikeToolkit.World.Core.Peoples.SubsistenceDef.Timber.get -> double
+RoguelikeToolkit.World.Core.Peoples.SubsistenceDef.Timber.set -> void
+RoguelikeToolkit.World.Core.Peoples.SubsistenceDef.Fish.get -> double
+RoguelikeToolkit.World.Core.Peoples.SubsistenceDef.Fish.set -> void
+RoguelikeToolkit.World.Core.Peoples.SubsistenceDef.Defensibility.get -> double
+RoguelikeToolkit.World.Core.Peoples.SubsistenceDef.Defensibility.set -> void
+RoguelikeToolkit.World.Core.Peoples.SubsistenceDef.Coast.get -> double
+RoguelikeToolkit.World.Core.Peoples.SubsistenceDef.Coast.set -> void
+RoguelikeToolkit.World.Core.Peoples.SubsistenceDef.River.get -> double
+RoguelikeToolkit.World.Core.Peoples.SubsistenceDef.River.set -> void
+RoguelikeToolkit.World.Core.Peoples.SubsistenceDef.Road.get -> double
+RoguelikeToolkit.World.Core.Peoples.SubsistenceDef.Road.set -> void
+RoguelikeToolkit.World.Core.Peoples.SubsistenceDef.Exploits.get -> System.Collections.Generic.List<RoguelikeToolkit.World.Core.Peoples.SubsistenceExploit!>!
+RoguelikeToolkit.World.Core.Peoples.SubsistenceDef.Exploits.set -> void
+RoguelikeToolkit.World.Core.Peoples.ResourceDef
+RoguelikeToolkit.World.Core.Peoples.ResourceDef.ResourceDef() -> void
+RoguelikeToolkit.World.Core.Peoples.ResourceDef.Key.get -> string!
+RoguelikeToolkit.World.Core.Peoples.ResourceDef.Key.set -> void
+RoguelikeToolkit.World.Core.Peoples.ResourceDef.DisplayName.get -> string!
+RoguelikeToolkit.World.Core.Peoples.ResourceDef.DisplayName.set -> void
+RoguelikeToolkit.World.Core.Peoples.ResourceDef.Deposit.get -> string!
+RoguelikeToolkit.World.Core.Peoples.ResourceDef.Deposit.set -> void
+RoguelikeToolkit.World.Core.Peoples.ResourceDef.Yield.get -> string!
+RoguelikeToolkit.World.Core.Peoples.ResourceDef.Yield.set -> void
+RoguelikeToolkit.World.Core.Peoples.ResourceDef.Era.get -> string!
+RoguelikeToolkit.World.Core.Peoples.ResourceDef.Era.set -> void
+RoguelikeToolkit.World.Core.Peoples.ResourceDef.Value.get -> double
+RoguelikeToolkit.World.Core.Peoples.ResourceDef.Value.set -> void
+RoguelikeToolkit.World.Core.Peoples.ResourceDef.LifetimeTurns.get -> int
+RoguelikeToolkit.World.Core.Peoples.ResourceDef.LifetimeTurns.set -> void
+RoguelikeToolkit.World.Core.Peoples.ResourceDef.EraLevel.get -> RoguelikeToolkit.World.Core.Peoples.ResourceEra
+RoguelikeToolkit.World.Core.History.ResourceDeposits
+static RoguelikeToolkit.World.Core.History.ResourceDeposits.TryGetDeposit(RoguelikeToolkit.World.Core.Peoples.ResourceDef! resource, out RoguelikeToolkit.World.Core.Lithosphere.DepositType deposit) -> bool
+static RoguelikeToolkit.World.Core.History.ResourceDeposits.Problems(RoguelikeToolkit.World.Core.Peoples.PeoplesStore! store) -> System.Collections.Generic.IReadOnlyList<string!>!
+RoguelikeToolkit.World.Core.History.HistoryFounder
+RoguelikeToolkit.World.Core.History.HistoryFounder.HistoryFounder() -> void
+RoguelikeToolkit.World.Core.History.HistoryFounder.CultureKey.get -> string!
+RoguelikeToolkit.World.Core.History.HistoryFounder.CultureKey.init -> void
+RoguelikeToolkit.World.Core.History.HistoryFounder.FolkKey.get -> string!
+RoguelikeToolkit.World.Core.History.HistoryFounder.FolkKey.init -> void
+RoguelikeToolkit.World.Core.History.HistoryFounder.Form.get -> RoguelikeToolkit.World.Core.History.PolityForm?
+RoguelikeToolkit.World.Core.History.HistoryFounder.Form.init -> void
+RoguelikeToolkit.World.Core.History.HistoryFounder.HasLocation.get -> bool
+RoguelikeToolkit.World.Core.History.HistoryFounder.Latitude.get -> double?
+RoguelikeToolkit.World.Core.History.HistoryFounder.Latitude.init -> void
+RoguelikeToolkit.World.Core.History.HistoryFounder.Longitude.get -> double?
+RoguelikeToolkit.World.Core.History.HistoryFounder.Longitude.init -> void
+RoguelikeToolkit.World.Core.History.HistoryContext.Founders.get -> System.Collections.Generic.List<RoguelikeToolkit.World.Core.History.HistoryFounder!>!
+RoguelikeToolkit.World.Core.History.FormAffinity
+const RoguelikeToolkit.World.Core.History.FormAffinity.LandBonus = 3 -> int
+static RoguelikeToolkit.World.Core.History.FormAffinity.WeightsOf(RoguelikeToolkit.World.Core.Peoples.CultureDef? culture) -> int[]?
+static RoguelikeToolkit.World.Core.History.FormAffinity.Pick(int[]! weights, RoguelikeToolkit.World.Core.History.PolityForm landForm, double unit) -> RoguelikeToolkit.World.Core.History.PolityForm
+static RoguelikeToolkit.World.Core.History.FormAffinity.Problems(RoguelikeToolkit.World.Core.Peoples.PeoplesStore! store) -> System.Collections.Generic.IReadOnlyList<string!>!
+RoguelikeToolkit.World.Core.Peoples.CultureDef.FormAffinity.get -> System.Collections.Generic.Dictionary<string!, int>!
+RoguelikeToolkit.World.Core.Peoples.CultureDef.FormAffinity.set -> void

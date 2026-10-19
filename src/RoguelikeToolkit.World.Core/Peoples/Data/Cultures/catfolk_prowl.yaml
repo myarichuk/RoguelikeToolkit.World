@@ -1,0 +1,22 @@
+Key: catfolk_prowl
+DisplayName: "Catfolk · Prowl"
+NamingTable: catfolk
+Subsistence: pastoral
+LineageDefault: Matrilineal
+Xenophobia: 40
+HierarchyClaim: 30
+Collectivism: 50
+Honor: 60
+FaithForm: animism
+MixedNaming: Dominant
+DominantShareThreshold: 0.75
+OpennessOffset: 0
+ConscientiousnessOffset: 0
+ExtraversionOffset: 0
+AgreeablenessOffset: 0
+NeuroticismOffset: 0
+FormAffinity:
+  LooseAssociation: 40
+  Horde: 30
+  MerchantRepublic: 20
+  Kingdom: 10

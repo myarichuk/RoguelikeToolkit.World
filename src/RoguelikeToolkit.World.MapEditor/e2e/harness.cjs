@@ -29,6 +29,8 @@ async function run(name, body, { viewport = { width: 1500, height: 900 } } = {})
   const browser = await chromium.launch(launch);
   const ctx = await browser.newContext({ viewport });
   const page = await ctx.newPage();
+  // The new-world wizard opens at start; the suites expect a generated world, so they opt out of it.
+  await page.addInitScript(() => { try { localStorage.setItem('wme.wizard', 'off'); } catch { /* storage unavailable */ } });
 
   const problems = [];
   let failed = 0;

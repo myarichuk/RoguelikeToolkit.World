@@ -9,6 +9,7 @@ import type { FeatureEntity, RiverEntity } from '../doc/types';
 import { collectClimate, collectEdits, collectLandUse, packEdits, type EditMode, type Raster } from './edits';
 import type { NameRequest, RecomputeParams, WorldSnapshot } from './protocol';
 import { reconcileFeatures } from './reconcile';
+import { uniqueNamesAsync } from './uniqueNames';
 
 export type PhysicsMode = EditMode | 'revert';
 
@@ -47,8 +48,8 @@ export interface PhysicsOutcome {
 export async function derivePhysics(doc: MapDocument, engine: PhysicsEngine, mode: PhysicsMode): Promise<PhysicsOutcome> {
   const ph = doc.physics;
   if (!ph || !doc.hasWorld) throw new Error('This map has no generated world behind it, so there is nothing to re-derive. Generate a world first.');
-  const { seed, size, plates, styles, obliquity, flux, rotation, climateRefresh, meridionalWind, windCellBlend, oceanHeat, oceanRain, aeolian } = doc.settings;
-  const params = { seed, size, plates, styles, planet: { obliquity, flux, rotation }, model: { climateRefresh, meridionalWind, windCellBlend, oceanHeat, oceanRain, aeolian } };
+  const { seed, size, plates, styles, history, obliquity, flux, rotation, climateRefresh, meridionalWind, windCellBlend, oceanHeat, oceanRain, aeolian } = doc.settings;
+  const params = { seed, size, plates, styles, history, planet: { obliquity, flux, rotation }, model: { climateRefresh, meridionalWind, windCellBlend, oceanHeat, oceanRain, aeolian } };
   const tileCount = doc.world.tileXY.length / 2;
 
   let edits = ph.edits, heightTiles = 0, biomeTiles = 0, climateTiles = 0, landUseTiles = 0;
@@ -79,8 +80,11 @@ export async function derivePhysics(doc: MapDocument, engine: PhysicsEngine, mod
 
   if (rec.pending.length) {
     const byId = new Map(rec.features.map((f) => [f.id, f]));
-    const names = await engine.names(rec.pending.map((id) => byId.get(id)!.request!));
-    rec.pending.forEach((id, i) => { byId.get(id)!.name = names[i]; });
+    // New features may not take a name already on the map (kept names win).
+    const pending = new Set(rec.pending);
+    const got = await uniqueNamesAsync(rec.pending.map((id) => byId.get(id)!.request!), (r) => engine.names(r),
+      rec.features.filter((f) => !pending.has(f.id) && f.name).map((f) => f.name));
+    rec.pending.forEach((id, i) => { const f = byId.get(id)!; f.name = got.names[i]; f.request = got.requests[i]; });
     const riverOf = new Map(rec.rivers.map((r) => [r.id, r]));
     for (const f of rec.features) if (f.riverId && riverOf.has(f.riverId)) riverOf.get(f.riverId)!.name = f.name;
   }

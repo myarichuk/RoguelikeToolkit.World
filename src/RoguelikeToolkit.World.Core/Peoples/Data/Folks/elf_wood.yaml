@@ -1,0 +1,18 @@
+Key: elf_wood
+DisplayName: "Wood elf"
+Sapience: Full
+Embodiment: humanoid
+HabitatAffinity: temperate
+LifespanYears: 600
+MaturationYears: 70
+GrowthR: 0.014
+CompatGroup: elf
+OpennessPrior: high
+ConscientiousnessPrior: balanced
+ExtraversionPrior: balanced
+AgreeablenessPrior: high
+NeuroticismPrior: low
+Subsistence:
+  - forager
+  - agrarian
+  - highland

@@ -1,0 +1,25 @@
+Key: agrarian
+DisplayName: "Agrarian"
+Sedentary: true
+Arable: 3
+Pasture: 1
+Game: 0.5
+Timber: 0.5
+Fish: 0.5
+Defensibility: 0.5
+Coast: 0.5
+River: 2
+Road: 1
+Exploits:
+  - { Resource: quarry, Value: 1 }
+  - { Resource: lumber, Value: 1 }
+  - { Resource: fishery, Value: 0.5 }
+  - { Resource: salt, Value: 1.5 }
+  - { Resource: iron, Value: 1 }
+  - { Resource: copper, Value: 1 }
+  - { Resource: tin, Value: 1 }
+  - { Resource: lead_zinc, Value: 0.5 }
+  - { Resource: gold, Value: 1 }
+  - { Resource: silver, Value: 1 }
+  - { Resource: coal, Value: 0.5 }
+  - { Resource: gypsum, Value: 0.5 }

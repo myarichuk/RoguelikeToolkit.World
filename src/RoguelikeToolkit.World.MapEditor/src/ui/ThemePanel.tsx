@@ -31,8 +31,8 @@ export function ThemePanel() {
       </Section>
       <CoastlineSection />
       <Section title="Map">
-        {MAP_COLORS.map((c) => <ColorField key={c.key} label={c.label} value={t.map[c.key] as string} onChange={(v) => vm.setMap(c.key, v)} hint={THEME_HINTS[c.key]} />)}
-        {MAP_NUMBERS.map((n) => <Slider key={n.key} label={n.label} value={t.map[n.key] as number} min={n.min} max={n.max} step={n.step} onChange={(v) => vm.setMap(n.key, v)} hint={THEME_HINTS[n.key]} />)}
+        {MAP_COLORS.map((c) => <ColorField key={c.key} label={c.label} value={(t.map[c.key] ?? (c.key === 'riverInk' || c.key === 'road' ? t.map.landInk : '')) as string} onChange={(v) => vm.setMap(c.key, v)} hint={THEME_HINTS[c.key]} />)}
+        {MAP_NUMBERS.map((n) => <Slider key={n.key} label={n.label} value={(t.map[n.key] ?? (n.key === 'riverInkWidth' ? 0.3 : n.key === 'roadWidth' ? 1 : 0)) as number} min={n.min} max={n.max} step={n.step} onChange={(v) => vm.setMap(n.key, v)} hint={THEME_HINTS[n.key]} />)}
       </Section>
       <Section title="Biome colors" hint={THEME_HINTS.biomes}>
         {Object.keys(t.biomes).map((id) => <ColorField key={id} label={s.biomeNames[id] ?? `#${id}`} value={t.biomes[id]} onChange={(v) => vm.setBiome(id, v)} hint={THEME_HINTS.biomes} />)}

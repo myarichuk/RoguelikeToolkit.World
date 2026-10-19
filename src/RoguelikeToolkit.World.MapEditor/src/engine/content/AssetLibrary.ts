@@ -13,6 +13,8 @@ export interface AssetEntry {
   w: number; h: number;
   /** Anchor as a fraction of the box. */
   ax: number; ay: number;
+  /** The asset's category ("mountain", "tree", "settlement"...): drives zoom level-of-detail. */
+  category: string;
   /** Vector form for export: symbol content in its own viewBox. */
   viewBox: [number, number];
   svg: string;
@@ -89,7 +91,7 @@ export class AssetLibrary {
       const e: AssetEntry = {
         asset: it.def.id, variant: it.variant,
         u0: x / ATLAS, v0: y / ATLAS, u1: (x + it.vb[0] * it.px) / ATLAS, v1: (y + it.vb[1] * it.px) / ATLAS,
-        w: it.vb[0] * muPerUnit, h: it.vb[1] * muPerUnit, ax: it.ax, ay: it.ay, viewBox: it.vb, svg: it.svg,
+        w: it.vb[0] * muPerUnit, h: it.vb[1] * muPerUnit, ax: it.ax, ay: it.ay, category: it.def.category, viewBox: it.vb, svg: it.svg,
       };
       entries.set(`${e.asset}#${e.variant}`, e);
       let l = byAsset.get(e.asset); if (!l) byAsset.set(e.asset, (l = [])); l.push(e);

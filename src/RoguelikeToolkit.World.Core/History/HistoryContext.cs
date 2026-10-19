@@ -1,3 +1,4 @@
+using RoguelikeToolkit.World.Core.Peoples;
 namespace RoguelikeToolkit.World.Core.History;
 
 /// <summary>
@@ -9,6 +10,7 @@ namespace RoguelikeToolkit.World.Core.History;
 /// </summary>
 public sealed class HistoryContext
 {
+    private ResourceEra _maxResourceEra = ResourceEra.Medieval;
     private int _turnYears = 10;
     private int _turnCount = 30;
     private int _maxDecisionsPerTurn = 8;
@@ -125,8 +127,25 @@ public sealed class HistoryContext
         set => _hazardRate = value >= 0 ? value : throw new ArgumentOutOfRangeException(nameof(value), "HazardRate cannot be negative.");
     }
 
+    /// <summary>
+    /// The world-wide era gate: no people exploits a <see cref="Peoples.ResourceDef"/> whose era is above it (default
+    /// <see cref="ResourceEra.Medieval"/>, which keeps oil, gas, uranium and bauxite out of a fantasy world). Must be a defined era.
+    /// M5.1: carried, not yet read.
+    /// </summary>
+    public ResourceEra MaxResourceEra
+    {
+        get => _maxResourceEra;
+        set => _maxResourceEra = value >= ResourceEra.Ancient && value <= ResourceEra.Industrial ? value : throw new ArgumentOutOfRangeException(nameof(value), "MaxResourceEra must be a defined era.");
+    }
+
     /// <summary>The (folk, culture) pairs <see cref="CultureSeedStage"/> seeds the world with, in priority order.</summary>
     public List<HistoryPeople> Peoples { get; } = new();
+
+    /// <summary>
+    /// Author-pinned founding polities: founder <c>i</c> becomes polity <c>i</c>, and the rest of <see cref="MaxPolities"/> are
+    /// drawn as usual. Empty (the default) leaves the founding entirely to the draw, byte for byte as before.
+    /// </summary>
+    public List<HistoryFounder> Founders { get; } = new();
 
     /// <summary>Current history turn; advanced by <see cref="BeginTurn"/>.</summary>
     public int CurrentTurn { get; private set; }

@@ -1,0 +1,17 @@
+Key: halfling
+DisplayName: "Halfling"
+Sapience: Full
+Embodiment: humanoid
+HabitatAffinity: temperate
+LifespanYears: 120
+MaturationYears: 20
+GrowthR: 0.05
+CompatGroup: small
+OpennessPrior: balanced
+ConscientiousnessPrior: balanced
+ExtraversionPrior: high
+AgreeablenessPrior: high
+NeuroticismPrior: low
+Subsistence:
+  - agrarian
+  - forager

@@ -15,7 +15,7 @@ export interface TileFields {
   faces: Int32Array;
   heights: Float64Array;
   biomes: Uint8Array;
-  /** Ponded water depth per tile (0 where dry): carved into the elevation so lakes read as water. */
+  /** Ponded water depth per tile (0 where dry): carved into the elevation so lakes read as water, out to about halfway to the dry neighbours. */
   lakeDepth?: ArrayLike<number>;
 }
 
@@ -33,7 +33,7 @@ export interface Rasters {
 }
 
 /** Smooth 2D value noise in [0,1), one independent field per `salt`. */
-function valueNoise(x: number, y: number, salt: number): number {
+export function valueNoise(x: number, y: number, salt: number): number {
   const xi = Math.floor(x), yi = Math.floor(y);
   let fx = x - xi, fy = y - yi;
   fx = fx * fx * (3 - 2 * fx); fy = fy * fy * (3 - 2 * fy);
@@ -72,6 +72,65 @@ export function arcLatitudeExtremes(V: ArrayLike<number>, p: number, q: number):
   return { min, max };
 }
 
+/** Box blur radius (pixels, two passes) over the ponded share before it is thresholded: rounds the triangle-edge shore. */
+const LAKE_BLUR = 3;
+
+/**
+ * Carves lakes into the elevation. A pixel is lake water where the share of its barycentric weight
+ * on ponded tiles, blurred across face edges and thresholded with noise, passes about half: the
+ * shore runs halfway between a ponded tile and its dry neighbours and wanders in bays instead of
+ * following triangle edges. (Flooding every face that touches a ponded tile drew each lake as the
+ * whole star of triangles around it: twice its size, hexagonal, and fused with any lake two tiles
+ * away.) Only rows y0..y1 (plus the blur reach) hold lakes.
+ */
+function carveLakes(elevation: Float32Array, share: Float32Array, depth: Float32Array, W: number, H: number, y0: number, y1: number): void {
+  const r0 = Math.max(0, y0 - 2 * LAKE_BLUR), r1 = Math.min(H - 1, y1 + 2 * LAKE_BLUR), h = r1 - r0 + 1;
+  const a = share.subarray(r0 * W, (r1 + 1) * W), d = depth.subarray(r0 * W, (r1 + 1) * W);
+  const tmp = new Float32Array(h * W);
+  for (const f of [a, d]) for (let pass = 0; pass < 2; pass++) { boxBlur(f, tmp, W, h, LAKE_BLUR, true); boxBlur(tmp, f, W, h, LAKE_BLUR, false); }
+  const jl = 1 / 12; // bays ~12 mu, with a ~4 mu octave on top
+  for (let y = r0; y <= r1; y++) {
+    for (let x = 0; x < W; x++) {
+      const k = (y - r0) * W + x;
+      if (a[k] <= LAKE_SHORE - LAKE_JITTER / 2) continue;
+      const n = 0.6 * valueNoise(x * jl, y * jl, 0x1a4e) + 0.4 * valueNoise(x * jl * 3, y * jl * 3, 0x1a4f);
+      if (a[k] > LAKE_SHORE + LAKE_JITTER * (n - 0.5)) elevation[y * W + x] = -Math.max(d[k], MIN_LAKE_DEPTH);
+    }
+  }
+}
+
+/** One box-blur pass along x (wrapping) or y (clamped) over a W x H field. */
+export function boxBlur(src: Float32Array, dst: Float32Array, W: number, H: number, r: number, alongX: boolean): void {
+  const inv = 1 / (2 * r + 1);
+  if (alongX) {
+    for (let y = 0; y < H; y++) {
+      const row = y * W;
+      let s = 0;
+      for (let k = -r; k <= r; k++) s += src[row + ((k % W) + W) % W];
+      for (let x = 0; x < W; x++) {
+        dst[row + x] = s * inv;
+        s += src[row + (x + r + 1) % W] - src[row + ((x - r) % W + W) % W];
+      }
+    }
+  } else {
+    for (let x = 0; x < W; x++) {
+      let s = 0;
+      for (let k = -r; k <= r; k++) s += src[Math.min(H - 1, Math.max(0, k)) * W + x];
+      for (let y = 0; y < H; y++) {
+        dst[y * W + x] = s * inv;
+        s += src[Math.min(H - 1, y + r + 1) * W + x] - src[Math.max(0, y - r) * W + x];
+      }
+    }
+  }
+}
+
+/** Share of a pixel's barycentric weight on ponded tiles above which it is lake water. */
+const LAKE_SHORE = 0.5;
+/** Peak-to-peak noise on that threshold, so shores wander instead of following triangle edges. */
+const LAKE_JITTER = 0.4;
+/** Depth given to lake pixels right at the shore, where the interpolated depth tends to 0. */
+const MIN_LAKE_DEPTH = 0.004;
+
 const clampUnit = (v: number): number => Math.max(-1, Math.min(1, v));
 
 export function rasterize(t: TileFields, W: number, H: number, biomeJitter = 0.22): Rasters {
@@ -107,6 +166,11 @@ export function rasterize(t: TileFields, W: number, H: number, biomeJitter = 0.2
     return lo;
   };
   const jf = 1 / 7; // jitter feature size ~7 mu
+  // Ponded share and depth per pixel, carved into the elevation after the faces (see carveLakes).
+  let anyPond = false;
+  if (lakeDepth) for (let k = 0; k < nT && !anyPond; k++) anyPond = lakeDepth[k] > 0;
+  const lakeShare = anyPond ? new Float32Array(W * H) : null, lakeDepthPx = anyPond ? new Float32Array(W * H) : null;
+  let lakeY0 = H, lakeY1 = -1;
 
   for (let f = 0; f < F.length; f += 3) {
     const ia = F[f], ib = F[f + 1], ic = F[f + 2];
@@ -150,6 +214,8 @@ export function rasterize(t: TileFields, W: number, H: number, biomeJitter = 0.2
 
     const hA = t.heights[ia], hB = t.heights[ib], hC = t.heights[ic];
     const ldA = lakeDepth?.[ia] ?? 0, ldB = lakeDepth?.[ib] ?? 0, ldC = lakeDepth?.[ic] ?? 0;
+    const lA = ldA > 0 ? 1 : 0, lB = ldB > 0 ? 1 : 0, lC = ldC > 0 ? 1 : 0;
+    const anyLake = lA + lB + lC > 0;
     const bA = t.biomes[ia], bB = t.biomes[ib], bC = t.biomes[ic];
     const sameBiome = bA === bB && bB === bC;
     for (let y = y0; y <= y1; y++) {
@@ -166,8 +232,12 @@ export function rasterize(t: TileFields, W: number, H: number, biomeJitter = 0.2
         const s = wa + wb + wc;
         const i = y * W + x;
         elevation[i] = (wa * hA + wb * hB + wc * hC) / s;
-        const ponded = (wa * ldA + wb * ldB + wc * ldC) / s;
-        if (ponded > 0) elevation[i] = -ponded;
+        if (anyLake) {
+          lakeShare![i] = (wa * lA + wb * lB + wc * lC) / s;
+          lakeDepthPx![i] = (wa * ldA + wb * ldB + wc * ldC) / s;
+          if (y < lakeY0) lakeY0 = y;
+          if (y > lakeY1) lakeY1 = y;
+        }
         tile[i] = wa >= wb && wa >= wc ? ia : wb >= wc ? ib : ic;
         if (sameBiome) { biome[i] = bA; continue; }
         const ja = wa / s + biomeJitter * (valueNoise(x * jf, y * jf, ia) - 0.5);
@@ -178,6 +248,7 @@ export function rasterize(t: TileFields, W: number, H: number, biomeJitter = 0.2
     }
   }
   for (let i = 0; i < elevation.length; i++) if (Number.isNaN(elevation[i])) throw new Error(`raster hole at pixel ${i}`);
+  if (lakeShare && lakeDepthPx && lakeY1 >= lakeY0) carveLakes(elevation, lakeShare, lakeDepthPx, W, H, lakeY0, lakeY1);
   const waterPixels = new Int32Array(nT);
   for (let i = 0; i < elevation.length; i++) if (elevation[i] < 0) waterPixels[tile[i]]++;
   return { width: W, height: H, elevation, biome, tile, waterPixels };

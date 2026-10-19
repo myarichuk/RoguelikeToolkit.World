@@ -7,7 +7,8 @@ namespace RoguelikeToolkit.World.Core.Peoples;
 /// <summary>
 /// Data-oriented folk and culture tables. Convention: <c>Folks/*.yaml</c> hold one
 /// <see cref="FolkDef"/> each and <c>Cultures/*.yaml</c> hold one <see cref="CultureDef"/>
-/// each, with the Key matching the filename; <c>compat.yaml</c> holds the pairwise
+/// each, <c>Subsistence/*.yaml</c> one <see cref="SubsistenceDef"/> and <c>Resources/*.yaml</c> one
+/// <see cref="ResourceDef"/>, with the Key matching the filename; <c>compat.yaml</c> holds the pairwise
 /// offspring rules. YAML ships as embedded resources; files under an override
 /// directory (same layout) replace shipped entries with the same key.
 /// </summary>
@@ -17,6 +18,10 @@ public sealed class PeoplesStore
     public Dictionary<string, FolkDef> Folks { get; } = new(StringComparer.OrdinalIgnoreCase);
     /// <summary>Loaded culture definitions keyed by <see cref="CultureDef.Key"/> (case-insensitive).</summary>
     public Dictionary<string, CultureDef> Cultures { get; } = new(StringComparer.OrdinalIgnoreCase);
+    /// <summary>Loaded subsistence profiles keyed by <see cref="SubsistenceDef.Key"/> (case-insensitive).</summary>
+    public Dictionary<string, SubsistenceDef> Subsistence { get; } = new(StringComparer.OrdinalIgnoreCase);
+    /// <summary>Loaded resources keyed by <see cref="ResourceDef.Key"/> (case-insensitive).</summary>
+    public Dictionary<string, ResourceDef> Resources { get; } = new(StringComparer.OrdinalIgnoreCase);
     /// <summary>Pairwise offspring rules from <c>compat.yaml</c>; unlisted pairs blend.</summary>
     public CompatibilityMatrix Compatibility { get; } = new();
 
@@ -42,9 +47,57 @@ public sealed class PeoplesStore
         throw new UnknownPeoplesKeyException("culture", key ?? string.Empty, Cultures.Keys);
     }
 
+    /// <summary>Strict subsistence lookup: throws <see cref="UnknownPeoplesKeyException"/> naming available keys.</summary>
+    public SubsistenceDef GetSubsistence(string key)
+    {
+        if (key is not null && Subsistence.TryGetValue(key, out var d)) return d;
+        throw new UnknownPeoplesKeyException("subsistence", key ?? string.Empty, Subsistence.Keys);
+    }
+
+    /// <summary>Strict resource lookup: throws <see cref="UnknownPeoplesKeyException"/> naming available keys.</summary>
+    public ResourceDef GetResource(string key)
+    {
+        if (key is not null && Resources.TryGetValue(key, out var d)) return d;
+        throw new UnknownPeoplesKeyException("resource", key ?? string.Empty, Resources.Keys);
+    }
+
+    /// <summary>
+    /// The era gate: the exploits of profile <paramref name="subsistenceKey"/> whose resource needs no more than
+    /// <paramref name="maxEra"/>, in file order. An exploit naming a missing resource (possible only after
+    /// <see cref="LoadLenient"/>) is skipped.
+    /// </summary>
+    /// <exception cref="UnknownPeoplesKeyException">The profile does not exist.</exception>
+    public IReadOnlyList<SubsistenceExploit> ExploitsOf(string subsistenceKey, ResourceEra maxEra)
+    {
+        var list = new List<SubsistenceExploit>();
+        foreach (var e in GetSubsistence(subsistenceKey).Exploits)
+            if (Resources.TryGetValue(e.Resource, out var r) && r.EraLevel <= maxEra) list.Add(e);
+        return list;
+    }
+
+    /// <summary>True when folk <paramref name="folkKey"/> may live by <paramref name="subsistenceKey"/> (an empty allow-list allows any).</summary>
+    /// <exception cref="UnknownPeoplesKeyException">The folk does not exist.</exception>
+    public bool AllowsSubsistence(string folkKey, string subsistenceKey)
+    {
+        var allowed = GetFolk(folkKey).Subsistence;
+        return allowed.Count == 0 || allowed.Any(k => string.Equals(k?.Trim(), subsistenceKey?.Trim(), StringComparison.OrdinalIgnoreCase));
+    }
+
+    /// <summary>
+    /// Why the (folk, culture) pair cannot be seeded, or null when it can: both exist and the culture's default
+    /// subsistence is in the folk's allow-list. Cultures do not name a folk, so this is checked per pair, not at load.
+    /// </summary>
+    public string? PairingProblem(string folkKey, string cultureKey)
+    {
+        if (folkKey is null || !Folks.ContainsKey(folkKey)) return $"unknown folk '{folkKey}'.";
+        if (cultureKey is null || !Cultures.TryGetValue(cultureKey, out var culture)) return $"unknown culture '{cultureKey}'.";
+        if (AllowsSubsistence(folkKey, culture.Subsistence)) return null;
+        return $"culture '{cultureKey}' lives by '{culture.Subsistence}', which folk '{folkKey}' does not allow (allowed: {string.Join(", ", Folks[folkKey].Subsistence)}).";
+    }
+
     /// <summary>
     /// Loads the shipped folk/culture tables and, when <paramref name="overrideDir"/> exists,
-    /// every <c>*.yaml</c> under its <c>Folks/</c>, <c>Cultures/</c> folders plus a top-level
+    /// every <c>*.yaml</c> under its <c>Folks/</c>, <c>Cultures/</c>, <c>Subsistence/</c> and <c>Resources/</c> folders plus a top-level
     /// <c>compat.yaml</c>; an on-disk entry replaces the shipped one with the same key.
     /// </summary>
     /// <exception cref="PeoplesDataException">Any file is unreadable, malformed or invalid, or two files claim the same key; all problems are reported together.</exception>
@@ -110,6 +163,7 @@ public sealed class PeoplesStore
         }
         foreach (var (where, folk) in store._compatRefs)
             if (!store.Folks.ContainsKey(folk)) problems.Add($"{where}: unknown folk '{folk}' (a typo here would silently leave the pair blending).");
+        CheckReferences(store, problems);
         return store;
     }
 
@@ -144,79 +198,51 @@ public sealed class PeoplesStore
             ValidateCompat(rel, compat, store.Compatibility, problems, fromDisk ? store._compatRefs : null);
             return;
         }
-        bool isFolk = rel.StartsWith("Folks/", StringComparison.OrdinalIgnoreCase);
-        bool isCulture = rel.StartsWith("Cultures/", StringComparison.OrdinalIgnoreCase);
-        if (!isFolk && !isCulture)
-        {
-            problems.Add($"{rel}: unrecognized location (want Folks/*.yaml, Cultures/*.yaml or compat.yaml).");
-            return;
-        }
         var fileBase = Path.GetFileNameWithoutExtension(rel.Split('/').Last());
-        if (isFolk)
-        {
-            FolkDef? data;
-            try
-            {
-                data = des.Deserialize<FolkDef>(content);
-            }
-            catch (Exception ex)
-            {
-                problems.Add($"{rel}: invalid YAML: {ex.Message}");
-                return;
-            }
-            if (data is null || string.IsNullOrWhiteSpace(data.Key))
-            {
-                problems.Add($"{rel}: missing Key (expected Key matching the filename).");
-                return;
-            }
-            if (!data.Key.Equals(fileBase, StringComparison.OrdinalIgnoreCase))
-            {
-                problems.Add($"{rel}: Key '{data.Key}' does not match filename '{fileBase}'.");
-                return;
-            }
-            bool duplicate = fromDisk ? !diskKeys!.Add("folk:" + data.Key) : !embeddedKeys.Add("folk:" + data.Key);
-            if (duplicate)
-            {
-                problems.Add($"{rel}: duplicate folk Key '{data.Key}'.");
-                return;
-            }
-            int before = problems.Count;
-            ValidateFolk(rel, data, problems);
-            if (problems.Count > before) return;
-            store.Folks[data.Key] = data;
-        }
+        if (rel.StartsWith("Folks/", StringComparison.OrdinalIgnoreCase))
+            LoadKeyed(store.Folks, "folk", d => d.Key, ValidateFolk);
+        else if (rel.StartsWith("Cultures/", StringComparison.OrdinalIgnoreCase))
+            LoadKeyed(store.Cultures, "culture", d => d.Key, ValidateCulture);
+        else if (rel.StartsWith("Subsistence/", StringComparison.OrdinalIgnoreCase))
+            LoadKeyed(store.Subsistence, "subsistence", d => d.Key, ValidateSubsistence);
+        else if (rel.StartsWith("Resources/", StringComparison.OrdinalIgnoreCase))
+            LoadKeyed(store.Resources, "resource", d => d.Key, ValidateResource);
         else
+            problems.Add($"{rel}: unrecognized location (want Folks/, Cultures/, Subsistence/ or Resources/*.yaml, or compat.yaml).");
+
+        void LoadKeyed<T>(Dictionary<string, T> into, string kind, Func<T, string> key, Action<string, T, List<string>> validate)
         {
-            CultureDef? data;
+            T? data;
             try
             {
-                data = des.Deserialize<CultureDef>(content);
+                data = des.Deserialize<T>(content!);
             }
             catch (Exception ex)
             {
                 problems.Add($"{rel}: invalid YAML: {ex.Message}");
                 return;
             }
-            if (data is null || string.IsNullOrWhiteSpace(data.Key))
+            if (data is null || string.IsNullOrWhiteSpace(key(data)))
             {
                 problems.Add($"{rel}: missing Key (expected Key matching the filename).");
                 return;
             }
-            if (!data.Key.Equals(fileBase, StringComparison.OrdinalIgnoreCase))
+            string k = key(data);
+            if (!k.Equals(fileBase, StringComparison.OrdinalIgnoreCase))
             {
-                problems.Add($"{rel}: Key '{data.Key}' does not match filename '{fileBase}'.");
+                problems.Add($"{rel}: Key '{k}' does not match filename '{fileBase}'.");
                 return;
             }
-            bool duplicate = fromDisk ? !diskKeys!.Add("culture:" + data.Key) : !embeddedKeys.Add("culture:" + data.Key);
+            bool duplicate = fromDisk ? !diskKeys!.Add(kind + ":" + k) : !embeddedKeys.Add(kind + ":" + k);
             if (duplicate)
             {
-                problems.Add($"{rel}: duplicate culture Key '{data.Key}'.");
+                problems.Add($"{rel}: duplicate {kind} Key '{k}'.");
                 return;
             }
             int before = problems.Count;
-            ValidateCulture(rel, data, problems);
+            validate(rel, data, problems);
             if (problems.Count > before) return;
-            store.Cultures[data.Key] = data;
+            into[k] = data;
         }
     }
 
@@ -266,6 +292,14 @@ public sealed class PeoplesStore
                      ("Collectivism", data.Collectivism), ("Honor", data.Honor),
                  })
             if (v < 0 || v > 100) problems.Add($"{rel}: {field} {v} is out of range (0-100).");
+        if (data.FormAffinity is null) problems.Add($"{rel}: FormAffinity is null (use an empty map for none).");
+        else
+        {
+            foreach (var (form, weight) in data.FormAffinity)
+                if (string.IsNullOrWhiteSpace(form) || weight < 0 || weight > 100)
+                    problems.Add($"{rel}: FormAffinity '{form}' weight {weight} is out of range (0-100).");
+            if (data.FormAffinity.Count > 0 && data.FormAffinity.Values.Sum() <= 0) problems.Add($"{rel}: FormAffinity weights are all zero.");
+        }
         if (string.IsNullOrWhiteSpace(data.FaithForm)) problems.Add($"{rel}: FaithForm is blank.");
         if (!string.Equals(data.MixedNaming, "blend", StringComparison.OrdinalIgnoreCase) &&
             !string.Equals(data.MixedNaming, "dominant", StringComparison.OrdinalIgnoreCase) &&
@@ -280,6 +314,87 @@ public sealed class PeoplesStore
                      ("NeuroticismOffset", data.NeuroticismOffset),
                  })
             if (v < -100 || v > 100) problems.Add($"{rel}: {field} {v} is out of range (-100-100).");
+    }
+
+    private static void ValidateSubsistence(string rel, SubsistenceDef data, List<string> problems)
+    {
+        foreach (var (field, v) in new[]
+                 {
+                     ("Arable", data.Arable), ("Pasture", data.Pasture), ("Game", data.Game),
+                     ("Timber", data.Timber), ("Fish", data.Fish),
+                 })
+            if (!(v >= 0 && v <= 10)) problems.Add($"{rel}: {field} {v} is out of range (0-10).");
+        foreach (var (field, v) in new[]
+                 {
+                     ("Defensibility", data.Defensibility), ("Coast", data.Coast), ("River", data.River), ("Road", data.Road),
+                 })
+            if (!(v >= -10 && v <= 10)) problems.Add($"{rel}: {field} {v} is out of range (-10-10).");
+        if (data.Exploits is null)
+        {
+            problems.Add($"{rel}: Exploits is null (use an empty list).");
+            return;
+        }
+        var seen = new HashSet<string>(StringComparer.OrdinalIgnoreCase);
+        for (int i = 0; i < data.Exploits.Count; i++)
+        {
+            var e = data.Exploits[i];
+            if (e is null || string.IsNullOrWhiteSpace(e.Resource))
+            {
+                problems.Add($"{rel}: Exploits[{i}] needs a Resource.");
+                continue;
+            }
+            e.Resource = e.Resource.Trim();
+            if (!seen.Add(e.Resource)) problems.Add($"{rel}: Exploits[{i}] repeats resource '{e.Resource}'.");
+            if (!(e.Value >= 0 && e.Value <= 10)) problems.Add($"{rel}: Exploits[{i}] Value {e.Value} is out of range (0-10).");
+        }
+    }
+
+    private static readonly string[] YieldChannels = { "arable", "pasture", "game", "timber", "fish" };
+
+    private static void ValidateResource(string rel, ResourceDef data, List<string> problems)
+    {
+        bool deposit = !string.IsNullOrWhiteSpace(data.Deposit);
+        bool yield = !string.IsNullOrWhiteSpace(data.Yield);
+        if (yield && !YieldChannels.Contains(data.Yield.Trim(), StringComparer.OrdinalIgnoreCase))
+            problems.Add($"{rel}: unknown Yield '{data.Yield}' (want arable, pasture, game, timber, fish, or blank).");
+        if (deposit && yield) problems.Add($"{rel}: a resource is a Deposit or a Yield, not both.");
+        if (!ResourceDef.TryParseEra(data.Era, out _))
+            problems.Add($"{rel}: unknown Era '{data.Era}' (want Ancient, Medieval or Industrial).");
+        if (!(data.Value >= 0 && data.Value <= 100)) problems.Add($"{rel}: Value {data.Value} is out of range (0-100).");
+        if (data.LifetimeTurns < 0 || data.LifetimeTurns > 100000)
+            problems.Add($"{rel}: LifetimeTurns {data.LifetimeTurns} is out of range (0-100000).");
+        else if (data.LifetimeTurns > 0 && !deposit)
+            problems.Add($"{rel}: LifetimeTurns needs a Deposit (only deposits run out).");
+    }
+
+    /// <summary>Cross-file checks once every file has loaded (shipped and override alike).</summary>
+    private static void CheckReferences(PeoplesStore store, List<string> problems)
+    {
+        foreach (var c in store.Cultures.Values.OrderBy(c => c.Key, StringComparer.OrdinalIgnoreCase))
+            if (!string.IsNullOrWhiteSpace(c.Subsistence) && !store.Subsistence.ContainsKey(c.Subsistence.Trim()))
+                problems.Add($"Cultures/{c.Key}.yaml: unknown Subsistence '{c.Subsistence}'.");
+        foreach (var f in store.Folks.Values.OrderBy(f => f.Key, StringComparer.OrdinalIgnoreCase))
+        {
+            if (f.Subsistence is null)
+            {
+                problems.Add($"Folks/{f.Key}.yaml: Subsistence is null (use an empty list for any).");
+                continue;
+            }
+            foreach (var k in f.Subsistence)
+                if (string.IsNullOrWhiteSpace(k) || !store.Subsistence.ContainsKey(k.Trim()))
+                    problems.Add($"Folks/{f.Key}.yaml: unknown Subsistence '{k}'.");
+        }
+        foreach (var sub in store.Subsistence.Values.OrderBy(x => x.Key, StringComparer.OrdinalIgnoreCase))
+            foreach (var e in sub.Exploits)
+                if (!store.Resources.ContainsKey(e.Resource))
+                    problems.Add($"Subsistence/{sub.Key}.yaml: unknown resource '{e.Resource}'.");
+        var claimed = new Dictionary<string, string>(StringComparer.OrdinalIgnoreCase);
+        foreach (var r in store.Resources.Values.OrderBy(x => x.Key, StringComparer.OrdinalIgnoreCase))
+        {
+            if (string.IsNullOrWhiteSpace(r.Deposit)) continue;
+            string d = r.Deposit.Trim();
+            if (!claimed.TryAdd(d, r.Key)) problems.Add($"Resources/{r.Key}.yaml: deposit {d} is already claimed by '{claimed[d]}'.");
+        }
     }
 
     private static void ValidateCompat(string rel, CompatData? data, CompatibilityMatrix matrix, List<string> problems, List<(string Where, string Folk)>? refs)

@@ -9,12 +9,22 @@ const stubDoc = (biome: number) => ({
   biomeAt: () => biome,
   features: { all: () => [] as never[] },
 }) as unknown as MapDocument;
-const stubLib = (count: number) => ({ variants: () => count }) as unknown as AssetLibrary;
+const stubLib = (count: number) => ({ variants: () => count, get: () => ({ w: 5, h: 6, ax: 0.5, ay: 1 }) }) as unknown as AssetLibrary;
 const rule: PlacementRule = {
   id: 't', assets: ['core.conifer'], biomes: [3], elevation: [0, 99], spacing: 64, density: 1,
 };
 const run = (variants: number) =>
   populate(stubDoc(3), { seed: 1337, rules: [rule], library: stubLib(variants), featureAssets: () => [] });
+
+describe('populate on a shore', () => {
+  it('drops a land stamp whose base reaches into water, though its anchor is dry', () => {
+    const shore = { ...stubDoc(3), elevationAt: (x: number) => (x < 1000 ? 0.3 : -0.2) } as unknown as MapDocument;
+    const opts = { seed: 1337, rules: [rule], library: stubLib(2), featureAssets: () => [] };
+    const dry = populate(shore, opts);
+    expect(dry.length).toBeGreaterThan(0);
+    expect(dry.every((st) => st.x < 1000 - 2)).toBe(true);
+  });
+});
 
 describe('placeVariant', () => {
   it('bumps a variant that would repeat a neighbour', () => {

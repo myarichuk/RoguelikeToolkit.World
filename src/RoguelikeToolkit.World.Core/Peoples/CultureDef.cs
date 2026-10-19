@@ -21,8 +21,15 @@ public sealed class CultureDef
     /// rank-2 slice only checks it is non-blank.
     /// </summary>
     public string NamingTable { get; set; } = string.Empty;
-    /// <summary>Subsistence archetype (agrarian, pastoral, artisan, maritime, ...); free text, required non-blank.</summary>
+    /// <summary>Default <see cref="SubsistenceDef"/> key (agrarian, pastoral, artisan, maritime, ...); must name a loaded profile.</summary>
     public string Subsistence { get; set; } = string.Empty;
+
+    /// <summary>
+    /// How readily this culture takes each government form: weights (0-100) by <c>PolityForm</c> name, e.g.
+    /// <c>LooseAssociation: 30</c>. Empty means the land alone decides. Names are data here and bound to the enum by
+    /// <c>History.FormAffinity</c> (Peoples sits below History).
+    /// </summary>
+    public Dictionary<string, int> FormAffinity { get; set; } = new(StringComparer.OrdinalIgnoreCase);
     /// <summary>Whose line names follow when the caller does not choose: <c>Patrilineal</c>, <c>Matrilineal</c> or <c>Bilineal</c> (validated at load, case-insensitive).</summary>
     public string LineageDefault { get; set; } = "Patrilineal";
     /// <summary>Xenophobia (parochial altruism axis), 0-100.</summary>

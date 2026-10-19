@@ -11,6 +11,7 @@ import { hash2, hashString } from './core/rng';
 import { documentFromWorld } from './doc/fromWorld';
 import { MapDocument } from './doc/MapDocument';
 import { loadDocument, saveDocument } from './doc/serialize';
+import type { SessionStore } from './doc/SessionStore';
 import type { DocSettings, Entity, FeatureEntity, LabelEntity, RiverEntity, StampEntity } from './doc/types';
 import type { EntityStore } from './doc/EntityStore';
 import { exportSvg, type SvgExportOptions } from './export/SvgExporter';
@@ -36,8 +37,9 @@ import { DEFAULT_TOOL_OPTIONS, type Tool, type ToolContext, type ToolId, type To
 import { ToolController, type ToolHost } from './tools/ToolController';
 import { derivePhysics, describeReport, type PhysicsMode } from './world/derivePhysics';
 import { styleIndexForPlate } from './world/features';
-import { CLIMATE_MODEL_DEFAULTS, EARTH, NameCtx, type GenerateParams, type NameRequest, type NameStyle } from './world/protocol';
+import { CLIMATE_MODEL_DEFAULTS, EARTH, NameCtx, type GenerateParams, type NameRequest, type NameStyle, type PeopleOption } from './world/protocol';
 import { WorldService } from './world/WorldService';
+import { uniqueNamesAsync } from './world/uniqueNames';
 
 export interface GenerateRequest extends GenerateParams { title?: string; density?: number; }
 
@@ -62,6 +64,8 @@ export interface EditorConfig {
   frameworkUrl: string;
   /** Base URL that the core pack's relative URLs (fonts) resolve against. */
   baseUrl: string;
+  /** Where the working map is kept between reloads. Omit for none. */
+  session?: SessionStore;
 }
 
 /**
@@ -90,6 +94,8 @@ export class Editor implements ToolContext, ToolHost {
   private _tool: ToolId = 'inspect';
   private _options: ToolOptions = { ...DEFAULT_TOOL_OPTIONS };
   private _styles: NameStyle[] = [];
+  private _peoples: PeopleOption[] = [];
+  private _forms: string[] = [];
   private renderer: MapRenderer | null = null;
   private overlay: Overlay | null = null;
   private controller: ToolController | null = null;
@@ -105,7 +111,12 @@ export class Editor implements ToolContext, ToolHost {
   /** Resolves when fonts and the atlas for the current theme are ready. */
   contentReady: Promise<void> = Promise.resolve();
 
+  private readonly session: SessionStore | undefined;
+  private sessionTimer = 0;
+  private sessionDirty = false;
+
   constructor(config: EditorConfig) {
+    this.session = config.session;
     this.world = new WorldService(config.frameworkUrl);
     this.packs.add(corePack, config.baseUrl);
     this.packs.events.on('change', () => {
@@ -115,9 +126,11 @@ export class Editor implements ToolContext, ToolHost {
       this.contentTimer = window.setTimeout(() => { this.contentReady = this.refreshContent(); }, 60);
     });
     this.selection.events.on('change', () => this.selectionChanged());
-    this.undo.events.on('change', () => this.requestRender());
+    this.undo.events.on('change', () => { this.requestRender(); this.scheduleSessionSave(); });
+    if (typeof document !== 'undefined') document.addEventListener('visibilitychange', () => { if (document.visibilityState === 'hidden') void this.saveSession(); });
     this.contentReady = this.refreshContent();
     void this.world.styles().then((s) => { this._styles = s; this.events.emit('content', this.packs); }).catch((e) => this.fail(e));
+    void this.world.peoples().then((r) => { this._peoples = r.peoples; this._forms = r.forms; this.events.emit('content', this.packs); }).catch((e) => this.fail(e));
   }
 
   // --- state accessors ---------------------------------------------------------------------
@@ -130,6 +143,9 @@ export class Editor implements ToolContext, ToolHost {
   get themeId(): string { return this._themeId; }
   /** Every name style the engine knows (race x culture). */
   get nameStyles(): readonly NameStyle[] { return this._styles; }
+  /** The peoples a world can be founded by, and the polity form names (founders pin a form by index). */
+  get peoples(): readonly PeopleOption[] { return this._peoples; }
+  get formNames(): readonly string[] { return this._forms; }
   get stats(): FrameStats | null { return this.renderer?.stats ?? null; }
   theme(): Theme { return this.packs.theme(this._themeId); }
   view(): ViewSettings { return this._view; }
@@ -291,7 +307,7 @@ export class Editor implements ToolContext, ToolHost {
 
   // --- documents ---------------------------------------------------------------------------
 
-  private attach(doc: MapDocument): void {
+  private attach(doc: MapDocument, restored = false): void {
     this._doc = doc;
     this.selection.clear();
     this.selection.set({ hoverFeature: null });
@@ -302,6 +318,49 @@ export class Editor implements ToolContext, ToolHost {
     this.renderer?.camera.fit();
     this.events.emit('doc', doc);
     this.requestRender();
+    if (!restored) this.scheduleSessionSave();
+  }
+
+  // --- session (autosave) ------------------------------------------------------------------
+
+  /** Whether a map from an earlier visit is stored. */
+  async hasSession(): Promise<boolean> { return !!(await this.session?.load()); }
+
+  /** Re-opens the map stored by the last visit; false when there is none (or it cannot be read). */
+  async restoreSession(): Promise<boolean> {
+    const blob = await this.session?.load();
+    if (!blob) return false;
+    try {
+      const doc = await loadDocument(blob);
+      this.attach(doc, true);
+      this.status(`Restored "${doc.settings.title}" from your last visit`);
+      return true;
+    } catch {
+      await this.session?.clear(); // unreadable (older format, corrupt): do not trip over it again
+      return false;
+    }
+  }
+
+  /** Forgets the stored map. */
+  forgetSession(): Promise<void> {
+    clearTimeout(this.sessionTimer);
+    this.sessionDirty = false;
+    return this.session?.clear() ?? Promise.resolve();
+  }
+
+  private scheduleSessionSave(): void {
+    if (!this.session) return;
+    this.sessionDirty = true;
+    clearTimeout(this.sessionTimer);
+    this.sessionTimer = window.setTimeout(() => void this.saveSession(), 4000);
+  }
+
+  /** Writes the working map to the session store now, if it changed since the last write. */
+  async saveSession(): Promise<void> {
+    if (!this.session || !this.sessionDirty) return;
+    clearTimeout(this.sessionTimer);
+    this.sessionDirty = false;
+    try { await this.session.save(await saveDocument(this._doc)); } catch { this.sessionDirty = true; }
   }
 
   async generate(req: GenerateRequest): Promise<void> {
@@ -309,8 +368,8 @@ export class Editor implements ToolContext, ToolHost {
       const t0 = performance.now();
       const planet = { ...EARTH, ...req.planet };
       const model = { ...CLIMATE_MODEL_DEFAULTS, ...req.model };
-      const snap = await this.world.generate({ seed: req.seed >>> 0, size: req.size, plates: req.plates, styles: req.styles, planet, model });
-      const doc = documentFromWorld(snap, { title: req.title ?? `World ${req.seed}`, styles: req.styles, ...planet, ...model });
+      const snap = await this.world.generate({ seed: req.seed >>> 0, size: req.size, plates: req.plates, styles: req.styles, planet, model, history: req.history });
+      const doc = documentFromWorld(snap, { title: req.title ?? `World ${req.seed}`, styles: req.styles, history: req.history, ...planet, ...model });
       this.density = req.density ?? 1;
       await this.contentReady;
       let t = performance.now();
@@ -387,8 +446,9 @@ export class Editor implements ToolContext, ToolHost {
       .filter((f): f is FeatureEntity => !!f && !!f.request);
     if (!feats.length) return;
     const nonce = this.nameNonce++;
-    const requests = feats.map((f) => ({ ...f.request!, seed: hash2(f.request!.seed, nonce) }));
-    const names = await this.world.names(requests);
+    const ids = new Set(feats.map((f) => f.id));
+    const taken = [...doc.features.all()].filter((f) => !ids.has(f.id) && f.name && f.kind !== 'deposit').map((f) => f.name);
+    const { names, requests } = await uniqueNamesAsync(feats.map((f) => ({ ...f.request!, seed: hash2(f.request!.seed, nonce) })), (r) => this.world.names(r), taken);
     this.undo.execute(this.renameCommand(feats.length === 1 ? 'Re-roll name' : 'Re-roll names', feats.map((f, i) => ({ f, name: names[i], request: requests[i] }))));
   }
 
@@ -525,11 +585,8 @@ export class Editor implements ToolContext, ToolHost {
     const key = `${s.feature}|${s.hoverFeature}`;
     if (key !== this.maskKey) {
       this.maskKey = key;
-      const tiles = (id: string | null) => {
-        const f = id ? doc.features.get(id) : undefined;
-        return f?.tiles && f.kind !== 'river' ? f.tiles : null;
-      };
-      this.renderer?.setMasks(tiles(s.feature), s.hoverFeature !== s.feature ? tiles(s.hoverFeature) : null);
+      const mask = (id: string | null) => (id ? doc.maskOf(id) : null);
+      this.renderer?.setMasks(mask(s.feature), s.hoverFeature !== s.feature ? mask(s.hoverFeature) : null);
     }
     this.requestRender();
   }
@@ -540,6 +597,9 @@ export class Editor implements ToolContext, ToolHost {
     this.events.emit('busy', label);
     try { return await fn(); } catch (e) { this.fail(e); throw e; } finally { this.events.emit('busy', null); }
   }
+
+  /** Gives up on the world engine's current job (a generation taking too long) and starts a fresh engine; the map on screen is untouched. */
+  cancelWork(): void { this.world.restart('Cancelled: the generation was stopped. The map on screen is unchanged.'); }
 
   private fail(e: unknown): void {
     const msg = e instanceof Error ? e.message : String(e);

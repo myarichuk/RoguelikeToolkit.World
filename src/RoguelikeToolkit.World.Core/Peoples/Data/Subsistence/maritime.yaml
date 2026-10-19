@@ -1,0 +1,19 @@
+Key: maritime
+DisplayName: "Maritime"
+Sedentary: true
+Arable: 1
+Pasture: 0.5
+Game: 0
+Timber: 1.5
+Fish: 3
+Defensibility: 0.5
+Coast: 3
+River: 1
+Road: 0.5
+Exploits:
+  - { Resource: fishery, Value: 3 }
+  - { Resource: lumber, Value: 1.5 }
+  - { Resource: salt, Value: 1.5 }
+  - { Resource: quarry, Value: 0.5 }
+  - { Resource: oil, Value: 1 }
+  - { Resource: gas, Value: 1 }

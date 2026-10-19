@@ -32,6 +32,9 @@ export function documentFromWorld(w: WorldSnapshot, settings: Partial<DocSetting
   );
   const { features, rivers } = entitiesFromSnapshot(w);
   doc.rivers.reset(rivers);
+  doc.roads.reset(w.features.roads.map((r) => ({
+    id: newId('road'), kind: r.kind, keeper: r.keeper, severed: r.severed, founded: r.founded, points: Array.from(r.points, (v) => Math.round(v * 100) / 100),
+  })));
   doc.features.reset(features);
   // The pristine world is the baseline brush strokes are measured against; every feature here is the engine's.
   doc.physics = {

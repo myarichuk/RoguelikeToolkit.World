@@ -1,0 +1,23 @@
+Key: highland
+DisplayName: "Highland"
+Sedentary: true
+Arable: 1
+Pasture: 2
+Game: 1
+Timber: 0.5
+Fish: 0
+Defensibility: 3
+Coast: 0
+River: 0.5
+Road: -0.5
+Exploits:
+  - { Resource: range, Value: 1.5 }
+  - { Resource: quarry, Value: 1 }
+  - { Resource: salt, Value: 1 }
+  - { Resource: iron, Value: 1 }
+  - { Resource: copper, Value: 1 }
+  - { Resource: tin, Value: 1 }
+  - { Resource: lead_zinc, Value: 0.5 }
+  - { Resource: gold, Value: 1 }
+  - { Resource: silver, Value: 1 }
+  - { Resource: gems, Value: 1 }

@@ -4,6 +4,7 @@ import type { AssetLibrary } from '../content/AssetLibrary';
 import type { PlacementRule } from '../content/types';
 import type { MapDocument } from '../doc/MapDocument';
 import type { FeatureEntity, StampEntity } from '../doc/types';
+import { FootprintMap, baseOnLand, placeRelief } from './relief';
 
 export interface PopulateOptions {
   seed: number;
@@ -17,8 +18,9 @@ export interface PopulateOptions {
 
 /**
  * Rule-driven scatter: one jittered candidate per grid cell (spacing = cell size), kept with the
- * rule's density where elevation/biome fit. Deterministic in (seed, rule id, cell). Settlements
- * then get their markers and clear vegetation around them. Stable ids derive from the rule and
+ * rule's density where elevation/biome fit. "relief" rules (ranges, hill country) are placed first
+ * by `placeRelief`, and grid-scattered vegetation keeps off their bodies. Deterministic in
+ * (seed, rule id, cell). Settlements then get their markers and clear vegetation around them. Stable ids derive from the rule and
  * cell, so re-running yields the same stamps.
  */
 /**
@@ -46,7 +48,12 @@ export function populate(doc: MapDocument, o: PopulateOptions): StampEntity[] {
   const out: StampEntity[] = [];
   const density = o.density ?? 1;
   const elevAt = (x: number, y: number) => doc.elevationAt(x, y);
+  // Relief first (ranges, then hill country, in pack order), so scattered vegetation can keep off it.
+  const relief = new FootprintMap();
+  const reliefStamps: StampEntity[] = [];
+  for (const rule of o.rules) if (rule.layout === 'relief') reliefStamps.push(...placeRelief(doc, rule, o.seed, o.library, density, relief));
   for (const rule of o.rules) {
+    if (rule.layout === 'relief') continue;
     const assets = rule.assets.filter((a) => o.library.variants(a) > 0);
     if (!assets.length) continue;
     const ruleSeed = hash2(o.seed, hashString(rule.id));
@@ -71,6 +78,8 @@ export function populate(doc: MapDocument, o: PopulateOptions): StampEntity[] {
         const [s0, s1] = rule.scale ?? [0.85, 1.15];
         let scale = s0 + (s1 - s0) * rng();
         if (rule.scaleWithElevation !== undefined) scale *= 1 + Math.max(0, h - rule.scaleWithElevation) * 1.1;
+        const e = o.library.get(asset, 0);
+        if (land && e && !baseOnLand(elevAt, x, y, e.w * scale, e.h * scale)) continue;
         out.push({
           id: `st_${rule.id}_${cx}_${cy}`, asset, variant: placeVariant(rng, o.library.variants(asset), seen, nx, cx, cy, asset),
           x, y, scale, rotation: /compass/.test(asset) ? 0 : (rng() - 0.5) * 0.14, flip: rng() < 0.5 && !/compass/.test(asset),
@@ -89,7 +98,10 @@ export function populate(doc: MapDocument, o: PopulateOptions): StampEntity[] {
     settlements.push({ id: `st_${f.id}`, asset: marker, variant, x: f.x, y: f.y + e.h * (1 - e.ay) * 0.2, scale: 1, rotation: 0, flip: false });
     clear.push({ x: f.x, y: f.y - e.h * 0.3, r: Math.max(e.w, e.h) * 0.62 });
   }
-  const kept = out.filter((st) => {
+  // Small scatter on a hill or mountain body reads as clutter: the relief keeps that ground.
+  const small = new Set(['tree', 'vegetation', 'terrain']);
+  const scattered = !reliefStamps.length ? out : out.filter((st) => !small.has(o.library.get(st.asset, st.variant)?.category ?? '') || !relief.covers(st.x, st.y));
+  const kept = scattered.concat(reliefStamps).filter((st) => {
     if (/mountain|volcano|wave|ship|monster|whirlpool/i.test(st.asset)) return true;
     for (const c of clear) {
       let dx = st.x - c.x; dx -= Math.round(dx / MAP_W) * MAP_W;
@@ -101,7 +113,7 @@ export function populate(doc: MapDocument, o: PopulateOptions): StampEntity[] {
 }
 
 function settlementAsset(f: FeatureEntity, featureAssets: (kind: string) => string[]): string | null {
-  if (!['capital', 'city', 'town', 'village'].includes(f.kind)) return null;
+  if (!['capital', 'city', 'town', 'village', 'ruin', 'shrine'].includes(f.kind)) return null;
   const coastal = f.details.some(([k, v]) => k === 'Water access' && v.includes('coast'));
   const port = featureAssets('port');
   if (coastal && f.kind === 'town' && port.length) return port[0];

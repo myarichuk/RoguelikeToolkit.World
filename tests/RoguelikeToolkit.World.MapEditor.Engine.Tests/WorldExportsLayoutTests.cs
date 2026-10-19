@@ -192,4 +192,66 @@ public class WorldExportsLayoutTests
     {
         foreach (var s in WorldExports.NameStyles()) Assert.Equal(3, s.Split('\t').Length);
     }
+
+    [Fact]
+    public void HistoryArrays_HaveTheirDocumentedStride_AndAlignWithTheirStrings()
+    {
+        WorldExports.ResetHistoryConfig();
+        int n = Tiles();
+        var info = WorldExports.HistoryInfo();
+        Assert.Equal(WorldExports.HistoryInfoLength, info.Length);
+        Assert.Equal(1, info[0]);
+        int polities = info[3], settlements = info[4], roads = info[5], scars = info[6], events = info[7], changes = info[8], scalars = info[9], samples = info[10];
+        Assert.True(polities > 0 && settlements > 0 && events > 0 && samples > 0);
+
+        Assert.Equal(n, WorldExports.HistoryOwnershipAt(0).Length);
+        Assert.Equal(n, WorldExports.HistoryOwnershipAt(info[1]).Length);
+        Assert.Equal(n, WorldExports.HistoryOwnershipBase().Length);
+        Assert.Equal(changes * WorldExports.TerritoryChangeStride, WorldExports.HistoryTerritoryChanges().Length);
+        Assert.Equal(polities * WorldExports.PolityStride, WorldExports.HistoryPolities().Length);
+        Assert.Equal(polities, WorldExports.HistoryPolityKeys().Length);
+        Assert.All(WorldExports.HistoryPolityKeys(), k => Assert.Equal(4, k.Split('\t').Length));
+        Assert.Equal(settlements * WorldExports.SettlementStride, WorldExports.HistorySettlements().Length);
+        Assert.Equal(settlements, WorldExports.HistorySettlementEndCauses().Length);
+        Assert.Equal(roads * WorldExports.RoadStride, WorldExports.HistoryRoads().Length);
+        Assert.Equal(scars * WorldExports.ScarStride, WorldExports.HistoryScars().Length);
+        Assert.Equal(scars, WorldExports.HistoryScarKinds().Length);
+        Assert.All(WorldExports.HistoryScarKinds(), k => Assert.Equal(2, k.Split('\t').Length));
+
+        var series = WorldExports.HistoryPolitySeries();
+        Assert.Equal(scalars, (int)series[0]);
+        Assert.Equal(1 + samples * (3 + scalars), series.Length);
+    }
+
+    [Fact]
+    public void HistoryEvents_DecodeWithACursor_AndMatchTheirTextPage()
+    {
+        WorldExports.ResetHistoryConfig();
+        int n = Tiles();
+        int total = WorldExports.HistoryInfo()[7];
+        int polities = WorldExports.HistoryInfo()[3];
+        var kinds = WorldExports.HistoryEventKindNames();
+        int strings = WorldExports.HistoryStrings().Length;
+        var page = WorldExports.HistoryEvents(0, total);
+        Assert.Equal(total, page[0]);
+        Assert.Equal(total, WorldExports.HistoryEventText(0, total).Length);
+        int c = 1, lastId = -1;
+        for (int i = 0; i < total; i++)
+        {
+            int id = page[c], kind = page[c + 1], polity = page[c + 3], tile = page[c + 4], cause = page[c + 5], parts = page[c + 7];
+            Assert.True(id > lastId, "log order is id order");
+            lastId = id;
+            Assert.False(string.IsNullOrEmpty(kinds[kind]));
+            Assert.InRange(polity, -1, polities - 1);
+            Assert.InRange(tile, -1, n - 1);
+            Assert.InRange(cause, -1, id - 1);
+            c += 8;
+            for (int k = 0; k < parts; k++, c += 2)
+            {
+                Assert.InRange(page[c], 0, polities - 1);
+                Assert.InRange(page[c + 1], 0, strings - 1);
+            }
+        }
+        Assert.Equal(page.Length, c);
+    }
 }

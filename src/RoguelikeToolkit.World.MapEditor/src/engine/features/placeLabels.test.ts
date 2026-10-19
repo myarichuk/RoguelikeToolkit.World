@@ -4,7 +4,7 @@ import { MapDocument } from '../doc/MapDocument';
 import type { FeatureEntity, LabelEntity } from '../doc/types';
 import type { FontLibrary } from '../text/FontLibrary';
 import { layoutLabel } from '../text/LabelLayout';
-import { labelLandFraction, placeLabels } from './placeLabels';
+import { labelLandFraction, placeLabels, riverCandidates } from './placeLabels';
 
 // Glyphs are axis-aligned boxes, so laid-out bounds are predictable without a real font.
 const boxGlyph = (adv: number) => ({
@@ -97,3 +97,21 @@ describe('river labels on short reaches', () => {
     expect(geo.bounds.x1).toBeGreaterThan(10);
   });
 });
+
+describe('riverCandidates', () => {
+  // 0..100 straight along y = 0, then 100 units of tight zigzag.
+  const pts: number[] = [];
+  for (let x = 0; x <= 100; x += 2) pts.push(x, 0, 2);
+  for (let k = 1; k <= 50; k++) pts.push(100 + k * 1.4, k % 2 ? 1.4 : 0, 2);
+
+  it('puts the name on the straightest stretch long enough for it', () => {
+    const c = riverCandidates(pts, 4, 40);
+    expect(c.length).toBeGreaterThan(0);
+    for (let i = 0; i < c[0].path!.length; i += 2) expect(c[0].path![i]).toBeLessThanOrEqual(100);
+  });
+
+  it('gives a river shorter than its name no label', () => {
+    expect(riverCandidates([0, 0, 2, 10, 0, 2, 20, 0, 2], 4, 40)).toEqual([]);
+  });
+});
+

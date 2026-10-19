@@ -1,0 +1,17 @@
+Key: lizardfolk
+DisplayName: "Lizardfolk"
+Sapience: Full
+Embodiment: humanoid
+HabitatAffinity: swamp
+LifespanYears: 60
+MaturationYears: 10
+GrowthR: 0.06
+CompatGroup: reptile
+OpennessPrior: low
+ConscientiousnessPrior: balanced
+ExtraversionPrior: low
+AgreeablenessPrior: balanced
+NeuroticismPrior: balanced
+Subsistence:
+  - maritime
+  - forager

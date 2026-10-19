@@ -54,6 +54,7 @@ export function GenerateFooter() {
     <footer className={styles.footer}>
       {s.stale && <span className={styles.stale} role="status">● Settings changed since the last generate</span>}
       <button className="primary wide" disabled={s.busy} onClick={() => void vm.generate()}>{s.busy ? 'Working…' : 'Generate world'}</button>
+      <button className="wide" onClick={() => vms.wizard.show()} title="Planet presets, peoples and realms, with explanations">New world wizard…</button>
     </footer>
   );
 }
@@ -73,7 +74,7 @@ const cultureLabel = (race: string, label: string) => {
  * Cultures grouped by race: each group shows how many of its cultures are on and folds away, with
  * all/none per group and a filter box. A filter opens every group that still has a match.
  */
-function CulturePicker() {
+export function CulturePicker() {
   const { vms } = useApp();
   const vm = vms.generate;
   const s = useViewModel(vm);

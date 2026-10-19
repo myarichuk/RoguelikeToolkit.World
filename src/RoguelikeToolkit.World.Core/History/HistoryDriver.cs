@@ -13,6 +13,7 @@ public sealed class HistoryDriver : HistoryPluginBase
 {
     private readonly List<IHistoryOperator> _operators = new();
     private readonly List<IHistoryPostPass> _postPasses = new();
+    private bool _recording;
 
     /// <summary>Diagnostic name, <c>HistoryDriver</c>.</summary>
     public override string Name => "HistoryDriver";
@@ -67,12 +68,21 @@ public sealed class HistoryDriver : HistoryPluginBase
     {
         context.ClearOperatorBudgets();
         RejectedProposals = 0;
-        for (int turn = 1; turn < context.TurnCount; turn++) RunTurn(map, history, context, turn);
+        history.Timeline.Begin(history);
+        _recording = true;
+        try
+        {
+            for (int turn = 1; turn < context.TurnCount; turn++) RunTurn(map, history, context, turn);
+        }
+        finally
+        {
+            _recording = false;
+        }
         history.SimulatedTurns = context.TurnCount > 0 ? context.TurnCount - 1 : 0;
         foreach (var pass in _postPasses) pass.Run(map, history, context);
     }
 
-    /// <summary>Runs one turn: snapshot, propose, commit.</summary>
+    /// <summary>Runs one turn: snapshot, propose, commit, then log the turn's territory changes and polity samples on <see cref="HistoryCatalog.Timeline"/> (when called by <see cref="Apply"/>; a turn driven by hand outside it drops the timeline, which then no longer describes the catalog).</summary>
     public void RunTurn(WorldMap map, HistoryCatalog history, HistoryContext context, int turn)
     {
         context.BeginTurn(turn);
@@ -87,6 +97,12 @@ public sealed class HistoryDriver : HistoryPluginBase
             proposals.AddRange(own);
         }
         Commit(map, history, context, turn, proposals);
+        if (_recording)
+        {
+            history.Timeline.RecordTerritory(turn, view.OwnershipSnapshot(), history.Ownership);
+            history.Timeline.Sample(history, turn);
+        }
+        else history.Timeline.Clear();
     }
 
     private void Commit(WorldMap map, HistoryCatalog history, HistoryContext context, int turn, List<Proposal> proposals)

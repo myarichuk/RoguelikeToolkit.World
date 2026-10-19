@@ -26,9 +26,18 @@ export interface MapStyle {
   stains: number;
   /** Fraction of the inner-coast darkening. */
   innerCoast: number;
+  /** River water. */
   river: string;
   /** River width multiplier. */
   riverWidth: number;
+  /** River bank ink (default: landInk). Thin rivers are drawn in it alone, as a pen line. */
+  riverInk?: string;
+  /** Bank ink width in map units (default 0.3). */
+  riverInkWidth?: number;
+  /** Road ink (default: landInk). */
+  road?: string;
+  /** Road width multiplier (default 1). */
+  roadWidth?: number;
   frame: string;
 }
 
@@ -58,7 +67,7 @@ export interface Theme {
   map: MapStyle;
   /** Biome id -> land color (styled view). */
   biomes: Record<string, string>;
-  /** Label kind -> typography. Kinds: capital, city, town, village, river, lake, sea, ocean, mountain, valley, forest, region, title. */
+  /** Label kind -> typography. Kinds: capital, city, town, village, ruin, shrine, battlefield, river, lake, sea, ocean, mountain, valley, forest, region, title. */
   labels: Record<string, LabelStyle>;
   /** Optional UI chrome colors as CSS custom properties ("--bg": "#1d1a17"). */
   ui?: Record<string, string>;
@@ -103,6 +112,19 @@ export interface PlacementRule {
   scale?: [number, number];
   /** Scale grows with height above this level (mountains). */
   scaleWithElevation?: number;
+  /**
+   * "grid" (default): one jittered candidate per cell. "relief": ranges and hill country. Candidates
+   * are ranked by height and ridge prominence; the strongest are placed first and largest, each keeps
+   * a footprint-sized gap, so a range reads as a chain of big peaks along its spine with smaller ones
+   * on the flanks instead of an even carpet. Relief rules share one footprint map, in pack order.
+   */
+  layout?: 'grid' | 'relief';
+  /** Relief: how much ridge prominence (height over the surroundings) counts against plain height, 0..1. Valleys are thinned in proportion. */
+  ridge?: number;
+  /** Relief: 0..1, roughly the share of the band left as open ground between clumps (hill country). */
+  clump?: number;
+  /** Relief: swap in other assets above a height ("peaks wear snow"), highest tier that fits wins. */
+  tiers?: { above: number; assets: string[] }[];
 }
 
 export interface ContentPack {

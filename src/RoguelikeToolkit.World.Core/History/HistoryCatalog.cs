@@ -16,8 +16,8 @@ namespace RoguelikeToolkit.World.Core.History;
 /// </summary>
 public sealed class HistoryCatalog : IHistoricalContext
 {
-    /// <summary>Persistence schema version, written first by <see cref="Save"/> and checked by <see cref="Load"/>: 1 is the P2a shape (capitals only), 2 adds polity demography and road routes, 3 adds P2c treaty/faith state (grudges, windows, faiths, holy sites, villains, heirs), 4 adds the generic-kernel state (string table, declared scalars and per-polity scalar values, polity lifecycle, event ids, causes, importance and participants, grudge turn stamps), 9 adds the plugin state bag (keyed versioned blobs and reset notes), 10 adds plugin event kinds (a name after the kind byte of a <see cref="HistoryEventKind.Plugin"/> event).</summary>
-    public const int SchemaVersion = 10;
+    /// <summary>Persistence schema version, written first by <see cref="Save"/> and checked by <see cref="Load"/>: 1 is the P2a shape (capitals only), 2 adds polity demography and road routes, 3 adds P2c treaty/faith state (grudges, windows, faiths, holy sites, villains, heirs), 4 adds the generic-kernel state (string table, declared scalars and per-polity scalar values, polity lifecycle, event ids, causes, importance and participants, grudge turn stamps), 9 adds the plugin state bag (keyed versioned blobs and reset notes), 10 adds plugin event kinds (a name after the kind byte of a <see cref="HistoryEventKind.Plugin"/> event), 11 adds the <see cref="Timeline"/> (turn-0 ownership, per-turn territory changes and polity samples).</summary>
+    public const int SchemaVersion = 11;
 
     /// <summary>Planet radius in kilometres, matching <c>World.EarthRadiusKm</c> (kept literal: the root slice is above History).</summary>
     private const double EarthRadiusKm = 6371.0;
@@ -48,6 +48,12 @@ public sealed class HistoryCatalog : IHistoricalContext
 
     /// <summary>Owner polity id per planet tile (-1 unclaimed); sized by <see cref="PolityFormStage"/>.</summary>
     public int[] Ownership { get; internal set; } = Array.Empty<int>();
+
+    /// <summary>Ownership and polity state per turn (see <see cref="HistoryTimeline"/>); recorded by <see cref="HistoryDriver"/>.</summary>
+    public HistoryTimeline Timeline { get; } = new();
+
+    /// <summary>Owner per tile at the end of <paramref name="turn"/> (see <see cref="HistoryTimeline.OwnershipAt"/>); <see cref="Ownership"/> when no timeline was recorded.</summary>
+    public int[] OwnershipAt(int turn) => Timeline.OwnershipAt(turn, Ownership);
 
     /// <summary>Interned identifiers (event kinds, roles); seeded with the built-in kinds.</summary>
     public StringTable Strings { get; } = new();
@@ -356,6 +362,7 @@ public sealed class HistoryCatalog : IHistoricalContext
         Polities.Clear();
         PolitiesFormed = false;
         Ownership = Array.Empty<int>();
+        Timeline.Clear();
         Events.Clear();
         _eventVersion++;
         _nextEventId = 0;
@@ -432,6 +439,11 @@ public sealed class HistoryCatalog : IHistoricalContext
             {
                 if (next[i] != Ownership[i]) { changed = true; break; }
             }
+        }
+        if (changed)
+        {
+            if (Timeline.Recorded && Timeline.BaseOwnership.Length == next.Length) Timeline.RecordTerritory(SimulatedTurns, Ownership, next);
+            else Timeline.Clear();
         }
         Ownership = next;
 
@@ -720,6 +732,24 @@ public sealed class HistoryCatalog : IHistoricalContext
         }
         writer.Write(PluginState.Notes.Count);
         foreach (string note in PluginState.Notes) writer.Write(note);
+        writer.Write(Timeline.BaseOwnership.Length);
+        foreach (int owner in Timeline.BaseOwnership) writer.Write(owner);
+        writer.Write(Timeline.Changes.Count);
+        foreach (var change in Timeline.Changes)
+        {
+            writer.Write(change.Turn);
+            writer.Write(change.Tile);
+            writer.Write(change.Owner);
+        }
+        writer.Write(Timeline.Samples.Count);
+        foreach (var sample in Timeline.Samples)
+        {
+            writer.Write(sample.Turn);
+            writer.Write(sample.PolityId);
+            writer.Write(sample.Population);
+            writer.Write(sample.Scalars.Length);
+            foreach (double value in sample.Scalars) writer.Write(value);
+        }
     }
 
     /// <summary>
@@ -1028,8 +1058,30 @@ public sealed class HistoryCatalog : IHistoricalContext
                 int notes = CheckedCount(reader.ReadInt32());
                 for (int i = 0; i < notes; i++) catalog.PluginState.AddNote(reader.ReadString());
             }
+            if (version >= 11)
+            {
+                int baseTiles = CheckedCount(reader.ReadInt32());
+                var baseOwners = new int[baseTiles];
+                for (int i = 0; i < baseTiles; i++) baseOwners[i] = reader.ReadInt32();
+                catalog.Timeline.BaseOwnership = baseOwners;
+                int changes = CheckedCount(reader.ReadInt32());
+                for (int i = 0; i < changes; i++)
+                    catalog.Timeline.AddLoaded(new TerritoryChange(reader.ReadInt32(), reader.ReadInt32(), reader.ReadInt32()));
+                int samples = CheckedCount(reader.ReadInt32());
+                for (int i = 0; i < samples; i++)
+                {
+                    int sampleTurn = reader.ReadInt32(), samplePolity = reader.ReadInt32();
+                    double population = reader.ReadDouble();
+                    int width = CheckedCount(reader.ReadInt32());
+                    if (width > catalog.Scalars.Count) throw new InvalidDataException("Corrupt history catalog (polity sample width).");
+                    var values = new double[width];
+                    for (int k = 0; k < width; k++) values[k] = reader.ReadDouble();
+                    catalog.Timeline.AddLoaded(new PolitySample { Turn = sampleTurn, PolityId = samplePolity, Population = population, Scalars = values });
+                }
+            }
             if (version >= 4) catalog._nextEventId = nextEventId;
             catalog.ValidateReferences();
+            catalog.Timeline.Validate(catalog);
             return catalog;
         }
         catch (EndOfStreamException ex)

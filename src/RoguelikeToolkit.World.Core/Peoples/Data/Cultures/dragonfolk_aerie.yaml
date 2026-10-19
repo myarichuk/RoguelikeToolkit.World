@@ -1,0 +1,22 @@
+Key: dragonfolk_aerie
+DisplayName: "Dragonfolk · Aerie"
+NamingTable: dragonfolk
+Subsistence: highland
+LineageDefault: Patrilineal
+Xenophobia: 70
+HierarchyClaim: 90
+Collectivism: 40
+Honor: 90
+FaithForm: ancestor
+MixedNaming: Dominant
+DominantShareThreshold: 0.75
+OpennessOffset: 0
+ConscientiousnessOffset: 0
+ExtraversionOffset: 0
+AgreeablenessOffset: 0
+NeuroticismOffset: 0
+FormAffinity:
+  Kingdom: 60
+  Horde: 20
+  LooseAssociation: 15
+  MerchantRepublic: 5

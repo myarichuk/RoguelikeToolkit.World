@@ -175,17 +175,27 @@ export class Overlay {
     ctx.stroke();
   }
 
+  /** A hollow casing around the river ribbon (the overlay is cleared inside it, so the drawn river shows through). */
   private strokeRiver(doc: MapDocument, riverId: string, theme: Theme, cam: Camera, strong: boolean): void {
     const r = doc.rivers.get(riverId);
     if (!r) return;
     const ctx = this.ctx, p = r.points;
+    let w = 0;
+    for (let i = 2; i < p.length; i += 3) w = Math.max(w, p[i]);
+    const inner = Math.max(w * theme.map.riverWidth, 1.8 / cam.zoom) + 2 / cam.zoom;
+    const outer = inner + ((strong ? 2.5 : 1.6) * 2) / cam.zoom;
     ctx.beginPath();
     for (let i = 0; i < p.length; i += 3) (i ? ctx.lineTo : ctx.moveTo).call(ctx, p[i], p[i + 1]);
     ctx.strokeStyle = theme.ui?.['--accent'] ?? '#e0902a';
-    ctx.globalAlpha = strong ? 0.9 : 0.55;
-    ctx.lineWidth = Math.max(2.4, 5 / cam.zoom) * (strong ? 1.3 : 1);
+    ctx.globalAlpha = strong ? 0.95 : 0.6;
+    ctx.lineJoin = 'round'; ctx.lineCap = 'round';
+    ctx.lineWidth = outer;
     ctx.stroke();
     ctx.globalAlpha = 1;
+    ctx.globalCompositeOperation = 'destination-out';
+    ctx.lineWidth = inner;
+    ctx.stroke();
+    ctx.globalCompositeOperation = 'source-over';
   }
 
   private drawPlateMotion(cam: Camera, doc: MapDocument): void {

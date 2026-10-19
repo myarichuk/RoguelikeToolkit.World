@@ -13,6 +13,7 @@ export interface Layers {
   ripples: boolean;
   coastline: boolean;
   rivers: boolean;
+  roads: boolean;
   stamps: boolean;
   labels: boolean;
   resources: boolean;
@@ -50,12 +51,12 @@ const allDeposits = (v: boolean) => Object.fromEntries(DEPOSIT_TYPES.map((k) => 
 
 const LAYERS_OFF: Layers = {
   hillshade: false, contours: false, plateBoundaries: false, plateMotion: false, graticule: false,
-  ripples: false, coastline: false, rivers: false, stamps: false, labels: false, resources: false, climatePaint: false, capacity: false, climate: false, wind: false, currents: false,
+  ripples: false, coastline: false, rivers: false, roads: false, stamps: false, labels: false, resources: false, climatePaint: false, capacity: false, climate: false, wind: false, currents: false,
 };
 
 export const DEFAULT_VIEW: ViewSettings = {
   base: 'styled', plateTopo: 0, capacityKind: 'arable', climateKind: 'temperature',
-  layers: { ...LAYERS_OFF, ripples: true, rivers: true, stamps: true, labels: true },
+  layers: { ...LAYERS_OFF, ripples: true, rivers: true, roads: true, stamps: true, labels: true },
   kinds: { ...allKinds(true), deposit: false },
   deposits: allDeposits(true),
 };
@@ -64,7 +65,7 @@ export interface ViewPreset { id: string; label: string; apply(v: ViewSettings):
 
 /** Named looks. Presets set the base mode and layers but keep the user's feature filters. */
 export const VIEW_PRESETS: ViewPreset[] = [
-  { id: 'map', label: 'Map', apply: (v) => ({ ...v, base: 'styled', layers: { ...LAYERS_OFF, ripples: true, rivers: true, stamps: true, labels: true } }) },
+  { id: 'map', label: 'Map', apply: (v) => ({ ...v, base: 'styled', layers: { ...LAYERS_OFF, ripples: true, rivers: true, roads: true, stamps: true, labels: true } }) },
   { id: 'plates', label: 'Plates', apply: (v) => ({ ...v, base: 'plates', plateTopo: 0, layers: { ...LAYERS_OFF, plateBoundaries: true, plateMotion: true, coastline: true } }) },
   { id: 'plates-topo', label: 'Plates + topography', apply: (v) => ({ ...v, base: 'plates', plateTopo: 0.75, layers: { ...LAYERS_OFF, hillshade: true, plateBoundaries: true, plateMotion: true, coastline: true } }) },
   { id: 'topo', label: 'Topography', apply: (v) => ({ ...v, base: 'elevation', layers: { ...LAYERS_OFF, hillshade: true, contours: true, coastline: true, rivers: true } }) },

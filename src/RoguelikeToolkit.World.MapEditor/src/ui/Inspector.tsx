@@ -4,7 +4,7 @@ import { FACT_HINTS } from './glossary';
 import styles from './Inspector.module.css';
 
 const KIND_TITLE: Record<string, string> = {
-  capital: 'Capital', city: 'City', town: 'Town', village: 'Village', river: 'River', lake: 'Lake', sea: 'Sea', ocean: 'Ocean',
+  capital: 'Capital', city: 'City', town: 'Town', village: 'Village', ruin: 'Ruin', shrine: 'Holy site', battlefield: 'Battlefield', river: 'River', lake: 'Lake', sea: 'Sea', ocean: 'Ocean',
   mountain: 'Mountain range', valley: 'Valley', forest: 'Forest', deposit: 'Resource deposit',
 };
 

@@ -1,5 +1,6 @@
 import { describe, expect, it } from 'vitest';
-import { extractFeatures, type CatalogInput } from './features';
+import { clipToLand, extractFeatures, meander, taperHead, type CatalogInput } from './features';
+import { polylineDistance } from '../tools/pick';
 
 /** Four land tiles around the equator with one 3-tile sink river running through them. */
 function riverWorld(): CatalogInput {
@@ -58,15 +59,16 @@ function tributaryWorld(): CatalogInput {
 }
 
 describe('river geometry', () => {
-  it('draws channels wide enough to survive the sub-pixel fade', () => {
+  it('draws channels from a pen line at the source to a broad river downstream', () => {
     const set = extractFeatures(riverWorld());
     expect(set.features.filter((f) => f.kind === 'river').map((f) => f.key)).toEqual(['river:0']);
     expect(set.rivers).toHaveLength(1);
     let max = 0;
     const pts = set.rivers[0].points;
     for (let i = 2; i < pts.length; i += 3) max = Math.max(max, pts[i]);
-    expect(max).toBeGreaterThanOrEqual(2.5);
-    expect(max).toBeLessThanOrEqual(6);
+    expect(max).toBeGreaterThanOrEqual(2);      // 10x the smallest discharge
+    expect(max).toBeLessThanOrEqual(5);
+    expect(pts[2]).toBeLessThan(0.5);            // the source tapers to a hairline
   });
 
   it('draws short tributaries but names only rivers reaching water, sinks or long confluences', () => {
@@ -83,5 +85,39 @@ describe('river geometry', () => {
     expect(flowsInto('river:1')).toBe('the sea');
     // A named confluence reach says so instead of claiming the sea it never touches.
     expect(flowsInto('river:2')).toBe('another river');
+  });
+
+  it('ends a tributary on its parent\'s drawn line, not a tile short of it', () => {
+    const set = extractFeatures(tributaryWorld());
+    // Reach 0 stops on land (tile 2): Core trims it one tile before the reach it joins.
+    const trib = set.rivers[0].points, n = trib.length / 3;
+    const ex = trib[(n - 1) * 3], ey = trib[(n - 1) * 3 + 1];
+    const gap = Math.min(...set.rivers.slice(1).map((r) => polylineDistance(r.points, 3, ex, ey)));
+    expect(gap).toBeLessThan(0.01);
+  });
+
+  it('reads a river ending in a lake as a mouth, not a confluence', () => {
+    const c = tributaryWorld();
+    // Tile 6 becomes a lake (ponded land, height >= 0) and the coastal river ends in it.
+    c.waterBodies = Int32Array.from([1, 9, 0, 1, 6]);
+    c.rivers = Int32Array.from([1, 4, 1, 9, 4, 3, 4, 5, 6]);
+    const set = extractFeatures(c);
+    const f = set.features.find((g) => g.key === 'river:4')!;
+    expect(f.details.find(([k]) => k === 'Flows into')![1]).toBe('a lake');
+  });
+
+  it('clips a river to the drawn shore at its mouth and at a lake outflow', () => {
+    const line = new Float32Array([0, 0, 2, 10, 0, 2, 20, 0, 2, 30, 0, 2, 40, 0, 2, 50, 0, 2]);
+    const wet = (x: number) => x < 12 || x > 33;
+    const out = clipToLand(line, wet, true);
+    expect(Array.from(out.filter((_, i) => i % 3 === 0))).toEqual([10, 20, 30, 40]);
+    // A tributary keeps its end (it meets a river, not a shore).
+    expect(clipToLand(line, wet, false).at(-3)).toBe(50);
+  });
+
+  it('tapers the source to a hairline and leaves the channel alone', () => {
+    const p = taperHead(meander([0, 0, 3, 20, 0, 3, 40, 0, 3], () => 0.5));
+    expect(p[2]).toBeLessThan(1);
+    expect(p[p.length - 1]).toBe(3);
   });
 });

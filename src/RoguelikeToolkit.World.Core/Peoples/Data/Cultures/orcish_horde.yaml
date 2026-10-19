@@ -1,0 +1,22 @@
+Key: orcish_horde
+DisplayName: "Orc · Horde"
+NamingTable: orcish
+Subsistence: pastoral
+LineageDefault: Patrilineal
+Xenophobia: 70
+HierarchyClaim: 60
+Collectivism: 70
+Honor: 80
+FaithForm: war_cult
+MixedNaming: Dominant
+DominantShareThreshold: 0.75
+OpennessOffset: 0
+ConscientiousnessOffset: 0
+ExtraversionOffset: 0
+AgreeablenessOffset: 0
+NeuroticismOffset: 0
+FormAffinity:
+  Horde: 55
+  LooseAssociation: 25
+  Kingdom: 15
+  MerchantRepublic: 5

@@ -1,0 +1,22 @@
+Key: gnomish_burrow
+DisplayName: "Gnome · Burrow"
+NamingTable: gnomish
+Subsistence: artisan
+LineageDefault: Bilineal
+Xenophobia: 30
+HierarchyClaim: 30
+Collectivism: 60
+Honor: 40
+FaithForm: ancestor
+MixedNaming: Dominant
+DominantShareThreshold: 0.75
+OpennessOffset: 0
+ConscientiousnessOffset: 0
+ExtraversionOffset: 0
+AgreeablenessOffset: 0
+NeuroticismOffset: 0
+FormAffinity:
+  MerchantRepublic: 35
+  LooseAssociation: 35
+  Kingdom: 25
+  Horde: 5

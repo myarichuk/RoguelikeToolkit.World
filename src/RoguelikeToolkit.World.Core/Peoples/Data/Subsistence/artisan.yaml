@@ -1,0 +1,27 @@
+Key: artisan
+DisplayName: "Artisan"
+Sedentary: true
+Arable: 1
+Pasture: 0.5
+Game: 0.5
+Timber: 1
+Fish: 0.5
+Defensibility: 2
+Coast: 0
+River: 1
+Road: 1.5
+Exploits:
+  - { Resource: quarry, Value: 2 }
+  - { Resource: lumber, Value: 1 }
+  - { Resource: salt, Value: 1 }
+  - { Resource: iron, Value: 2 }
+  - { Resource: copper, Value: 2 }
+  - { Resource: tin, Value: 2 }
+  - { Resource: lead_zinc, Value: 1.5 }
+  - { Resource: gold, Value: 2 }
+  - { Resource: silver, Value: 2 }
+  - { Resource: gems, Value: 2 }
+  - { Resource: coal, Value: 1 }
+  - { Resource: gypsum, Value: 1 }
+  - { Resource: uranium, Value: 1 }
+  - { Resource: bauxite, Value: 1 }

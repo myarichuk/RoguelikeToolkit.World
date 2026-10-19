@@ -1,0 +1,22 @@
+Key: halfling_hearth
+DisplayName: "Halfling · Hearth"
+NamingTable: smallfolk
+Subsistence: agrarian
+LineageDefault: Bilineal
+Xenophobia: 20
+HierarchyClaim: 20
+Collectivism: 70
+Honor: 40
+FaithForm: polytheism
+MixedNaming: Dominant
+DominantShareThreshold: 0.75
+OpennessOffset: 0
+ConscientiousnessOffset: 0
+ExtraversionOffset: 0
+AgreeablenessOffset: 0
+NeuroticismOffset: 0
+FormAffinity:
+  LooseAssociation: 45
+  MerchantRepublic: 25
+  Kingdom: 25
+  Horde: 5

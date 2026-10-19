@@ -1,0 +1,18 @@
+Key: elf_dark
+DisplayName: "Dark elf"
+Sapience: Full
+Embodiment: humanoid
+HabitatAffinity: mountain
+LifespanYears: 650
+MaturationYears: 75
+GrowthR: 0.013
+CompatGroup: elf
+OpennessPrior: balanced
+ConscientiousnessPrior: high
+ExtraversionPrior: low
+AgreeablenessPrior: low
+NeuroticismPrior: balanced
+Subsistence:
+  - artisan
+  - highland
+  - forager

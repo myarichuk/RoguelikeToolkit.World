@@ -8,7 +8,7 @@ import styles from './ViewPanel.module.css';
 
 const LAYERS: { key: keyof Layers; label: string }[] = [
   { key: 'hillshade', label: 'Hillshade' }, { key: 'contours', label: 'Contours' }, { key: 'coastline', label: 'Coastline' },
-  { key: 'ripples', label: 'Ripples' }, { key: 'rivers', label: 'Rivers' }, { key: 'stamps', label: 'Stamps' },
+  { key: 'ripples', label: 'Ripples' }, { key: 'rivers', label: 'Rivers' }, { key: 'roads', label: 'Roads' }, { key: 'stamps', label: 'Stamps' },
   { key: 'labels', label: 'Labels' }, { key: 'resources', label: 'Resource markers' }, { key: 'plateBoundaries', label: 'Plate boundaries' },
   { key: 'plateMotion', label: 'Plate motion' }, { key: 'graticule', label: 'Graticule' }, { key: 'climatePaint', label: 'Climate paint' }, { key: 'capacity', label: 'Land capacity' },
   { key: 'climate', label: 'Climate' }, { key: 'wind', label: 'Wind arrows' }, { key: 'currents', label: 'Current arrows' },

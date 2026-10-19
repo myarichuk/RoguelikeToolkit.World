@@ -19,11 +19,13 @@ export const MAP_NUMBERS: { key: keyof MapStyle; label: string; min: number; max
   { key: 'stains', label: 'Stains', min: 0, max: 0.3, step: 0.01 },
   { key: 'innerCoast', label: 'Inner coast shade', min: 0, max: 1, step: 0.05 },
   { key: 'riverWidth', label: 'River width', min: 0.2, max: 3, step: 0.05 },
+  { key: 'riverInkWidth', label: 'River bank ink', min: 0, max: 1, step: 0.02 },
+  { key: 'roadWidth', label: 'Road width', min: 0.3, max: 3, step: 0.05 },
 ];
 
 export const MAP_COLORS: { key: keyof MapStyle; label: string }[] = [
   { key: 'paper', label: 'Paper' }, { key: 'sea', label: 'Sea' }, { key: 'shallow', label: 'Shallows' }, { key: 'seaInk', label: 'Sea ink' },
-  { key: 'landInk', label: 'Land ink' }, { key: 'river', label: 'Rivers' }, { key: 'frame', label: 'Frame' },
+  { key: 'landInk', label: 'Land ink' }, { key: 'river', label: 'Rivers' }, { key: 'riverInk', label: 'River ink' }, { key: 'road', label: 'Road ink' }, { key: 'frame', label: 'Frame' },
 ];
 
 /**

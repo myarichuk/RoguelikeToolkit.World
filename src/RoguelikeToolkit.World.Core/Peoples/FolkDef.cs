@@ -41,6 +41,11 @@ public sealed class FolkDef
     public string AgreeablenessPrior { get; set; } = string.Empty;
     /// <summary>Neuroticism prior: <c>low</c>, <c>balanced</c> or <c>high</c>.</summary>
     public string NeuroticismPrior { get; set; } = string.Empty;
+    /// <summary>
+    /// The <see cref="SubsistenceDef"/> keys this folk can live by; empty means any. Each key must exist (checked
+    /// after every file loads); <see cref="PeoplesStore.PairingProblem"/> checks a culture's default against it.
+    /// </summary>
+    public List<string> Subsistence { get; set; } = new();
 
     /// <summary>True when <see cref="Sapience"/> is full personhood (a history actor).</summary>
     public bool IsFullPerson => Sapience.Equals("full", StringComparison.OrdinalIgnoreCase);

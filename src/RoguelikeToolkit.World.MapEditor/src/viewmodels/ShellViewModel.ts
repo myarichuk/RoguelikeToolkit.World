@@ -99,11 +99,14 @@ export class ShellViewModel extends ViewModel<ShellState> {
   redo = (): void => this.editor.undo.redo();
   setTheme = (id: string): void => this.editor.setTheme(id);
   dismissError = (): void => this.set({ error: null });
+  cancelWork = (): void => this.editor.cancelWork();
   newBlank = (): void => this.editor.newBlank();
 
-  open = async (): Promise<void> => {
+  /** Picks and opens a saved world; resolves whether one was opened. */
+  open = async (): Promise<boolean> => {
     const f = await this.files.pick('.wmap,application/gzip,application/octet-stream');
-    if (f) await this.editor.open(f).catch(() => {});
+    if (!f) return false;
+    return this.editor.open(f).then(() => true, () => false);
   };
 
   save = async (): Promise<void> => {

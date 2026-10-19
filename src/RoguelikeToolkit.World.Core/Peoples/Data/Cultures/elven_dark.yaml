@@ -1,0 +1,22 @@
+Key: elven_dark
+DisplayName: "Dark elf · House"
+NamingTable: elf_dark
+Subsistence: artisan
+LineageDefault: Matrilineal
+Xenophobia: 80
+HierarchyClaim: 90
+Collectivism: 40
+Honor: 60
+FaithForm: dark_cult
+MixedNaming: Dominant
+DominantShareThreshold: 0.75
+OpennessOffset: 0
+ConscientiousnessOffset: 0
+ExtraversionOffset: 0
+AgreeablenessOffset: 0
+NeuroticismOffset: 0
+FormAffinity:
+  Kingdom: 45
+  LooseAssociation: 30
+  Horde: 15
+  MerchantRepublic: 10

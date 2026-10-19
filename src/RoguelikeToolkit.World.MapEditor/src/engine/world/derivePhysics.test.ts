@@ -27,7 +27,7 @@ function fakeEngine(log: RecomputeParams[] = []): PhysicsEngine {
       const features = p.rastersOnly ? [] : [{ key: 'lake:0', kind: 'lake' as const, name: '', x: 1, y: 1, angle: 0, extent: 1, weight: 1, style: 0, tiles: Int32Array.from(lake.tiles!), details: [], request: lake.request }];
       return {
         seed: p.seed, size: p.size, plates: p.plates, tileCount: 2, rasters: { width: MAP_W, height: MAP_H, elevation, biome, tile, waterPixels: new Int32Array(2) }, tilePlate: new Uint32Array(2),
-        plateDrift: new Float64Array(0), tileXY: new Float32Array(4), capacity: new Uint8Array(10).fill(p.edits.tiles.length + 1), seaIce: new Uint8Array(2).fill(p.edits.tiles.length + 1), climate: new Float32Array(18).fill(p.edits.tiles.length + 1), features: { features, rivers: [] }, styles: [{ race: 'h', culture: 'c', label: 'Human' }], timings: {},
+        plateDrift: new Float64Array(0), tileXY: new Float32Array(4), capacity: new Uint8Array(10).fill(p.edits.tiles.length + 1), seaIce: new Uint8Array(2).fill(p.edits.tiles.length + 1), climate: new Float32Array(18).fill(p.edits.tiles.length + 1), features: { features, rivers: [], roads: [] }, styles: [{ race: 'h', culture: 'c', label: 'Human' }], timings: {},
       } as WorldSnapshot;
     },
     async names(reqs) { return reqs.map((_, i) => `Name${i}`); },

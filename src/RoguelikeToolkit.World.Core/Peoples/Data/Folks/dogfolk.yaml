@@ -1,0 +1,18 @@
+Key: dogfolk
+DisplayName: "Dogfolk"
+Sapience: Full
+Embodiment: humanoid
+HabitatAffinity: temperate
+LifespanYears: 65
+MaturationYears: 13
+GrowthR: 0.06
+CompatGroup: canine
+OpennessPrior: balanced
+ConscientiousnessPrior: balanced
+ExtraversionPrior: high
+AgreeablenessPrior: high
+NeuroticismPrior: balanced
+Subsistence:
+  - pastoral
+  - agrarian
+  - forager

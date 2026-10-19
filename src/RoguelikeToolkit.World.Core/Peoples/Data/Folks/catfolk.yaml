@@ -1,0 +1,17 @@
+Key: catfolk
+DisplayName: "Catfolk"
+Sapience: Full
+Embodiment: humanoid
+HabitatAffinity: savanna
+LifespanYears: 70
+MaturationYears: 14
+GrowthR: 0.055
+CompatGroup: feline
+OpennessPrior: high
+ConscientiousnessPrior: balanced
+ExtraversionPrior: high
+AgreeablenessPrior: balanced
+NeuroticismPrior: balanced
+Subsistence:
+  - pastoral
+  - forager

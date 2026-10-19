@@ -14,7 +14,7 @@ export function StatusBar() {
   const breakdown = `gen ${Math.round(t.generateMs ?? 0)} + raster ${Math.round(t.rasterMs ?? 0)} + features ${Math.round(t.featuresMs ?? 0)} + names ${Math.round(t.namesMs ?? 0)} ms`;
   return (
     <footer className={styles.statusbar} data-testid="statusbar">
-      {s.busy && <span className={styles.busy}><span className={styles.spinner} />{s.busy}</span>}
+      {s.busy && <span className={styles.busy}><span className={styles.spinner} />{s.busy}<button className="mini" onClick={vms.shell.cancelWork} title="Stop and start a fresh engine: use it if a big world is taking too long">Cancel</button></span>}
       <span className="grow">{s.status}</span>
       {c && (
         <span title={SHELL_HINTS.cursor}>

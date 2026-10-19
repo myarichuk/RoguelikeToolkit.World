@@ -1,0 +1,18 @@
+Key: elf_high
+DisplayName: "High elf"
+Sapience: Full
+Embodiment: humanoid
+HabitatAffinity: temperate
+LifespanYears: 700
+MaturationYears: 80
+GrowthR: 0.012
+CompatGroup: elf
+OpennessPrior: high
+ConscientiousnessPrior: high
+ExtraversionPrior: balanced
+AgreeablenessPrior: balanced
+NeuroticismPrior: low
+Subsistence:
+  - agrarian
+  - artisan
+  - forager

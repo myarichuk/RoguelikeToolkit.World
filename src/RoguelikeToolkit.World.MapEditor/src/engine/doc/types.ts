@@ -39,6 +39,20 @@ export interface RiverEntity extends Entity {
   points: number[];
 }
 
+/** A road or track drawn on the map: history's trade routes and spurs, or any plugin's `AddRoad`. */
+export interface RoadEntity extends Entity {
+  /** 'trunk' (between capitals) or 'spur' (kept by a polity). */
+  kind: string;
+  /** Keeper polity id, -1 for a trunk route. */
+  keeper: number;
+  /** Turn a war cut it, -1 while intact. */
+  severed: number;
+  /** Turn it was built; with `severed` it brackets when the road stands on a history timeline. */
+  founded?: number;
+  /** x, y, width triples along the road; x may run past the map edge (unwrapped). */
+  points: number[];
+}
+
 export interface DocSettings {
   seed: number;
   size: number;
@@ -62,6 +76,8 @@ export interface DocSettings {
   oceanHeat: number;
   oceanRain: number;
   aeolian: number;
+  /** How history was run and who founded it; absent in old files = the defaults. Part of what identifies the generated world. */
+  history?: import('../world/protocol').HistorySettings;
 }
 
 export const DEFAULT_SETTINGS: DocSettings = {
