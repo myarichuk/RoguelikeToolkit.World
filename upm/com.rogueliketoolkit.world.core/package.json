@@ -1,7 +1,7 @@
 {
   "name": "com.rogueliketoolkit.world.core",
   "displayName": "RoguelikeToolkit World Core",
-  "version": "3.0.0",
+  "version": "3.1.0",
   "unity": "2022.3",
   "description": "Deterministic procedural planets on an icosahedral hex sphere: tectonics, elevation, climate, erosion, hydrology, biomes, deposits, region/local zoom, name generation and a pluggable generation pipeline. IL2CPP-safe netstandard2.1 build.",
   "license": "PolyForm-Noncommercial-1.0.0",

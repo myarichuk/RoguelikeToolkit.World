@@ -1,5 +1,69 @@
 # Changelog
 
+## [3.1.0](https://github.com/myarichuk/RoguelikeToolkit.World/compare/v3.0.0...v3.1.0) (2026-10-19)
+
+
+### Features
+
+* **core:** history-first P1 - drift deltas and generalized mixed naming ([f5f8831](https://github.com/myarichuk/RoguelikeToolkit.World/commit/f5f8831e81c0da4b64d2e26435e79fcad8c85d57))
+* **economy:** M3.17 tune fiscal operator; stop tax-cut spiral, soften scarcity unrest ([67c7e60](https://github.com/myarichuk/RoguelikeToolkit.World/commit/67c7e6001f0464b2030d127dc70d80acd92a64c3))
+* **editor:** M3.19 plugin-agnostic history summary export for a future panel ([baf3e85](https://github.com/myarichuk/RoguelikeToolkit.World/commit/baf3e85d71166a5691cbe9d436b8db56d1e4bc8f))
+* history generation, world creation wizard and some other stuff ([b3a491e](https://github.com/myarichuk/RoguelikeToolkit.World/commit/b3a491e53bfc2cf40787e041a4e75e59015fb15d))
+* **history:** M1.1a kernel types - interned kinds, event links, importance compaction, polity lifecycle ([39f527c](https://github.com/myarichuk/RoguelikeToolkit.World/commit/39f527c54d5b9307af6c2a18971255f258fdd04c))
+* **history:** M1.1b declared scalars and event indexes ([f4bc707](https://github.com/myarichuk/RoguelikeToolkit.World/commit/f4bc707dc0eb4c675b5eb76c39c42cecfc1688fd))
+* **history:** M1.2 operator contract, turn view, proposal sink and driver ([a2e66d9](https://github.com/myarichuk/RoguelikeToolkit.World/commit/a2e66d924f3a8c718915a98be0769f37c205431a))
+* **history:** M1.3 Conquest operator, SetOverlay proposal ([b03076b](https://github.com/myarichuk/RoguelikeToolkit.World/commit/b03076b7d7a44ed36d8e651f6edb8ca7baaa637f))
+* **history:** M1.3 Exchange operator, DriftOpenness proposal ([40a5054](https://github.com/myarichuk/RoguelikeToolkit.World/commit/40a505437cb536a6296f486915eba4a583962166))
+* **history:** M1.3 Faith and CityHistoryProject post-passes; M1.3 complete ([e53e9df](https://github.com/myarichuk/RoguelikeToolkit.World/commit/e53e9dfb14e21ff4694465a3ffd0c5f2868444e0))
+* **history:** M1.3 HolySite operator ([ea565a2](https://github.com/myarichuk/RoguelikeToolkit.World/commit/ea565a2ace8cc95995c7c7d9046c25f0d902ee3c))
+* **history:** M1.3 Khan operator ([9198cf3](https://github.com/myarichuk/RoguelikeToolkit.World/commit/9198cf38adf46d5ed49584110b8609f4ffac4713))
+* **history:** M1.3 Population operator, map access for operators, SetPopulation proposal ([d9abbb0](https://github.com/myarichuk/RoguelikeToolkit.World/commit/d9abbb07b76de5e0277ea0ff524fd4dbb7881c2a))
+* **history:** M1.3 Rebellion operator, AddPolity pre-pass with re-flood and holy-site sync ([356444c](https://github.com/myarichuk/RoguelikeToolkit.World/commit/356444c463b925d4ccf9cd6faaed76368913b1a3))
+* **history:** M1.3 TradeRoad operator ([af017fe](https://github.com/myarichuk/RoguelikeToolkit.World/commit/af017fe2aec64abf1051a2ff8455be2af6841017))
+* **history:** M1.3 Treaty operator, SetHeir proposal ([3b743a6](https://github.com/myarichuk/RoguelikeToolkit.World/commit/3b743a63084fbddb11a7a4c521c6c95d7f862c8e))
+* **history:** M1.3 Villain operator, AddVillain proposal ([e72ee2e](https://github.com/myarichuk/RoguelikeToolkit.World/commit/e72ee2edd9ad101e0278f78b1a44d617e1457ef9))
+* **history:** M1.3 War operator, AddSite proposal, grudge turn stamps ([9a5b1eb](https://github.com/myarichuk/RoguelikeToolkit.World/commit/9a5b1ebae417ced306a93c177739be6848ce8074))
+* **history:** M1.4 schema v4 persistence (string table, scalars, lifecycle, event links, grudge stamps) ([560f84b](https://github.com/myarichuk/RoguelikeToolkit.World/commit/560f84b75637b085682673a6ffd4de19ce6661d5))
+* **history:** M1.5 wire StandardHistory driver into WorldBuilder, drop HistoryEventsStage, re-baseline corpus ([773b049](https://github.com/myarichuk/RoguelikeToolkit.World/commit/773b049735b61ba61fe944490aa5cb62b7b1a986))
+* **history:** M2.1 settlement lifecycle fields, schema v5 ([99b8870](https://github.com/myarichuk/RoguelikeToolkit.World/commit/99b8870b2f0d14d48df4295c48808f91ff4e91d5))
+* **history:** M2.10 history-weighted settlement placement (scars, ruins, routes) over scorer candidates; TurnView.Scars; corpus re-baseline ([ef36e95](https://github.com/myarichuk/RoguelikeToolkit.World/commit/ef36e95ff5f80658d6752e27ff80678f03a2e3a8))
+* **history:** M2.3A capital settlements founded with their polity; M2.3 design ([08bf93c](https://github.com/myarichuk/RoguelikeToolkit.World/commit/08bf93c380b522ef9d1685885c56dacb645e3724))
+* **history:** M2.3B AddSettlement/EndSettlement proposals, settlement events, TurnView settlements ([a981af0](https://github.com/myarichuk/RoguelikeToolkit.World/commit/a981af009cee1e4b51495b27057105f65dbd707c))
+* **history:** M2.3C SettleOperator colonization, settlement owner sync, corpus re-baseline ([ed1292d](https://github.com/myarichuk/RoguelikeToolkit.World/commit/ed1292d7065a466eb0d307d7bf221e6bf63cfacc))
+* **history:** M2.4A stored per-settlement population, catchment capacity, GrowSettlement, schema v6 ([b2cab2b](https://github.com/myarichuk/RoguelikeToolkit.World/commit/b2cab2b9ed96c822771dc45f6c322520a9a329f6))
+* **history:** M2.4B displaced pool ledger, Release/Absorb proposals, EndSettlement auto-release, schema v7 ([06e875a](https://github.com/myarichuk/RoguelikeToolkit.World/commit/06e875adeaf83db6453c151606f4f9d8b88f0b7e))
+* **history:** M2.4C refugee settling: pool groups found Refuge settlements or merge into a standing one ([9a10ac0](https://github.com/myarichuk/RoguelikeToolkit.World/commit/9a10ac037bc45589e933380f33b6bf42411749a6))
+* **history:** M2.5A shock resolver: Shock, ShockResolver, KillPopulation, Shock event, EndSettlement.LostShare ([9a1a35e](https://github.com/myarichuk/RoguelikeToolkit.World/commit/9a1a35ef1d8a4a9673bdd30c6affb5a728c28260))
+* **history:** M2.5B per-settlement capacity and pressure on TurnView; refugees prefer roomy settlements, shocks hit crowded ones harder ([3534bc6](https://github.com/myarichuk/RoguelikeToolkit.World/commit/3534bc6c9b4619b0b9aafe14294e4b95aed9eb5a))
+* **history:** M2.6A hazard maps and Hazard operator: quake, volcano, tsunami, flood, drought shocks; corpus re-baseline ([b6e05e6](https://github.com/myarichuk/RoguelikeToolkit.World/commit/b6e05e64d8d34eaeb00f7e1a15361b84675fda14))
+* **history:** M2.6B famine and plague shocks from settlement pressure and tier/road density; corpus re-baseline ([cbc5647](https://github.com/myarichuk/RoguelikeToolkit.World/commit/cbc56473f71647c5c3559aa254fcd2632678ba27))
+* **history:** M2.7 scars: HistoryScar, AddScar proposal, ruins and shock scars projected as sites and tile modifiers; schema v8 ([2b364a3](https://github.com/myarichuk/RoguelikeToolkit.World/commit/2b364a3beb193d6ca5d123aacc26104e917712c3))
+* **history:** M2.8 spur roads between a polity's settlements; plague links count live routes at the settlement; corpus re-baseline ([d1821fc](https://github.com/myarichuk/RoguelikeToolkit.World/commit/d1821fc0aec6dd697138fd3774208dff4f545dcc))
+* **history:** M2.9A wars sack, raze and capture settlements: CaptureSettlement proposal, SettlementCaptured event, owner sync limited to reassigned tiles; corpus re-baseline ([9d65fcb](https://github.com/myarichuk/RoguelikeToolkit.World/commit/9d65fcb300a5d59cf48336c6ef09e920d41804a9))
+* **history:** M2.9B cross-polity asylum for homeless polities' displaced groups ([fdb1346](https://github.com/myarichuk/RoguelikeToolkit.World/commit/fdb134666bae209f0aa91f95c588e83c734a1118))
+* **history:** M3.1 fold war battlefield sites into battlefield scars; scar conflicts per tile and kind; corpus re-baseline ([44a2211](https://github.com/myarichuk/RoguelikeToolkit.World/commit/44a221153a5e97380bd7d7ce7e3ce0ec012efcb1))
+* **history:** M3.10 public API audit; regenerate PublicAPI backlog, remove dead AddSite proposal, public PeoplesLoader, guard internals exposure ([78eab8d](https://github.com/myarichuk/RoguelikeToolkit.World/commit/78eab8d5bb15565bb224a3127b69f8afdd080165))
+* **history:** M3.11 plugin state bag; keyed versioned blobs in the catalog (schema 9), survive Respatialize, reset notes ([bc2fa3a](https://github.com/myarichuk/RoguelikeToolkit.World/commit/bc2fa3a9457f4300352074e9986f340d9b5449e7))
+* **history:** M3.12 reserved plugin order band (100-899) and namespace/name plugin names; AddPluginOperator, DeclarePlugin ([07079c5](https://github.com/myarichuk/RoguelikeToolkit.World/commit/07079c5c290e5367d0098fde27d70db364da70e9))
+* **history:** M3.13 reference plugin host and sample; WithHistoryScalars, HistoryPluginHost, samples/HistoryPlugin ([042e5a9](https://github.com/myarichuk/RoguelikeToolkit.World/commit/042e5a915e17d421ac80f3de67fddbf5ec901005))
+* **history:** M3.14-15 economy plugin outside Core; plugin event kinds and operator-written state bag (schema 10) ([75b72da](https://github.com/myarichuk/RoguelikeToolkit.World/commit/75b72daed44396743b444c4d3b2c2ee4e2ab7683))
+* **history:** M3.2 river and fishing scoring terms; holy-site pull in settlement placement; corpus re-baseline ([1e99a61](https://github.com/myarichuk/RoguelikeToolkit.World/commit/1e99a61b5545f4d804ff70e1ddcd5a02948f830e))
+* **history:** M3.3 tier operator with hysteresis; ChangeTier proposal and SettlementTierChanged event; corpus re-baseline ([db0eb9a](https://github.com/myarichuk/RoguelikeToolkit.World/commit/db0eb9ad323cb85897ea8bebfed6b9a292870352))
+* **history:** M3.4 garrison, pilgrimage, route-node and horde-sedentarization founding sources; why tag on SettlementFounded; corpus re-baseline ([28834fe](https://github.com/myarichuk/RoguelikeToolkit.World/commit/28834fe7c46032c3a12b33d94adb8bee250f5b6d))
+* **history:** M3.6 polity collapse into successors; SplitPolity proposal, PolityCollapsed event, MaxSuccessors; pins on ended polities inert; corpus re-baseline ([79edf5e](https://github.com/myarichuk/RoguelikeToolkit.World/commit/79edf5eecd7fd9ce8a7bb9923ce4f541b2058cf7))
+* **history:** M3.7 coastal collapse successors become merchant republics; republic route nodes; river-mouth-on-route placement weight; corpus re-baseline ([0e0d743](https://github.com/myarichuk/RoguelikeToolkit.World/commit/0e0d743c649a5a83bbc045fd1110c9f75511add5))
+* **history:** M3.9 polity absorption (merge); AbsorbPolity proposal, PolityAbsorbed event, absorption myth; corpus re-baseline ([5a897e8](https://github.com/myarichuk/RoguelikeToolkit.World/commit/5a897e8e9abadc7ae0c6f7b3dc06700f269dd8ff))
+* **history:** P2c operators (holy sites, khan, treaty, villain, faith) and M1.0 coverage tests ([531d0a7](https://github.com/myarichuk/RoguelikeToolkit.World/commit/531d0a70a6de1c5e6bf8339c1cfc64ed76daeb9a))
+* implementing history WIP ([518730d](https://github.com/myarichuk/RoguelikeToolkit.World/commit/518730d4a37053312060b9438e71e14c620fe79a))
+
+
+### Bug Fixes
+
+* bug fix and improvements pass ([3521f88](https://github.com/myarichuk/RoguelikeToolkit.World/commit/3521f88bc2a248545dcf0e7681758c791319973c))
+* **history:** M3.18 give rebellions their own allowance above the founding cap ([9dc2cdb](https://github.com/myarichuk/RoguelikeToolkit.World/commit/9dc2cdb1e7fe4fe3b7831e3095d9e3d8b3388daf))
+* **history:** M3.5 ignore pins on capital tiles; report unknown folks in user compat rules ([52b7129](https://github.com/myarichuk/RoguelikeToolkit.World/commit/52b71297e44fe595b4e82858b2cc0e49e022d1a4))
+* **history:** trade gate compares grain shares so routes can open ([32ce8f2](https://github.com/myarichuk/RoguelikeToolkit.World/commit/32ce8f2d09fd7b8cab63c965cd339d9fbeb5dd8a))
+
 ## [3.0.0](https://github.com/myarichuk/RoguelikeToolkit.World/compare/v2.0.1...v3.0.0) (2026-10-13)
 
 
