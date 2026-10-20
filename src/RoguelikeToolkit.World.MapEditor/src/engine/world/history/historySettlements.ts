@@ -1,4 +1,4 @@
-import type { FeatureKind } from './protocol';
+import type { FeatureKind } from '../protocol';
 
 /** Ints per settlement in the engine's `HistorySettlements()`: tile, polity, founded, ended (-1 standing), tier, role, parent, active, population. */
 export const SETTLEMENT_STRIDE = 9;

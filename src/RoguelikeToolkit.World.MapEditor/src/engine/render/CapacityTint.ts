@@ -1,6 +1,6 @@
 import { MAP_H, MAP_W } from '../core/geo';
 import type { MapDocument } from '../doc/MapDocument';
-import { CAPACITY_KINDS, CAPACITY_STRIDE, CAPACITY_INDEX, type CapacityKind } from '../world/capacity';
+import { CAPACITY_KINDS, CAPACITY_STRIDE, CAPACITY_INDEX, type CapacityKind } from '../world/physics/capacity';
 
 /** Shown at 1/CELL resolution: a tint to read, not a surface to trace. */
 const CELL = 4;

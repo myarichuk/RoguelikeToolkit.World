@@ -4,8 +4,8 @@
 // across by *matching* new features to old ones on what they are (shared tiles, shared riverbed,
 // same place) rather than on their ids, so "the Silverfen lake" is still the Silverfen after a
 // ridge is raised beside it, and a deleted feature stays deleted.
-import type { FeatureEntity, RiverEntity } from '../doc/types';
-import type { FeatureKind } from './protocol';
+import type { FeatureEntity, RiverEntity } from '../../doc/types';
+import type { FeatureKind } from '../protocol';
 
 const AREA_FAMILY: Partial<Record<FeatureKind, string>> = {
   lake: 'lake', sea: 'sea', ocean: 'sea', mountain: 'mountain', valley: 'valley', forest: 'forest',

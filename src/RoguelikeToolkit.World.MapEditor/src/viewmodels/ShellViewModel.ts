@@ -1,6 +1,6 @@
-import { CAPACITY_KINDS, capacityOf } from '../engine/world/capacity';
-import { describeClimate, paintedKelvin, paintedRain } from '../engine/world/climate';
-import { landUseName } from '../engine/world/landuse';
+import { CAPACITY_KINDS, capacityOf } from '../engine/world/physics/capacity';
+import { describeClimate, paintedKelvin, paintedRain } from '../engine/world/physics/climate';
+import { landUseName } from '../engine/world/physics/landuse';
 import type { Editor } from '../engine/Editor';
 import { kmPerMu, mapToLonLatDeg, wrapX } from '../engine/core/geo';
 import type { UndoState } from '../engine/commands/UndoStack';

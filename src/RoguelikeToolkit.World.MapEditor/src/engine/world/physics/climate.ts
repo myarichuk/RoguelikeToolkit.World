@@ -1,4 +1,4 @@
-import { CLIMATE_RANGE, PAINT_MAX } from './edits';
+import { CLIMATE_RANGE, PAINT_MAX } from '../edits/edits';
 
 // The climate layer as the engine computed it, one record of nine floats per tile. Like land capacity it is
 // derived physics: shown, read back by the inspector, never an input (the climate brush is the input).

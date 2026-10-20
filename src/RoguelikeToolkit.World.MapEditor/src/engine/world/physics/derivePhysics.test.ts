@@ -1,10 +1,10 @@
 import { describe, expect, it } from 'vitest';
-import { MAP_H, MAP_W } from '../core/geo';
-import { MapDocument } from '../doc/MapDocument';
-import { DEFAULT_SETTINGS, type FeatureEntity } from '../doc/types';
+import { MAP_H, MAP_W } from '../../core/geo';
+import { MapDocument } from '../../doc/MapDocument';
+import { DEFAULT_SETTINGS, type FeatureEntity } from '../../doc/types';
 import { derivePhysics, describeReport, type PhysicsEngine } from './derivePhysics';
-import { unpackForTest } from './testSupport';
-import type { RecomputeParams, WorldSnapshot } from './protocol';
+import { unpackForTest } from '../testSupport';
+import type { RecomputeParams, WorldSnapshot } from '../protocol';
 
 // A fake planet: two tiles (left and right half of the map). The "engine" is flat ground whose height
 // is the tile's sculpt delta, so what the editor sends is directly observable in what comes back.

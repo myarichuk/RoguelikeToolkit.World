@@ -1,5 +1,5 @@
-import { hash2 } from '../core/rng';
-import type { NameRequest } from './protocol';
+import { hash2 } from '../../core/rng';
+import type { NameRequest } from '../protocol';
 
 /** Re-rolls a colliding name gets before it is kept as it is. */
 const MAX_REROLLS = 4;

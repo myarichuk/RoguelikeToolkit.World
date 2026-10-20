@@ -3,7 +3,7 @@ import type { AssetLibrary } from '../content/AssetLibrary';
 import type { BiomeDef, Theme } from '../content/types';
 import type { MapDocument } from '../doc/MapDocument';
 import type { FeatureMask } from '../features/featureMask';
-import { composeBiomes } from '../world/landuse';
+import { composeBiomes } from '../world/physics/landuse';
 import { Camera } from './Camera';
 import { FULLSCREEN_VS, bind, compile, rgb, texture, type Program } from './gl';
 import { RIVER_INK_MU, RiverLayer } from './RiverLayer';

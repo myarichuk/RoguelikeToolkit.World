@@ -1,7 +1,7 @@
 import { MAP_H, MAP_W } from '../core/geo';
-import { widenClimate } from '../world/climate';
-import { editsFromRows, editsToRows, type EditRow } from '../world/edits';
-import { migrateLegacyLandUse } from '../world/landuse';
+import { widenClimate } from '../world/physics/climate';
+import { editsFromRows, editsToRows, type EditRow } from '../world/edits/edits';
+import { migrateLegacyLandUse } from '../world/physics/landuse';
 import { isGeneratedFeatureId, MapDocument } from './MapDocument';
 import { DEFAULT_SETTINGS, type DocSettings, type FeatureEntity, type LabelEntity, type RiverEntity, type RoadEntity, type StampEntity } from './types';
 

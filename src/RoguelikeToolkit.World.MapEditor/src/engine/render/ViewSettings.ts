@@ -1,5 +1,5 @@
-import type { CapacityKind } from '../world/capacity';
-import type { ClimateKind } from '../world/climate';
+import type { CapacityKind } from '../world/physics/capacity';
+import type { ClimateKind } from '../world/physics/climate';
 import { DEPOSIT_TYPES, FEATURE_KINDS, type DepositType, type FeatureKind } from '../world/protocol';
 
 export type BaseMode = 'styled' | 'biomes' | 'elevation' | 'plates';

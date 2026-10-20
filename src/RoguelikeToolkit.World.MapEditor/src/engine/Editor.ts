@@ -11,6 +11,7 @@ import { hash2, hashString } from './core/rng';
 import { documentFromWorld } from './doc/fromWorld';
 import { MapDocument } from './doc/MapDocument';
 import { loadDocument, saveDocument } from './doc/serialize';
+import { SessionController } from './doc/SessionController';
 import type { SessionStore } from './doc/SessionStore';
 import type { DocSettings, Entity, FeatureEntity, LabelEntity, RiverEntity, StampEntity } from './doc/types';
 import type { EntityStore } from './doc/EntityStore';
@@ -35,11 +36,11 @@ import { StampTool } from './tools/StampTool';
 import { TextTool } from './tools/TextTool';
 import { DEFAULT_TOOL_OPTIONS, type Tool, type ToolContext, type ToolId, type ToolOptions } from './tools/Tool';
 import { ToolController, type ToolHost } from './tools/ToolController';
-import { derivePhysics, describeReport, type PhysicsMode } from './world/derivePhysics';
+import { derivePhysics, describeReport, type PhysicsMode } from './world/physics/derivePhysics';
 import { styleIndexForPlate } from './world/features';
 import { CLIMATE_MODEL_DEFAULTS, EARTH, NameCtx, type GenerateParams, type NameRequest, type NameStyle, type PeopleOption } from './world/protocol';
 import { WorldService } from './world/WorldService';
-import { uniqueNamesAsync } from './world/uniqueNames';
+import { uniqueNamesAsync } from './world/history/uniqueNames';
 
 export interface GenerateRequest extends GenerateParams { title?: string; density?: number; }
 
@@ -111,12 +112,15 @@ export class Editor implements ToolContext, ToolHost {
   /** Resolves when fonts and the atlas for the current theme are ready. */
   contentReady: Promise<void> = Promise.resolve();
 
-  private readonly session: SessionStore | undefined;
-  private sessionTimer = 0;
-  private sessionDirty = false;
+  /** Autosave and restore of the working map between visits. */
+  readonly session: SessionController;
 
   constructor(config: EditorConfig) {
-    this.session = config.session;
+    this.session = new SessionController(config.session, {
+      current: () => this._doc,
+      open: (doc) => this.attach(doc, true),
+      status: (m) => this.status(m),
+    });
     this.world = new WorldService(config.frameworkUrl);
     this.packs.add(corePack, config.baseUrl);
     this.packs.events.on('change', () => {
@@ -126,8 +130,7 @@ export class Editor implements ToolContext, ToolHost {
       this.contentTimer = window.setTimeout(() => { this.contentReady = this.refreshContent(); }, 60);
     });
     this.selection.events.on('change', () => this.selectionChanged());
-    this.undo.events.on('change', () => { this.requestRender(); this.scheduleSessionSave(); });
-    if (typeof document !== 'undefined') document.addEventListener('visibilitychange', () => { if (document.visibilityState === 'hidden') void this.saveSession(); });
+    this.undo.events.on('change', () => { this.requestRender(); this.session.changed(); });
     this.contentReady = this.refreshContent();
     void this.world.styles().then((s) => { this._styles = s; this.events.emit('content', this.packs); }).catch((e) => this.fail(e));
     void this.world.peoples().then((r) => { this._peoples = r.peoples; this._forms = r.forms; this.events.emit('content', this.packs); }).catch((e) => this.fail(e));
@@ -318,49 +321,7 @@ export class Editor implements ToolContext, ToolHost {
     this.renderer?.camera.fit();
     this.events.emit('doc', doc);
     this.requestRender();
-    if (!restored) this.scheduleSessionSave();
-  }
-
-  // --- session (autosave) ------------------------------------------------------------------
-
-  /** Whether a map from an earlier visit is stored. */
-  async hasSession(): Promise<boolean> { return !!(await this.session?.load()); }
-
-  /** Re-opens the map stored by the last visit; false when there is none (or it cannot be read). */
-  async restoreSession(): Promise<boolean> {
-    const blob = await this.session?.load();
-    if (!blob) return false;
-    try {
-      const doc = await loadDocument(blob);
-      this.attach(doc, true);
-      this.status(`Restored "${doc.settings.title}" from your last visit`);
-      return true;
-    } catch {
-      await this.session?.clear(); // unreadable (older format, corrupt): do not trip over it again
-      return false;
-    }
-  }
-
-  /** Forgets the stored map. */
-  forgetSession(): Promise<void> {
-    clearTimeout(this.sessionTimer);
-    this.sessionDirty = false;
-    return this.session?.clear() ?? Promise.resolve();
-  }
-
-  private scheduleSessionSave(): void {
-    if (!this.session) return;
-    this.sessionDirty = true;
-    clearTimeout(this.sessionTimer);
-    this.sessionTimer = window.setTimeout(() => void this.saveSession(), 4000);
-  }
-
-  /** Writes the working map to the session store now, if it changed since the last write. */
-  async saveSession(): Promise<void> {
-    if (!this.session || !this.sessionDirty) return;
-    clearTimeout(this.sessionTimer);
-    this.sessionDirty = false;
-    try { await this.session.save(await saveDocument(this._doc)); } catch { this.sessionDirty = true; }
+    if (!restored) this.session.changed();
   }
 
   async generate(req: GenerateRequest): Promise<void> {

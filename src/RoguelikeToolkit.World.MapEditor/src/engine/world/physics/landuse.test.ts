@@ -1,6 +1,6 @@
 import { describe, expect, it } from 'vitest';
 import { LAND_USES, composeBiomes, migrateLegacyLandUse } from './landuse';
-import { LANDUSE_HINTS } from '../../ui/glossary';
+import { LANDUSE_HINTS } from '../../../ui/glossary';
 
 const W = 8;
 

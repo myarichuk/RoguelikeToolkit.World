@@ -1,7 +1,7 @@
 import type { Editor } from '../engine/Editor';
 import { depositLabel } from '../engine/world/features';
-import type { CapacityKind } from '../engine/world/capacity';
-import type { ClimateKind } from '../engine/world/climate';
+import type { CapacityKind } from '../engine/world/physics/capacity';
+import type { ClimateKind } from '../engine/world/physics/climate';
 import { DEPOSIT_TYPES, FEATURE_KINDS, type DepositType, type FeatureKind } from '../engine/world/protocol';
 import { DEPOSIT_MARKERS } from '../engine/render/Overlay';
 import { VIEW_PRESETS, type BaseMode, type Layers, type ViewSettings } from '../engine/render/ViewSettings';

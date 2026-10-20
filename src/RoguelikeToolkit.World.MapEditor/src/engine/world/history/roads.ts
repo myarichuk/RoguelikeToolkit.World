@@ -1,6 +1,6 @@
-import { MAP_W, vecToMap } from '../core/geo';
-import { hash2 } from '../core/rng';
-import type { RoadGeometry } from './protocol';
+import { MAP_W, vecToMap } from '../../core/geo';
+import { hash2 } from '../../core/rng';
+import type { RoadGeometry } from '../protocol';
 
 /** Ints per road segment in the engine's `HistoryRoads()`: tile A, tile B, keeper, route A, route B, founded turn, severed turn. */
 export const ROAD_STRIDE = 7;

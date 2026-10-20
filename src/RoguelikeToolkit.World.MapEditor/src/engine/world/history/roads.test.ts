@@ -1,5 +1,5 @@
 import { describe, expect, it } from 'vitest';
-import { MAP_W } from '../core/geo';
+import { MAP_W } from '../../core/geo';
 import { buildRoads, chaikin, ROAD_STRIDE } from './roads';
 
 /** Tiles along the equator, 10 degrees apart: tile i sits at longitude (i * 10 + lon0). */

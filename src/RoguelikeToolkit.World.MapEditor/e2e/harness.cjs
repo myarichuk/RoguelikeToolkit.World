@@ -47,8 +47,8 @@ async function run(name, body, { viewport = { width: 1500, height: 900 } } = {})
     },
     note(label, value) { console.log(`  ..   ${label}: ${typeof value === 'string' ? value : JSON.stringify(value)}`); },
     evaluate: (fn, arg) => page.evaluate(fn, arg),
-    async generate({ seed = 42, size = 3, plates = 12, title = 'e2e' } = {}) {
-      await page.evaluate((o) => window.editor.generate({ ...o, styles: [] }), { seed, size, plates, title });
+    async generate({ seed = 42, size = 3, plates = 12, title = 'e2e', history } = {}) {
+      await page.evaluate((o) => window.editor.generate({ ...o, styles: [] }), { seed, size, plates, title, ...(history ? { history } : {}) });
     },
     /** Bounding box of the map canvas in page pixels. */
     canvasBox: () => page.evaluate(() => { const r = document.querySelector('canvas:last-of-type').getBoundingClientRect(); return { x: r.x, y: r.y, w: r.width, h: r.height }; }),
@@ -56,9 +56,9 @@ async function run(name, body, { viewport = { width: 1500, height: 900 } } = {})
     async landOnScreen(box) {
       return page.evaluate(({ box }) => {
         const ed = window.editor, d = ed.doc;
-        for (let gy = 0.3; gy < 0.8; gy += 0.05) for (let gx = 0.3; gx < 0.8; gx += 0.05) {
+        for (let gy = 0.1; gy < 0.95; gy += 0.025) for (let gx = 0.1; gx < 0.95; gx += 0.025) {
           const p = ed.camera.toMap(box.w * gx, box.h * gy);
-          if (p && d.elevationAt(p.x, p.y) > 0.05) return { sx: box.x + box.w * gx, sy: box.y + box.h * gy };
+          if (p && [[0,0],[-60,0],[60,0],[0,-60],[0,60]].every(([dx, dy]) => { const q = ed.camera.toMap(box.w * gx + dx, box.h * gy + dy); return q && d.elevationAt(q.x, q.y) > 0.05; })) return { sx: box.x + box.w * gx, sy: box.y + box.h * gy };
         }
         return null;
       }, { box });

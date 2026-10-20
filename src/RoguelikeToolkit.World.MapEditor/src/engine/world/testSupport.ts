@@ -1,4 +1,4 @@
-import type { PackedEdits, TileEdit } from './edits';
+import type { PackedEdits, TileEdit } from './edits/edits';
 
 /** Inverse of packEdits, for tests that play the engine. */
 export function unpackForTest(p: PackedEdits): Map<number, TileEdit> {

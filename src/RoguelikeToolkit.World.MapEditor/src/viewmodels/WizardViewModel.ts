@@ -1,6 +1,7 @@
 import type { Editor } from '../engine/Editor';
 import { DEFAULT_MS_PER_TILE, PLANET_PRESETS, TECTONIC_PRESETS, tilesOf } from '../engine/world/presets';
 import type { GenerateViewModel } from './GenerateViewModel';
+import { getPreference, setPreference } from '../preferences';
 import { ViewModel } from './ViewModel';
 
 export const WIZARD_STEPS = [
@@ -21,20 +22,17 @@ export interface WizardState {
   showOnStart: boolean;
 }
 
-const get = (k: string): string | null => { try { return localStorage.getItem(`wme.${k}`); } catch { return null; } };
-const set = (k: string, v: string): void => { try { localStorage.setItem(`wme.${k}`, v); } catch { /* storage unavailable */ } };
-
 /** The "new world" wizard: a guided tour over the generator's choices. It edits the Generate view model and creates the world from it. */
 export class WizardViewModel extends ViewModel<WizardState> {
   constructor(editor: Editor, private readonly generateVm: GenerateViewModel) {
-    const speed = Number(get('msPerTile'));
-    super({ open: false, step: 0, msPerTile: Number.isFinite(speed) && speed > 0 ? speed : DEFAULT_MS_PER_TILE, showOnStart: get('wizard') !== 'off' });
+    const speed = Number(getPreference('msPerTile'));
+    super({ open: false, step: 0, msPerTile: Number.isFinite(speed) && speed > 0 ? speed : DEFAULT_MS_PER_TILE, showOnStart: getPreference('wizard') !== 'off' });
     // Time every generation, so the estimates shown for the big detail levels come from this device and not from a laptop.
     this.track(editor.events.on('timings', (t) => {
       const size = editor.doc.settings.size;
       if (!(t.totalMs > 0) || !(t.generateMs > 0)) return;
       const msPerTile = t.totalMs / tilesOf(size);
-      set('msPerTile', String(msPerTile));
+      setPreference('msPerTile', String(msPerTile));
       this.set({ msPerTile });
     }));
   }
@@ -47,7 +45,7 @@ export class WizardViewModel extends ViewModel<WizardState> {
   goto = (step: number): void => this.set({ step: Math.min(WIZARD_STEPS.length - 1, Math.max(0, step)) });
   next = (): void => this.goto(this.state.step + 1);
   back = (): void => this.goto(this.state.step - 1);
-  setShowOnStart = (on: boolean): void => { set('wizard', on ? 'on' : 'off'); this.set({ showOnStart: on }); };
+  setShowOnStart = (on: boolean): void => { setPreference('wizard', on ? 'on' : 'off'); this.set({ showOnStart: on }); };
 
   /** Rolls everything the wizard can: a planet, a land, a seed. Peoples and pins stay as the author left them. */
   randomize = (): void => {

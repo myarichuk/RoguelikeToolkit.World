@@ -3,10 +3,12 @@
 // and the settlement export (which now treats pack ice as no water access) still runs and is repeatable.
 const { run } = require('./harness.cjs');
 
+// Sites are only scored for worlds without history; with it, history founds the settlements instead.
+const NO_HISTORY = { enabled: false, turns: 30, years: 10, maxPolities: 8, roster: [], founders: [] };
 const OPEN = 0, SEASONAL = 1, PERENNIAL = 2;
 
 run('Sea ice', async (t) => {
-  await t.generate({ seed: 7, size: 4 });
+  await t.generate({ seed: 7, size: 4, history: NO_HISTORY });
 
   const spots = await t.evaluate(() => {
     const d = window.editor.doc, s = d.physics.seaIce, out = {}, counts = [0, 0, 0];
@@ -50,7 +52,7 @@ run('Sea ice', async (t) => {
   const first = await sites();
   t.note('settlements', first.kinds);
   t.check('every settlement tier is placed', ['capital', 'city', 'town', 'village'].every((k) => first.kinds[k] > 0), first.kinds);
-  await t.generate({ seed: 7, size: 4 });
+  await t.generate({ seed: 7, size: 4, history: NO_HISTORY });
   t.check('the same seed places the same settlements', (await sites()).key === first.key);
 
   // The export says why each site scored what it did, and the editor shows it as a fact on the settlement.
@@ -63,7 +65,7 @@ run('Sea ice', async (t) => {
     }
     return out;
   });
-  const known = /^(fresh water|fertile land|harsh terrain|sea ice in winter|high ground|shaped by history|past events)(, (fresh water|fertile land|harsh terrain|sea ice in winter|high ground|shaped by history|past events))*$/;
+  const known = /^(fresh water|fertile land|harsh terrain|sea ice in winter|high ground|shaped by history|past events|river|fishing)(, (fresh water|fertile land|harsh terrain|sea ice in winter|high ground|shaped by history|past events|river|fishing))*$/;
   t.check('settlements list their site factors in plain words', why.length > 0 && why.every((w) => w.factors && known.test(w.factors)), why.filter((w) => !w.factors || !known.test(w.factors)).slice(0, 3));
   const best = why.slice().sort((a, b) => b.score - a.score)[0];
   t.check('the best-scoring site is credited with fresh water', /fresh water/.test(best.factors), best);

@@ -1,6 +1,6 @@
 import { describe, expect, it } from 'vitest';
-import { MapDocument } from '../doc/MapDocument';
-import { decodeDocument, encodeDocument } from '../doc/serialize';
+import { MapDocument } from '../../doc/MapDocument';
+import { decodeDocument, encodeDocument } from '../../doc/serialize';
 import {
   CI, CLIMATE_KINDS, CLIMATE_STRIDE, climateValue, describeClimate, ENGINE_CLIMATE_STRIDE, flowLabel, LEGACY_CLIMATE_STRIDE, paintedKelvin, projectClimate, rampColor, widenClimate,
 } from './climate';

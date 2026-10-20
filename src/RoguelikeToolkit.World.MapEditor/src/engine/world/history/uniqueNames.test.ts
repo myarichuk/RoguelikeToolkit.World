@@ -1,5 +1,5 @@
 import { describe, expect, it } from 'vitest';
-import type { NameRequest } from './protocol';
+import type { NameRequest } from '../protocol';
 import { uniqueNamesSync } from './uniqueNames';
 
 const req = (seed: number): NameRequest => ({ kind: 'lake', seed, race: 'human', culture: 'c', context: 0 });

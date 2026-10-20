@@ -1,6 +1,6 @@
 import { RasterEdit } from '../commands/RasterEdit';
 import type { Camera } from '../render/Camera';
-import { landUseName } from '../world/landuse';
+import { landUseName } from '../world/physics/landuse';
 import { biomeDab, climateDab, dabRect, heightDab, strokePoints } from './brushes';
 import type { PointerInput, Tool, ToolContext } from './Tool';
 

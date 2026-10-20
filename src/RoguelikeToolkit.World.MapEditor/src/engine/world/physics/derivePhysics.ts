@@ -2,14 +2,14 @@
 // table, have the engine re-derive the world from it, and carry the document's identities
 // (names, deletions, hand-made features) across. Pure of rendering and UI, so
 // it is tested against a fake engine.
-import { entitiesFromSnapshot } from '../doc/fromWorld';
-import type { PhysicsState } from '../doc/MapDocument';
-import { MapDocument } from '../doc/MapDocument';
-import type { FeatureEntity, RiverEntity } from '../doc/types';
-import { collectClimate, collectEdits, collectLandUse, packEdits, type EditMode, type Raster } from './edits';
-import type { NameRequest, RecomputeParams, WorldSnapshot } from './protocol';
-import { reconcileFeatures } from './reconcile';
-import { uniqueNamesAsync } from './uniqueNames';
+import { entitiesFromSnapshot } from '../../doc/fromWorld';
+import type { PhysicsState } from '../../doc/MapDocument';
+import { MapDocument } from '../../doc/MapDocument';
+import type { FeatureEntity, RiverEntity } from '../../doc/types';
+import { collectClimate, collectEdits, collectLandUse, packEdits, type EditMode, type Raster } from '../edits/edits';
+import type { NameRequest, RecomputeParams, WorldSnapshot } from '../protocol';
+import { reconcileFeatures } from '../edits/reconcile';
+import { uniqueNamesAsync } from '../history/uniqueNames';
 
 export type PhysicsMode = EditMode | 'revert';
 

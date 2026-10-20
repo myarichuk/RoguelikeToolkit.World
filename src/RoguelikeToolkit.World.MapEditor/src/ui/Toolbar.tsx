@@ -4,7 +4,7 @@ import { ChoiceGrid, Section, Select, Slider, Swatch } from './controls';
 import { BIOME_HINTS, LANDUSE_HINTS, TERRAIN_HINTS } from './glossary';
 import { ToolIcon } from './icons';
 import type { ToolId } from '../engine/tools/Tool';
-import { LAND_USES } from '../engine/world/landuse';
+import { LAND_USES } from '../engine/world/physics/landuse';
 import styles from './Toolbar.module.css';
 
 const GROUPS: { name: string; tools: ToolId[] }[] = [

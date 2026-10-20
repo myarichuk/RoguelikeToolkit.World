@@ -1,6 +1,6 @@
 // The contract between the editor (main thread) and the world worker (.NET Core in wasm).
 // Plain data only: everything crosses postMessage, big arrays as transferables.
-import type { PackedEdits } from './edits';
+import type { PackedEdits } from './edits/edits';
 import type { Rasters } from './rasterize';
 
 export interface NameStyle { race: string; culture: string; label: string; }

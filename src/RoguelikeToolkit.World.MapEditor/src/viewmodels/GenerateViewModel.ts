@@ -1,9 +1,19 @@
 import type { Editor } from '../engine/Editor';
 import { CLIMATE_MODEL_DEFAULTS, CLIMATE_MODEL_LIMITS, DEFAULT_HISTORY, DEFAULT_STYLES, EARTH, PLANET_LIMITS, styleKey, type FounderPin, type HistorySettings, type PeopleOption } from '../engine/world/protocol';
 import type { DocSettings } from '../engine/doc/types';
-import type { ClimateModelSettings } from '../engine/world/protocol';
+import type { ClimateModelSettings, PlanetSettings } from '../engine/world/protocol';
 import { modelFor, type PlanetPreset, type TectonicPreset } from '../engine/world/presets';
 import { ViewModel } from './ViewModel';
+
+const PLANET_KEYS = Object.keys(EARTH) as (keyof PlanetSettings)[];
+const MODEL_KEYS = Object.keys(CLIMATE_MODEL_DEFAULTS) as (keyof ClimateModelSettings)[];
+
+/** The listed fields of `from`, as a fresh object. */
+function pick<T, K extends keyof T>(from: T, keys: readonly K[]): Pick<T, K> {
+  const out = {} as Pick<T, K>;
+  for (const k of keys) out[k] = from[k];
+  return out;
+}
 
 export interface StyleOption { key: string; race: string; label: string; }
 
@@ -50,7 +60,7 @@ export class GenerateViewModel extends ViewModel<GenerateState> {
 
   private paramsKey(): string {
     const s = this.state;
-    return JSON.stringify([s.seed, s.size, s.plates, s.obliquity, s.flux, s.rotation, s.climateRefresh, s.meridionalWind, s.windCellBlend, s.oceanHeat, s.oceanRain, s.aeolian, s.density, s.styles, s.history]);
+    return JSON.stringify([s.seed, s.size, s.plates, pick(s, PLANET_KEYS), pick(s, MODEL_KEYS), s.density, s.styles, s.history]);
   }
 
   /** Every setter funnels through here, so `stale` can never drift from the inputs. */
@@ -60,7 +70,7 @@ export class GenerateViewModel extends ViewModel<GenerateState> {
   }
 
   private syncDoc(s: DocSettings): void {
-    this.set({ history: structuredClone(s.history ?? DEFAULT_HISTORY), warp: s.warp, detail: s.detail, ring: s.ring, obliquity: s.obliquity, flux: s.flux, rotation: s.rotation, climateRefresh: s.climateRefresh, meridionalWind: s.meridionalWind, windCellBlend: s.windCellBlend, oceanHeat: s.oceanHeat, oceanRain: s.oceanRain, aeolian: s.aeolian });
+    this.set({ history: structuredClone(s.history ?? DEFAULT_HISTORY), warp: s.warp, detail: s.detail, ring: s.ring, ...pick(s, PLANET_KEYS), ...pick(s, MODEL_KEYS) });
     // A document was generated, opened or created: whatever the inputs say now is the new baseline.
     this.baseline = this.paramsKey();
     this.set({});
@@ -151,7 +161,7 @@ export class GenerateViewModel extends ViewModel<GenerateState> {
 
   generate = async (): Promise<void> => {
     const s = this.state;
-    await this.editor.generate({ seed: s.seed, size: s.size, plates: s.plates, planet: { obliquity: s.obliquity, flux: s.flux, rotation: s.rotation }, model: { climateRefresh: s.climateRefresh, meridionalWind: s.meridionalWind, windCellBlend: s.windCellBlend, oceanHeat: s.oceanHeat, oceanRain: s.oceanRain, aeolian: s.aeolian }, styles: s.styles, history: s.history, title: this.editor.doc.settings.title || undefined, density: s.density }).catch(() => {});
+    await this.editor.generate({ seed: s.seed, size: s.size, plates: s.plates, planet: pick(s, PLANET_KEYS), model: pick(s, MODEL_KEYS), styles: s.styles, history: s.history, title: this.editor.doc.settings.title || undefined, density: s.density }).catch(() => {});
   };
 
   /** Coastline look: live, undoable (one step per slider scrub). */

@@ -10,6 +10,7 @@ import { Toolbar } from './Toolbar';
 import { TopBar } from './TopBar';
 import { ViewPanel } from './ViewPanel';
 import { NewWorldWizard } from './wizard/NewWorldWizard';
+import { getPreference, setPreference } from '../preferences';
 import styles from './App.module.css';
 
 const TABS = [
@@ -22,8 +23,8 @@ const TABS = [
 export function App() {
   const { vms } = useApp();
   const shell = useViewModel(vms.shell);
-  const [tab, setTab] = useState<(typeof TABS)[number]['id']>(() => (safeGet('tab') as never) ?? 'world');
-  useEffect(() => { safeSet('tab', tab); }, [tab]);
+  const [tab, setTab] = useState<(typeof TABS)[number]['id']>(() => (getPreference('tab') as never) ?? 'world');
+  useEffect(() => { setPreference('tab', tab); }, [tab]);
   // Theme chrome: the theme's `ui` colors become CSS custom properties.
   useEffect(() => {
     const root = document.documentElement;
@@ -60,5 +61,3 @@ export function App() {
   );
 }
 
-function safeGet(k: string): string | null { try { return localStorage.getItem(`wme.${k}`); } catch { return null; } }
-function safeSet(k: string, v: string): void { try { localStorage.setItem(`wme.${k}`, v); } catch { /* storage unavailable */ } }

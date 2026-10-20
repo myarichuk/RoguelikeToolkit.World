@@ -1,5 +1,5 @@
 import { describe, expect, it } from 'vitest';
-import type { FeatureEntity, RiverEntity } from '../doc/types';
+import type { FeatureEntity, RiverEntity } from '../../doc/types';
 import { reconcileFeatures } from './reconcile';
 
 const area = (id: string, kind: FeatureEntity['kind'], tiles: number[], name = '', request = true): FeatureEntity => ({

@@ -1,9 +1,9 @@
 import type { Editor } from '../engine/Editor';
 import type { BiomeDef } from '../engine/content/types';
-import type { PhysicsMode } from '../engine/world/derivePhysics';
+import type { PhysicsMode } from '../engine/world/physics/derivePhysics';
 import type { ClimateMode, HeightMode } from '../engine/tools/brushes';
 import type { ToolId, ToolOptions } from '../engine/tools/Tool';
-import { LAND_USE_SLOTS } from '../engine/world/landuse';
+import { LAND_USE_SLOTS } from '../engine/world/physics/landuse';
 import { LANDUSE_HINTS } from '../ui/glossary';
 import { ViewModel } from './ViewModel';
 

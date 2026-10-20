@@ -10,7 +10,7 @@ import {
   type DepositType, type FeatureKind, type FeatureSet, type MapFeature, type NameStyle, type RiverGeometry,
 } from './protocol';
 
-import { historyPicks, historySites, type HistoryInput } from './historySettlements';
+import { historyPicks, historySites, type HistoryInput } from './history/historySettlements';
 
 export interface CatalogInput {
   seed: number;

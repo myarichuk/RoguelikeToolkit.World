@@ -1,6 +1,6 @@
 import { MAP_H, MAP_W } from '../core/geo';
 import type { MapDocument } from '../doc/MapDocument';
-import { CI, CLIMATE_STRIDE } from '../world/climate';
+import { CI, CLIMATE_STRIDE } from '../world/physics/climate';
 
 export type FlowKind = 'wind' | 'current';
 

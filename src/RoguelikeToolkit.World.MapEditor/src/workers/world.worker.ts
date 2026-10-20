@@ -3,16 +3,16 @@
 // .NET runtime; the editor only ever sees plain data (protocol.ts). Rasterization and feature
 // extraction run here too, in V8 — measurably faster than the Mono interpreter for per-pixel loops.
 import { MAP_H, MAP_W, vecToMap } from '../engine/core/geo';
-import { projectClimate } from '../engine/world/climate';
+import { projectClimate } from '../engine/world/physics/climate';
 import { extractFeatures } from '../engine/world/features';
-import { buildRoads } from '../engine/world/roads';
-import type { HistoryInput } from '../engine/world/historySettlements';
+import { buildRoads } from '../engine/world/history/roads';
+import type { HistoryInput } from '../engine/world/history/historySettlements';
 import {
   CLIMATE_MODEL_DEFAULTS, DEFAULT_HISTORY, DEFAULT_STYLES, EARTH, snapshotTransfer, styleKey,
   type GenerateParams, type HistorySettings, type NameRequest, type NameStyle, type RecomputeParams, type WorkerRequest, type WorkerResponse, type WorldSnapshot,
 } from '../engine/world/protocol';
 import { rasterize } from '../engine/world/rasterize';
-import { uniqueNamesSync } from '../engine/world/uniqueNames';
+import { uniqueNamesSync } from '../engine/world/history/uniqueNames';
 
 type Arr = ArrayLike<number>;
 

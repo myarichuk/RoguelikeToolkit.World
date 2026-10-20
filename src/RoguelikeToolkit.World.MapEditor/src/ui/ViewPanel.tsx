@@ -1,8 +1,8 @@
 import type { BaseMode, Layers } from '../engine/render/ViewSettings';
 import { useApp, useViewModel } from './hooks';
 import { ChoiceGrid, Section, Segmented, Slider, Toggle } from './controls';
-import { CAPACITY_KINDS, type CapacityKind } from '../engine/world/capacity';
-import { CLIMATE_KINDS, climateDef, rampGradient, type ClimateKind } from '../engine/world/climate';
+import { CAPACITY_KINDS, type CapacityKind } from '../engine/world/physics/capacity';
+import { CLIMATE_KINDS, climateDef, rampGradient, type ClimateKind } from '../engine/world/physics/climate';
 import { BASE_HINTS, LAYER_HINTS } from './glossary';
 import styles from './ViewPanel.module.css';
 

@@ -1,6 +1,6 @@
 import { MAP_H, MAP_W } from '../core/geo';
 import type { MapDocument } from '../doc/MapDocument';
-import { CLIMATE_STRIDE, NOT_A_COLUMN, climateDef, climateValue, rampColor, type ClimateKind } from '../world/climate';
+import { CLIMATE_STRIDE, NOT_A_COLUMN, climateDef, climateValue, rampColor, type ClimateKind } from '../world/physics/climate';
 
 /** Shown at 1/CELL resolution, like the capacity tint: a picture to read, not a surface to trace. */
 const CELL = 4;

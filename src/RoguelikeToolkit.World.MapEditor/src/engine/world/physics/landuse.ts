@@ -6,7 +6,7 @@
 // destroyed the biome underneath and forced the physics to special-case their ids. They live in their
 // own raster instead, and the renderer composites the two.
 
-import type { Rect } from '../core/geo';
+import type { Rect } from '../../core/geo';
 
 export interface LandUseDef {
   id: number;

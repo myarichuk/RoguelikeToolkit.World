@@ -2,7 +2,7 @@ import { Emitter } from '../core/Emitter';
 import { MAP_H, MAP_W, type Rect } from '../core/geo';
 import type { RasterTarget } from '../commands/RasterEdit';
 import type { NameStyle } from '../world/protocol';
-import type { Raster, TileEdits } from '../world/edits';
+import type { Raster, TileEdits } from '../world/edits/edits';
 import { featureMask, maskHas, tileRowSpans, type FeatureMask } from '../features/featureMask';
 import { EntityStore } from './EntityStore';
 import { DEFAULT_SETTINGS, type DocSettings, type FeatureEntity, type LabelEntity, type RiverEntity, type RoadEntity, type StampEntity } from './types';

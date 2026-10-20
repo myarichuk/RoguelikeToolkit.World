@@ -1,7 +1,7 @@
 import { describe, it, expect } from 'vitest';
-import { GENERATORS, DEFAULT_PALETTE, makeStamp, stampToSvg, stampScale } from './stamps';
-import type { PaletteToken, Stamp } from './stamps';
-import { Rng, mixSeed, pathD } from './ink';
+import { GENERATORS, DEFAULT_PALETTE, makeStamp, stampToSvg, stampScale } from './index';
+import type { PaletteToken, Stamp } from './index';
+import { Rng, mixSeed, pathD } from '../ink';
 
 const TOKENS = Object.keys(DEFAULT_PALETTE) as PaletteToken[];
 const IDS = Object.keys(GENERATORS);
