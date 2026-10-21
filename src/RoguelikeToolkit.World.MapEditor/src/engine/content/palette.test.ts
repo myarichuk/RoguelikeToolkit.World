@@ -31,7 +31,9 @@ function closest(colors: Record<string, string>, names: Map<string, string>): { 
 // the shipped palettes measure, so a retouch that makes any two biomes read as one colour fails here and names the pair.
 describe('core pack biome colours stay distinguishable', () => {
   const names = new Map(corePack.biomes.map((b) => [String(b.id), b.name]));
-  const floors: Record<string, number> = { parchment: 10, atlas: 10, nocturne: 6 };
+  // Sepia ink is near-monochrome by design (biomes are a 15% tint over the paper; stamps carry the meaning), so its
+  // floor only catches two biomes collapsing into the very same colour.
+  const floors: Record<string, number> = { parchment: 10, atlas: 10, nocturne: 6, sepia: 1 };
 
   for (const theme of corePack.themes) {
     it(`theme ${theme.id}: every pair of land biomes differs by at least ${floors[theme.id] ?? 10} ΔE`, () => {

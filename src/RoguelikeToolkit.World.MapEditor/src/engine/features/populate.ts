@@ -1,7 +1,7 @@
 import { MAP_H, MAP_W } from '../core/geo';
 import { hash2, hashString, mulberry32 } from '../core/rng';
 import type { AssetLibrary } from '../content/AssetLibrary';
-import type { PlacementRule } from '../content/types';
+import type { PlacementRule, StampTuning } from '../content/types';
 import type { MapDocument } from '../doc/MapDocument';
 import type { FeatureEntity, StampEntity } from '../doc/types';
 import { FootprintMap, baseOnLand, placeRelief } from './relief';
@@ -42,6 +42,19 @@ export function placeVariant(rng: () => number, count: number, seen: Map<number,
   }
   seen.set(cy * nx + cx, `${asset}#${variant}`);
   return variant;
+}
+
+/** Rules with a theme's per-rule density and scale multipliers applied (see `Theme.stamps`). Untuned rules pass through as is. */
+export function tuneRules(rules: PlacementRule[], tuning: Record<string, StampTuning> | undefined): PlacementRule[] {
+  if (!tuning) return rules;
+  return rules.map((r) => {
+    const t = tuning[r.id];
+    if (!t) return r;
+    const k = t.scale ?? 1;
+    const out: PlacementRule = { ...r, density: r.density * (t.density ?? 1) };
+    if (r.scale) out.scale = [r.scale[0] * k, r.scale[1] * k];
+    return out;
+  });
 }
 
 export function populate(doc: MapDocument, o: PopulateOptions): StampEntity[] {

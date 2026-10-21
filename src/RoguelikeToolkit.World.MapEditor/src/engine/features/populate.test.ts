@@ -2,7 +2,7 @@ import { describe, expect, it } from 'vitest';
 import type { AssetLibrary } from '../content/AssetLibrary';
 import type { PlacementRule } from '../content/types';
 import type { MapDocument } from '../doc/MapDocument';
-import { placeVariant, populate } from './populate';
+import { placeVariant, populate, tuneRules } from './populate';
 
 const stubDoc = (biome: number) => ({
   elevationAt: () => 0.3,
@@ -67,5 +67,24 @@ describe('populate', () => {
 
   it('keeps scatter rotation a hand-placed lean', () => {
     for (const s of run(4)) expect(Math.abs(s.rotation)).toBeLessThanOrEqual(0.070001);
+  });
+});
+
+describe('tuneRules', () => {
+  const rules: PlacementRule[] = [
+    { id: 'a', assets: ['x'], spacing: 5, density: 0.8, scale: [0.5, 1.5] },
+    { id: 'b', assets: ['x'], spacing: 5, density: 0.4 },
+  ];
+
+  it('scales density and scale of tuned rules only', () => {
+    const [a, b] = tuneRules(rules, { a: { density: 0.5, scale: 2 }, b: { scale: 3 } });
+    expect(a.density).toBeCloseTo(0.4);
+    expect(a.scale).toEqual([1, 3]);
+    expect(b).toEqual(rules[1]);
+    expect(rules[0].density).toBe(0.8);
+  });
+
+  it('passes rules through without tuning', () => {
+    expect(tuneRules(rules, undefined)).toBe(rules);
   });
 });

@@ -71,6 +71,13 @@ export interface Theme {
   labels: Record<string, LabelStyle>;
   /** Optional UI chrome colors as CSS custom properties ("--bg": "#1d1a17"). */
   ui?: Record<string, string>;
+  /** Optional auto-placement tuning by rule id: multipliers on the rule's density and scale. Applied when stamps are placed (generate, re-populate), not on a theme switch. */
+  stamps?: Record<string, StampTuning>;
+}
+
+export interface StampTuning {
+  density?: number;
+  scale?: number;
 }
 
 export interface BiomeDef {

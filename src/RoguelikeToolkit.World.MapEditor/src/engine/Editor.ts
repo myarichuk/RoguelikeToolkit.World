@@ -19,7 +19,7 @@ import { exportSvg, type SvgExportOptions } from './export/SvgExporter';
 import { exportWkt } from './export/WktExporter';
 import { deleteFeatureCommand } from './features/deleteFeature';
 import { placeLabels } from './features/placeLabels';
-import { populate } from './features/populate';
+import { populate, tuneRules } from './features/populate';
 import { Camera } from './render/Camera';
 import { MapRenderer, type FrameStats } from './render/MapRenderer';
 import { Overlay } from './render/Overlay';
@@ -535,7 +535,7 @@ export class Editor implements ToolContext, ToolHost {
   }
 
   private autoStamps(doc: MapDocument, density?: number): StampEntity[] {
-    return populate(doc, { seed: doc.settings.seed, rules: this.packs.rules(), library: this.library, featureAssets: (k) => this.packs.featureAssets(k), density });
+    return populate(doc, { seed: doc.settings.seed, rules: tuneRules(this.packs.rules(), this.theme().stamps), library: this.library, featureAssets: (k) => this.packs.featureAssets(k), density });
   }
 
   // --- selection -> renderer ---------------------------------------------------------------

@@ -41,6 +41,10 @@ export function validatePack(raw: unknown): { pack?: ContentPack; errors: string
       if (!obj(l, `${p}.labels.${k}`)) continue;
       str(l.font, `${p}.labels.${k}.font`); num(l.size, `${p}.labels.${k}.size`); color(l.fill, `${p}.labels.${k}.fill`);
     }
+    if (t.stamps !== undefined && obj(t.stamps, `${p}.stamps`)) for (const [k, v] of Object.entries(t.stamps)) {
+      if (!obj(v, `${p}.stamps.${k}`)) continue;
+      num(v.density, `${p}.stamps.${k}.density`, true); num(v.scale, `${p}.stamps.${k}.scale`, true);
+    }
   });
   if (arr(raw.biomes, 'biomes')) raw.biomes.forEach((b, i) => {
     if (!obj(b, `biomes[${i}]`)) return;
