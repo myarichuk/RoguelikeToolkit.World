@@ -2,6 +2,7 @@ import type { Command } from '../commands/Command';
 import { CompositeCommand } from '../commands/Command';
 import { RemoveEntities } from '../commands/EntityCommands';
 import type { MapDocument } from '../doc/MapDocument';
+import { labelIdOf } from '../doc/types';
 
 export interface FeatureDeletion {
   command: Command;
@@ -19,7 +20,7 @@ export function deleteFeatureCommand(doc: MapDocument, id: string): FeatureDelet
   if (!f) return null;
   const parts: Command[] = [new RemoveEntities('feature', doc.features, [id])];
   const removed: string[] = [];
-  if (doc.labels.get(`lb_${id}`)) { parts.push(new RemoveEntities('label', doc.labels, [`lb_${id}`])); removed.push('label'); }
+  if (doc.labels.get(labelIdOf(id))) { parts.push(new RemoveEntities('label', doc.labels, [labelIdOf(id)])); removed.push('label'); }
   if (f.riverId && doc.rivers.get(f.riverId)) { parts.push(new RemoveEntities('river', doc.rivers, [f.riverId])); removed.push('river'); }
   if (doc.stamps.get(`st_${id}`)) { parts.push(new RemoveEntities('marker', doc.stamps, [`st_${id}`])); removed.push('marker'); }
   return { command: new CompositeCommand(`Delete ${f.name || f.kind}`, parts), removed };

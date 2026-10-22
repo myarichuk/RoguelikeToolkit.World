@@ -1,5 +1,6 @@
 import { newId } from '../core/ids';
 import { AddEntities } from '../commands/EntityCommands';
+import { labelExistsAt } from '../doc/existsAt';
 import type { LabelEntity } from '../doc/types';
 import { pickLabel } from './pick';
 import type { PointerInput, Tool, ToolContext } from './Tool';
@@ -10,7 +11,7 @@ export class TextTool implements Tool {
   readonly cursor = 'text';
 
   async down(p: PointerInput, ctx: ToolContext): Promise<void> {
-    const hit = pickLabel(ctx.doc, ctx.labels, ctx.theme(), p.x, p.y, () => true);
+    const hit = pickLabel(ctx.doc, ctx.labels, ctx.theme(), p.x, p.y, (id) => labelExistsAt(ctx.doc, id, ctx.view().historyTurn));
     if (hit) { ctx.selection.set({ labels: new Set([hit]), stamps: new Set(), feature: null }); return; }
     const style = ctx.options.labelStyle;
     const nameKind = ({ capital: 'city', ocean: 'sea', region: 'forest', title: 'city' } as Record<string, string>)[style] ?? style;

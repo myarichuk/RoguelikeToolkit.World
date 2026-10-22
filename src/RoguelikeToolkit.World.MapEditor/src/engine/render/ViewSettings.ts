@@ -27,6 +27,10 @@ export interface Layers {
   wind: boolean;
   /** Arrows for the ocean surface currents, warm ones red and cold ones blue. */
   currents: boolean;
+  /** Tint of who held each tile, at the history turn the scrubber shows. */
+  realms: boolean;
+  /** Realm outlines and names at the same turn. */
+  borders: boolean;
 }
 
 /**
@@ -37,6 +41,8 @@ export interface ViewSettings {
   base: BaseMode;
   /** Plates view: 0 = flat plate colors, 1 = plates tinted over topography. */
   plateTopo: number;
+  /** The history turn the realms layer shows; -1 is the end of history. */
+  historyTurn: number;
   /** Which capacity the `capacity` layer shows. */
   capacityKind: CapacityKind;
   /** Which climate field the `climate` layer shows. */
@@ -51,11 +57,11 @@ const allDeposits = (v: boolean) => Object.fromEntries(DEPOSIT_TYPES.map((k) => 
 
 const LAYERS_OFF: Layers = {
   hillshade: false, contours: false, plateBoundaries: false, plateMotion: false, graticule: false,
-  ripples: false, coastline: false, rivers: false, roads: false, stamps: false, labels: false, resources: false, climatePaint: false, capacity: false, climate: false, wind: false, currents: false,
+  ripples: false, coastline: false, rivers: false, roads: false, stamps: false, labels: false, resources: false, climatePaint: false, capacity: false, climate: false, wind: false, currents: false, realms: false, borders: false,
 };
 
 export const DEFAULT_VIEW: ViewSettings = {
-  base: 'styled', plateTopo: 0, capacityKind: 'arable', climateKind: 'temperature',
+  base: 'styled', plateTopo: 0, historyTurn: -1, capacityKind: 'arable', climateKind: 'temperature',
   layers: { ...LAYERS_OFF, ripples: true, rivers: true, roads: true, stamps: true, labels: true },
   kinds: { ...allKinds(true), deposit: false },
   deposits: allDeposits(true),
@@ -68,6 +74,7 @@ export const VIEW_PRESETS: ViewPreset[] = [
   { id: 'map', label: 'Map', apply: (v) => ({ ...v, base: 'styled', layers: { ...LAYERS_OFF, ripples: true, rivers: true, roads: true, stamps: true, labels: true } }) },
   { id: 'plates', label: 'Plates', apply: (v) => ({ ...v, base: 'plates', plateTopo: 0, layers: { ...LAYERS_OFF, plateBoundaries: true, plateMotion: true, coastline: true } }) },
   { id: 'plates-topo', label: 'Plates + topography', apply: (v) => ({ ...v, base: 'plates', plateTopo: 0.75, layers: { ...LAYERS_OFF, hillshade: true, plateBoundaries: true, plateMotion: true, coastline: true } }) },
+  { id: 'realms', label: 'Realms', apply: (v) => ({ ...v, base: 'styled', layers: { ...LAYERS_OFF, ripples: true, rivers: true, roads: true, labels: true, realms: true, borders: true } }) },
   { id: 'topo', label: 'Topography', apply: (v) => ({ ...v, base: 'elevation', layers: { ...LAYERS_OFF, hillshade: true, contours: true, coastline: true, rivers: true } }) },
   { id: 'biomes', label: 'Biomes', apply: (v) => ({ ...v, base: 'biomes', layers: { ...LAYERS_OFF, hillshade: true, coastline: true, rivers: true } }) },
   { id: 'land', label: 'Land capacity', apply: (v) => ({ ...v, base: 'biomes', layers: { ...LAYERS_OFF, hillshade: true, coastline: true, rivers: true, capacity: true } }) },

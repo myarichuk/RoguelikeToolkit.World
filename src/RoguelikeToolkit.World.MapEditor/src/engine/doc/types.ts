@@ -86,6 +86,13 @@ export const DEFAULT_SETTINGS: DocSettings = {
   climateRefresh: true, meridionalWind: 0.3, windCellBlend: 0, oceanHeat: 1, oceanRain: 2, aeolian: 4,
 };
 
+/** The label and the settlement stamp that belong to a feature are named after it. */
+export const labelIdOf = (featureId: string): string => `lb_${featureId}`;
+export const stampIdOf = (featureId: string): string => `st_${featureId}`;
+/** The feature a label or a settlement stamp belongs to, when its id says so (what the user placed by hand has none). */
+export const featureIdOfLabel = (labelId: string): string | undefined => (labelId.startsWith('lb_f_') ? labelId.slice(3) : undefined);
+export const featureIdOfStamp = (stampId: string): string | undefined => (stampId.startsWith('st_f_') ? stampId.slice(3) : undefined);
+
 /** A named, selectable map feature (river, range, sea, settlement, deposit...). */
 export interface FeatureEntity extends Entity {
   kind: import('../world/protocol').FeatureKind;
@@ -93,6 +100,10 @@ export interface FeatureEntity extends Entity {
   x: number; y: number;
   angle: number; extent: number;
   weight: number;
+  /** The tile the feature is anchored to (history events are keyed by it); absent in files saved before it was recorded. */
+  tile?: number;
+  /** The turns the place stood on a history timeline; absent for features that always are (and in older files). */
+  span?: import('../world/history/timeline').Span;
   /** Area membership by tile; pixels map to tiles through the document's tile raster. */
   tiles?: number[];
   /** River features: the river entity drawn for it. */

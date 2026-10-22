@@ -13,7 +13,7 @@ import { MapDocument } from './doc/MapDocument';
 import { loadDocument, saveDocument } from './doc/serialize';
 import { SessionController } from './doc/SessionController';
 import type { SessionStore } from './doc/SessionStore';
-import type { DocSettings, Entity, FeatureEntity, LabelEntity, RiverEntity, StampEntity } from './doc/types';
+import { labelIdOf, type DocSettings, type Entity, type FeatureEntity, type LabelEntity, type RiverEntity, type StampEntity } from './doc/types';
 import type { EntityStore } from './doc/EntityStore';
 import { exportSvg, type SvgExportOptions } from './export/SvgExporter';
 import { exportWkt } from './export/WktExporter';
@@ -28,6 +28,7 @@ import { FontLibrary } from './text/FontLibrary';
 import { LabelCache } from './text/LabelCache';
 import { BiomeTool, ClimateTool, LandUseTool, TerrainTool } from './tools/BrushTools';
 import { InspectTool } from './tools/InspectTool';
+import { featureVisible } from './tools/pick';
 import { NavigateTool } from './tools/NavigateTool';
 import { RiverTool } from './tools/RiverTool';
 import { SelectTool } from './tools/SelectTool';
@@ -37,7 +38,6 @@ import { TextTool } from './tools/TextTool';
 import { DEFAULT_TOOL_OPTIONS, type Tool, type ToolContext, type ToolId, type ToolOptions } from './tools/Tool';
 import { ToolController, type ToolHost } from './tools/ToolController';
 import { derivePhysics, describeReport, type PhysicsMode } from './world/physics/derivePhysics';
-import { styleIndexForPlate } from './world/features';
 import { CLIMATE_MODEL_DEFAULTS, EARTH, NameCtx, type GenerateParams, type NameRequest, type NameStyle, type PeopleOption } from './world/protocol';
 import { WorldService } from './world/WorldService';
 import { uniqueNamesAsync } from './world/history/uniqueNames';
@@ -220,7 +220,7 @@ export class Editor implements ToolContext, ToolHost {
   undoLast(): void { this.undo.undo(); }
   redoLast(): void { this.undo.redo(); }
 
-  /** A name in the culture that owns the plate under (x, y), flavored by what is around it. */
+  /** A name in the tongue of the realm (else the landmass) under (x, y), flavored by what is around it. */
   async nameAt(kind: string, x: number, y: number): Promise<string> {
     const doc = this._doc;
     const [name] = await this.world.names([this.nameRequestAt(kind, x, y, hash2(hash2(doc.settings.seed, hashString(kind)), this.nameNonce++ * 7919 + (Math.round(x) << 12) + Math.round(y)))]);
@@ -230,8 +230,7 @@ export class Editor implements ToolContext, ToolHost {
   nameRequestAt(kind: string, x: number, y: number, seed: number): NameRequest {
     const doc = this._doc, styles = doc.world.styles;
     const t = doc.tileAt(x, y);
-    const plate = t >= 0 && doc.world.tilePlate.length ? doc.world.tilePlate[t] & 0xffff : 0;
-    const s = styles[styleIndexForPlate(doc.settings.seed, plate, styles.length)] ?? { race: 'human', culture: 'fantasy_common' };
+    const s = styles[t >= 0 ? doc.world.tileStyle?.[t] ?? 0 : 0] ?? { race: 'human', culture: 'fantasy_common' };
     let context = 0;
     const h = doc.elevationAt(x, y), b = doc.biomeAt(x, y);
     for (let a = 0; a < 8; a++) if (doc.elevationAt(x + Math.cos(a) * 14, y + Math.sin(a) * 14) < 0) { context |= NameCtx.Water; break; }
@@ -258,7 +257,7 @@ export class Editor implements ToolContext, ToolHost {
     this.renderer?.setView(view);
     // Hidden things cannot stay selected.
     const f = this.selection.state.feature ? this._doc.features.get(this.selection.state.feature) : undefined;
-    if (f && !view.kinds[f.kind]) this.selection.set({ feature: null });
+    if (f && !featureVisible(f, view)) this.selection.set({ feature: null });
     this.events.emit('view', view);
   }
 
@@ -425,7 +424,7 @@ export class Editor implements ToolContext, ToolHost {
     const rb: RiverEntity[] = [], ra: RiverEntity[] = [];
     for (const { f, name, request } of items) {
       fb.push(f); fa.push({ ...f, name, request });
-      const l = doc.labels.get(`lb_${f.id}`);
+      const l = doc.labels.get(labelIdOf(f.id));
       if (l) { lb.push(l); la.push({ ...l, text: name, feature: l.feature ? { ...l.feature, request } : l.feature }); }
       const r = f.riverId ? doc.rivers.get(f.riverId) : undefined;
       if (r) { rb.push(r); ra.push({ ...r, name }); }

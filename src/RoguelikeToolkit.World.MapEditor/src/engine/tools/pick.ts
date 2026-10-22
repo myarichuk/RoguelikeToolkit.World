@@ -3,13 +3,14 @@ import type { AssetLibrary } from '../content/AssetLibrary';
 import type { Theme } from '../content/types';
 import type { MapDocument } from '../doc/MapDocument';
 import type { FeatureEntity, StampEntity } from '../doc/types';
+import { existsAt } from '../world/history/timeline';
 import type { ViewSettings } from '../render/ViewSettings';
 import type { LabelCache } from '../text/LabelCache';
 
 const wrapD = (d: number) => d - Math.round(d / MAP_W) * MAP_W;
 
 export function featureVisible(f: FeatureEntity, view: ViewSettings): boolean {
-  if (!view.kinds[f.kind]) return false;
+  if (!view.kinds[f.kind] || !existsAt(f.span, view.historyTurn)) return false;
   if (f.kind === 'deposit') return view.layers.resources && !!f.deposit && view.deposits[f.deposit.type];
   return true;
 }
@@ -62,9 +63,10 @@ export function polylineDistance(p: ArrayLike<number>, stride: number, x: number
 }
 
 /** Topmost stamp whose box contains the point (stamps paint in y order: largest y on top). */
-export function pickStamp(doc: MapDocument, lib: AssetLibrary, x: number, y: number): StampEntity | null {
+export function pickStamp(doc: MapDocument, lib: AssetLibrary, x: number, y: number, visible: (id: string) => boolean = () => true): StampEntity | null {
   let best: StampEntity | null = null;
   for (const s of doc.stamps.all()) {
+    if (!visible(s.id)) continue;
     const e = lib.get(s.asset, s.variant);
     if (!e) continue;
     const w = e.w * s.scale, h = e.h * s.scale;

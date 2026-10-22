@@ -27,6 +27,15 @@ export function Inspector() {
         <dl className={styles.details}>
           {f.details.map(([k, v]) => <div key={k}><dt title={FACT_HINTS[k]}>{k}</dt><dd>{v}</dd></div>)}
         </dl>
+        {f.history && (
+          <div className={styles.history}>
+            <h4>History</h4>
+            {f.history.rulers && <p className="small">Held by {f.history.rulers}</p>}
+            <ul>
+              {f.history.story.map((e, i) => <li key={i}><span className={styles.turn}>t{e.turn}</span> {e.text}</li>)}
+            </ul>
+          </div>
+        )}
         <div className={styles.buttons}>
           <button onClick={vm.focus}>Zoom to</button>
           {f.hasLabel && <button onClick={vm.editLabel}>Edit label</button>}

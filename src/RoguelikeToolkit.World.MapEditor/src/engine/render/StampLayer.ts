@@ -71,9 +71,10 @@ export class StampLayer {
     this.atlasVersion = lib.version;
   }
 
-  rebuild(stamps: Iterable<StampEntity>, lib: AssetLibrary): void {
+  /** `absent` are stamps that do not exist yet at the history turn on view; like `hidden`, they are left out of the batch. */
+  rebuild(stamps: Iterable<StampEntity>, lib: AssetLibrary, absent: ReadonlySet<string> = new Set()): void {
     const list: { s: StampEntity; y: number }[] = [];
-    for (const s of stamps) if (!this.hidden.has(s.id)) list.push({ s, y: s.y });
+    for (const s of stamps) if (!this.hidden.has(s.id) && !absent.has(s.id)) list.push({ s, y: s.y });
     list.sort((a, b) => a.y - b.y);
     const data = new Float32Array(list.length * FLOATS);
     let n = 0;

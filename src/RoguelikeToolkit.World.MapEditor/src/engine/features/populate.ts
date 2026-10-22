@@ -3,7 +3,7 @@ import { hash2, hashString, mulberry32 } from '../core/rng';
 import type { AssetLibrary } from '../content/AssetLibrary';
 import type { PlacementRule, StampTuning } from '../content/types';
 import type { MapDocument } from '../doc/MapDocument';
-import type { FeatureEntity, StampEntity } from '../doc/types';
+import { stampIdOf, type FeatureEntity, type StampEntity } from '../doc/types';
 import { FootprintMap, baseOnLand, placeRelief } from './relief';
 
 export interface PopulateOptions {
@@ -108,7 +108,7 @@ export function populate(doc: MapDocument, o: PopulateOptions): StampEntity[] {
     if (!marker || o.library.variants(marker) === 0) continue;
     const e = o.library.get(marker, 0)!;
     const variant = hash2(o.seed, hashString(f.id)) % o.library.variants(marker);
-    settlements.push({ id: `st_${f.id}`, asset: marker, variant, x: f.x, y: f.y + e.h * (1 - e.ay) * 0.2, scale: 1, rotation: 0, flip: false });
+    settlements.push({ id: stampIdOf(f.id), asset: marker, variant, x: f.x, y: f.y + e.h * (1 - e.ay) * 0.2, scale: 1, rotation: 0, flip: false });
     clear.push({ x: f.x, y: f.y - e.h * 0.3, r: Math.max(e.w, e.h) * 0.62 });
   }
   // Small scatter on a hill or mountain body reads as clutter: the relief keeps that ground.

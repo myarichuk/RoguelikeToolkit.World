@@ -70,4 +70,4 @@ export class ViewFiltersViewModel extends ViewModel<ViewFiltersState> {
 }
 
 const sameLook = (a: ViewSettings, b: ViewSettings) =>
-  a.base === b.base && a.plateTopo === b.plateTopo && a.capacityKind === b.capacityKind && a.climateKind === b.climateKind && JSON.stringify(a.layers) === JSON.stringify(b.layers);
+  a.base === b.base && a.plateTopo === b.plateTopo && a.historyTurn === b.historyTurn && a.capacityKind === b.capacityKind && a.climateKind === b.climateKind && JSON.stringify(a.layers) === JSON.stringify(b.layers);

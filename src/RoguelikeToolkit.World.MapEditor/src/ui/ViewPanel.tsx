@@ -11,7 +11,7 @@ const LAYERS: { key: keyof Layers; label: string }[] = [
   { key: 'ripples', label: 'Ripples' }, { key: 'rivers', label: 'Rivers' }, { key: 'roads', label: 'Roads' }, { key: 'stamps', label: 'Stamps' },
   { key: 'labels', label: 'Labels' }, { key: 'resources', label: 'Resource markers' }, { key: 'plateBoundaries', label: 'Plate boundaries' },
   { key: 'plateMotion', label: 'Plate motion' }, { key: 'graticule', label: 'Graticule' }, { key: 'climatePaint', label: 'Climate paint' }, { key: 'capacity', label: 'Land capacity' },
-  { key: 'climate', label: 'Climate' }, { key: 'wind', label: 'Wind arrows' }, { key: 'currents', label: 'Current arrows' },
+  { key: 'climate', label: 'Climate' }, { key: 'wind', label: 'Wind arrows' }, { key: 'currents', label: 'Current arrows' }, { key: 'realms', label: 'Realms' }, { key: 'borders', label: 'Realm borders' },
 ];
 
 const BASES: { value: BaseMode; label: string }[] = [

@@ -1,4 +1,5 @@
 import { MAP_H, MAP_W } from '../core/geo';
+import type { HistoryRecordJson } from '../world/history/record';
 import { widenClimate } from '../world/physics/climate';
 import { editsFromRows, editsToRows, type EditRow } from '../world/edits/edits';
 import { migrateLegacyLandUse } from '../world/physics/landuse';
@@ -16,7 +17,7 @@ const MAGIC = 0x50414d57; // "WMAP" little-endian
 // v4 adds the land-use raster (`landuse`); farmland and ashlands used to be biome ids 11 and 13 and are migrated out on load.
 export const WMAP_VERSION = 4;
 
-type BlobName = 'elevation' | 'biome' | 'tile' | 'tilePlate' | 'plateDrift' | 'tileXY' | 'warmth' | 'wetness' | 'landuse' | 'capacity' | 'seaIce' | 'climate';
+type BlobName = 'elevation' | 'biome' | 'tile' | 'tilePlate' | 'tileStyle' | 'plateDrift' | 'tileXY' | 'ownerBase' | 'ownerChanges' | 'warmth' | 'wetness' | 'landuse' | 'capacity' | 'seaIce' | 'climate';
 type Typed = Float32Array | Uint8Array | Int8Array | Int32Array | Uint32Array | Float64Array;
 const CTORS = { Float32Array, Uint8Array, Int8Array, Int32Array, Uint32Array, Float64Array } as const;
 
@@ -32,6 +33,7 @@ interface Header {
   labels: LabelEntity[];
   rivers: RiverEntity[];
   roads?: RoadEntity[];
+  history?: HistoryRecordJson;
   physics?: { edits: EditRow[]; generated: string[]; tombstones: FeatureEntity[] };
   blobs: { name: BlobName; type: keyof typeof CTORS; offset: number; length: number }[];
 }
@@ -43,6 +45,8 @@ export function encodeDocument(doc: MapDocument): Uint8Array {
     ['tilePlate', doc.world.tilePlate], ['plateDrift', doc.world.plateDrift], ['tileXY', doc.world.tileXY],
     ['warmth', doc.warmth], ['wetness', doc.wetness], ['landuse', doc.landuse],
   ];
+  if (doc.history) arrays.push(['ownerBase', doc.history.ownerBase], ['ownerChanges', doc.history.changes]);
+  if (doc.world.tileStyle?.length) arrays.push(['tileStyle', doc.world.tileStyle]);
   // Derived and cached: written so the capacity overlay works straight after opening, never read as an input.
   if (doc.physics?.capacity) arrays.push(['capacity', doc.physics.capacity]);
   if (doc.physics?.seaIce) arrays.push(['seaIce', doc.physics.seaIce]);
@@ -56,6 +60,7 @@ export function encodeDocument(doc: MapDocument): Uint8Array {
   const header: Header = {
     format: 'wmap', version: WMAP_VERSION, width: doc.width, height: doc.height, settings: doc.settings, styles: doc.world.styles,
     features: [...doc.features.all()], stamps: [...doc.stamps.all()], labels: [...doc.labels.all()].map(labelOut), rivers: [...doc.rivers.all()], roads: [...doc.roads.all()],
+    history: doc.history ? { turns: doc.history.turns, turnYears: doc.history.turnYears, polities: doc.history.polities, events: doc.history.events } : undefined,
     physics: doc.physics ? { edits: editsToRows(doc.physics.edits), generated: [...doc.physics.generated], tombstones: [...doc.physics.tombstones.values()] } : undefined,
     blobs,
   };
@@ -97,7 +102,7 @@ export function decodeDocument(bytes: Uint8Array): MapDocument {
   const elevation = blob<Float32Array>('elevation'), biome = blob<Uint8Array>('biome');
   if (elevation.length !== MAP_W * MAP_H || biome.length !== MAP_W * MAP_H) throw new Error('.wmap raster size mismatch.');
   const doc = new MapDocument({ ...DEFAULT_SETTINGS, ...header.settings }, elevation, biome, {
-    tile: blob('tile'), tilePlate: blob('tilePlate'), plateDrift: blob('plateDrift'), tileXY: blob('tileXY'), styles: header.styles ?? [],
+    tile: blob('tile'), tilePlate: blob('tilePlate'), tileStyle: header.blobs.some((b) => b.name === 'tileStyle') ? blob<Uint8Array>('tileStyle') : undefined, plateDrift: blob('plateDrift'), tileXY: blob('tileXY'), styles: header.styles ?? [],
   });
   // Land use arrived with v4. Older files painted farmland and ashlands as biomes 11 and 13: lift them out.
   if (header.blobs.some((b) => b.name === 'landuse')) {
@@ -112,6 +117,9 @@ export function decodeDocument(bytes: Uint8Array): MapDocument {
   doc.labels.reset((header.labels ?? []).map(labelIn));
   doc.rivers.reset(header.rivers ?? []);
   doc.roads.reset(header.roads ?? []);
+  if (header.history && header.blobs.some((b) => b.name === 'ownerBase')) {
+    doc.history = { ...header.history, ownerBase: blob<Int32Array>('ownerBase'), changes: header.blobs.some((b) => b.name === 'ownerChanges') ? blob<Int32Array>('ownerChanges') : new Int32Array(0) };
+  }
   // The cache is only good for the world it was computed on: a length that does not match the tile count is dropped.
   const capacity = header.blobs.some((b) => b.name === 'capacity') ? blob<Uint8Array>('capacity') : undefined;
   const goodCapacity = capacity && capacity.length === (doc.world.tileXY.length / 2) * 5 ? capacity : undefined;

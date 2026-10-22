@@ -1,4 +1,6 @@
 import { useEffect, useState } from 'react';
+import { HistoryPanel } from './HistoryPanel';
+import { HistoryWindow } from './HistoryWindow';
 import { GeneratePanel, GenerateFooter } from './GeneratePanel';
 import { useApp, useViewModel } from './hooks';
 import { MapView } from './MapView';
@@ -16,6 +18,7 @@ import styles from './App.module.css';
 const TABS = [
   { id: 'world', label: 'World', View: GeneratePanel },
   { id: 'view', label: 'View', View: ViewPanel },
+  { id: 'history', label: 'History', View: HistoryPanel },
   { id: 'theme', label: 'Theme', View: ThemePanel },
   { id: 'packs', label: 'Packs', View: PacksPanel },
 ] as const;
@@ -56,6 +59,7 @@ export function App() {
       <Properties />
       <StatusBar />
       <NewWorldWizard />
+      <HistoryWindow />
       {shell.error && <div className={styles.toast} role="alert"><b>Error</b><pre>{shell.error}</pre><button className="dismiss" onClick={vms.shell.dismissError}><small>Dismiss</small></button></div>}
     </div>
   );

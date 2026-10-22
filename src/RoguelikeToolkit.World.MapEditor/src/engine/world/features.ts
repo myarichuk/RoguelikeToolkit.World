@@ -10,6 +10,8 @@ import {
   type DepositType, type FeatureKind, type FeatureSet, type MapFeature, type NameStyle, type RiverGeometry,
 } from './protocol';
 
+import { tileNamingStyles } from './naming';
+import type { Span } from './history/timeline';
 import { historyPicks, historySites, type HistoryInput } from './history/historySettlements';
 
 export interface CatalogInput {
@@ -22,6 +24,8 @@ export interface CatalogInput {
   /** temperature, precipitation interleaved. */
   climate: ArrayLike<number>;
   tilePlate: Uint32Array;
+  /** Per tile name style (`tileNamingStyles`); computed from the landmasses when absent. */
+  tileStyle?: Uint8Array;
   /** Flattened catalogs, see the engine's WorldExports. */
   rivers: Int32Array;
   waterBodies: Int32Array;
@@ -147,9 +151,6 @@ const DEPOSIT_LABEL: Record<DepositType, string> = {
 export const depositLabel = (t: DepositType): string => DEPOSIT_LABEL[t];
 const sizeClass = (r: number) => (r >= 0.85 ? 'rich' : r >= 0.65 ? 'large' : r >= 0.45 ? 'medium' : 'small');
 
-/** The culture (index into the chosen styles) that names places on a plate. Shared with the editor's nameAt. */
-export const styleIndexForPlate = (seed: number, plate: number, n: number): number => (n ? hash2(seed, plate) % n : 0);
-
 export function extractFeatures(c: CatalogInput): FeatureSet {
   const n = c.heights.length;
   const adj = buildAdjacency(n, c.faces);
@@ -180,17 +181,13 @@ export function extractFeatures(c: CatalogInput): FeatureSet {
     list.push(d);
   }
 
-  // A realm names its places in its own folk's tongue: the polity's founding folk picks among the chosen name styles of that race.
-  const folkOf = new Map<number, string>();
-  if (c.history?.polityIds && c.history.polityFolk) for (let i = 0; i < c.history.polityIds.length; i++) folkOf.set(c.history.polityIds[i], c.history.polityFolk[i]);
-  const styleOfPolity = (polity: number): number | undefined => {
-    const folk = folkOf.get(polity);
-    if (!folk) return undefined;
-    const of: number[] = [];
-    c.styles.forEach((s, i) => { if (s.race === folk) of.push(i); });
-    return of.length ? of[hash2(c.seed, 0x5017 + polity) % of.length] : undefined;
-  };
-  const styleOf = (t: number) => styleIndexForPlate(c.seed, c.tilePlate[t] & 0xffff, c.styles.length);
+  // A realm names its places in its own tongue (the worker resolved each polity's style); elsewhere the tile's naming style
+  // (nearest realm, else the landmass) decides.
+  const polityStyle = new Map<number, number>();
+  if (c.history?.polityIds && c.history.polityStyle) for (let i = 0; i < c.history.polityIds.length; i++) if (c.history.polityStyle[i] >= 0) polityStyle.set(c.history.polityIds[i], c.history.polityStyle[i]);
+  const styleOfPolity = (polity: number): number | undefined => polityStyle.get(polity);
+  const tileStyle = c.tileStyle ?? tileNamingStyles({ seed: c.seed, n, adj, isLand, owner: [], polityStyle, styleCount: c.styles.length });
+  const styleOf = (t: number) => tileStyle[t];
   const near = (t: number, pred: (u: number) => boolean) => {
     if (pred(t)) return true;
     for (let k = adj.start[t]; k < adj.start[t + 1]; k++) if (pred(adj.list[k])) return true;
@@ -248,7 +245,7 @@ export function extractFeatures(c: CatalogInput): FeatureSet {
     const facts: [string, string][] = [...details];
     if (kind !== 'deposit') facts.push(['Culture', s.label]);
     features.push({
-      key, kind, x: shape.x, y: shape.y, angle: shape.angle, extent: shape.extent, weight, name: '', style, details: facts,
+      key, kind, x: shape.x, y: shape.y, angle: shape.angle, extent: shape.extent, weight, name: '', style, tile: anchor, details: facts,
       request: kind === 'deposit' ? undefined
         : { kind: NAME_KIND[kind], seed: hash2(c.seed, hashKey(key)) & 0x7fffffff, race: s.race, culture: s.culture, context: contextOf(anchor) },
       ...extra,
@@ -412,7 +409,7 @@ export function extractFeatures(c: CatalogInput): FeatureSet {
     { kind: 'town', count: 42, spacing: 0.11 },
     { kind: 'village', count: 90, spacing: 0.065 },
   ];
-  const picked: { tile: number; kind: FeatureKind; score: number; reasons: string; polity?: number }[] = [];
+  const picked: { tile: number; kind: FeatureKind; score: number; reasons: string; polity?: number; span?: Span }[] = [];
   const far = (t: number, rad: number) => {
     const cos = Math.cos(rad);
     for (const p of picked) {
@@ -426,7 +423,7 @@ export function extractFeatures(c: CatalogInput): FeatureSet {
   const historyFacts = new Map<number, [string, string][]>();
   if (fromHistory) {
     for (const h of historyPicks(c.history!, (t) => inMap(t) && !lakeTiles.has(t))) {
-      picked.push({ tile: h.tile, kind: h.kind, score: NaN, reasons: '', polity: h.polity });
+      picked.push({ tile: h.tile, kind: h.kind, score: NaN, reasons: '', polity: h.polity, span: h.span });
       historyFacts.set(h.tile, h.facts);
     }
   }
@@ -470,7 +467,7 @@ export function extractFeatures(c: CatalogInput): FeatureSet {
       ['Water access', access],
       ...pointFacts(t),
       ...(res.size ? [['Nearby resources', [...res].join(', ')] as [string, string]] : []),
-    ], {}, p.polity ?? -1);
+    ], { span: p.span }, p.polity ?? -1);
   }
 
   // --- What history left: ruins, holy sites, battlefields ------------------------------------------
@@ -482,7 +479,7 @@ export function extractFeatures(c: CatalogInput): FeatureSet {
       const t = h.tile, rng = mulberry32(hash2(c.seed, 0x6800 + t));
       add(`site:${t}`, h.kind, t, { x: xy[t * 2] + (rng() - 0.5) * 4, y: xy[t * 2 + 1] + (rng() - 0.5) * 4, angle: 0, extent: 0 }, weight[h.kind] ?? 1, [
         ['Rank', title[h.kind] ?? h.kind], ...h.facts, ...pointFacts(t),
-      ], {}, h.polity);
+      ], { span: h.span }, h.polity);
     }
   }
 
