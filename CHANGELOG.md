@@ -1,5 +1,13 @@
 # Changelog
 
+## [3.2.0](https://github.com/myarichuk/RoguelikeToolkit.World/compare/v3.1.0...v3.2.0) (2026-10-22)
+
+
+### Features
+
+* **editor:** history view, realm borders, place history and per-realm naming ([2f05c9b](https://github.com/myarichuk/RoguelikeToolkit.World/commit/2f05c9b75cbaeb60dcd4bcc30bcc78ab6b5f4b22))
+* **editor:** history view, realm borders, place history, per-realm naming ([815c89f](https://github.com/myarichuk/RoguelikeToolkit.World/commit/815c89f5af9f606831cfb3ba71c32c1c9df6d9a7))
+
 ## [3.1.0](https://github.com/myarichuk/RoguelikeToolkit.World/compare/v3.0.0...v3.1.0) (2026-10-19)
 
 
