@@ -1,4 +1,6 @@
 import type { Editor } from '../engine/Editor';
+import { HistoryViewModel } from './HistoryViewModel';
+import { HistoryWindowViewModel } from './HistoryWindowViewModel';
 import { GenerateViewModel } from './GenerateViewModel';
 import { InspectorViewModel } from './InspectorViewModel';
 import { PacksViewModel } from './PacksViewModel';
@@ -13,6 +15,8 @@ export interface ViewModels {
   shell: ShellViewModel;
   generate: GenerateViewModel;
   filters: ViewFiltersViewModel;
+  history: HistoryViewModel;
+  historyWindow: HistoryWindowViewModel;
   tools: ToolsViewModel;
   inspector: InspectorViewModel;
   theme: ThemeEditorViewModel;
@@ -28,6 +32,8 @@ export function createViewModels(editor: Editor, files: FileService): ViewModels
     generate,
     wizard: new WizardViewModel(editor, generate),
     filters: new ViewFiltersViewModel(editor),
+    history: new HistoryViewModel(editor),
+    historyWindow: new HistoryWindowViewModel(editor),
     tools: new ToolsViewModel(editor),
     inspector: new InspectorViewModel(editor),
     theme: new ThemeEditorViewModel(editor),

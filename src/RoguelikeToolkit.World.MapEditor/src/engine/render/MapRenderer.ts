@@ -2,6 +2,7 @@ import { MAP_H, MAP_W, rectUnion, type Rect } from '../core/geo';
 import type { AssetLibrary } from '../content/AssetLibrary';
 import type { BiomeDef, Theme } from '../content/types';
 import type { MapDocument } from '../doc/MapDocument';
+import { stampExistsAt } from '../doc/existsAt';
 import type { FeatureMask } from '../features/featureMask';
 import { composeBiomes } from '../world/physics/landuse';
 import { Camera } from './Camera';
@@ -119,7 +120,12 @@ export class MapRenderer {
     this.requestRender();
   }
 
-  setView(view: ViewSettings): void { this.view = view; this.requestRender(); }
+  setView(view: ViewSettings): void {
+    // Roads and settlement stamps are built for a history turn, so they follow the scrubber.
+    if (view.historyTurn !== this.view.historyTurn) this.stampsDirty = this.roadsDirty = true;
+    this.view = view;
+    this.requestRender();
+  }
 
   /** Marks the atlas as changed (theme switch, pack change). */
   assetsChanged(): void { this.stampsDirty = true; this.requestRender(); }
@@ -169,9 +175,9 @@ export class MapRenderer {
     if (!doc || !this.theme) return;
     this.flushTerrain();
     if (this.lib) this.stamps.syncAtlas(this.lib);
-    if (this.stampsDirty && this.lib) { this.stamps.rebuild(doc.stamps.all(), this.lib); this.stampsDirty = false; this.stats.stamps = doc.stamps.size; }
+    if (this.stampsDirty && this.lib) { this.stamps.rebuild(doc.stamps.all(), this.lib, this.stampsAbsentAt(doc, this.view.historyTurn)); this.stampsDirty = false; this.stats.stamps = doc.stamps.size; }
     if (this.riversDirty) { this.rivers.rebuild(doc.rivers.all()); this.riversDirty = false; }
-    if (this.roadsDirty) { this.roads.rebuild(doc.roads.all()); this.roadsDirty = false; }
+    if (this.roadsDirty) { this.roads.rebuild(doc.roads.all(), this.view.historyTurn); this.roadsDirty = false; }
 
     const gl = this.gl, cam = this.camera, th = this.theme.map, v = this.view;
     gl.bindFramebuffer(gl.FRAMEBUFFER, null);
@@ -195,6 +201,14 @@ export class MapRenderer {
     if (v.layers.stamps && v.base === 'styled') this.stamps.draw(cam);
     this.stats.frameMs = performance.now() - t0;
     this.onAfterFrame?.();
+  }
+
+  /** Settlement stamps of the places that do not exist yet at the history turn on view. */
+  private stampsAbsentAt(doc: MapDocument, turn: number): Set<string> {
+    const out = new Set<string>();
+    if (turn < 0) return out;
+    for (const s of doc.stamps.all()) if (!stampExistsAt(doc, s.id, turn)) out.add(s.id);
+    return out;
   }
 
   private flushTerrain(): void {

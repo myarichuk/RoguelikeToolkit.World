@@ -1,3 +1,4 @@
+import type { HistoryRecord } from '../world/history/record';
 import { Emitter } from '../core/Emitter';
 import { MAP_H, MAP_W, type Rect } from '../core/geo';
 import type { RasterTarget } from '../commands/RasterEdit';
@@ -15,6 +16,8 @@ export interface WorldReference {
   tile: Int32Array;
   /** Per tile: plate id | boundary << 16 | crust << 24. */
   tilePlate: Uint32Array;
+  /** Per tile: the name style (index into `styles`) that names places there; absent in worlds saved before realms named their land. */
+  tileStyle?: Uint8Array;
   /** Per plate: drift xyz + speed. */
   plateDrift: Float64Array;
   /** Per tile map position. */
@@ -64,6 +67,8 @@ export class MapDocument {
   private tileRows: Int32Array | null = null;
   /** Null for hand-made maps (no engine world behind them), so there is nothing to re-derive. */
   physics: PhysicsState | null = null;
+  /** What the generating history run left (realms, events, territory); null for a blank map, a world without history or an old file. */
+  history: HistoryRecord | null = null;
   /**
    * Climate paint: signed offsets the author brushed, -127..127 per texel (full scale is CLIMATE_RANGE in
    * world/edits.ts). Inputs, not derived: the physics never overwrites them, only "Revert" clears them.

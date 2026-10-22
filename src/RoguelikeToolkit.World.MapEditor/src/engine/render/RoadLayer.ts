@@ -1,20 +1,24 @@
 import type { RoadEntity } from '../doc/types';
+import { roadStateAt } from '../world/history/timeline';
 import type { Camera } from './Camera';
 import { bind, compile, rgb, type Program } from './gl';
 import { FS_ROAD, VS_ROAD } from './shaders';
 
 const FLOATS = 8;
 
-const styleOf = (r: RoadEntity): number => (r.severed >= 0 ? 2 : r.kind === 'trunk' ? 0 : 1);
+const styleOf = (r: RoadEntity, cut: boolean): number => (cut ? 2 : r.kind === 'trunk' ? 0 : 1);
 
-/** Ribbon geometry for road polylines (x, y, w triples): two vertices per point, miter normals, arc length and a style. */
-export function roadMesh(roads: Iterable<RoadEntity>): { verts: Float32Array; index: Uint32Array } {
+/**
+ * Ribbon geometry for road polylines (x, y, w triples): two vertices per point, miter normals, arc length and a style.
+ * At a history `turn` (-1 = the end) roads not yet built are left out and roads a war has cut are drawn cut.
+ */
+export function roadMesh(roads: Iterable<RoadEntity>, turn = -1): { verts: Float32Array; index: Uint32Array } {
   const v: number[] = [];
   const idx: number[] = [];
   for (const r of roads) {
-    const p = r.points, n = p.length / 3;
-    if (n < 2) continue;
-    const base = v.length / FLOATS, style = styleOf(r);
+    const p = r.points, n = p.length / 3, state = roadStateAt(r, turn);
+    if (n < 2 || state === 'absent') continue;
+    const base = v.length / FLOATS, style = styleOf(r, state === 'cut');
     let along = 0;
     for (let i = 0; i < n; i++) {
       if (i) along += Math.hypot(p[i * 3] - p[i * 3 - 3], p[i * 3 + 1] - p[i * 3 - 2]);
@@ -54,8 +58,8 @@ export class RoadLayer {
     gl.bindVertexArray(null);
   }
 
-  rebuild(roads: Iterable<RoadEntity>): void {
-    const { verts, index } = roadMesh(roads);
+  rebuild(roads: Iterable<RoadEntity>, turn = -1): void {
+    const { verts, index } = roadMesh(roads, turn);
     const gl = this.gl;
     gl.bindVertexArray(this.vao);
     gl.bindBuffer(gl.ARRAY_BUFFER, this.vbuf);

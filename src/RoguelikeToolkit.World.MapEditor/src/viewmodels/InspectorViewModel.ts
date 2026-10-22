@@ -1,6 +1,16 @@
 import type { Editor } from '../engine/Editor';
-import type { FeatureEntity, LabelEntity, StampEntity } from '../engine/doc/types';
+import type { MapDocument } from '../engine/doc/MapDocument';
+import { labelIdOf, type FeatureEntity, type LabelEntity, type StampEntity } from '../engine/doc/types';
+import { placeStory, rulersOf, rulersText, type PlaceEntry } from '../engine/world/history/placeHistory';
+import { realmName } from '../engine/world/history/record';
+import { PLACE_KINDS } from '../engine/world/protocol';
 import { ViewModel } from './ViewModel';
+
+/** What history knows about a place: who ruled its tile, and what happened there. */
+export interface PlaceHistory {
+  rulers: string;
+  story: PlaceEntry[];
+}
 
 export interface FeatureView {
   id: string;
@@ -10,6 +20,8 @@ export interface FeatureView {
   details: [string, string][];
   canReroll: boolean;
   hasLabel: boolean;
+  /** Null for features history has nothing to say about (rivers, mountains, a world without history). */
+  history: PlaceHistory | null;
 }
 
 export interface InspectorState {
@@ -59,7 +71,7 @@ export class InspectorViewModel extends ViewModel<InspectorState> {
       const def = ed.packs.assets().get(stamps[0].asset);
       this.set({ mode: 'stamps', stamp: stamps[0], stampCount: stamps.length, stampName: def?.name ?? stamps[0].asset, feature: null, label: null, labelCount: 0, labelStyles });
     } else if (f) {
-      this.set({ mode: 'feature', feature: featureView(f, !!doc.labels.get(`lb_${f.id}`)), label: null, labelCount: 0, stamp: null, stampCount: 0, labelStyles });
+      this.set({ mode: 'feature', feature: featureView(f, !!doc.labels.get(labelIdOf(f.id)), placeHistoryOf(doc, f)), label: null, labelCount: 0, stamp: null, stampCount: 0, labelStyles });
     } else {
       this.set({ mode: 'none', feature: null, label: null, labelCount: 0, stamp: null, stampCount: 0, labelStyles });
     }
@@ -78,7 +90,7 @@ export class InspectorViewModel extends ViewModel<InspectorState> {
     const f = this.state.feature;
     if (!f) return;
     this.editor.setTool('select');
-    this.editor.selection.set({ labels: new Set([`lb_${f.id}`]), stamps: new Set(), feature: null });
+    this.editor.selection.set({ labels: new Set([labelIdOf(f.id)]), stamps: new Set(), feature: null });
   };
 
   // Label commands (apply to every selected label)
@@ -96,6 +108,15 @@ export class InspectorViewModel extends ViewModel<InspectorState> {
 
 }
 
-function featureView(f: FeatureEntity, hasLabel: boolean): FeatureView {
-  return { id: f.id, kind: f.kind, name: f.name, culture: f.culture, details: f.details, canReroll: !!f.request, hasLabel };
+function featureView(f: FeatureEntity, hasLabel: boolean, history: PlaceHistory | null): FeatureView {
+  return { id: f.id, kind: f.kind, name: f.name, culture: f.culture, details: f.details, canReroll: !!f.request, hasLabel, history };
+}
+
+/** The story of a place from the document's history record; null when there is none to tell. */
+function placeHistoryOf(doc: MapDocument, f: FeatureEntity): PlaceHistory | null {
+  const h = doc.history;
+  if (!h || f.tile === undefined || !PLACE_KINDS.has(f.kind)) return null;
+  const rulers = rulersText(rulersOf(h, f.tile), (id) => realmName(h, id));
+  const story = placeStory(h, f.tile);
+  return rulers || story.length ? { rulers, story } : null;
 }

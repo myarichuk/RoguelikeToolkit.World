@@ -2,7 +2,7 @@ import { MAP_W, type Rect } from '../core/geo';
 import { hash2, hashString } from '../core/rng';
 import type { Theme } from '../content/types';
 import type { MapDocument } from '../doc/MapDocument';
-import type { FeatureEntity, LabelEntity } from '../doc/types';
+import { labelIdOf, type FeatureEntity, type LabelEntity } from '../doc/types';
 import type { FontLibrary } from '../text/FontLibrary';
 import { layoutLabel } from '../text/LabelLayout';
 
@@ -84,7 +84,7 @@ export function placeLabels(doc: MapDocument, theme: Theme, fonts: FontLibrary, 
       if (!free(r)) continue;
       placed.push(r);
       out.push({
-        id: `lb_${f.id}`, text: f.name, style: f.kind, x: cand.x, y: cand.y, angle: cand.angle, size, spacing: NaN, curve: cand.curve,
+        id: labelIdOf(f.id), text: f.name, style: f.kind, x: cand.x, y: cand.y, angle: cand.angle, size, spacing: NaN, curve: cand.curve,
         path: cand.path, feature: { kind: f.kind, request: f.request },
       });
       break;

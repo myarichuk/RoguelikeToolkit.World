@@ -1,6 +1,7 @@
 import { MAP_W } from '../core/geo';
 import { CompositeCommand } from '../commands/Command';
 import { UpdateEntities } from '../commands/EntityCommands';
+import { labelExistsAt, stampExistsAt } from '../doc/existsAt';
 import type { LabelEntity, StampEntity } from '../doc/types';
 import type { Camera } from '../render/Camera';
 import { pickLabel, pickStamp, stampBounds } from './pick';
@@ -26,8 +27,8 @@ export class SelectTool implements Tool {
   down(p: PointerInput, ctx: ToolContext): void {
     const sel = ctx.selection.state;
     const theme = ctx.theme(), view = ctx.view();
-    const labelId = view.layers.labels ? pickLabel(ctx.doc, ctx.labels, theme, p.x, p.y, () => true) : null;
-    const stamp = !labelId && view.layers.stamps ? pickStamp(ctx.doc, ctx.library, p.x, p.y) : null;
+    const labelId = view.layers.labels ? pickLabel(ctx.doc, ctx.labels, theme, p.x, p.y, (id) => labelExistsAt(ctx.doc, id, view.historyTurn)) : null;
+    const stamp = !labelId && view.layers.stamps ? pickStamp(ctx.doc, ctx.library, p.x, p.y, (id) => stampExistsAt(ctx.doc, id, view.historyTurn)) : null;
     if (!labelId && !stamp) {
       if (!p.shift) ctx.selection.set({ stamps: new Set(), labels: new Set(), feature: null });
       this.drag = { kind: 'box', start: p, cur: p };

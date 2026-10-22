@@ -10,7 +10,7 @@ export const FACT_HINTS: Record<string, string> = {
   Elevation: 'Surface height above sea level (sea level is 0, the highest peaks are about 1.2).',
   Biome: 'Land cover chosen from temperature, rainfall, height and drainage (or pinned by hand).',
   Plate: 'The tectonic plate under this tile. Oceanic crust is thin and low, continental crust thick and high; boundaries raise mountains and trenches.',
-  Culture: 'The naming tradition used for this feature: each tectonic plate is named by one culture.',
+  Culture: 'The naming tradition used for this feature: a realm names its places in its own culture, other land by landmass.',
   Length: 'River length along its tile chain, stretched 25% because tile chains cut meanders short.',
   'Discharge at mouth': 'Water carried at the mouth relative to the source: how many times bigger the river has grown by collecting tributaries and rain.',
   'Flows into': 'Where the river ends: the sea, a lake, or an inland sink where it evaporates.',
@@ -47,7 +47,7 @@ export const WORLD_HINTS = {
   warp: 'How far coastlines are distorted by noise, in map units, to look hand-drawn rather than hexagonal.',
   detailNoise: 'Fine-scale roughness added to coast and relief edges.',
   ripple: 'Distance between the decorative coastline ripples in the water.',
-  cultures: 'Naming traditions. Each plate is assigned one, and its mountains, rivers and towns are named in it.',
+  cultures: 'Naming traditions. Towns take their realm people\'s tradition; mountains and rivers take the nearest realm\'s, or their landmass\'s.',
 } as const;
 
 export const LAYER_HINTS: Record<string, string> = {
@@ -56,6 +56,8 @@ export const LAYER_HINTS: Record<string, string> = {
   coastline: 'Outline where land meets sea.',
   ripples: 'Decorative rings in the water along the coast.',
   rivers: 'River ribbons; width follows discharge.',
+  realms: 'Tints the land by the realm that held it. Scrub through the turns in the History tab.',
+  borders: 'Outlines each realm\'s territory and writes its name, at the turn the History tab shows.',
   roads: 'Trade roads between capitals (solid), country roads between a realm\'s settlements (dashed), cut ones (dotted).',
   stamps: 'Hand-drawn style decals: mountains, trees, hills.',
   labels: 'Names of places and geographic features.',

@@ -1,4 +1,5 @@
 import type { FeatureKind } from '../protocol';
+import { since, type Span } from './timeline';
 
 /** Ints per settlement in the engine's `HistorySettlements()`: tile, polity, founded, ended (-1 standing), tier, role, parent, active, population. */
 export const SETTLEMENT_STRIDE = 9;
@@ -13,6 +14,8 @@ export interface HistoryInput {
   polityIds?: ArrayLike<number>;
   /** Founding folk key per `polityIds` entry (`human`, `dwarf`, ...). */
   polityFolk?: ArrayLike<string>;
+  /** Name style (index into the chosen styles) each `polityIds` entry renders its places through, -1 when it has none. */
+  polityStyle?: ArrayLike<number>;
   /** Why each settlement ended, aligned with `settlements`; empty while it stands. */
   endCauses?: ArrayLike<string>;
   /** Flat `HistoryScars()`: tile, polity, founded turn, active. */
@@ -30,6 +33,8 @@ export interface HistoryPick {
   polity: number;
   /** Inspector facts specific to history, already formatted. */
   facts: [string, string][];
+  /** The turns it can be seen on the map. A ruin appears when its settlement falls: before that, only the living town was drawn. */
+  span: Span;
 }
 
 const TIER = ['Hamlet', 'Village', 'Town', 'City'];
@@ -67,7 +72,7 @@ export function historyPicks(h: HistoryInput, allowed: (tile: number) => boolean
       ['Population', String(pop)],
     ];
     if (parent >= 0 && parent < n) facts.push(['Founded from', `settlement ${parent}`]);
-    out.push({ tile, kind: settlementKind(tier, role), polity, facts });
+    out.push({ tile, kind: settlementKind(tier, role), polity, facts, span: since(founded) });
   }
   return out;
 }
@@ -92,17 +97,17 @@ export function historySites(h: HistoryInput, taken: ReadonlySet<number>, allowe
   const realm = (p: number) => names.get(p) ?? (p >= 0 ? `Polity ${p}` : 'None');
   const used = new Set(taken);
   const out: HistoryPick[] = [];
-  const add = (tile: number, kind: FeatureKind, polity: number, facts: [string, string][]) => {
+  const add = (tile: number, kind: FeatureKind, polity: number, from: number, facts: [string, string][]) => {
     if (used.has(tile) || !allowed(tile)) return;
     used.add(tile);
-    out.push({ tile, kind, polity, facts });
+    out.push({ tile, kind, polity, facts, span: since(from) });
   };
   const n = Math.floor(h.settlements.length / SETTLEMENT_STRIDE);
   for (let i = 0; i < n; i++) {
     const o = i * SETTLEMENT_STRIDE;
     if (h.settlements[o + 3] < 0) continue;
     const end = h.endCauses?.[i] ?? '';
-    add(h.settlements[o], 'ruin', h.settlements[o + 1], [
+    add(h.settlements[o], 'ruin', h.settlements[o + 1], h.settlements[o + 3], [
       ['Was', `${TIER[h.settlements[o + 4]] ?? 'Settlement'} of ${realm(h.settlements[o + 1])}`],
       ['Founded', `turn ${h.settlements[o + 2]}`], ['Ended', `turn ${h.settlements[o + 3]}${end ? ` (${cause(end)})` : ''}`],
     ]);
@@ -114,12 +119,12 @@ export function historySites(h: HistoryInput, taken: ReadonlySet<number>, allowe
   };
   for (let i = 0; i < scars; i++) {
     const s = scar(i);
-    if (s.kind === 'ruin') add(s.tile, 'ruin', s.polity, [['Was', `settlement of ${realm(s.polity)}`], ['Ended', `turn ${s.turn} (${cause(s.why)})`]]);
+    if (s.kind === 'ruin') add(s.tile, 'ruin', s.polity, s.turn, [['Was', `settlement of ${realm(s.polity)}`], ['Ended', `turn ${s.turn} (${cause(s.why)})`]]);
   }
-  for (const s of h.holy ?? []) add(s.tile, 'shrine', s.polity, [['Founded by', realm(s.polity)], ['Founded', `turn ${s.turn}`]]);
+  for (const s of h.holy ?? []) add(s.tile, 'shrine', s.polity, s.turn, [['Founded by', realm(s.polity)], ['Founded', `turn ${s.turn}`]]);
   for (let i = 0; i < scars; i++) {
     const s = scar(i);
-    if (s.kind === 'battlefield') add(s.tile, 'battlefield', s.polity, [['Fought on land of', realm(s.polity)], ['Fought', `turn ${s.turn}`]]);
+    if (s.kind === 'battlefield') add(s.tile, 'battlefield', s.polity, s.turn, [['Fought on land of', realm(s.polity)], ['Fought', `turn ${s.turn}`]]);
   }
   return out;
 }

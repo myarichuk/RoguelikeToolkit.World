@@ -47,7 +47,7 @@ describe('historySites', () => {
 
   it('turns an ended settlement into a ruin that says what it was and why it ended', () => {
     const picks = historySites({ ...base, settlements: s(10, 1, 2, 2, 9), endCauses: ['razed'] }, new Set(), all);
-    expect(picks).toEqual([{ tile: 10, kind: 'ruin', polity: 1, facts: [['Was', 'Town of Veldmark'], ['Founded', 'turn 4'], ['Ended', 'turn 9 (being razed)']] }]);
+    expect(picks).toEqual([{ tile: 10, kind: 'ruin', polity: 1, facts: [['Was', 'Town of Veldmark'], ['Founded', 'turn 4'], ['Ended', 'turn 9 (being razed)']], span: { from: 9, until: -1 } }]);
   });
 
   it('adds ruin and war scars and holy sites, one mark per tile and none on a living settlement', () => {

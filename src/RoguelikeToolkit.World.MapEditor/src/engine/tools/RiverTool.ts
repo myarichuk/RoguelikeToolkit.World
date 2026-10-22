@@ -1,7 +1,7 @@
 import { newId } from '../core/ids';
 import { AddEntities, RemoveEntities } from '../commands/EntityCommands';
 import { CompositeCommand, type Command } from '../commands/Command';
-import type { FeatureEntity, LabelEntity, RiverEntity } from '../doc/types';
+import { labelIdOf, type FeatureEntity, type LabelEntity, type RiverEntity } from '../doc/types';
 import type { Camera } from '../render/Camera';
 import { pickFeature } from './pick';
 import type { PointerInput, Tool, ToolContext } from './Tool';
@@ -60,7 +60,7 @@ export class RiverTool implements Tool {
   private remove(p: PointerInput, ctx: ToolContext): void {
     const f = pickFeature(ctx.doc, p.x, p.y, ctx.camera.zoom, { ...ctx.view(), kinds: { ...ctx.view().kinds, river: true } });
     if (!f || f.kind !== 'river') return;
-    const labels = [...ctx.doc.labels.all()].filter((l) => l.id === `lb_${f.id}` || (l.feature?.kind === 'river' && l.text === f.name)).map((l) => l.id);
+    const labels = [...ctx.doc.labels.all()].filter((l) => l.id === labelIdOf(f.id) || (l.feature?.kind === 'river' && l.text === f.name)).map((l) => l.id);
     ctx.undo.execute(new CompositeCommand('Delete river', [
       new RemoveEntities('Delete label', ctx.doc.labels, labels),
       new RemoveEntities('Delete feature', ctx.doc.features, [f.id]),

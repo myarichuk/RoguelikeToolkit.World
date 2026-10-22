@@ -1,0 +1,14 @@
+.scrub { display: flex; align-items: center; gap: var(--s-3); }
+.scrub input[type='range'] { flex: 1; }
+.when { color: var(--muted); font-size: var(--fs-sm); font-variant-numeric: tabular-nums; }
+.list { list-style: none; margin: 0; padding: 0; display: flex; flex-direction: column; gap: var(--s-1); }
+.row { display: grid; grid-template-columns: 12px 1fr auto; gap: var(--s-2); align-items: baseline; width: 100%; text-align: left; padding: var(--s-1) var(--s-2); }
+.row[aria-pressed='true'] { outline: 1px solid var(--accent); }
+.dead { opacity: 0.55; }
+.dot { width: 10px; height: 10px; border-radius: 50%; align-self: center; }
+.name { font-weight: 600; }
+.meta { color: var(--muted); font-size: var(--fs-xs); display: block; }
+.turn { color: var(--muted); font-size: var(--fs-xs); font-variant-numeric: tabular-nums; }
+.event { display: grid; grid-template-columns: 3.2em 1fr; gap: var(--s-2); width: 100%; text-align: left; padding: var(--s-1) var(--s-2); }
+.minor { opacity: 0.7; }
+.empty { color: var(--muted); }

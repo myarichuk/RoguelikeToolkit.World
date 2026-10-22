@@ -17,6 +17,9 @@ export const FEATURE_KINDS: readonly FeatureKind[] = [
   'capital', 'city', 'town', 'village', 'ruin', 'shrine', 'battlefield', 'river', 'lake', 'sea', 'ocean', 'mountain', 'valley', 'forest', 'deposit',
 ];
 
+/** The kinds that are places: a tile of their own that history events are logged against. */
+export const PLACE_KINDS: ReadonlySet<FeatureKind> = new Set<FeatureKind>(['capital', 'city', 'town', 'village', 'ruin', 'shrine', 'battlefield']);
+
 /** Name generator kind for a feature kind (Core's PlaceKinds); deposits are not named. */
 export const NAME_KIND: Record<Exclude<FeatureKind, 'deposit'>, string> = {
   capital: 'city', city: 'city', town: 'town', village: 'village',
@@ -47,6 +50,10 @@ export interface MapFeature {
   weight: number;
   /** Index into WorldSnapshot.styles (the culture naming this feature). */
   style: number;
+  /** The tile the feature is anchored to: a settlement's or site's own tile, which history events are keyed by. */
+  tile: number;
+  /** The turns the place can be seen on a history timeline; absent for features that always are. */
+  span?: import('./history/timeline').Span;
   /** Area features: member tiles (pixel membership goes through the tile raster). */
   tiles?: Int32Array;
   /** River features: index into FeatureSet.rivers. */
@@ -84,6 +91,8 @@ export interface WorldSnapshot {
   rasters: Rasters;
   /** Per tile: plate id (low 16 bits) | boundary type << 16 | crust << 24. */
   tilePlate: Uint32Array;
+  /** Per tile: the name style (index into `styles`) that names places there; see `tileNamingStyles`. */
+  tileStyle: Uint8Array;
   /** Per plate (id - 1): drift unit xyz + speed. */
   plateDrift: Float64Array;
   /** Per tile map position (x, y). */
@@ -95,6 +104,8 @@ export interface WorldSnapshot {
   /** Per tile climate, nine floats each (world/climate.ts): temperature, rainfall, wind and current as east/north, ocean heat, seasons. */
   climate: Float32Array;
   features: FeatureSet;
+  /** The realms, event log and territory a history run left; null when history is off. */
+  history: import('./history/record').HistoryRecord | null;
   styles: NameStyle[];
   timings: Record<string, number>;
 }
@@ -164,7 +175,7 @@ export interface GenerateParams {
   planet?: PlanetSettings;
   /** Absent = the calibrated defaults. */
   model?: ClimateModelSettings;
-  /** Name styles (`race|culture`) cultures are drawn from, one per plate; empty = DEFAULT_STYLES. */
+  /** Name styles (`race|culture`) places are named in (realms pick theirs by folk and culture, other land by landmass); empty = DEFAULT_STYLES. */
   styles: string[];
   /** Absent = DEFAULT_HISTORY. */
   history?: HistorySettings;
@@ -205,7 +216,8 @@ export type WorkerResponse =
 /** Transferable buffers of a snapshot (zero-copy handoff). */
 export function snapshotTransfer(w: WorldSnapshot): Transferable[] {
   const r = w.rasters;
-  const out: Transferable[] = [r.elevation.buffer, r.biome.buffer, r.tile.buffer, r.waterPixels.buffer, w.tilePlate.buffer, w.plateDrift.buffer, w.tileXY.buffer, w.capacity.buffer, w.seaIce.buffer, w.climate.buffer];
+  const out: Transferable[] = [r.elevation.buffer, r.biome.buffer, r.tile.buffer, r.waterPixels.buffer, w.tilePlate.buffer, w.tileStyle.buffer, w.plateDrift.buffer, w.tileXY.buffer, w.capacity.buffer, w.seaIce.buffer, w.climate.buffer];
+  if (w.history) out.push(w.history.ownerBase.buffer, w.history.changes.buffer);
   for (const rv of w.features.rivers) out.push(rv.points.buffer);
   for (const rd of w.features.roads) out.push(rd.points.buffer);
   for (const f of w.features.features) if (f.tiles) out.push(f.tiles.buffer);

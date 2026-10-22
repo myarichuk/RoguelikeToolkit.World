@@ -1,11 +1,13 @@
 import { MAP_W, latOfY, lonOfX } from '../core/geo';
 import type { Theme } from '../content/types';
 import type { MapDocument } from '../doc/MapDocument';
+import { labelExistsAt } from '../doc/existsAt';
 import type { FeatureEntity, LabelEntity } from '../doc/types';
 import type { LabelCache } from '../text/LabelCache';
 import type { DepositType } from '../world/protocol';
 import type { Camera } from './Camera';
 import { CapacityTint } from './CapacityTint';
+import { RealmLayer } from './RealmLayer';
 import { ClimateTint } from './ClimateTint';
 import { drawFlowArrows } from './FlowArrows';
 import { ClimatePaint } from './ClimatePaint';
@@ -35,6 +37,7 @@ export class Overlay {
   showClimatePaint = false;
   readonly climatePaint = new ClimatePaint();
   private readonly capacityTint = new CapacityTint();
+  private readonly realms = new RealmLayer();
   private readonly climateTint = new ClimateTint();
   selection: { labels: Set<string>; stamps: Set<string>; feature: string | null; hoverFeature: string | null } = { labels: new Set(), stamps: new Set(), feature: null, hoverFeature: null };
   private plateArrows: { x: number; y: number; dx: number; dy: number }[] | null = null;
@@ -61,6 +64,8 @@ export class Overlay {
       }
       if (view.layers.climate) this.drawClimate(doc, view);
       if (view.layers.capacity) this.drawCapacity(doc, view);
+      if (view.layers.realms) this.realms.drawTint(ctx, doc, view.historyTurn);
+      if (view.layers.borders) this.realms.drawBorders(ctx, doc, view.historyTurn, cam.zoom);
       if (view.layers.climatePaint || this.showClimatePaint) this.drawClimatePaint(doc);
       if (view.layers.labels) this.drawLabels(cam, doc, theme, view, off, vis);
       if (view.layers.resources && view.kinds.deposit) this.drawDeposits(cam, doc, view, off);
@@ -78,8 +83,9 @@ export class Overlay {
   }
 
   /** Labels visible under the current filters and zoom. */
-  visibleLabel(l: LabelEntity, theme: Theme, view: ViewSettings, zoom: number): boolean {
+  visibleLabel(l: LabelEntity, doc: MapDocument, theme: Theme, view: ViewSettings, zoom: number): boolean {
     const kind = l.feature?.kind;
+    if (!labelExistsAt(doc, l.id, view.historyTurn)) return false;
     if (kind && kind in view.kinds && !view.kinds[kind as keyof typeof view.kinds]) return false;
     const style = theme.labels[l.style];
     return !style?.minZoom || zoom >= style.minZoom || this.selection.labels.has(l.id);
@@ -117,7 +123,7 @@ export class Overlay {
     ctx.lineJoin = 'round';
     ctx.lineCap = 'round';
     for (const l of doc.labels.all()) {
-      if (!this.visibleLabel(l, theme, view, cam.zoom)) continue;
+      if (!this.visibleLabel(l, doc, theme, view, cam.zoom)) continue;
       const r = this.labels.resolve(l, theme);
       if (!r) continue;
       const b = r.geo.bounds;

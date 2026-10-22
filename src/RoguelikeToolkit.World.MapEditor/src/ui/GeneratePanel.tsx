@@ -38,7 +38,7 @@ export function GeneratePanel() {
         <button className="wide" onClick={vm.resetModel}>Calibrated defaults</button>
       </Section>
       <Section title="Cultures" collapsible defaultOpen={false} summary={s.styles.length ? `${s.styles.length} selected` : 'default mix'} hint={WORLD_HINTS.cultures}>
-        <p className="hint">Each tectonic plate is named by one of these. Names come from the Core name generator.</p>
+        <p className="hint">Realms name their places in the style of their people's culture (human realms use the human styles you pick), and other land by landmass; any style a realm needs is added automatically. Names come from the Core name generator.</p>
         <CulturePicker />
       </Section>
     </>

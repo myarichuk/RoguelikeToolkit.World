@@ -229,7 +229,7 @@ function LookStep() {
       </div>
       <div className={styles.side}>
         <h3>Name styles</h3>
-        <p className="hint">Each plate, and each people you chose, names its places in one of these.</p>
+        <p className="hint">Each people you chose names its places in one of these; land no realm claims is named by landmass.</p>
         <CulturePicker />
       </div>
     </div>

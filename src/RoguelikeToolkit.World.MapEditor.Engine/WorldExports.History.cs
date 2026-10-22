@@ -1,6 +1,7 @@
 using System.Runtime.InteropServices.JavaScript;
 using RoguelikeToolkit.World.Core;
 using RoguelikeToolkit.World.Core.History;
+using RoguelikeToolkit.World.Core.Names;
 
 namespace RoguelikeToolkit.World.MapEditor.Engine;
 
@@ -224,12 +225,27 @@ public static partial class WorldExports
         return result;
     }
 
-    /// <summary>Per polity, aligned with <see cref="HistoryPolities"/>: <c>folk\tculture\tcultureOverlay\tdisplayName</c>.</summary>
+    /// <summary>Per polity, aligned with <see cref="HistoryPolities"/>: <c>folk\tculture\tcultureOverlay\tdisplayName\tnameRace\tnameCulture</c>; the last two are the
+    /// name style (race, culture) the polity's effective culture renders through, blank when none matches.</summary>
     [JSExport]
     public static string[] HistoryPolityKeys()
     {
         var h = Current.History;
-        return h.Polities.Select(p => $"{p.FolkKey}\t{p.CultureKey}\t{p.CultureOverlay}\t{h.DisplayNameOf(p.Id)}").ToArray();
+        var store = Core.Peoples.PeoplesStore.Load();
+        var styles = FantasyNameGenerator.Styles();
+        // A polity names its places through the naming table of its effective culture (a conquest overlay wins), which is a
+        // different key space from the name-style culture: resolve it to the style that table renders through.
+        string[] StyleOf(Polity p)
+        {
+            string culture = string.IsNullOrEmpty(p.CultureOverlay) ? p.CultureKey : p.CultureOverlay;
+            var table = store.Cultures.TryGetValue(culture, out var c) ? c.NamingTable : string.Empty;
+            // Several styles can share a table (half-orcs read the orc one): the polity's own folk, then a pure race, wins.
+            var s = styles.Where(x => x.TableKey.Equals(table, StringComparison.OrdinalIgnoreCase))
+                .OrderBy(x => x.Race.Equals(p.FolkKey, StringComparison.OrdinalIgnoreCase) ? 0 : x.Race.StartsWith("half_", StringComparison.OrdinalIgnoreCase) ? 2 : 1)
+                .FirstOrDefault();
+            return s is null ? new[] { string.Empty, string.Empty } : new[] { s.Race, s.Culture };
+        }
+        return h.Polities.Select(p => { var s = StyleOf(p); return $"{p.FolkKey}\t{p.CultureKey}\t{p.CultureOverlay}\t{h.DisplayNameOf(p.Id)}\t{s[0]}\t{s[1]}"; }).ToArray();
     }
 
     /// <summary>
