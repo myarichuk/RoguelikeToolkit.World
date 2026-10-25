@@ -174,7 +174,8 @@ public class LakeTests
     public void DesertCrossing_RiversDieInSinks()
     {
         // Wet highland cap draining across a vast desert to a far ocean:
-        // some rivers must evaporate mid-course (sink terminal on dry land).
+        // some rivers must evaporate mid-course. The ground still drains to the sea, so they dry out; they are not
+        // endorheic sinks.
         using var map = new WorldMap(3);
         map.RegisterLayer<ElevationInfo>(new ElevationLayer(map.DataStore));
         map.RegisterLayer<ClimateInfo>(new ClimateLayer(map.DataStore));
@@ -210,14 +211,15 @@ public class LakeTests
         foreach (var r in rivers.Rivers)
         {
             int tail = r.Path[^1];
-            if (r.Terminal == RiverTerminal.Sink)
+            if (r.Terminal is RiverTerminal.Sink or RiverTerminal.DriesOut)
             {
-                hasSink = true;
+                hasSink |= r.Terminal == RiverTerminal.DriesOut;
                 Assert.True(elev[tail].Height >= ElevationGenerationStage.SeaLevel);
                 Assert.True(hydro[tail].LakeDepth <= 0f);
+                Assert.Equal(r.Terminal == RiverTerminal.Sink ? 1 : 0, hydro[tail].Endorheic);
             }
         }
-        Assert.True(hasSink, "Expected a Sink-terminal desert river");
+        Assert.True(hasSink, "Expected a desert river that dries out on its way");
     }
 
     [Fact]

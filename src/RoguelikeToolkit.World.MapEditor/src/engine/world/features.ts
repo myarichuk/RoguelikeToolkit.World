@@ -61,9 +61,12 @@ const SITE_REASON: Record<string, string> = {
 };
 export const siteReasons = (raw: string | undefined): string =>
   (raw ?? '').split(',').filter(Boolean).map((r) => SITE_REASON[r] ?? r).join(', ');
-const TERMINAL = ['the sea', 'a lake', 'an inland sink'];
-/** Core's RiverTerminal for the river header: Sea 0, Lake 1, Sink 2. */
+const TERMINAL = ['the sea', 'a lake', 'an inland sink', 'nothing: it dries out on its way'];
+/** Core's RiverTerminal for the river header: Sea 0, Lake 1, Sink 2, DriesOut 3. */
 const RIVER_SINK = 2;
+const RIVER_DRIES_OUT = 3;
+/** A river that ends on dry land: no mouth to flare, and not a tributary of anything. */
+const endsDry = (terminal: number) => terminal === RIVER_SINK || terminal === RIVER_DRIES_OUT;
 /** A reach ending at a confluence earns a name only at this many in-map tiles: shorter ones are drawn but stay unnamed. */
 const MIN_NAMED_CONFLUENCE_TILES = 5;
 const EARTH_AREA_KM2 = 4 * Math.PI * 6371 * 6371;
@@ -273,7 +276,7 @@ export function extractFeatures(c: CatalogInput): FeatureSet {
     // A reach ending on dry land without dying in a sink joins a parent reach at a confluence
     // (Core reports the parent's terminal and stops the path one tile short of the parent). The
     // true tail decides: the in-map path may be cut short by the Mercator edge.
-    tributary: r.head[1] !== RIVER_SINK && !isWater(r.items[r.items.length - 1]),
+    tributary: !endsDry(r.head[1]) && !isWater(r.items[r.items.length - 1]),
     points: null as Float32Array | null,
   }));
   const ownerOf = new Int32Array(n).fill(-1);
@@ -307,7 +310,7 @@ export function extractFeatures(c: CatalogInput): FeatureSet {
     let line = meander(pts, rng, joined);
     if (wetAt) line = clipToLand(line, wetAt, !r.tributary);
     line = taperHead(line);
-    r.points = r.tributary || r.terminal === RIVER_SINK ? line : flareMouth(line);
+    r.points = r.tributary || endsDry(r.terminal) ? line : flareMouth(line);
   }
 
   /**

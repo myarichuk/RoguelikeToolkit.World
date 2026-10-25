@@ -244,6 +244,7 @@ internal static class LakeSolver
                 }
             }
             lake.Outlet = outlet;
+            RouteLakeToOutlet(store, ponded, outlet, solution, scratch);
         }
         // Terminal lake: every tile of its basin drains to it and nowhere else.
         if (!full)
@@ -281,6 +282,32 @@ internal static class LakeSolver
                 float pass = Math.Max(bed[nb], level[cur]);
                 level[nb] = pass;
                 heap.Enqueue(nb, TileOrdering.AscendingKey(pass, nb));
+            }
+        }
+    }
+
+    /// <summary>
+    /// An open lake's surface is level: resolved by distance alone, the tiles nearest the rim leave over it without
+    /// passing the outlet, where the lake's evaporation is charged. A breadth-first tree over the lake (ties by index)
+    /// sends every lake tile through the outlet.
+    /// </summary>
+    private static void RouteLakeToOutlet(WorldDataStore store, List<int> ponded, int outlet, LakeSolution solution, Span<int> scratch)
+    {
+        var inLake = new HashSet<int>(ponded);
+        var queue = new Queue<int>();
+        var reached = new HashSet<int> { outlet };
+        queue.Enqueue(outlet);
+        while (queue.Count > 0)
+        {
+            int cur = queue.Dequeue();
+            int adjacent = store.GetAdjacent(cur, scratch);
+            for (int k = 0; k < adjacent; k++)
+            {
+                int nb = scratch[k];
+                if (!inLake.Contains(nb) || !reached.Add(nb)) continue;
+                solution.BasinReceiver[nb] = cur;
+                solution.BasinDepth[nb] = solution.BasinDepth[cur] + 1;
+                queue.Enqueue(nb);
             }
         }
     }

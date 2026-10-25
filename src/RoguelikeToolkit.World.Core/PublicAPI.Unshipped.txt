@@ -1571,6 +1571,7 @@ RoguelikeToolkit.World.Core.Features.RiverTerminal
 RoguelikeToolkit.World.Core.Features.RiverTerminal.Lake = 1 -> RoguelikeToolkit.World.Core.Features.RiverTerminal
 RoguelikeToolkit.World.Core.Features.RiverTerminal.Sea = 0 -> RoguelikeToolkit.World.Core.Features.RiverTerminal
 RoguelikeToolkit.World.Core.Features.RiverTerminal.Sink = 2 -> RoguelikeToolkit.World.Core.Features.RiverTerminal
+RoguelikeToolkit.World.Core.Features.RiverTerminal.DriesOut = 3 -> RoguelikeToolkit.World.Core.Features.RiverTerminal
 RoguelikeToolkit.World.Core.Features.RiverWaterSource
 RoguelikeToolkit.World.Core.Features.RiverWaterSource.GlacierMelt = 2 -> RoguelikeToolkit.World.Core.Features.RiverWaterSource
 RoguelikeToolkit.World.Core.Features.RiverWaterSource.None = 0 -> RoguelikeToolkit.World.Core.Features.RiverWaterSource

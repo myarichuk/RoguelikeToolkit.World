@@ -22,7 +22,7 @@ Branch: `claude/gallant-knuth-1ctv0z`. Build/test: `dotnet build RoguelikeToolki
 > Batches A-E (review section 1) done and pushed. User asked (2026-10-25) for: **F** history defects, **G** hydrology
 > defects (review section 2), then **H** 2D-map/history-overlay issues (diagnosis delegated, results go in H), then the
 > history expansion (battles, logistics events, advisors/merchant princes/rebels/outlaws; design in
-> `docs/HISTORY_EXPANSION_PLAN.md` once written). Current batch: **G**.
+> `docs/HISTORY_EXPANSION_PLAN.md` once written). Current batch: **H** (start with H1 cost-weighted territory).
 
 ## Batch A — determinism
 
@@ -122,12 +122,21 @@ Log:
 
 ## Batch G — hydrology defects (review section 2)
 
-- [ ] G1 Below-sea-level inland basins are not ocean (connectivity from the world ocean)
-- [ ] G2 Open-lake evaporation charged on the whole outflow, not only the outlet path
-- [ ] G3 Glacier melt scales with ablation, not a flat +2
-- [ ] G4 Rivers that dry out mid-course are not reported as `Sink` when they drain to the sea
+- [x] G1 Below-sea-level inland basins are not ocean (connectivity from the world ocean)
+- [x] G2 Open-lake evaporation charged on the whole outflow, not only the outlet path
+- [!] G3 Glacier melt scales with ablation, not a flat +2: deferred. Any runoff cut (tried ablation^2 and 0.3+0.7*ablation)
+  moves ~7-12 seed-calibrated tests (river/lake counts, road and founding facts of seed-42 histories). Belongs with the
+  runoff recalibration of WEATHER_PLAN W0 / Climate v2, not a bug batch.
+- [x] G4 Rivers that dry out mid-course are not reported as `Sink` when they drain to the sea
 
 Log:
+- 2026-10-25. G1 (scoped): marine groups other than the ocean of at most n/40 tiles (HydrologyStage.IsLandlockedMarineSize,
+  shared with the catalog's Lake/Sea rule) are endorheic, and rivers ending in them are Lake-terminal. Biomes/climate still
+  treat them as water (by design: they are lakes). G2: open lakes route every tile through the outlet (LakeSolver
+  RouteLakeToOutlet); HydrologyStage.LevelDepths recomputes level-ground drain depth from the final receivers.
+  G4: RiverTerminal.DriesOut (=3) for channels ending on exorheic dry land; editor features.ts handles it.
+  Tests: HydrologyIntegrityTests (terminal vs ground, 3 worlds), DesertCrossing test updated (now DriesOut). No golden moved.
+  Core 959 (+957 ns2.1), MapEditor.Engine 73, vitest 399, tsc clean. G2 has no dedicated test.
 
 ## Batch H — 2D map / history overlay (user report 2026-10-25)
 
