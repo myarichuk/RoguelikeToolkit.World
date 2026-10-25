@@ -80,10 +80,8 @@ public sealed class WarOperator : IHistoryOperator
             _storeLoaded = true;
         }
         var map = view.Map;
-        int[] ownership = view.OwnershipSnapshot();
         var severedNow = new HashSet<(int, int)>();
         var sitedNow = new HashSet<int>();
-        Span<int> neighbors = stackalloc int[6];
 
         foreach (var polity in polities)
         {
@@ -96,7 +94,7 @@ public sealed class WarOperator : IHistoryOperator
                 xeno = XenophobiaOf(polity.CultureKey, _store);
                 _xenophobia[polity.CultureKey] = xeno;
             }
-            var bordering = HistoryNeighbors.Bordering(map.DataStore, ownership, attacker);
+            var bordering = view.BorderingPolities(attacker);
             if (bordering.Count == 0) continue;
             var stream = sink.Rng(attacker, "raid");
             int defender = bordering[(int)stream.NextUInt((uint)bordering.Count)];
@@ -105,7 +103,7 @@ public sealed class WarOperator : IHistoryOperator
                 + view.GrudgeWeight(attacker, defender) * GrudgeWarScale, MaxWarChance);
             if (stream.NextDouble() >= chance) continue;
             if (!sink.TrySpendDecision()) continue;
-            int battlefield = BattlefieldTile(view, neighbors, attacker, defender);
+            int battlefield = BattlefieldTile(view, attacker, defender);
             sink.Event(HistoryEventKind.War, attacker, battlefield,
                 new[] { "war", $"attacker:{attacker}", $"defender:{defender}" });
             if (!view.HasSite(battlefield) && sitedNow.Add(battlefield))
@@ -119,7 +117,7 @@ public sealed class WarOperator : IHistoryOperator
                     Position = map.DataStore.GetGeoCoord(battlefield),
                 });
             }
-            CheckDesecration(view, sink, ownership, attacker, defender, battlefield);
+            CheckDesecration(view, sink, attacker, defender, battlefield);
             SeverRoutes(view, sink, severedNow, attacker, polity.CapitalTile, polities[defender].CapitalTile);
             Assault(view, sink, severedNow, polity, polities[defender], battlefield);
             sink.Adjust(attacker, ScalarRegistry.Pressure, HistoryDemography.WarPressureBump);
@@ -202,7 +200,7 @@ public sealed class WarOperator : IHistoryOperator
     }
 
     private static void CheckDesecration(
-        TurnView view, ProposalSink sink, int[] ownership, int attacker, int defender, int battlefield)
+        TurnView view, ProposalSink sink, int attacker, int defender, int battlefield)
     {
         int holyOwner = -1;
         foreach (var site in view.HolySites)
@@ -213,7 +211,7 @@ public sealed class WarOperator : IHistoryOperator
         sink.Event(HistoryEventKind.Desecration, attacker, battlefield,
             new[] { "desecration", $"by:{attacker}", $"holy:{holyOwner}", $"tile:{battlefield}" });
         sink.Emit(new Proposal.AddGrudge { EntityId = attacker, Other = holyOwner, Weight = DesecrationGrudge });
-        foreach (int neighbor in HistoryNeighbors.Bordering(view.Map.DataStore, ownership, holyOwner))
+        foreach (int neighbor in view.BorderingPolities(holyOwner))
         {
             if (neighbor != attacker)
                 sink.Emit(new Proposal.AddGrudge { EntityId = neighbor, Other = attacker, Weight = DesecrationCoalitionGrudge });
@@ -221,19 +219,11 @@ public sealed class WarOperator : IHistoryOperator
         sink.Adjust(attacker, ScalarRegistry.Pressure, HistoryDemography.WarPressureBump);
     }
 
-    private static int BattlefieldTile(TurnView view, Span<int> neighbors, int attacker, int defender)
+    /// <summary>The lowest-index defender tile on the attacker's frontier, else the defender's capital.</summary>
+    private static int BattlefieldTile(TurnView view, int attacker, int defender)
     {
-        var store = view.Map.DataStore;
-        for (int tile = 0; tile < store.TileCount && tile < view.TileCount; tile++)
-        {
-            if (view.OwnerOf(tile) != defender) continue;
-            int adjacent = store.GetAdjacent(tile, neighbors);
-            for (int k = 0; k < adjacent; k++)
-            {
-                if (view.OwnerOf(neighbors[k]) == attacker) return tile;
-            }
-        }
-        return view.Polities[defender].CapitalTile;
+        var frontier = view.FrontierTiles(attacker, defender);
+        return frontier.Count > 0 ? frontier[0] : view.Polities[defender].CapitalTile;
     }
 
     private static void SeverRoutes(

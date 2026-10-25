@@ -22,7 +22,8 @@ Branch: `claude/gallant-knuth-1ctv0z`. Build/test: `dotnet build RoguelikeToolki
 > Batches A-E (review section 1) done and pushed. User asked (2026-10-25) for: **F** history defects, **G** hydrology
 > defects (review section 2), then **H** 2D-map/history-overlay issues (diagnosis delegated, results go in H), then the
 > history expansion (battles, logistics events, advisors/merchant princes/rebels/outlaws; design in
-> `docs/HISTORY_EXPANSION_PLAN.md` once written). Batches A-H done (H6 folded into the expansion). Next: HISTORY_EXPANSION_PLAN X0 (ask the user first).
+> `docs/HISTORY_EXPANSION_PLAN.md` once written). Batches A-H done (H6 folded into the expansion). User approved the expansion (2026-10-25: "start from x0 and
+> x1"). Progress is tracked in the **Expansion X** section at the end; resume at the first unchecked item.
 
 ## Batch A — determinism
 
@@ -180,4 +181,18 @@ Log:
   the Realms view, seed 7 size 5, 8 peoples): no label collisions seen, titles culture-specific, 102 place names, 0 dupes.
   Open: halfling realm got an elf_high title (style resolution of the realm, pre-existing); tint shows latitude stripes
   from the styled base (not realm code). Core 965, vitest 402, tsc clean.
+
+## Expansion X — history expansion (`docs/HISTORY_EXPANSION_PLAN.md`)
+
+- [x] X0 Legacy fixtures and speed-up
+  - [x] `LegacyHistoryFixtureTests`: sizes 3/4 × seeds 1-5, schema-independent `HistoryProjection` hash plus raw bytes
+    hash, captured on the pre-X0 `HEAD` (254a080) and identical after X0
+  - [x] `BorderIndex` (one pass: bordering polities + per-pair frontier) behind `TurnView.BorderingPolities` /
+    `FrontierTiles`; War/Khan/Treaty/Absorb use it; `BorderIndexTests` against the scans
+  - [x] Profiled size 7 first: border scans were < 100 ms. The real costs were `DepositCatalogBuilder` (two fBm samples per
+    tile × commodity before the host test; now lazy, 796 → 90 ms, also speeds world builds) and `CitySiteScorer`'s
+    water-radius test (hop-nearest water verified exactly first; `SpatialIndex.AnyWithin` prunes by measured cell
+    radius instead of a fixed slack). Size-7 history ~1.5 s → ~0.8 s, catalog hash unchanged.
+- [ ] X1 Kernel (types, proposals 28-36, pending person handles, detail quota, participant prefixes, schema 13,
+  TurnView accessors, `HistoryFeatures` default None)
 

@@ -54,13 +54,12 @@ public sealed class TreatyOperator : IHistoryOperator
             _store = view.LoadPeoples();
             _storeLoaded = true;
         }
-        int[] ownership = view.OwnershipSnapshot();
         var married = new HashSet<int>();
         foreach (var first in polities)
         {
             if (!first.Alive || first.FoundedTurn >= view.Turn) continue;
             int a = first.Id;
-            foreach (int b in HistoryNeighbors.Bordering(view.Map.DataStore, ownership, a))
+            foreach (int b in view.BorderingPolities(a))
             {
                 if (b <= a || (uint)b >= (uint)polities.Count) continue;
                 var second = polities[b];

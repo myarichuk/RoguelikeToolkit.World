@@ -196,6 +196,20 @@ public sealed class TurnView
     /// <summary>Loads the peoples tables, counting a fallback on the catalog when they fail.</summary>
     internal Peoples.PeoplesStore? LoadPeoples() => PeoplesLoader.LoadStore(_history);
 
+    private BorderIndex? _borders;
+
+    /// <summary>The borders of the snapshot ownership, built on first use (one pass over the tiles).</summary>
+    internal BorderIndex Borders => _borders ??= new BorderIndex(Map.DataStore, _ownership);
+
+    /// <summary>Polities bordering <paramref name="polityId"/> at the snapshot, ascending (never <paramref name="polityId"/> itself).</summary>
+    public IReadOnlyList<int> BorderingPolities(int polityId) => Borders.Bordering(polityId);
+
+    /// <summary>
+    /// Tiles of <paramref name="into"/> touching a tile of <paramref name="from"/> at the snapshot, ascending: the frontier a
+    /// force from <paramref name="from"/> crosses. Empty when the two do not border.
+    /// </summary>
+    public IReadOnlyList<int> FrontierTiles(int from, int into) => Borders.Frontier(from, into);
+
     /// <summary>Owner polity id of <paramref name="tile"/>, or -1.</summary>
     public int OwnerOf(int tile) => (uint)tile < (uint)_ownership.Length ? _ownership[tile] : -1;
 

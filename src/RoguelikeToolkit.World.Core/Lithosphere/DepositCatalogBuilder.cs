@@ -217,7 +217,10 @@ public static class DepositCatalogBuilder
     /// </summary>
     private static double Score(DepositType type, int seed, in Site s)
     {
-        double n = Noise01(s.Position, seed + 500 + (int)type * 17, 3.0);
+        // The noise terms only rank tiles that already qualify, so they are sampled after the host test (most tiles fail it).
+        var position = s.Position;
+        double N() => Noise01(position, seed + 500 + (int)type * 17, 3.0);
+        double Banding() => Noise01(position, seed + 911, 9.0);
         double oro = Math.Min(Math.Max(s.Orogeny, 0f), 1.5);
         bool orogen = s.Province == CrustalProvince.Orogen;
         bool rift = s.Province == CrustalProvince.Rift;
@@ -231,7 +234,6 @@ public static class DepositCatalogBuilder
         bool veined = orogen || islandArc;
         bool vms = rift || ridge;
         bool arc = (orogen && s.CoastRings <= 4) || islandArc;
-        double banding = Noise01(s.Position, seed + 911, 9.0);
 
         switch (type)
         {
@@ -239,51 +241,51 @@ public static class DepositCatalogBuilder
             // fold belts; Cu-Zn volcanogenic massive sulfide in rifts.
             case DepositType.Copper:
                 if (!land) return 0;
-                if (veined) return 0.40 + oro * 0.30 + (arc ? 0.12 : 0) + n * 0.25;
-                if (vms) return 0.42 + n * 0.30;
+                if (veined) return 0.40 + oro * 0.30 + (arc ? 0.12 : 0) + N() * 0.25;
+                if (vms) return 0.42 + N() * 0.30;
                 return 0;
 
             // Orogenic lode gold in fold belts, enriched where a river works it into placers;
             // Archaean greenstone gold and paleoplacers (Witwatersrand) on old cratons.
             case DepositType.Gold:
                 if (!land) return 0;
-                if (veined) return 0.38 + oro * 0.28 + n * 0.28 + (s.NearRiver ? 0.12 : 0);
-                if (craton && s.Age > 0.70f) return 0.40 + Math.Max(0.0, banding - 0.45) * 0.9 + (s.NearRiver ? 0.12 : 0) + n * 0.15;
+                if (veined) return 0.38 + oro * 0.28 + N() * 0.28 + (s.NearRiver ? 0.12 : 0);
+                if (craton && s.Age > 0.70f) return 0.40 + Math.Max(0.0, Banding() - 0.45) * 0.9 + (s.NearRiver ? 0.12 : 0) + N() * 0.15;
                 return 0;
 
             // Epithermal silver in magmatic belts; by-product Ag of rift massive sulfides.
             case DepositType.Silver:
                 if (!land) return 0;
-                if (veined) return 0.34 + Math.Min(oro, 1.2) * 0.30 + n * 0.30;
-                if (vms) return 0.40 + n * 0.30;
+                if (veined) return 0.34 + Math.Min(oro, 1.2) * 0.30 + N() * 0.30;
+                if (vms) return 0.40 + N() * 0.30;
                 return 0;
 
             // Tin granites in collisional highlands, away from the arc coast.
             case DepositType.Tin:
                 if (!land || !orogen || s.Height <= 0.30f) return 0;
-                return 0.40 + oro * 0.35 + n * 0.28;
+                return 0.40 + oro * 0.35 + N() * 0.28;
 
             // Hydrothermal vein and skarn in fold belts; VMS/SEDEX in rifts (the richest);
             // Mississippi-Valley-type in the carbonate foreland just beyond a belt.
             case DepositType.LeadZinc:
                 if (!land) return 0;
-                if (vms) return 0.50 + n * 0.30;
-                if (veined) return 0.36 + Math.Min(oro, 1.2) * 0.22 + n * 0.30;
+                if (vms) return 0.50 + N() * 0.30;
+                if (veined) return 0.36 + Math.Min(oro, 1.2) * 0.22 + N() * 0.30;
                 if (platform && s.Plate.NearestBoundary == PlateBoundaryType.Convergent
                     && s.Plate.BoundaryRings is >= 2 and <= 4 && s.Relief < 0.15f && s.Height < 0.30f)
-                    return 0.38 + n * 0.35;
+                    return 0.38 + N() * 0.35;
                 return 0;
 
             // Banded iron formation: the oldest cratons, in banded layers.
             case DepositType.Iron:
                 if (!land || !craton) return 0;
-                return 0.42 + (s.Age - Geology.CratonMinAge) * 0.5 + Math.Max(0.0, banding - 0.40) * 0.9 + n * 0.15;
+                return 0.42 + (s.Age - Geology.CratonMinAge) * 0.5 + Math.Max(0.0, Banding() - 0.40) * 0.9 + N() * 0.15;
 
             // Unconformity-related and paleoplacer uranium on shields; roll-front in dry sandstone basins.
             case DepositType.Uranium:
                 if (!land) return 0;
-                if (craton) return 0.38 + s.Age * 0.15 + (s.NearRiver ? 0.12 : 0) + n * 0.30;
-                if (platform && s.Precipitation < 0.45f && s.Height < 0.25f && s.Relief < 0.12f) return 0.36 + n * 0.35;
+                if (craton) return 0.38 + s.Age * 0.15 + (s.NearRiver ? 0.12 : 0) + N() * 0.30;
+                if (platform && s.Precipitation < 0.45f && s.Height < 0.25f && s.Relief < 0.12f) return 0.36 + N() * 0.35;
                 return 0;
 
             // Coal measures: warm wet lowlands on sedimentary crust, not in the fold belt itself.
@@ -291,40 +293,40 @@ public static class DepositCatalogBuilder
                 if (!land || !s.Continental || orogen) return 0;
                 if (s.Height < 0.30f && s.Temperature is > 0.30f and < 0.80f && s.Precipitation > 0.50f)
                     return 0.45 + (s.Precipitation - 0.5) * 0.5 + (s.Hydro.WaterBodyId >= 0 || s.NearRiver ? 0.15 : 0)
-                        + (rift ? 0.10 : 0) + n * 0.20;
+                        + (rift ? 0.10 : 0) + N() * 0.20;
                 return 0;
 
             // Oil: continental shelves and onshore basins, richer on rifted margins and deltas.
             case DepositType.Oil:
                 if (!land && s.Height > -0.45f && s.Continental)
-                    return 0.40 + (rift || s.Plate.BoundaryDistance < 3 ? 0.20 : 0) + (s.NearRiver ? 0.20 : 0) + n * 0.25;
+                    return 0.40 + (rift || s.Plate.BoundaryDistance < 3 ? 0.20 : 0) + (s.NearRiver ? 0.20 : 0) + N() * 0.25;
                 if (land && platform && s.Height < 0.20f)
-                    return 0.30 + (s.NearRiver ? 0.15 : 0) + n * 0.30;
+                    return 0.30 + (s.NearRiver ? 0.15 : 0) + N() * 0.30;
                 return 0;
 
             // Gas shares the oil basins, favouring deeper burial.
             case DepositType.Gas:
                 if (!land && s.Height is > -0.60f and < 0.02f && s.Continental)
-                    return 0.38 + Math.Min(-s.Height * 1.2, 0.25) + (rift || s.Plate.BoundaryDistance < 3 ? 0.15 : 0) + n * 0.25;
+                    return 0.38 + Math.Min(-s.Height * 1.2, 0.25) + (rift || s.Plate.BoundaryDistance < 3 ? 0.15 : 0) + N() * 0.25;
                 if (land && platform && s.Height < 0.15f)
-                    return 0.28 + n * 0.30;
+                    return 0.28 + N() * 0.30;
                 return 0;
 
             // Halite (Na): the saline sump of an endorheic basin, where evaporation beats rainfall.
             case DepositType.Salt:
                 if (!IsEvaporiteBasin(s) || s.Hydro.Saline != 1) return 0;
-                return 0.55 + Math.Min(s.Deficit, 1f) * 0.20 + (s.Hydro.IsPlaya == 1 ? 0.10 : 0) + n * 0.15;
+                return 0.55 + Math.Min(s.Deficit, 1f) * 0.20 + (s.Hydro.IsPlaya == 1 ? 0.10 : 0) + N() * 0.15;
 
             // Gypsum: drops out first as the brine concentrates, so it rims the sump rather than filling it.
             case DepositType.Gypsum:
                 if (!IsEvaporiteBasin(s) || s.Hydro.Saline == 1 || s.SalineRings > GypsumMarginRings) return 0;
-                return 0.45 + Math.Min(s.Deficit, 1f) * 0.20 + n * 0.25;
+                return 0.45 + Math.Min(s.Deficit, 1f) * 0.20 + N() * 0.25;
 
             // Gems: metamorphic belts of the collision zone, and kimberlite pipes through ancient craton.
             case DepositType.Gems:
                 if (!land) return 0;
-                if (orogen && s.Plate.Orogeny > 0.25f && s.Height > 0.25f) return 0.40 + n * 0.35;
-                if (craton && s.Age > 0.70f && Noise01(s.Position, seed + 913, 11.0) > 0.72) return 0.55 + n * 0.25;
+                if (orogen && s.Plate.Orogeny > 0.25f && s.Height > 0.25f) return 0.40 + N() * 0.35;
+                if (craton && s.Age > 0.70f && Noise01(s.Position, seed + 913, 11.0) > 0.72) return 0.55 + N() * 0.25;
                 return 0;
 
             // Bauxite: hot wet weathering of old, flat, stable surfaces.
@@ -332,7 +334,7 @@ public static class DepositCatalogBuilder
                 if (!land || !s.Continental || (!platform && !craton)) return 0;
                 if (s.Temperature > 0.62f && s.Precipitation > 0.60f && s.Height is >= 0f and < 0.30f
                     && s.Relief < 0.22f && s.Age > 0.35f)
-                    return 0.45 + (craton ? 0.10 : 0) + n * 0.30;
+                    return 0.45 + (craton ? 0.10 : 0) + N() * 0.30;
                 return 0;
 
             default:

@@ -56,14 +56,13 @@ public sealed class KhanOperator : IHistoryOperator
     {
         var polities = view.Polities;
         if (polities.Count < 2) return;
-        int[] ownership = view.OwnershipSnapshot();
         foreach (var khanPolity in polities)
         {
             if (!khanPolity.Alive || khanPolity.Form != PolityForm.Horde) continue;
             if (khanPolity.FoundedTurn >= view.Turn) continue;
             int khan = khanPolity.Id;
             var pressed = PressedBy(view, khan);
-            foreach (int weak in HistoryNeighbors.Bordering(view.Map.DataStore, ownership, khan))
+            foreach (int weak in view.BorderingPolities(khan))
             {
                 if (pressed.Contains(weak)) continue;
                 if ((uint)weak >= (uint)polities.Count) continue;
