@@ -3201,3 +3201,5 @@ RoguelikeToolkit.World.Core.Peoples.TerritoryDef.River.get -> double
 RoguelikeToolkit.World.Core.Peoples.TerritoryDef.River.set -> void
 RoguelikeToolkit.World.Core.Peoples.TerritoryDef.Biomes.get -> System.Collections.Generic.Dictionary<string!, double>!
 RoguelikeToolkit.World.Core.Peoples.TerritoryDef.Biomes.set -> void
+RoguelikeToolkit.World.Core.Names.CultureData.OwnWordWeight.get -> double
+RoguelikeToolkit.World.Core.Names.CultureData.OwnWordWeight.set -> void

@@ -151,7 +151,7 @@ rebellion gated on Collectivism >= 60, so lizardfolk/orc/dogfolk breakaways mult
 
 - [x] H1 Cost-weighted territory flood (terrain/rivers/ranges; deterministic PQ) so borders follow geography
 - [x] H2 Rebellion gate and breakaway culture: no collectivism-driven multiplication of a few peoples; founders drawn without replacement
-- [ ] H3 Name variety: bigger non-human tables, lower own-word weight, joint realm+place uniqueness with fallback
+- [x] H3 Name variety: bigger non-human tables, lower own-word weight, joint realm+place uniqueness with fallback
 - [ ] H4 Realm labels join collision avoidance (candidate cells, place labels yield)
 - [ ] H5 Surface ruins/holy sites/battlefields (Realms preset stamps, minZoom), richer event lines (villain agenda, myths)
 - [ ] H6 Export villains/faiths/culture traits; notable-figures + culture card in the history window (personas proper come with the expansion)
@@ -165,4 +165,11 @@ Log:
   1.54 (old 1.73, fails), spread 35..13 (old 39..11). Test fallout, re-scoped (assumptions held by chance): Wars_* pressure
   now over all wars at the war turn (>=80%); Shrines_* skips captured shrines. Core 962 (+960 ns2.1), Engine 73.
   Render-side border smoothing (RealmGrid sampling) still open, goes with H4.
+- 2026-10-25. Data first (user ask): territory costs moved to Peoples/Data/Territory/default.yaml (TerritoryDef) with
+  per-culture TerrainAffinity in Cultures/*.yaml; History/TerritoryCosts builds per-owner costs (absorbed land keeps its
+  own people's costs). Affinities softened to keep collapses/absorptions near the old rate (strong values: 1 collapse in
+  40 seeds vs 4). Orc affinity trimmed (it re-created the orc surplus). H3: 17 non-human name tables now 14 descriptors /
+  16 nouns (delegated, cherry-picked 3ff7cd2); own-word weight is data (CultureData.OwnWordWeight, default 2, was a
+  hardcoded 3); editor de-duplicates places against realm bases and re-rolls 12x. 100-seed probe: worst repeat 20 -> 10,
+  distinct 44-64 per (people, kind). Core 963, Engine 73.
 
