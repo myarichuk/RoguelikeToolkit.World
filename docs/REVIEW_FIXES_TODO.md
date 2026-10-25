@@ -200,6 +200,11 @@ Log:
   treaty heirs and betrothals, offices per form with candidates/favourites/rivals, Gompertz deaths. All tuning in
   `Peoples/Data/Court/default.yaml` + `Traits/epithets.yaml` (`CourtProfile`). `CourtOperatorTests` (13); AOT smoke
   extended. Notes in the plan's §12.
-- [ ] X3 Tactics/Warfare YAML (+ lexicon stubs), `BattleResolver` (pure, statistical tests), generals from the court;
-  War/Conquest use it behind flag `Battles`
+- [x] X3 Tactics/Warfare/Battle YAML (10 tactics, a way of war per shipped culture plus `default`, the whole battle model
+  in `Battle/default.yaml`), `WarfareProfile` (compiles and lints), `BattleResolver` (pure; `BattleResolverTests`, 11, on
+  10k shared keys: equal 48.9%, 2:1 78.6%, river −9.5pp, heavy horse open−forest 31pp, Martial+30 +9.4pp, winter
+  attrition +8pp, monotone per key), generals from the court (General-kind office, else the ruler). War and Conquest use
+  it behind flag `Battles`; the decision to go to war is the legacy draw. `WarBattleTests` (17): corpus decisive 29% of
+  fought battles. Lexicon moved to X7 (prose only). Notes in the plan's §12.
+- [ ] X4 `SiegeResolver`, relief battles
 

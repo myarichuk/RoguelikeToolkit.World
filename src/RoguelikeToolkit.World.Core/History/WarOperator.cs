@@ -17,8 +17,11 @@ namespace RoguelikeToolkit.World.Core.History;
 /// decision from this operator's own per-turn budget, so a noisy war exhausts only itself. Every draw
 /// is a pure function of <c>(seed, turn, attacker, purpose)</c>: this stage never reads another
 /// operator's draws.
+/// <para>With <see cref="HistoryFeatures.Battles"/> on, the decision to go to war is unchanged (same <c>raid</c> stream), but the
+/// raid is fought: <see cref="BattleResolver"/> picks the field, season, tactics and outcome from the warfare data, a
+/// <see cref="HistoryBattle"/> record narrates it, and the outcome (not flat chances) decides capture, sack, razing and grudges.</para>
 /// </summary>
-public sealed class WarOperator : IHistoryOperator
+public sealed partial class WarOperator : IHistoryOperator
 {
     /// <summary>War chance per unit of crowding pressure.</summary>
     public const double WarPressureScale = 0.4;
@@ -103,6 +106,11 @@ public sealed class WarOperator : IHistoryOperator
                 + view.GrudgeWeight(attacker, defender) * GrudgeWarScale, MaxWarChance);
             if (stream.NextDouble() >= chance) continue;
             if (!sink.TrySpendDecision()) continue;
+            if (sink.Has(HistoryFeatures.Battles))
+            {
+                Fight(view, sink, severedNow, sitedNow, polity, polities[defender]);
+                continue;
+            }
             int battlefield = BattlefieldTile(view, attacker, defender);
             sink.Event(HistoryEventKind.War, attacker, battlefield,
                 new[] { "war", $"attacker:{attacker}", $"defender:{defender}" });
@@ -155,36 +163,50 @@ public sealed class WarOperator : IHistoryOperator
             && attacker.Population >= HistoryDemography.ConquestAdvantage * Math.Max(defender.Population, 1);
         if (strong && canHold && roll < CaptureChance)
         {
-            var capture = new Proposal.CaptureSettlement { EntityId = attacker.Id, Settlement = target.Index };
-            sink.Emit(capture);
-            sink.EventIfApplied(capture, HistoryEventKind.SettlementCaptured, attacker.Id, target.Tile,
-                new[] { $"settlement:{target.Index}", $"from:{defender.Id}", $"to:{attacker.Id}" });
+            Capture(sink, attacker.Id, defender.Id, target);
             return;
         }
         if (strong && roll < CaptureChance + RazeChance)
         {
-            var raze = new Proposal.EndSettlement { EntityId = defender.Id, Settlement = target.Index, EndCause = "razed", LostShare = RazeCasualty };
-            sink.Emit(raze);
-            sink.Emit(new Proposal.AddScar
-            {
-                Requires = raze, // no ruin where a rival already took the town this turn
-                EntityId = defender.Id, Tile = target.Tile, ScarKind = HistoryScar.Ruin, Cause = "war",
-                Position = view.Map.DataStore.GetGeoCoord(target.Tile),
-            });
-            var live = new HashSet<(int, int)>();
-            foreach (var road in view.Roads)
-                if (!road.Severed && (road.RouteA == target.Tile || road.RouteB == target.Tile)) live.Add((road.RouteA, road.RouteB));
-            foreach (var (a, b) in live) SeverRoutes(view, sink, severedNow, attacker.Id, a, b);
+            Raze(view, sink, severedNow, attacker.Id, defender.Id, target, RazeCasualty);
             return;
         }
         if (roll < CaptureChance + RazeChance + SackChance * (1 - CaptureChance - RazeChance))
+            Sack(sink, defender.Id, target, SackDisplacement, SackCasualty);
+    }
+
+    private static void Capture(ProposalSink sink, int attacker, int defender, TurnView.SettlementState target)
+    {
+        var capture = new Proposal.CaptureSettlement { EntityId = attacker, Settlement = target.Index };
+        sink.Emit(capture);
+        sink.EventIfApplied(capture, HistoryEventKind.SettlementCaptured, attacker, target.Tile,
+            new[] { $"settlement:{target.Index}", $"from:{defender}", $"to:{attacker}" });
+    }
+
+    private static void Raze(TurnView view, ProposalSink sink, HashSet<(int, int)> severedNow, int attacker, int defender,
+        TurnView.SettlementState target, double casualty)
+    {
+        var raze = new Proposal.EndSettlement { EntityId = defender, Settlement = target.Index, EndCause = "razed", LostShare = casualty };
+        sink.Emit(raze);
+        sink.Emit(new Proposal.AddScar
         {
-            sink.Emit(new Proposal.ReleasePopulation { EntityId = defender.Id, Settlement = target.Index, Share = SackDisplacement });
-            sink.Emit(new Proposal.KillPopulation
-            {
-                EntityId = defender.Id, Settlement = target.Index, Share = Math.Min(1, SackCasualty / (1 - SackDisplacement)),
-            });
-        }
+            Requires = raze, // no ruin where a rival already took the town this turn
+            EntityId = defender, Tile = target.Tile, ScarKind = HistoryScar.Ruin, Cause = "war",
+            Position = view.Map.DataStore.GetGeoCoord(target.Tile),
+        });
+        var live = new HashSet<(int, int)>();
+        foreach (var road in view.Roads)
+            if (!road.Severed && (road.RouteA == target.Tile || road.RouteB == target.Tile)) live.Add((road.RouteA, road.RouteB));
+        foreach (var (a, b) in live) SeverRoutes(view, sink, severedNow, attacker, a, b);
+    }
+
+    private static void Sack(ProposalSink sink, int defender, TurnView.SettlementState target, double displacement, double casualty)
+    {
+        sink.Emit(new Proposal.ReleasePopulation { EntityId = defender, Settlement = target.Index, Share = displacement });
+        sink.Emit(new Proposal.KillPopulation
+        {
+            EntityId = defender, Settlement = target.Index, Share = Math.Min(1, casualty / (1 - displacement)),
+        });
     }
 
     private static int XenophobiaOf(string cultureKey, PeoplesStore? store)

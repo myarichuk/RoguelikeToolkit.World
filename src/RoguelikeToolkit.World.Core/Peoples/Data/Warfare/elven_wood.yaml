@@ -1,0 +1,14 @@
+Key: elven_wood
+Doctrine: { ambush: 35, skirmish: 30, massed_archery: 30, shieldwall: 5 }
+Units:
+  - { Key: glade_rangers, Arm: missile, Weight: 3 }
+  - { Key: thorn_dancers, Arm: foot, Weight: 2 }
+  - { Key: stag_riders, Arm: horse, Weight: 1 }
+Mobility: 75
+Discipline: 60
+SiegeSkill: 20
+Forage: 85
+ColdTolerance: 55
+Levy: 0.9
+CampaignSeasons: { Spring: 3, Summer: 3, Autumn: 3, Winter: 1 }
+Customs: []

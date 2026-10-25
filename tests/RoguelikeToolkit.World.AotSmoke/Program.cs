@@ -115,11 +115,23 @@ foreach (var c in dwarf.Key + peoples.GetCulture("dwarven_clan").NamingTable) Mi
 // Court and epithet tables (nested dictionaries and lists of DTOs), then a history with named persons on them.
 Check(peoples.Courts.TryGetValue("default", out var court) && court.Forms.Count == 4 && court.Skills.Count == 4, "court table");
 Check(peoples.TraitTables.TryGetValue("epithets", out var epithets) && epithets.Epithets.Count > 0 && epithets.Epithets[0].Min.Count > 0, "epithet table");
+// Tactics, ways of war and the battle model (dictionaries of DTOs, lists of DTOs), then a history with persons and battles.
+Check(peoples.Tactics.TryGetValue("ambush", out var ambush) && ambush.Initiative && ambush.TerrainFit.Count > 0, "tactic table");
+Check(peoples.Warfare.TryGetValue("orcish_horde", out var horde) && horde.Units.Count > 0 && horde.Doctrine.Count > 0 && horde.Customs.Count > 0, "warfare table");
+Check(peoples.Battles.TryGetValue("default", out var battle) && battle.Beats.Count > 0 && battle.Epithets.Count > 0 && battle.Customs.Count > 0
+    && battle.BiomeTerrain.Count > 0 && battle.Aftermath.Count > 0, "battle table");
 using (var courtly = new WorldBuilder().WithSize(3).WithSeed(7)
-           .WithHistory(c => c.Features = RoguelikeToolkit.World.Core.History.HistoryFeatures.Persons).Build())
+           .WithHistory(c => c.Features = RoguelikeToolkit.World.Core.History.HistoryFeatures.Persons
+               | RoguelikeToolkit.World.Core.History.HistoryFeatures.Battles).Build())
 {
     Check(courtly.History.Persons.Count > 0 && courtly.History.Tenures.Count > 0, "court persons");
+    Check(courtly.History.Battles.Count > 0, "battles");
     foreach (var p in courtly.History.Persons) { Mix((ulong)(uint)p.StableKey); Mix(p.Martial); Mix((ulong)(uint)p.DiedTurn); }
+    foreach (var b in courtly.History.Battles)
+    {
+        Mix((ulong)b.Outcome); Mix((ulong)(uint)b.Tile); Mix((ulong)(uint)b.Attacker.Tactic);
+        Mix((ulong)(long)(b.Attacker.LossShare * 1e9)); Mix((ulong)(long)(b.Defender.Strength * 1e3));
+    }
 }
 
 // 5. Entity store: spawn, snapshot, reload.

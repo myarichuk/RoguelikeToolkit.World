@@ -1,6 +1,6 @@
 # History expansion: battles, logistics, named persons
 
-Status: **in progress** (X0–X2 done; progress in [REVIEW_FIXES_TODO.md](REVIEW_FIXES_TODO.md), section Expansion X). Requested 2026-10-25. Builds on `Proposal.Requires` (batch F of
+Status: **in progress** (X0–X3 done; progress in [REVIEW_FIXES_TODO.md](REVIEW_FIXES_TODO.md), section Expansion X). Requested 2026-10-25. Builds on `Proposal.Requires` (batch F of
 [REVIEW_FIXES_TODO.md](REVIEW_FIXES_TODO.md), landed in `d7492ac`). Phases are **X0–X9** (§10).
 
 ## 0. Facts that shape the design
@@ -351,7 +351,7 @@ About 3k persons expected at 300 turns.
 | X0 | Legacy catalog hash fixtures (sizes 3/4 × seeds 1–5) plus a legacy event projection; `BorderIndex` speed-up | bytes identical; size-7 history ≥20% faster. **Done:** profiling showed the border scans were minor; the win came from lazy deposit noise and an exact faster water-radius test (~1.5 s → ~0.8 s) |
 | X1 | Kernel: types, proposals 28–36, pending handles, detail quota, participant prefixes, schema 13, TurnView accessors, `HistoryFeatures` | flags off: legacy projection identical (hash re-captured once for the empty sections); round trip; corrupt-reference rejection. **Done** (see §12) |
 | X2 | `CourtOperator`, persons, relations, tenures (observer only) | flag on: the existing kinds' projection equals flag off; one ruler per polity per turn; no participation after death; age at death ≤ 1.5× lifespan; traits stable when a plugin adds persons. **Done** (see §12) |
-| X3 | Tactics/Warfare/Traits YAML, `BattleResolver`, generals; War/Conquest behind the flag | statistical tests (§11); flag off identical |
+| X3 | Tactics/Warfare/Traits YAML, `BattleResolver`, generals; War/Conquest behind the flag | statistical tests (§11); flag off identical. **Done** (see §12) |
 | X4 | `SiegeResolver`, relief battles | siege invariants; resupply lengthens sieges; cut supply raises the lifted share |
 | X5 | `LogisticsGraph`, `LogisticsOperator`, forts/waystations, winter quarters, route samples | safety in [0,1]; forts raise it; 300 turns at size 7 < 5 s |
 | X6 | Commerce, Outlaw, Merchant, Intrigue; `CourtInfluence` | corpus bands; an exposed sponsorship leads to a war in ≥1/25 worlds |
@@ -435,4 +435,51 @@ About 3k persons expected at 300 turns.
   - favouritism produces many `patron` bonds; rivalry is rare under the default thresholds.
 - **NativeAOT:** the smoke test checks the court and epithet tables and a Persons-enabled history; the JIT and native
   checksums match.
-
+- **X3 battles, all tuning in data.**
+  - `Tactics/*.yaml` (10), `Warfare/<culture>.yaml` (all 12 shipped cultures plus `default`) and `Battle/default.yaml`,
+    which holds every term of the model: levies per form, muster, reach and supply, morale, terrain classes and the
+    biome→terrain map, initiative, margin bands, losses, commanders' fates, beats with conditions, epithet and custom
+    effects, and the aftermath of each outcome. `WarfareProfile` compiles them and lists what it cannot place; the shipped
+    data has nothing unplaced.
+  - Terrain classes, beats, customs, units and aftermath actions are names; beat conditions are a small token language
+    (`season=`, `terrain=`, `winner=`, `outcome=`, `winner_arm=`, `custom=`, `river`, `declined`, `general_fell`...), so new
+    beats and customs need no code. A beat a tactic lists is drawn only for a winner fighting that tactic.
+  - `BattleResolver` is internal and pure: data, two sides, candidate fields and four named draw streams (season, manoeuvre,
+    engagement, rout), each drawing a fixed count, so one phase never shifts another's draws.
+- **The decision to go to war is the legacy one.** War still draws its `raid` stream; with `Battles` on it then fights the
+  war instead of rolling `Assault`'s flat chances (tested: the first war turn's pairs equal the flag-off pairs). Every war
+  is one `HistoryBattle` narrated by one event (`War`, or `Campaign` when it never reached the field) tagged
+  `outcome:`, with the generals as `person:attacker_general` / `person:defender_general` participants.
+- **Deviations from §3, found on generated worlds, not synthetic ones.** The first corpus runs had 84% of campaigns
+  averted and 82% of fought battles decisive; the synthetic statistics were already in band. Causes and fixes:
+  - **Reach.** A size-3 tile is ~8° across, so `ReachDegrees` 12 starved every campaign. It is 40.
+  - **Muster is local.** Whole-realm levies made a raid on a large neighbour meet its entire host (30:1). A settlement `d`
+    degrees from the field sends `exp(-d/M)` of its levy, `M = MusterDegrees(0.5 + Mobility/100)`, with a floor
+    (`MusterFloor` 0.5) a realm always brings. The attacker gathers at its settlement nearest the field and marches from
+    there (the march is the reach term).
+  - **The attacker's handicaps stacked.** Crowding pressure lowered the morale of exactly the polities that attack, and
+    supply counted in strength, power and morale. Pressure no longer touches morale (`MoralePressure` 0, kept as a
+    term); supply scales power by `1 − SupplyPower(1 − σ)` with `SupplyPower` 0.3, and hunger costs 0.1 morale.
+  - **Refusal.** A side that won the manoeuvre declines a field where its power is below `DeclineBelow` (0.4) of the
+    enemy's: a defender lets the raid through (attacker victory, then a sack), an attacker turns back (`Averted`,
+    tagged `declined`). Only a side caught without the initiative can be routed from a hopeless field.
+  - **Bands.** Logistic noise alone gives |m| > 2 a quarter of the time at even odds, and local force ratios spread
+    widely (σ ≈ 1.3 in log space). `DecisiveMargin` is 3.25 (a rout needs about 5:1 effective power, or luck);
+    `MartialPower` is 0.008 so 30 martial points are worth the +8pp §11 asks; `MoraleHome` is 0.12.
+  - Corpus (12 seeds, 30 turns, size 3): about 26 wars per world; 31% averted (11% supply, 20% declined); 29% of fought
+    battles decisive; ambushes about 1 in 20.
+- **Generals.** The holder of the form's first `General`-kind office (marshal, war chief, war leader, admiral), else the
+  ruler, else none. There is no ad-hoc captain: a pending captain could be refused by the per-polity cap, and the kernel
+  refuses a battle naming a refused person, which would lose the war. A fallen general dies (`battle`). A ruler who falls
+  leaves the realm without a ruler for the rest of that turn; the court crowns the heir the next turn (tested).
+  Under `ransom` a would-be death becomes `general_captured`. Winners gain renown and losers lose some; two generals who
+  have met `NemesisMeetings` times become `nemesis`.
+- **Aftermath** follows `Battle/default.yaml`: decisive → capture (a capital or an over-cap captor sacks instead;
+  `salt_fields` razes), victory → sack, a rout of the attacker → grudge. Each side's dead fall on its settlement nearest
+  the field, capped at 5%. `ConquestOperator` with `Battles` on overlays only after an `AttackerDecisive` battle (no
+  population ratio). Captures and conquests always follow a decisive battle (tested).
+- **Not in X3:** sieges and the defender's retreat into walls (X4), the logistics graph replacing straight-line
+  distance (X5), betrayal and mercenaries (X6, they need loyalty and `Pledged`), and the culture lexicon (X7; it is prose
+  only and never read by the simulation).
+- **NativeAOT:** the smoke test checks the tactic, warfare and battle tables and a Persons + Battles history; the JIT and
+  native checksums match.

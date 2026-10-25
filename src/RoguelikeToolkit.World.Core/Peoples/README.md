@@ -18,12 +18,24 @@ Namespace `RoguelikeToolkit.World.Core.Peoples`, layer rank 2 (see `docs/ARCHITE
   Lives in `Data/Subsistence/`.
 - **ResourceDef / ResourceEra**: an exploitable resource. It is either a deposit (by name), a land yield, or a surface
   work. It carries its era, value and an optional lifetime (deposits only). Lives in `Data/Resources/`.
+- **CourtDef / CourtOfficeDef**: how courts work (offices per government form, death hazard, ages, favouritism and
+  rivalry thresholds, skill formulas). Lives in `Data/Court/`; the history reads `default`.
+- **TraitTableDef / EpithetDef**: epithets and the trait/skill bounds that earn them. Lives in `Data/Traits/`.
+- **TacticDef**: one way of fighting (arm, terrain and season fit, counters, beats). Lives in `Data/Tactics/`.
+- **WarfareDef / WarfareUnitDef**: a culture's way of war (doctrine weights over tactics, signature units, mobility,
+  discipline, siege skill, forage, cold tolerance, levy, campaign seasons, customs). Lives in `Data/Warfare/`, one file per
+  culture key plus `default.yaml` for the rest.
+- **BattleDef / BattleBeatDef / BattleEpithetDef / BattleCustomDef**: the battle model, every term of it (levies, muster,
+  reach and supply, morale, terrain classes, initiative, margin bands, losses, commanders' fates, beats, epithets, customs,
+  aftermath). Lives in `Data/Battle/`; the history reads `default`.
 - **CompatData**: pairwise offspring rules (`Data/compat.yaml`); unlisted pairs blend.
 - **PeoplesStore**: loads and validates the tables (shipped embedded resources plus an optional override dir); `FolkKeys` is the generated folk index. After every file loads, it checks cross-file references:
   - culture → profile;
   - folk → profile;
   - profile → resource;
-  - one resource per deposit name.
+  - one resource per deposit name;
+  - way of war → culture (or `default`), doctrine → tactic, custom → the battle model's customs;
+  - tactic counters → tactic.
 
   `ExploitsOf(profile, maxEra)` is the era gate. `PairingProblem(folk, culture)` checks a culture's default profile against its folk's allow-list. That check is per pair, because cultures don't name a folk.
 - **PeoplesDataException, UnknownPeoplesKeyException**: load and lookup failures.

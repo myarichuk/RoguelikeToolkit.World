@@ -1,0 +1,9 @@
+# Only for the side that won the manoeuvre: the enemy is caught on the march and its ground counts for half.
+Key: ambush
+Arm: foot
+Kinds: [Field, Relief]
+Initiative: true
+Surprise: 1.3
+Cover: 0.5
+TerrainFit: { open: 0.6, forest: 1.35, hills: 1.25, mountain: 1.2, marsh: 1.1, desert: 0.7, snow: 0.9 }
+Beats: [trap_sprung, night_attack]

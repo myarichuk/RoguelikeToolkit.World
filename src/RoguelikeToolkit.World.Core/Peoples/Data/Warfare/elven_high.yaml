@@ -1,0 +1,14 @@
+Key: elven_high
+Doctrine: { massed_archery: 35, heavy_charge: 25, pike_square: 20, shieldwall: 10, ambush: 10 }
+Units:
+  - { Key: silver_archers, Arm: missile, Weight: 3 }
+  - { Key: swan_knights, Arm: horse, Weight: 2 }
+  - { Key: spear_wardens, Arm: foot, Weight: 2 }
+Mobility: 60
+Discipline: 80
+SiegeSkill: 55
+Forage: 40
+ColdTolerance: 50
+Levy: 0.8
+CampaignSeasons: { Spring: 3, Summer: 4, Autumn: 2, Winter: 1 }
+Customs: [ransom]

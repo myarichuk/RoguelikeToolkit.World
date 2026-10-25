@@ -1,0 +1,14 @@
+Key: catfolk_prowl
+Doctrine: { ambush: 40, skirmish: 30, horse_archers: 15, berserk_rush: 15 }
+Units:
+  - { Key: prowl_blades, Arm: foot, Weight: 3 }
+  - { Key: sand_runners, Arm: horse, Weight: 1 }
+  - { Key: thorn_slingers, Arm: missile, Weight: 1 }
+Mobility: 85
+Discipline: 40
+SiegeSkill: 20
+Forage: 70
+ColdTolerance: 30
+Levy: 0.9
+CampaignSeasons: { Spring: 3, Summer: 3, Autumn: 3, Winter: 1 }
+Customs: [duel_of_champions]

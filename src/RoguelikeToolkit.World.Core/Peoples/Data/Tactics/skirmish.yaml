@@ -1,0 +1,6 @@
+# Loose bands that harry and melt away: at home in broken ground.
+Key: skirmish
+Arm: foot
+TerrainFit: { open: 0.9, forest: 1.2, hills: 1.15, mountain: 1.2, marsh: 1.15, desert: 1.0, snow: 1.0 }
+Counters: { pike_square: 1.15, war_beasts: 1.1, siege_engines: 1.2, heavy_charge: 0.8 }
+Beats: [harried]

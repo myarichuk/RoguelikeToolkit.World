@@ -1,0 +1,15 @@
+# The way of war of any culture without its own file. Scores are 0-100; Doctrine weights are relative.
+Key: default
+Doctrine: { shieldwall: 30, massed_archery: 20, heavy_charge: 15, skirmish: 15, pike_square: 10, ambush: 10 }
+Units:
+  - { Key: spearmen, Arm: foot, Weight: 3 }
+  - { Key: bowmen, Arm: missile, Weight: 2 }
+  - { Key: riders, Arm: horse, Weight: 1 }
+Mobility: 50
+Discipline: 50
+SiegeSkill: 50
+Forage: 50
+ColdTolerance: 50
+Levy: 1.0
+CampaignSeasons: { Spring: 2, Summer: 4, Autumn: 3, Winter: 1 }
+Customs: [ransom]

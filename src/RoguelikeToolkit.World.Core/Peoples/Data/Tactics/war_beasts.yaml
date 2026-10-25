@@ -1,0 +1,7 @@
+# Great beasts driven at the line: terror in the open, a liability in cold and close country.
+Key: war_beasts
+Arm: beast
+TerrainFit: { open: 1.25, forest: 0.8, hills: 0.85, mountain: 0.6, marsh: 0.75, desert: 1.1, snow: 0.6 }
+Counters: { shieldwall: 1.2, heavy_charge: 1.15, skirmish: 0.8, massed_archery: 0.85 }
+Seasons: { Winter: 0.7 }
+Beats: [stampede]

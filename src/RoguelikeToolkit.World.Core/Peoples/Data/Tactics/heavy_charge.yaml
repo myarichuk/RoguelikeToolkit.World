@@ -1,0 +1,7 @@
+# Armoured horse driven home: decisive in the open, wasted in woods and mud.
+Key: heavy_charge
+Arm: horse
+TerrainFit: { open: 1.35, forest: 0.6, hills: 0.85, mountain: 0.5, marsh: 0.55, desert: 1.1, snow: 0.7 }
+Counters: { skirmish: 1.2, massed_archery: 1.2, horse_archers: 1.05, shieldwall: 0.85, pike_square: 0.7 }
+Seasons: { Spring: 0.85, Winter: 0.85 }
+Beats: [flank, broke_the_line]

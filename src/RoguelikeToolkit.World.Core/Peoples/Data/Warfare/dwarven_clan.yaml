@@ -1,0 +1,14 @@
+Key: dwarven_clan
+Doctrine: { shieldwall: 45, pike_square: 25, massed_archery: 15, berserk_rush: 10, ambush: 5 }
+Units:
+  - { Key: ironbreakers, Arm: foot, Weight: 3 }
+  - { Key: crossbow_thanes, Arm: missile, Weight: 2 }
+  - { Key: ram_riders, Arm: beast, Weight: 1 }
+Mobility: 30
+Discipline: 85
+SiegeSkill: 90
+Forage: 30
+ColdTolerance: 75
+Levy: 1.1
+CampaignSeasons: { Spring: 2, Summer: 3, Autumn: 3, Winter: 2 }
+Customs: [ransom, duel_of_champions]

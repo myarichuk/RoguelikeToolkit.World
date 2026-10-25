@@ -1,0 +1,7 @@
+# Volleys from massed bows: deadly to anything slow, wretched in the rain.
+Key: massed_archery
+Arm: missile
+TerrainFit: { open: 1.2, forest: 0.75, hills: 1.1, mountain: 0.9, marsh: 0.9, desert: 1.1, snow: 0.9 }
+Counters: { berserk_rush: 1.2, war_beasts: 1.15, pike_square: 1.15, shieldwall: 1.05, heavy_charge: 0.8 }
+Seasons: { Spring: 0.85, Winter: 0.9 }
+Beats: [arrow_storm]

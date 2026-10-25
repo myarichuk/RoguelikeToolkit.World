@@ -12,7 +12,8 @@ namespace RoguelikeToolkit.World.Core.History;
 /// <see cref="HistoryEventKind.Conquest"/> event records the transfer for the <c>Names</c> leaf,
 /// which renders the losing polity through the winning table late. Conquests cost one decision
 /// from this operator's own per-turn budget. No tile changes hands: conquest is a cultural overlay,
-/// so the ownership projection stays valid.
+/// so the ownership projection stays valid. With <see cref="HistoryFeatures.Battles"/> on, the battle decides instead of the
+/// population ratio: only a war whose battle the attacker won decisively can become an overlay.
 /// </summary>
 public sealed class ConquestOperator : IHistoryOperator
 {
@@ -38,6 +39,7 @@ public sealed class ConquestOperator : IHistoryOperator
             _store = view.LoadPeoples();
             _storeLoaded = true;
         }
+        bool battles = view.Has(HistoryFeatures.Battles);
         foreach (var victor in polities)
         {
             if (!victor.Alive) continue; // a victor that collapsed or was absorbed since imposes nothing
@@ -49,7 +51,7 @@ public sealed class ConquestOperator : IHistoryOperator
                 if ((uint)loser >= (uint)polities.Count || winner == loser) continue;
                 var fallen = polities[loser];
                 if (!fallen.Alive || fallen.CultureOverlay == victor.CultureKey) continue;
-                if (victor.Population < HistoryDemography.ConquestAdvantage * fallen.Population) continue;
+                if (battles ? !RoutedDefender(view, war) : victor.Population < HistoryDemography.ConquestAdvantage * fallen.Population) continue;
                 var stream = sink.Rng(loser, "overlay");
                 if (stream.NextDouble() >= ConquestChance) continue;
                 if (!sink.TrySpendDecision()) continue;
@@ -59,6 +61,20 @@ public sealed class ConquestOperator : IHistoryOperator
                     new[] { "conquest", $"winner:{winner}", $"loser:{loser}", victor.CultureKey }, war.Id);
             }
         }
+    }
+
+    /// <summary>True when <paramref name="war"/> narrates a battle the attacker won decisively.</summary>
+    private static bool RoutedDefender(TurnView view, HistoryEvent war)
+    {
+        foreach (string tag in war.Tags)
+        {
+            if (!tag.StartsWith("battle:", StringComparison.Ordinal)
+                || !int.TryParse(tag.Substring(7), System.Globalization.NumberStyles.None, System.Globalization.CultureInfo.InvariantCulture, out int id)
+                || (uint)id >= (uint)view.Battles.Count)
+                continue;
+            return view.Battles[id].Outcome == BattleOutcome.AttackerDecisive;
+        }
+        return false;
     }
 
     private static bool TryDefender(HistoryEvent war, out int defender)

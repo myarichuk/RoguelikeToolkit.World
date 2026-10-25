@@ -39,6 +39,17 @@ internal sealed class AotYamlObjectFactory : DefaultObjectFactory
         if (type == typeof(TraitTableDef)) return new TraitTableDef();
         if (type == typeof(EpithetDef)) return new EpithetDef();
         if (type == typeof(List<EpithetDef>)) return new List<EpithetDef>();
+        if (type == typeof(TacticDef)) return new TacticDef();
+        if (type == typeof(WarfareDef)) return new WarfareDef();
+        if (type == typeof(WarfareUnitDef)) return new WarfareUnitDef();
+        if (type == typeof(List<WarfareUnitDef>)) return new List<WarfareUnitDef>();
+        if (type == typeof(BattleDef)) return new BattleDef();
+        if (type == typeof(BattleBeatDef)) return new BattleBeatDef();
+        if (type == typeof(List<BattleBeatDef>)) return new List<BattleBeatDef>();
+        if (type == typeof(BattleEpithetDef)) return new BattleEpithetDef();
+        if (type == typeof(Dictionary<string, BattleEpithetDef>)) return new Dictionary<string, BattleEpithetDef>(StringComparer.OrdinalIgnoreCase);
+        if (type == typeof(BattleCustomDef)) return new BattleCustomDef();
+        if (type == typeof(Dictionary<string, BattleCustomDef>)) return new Dictionary<string, BattleCustomDef>(StringComparer.OrdinalIgnoreCase);
         if (type == typeof(Dictionary<string, double>)) return new Dictionary<string, double>(StringComparer.OrdinalIgnoreCase);
         if (type == typeof(LocaleData)) return new LocaleData();
         if (type == typeof(List<MorphemeYaml>)) return new List<MorphemeYaml>();
@@ -66,6 +77,13 @@ internal sealed class AotYamlObjectFactory : DefaultObjectFactory
     [DynamicDependency(DynamicallyAccessedMemberTypes.PublicProperties | DynamicallyAccessedMemberTypes.PublicParameterlessConstructor, typeof(CourtOfficeDef))]
     [DynamicDependency(DynamicallyAccessedMemberTypes.PublicProperties | DynamicallyAccessedMemberTypes.PublicParameterlessConstructor, typeof(TraitTableDef))]
     [DynamicDependency(DynamicallyAccessedMemberTypes.PublicProperties | DynamicallyAccessedMemberTypes.PublicParameterlessConstructor, typeof(EpithetDef))]
+    [DynamicDependency(DynamicallyAccessedMemberTypes.PublicProperties | DynamicallyAccessedMemberTypes.PublicParameterlessConstructor, typeof(TacticDef))]
+    [DynamicDependency(DynamicallyAccessedMemberTypes.PublicProperties | DynamicallyAccessedMemberTypes.PublicParameterlessConstructor, typeof(WarfareDef))]
+    [DynamicDependency(DynamicallyAccessedMemberTypes.PublicProperties | DynamicallyAccessedMemberTypes.PublicParameterlessConstructor, typeof(WarfareUnitDef))]
+    [DynamicDependency(DynamicallyAccessedMemberTypes.PublicProperties | DynamicallyAccessedMemberTypes.PublicParameterlessConstructor, typeof(BattleDef))]
+    [DynamicDependency(DynamicallyAccessedMemberTypes.PublicProperties | DynamicallyAccessedMemberTypes.PublicParameterlessConstructor, typeof(BattleBeatDef))]
+    [DynamicDependency(DynamicallyAccessedMemberTypes.PublicProperties | DynamicallyAccessedMemberTypes.PublicParameterlessConstructor, typeof(BattleEpithetDef))]
+    [DynamicDependency(DynamicallyAccessedMemberTypes.PublicProperties | DynamicallyAccessedMemberTypes.PublicParameterlessConstructor, typeof(BattleCustomDef))]
     [DynamicDependency(DynamicallyAccessedMemberTypes.PublicProperties | DynamicallyAccessedMemberTypes.PublicParameterlessConstructor, typeof(LocaleData))]
     public static IDeserializer CreateDeserializer() => new DeserializerBuilder()
         .WithObjectFactory(new AotYamlObjectFactory())

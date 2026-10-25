@@ -1,0 +1,6 @@
+# A screaming rush that wins in the first minute or not at all.
+Key: berserk_rush
+Arm: foot
+TerrainFit: { open: 1.0, forest: 1.1, hills: 1.0, mountain: 0.95, marsh: 0.9, desert: 0.95, snow: 1.05 }
+Counters: { massed_archery: 1.1, skirmish: 1.15, siege_engines: 1.2, shieldwall: 0.85, pike_square: 0.8 }
+Beats: [broke_the_line, frenzy]

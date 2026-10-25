@@ -1,0 +1,14 @@
+Key: dogfolk_pack
+Doctrine: { shieldwall: 35, berserk_rush: 25, skirmish: 20, war_beasts: 10, ambush: 10 }
+Units:
+  - { Key: pack_shields, Arm: foot, Weight: 3 }
+  - { Key: war_hounds, Arm: beast, Weight: 2 }
+  - { Key: javelin_runners, Arm: missile, Weight: 1 }
+Mobility: 65
+Discipline: 75
+SiegeSkill: 35
+Forage: 65
+ColdTolerance: 70
+Levy: 1.3
+CampaignSeasons: { Spring: 2, Summer: 3, Autumn: 3, Winter: 2 }
+Customs: [ransom, take_heads]
