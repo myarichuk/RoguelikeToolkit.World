@@ -151,13 +151,13 @@ public sealed class JintWorldStage : IWorldGeneratorStage, IDeclaredStage, IStag
 
         // Layer registration is fixed for the whole Execute: resolve each layer's
         // read access once instead of per call (no closure, no set lookups per read).
-        var modeTectonicPlate = ResolveRead(store, typeof(TectonicPlate), _reads, _readsOptional);
-        var modeElevationInfo = ResolveRead(store, typeof(ElevationInfo), _reads, _readsOptional);
-        var modeClimateInfo = ResolveRead(store, typeof(ClimateInfo), _reads, _readsOptional);
-        var modeHydrologyInfo = ResolveRead(store, typeof(HydrologyInfo), _reads, _readsOptional);
-        var modeBiomeInfo = ResolveRead(store, typeof(BiomeInfo), _reads, _readsOptional);
-        var modeCapacity = ResolveRead(store, typeof(LandCapacityInfo), _reads, _readsOptional);
-        var modeLandUse = ResolveRead(store, typeof(LandUseInfo), _reads, _readsOptional);
+        var modeTectonicPlate = ResolveRead(store, typeof(TectonicPlate), _reads, _readsOptional, _writes);
+        var modeElevationInfo = ResolveRead(store, typeof(ElevationInfo), _reads, _readsOptional, _writes);
+        var modeClimateInfo = ResolveRead(store, typeof(ClimateInfo), _reads, _readsOptional, _writes);
+        var modeHydrologyInfo = ResolveRead(store, typeof(HydrologyInfo), _reads, _readsOptional, _writes);
+        var modeBiomeInfo = ResolveRead(store, typeof(BiomeInfo), _reads, _readsOptional, _writes);
+        var modeCapacity = ResolveRead(store, typeof(LandCapacityInfo), _reads, _readsOptional, _writes);
+        var modeLandUse = ResolveRead(store, typeof(LandUseInfo), _reads, _readsOptional, _writes);
 
         double ReadContinentality(int i)
         {
@@ -379,12 +379,15 @@ public sealed class JintWorldStage : IWorldGeneratorStage, IDeclaredStage, IStag
 
     private enum ReadMode { Direct, Zero, NotRegistered, Undeclared }
 
+    // A read is legal only for a declared layer (Reads, ReadsOptional, or Writes for read-modify-write): an undeclared
+    // read slips past the contract and ordering checks and can see a layer before the stage that fills it has run.
     private static ReadMode ResolveRead(
-        WorldDataStore store, Type layer, HashSet<Type> reads, HashSet<Type> readsOptional)
+        WorldDataStore store, Type layer, HashSet<Type> reads, HashSet<Type> readsOptional, HashSet<Type> writes)
     {
+        bool optional = readsOptional.Contains(layer);
+        if (!optional && !reads.Contains(layer) && !writes.Contains(layer)) return ReadMode.Undeclared;
         if (store.IsLayerRegistered(layer)) return ReadMode.Direct;
-        if (readsOptional.Contains(layer)) return ReadMode.Zero;
-        return reads.Contains(layer) ? ReadMode.NotRegistered : ReadMode.Undeclared;
+        return optional ? ReadMode.Zero : ReadMode.NotRegistered;
     }
 
     // Errors stay lazy: a script that never touches the layer never fails on it.
@@ -395,7 +398,7 @@ public sealed class JintWorldStage : IWorldGeneratorStage, IDeclaredStage, IStag
             ReadMode.NotRegistered => throw new InvalidOperationException(
                 $"Jint stage '{stageName}' reads layer '{layer.Name}' but it is not registered. Call RegisterLayer<{layer.Name}>() before Allocate()."),
             _ => throw new InvalidOperationException(
-                $"Jint stage '{stageName}' reads layer '{layer.Name}' without declaring it in Reads/ReadsOptional."),
+                $"Jint stage '{stageName}' reads layer '{layer.Name}' without declaring it in Reads, ReadsOptional or Writes."),
         };
 
     private static void RequireWrite(Type layer, string stageName, HashSet<Type> writes)

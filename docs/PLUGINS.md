@@ -115,10 +115,15 @@ The default pipeline also has a second climate pass (`ClimateRefreshStage`, `Wit
    | `rand01(tile, salt)` | deterministic `[0,1)` from `(seed, tile, salt)` |
    | `tileSeed(tile)` | the per-tile seed (same as `World.TileSeed`); not stored per hex |
 
-   Reads require the layer in `Reads` (or degrade to `0` when listed in
-   `ReadsOptional` and unregistered); setters require the layer in `Writes`
-   and throw otherwise. Out-of-range tile/biome/danger values throw with the
-   stage name attached.
+   Reads require the layer in `Reads` or `Writes` (or degrade to `0` when
+   listed in `ReadsOptional` and unregistered), even when the map happens to
+   register it: an undeclared read would slip past the ordering checks.
+   Setters require the layer in `Writes`. Both throw otherwise. Out-of-range
+   tile/biome/danger values throw with the stage name attached.
+
+   `Math.random()` is a stream seeded by the stage seed (same script, same
+   seed, same numbers) and cannot be replaced; `Date` throws. Prefer
+   `rand01(tile, salt)`, which does not depend on call order.
 3. Wire it up:
    ```csharp
    pipeline.AddStage(new JintWorldStage(new JintStageSpec

@@ -42,6 +42,9 @@ export class WorldService {
     const timer = setTimeout(() => this.fail(worker, new Error(`The world engine did not start within ${Math.round(this.bootTimeoutMs / 1000)} s. Check the connection and reload; if it keeps happening the host may be throttling the download.`)), this.bootTimeoutMs);
     const stop = () => clearTimeout(timer);
     void boot.then(stop, stop);
+    // A boot the engine itself rejected (a failed download, a runtime error) marks the worker dead like a crash
+    // would, so the next call spawns a fresh one instead of awaiting this rejection forever.
+    void boot.catch((err: unknown) => this.fail(worker, err instanceof Error ? err : new Error(String(err))));
     return boot;
   }
 

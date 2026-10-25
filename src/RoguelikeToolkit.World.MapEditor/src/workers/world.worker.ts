@@ -115,6 +115,7 @@ async function generate(p: GenerateParams): Promise<WorldSnapshot> {
   const e = await api();
   const timings: Record<string, number> = { bootMs };
   const t = performance.now();
+  loaded = ''; // Generate retires the old world first: if the build throws, nothing is loaded any more
   const tileCount = generateWorld(e, p);
   loaded = worldKey(p);
   timings.generateMs = performance.now() - t;
@@ -125,8 +126,11 @@ async function recompute(p: RecomputeParams): Promise<WorldSnapshot> {
   const e = await api();
   const timings: Record<string, number> = { bootMs };
   let t = performance.now();
-  const tileCount = loaded === worldKey(p) ? -1 : generateWorld(e, p);
-  if (tileCount >= 0) loaded = worldKey(p);
+  if (loaded !== worldKey(p)) {
+    loaded = ''; // as in generate: a failed build leaves no world, and the next call must build again
+    generateWorld(e, p);
+    loaded = worldKey(p);
+  }
   const n = e.ApplyEdits(Array.from(p.edits.tiles), Array.from(p.edits.delta), Array.from(p.edits.pinHeight), Array.from(p.edits.meta), Array.from(p.edits.temperature), Array.from(p.edits.precipitation));
   timings.recomputeMs = performance.now() - t;
   // Names are the document's business on a recompute: surviving features keep theirs, and the
@@ -310,7 +314,8 @@ self.addEventListener('message', async (ev: MessageEvent<WorkerRequest>) => {
   try {
     switch (req.type) {
       case 'init':
-        engine ??= boot(req.frameworkUrl);
+        // A failed boot must not be cached: the next init (a fresh worker, or a retry here) boots again.
+        engine ??= boot(req.frameworkUrl).catch((err: unknown) => { engine = null; throw err; });
         await engine;
         post({ id: req.id, ok: true, type: 'init', bootMs });
         break;

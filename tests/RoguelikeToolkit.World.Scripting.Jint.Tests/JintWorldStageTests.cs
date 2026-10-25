@@ -94,6 +94,30 @@ public class JintWorldStageTests
     }
 
     [Fact]
+    public void UndeclaredRead_OfARegisteredLayer_Throws()
+    {
+        // ElevationInfo is registered on the map, but the stage only declared ClimateInfo.
+        using var map = TinyMap();
+        var ex = Assert.Throws<InvalidOperationException>(() => AridityStage("function execute() { setPrecip(0, height(0)); }").Execute(map));
+        Assert.Contains("without declaring", ex.Message);
+    }
+
+    [Fact]
+    public void ReadOfAWrittenLayer_IsAllowed()
+    {
+        using var map = TinyMap();
+        var stage = new JintWorldStage(new JintStageSpec
+        {
+            Name = "rmw-js",
+            Order = 19,
+            Source = "function execute() { setHeight(0, height(0) + 1); }",
+            Writes = new[] { typeof(ElevationInfo) },
+        });
+        stage.Execute(map);
+        Assert.Equal(1f, map.DataStore.GetSpan<ElevationInfo>()[0].Height);
+    }
+
+    [Fact]
     public void MissingExecute_ThrowsWithStageName()
     {
         using var map = TinyMap();

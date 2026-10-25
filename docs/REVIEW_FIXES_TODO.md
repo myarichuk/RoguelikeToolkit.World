@@ -19,7 +19,14 @@ Branch: `claude/gallant-knuth-1ctv0z`. Build/test: `dotnet build RoguelikeToolki
 
 ## Rehydration
 
-> Batches A-D done and pushed. Current batch: **E** (robustness), nothing started. Start with E1 (`WorldBuilder.Build` ~L244-316, `WorldDataStore.Allocate` ~L159-191).
+> **Section 1 of the review ("Fix first", #1-#13) is done**: batches A-E pushed to `claude/gallant-knuth-1ctv0z`, all suites
+> green (see logs). No PR opened. Next candidates, in the order the review suggests (ask the user which):
+> 1. Review section 2 history items (displaced people of dead polities, successor seat roles, `SuccessorCount` counting
+>    rebels, events committed for rejected proposals, `AddRoad.ConflictKey`).
+> 2. Review section 2 hydrology (sub-sea inland basins as ocean, open-lake evaporation path, glacier melt).
+> 3. `WEATHER_PLAN.md` W0 (unclamped temperature, expose maritime/SST; depends on nothing else open).
+> 4. `UNITY_PLAN.md` U0 (progress/cancel/step runner in Core; picking already fixed in C2).
+> Before starting, add a new batch section here (F, G, ...) with checkboxes, like A-E.
 
 ## Batch A — determinism
 
@@ -82,8 +89,14 @@ Log:
 
 ## Batch E — robustness
 
-- [ ] E1 `WorldBuilder.Build` / `WorldDataStore.Allocate` release native memory on failure
-- [ ] E2 Jint `ResolveRead` enforces declared reads
-- [ ] E3 Map editor: failed generate / failed boot recover
+- [x] E1 `WorldBuilder.Build` / `WorldDataStore.Allocate` release native memory on failure
+- [x] E2 Jint `ResolveRead` enforces declared reads
+- [x] E3 Map editor: failed generate / failed boot recover
 
 Log:
+- 2026-10-25. E1: WorldBuilder.Build disposes the map on any failure; WorldDataStore.Allocate disposes a half-built mapping
+  so a retry throws again (BuildFailureCleanupTests: both fail on the old code). E2: Jint ResolveRead requires the layer in
+  Reads/ReadsOptional/Writes even when registered (+2 tests); PLUGINS.md updated (also documents seeded Math.random, Date).
+  E3: worker clears `loaded` before (re)generating and drops a rejected boot promise; WorldService fails the worker on a
+  rejected init (+vitest). The worker `loaded` path has no unit test (needs the .NET runtime; covered only by e2e).
+  Core 949 (+947 ns2.1), Jint 33, Presentation 108, MapEditor.Engine 73, editor vitest 399/399, tsc clean.
