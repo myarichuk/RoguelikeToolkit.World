@@ -90,7 +90,7 @@ const KIND_TEXT: Record<string, string> = {
 };
 
 /** Events that change the political map; the default log shows only these. */
-export const MAJOR_KINDS: ReadonlySet<string> = new Set(['Founding', 'War', 'Conquest', 'Rebellion', 'PolityCollapsed', 'PolityAbsorbed', 'HolyFound', 'Desecration', 'Shock', 'Villain', 'SettlementCaptured']);
+export const MAJOR_KINDS: ReadonlySet<string> = new Set(['Founding', 'War', 'Conquest', 'Rebellion', 'PolityCollapsed', 'PolityAbsorbed', 'HolyFound', 'Desecration', 'Shock', 'Villain', 'SettlementCaptured', 'Myth']);
 
 export const kindText = (kind: string): string => KIND_TEXT[kind] ?? kind;
 
@@ -113,6 +113,9 @@ export const humanize = (key: string): string => key.replace(/_/g, ' ').replace(
 const CAUSE_TEXT: Record<string, string> = {
   war: 'war', plague: 'plague', famine: 'famine', drought: 'drought', quake: 'an earthquake', flood: 'a flood', eruption: 'an eruption', abandoned: 'abandonment', razed: 'being razed',
 };
+/** What a risen villain wants (Core's VillainOperator agendas). */
+const AGENDA_TEXT: Record<string, string> = { dominion: 'dominion', ruin: 'ruin', hunger: 'endless hunger', shadow: 'the shadow' };
+
 /** An end cause as it reads after "by": `razed` becomes "being razed". */
 export const causeText = (key: string): string => CAUSE_TEXT[key] ?? (key.replace(/_/g, ' ') || 'unknown causes');
 
@@ -135,6 +138,14 @@ export function eventLine(e: EventRecord, nameOf: (polity: number) => string): s
       const to = tagValue(e, 'to')?.toLowerCase();
       const grew = e.tags.includes('up');
       return `a settlement of ${who} ${grew ? 'grew into' : 'shrank to'} ${to ? `a ${to}` : 'another size'}`;
+    }
+    case 'Villain': {
+      const agenda = tagValue(e, 'agenda');
+      return `${who} fell under a tyrant${agenda ? ` bent on ${AGENDA_TEXT[agenda] ?? agenda}` : ''}`;
+    }
+    case 'Myth': {
+      const faith = tagValue(e, 'faith'), powers = e.tags.filter((t) => t.startsWith('power:')).map((t) => t.slice(6).replace(/_/g, ' '));
+      return `${who} told the myth of its ${faith ? humanize(faith).toLowerCase() : ''} faith${powers.length ? `, of ${powers.join(' and ')}` : ''}`.replace('its  faith', 'its faith');
     }
     case 'Plugin': return `${who}: ${e.plugin}`;
     default: return `${who} ${kindText(e.kind)}`;

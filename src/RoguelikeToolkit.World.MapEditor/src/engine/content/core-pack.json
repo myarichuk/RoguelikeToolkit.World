@@ -217,7 +217,7 @@
      "fill": "#2b2119",
      "halo": "#ece0c2",
      "haloWidth": 1.0,
-     "minZoom": 1.6,
+     "minZoom": 1.0,
      "sizeExp": 0
     },
     "ruin": {
@@ -228,7 +228,7 @@
      "fill": "#2b2119",
      "halo": "#ece0c2",
      "haloWidth": 1.0,
-     "minZoom": 1.6,
+     "minZoom": 1.0,
      "sizeExp": 0
     },
     "battlefield": {
@@ -239,7 +239,7 @@
      "fill": "#2b2119",
      "halo": "#ece0c2",
      "haloWidth": 1.0,
-     "minZoom": 1.6,
+     "minZoom": 1.0,
      "sizeExp": 0
     }
    },
@@ -465,7 +465,7 @@
      "fill": "#2b1e14",
      "halo": "#e8d9b5",
      "haloWidth": 1.0,
-     "minZoom": 1.6,
+     "minZoom": 1.0,
      "sizeExp": 0
     },
     "ruin": {
@@ -476,7 +476,7 @@
      "fill": "#2b1e14",
      "halo": "#e8d9b5",
      "haloWidth": 1.0,
-     "minZoom": 1.6,
+     "minZoom": 1.0,
      "sizeExp": 0
     },
     "battlefield": {
@@ -487,7 +487,7 @@
      "fill": "#2b1e14",
      "halo": "#e8d9b5",
      "haloWidth": 1.0,
-     "minZoom": 1.6,
+     "minZoom": 1.0,
      "sizeExp": 0
     }
    },
@@ -754,7 +754,7 @@
      "fill": "#2f2622",
      "halo": "#fbf6e8",
      "haloWidth": 1.0,
-     "minZoom": 1.6,
+     "minZoom": 1.0,
      "sizeExp": 0
     },
     "ruin": {
@@ -765,7 +765,7 @@
      "fill": "#2f2622",
      "halo": "#fbf6e8",
      "haloWidth": 1.0,
-     "minZoom": 1.6,
+     "minZoom": 1.0,
      "sizeExp": 0
     },
     "battlefield": {
@@ -776,7 +776,7 @@
      "fill": "#2f2622",
      "halo": "#fbf6e8",
      "haloWidth": 1.0,
-     "minZoom": 1.6,
+     "minZoom": 1.0,
      "sizeExp": 0
     }
    },
@@ -1002,7 +1002,7 @@
      "fill": "#e2e8f0",
      "halo": "#1c2533",
      "haloWidth": 1.0,
-     "minZoom": 1.6,
+     "minZoom": 1.0,
      "sizeExp": 0
     },
     "ruin": {
@@ -1013,7 +1013,7 @@
      "fill": "#e2e8f0",
      "halo": "#1c2533",
      "haloWidth": 1.0,
-     "minZoom": 1.6,
+     "minZoom": 1.0,
      "sizeExp": 0
     },
     "battlefield": {
@@ -1024,7 +1024,7 @@
      "fill": "#e2e8f0",
      "halo": "#1c2533",
      "haloWidth": 1.0,
-     "minZoom": 1.6,
+     "minZoom": 1.0,
      "sizeExp": 0
     }
    },
