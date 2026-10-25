@@ -82,6 +82,14 @@ public sealed class ProposalSink
             throw new ArgumentException($"'{name}' is outside operator '{OperatorName}' namespace.", paramName);
     }
 
+    /// <summary>Emits an event append that commits only when <paramref name="requires"/> (emitted this turn) is applied.</summary>
+    public void EventIfApplied(Proposal requires, HistoryEventKind kind, int polityId, int tile, IReadOnlyList<string> tags, int cause = -1,
+        IReadOnlyList<EventParticipant>? participants = null)
+    {
+        ArgumentNullException.ThrowIfNull(requires);
+        Emit(new Proposal.AppendEvent { EntityId = polityId, EventKind = kind, Tile = tile, Tags = tags, Cause = cause, Participants = participants, Requires = requires });
+    }
+
     /// <summary>Emits an event append.</summary>
     public void Event(HistoryEventKind kind, int polityId, int tile, IReadOnlyList<string> tags, int cause = -1,
         IReadOnlyList<EventParticipant>? participants = null)

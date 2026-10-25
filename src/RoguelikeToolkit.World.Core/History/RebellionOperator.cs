@@ -77,7 +77,7 @@ public sealed class RebellionOperator : IHistoryOperator
             if (stream.NextDouble() >= RebelChance) continue;
             if (!sink.TrySpendEmergence()) continue;
             int id = polities.Count + founded++;
-            sink.Emit(new Proposal.AddPolity
+            var rising = new Proposal.AddPolity
             {
                 EntityId = id,
                 Form = PolityForm.LooseAssociation,
@@ -85,8 +85,9 @@ public sealed class RebellionOperator : IHistoryOperator
                 FolkKey = polity.FolkKey,
                 CultureKey = polity.CultureKey,
                 Parent = parent,
-            });
-            sink.Event(HistoryEventKind.Rebellion, id, capital,
+            };
+            sink.Emit(rising);
+            sink.EventIfApplied(rising, HistoryEventKind.Rebellion, id, capital,
                 new[] { "rebellion", $"parent:{parent}", polity.FolkKey, polity.CultureKey });
         }
     }

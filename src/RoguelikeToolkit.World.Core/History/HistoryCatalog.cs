@@ -401,12 +401,13 @@ public sealed class HistoryCatalog : IHistoricalContext
         return count;
     }
 
-    /// <summary>Counts polities founded by a collapse (their parent has ended).</summary>
+    /// <summary>Counts polities founded by a collapse: their parent ended on the turn they were founded. A rebel's parent was
+    /// still standing then, even if it fell later, so rebels never use up the successor allowance.</summary>
     internal int SuccessorCount()
     {
         int count = 0;
         foreach (var p in Polities)
-            if (p.Parent >= 0 && !Polities[p.Parent].Alive) count++;
+            if (p.Parent >= 0 && Polities[p.Parent].EndedTurn == p.FoundedTurn) count++;
         return count;
     }
 

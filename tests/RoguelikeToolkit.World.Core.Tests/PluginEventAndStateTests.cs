@@ -23,6 +23,32 @@ public class PluginEventAndStateTests
         }
     }
 
+    /// <summary>Emits one event behind a proposal that is rejected (no such settlement) and one behind one that applies.</summary>
+    private sealed class Dependent : IHistoryOperator
+    {
+        public string Name => "probe/dep";
+        public int Order => 201;
+
+        public void Propose(TurnView view, ProposalSink sink)
+        {
+            if (view.Turn != 3) return;
+            var doomed = new Proposal.CaptureSettlement { EntityId = 0, Settlement = int.MaxValue };
+            var fine = new Proposal.AdjustScalar { EntityId = 0, ScalarId = ScalarRegistry.Pressure, Delta = 0 };
+            sink.Emit(doomed);
+            sink.Emit(fine);
+            sink.Emit(new Proposal.AppendEvent { EntityId = 0, EventKind = HistoryEventKind.Plugin, PluginKind = "probe/lost", Tags = new[] { "t" }, Requires = doomed });
+            sink.Emit(new Proposal.AppendEvent { EntityId = 0, EventKind = HistoryEventKind.Plugin, PluginKind = "probe/kept", Tags = new[] { "t" }, Requires = fine });
+        }
+    }
+
+    [Fact]
+    public void Requires_DropsWhatARejectedProposalWouldHaveNarrated()
+    {
+        using var w = new WorldBuilder().WithSize(3).WithSeed(5).WithHistoryDriver(d => d.AddPluginOperator(new Dependent())).Build();
+        Assert.Contains(w.History.Events, e => e.PluginKind == "probe/kept");
+        Assert.DoesNotContain(w.History.Events, e => e.PluginKind == "probe/lost");
+    }
+
     private static World Build(Probe probe)
         => new WorldBuilder().WithSize(3).WithSeed(5).WithUserEdits().WithHistoryDriver(d => d.AddPluginOperator(probe)).Build();
 

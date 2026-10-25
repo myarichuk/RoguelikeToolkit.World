@@ -22,6 +22,13 @@ public abstract class Proposal
     public int Sequence { get; internal set; }
 
     /// <summary>
+    /// A proposal this one only makes sense after (the event narrating a capture, the ruin a razing leaves), or
+    /// <c>null</c>. It commits after every independent proposal of the turn, and only when <see cref="Requires"/> was
+    /// applied: a capture lost to a rival's razing must not leave a "captured" event behind.
+    /// </summary>
+    public Proposal? Requires { get; init; }
+
+    /// <summary>
     /// Key of the resource a structural proposal claims, or <c>null</c> when proposals of this kind never
     /// conflict. A second proposal with the same <c>(Kind, ConflictKey)</c> in one turn is rejected.
     /// </summary>
@@ -37,7 +44,8 @@ public abstract class Proposal
         internal override long? ConflictKey => Tile;
     }
 
-    /// <summary>Opens a road segment kept by polity <see cref="Proposal.EntityId"/>. Conflicts per tile pair.</summary>
+    /// <summary>Opens a road segment kept by polity <see cref="Proposal.EntityId"/>. Conflicts per tile pair within one route: two
+    /// routes laid the same turn may share a segment (each keeps its own, so severing one leaves the other whole).</summary>
     public sealed class AddRoad : Proposal
     {
         /// <inheritdoc />
@@ -50,7 +58,15 @@ public abstract class Proposal
         public int RouteA { get; init; }
         /// <summary>Route endpoint: the larger capital tile.</summary>
         public int RouteB { get; init; }
-        internal override long? ConflictKey => ((long)Math.Min(TileA, TileB) << 32) | (uint)Math.Max(TileA, TileB);
+        internal override long? ConflictKey
+        {
+            get
+            {
+                long pair = ((long)Math.Min(TileA, TileB) << 32) | (uint)Math.Max(TileA, TileB);
+                long route = ((long)RouteA << 32) | (uint)RouteB;
+                return unchecked(pair * -7046029254386353131L ^ route); // golden-ratio mix of (segment, route)
+            }
+        }
     }
 
     /// <summary>Severs every active segment between two capital tiles. Conflicts per route.</summary>

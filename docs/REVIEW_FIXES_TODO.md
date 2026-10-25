@@ -19,14 +19,10 @@ Branch: `claude/gallant-knuth-1ctv0z`. Build/test: `dotnet build RoguelikeToolki
 
 ## Rehydration
 
-> **Section 1 of the review ("Fix first", #1-#13) is done**: batches A-E pushed to `claude/gallant-knuth-1ctv0z`, all suites
-> green (see logs). No PR opened. Next candidates, in the order the review suggests (ask the user which):
-> 1. Review section 2 history items (displaced people of dead polities, successor seat roles, `SuccessorCount` counting
->    rebels, events committed for rejected proposals, `AddRoad.ConflictKey`).
-> 2. Review section 2 hydrology (sub-sea inland basins as ocean, open-lake evaporation path, glacier melt).
-> 3. `WEATHER_PLAN.md` W0 (unclamped temperature, expose maritime/SST; depends on nothing else open).
-> 4. `UNITY_PLAN.md` U0 (progress/cancel/step runner in Core; picking already fixed in C2).
-> Before starting, add a new batch section here (F, G, ...) with checkboxes, like A-E.
+> Batches A-E (review section 1) done and pushed. User asked (2026-10-25) for: **F** history defects, **G** hydrology
+> defects (review section 2), then **H** 2D-map/history-overlay issues (diagnosis delegated, results go in H), then the
+> history expansion (battles, logistics events, advisors/merchant princes/rebels/outlaws; design in
+> `docs/HISTORY_EXPANSION_PLAN.md` once written). Current batch: **G**.
 
 ## Batch A — determinism
 
@@ -100,3 +96,56 @@ Log:
   E3: worker clears `loaded` before (re)generating and drops a rejected boot promise; WorldService fails the worker on a
   rejected init (+vitest). The worker `loaded` path has no unit test (needs the .NET runtime; covered only by e2e).
   Core 949 (+947 ns2.1), Jint 33, Presentation 108, MapEditor.Engine 73, editor vitest 399/399, tsc clean.
+
+## Batch F — history defects (review section 2)
+
+- [x] F1 Displaced people of a collapsed/absorbed polity re-owned to successor/absorber instead of written off
+- [x] F2 Collapse successor's seat becomes Capital (role + tier floor)
+- [x] F3 `SuccessorCount` counts only collapse successors (not rebels)
+- [x] F4 Narrative events of rejected structural proposals are not committed (capture, rebellion, villain)
+- [x] F5 `AddRoad.ConflictKey` per route so same-turn routes keep shared segments
+- [x] F6 Treaty: no foster refusal for pairs married the same turn
+- [x] F7 Conquest overlay requires a living victor
+- [x] F8 `RulerGeneration` counts from `FoundedTurn`
+- [x] F9 `PopulationGrid.Step` tolerates duplicate cells / guards underflow
+- [x] F10 Myths use the priority (unbudgeted) append
+
+Log:
+- 2026-10-25. F1 RehomeDisplaced (driver, after HandOver/absorb; DisplacedGroup.PolityId now settable). F2 seat Role=Capital,
+  Tier>=CapitalFloor. F3 SuccessorCount = parent ended on the founding turn (TurnView.SuccessorCount feeds CollapseOperator).
+  F4 Proposal.Requires + ProposalSink.EventIfApplied; driver commits dependents after independents and only if their
+  requirement applied (capture event, raze ruin, rebellion event, villain event + pressure). F5 AddRoad conflict key mixes
+  the route in. F6 treaty skips pairs married this turn. F7 dead victors skipped. F8 generations from FoundedTurn (both
+  operators). F9 PopulationGrid subset dedupe bitset + off-grid neighbours ignored. F10 myths via AppendPriorityEvent.
+  Tests: HistoryIntegrityTests (4, all fail on old code), PopulationGrid (+2, fail on old), Requires plugin test.
+  F5/F6/F7/F10 have no dedicated test. Core 956 (+954 ns2.1), Jint 33, MapEditor.Engine 73. No golden moved.
+
+## Batch G — hydrology defects (review section 2)
+
+- [ ] G1 Below-sea-level inland basins are not ocean (connectivity from the world ocean)
+- [ ] G2 Open-lake evaporation charged on the whole outflow, not only the outlet path
+- [ ] G3 Glacier melt scales with ablation, not a flat +2
+- [ ] G4 Rivers that dry out mid-course are not reported as `Sink` when they drain to the sea
+
+Log:
+
+## Batch H — 2D map / history overlay (user report 2026-10-25)
+
+Issues: names repeat; labels overlap (worst in history overlay); no personas, ruins, construction or culture visible;
+borders too straight; some cultures over-represented (orcs, lizardfolk). Diagnosis (2026-10-25) root causes:
+names = non-human name tables are 3-4 x 3-4 words, own words weighted x3 (PlaceNameBuilder.cs:39-55), uniqueness gives up
+after 4 rerolls and realm/place batches are de-duplicated separately (uniqueNames.ts, world.worker.ts:199,295);
+overlap = realm labels drawn by RealmLayer.ts outside the placeLabels collision pass; personas = none exist (only villain
+records, unnamed, not exported); ruins/holy/battlefields exported but minZoom 1.6, lowest priority, Realms preset hides
+stamps; faiths/culture not exported; borders = unweighted BFS from capitals (Voronoi) + coarse 4px RealmGrid; culture skew =
+rebellion gated on Collectivism >= 60, so lizardfolk/orc/dogfolk breakaways multiply (founding itself is uniform).
+
+- [ ] H1 Cost-weighted territory flood (terrain/rivers/ranges; deterministic PQ) so borders follow geography
+- [ ] H2 Rebellion gate and breakaway culture: no collectivism-driven multiplication of a few peoples; founders drawn without replacement
+- [ ] H3 Name variety: bigger non-human tables, lower own-word weight, joint realm+place uniqueness with fallback
+- [ ] H4 Realm labels join collision avoidance (candidate cells, place labels yield)
+- [ ] H5 Surface ruins/holy sites/battlefields (Realms preset stamps, minZoom), richer event lines (villain agenda, myths)
+- [ ] H6 Export villains/faiths/culture traits; notable-figures + culture card in the history window (personas proper come with the expansion)
+
+Log:
+

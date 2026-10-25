@@ -66,8 +66,11 @@ public sealed class TreatyOperator : IHistoryOperator
                 var second = polities[b];
                 if (!second.Alive || second.FoundedTurn >= view.Turn) continue;
                 if (view.IsWindowed(a, b)) continue;
-                bool aHeir = first.HeirBornTurn >= 0 || married.Contains(a);
-                bool bHeir = second.HeirBornTurn >= 0 || married.Contains(b);
+                // A polity that married this turn has no heir in the snapshot yet: pairing it again (fostering a child
+                // that is not born) could only end in a refusal and a grudge. It waits for next turn.
+                if (married.Contains(a) || married.Contains(b)) continue;
+                bool aHeir = first.HeirBornTurn >= 0;
+                bool bHeir = second.HeirBornTurn >= 0;
                 if (aHeir != bHeir) continue;
                 var stream = sink.Rng(a * 100003 + b, "bond");
                 double chance = Math.Max(TreatyBase - (XenophobiaOf(first.CultureKey, _store)

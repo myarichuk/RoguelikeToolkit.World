@@ -174,7 +174,7 @@ RoguelikeToolkit.World.Core.History.DisplacedGroup.DisplacedGroup() -> void
 RoguelikeToolkit.World.Core.History.DisplacedGroup.Origin.get -> int
 RoguelikeToolkit.World.Core.History.DisplacedGroup.Origin.init -> void
 RoguelikeToolkit.World.Core.History.DisplacedGroup.PolityId.get -> int
-RoguelikeToolkit.World.Core.History.DisplacedGroup.PolityId.init -> void
+RoguelikeToolkit.World.Core.History.DisplacedGroup.PolityId.set -> void
 RoguelikeToolkit.World.Core.History.DisplacedGroup.Turn.get -> int
 RoguelikeToolkit.World.Core.History.DisplacedGroup.Turn.init -> void
 RoguelikeToolkit.World.Core.History.EventImportance
@@ -520,6 +520,8 @@ RoguelikeToolkit.World.Core.History.Proposal.EndSettlement.Settlement.get -> int
 RoguelikeToolkit.World.Core.History.Proposal.EndSettlement.Settlement.init -> void
 RoguelikeToolkit.World.Core.History.Proposal.EntityId.get -> int
 RoguelikeToolkit.World.Core.History.Proposal.EntityId.init -> void
+RoguelikeToolkit.World.Core.History.Proposal.Requires.get -> RoguelikeToolkit.World.Core.History.Proposal?
+RoguelikeToolkit.World.Core.History.Proposal.Requires.init -> void
 RoguelikeToolkit.World.Core.History.Proposal.GrowSettlement
 RoguelikeToolkit.World.Core.History.Proposal.GrowSettlement.Delta.get -> double
 RoguelikeToolkit.World.Core.History.Proposal.GrowSettlement.Delta.init -> void
@@ -616,6 +618,7 @@ RoguelikeToolkit.World.Core.History.ProposalKind.SplitPolity = 25 -> RoguelikeTo
 RoguelikeToolkit.World.Core.History.ProposalSink
 RoguelikeToolkit.World.Core.History.ProposalSink.Adjust(int polityId, int scalarId, double delta) -> void
 RoguelikeToolkit.World.Core.History.ProposalSink.Emit(RoguelikeToolkit.World.Core.History.Proposal! proposal) -> void
+RoguelikeToolkit.World.Core.History.ProposalSink.EventIfApplied(RoguelikeToolkit.World.Core.History.Proposal! requires, RoguelikeToolkit.World.Core.History.HistoryEventKind kind, int polityId, int tile, System.Collections.Generic.IReadOnlyList<string!>! tags, int cause = -1, System.Collections.Generic.IReadOnlyList<RoguelikeToolkit.World.Core.History.EventParticipant>? participants = null) -> void
 RoguelikeToolkit.World.Core.History.ProposalSink.Event(RoguelikeToolkit.World.Core.History.HistoryEventKind kind, int polityId, int tile, System.Collections.Generic.IReadOnlyList<string!>! tags, int cause = -1, System.Collections.Generic.IReadOnlyList<RoguelikeToolkit.World.Core.History.EventParticipant>? participants = null) -> void
 RoguelikeToolkit.World.Core.History.ProposalSink.OperatorName.get -> string!
 RoguelikeToolkit.World.Core.History.ProposalSink.PluginEvent(string! pluginKind, int polityId, int tile, System.Collections.Generic.IReadOnlyList<string!>! tags, int cause = -1, System.Collections.Generic.IReadOnlyList<RoguelikeToolkit.World.Core.History.EventParticipant>? participants = null) -> void

@@ -61,6 +61,7 @@ public sealed class TurnView
             polities.Add(new PolityState(p.Id, p.Form, p.CapitalTile, p.FolkKey, p.CultureKey, p.Alive, p.Parent, p.Population, scalars, p.CultureOverlay ?? string.Empty, p.FoundedTurn, p.HeirBornTurn, p.HasVillain, p.RulerGeneration));
         }
         Polities = polities;
+        SuccessorCount = history.SuccessorCount();
         foreach (var g in history.Grudges) _grudges[(g.A, g.B)] = g.Weight;
         foreach (var w in history.Treaties) _windows.Add((w.A, w.B, w.UntilTurn));
         var roads = new List<RoadState>(history.Roads.Count);
@@ -125,6 +126,9 @@ public sealed class TurnView
 
     /// <summary>Cap on collapse successors over the whole history (<see cref="HistoryContext.MaxSuccessors"/>).</summary>
     public int MaxSuccessors { get; }
+
+    /// <summary>Collapse successors founded so far (<see cref="HistoryCatalog.SuccessorCount"/>).</summary>
+    internal int SuccessorCount { get; }
 
     /// <summary>Rebellion headroom above the founding cap (<see cref="HistoryContext.MaxRebellions"/>).</summary>
     public int MaxRebellions { get; }

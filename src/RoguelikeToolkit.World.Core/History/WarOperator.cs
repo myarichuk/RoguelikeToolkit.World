@@ -157,16 +157,19 @@ public sealed class WarOperator : IHistoryOperator
             && attacker.Population >= HistoryDemography.ConquestAdvantage * Math.Max(defender.Population, 1);
         if (strong && canHold && roll < CaptureChance)
         {
-            sink.Emit(new Proposal.CaptureSettlement { EntityId = attacker.Id, Settlement = target.Index });
-            sink.Event(HistoryEventKind.SettlementCaptured, attacker.Id, target.Tile,
+            var capture = new Proposal.CaptureSettlement { EntityId = attacker.Id, Settlement = target.Index };
+            sink.Emit(capture);
+            sink.EventIfApplied(capture, HistoryEventKind.SettlementCaptured, attacker.Id, target.Tile,
                 new[] { $"settlement:{target.Index}", $"from:{defender.Id}", $"to:{attacker.Id}" });
             return;
         }
         if (strong && roll < CaptureChance + RazeChance)
         {
-            sink.Emit(new Proposal.EndSettlement { EntityId = defender.Id, Settlement = target.Index, EndCause = "razed", LostShare = RazeCasualty });
+            var raze = new Proposal.EndSettlement { EntityId = defender.Id, Settlement = target.Index, EndCause = "razed", LostShare = RazeCasualty };
+            sink.Emit(raze);
             sink.Emit(new Proposal.AddScar
             {
+                Requires = raze, // no ruin where a rival already took the town this turn
                 EntityId = defender.Id, Tile = target.Tile, ScarKind = HistoryScar.Ruin, Cause = "war",
                 Position = view.Map.DataStore.GetGeoCoord(target.Tile),
             });

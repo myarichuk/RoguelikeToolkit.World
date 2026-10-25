@@ -30,6 +30,7 @@ public sealed class PopulationGrid
     private readonly int _groups;
     private uint[] _counts;
     private uint[] _next;
+    private ulong[]? _stepped;   // subset sweeps: one bit per cell, so a cell listed twice steps once
 
     /// <summary>Creates an empty grid (all counts zero, <see cref="Tick"/> 0) with two <c>cellCount * groupCount</c> buffers, one of them the scratch for <c>Step</c>.</summary>
     /// <exception cref="ArgumentOutOfRangeException"><paramref name="cellCount"/> is negative, <paramref name="groupCount"/> is not positive, or their product exceeds <c>Array.MaxLength</c>.</exception>
@@ -112,8 +113,21 @@ public sealed class PopulationGrid
         if (cells.IsEmpty)
             for (int c = 0; c < CellCount; c++) StepCell(c, policy, adjacency, tickRng);
         else
+        {
+            // A cell stepped twice would subtract its deaths and leavers twice from the same old count and wrap the
+            // unsigned total; a round-robin slice that overlaps itself must not do that.
+            var stepped = _stepped ??= new ulong[(CellCount + 63) >> 6];
             foreach (int c in cells)
-                if ((uint)c < (uint)CellCount) StepCell(c, policy, adjacency, tickRng);
+            {
+                if ((uint)c >= (uint)CellCount) continue;
+                ulong bit = 1UL << (c & 63);
+                if ((stepped[c >> 6] & bit) != 0) continue;
+                stepped[c >> 6] |= bit;
+                StepCell(c, policy, adjacency, tickRng);
+            }
+            foreach (int c in cells)
+                if ((uint)c < (uint)CellCount) stepped[c >> 6] = 0;
+        }
 
         (_counts, _next) = (_next, _counts);
         Tick++;
@@ -166,7 +180,8 @@ public sealed class PopulationGrid
         int last = -1;
         for (int k = 0; k < neighbors.Length; k++)
         {
-            double w = policy.Attraction(neighbors[k], group);
+            // A custom adjacency may name cells this grid does not have; nobody migrates there.
+            double w = (uint)neighbors[k] < (uint)CellCount ? policy.Attraction(neighbors[k], group) : 0;
             weights[k] = w > 0 && double.IsFinite(w) ? w : 0;
             totalWeight += weights[k];
             if (weights[k] > 0) last = k;

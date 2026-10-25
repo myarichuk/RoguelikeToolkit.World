@@ -58,14 +58,15 @@ public sealed class VillainOperator : IHistoryOperator
             string agenda = Agendas[(int)stream.NextUInt((uint)Agendas.Length)];
             if (!sink.TrySpendEmergence()) continue;
             int villainId = view.VillainCount + risen++;
-            sink.Emit(new Proposal.AddVillain
+            var rise = new Proposal.AddVillain
             {
                 EntityId = polity.Id,
                 Agenda = agenda,
-                RulerGeneration = HistoryDemography.SuccessionsBefore(folk.LifespanYears, view.TurnYears, view.Turn),
-            });
-            sink.Adjust(polity.Id, ScalarRegistry.Pressure, AgendaBump);
-            sink.Event(HistoryEventKind.Villain, polity.Id, polity.CapitalTile,
+                RulerGeneration = HistoryDemography.SuccessionsBefore(folk.LifespanYears, view.TurnYears, view.Turn - polity.FoundedTurn),
+            };
+            sink.Emit(rise);
+            sink.Emit(new Proposal.AdjustScalar { Requires = rise, EntityId = polity.Id, ScalarId = ScalarRegistry.Pressure, Delta = AgendaBump });
+            sink.EventIfApplied(rise, HistoryEventKind.Villain, polity.Id, polity.CapitalTile,
                 new[] { "villain", $"villain:{villainId}", $"agenda:{agenda}", $"folk:{polity.FolkKey}" });
         }
     }

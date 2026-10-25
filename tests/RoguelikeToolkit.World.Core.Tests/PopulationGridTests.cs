@@ -33,6 +33,38 @@ public sealed class PopulationGridTests
         return grid;
     }
 
+    /// <summary>An adjacency that also names a cell the grid does not have.</summary>
+    private readonly struct OffGrid : IAdjacency
+    {
+        public int GetAdjacent(int cell, Span<int> neighbors)
+        {
+            neighbors[0] = cell + 1000;
+            neighbors[1] = (cell + 1) % 4;
+            return 2;
+        }
+    }
+
+    [Fact]
+    public void SubsetListingACellTwice_StepsItOnce()
+    {
+        var once = Seeded(50, 2);
+        var twice = Seeded(50, 2);
+        once.Step(new Rates(0.01, 0.4, 0.5), new Ring(50), seed: 3, cells: new[] { 7, 8 });
+        twice.Step(new Rates(0.01, 0.4, 0.5), new Ring(50), seed: 3, cells: new[] { 7, 8, 7, 7, 8 });
+        for (int c = 0; c < 50; c++)
+            for (int g = 0; g < 2; g++)
+                Assert.Equal(once.Get(c, g), twice.Get(c, g));
+    }
+
+    [Fact]
+    public void NeighbourOutsideTheGrid_IsIgnored()
+    {
+        var grid = new PopulationGrid(4, 1);
+        grid.Give(0, 0, 100);
+        grid.Step(new Rates(0, 0, 1.0), new OffGrid(), seed: 1);
+        Assert.Equal(100L, grid.Total());
+    }
+
     [Fact]
     public void Migration_ConservesPeopleExactly()
     {

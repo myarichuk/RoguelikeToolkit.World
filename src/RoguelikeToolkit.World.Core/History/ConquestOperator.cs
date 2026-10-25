@@ -40,6 +40,7 @@ public sealed class ConquestOperator : IHistoryOperator
         }
         foreach (var victor in polities)
         {
+            if (!victor.Alive) continue; // a victor that collapsed or was absorbed since imposes nothing
             foreach (var war in view.EventsOf(victor.Id))
             {
                 if (war.Kind != HistoryEventKind.War || war.Turn != view.Turn - 1) continue;
