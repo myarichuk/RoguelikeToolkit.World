@@ -8,8 +8,7 @@ namespace RoguelikeToolkit.World.Core.History;
 /// <summary>
 /// Order 70: splits far-flung, oppressed regions off as new polities. Every turn, in polity
 /// order, a polity whose crowding pressure (plus its accumulated war bumps) passes
-/// <see cref="OppressionThreshold"/>, whose culture holds tight (<see cref="TightnessThreshold"/>
-/// collectivism or more), and which owns a large-enough far province, may see that province
+/// <see cref="OppressionThreshold"/> and which owns a large-enough far province may see that province
 /// break away: the rebel capital is its most distant owned tile, ownership is re-flooded by the driver commit from
 /// all capitals (user pins win, exactly like <see cref="HistoryTerritory"/>), and a
 /// <see cref="HistoryEventKind.Rebellion"/> event records the parent. Rebellions cost one
@@ -28,11 +27,16 @@ public sealed class RebellionOperator : IHistoryOperator
     /// <summary>Crowding pressure (plus war bumps) at which an oppressed province snaps.</summary>
     public const double OppressionThreshold = 0.35;
 
-    /// <summary>Minimum parent-culture collectivism (0..100) for a tight-culture break.</summary>
+    /// <summary>Parent-culture collectivism (0..100) from which a break is a clean split of kin (full <see cref="RebelChance"/>);
+    /// looser cultures break too, at <see cref="LooseRebelShare"/> of it. Every culture can rebel: gating on collectivism
+    /// alone used to let only a few peoples (lizardfolk, dogfolk, dwarves, orcs) multiply into breakaway states.</summary>
     public const int TightnessThreshold = 60;
 
-    /// <summary>Per-province, per-turn breakaway chance once every condition holds.</summary>
+    /// <summary>Per-province, per-turn breakaway chance once every condition holds, for a tight culture.</summary>
     public const double RebelChance = 0.3;
+
+    /// <summary>Share of <see cref="RebelChance"/> a culture below <see cref="TightnessThreshold"/> breaks at.</summary>
+    public const double LooseRebelShare = 0.7;
 
     private PeoplesStore? _store;
     private bool _storeLoaded;
@@ -68,13 +72,13 @@ public sealed class RebellionOperator : IHistoryOperator
             if (!polity.Alive || polity.FoundedTurn >= view.Turn) continue;
             int parent = polity.Id;
             if (owned[parent] < MinRebelTiles) continue;
-            if (CollectivismOf(polity.CultureKey, _store) < TightnessThreshold) continue;
             if (view.ScalarOf(parent, ScalarRegistry.Pressure) < OppressionThreshold) continue;
             int capital = FarthestTile(vectors, ownership, polity);
             if (capital < 0) continue;
             if (Vector3D.Dot(vectors[polity.CapitalTile], vectors[capital]) > separationDot) continue;
             var stream = sink.Rng(parent, "break");
-            if (stream.NextDouble() >= RebelChance) continue;
+            double chance = CollectivismOf(polity.CultureKey, _store) >= TightnessThreshold ? RebelChance : RebelChance * LooseRebelShare;
+            if (stream.NextDouble() >= chance) continue;
             if (!sink.TrySpendEmergence()) continue;
             int id = polities.Count + founded++;
             var rising = new Proposal.AddPolity

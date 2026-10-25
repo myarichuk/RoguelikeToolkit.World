@@ -126,6 +126,9 @@ public sealed class PolityFormStage : HistoryPluginBase
         PeoplesStore? peoplesStore = null;
         bool loaded = false;
         var peoples = HistoryRng.Create(history.Seed, nameof(PolityFormStage), 0, 0, "peoples");
+        // Peoples are drawn without replacement until the roster is used up (then the bag refills): with independent draws a
+        // dozen-people roster leaves some peoples founding three states and others none.
+        var bag = new List<int>();
         for (int id = 0; id < capitals.Count; id++)
         {
             int tile = capitals[id];
@@ -137,7 +140,10 @@ public sealed class PolityFormStage : HistoryPluginBase
             string folk = "human", culture = "human_common";
             if (history.Seeds.Count > 0)
             {
-                var pair = history.Seeds[(int)peoples.NextUInt((uint)history.Seeds.Count)];
+                if (bag.Count == 0) for (int k = 0; k < history.Seeds.Count; k++) bag.Add(k);
+                int pick = (int)peoples.NextUInt((uint)bag.Count);
+                var pair = history.Seeds[bag[pick]];
+                bag.RemoveAt(pick);
                 folk = pair.FolkKey;
                 culture = pair.CultureKey;
             }

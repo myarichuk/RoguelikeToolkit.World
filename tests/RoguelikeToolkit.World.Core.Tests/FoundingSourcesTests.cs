@@ -49,7 +49,11 @@ public sealed class FoundingSourcesTests
             var h = w.History;
             // After a collapse a shrine may sit in a successor that owns no holy site of its own.
             if (h.Events.Any(e => e.Kind == HistoryEventKind.PolityCollapsed)) continue;
-            foreach (var s in h.Settlements.Where(s => s.Role == SettlementRole.Shrine))
+            // A shrine taken in war stays a shrine of its captor while the holy site stays with the land's owner.
+            var captured = h.Events.Where(e => e.Kind == HistoryEventKind.SettlementCaptured)
+                .Select(e => int.Parse(e.Tags.First(t => t.StartsWith("settlement:", StringComparison.Ordinal))["settlement:".Length..]))
+                .ToHashSet();
+            foreach (var (s, i) in h.Settlements.Select((s, i) => (s, i)).Where(x => x.s.Role == SettlementRole.Shrine && !captured.Contains(x.i)))
                 Assert.Contains(h.HolySites, hs => hs.PolityId == s.PolityId);
             foreach (var s in h.Settlements.Where(s => s.Role == SettlementRole.Post))
                 Assert.True(h.Polities.Any(p => p.Id != s.PolityId), "A post needs a rival polity to face.");

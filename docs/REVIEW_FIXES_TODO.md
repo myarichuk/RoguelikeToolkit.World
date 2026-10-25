@@ -149,12 +149,20 @@ records, unnamed, not exported); ruins/holy/battlefields exported but minZoom 1.
 stamps; faiths/culture not exported; borders = unweighted BFS from capitals (Voronoi) + coarse 4px RealmGrid; culture skew =
 rebellion gated on Collectivism >= 60, so lizardfolk/orc/dogfolk breakaways multiply (founding itself is uniform).
 
-- [ ] H1 Cost-weighted territory flood (terrain/rivers/ranges; deterministic PQ) so borders follow geography
-- [ ] H2 Rebellion gate and breakaway culture: no collectivism-driven multiplication of a few peoples; founders drawn without replacement
+- [x] H1 Cost-weighted territory flood (terrain/rivers/ranges; deterministic PQ) so borders follow geography
+- [x] H2 Rebellion gate and breakaway culture: no collectivism-driven multiplication of a few peoples; founders drawn without replacement
 - [ ] H3 Name variety: bigger non-human tables, lower own-word weight, joint realm+place uniqueness with fallback
 - [ ] H4 Realm labels join collision avoidance (candidate cells, place labels yield)
 - [ ] H5 Surface ruins/holy sites/battlefields (Realms preset stamps, minZoom), richer event lines (villain agenda, myths)
 - [ ] H6 Export villains/faiths/culture traits; notable-figures + culture card in the history window (personas proper come with the expansion)
 
 Log:
+- 2026-10-25. H1: HistoryTerritory.AssignOwners is a Dijkstra (key cost, owner, tile) with StepCost = 1 + 6*climb +
+  4*(height-0.35)+ + 1 onto a river, x biome hostility (glacier 2.5, deserts 1.8, swamp/tundra/mountain/canyon 1.6,
+  jungle 1.4, forest 1.15). Size 6 build ~1.2 s. TerritoryCostTests (wall hands land to the far side). No golden moved
+  (goldens carry no history). H2: founders drawn without replacement (bag); rebellion open to every culture at 0.7x chance
+  below collectivism 60 (RebellionOperator.LooseRebelShare). PeoplesBalanceTests (12-people roster, 24 worlds): max/mean
+  1.54 (old 1.73, fails), spread 35..13 (old 39..11). Test fallout, re-scoped (assumptions held by chance): Wars_* pressure
+  now over all wars at the war turn (>=80%); Shrines_* skips captured shrines. Core 962 (+960 ns2.1), Engine 73.
+  Render-side border smoothing (RealmGrid sampling) still open, goes with H4.
 

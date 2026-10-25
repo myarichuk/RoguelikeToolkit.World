@@ -62,6 +62,7 @@ const RoguelikeToolkit.World.Core.History.RebellionOperator.MinRebelTiles = 8 ->
 const RoguelikeToolkit.World.Core.History.RebellionOperator.MinSeparationDegrees = 12 -> double
 const RoguelikeToolkit.World.Core.History.RebellionOperator.OppressionThreshold = 0.35 -> double
 const RoguelikeToolkit.World.Core.History.RebellionOperator.RebelChance = 0.3 -> double
+const RoguelikeToolkit.World.Core.History.RebellionOperator.LooseRebelShare = 0.7 -> double
 const RoguelikeToolkit.World.Core.History.RebellionOperator.TightnessThreshold = 60 -> int
 const RoguelikeToolkit.World.Core.History.ScalarRegistry.Pressure = 0 -> int
 const RoguelikeToolkit.World.Core.History.SettleOperator.HolySiteRadiusDegrees = 4 -> double
