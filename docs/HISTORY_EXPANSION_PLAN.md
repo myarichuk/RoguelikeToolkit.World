@@ -1,0 +1,379 @@
+# History expansion: battles, logistics, named persons
+
+Status: **plan, no code.** Requested 2026-10-25. Builds on `Proposal.Requires` (batch F of
+[REVIEW_FIXES_TODO.md](REVIEW_FIXES_TODO.md), landed in `d7492ac`). Phases are **X0–X9** (§10).
+
+## 0. Facts that shape the design
+
+- **A turn is 10 years** (`HistoryContext.TurnYears`). A battle or siege lives inside one turn: each campaign draws a year
+  offset (0..TurnYears−1) and a season and records them. Nothing carries across turns except the persisted state below.
+- **War today is a coin flip.**
+  - `WarOperator.Propose` uses one `raid` stream.
+  - `BattlefieldTile` scans all tiles and returns the lowest-index defender tile next to the attacker: the same tile for a
+    pair every time (repetitive) and O(tiles) per war (slow at size 7).
+  - `Assault` picks capture / raze / sack from flat constants; `ConquestOperator` uses a 1.5x population ratio.
+- **Event budget.** `HistoryCatalog.AppendLinked` enforces `MaxEventsPerTurn` (64) catalog-wide in commit order (entity id
+  first). Structural events written by the commit (SettlementFounded, TierChanged, SettlementEnded) share the 64.
+  Detail events must get their own quota or they crowd out structure and move goldens. `MaxEvents` (4096) compacts Minor
+  events first.
+- **Event participants.** `EventParticipant(EntityId, Role)` has no callers. `ValidateReferences` treats every participant
+  id as a polity.
+- **Ids are predicted by the emitter.** `AddPolity` works only because the emitter predicts the next id and the commit
+  rejects anything else. Persons created by several operators in one turn need pending handles (§1.3).
+- **`ActorTraits.Roll` is keyed by id.** If person ids came from commit order, adding a plugin would change Core persons'
+  traits. Person draws use stable keys (§1.1).
+- **Layering.** Peoples is rank 2, History 4, Integration/Names 5 (`ArchitectureTests.Rank`). The Peoples loader routes by
+  folder (`PeoplesStore.LoadOne`); new YAML types must be registered in `Internal/Compat/AotYamlObjectFactory.cs`. Core
+  targets `net10.0;netstandard2.1`.
+- **Schema.** `HistoryCatalog.SchemaVersion = 12`. Load branches on `version >= N`, then `ValidateReferences` and
+  `Timeline.Validate`.
+- **Editor.** C# exports in `MapEditor.Engine/WorldExports.History.cs`, strides pinned in `WorldExportsLayoutTests`.
+  Editor TS `engine/world/history/actors.ts` already uses "Actor" for realm/culture groups, so new TS code says **Person**.
+- **Logistics inputs that already exist:**
+  - routes of road segments (`HistoryRoad`);
+  - `SettlementRole.Post` and `AddSettlement.Why` (`garrison`, `route`);
+  - the displaced pool;
+  - `ClimateInfo.SeasonalRange`, `RainSeasonality`, `RainPhase`;
+  - `HydrologyInfo.IsRiver`, `LandCapacityInfo.Timber`, `BiomeInfo.DangerLevel`.
+
+  There is no defensibility layer yet (M5.2); sieges fall back to tier, height and coast.
+
+## 1. Data model (Core `History/`, one type per file)
+
+### 1.1 `HistoryPerson` (catalog list `Persons`, id = index)
+
+| Field | Type / notes |
+|---|---|
+| `Id` | int |
+| `Kind` | `PersonKind : byte`: Ruler, Heir, Advisor, General, Spymaster, MerchantPrince, RebelLeader, Outlaw, Privateer, Prophet |
+| `Folk`, `Culture` | interned string ids |
+| `PolityId` | allegiance; −1 for a free outlaw |
+| `SeatSettlement` | −1 for none |
+| `HouseId`, `Parent` | person id or −1 |
+| `Feminine` | bool |
+| `BornTurn`, `BornYear` | year is the offset inside the turn |
+| `DiedTurn` | −1 = alive |
+| `DeathCause` | interned: age, battle, executed, assassinated, plague, hanged, lost_at_sea, outlaws |
+| `Traits` | `ActorTraits` (OCEAN) |
+| Skills | `Martial`, `Intrigue`, `Stewardship`, `Charisma` (bytes 0..100) |
+| `Epithets` | 0..3 interned trait ids from data |
+| `Renown` | int |
+| `Wealth` | double |
+| `Loyalty` | sbyte −100..100, to the ruler |
+| `Pledged` | double, merchant war funding consumed by the next campaign |
+| `StableKey` | int, see below |
+
+- **`StableKey`** = `HistoryRng.StableHash($"{operator}|{turn}|{originEntity}|{slot}")`, fixed when proposed. Every draw about
+  the person uses `sink.Rng(StableKey, purpose)`, never the id; traits are rolled by the proposer and carried in the
+  proposal. Ids may shift when plugins add persons; outcomes do not.
+- **Skills** = OCEAN + culture offsets + one draw:
+  - Martial = 0.4(100−A) + 0.3C + 0.3·roll
+  - Intrigue = 0.4O + 0.3(100−A) + 0.3·roll
+  - Stewardship = 0.6C + 0.4·roll
+  - Charisma = 0.6E + 0.4·roll
+- **Epithets** come from `Peoples/Data/Traits/*.yaml` (OCEAN predicates, effect weights): cautious, reckless, cruel, pious,
+  greedy, beloved, cunning, craven, ...
+
+### 1.2 Other catalog lists
+
+- **`HistoryRelation { A, B, Kind, FromTurn, ToTurn, Weight }`.** Kinds: parent, spouse, patron, rival, nemesis, mentor,
+  betrayer, sworn, sponsor. List sorted by (A, B, Kind, FromTurn); at most 8 open relations per person.
+- **`HistoryTenure { Person, Polity, Office, FromTurn, ToTurn }`.** Offices: ruler, chancellor, marshal, spymaster, treasurer,
+  high_priest, council. At most one open tenure per (polity, office).
+- **`HistoryBattle`.** A record, not an event, so it survives compaction; one War or Siege event points at it.
+  - Identity and place: `Id, Turn, Year, Season, Kind` (field / ambush / siege / relief / naval), `Tile, Terrain`,
+    `Settlement` (−1 unless a siege).
+  - Sides: `Attacker, Defender, GeneralA, GeneralD`; per side strength, loss share, supply, morale, tactic, unit.
+  - Result: `Outcome` (AttackerDecisive, AttackerVictory, AttackerPyrrhic, Stalemate, DefenderVictory, DefenderDecisive,
+    Averted), `Beats` (interned beat tags), `SiegeMonths, SiegeEnd`, `Parent` (a relief battle points at its siege), `EventId`.
+- **`HistoryRouteState`.** Sorted by (RouteA, RouteB). Fields: `Safety, Traffic` (0..1), `Forts, Waystations`,
+  `OutlawBand` (person), `Sponsor` (polity), `SabotagedTurn, LastIncidentTurn`. The timeline gains route samples.
+- **`HistoryContext` additions:**
+  - `HistoryFeatures` flags: Persons, Battles, Sieges, Logistics, Commerce, Outlaws, Intrigue. **Default None until X9.**
+  - Caps: `MaxPersons` 4096, `MaxLivingPersonsPerPolity` 6, `MaxAppointmentsPerTurn` 12, `MaxOutlawBands` 16,
+    `MaxDetailEventsPerTurn` 32, `MaxSiegeMonths` 18.
+
+### 1.3 Proposals (appended after `SetPluginState = 27`; numeric order = commit order within an entity)
+
+- **`AddPerson` (28)**, applied in a structural pre-pass after `AddPolities`.
+  - The emitter gets a pending id from `sink.ProposePerson(...)` (`−(2+n)`, scoped per operator).
+  - The commit assigns real ids in canonical order and rewrites same-operator references (`person:{pending}` tags,
+    participants, later proposals) through the map.
+  - Caps apply; rulers are exempt.
+- **`EndPerson` (29)**, conflict per person.
+- **`SetTenure` (30)**, conflict per polity·64 + office.
+- **`AddRelation` / `EndRelation` (31/32).**
+- **`AdjustPerson` (33)**: summed deltas, clamped once, like `AdjustScalar`.
+- **`AddBattle` (34)**: the commit appends the record, then the War/Siege event tagged `battle:{index}`, and sets `EventId`.
+- **`AdjustRoute` (35)** and **`SetRouteFlag` (36)**.
+
+Outcome-dependent proposals ("capture only if the siege committed") use `Requires`.
+
+### 1.4 Events
+
+- **New `HistoryEventKind` values:** Siege 25, PersonRose 26, PersonDied 27, Intrigue 28 (plot / assassination / bribe /
+  sabotage / sponsorship_exposed), CaravanRaided 29, OutlawRose 30, OutlawEnded 31, Smuggling 32, Privateering 33,
+  Campaign 34 (winter_quarters / supply_failed / foraging / forced_march), Prophecy 35.
+- **War stays the field battle**, gaining `battle:{id}` and `outcome:{o}` tags.
+- **Participant roles are prefixed by entity** (`person:commander`, `settlement:besieged`); a bare role means a polity.
+  `ValidateReferences` dispatches on the prefix.
+- **Detail quota.** Kinds 25+ and Minor kinds count against `MaxDetailEventsPerTurn`, separate from the 64. At most 2
+  detail events per polity per operator.
+
+### 1.5 TurnView
+
+- New: `Persons` (living), `PersonsOf`, `OfficeHolder`, `RelationsOf`, `RouteStates`, `BattlesOf`.
+- Lazy caches: `LogisticsGraph`, `TerrainClass(tile)`, and `BorderIndex` (polity pair → border tiles, one O(tiles·6) pass).
+  `BorderIndex` replaces the `BattlefieldTile` scan; its first entry reproduces today's choice, so legacy mode stays
+  byte-identical.
+
+### 1.6 Persistence: schema 13
+
+- Saved after the timeline: persons, relations, tenures, battles, route states, route samples.
+- Load validates references, interned ids, `BornTurn ≤ DiedTurn`, one open tenure per office, loss shares in [0, 1] with
+  finite strengths, and sorted relations.
+- Files older than v13 load with empty lists.
+
+## 2. Peoples data (YAML, culture-keyed, validated)
+
+- **`Tactics/*.yaml`.** `Key`, `Arm` (foot/horse/missile/siege/beast/naval), `TerrainFit` (0.5..1.5), `Counters`
+  (0.7..1.3), `Seasons`, `Beats`. Starter set: shieldwall, pike_square, heavy_charge, horse_archers, skirmish, ambush,
+  massed_archery, berserk_rush, war_beasts, siege_engines.
+- **`Warfare/<culture>.yaml`**, with `default.yaml` as the fallback:
+
+```yaml
+Key: orcish_horde
+Doctrine: { berserk_rush: 40, horse_archers: 30, ambush: 20, shieldwall: 10 }
+Units: [ { Key: wolf_riders, Arm: horse, Weight: 3 }, { Key: boar_tuskers, Arm: beast, Weight: 1 } ]
+Mobility: 80, Discipline: 35, SiegeSkill: 25, Forage: 90, ColdTolerance: 60, Levy: 1.4
+CampaignSeasons: { spring: 2, summer: 3, autumn: 2, winter: 1 }
+Customs: [take_heads, no_quarter, duel_of_champions]   # change model terms, unlock beats
+```
+
+- **`Lexicon/<culture>.yaml`** (prose only, never read by the simulation): cries, unit names (sing./pl.), oaths, verbs by
+  register, office titles, epithet words, siege words.
+- **`Traits/*.yaml`** for epithets.
+- **Loader work:** new folders in `PeoplesStore.LoadOne`, cross-checks (doctrine → tactics, arms valid, culture exists),
+  AOT factory registration, and a lint over all 12 shipped cultures.
+
+## 3. Battle resolution: `BattleResolver` (pure static, like `ShockResolver`)
+
+Called inside `WarOperator.Propose`. Draws use `sink.Rng(battleKey, "battle:<phase>")` with
+`battleKey = StableHash($"{attacker}|{defender}|{turn}|{n}")`, independent of the legacy `raid` stream, so the decision to go
+to war is unchanged. `DetMath` only; sums of uniforms stand in for normals.
+
+**Forces**
+- Levy: `L = Pop × m_form × Levy_c × (1 + (Collectivism−50)/200)`, with m_form Horde .20, Loose .10, Kingdom .07, MerchantRepublic .04.
+- Mercenaries: `+ min(ΣPledged×0.02, 0.5L)`.
+- Attacker: `F_a = L_a·reach`, `reach = Exp(−d/R)`; d is the logistics cost from the nearest own settlement (§4) and
+  `R = R0(0.5 + Mobility/100)`.
+- Defender: `F_d = L_d(0.6 + 0.4·warned)`; warned is a draw < 0.5 + 0.004·(spy Intrigue difference).
+
+**Supply, morale, terrain, season**
+- Supply: `σ = clamp(reach·seasonF + (Forage/100)·cap(target)·(1−reach) − 0.2·sabotaged, .25, 1)`.
+- Morale: `μ = clamp(.5 + .003·Honor + .1·home + .1·holy + .05·tanh(renown/10) − .3·max(0, pressure−.5) − .2(1−σ), .2, 1.2)`.
+- Terrain of the battlefield tile: open/forest/hills/mountain/marsh/desert/snow plus a river-crossing flag.
+  Defender bonus δ: forest .10, hills .20, mountain .35, marsh .15, river crossing +.25.
+- Season from CampaignSeasons. Winter penalty `w = norm(SeasonalRange)·[winter]·(1−ColdTolerance/100)`; mud from
+  RainSeasonality / RainPhase.
+
+**Phases**
+1. **Manoeuvre.**
+   - Initiative: `I = Mobility/100 + Martial/100 + .3·Intrigue/100 + noise`.
+   - Attacker wins: picks ground (ambush ×1.3 with δ halved in forest/hills if the doctrine allows), or bypasses the river.
+   - Defender wins: holds the best border tile (full δ), or declines into a siege when `F_d < .6F_a` and a walled settlement
+     is in reach.
+   - If `σ_a < .35`: outcome Averted plus `Campaign:supply_failed`.
+   - The battlefield is drawn from the top-k `BorderIndex` tiles along the path, weighted by the manoeuvre winner's
+     TerrainFit. This also fixes the same-tile repetition.
+2. **Engagement.**
+   - Each side draws a tactic, weighted by Doctrine × TerrainFit × epithet bias.
+   - Power: `P = F·μ·σ·Fit·Counter·(1 + .006(Martial−50))·(1−w)`, times `(1+δ)` for the defender.
+   - Margin: `m = 2·Log(P_a/P_d) + spread·Log(u/(1−u))`, with spread = 1 + .5·reckless − .3·cautious.
+     P(attacker wins) ≈ r²/(1+r²) (Lanchester square).
+   - Bands: m > 2 decisive; .6..2 victory; |m| < .6 pyrrhic or stalemate; mirrored for the defender.
+3. **Rout and pursuit.**
+   - Loser loss: `ℓ_l = clamp(.10 + .08|m|, .05, .6)`. Winner loss: `ℓ_w = clamp(.12/(1+|m|), .02, .3)`.
+   - Decisive adds `.15·Mobility_w/100·(1−Discipline_l/200)`, ×1.5 under `no_quarter`.
+   - General death: p = .03 + .10·lost + .15·decisive-lost + .08·reckless; under `ransom`, part of that becomes capture.
+   - Turning-point beat: a weighted draw over beats whose preconditions hold — flank, feigned_retreat,
+     rain_on_bowstrings, river_ford_held, night_attack, stampede, betrayal (advisor Loyalty < −30), champion_duel,
+     general_fell.
+
+**What the outcome does** (replaces the flat constants in `Assault`)
+- Casualties: KillPopulation on the nearest settlements, capped at 5%.
+- Decisive win against a non-capital: siege, or direct capture if the target is unwalled.
+- Victory: sack.
+- Defender decisive: grudge +2 and deserters (§5).
+- Renown, and a nemesis relation after two meetings.
+- `ConquestOperator` (behind the flag) overlays only on AttackerDecisive or a stormed capital.
+
+### 3.1 Sieges: `SiegeResolver` (month loop, up to `MaxSiegeMonths`)
+
+- **Setup**
+  - Garrison: pop × {village .05, town .08, city .10}; hamlets cannot be besieged.
+  - Walls: tier + defensibility (or a height/coast proxy) + .3 for a fort.
+  - Food in months: `Fm = 6 + 6[city] + 4[river/coast resupply not blockaded] − 3[autumn] − 3[granary sabotaged]`.
+  - The blockade is complete only if the attacker controls the sea lane.
+- **Each month**
+  - Attacker supply σ_m = σ − .03m (×2 in winter without quarters), plus disease .02/month (×2 marsh or summer).
+  - Storm attempt when `SiegeSkill·P_a/(P_d(1+W)) > 1.2` and a draw < .15·SiegeSkill/100; success at r²/(1+r²).
+  - Starvation after Fm: defender morale −.15/month, surrender p = .1(m−Fm).
+  - Betrayal p = .01 + .03[spymaster Intrigue > 70] + .04·starving + .05·[foreign garrison or disloyal commander].
+  - Relief: if the defender's free levy ≥ .5P_a, a relief battle at month ⌈d/speed⌉, recorded with Parent = the siege.
+  - The siege lifts when σ_m < .3.
+- **Ends and their proposals**
+  - stormed → capture, kill .1–.3, or raze under `salt_fields`;
+  - surrendered → capture;
+  - betrayed → capture plus a relation;
+  - relieved / lifted / starved_out → pressure and a grudge;
+  - capital stormed → sack plus an `AddWindow` tribute.
+
+## 4. Logistics: a graph over settlements, not tiles
+
+- **`LogisticsGraph`**, built lazily per TurnView (about 150 nodes or fewer).
+  - Edges:
+    - unsevered routes: segments × (1 + 1.5(1−Safety));
+    - river links: both IsRiver, within 8°, angle·0.7;
+    - sea lanes for coastal settlements of maritime or merchant polities, within 20°: angle·0.8;
+    - overland within 10°: angle × mean terrain factor × 3.
+  - Multi-source Dijkstra, `SortedSet<(cost, index)>`.
+- **Military use:** reach, σ, foraging, winter quarters (σ < .6 in winter → Campaign:winter_quarters, attrition, campaign
+  slips a year). Severed or sabotaged edges, or a third party at war, add cut-supply cost; cut supply is the main reason
+  sieges lift.
+- **`LogisticsOperator` (order 40): projection of power.**
+  - Route safety drifts .3 per turn toward
+    `Σ_endpoints formStrength·(1 − dist_capital/R_proj) + .15·Forts + .05·Waystations − .25[outlaws] − .3[crosses belligerents]`.
+  - On long, unsafe routes it founds a `Post` settlement (`why:fort` / `why:waystation`) on an owned midpoint tile.
+- **`CommerceOperator` (order 82): peaceful flows.**
+  - Traffic = complementarity × (.5 + merchant wealth) × Safety. Needs `TradeRoadOperator.SurplusProfiles` moved into
+    `HistoryDemography`.
+  - Raids: p = (1−Safety)·.3·Traffic → `CaravanRaided`; the merchant loses wealth, the outlaw gains renown.
+  - A sponsored band is exposed on a draw against the victim's spymaster → `Intrigue:sponsorship_exposed` + grudge, a
+    casus belli.
+  - A severed route with merchants at both ends → `Smuggling`.
+  - A maritime polity with grudge ≥ 2 and a sea lane commissions a Privateer (`sponsor` relation).
+  - Sabotage (`IntrigueOperator`): an enemy route or granary before an expected campaign; it takes effect next turn.
+
+## 5. Persons: operators (built-ins below 100; the plugin band is untouched)
+
+- **`CourtOperator` (38)**
+  - **Rulers:** one per living polity. Succession is tied to `PopulationOperator`'s generation tick: the ruler dies of age
+    and the heir or a kinsman takes over (`parent` relation).
+  - **Heirs:** treaty heirs become persons; marriage gives `spouse`.
+  - **Offices by form:** Kingdom 3; MerchantRepublic a council of merchant princes; Horde 1–2 war-chiefs; Loose
+    Association elders. A vacancy draws 3 candidates and takes the best OCEAN fit; low-A rulers pick favourites
+    (`patron`). Two holders with high E and low A become `rival`s.
+  - **Death hazard:** `1 − Exp(−TurnYears·a·Exp(b·age/lifespan))`, lifespan ±25%, plus plague or shock in the seat.
+- **War (50):** the marshal leads, else the ruler, else an ad-hoc captain via a pending handle.
+- **Rebellion (70):** creates the RebelLeader, who becomes ruler of the new polity. A failed uprising gives a leader who is
+  executed or turns outlaw.
+- **`OutlawOperator` (74)**
+  - Sources: displaced groups unabsorbed for 2+ turns near a route; deserters after a decisive loss; failed rebels;
+    ruined merchants.
+  - Haven: forest or hills within 6° of a route.
+  - Ends: hanged, pardoned (becomes a captain, `patron`), age, or a haven settlement (`Refuge`, `why:outlaw_haven`).
+- **`MerchantOperator` (78)**
+  - Merchant princes in Town+ Node or port settlements on active routes, at most 2 per settlement.
+  - Wealth grows with traffic. Wealth plus ambition buys a council seat. `Pledged` funds mercenaries.
+- **`CourtInfluence` helper (flag Intrigue)**
+  - Hawk = Σ office weight × (100−A+E)/200.
+  - War chance × (.7 + .6·Hawk); treaty acceptance × (.7 + .6·Dove); merchant councils avoid wars that cut their routes.
+- **`ProphetOperator` (86, optional):** after plague or famine; a Prophecy raises pressure and can seed a holy-war grudge.
+
+## 6. Flavour text: late render, never touches simulation bytes
+
+- **Where:** a new `Chronicle` slice (rank 5): `IChronicleTextProvider` / `TemplateChronicleTextProvider`, the pattern of
+  `Integration/TemplateMythTextProvider`.
+- **Inputs:** catalog, event, battle or person, a lexicon, and a host `INameResolver` (honours `Overrides.Renames`).
+- **Grammar** in YAML (`Chronicle/Data/Grammar/common.yaml` plus per-culture overlays):
+
+```yaml
+battle.intro:
+  - { id: bi01, when: [season=winter], w: 2, cd: 8, t: "In the bitter winter of {year}, {att.general} led {att.unit.pl} against {def.realm}." }
+  - { id: bi02, when: [beat=ambush], t: "{def.realm|poss} host never saw the {terrain.noun} close around it." }
+```
+
+- **Grammar features:** slots from tags, records and the lexicon; modifiers `|cap |pl |a |poss |ord`; predicates;
+  nested `{#symbol}`.
+- **Composition:** intro + engagement (tactic pair) + turning point + rout + aftermath/custom + optional cry. With 6–10
+  variants per pool × 8 terrains × 4 seasons × 10 beats × culture overlays, that is more than 10⁴ combinations per culture.
+- **Repetition control (deterministic):**
+  - Render the log once in event-id order, keeping a per-symbol LRU of template ids.
+  - A template within its `cd` window gets weight 0; if all are cooling, take the least recently used.
+  - Draws come from `HistoryRng.Create(seed, "Chronicle", turn, eventId, symbolPath)`.
+  - A used-word set per event stops lexicon repeats.
+  - Output is a pure function of (log, records, grammar hash); nothing is persisted.
+
+## 7. Editor exports (`WorldExports.History.cs`, strides pinned)
+
+- `HistoryInfo` grows from 11 to 16 ints: persons, relations, tenures, battles, route states.
+- **`HistoryPersons()`**, stride 24: `[id, kind, polity, seat, folkStr, cultureStr, feminine, house, parent, bornTurn,
+  bornYear, diedTurn, deathCauseStr, renown, wealth×100, loyalty, martial, intrigue, stewardship, charisma, O, C, E, A]`.
+  Plus `HistoryPersonEpithets()` and `HistoryPersonKindNames()`.
+- **`HistoryRelations()`**, stride 6; **`HistoryTenures()`**, stride 5.
+- **`HistoryBattles()`**, stride 24, plus `HistoryBattleText()` (tactics, units, siege end, beats).
+- **`HistoryRouteStates()`**, stride 8, plus `HistoryRouteSeries()`.
+- **`HistoryChronicle(start, count)`**: rendered prose per event.
+- **TS** (`persons.ts`, `battles.ts`, `routes.ts`):
+  - person card: name via `NameRequest(seed, personId, folk, culture, feminine)`, epithets, lifespan bar, tenures,
+    relations, battles;
+  - map overlay at the scrub turn: battle markers by outcome, siege rings, route-safety heat, outlaw havens, raid pins;
+  - chronicle pane;
+  - `involved()` reads participants by role prefix.
+
+## 8. Budgets
+
+| What | Budget |
+|---|---|
+| Battles | War's decisions (≤8/turn); sieges and relief battles are free |
+| Rulers | structural, unbudgeted |
+| Appointments | ≤ `MaxAppointmentsPerTurn` |
+| Persons | `MaxPersons`, `MaxLivingPersonsPerPolity` |
+| Outlaws, merchants, forts | 4 emergences per operator; outlaws also `MaxOutlawBands` |
+| Route state | free |
+| Detail events | the separate quota |
+
+About 3k persons expected at 300 turns.
+
+## 9. Determinism checklist
+
+- Draws use `sink.Rng(stableKey, purpose)`; persons key on `StableKey`, never id.
+- `DetMath` only.
+- Lists sorted by id or `SortedDictionary` with ordinal comparers. Never `HashCode.Combine` or `string.GetHashCode`.
+- Caches are keyed by catalog instance, never static or stale across `RegenerateHistory`.
+- netstandard2.1: no `Enum.GetValues<T>`, no `CollectionsMarshal`.
+
+## 10. Phases
+
+| Phase | Work | Acceptance |
+|---|---|---|
+| X0 | Legacy catalog hash fixtures (sizes 3/4 × seeds 1–5) plus a legacy event projection; `BorderIndex` speed-up | bytes identical; size-7 history ≥20% faster |
+| X1 | Kernel: types, proposals 28–36, pending handles, detail quota, participant prefixes, schema 13, TurnView accessors, `HistoryFeatures` | flags off: legacy projection identical (hash re-captured once for the empty sections); round trip; corrupt-reference rejection |
+| X2 | `CourtOperator`, persons, relations, tenures (observer only) | flag on: the existing kinds' projection equals flag off; one ruler per polity per turn; no participation after death; age at death ≤ 1.5× lifespan; traits stable when a plugin adds persons |
+| X3 | Tactics/Warfare/Traits YAML, `BattleResolver`, generals; War/Conquest behind the flag | statistical tests (§11); flag off identical |
+| X4 | `SiegeResolver`, relief battles | siege invariants; resupply lengthens sieges; cut supply raises the lifted share |
+| X5 | `LogisticsGraph`, `LogisticsOperator`, forts/waystations, winter quarters, route samples | safety in [0,1]; forts raise it; 300 turns at size 7 < 5 s |
+| X6 | Commerce, Outlaw, Merchant, Intrigue; `CourtInfluence` | corpus bands; an exposed sponsorship leads to a war in ≥1/25 worlds |
+| X7 | Lexicon, Chronicle grammar, renderer | catalog bytes unchanged by rendering; repetition metrics; every template resolves for all 12 cultures |
+| X8 | Exports, TS overlay, person panel | layout tests, vitest, a Playwright path |
+| X9 | `HistoryFeatures` default All | one deliberate corpus re-baseline; PR listing every shift; milestone entry |
+
+## 11. Testing
+
+- **Invariants** over 25 corpus worlds: references resolve; nothing after death; tenures do not overlap; losses in [0,1];
+  captures agree with battle records (`Requires`); caps hold; detail never drops structure.
+- **Determinism:** identical bytes; save/load round trip; prefix stability (12 turns ⊂ 30); shuffled registration;
+  plugin-inserted persons leave Core persons' traits and battles intact.
+- **Statistics** (`BattleResolver`, 10k synthetic keys, shared draws):
+  - equal forces: attacker 0.38–0.50;
+  - 2:1: ≥ .75;
+  - river crossing: −10pp;
+  - cavalry in open vs forest: ≥ 15pp gap;
+  - winter raises attrition;
+  - Martial +30: +8pp;
+  - monotone in strength.
+- **Corpus bands:** decisive 15–35%; sieges 20–40% of wars; 3–7 living persons per polity; 2–10 outlaw bands per 30 turns;
+  raids under 30% of route-turns.
+- **Chronicle:** the most frequent full sentence under 2%; trigram repeats under 15% in a 20-event window; lint for every
+  symbol, slot and predicate; every template reachable.
