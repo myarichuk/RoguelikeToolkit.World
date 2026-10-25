@@ -51,7 +51,31 @@ Descriptors:
   - {Form: Windy, Gloss: windswept, Tags: [high, hill]}
   - {Form: Howling, Gloss: howl-haunted, Tags: [mountain, danger]}
   - {Form: Cloudcapped, Gloss: cloud-capped, Tags: [mountain, high]}
+  - {Form: Gusty, Gloss: gusty, Tags: [hill]}
+  - {Form: Blustery, Gloss: blustery, Tags: [danger, mountain]}
+  - {Form: Airy, Gloss: airy, Tags: [high]}
+  - {Form: Hazy, Gloss: hazy, Tags: [valley]}
+  - {Form: Scudding, Gloss: scudding, Tags: [high, hill]}
+  - {Form: Misted, Gloss: misted, Tags: [water, lake]}
+  - {Form: Veiled, Gloss: veiled, Tags: [high]}
+  - {Form: Lofty, Gloss: lofty, Tags: [mountain, high]}
+  - {Form: Swirling, Gloss: swirling, Tags: [danger, valley]}
+  - {Form: Fleet, Gloss: fleet, Tags: [river]}
+  - {Form: Shrill, Gloss: shrill, Tags: [danger]}
 Nouns:
   - {Form: peak, Gloss: sky peak, Tags: [mountain, high]}
   - {Form: spire, Gloss: wind spire, Tags: [mountain, town]}
   - {Form: eyrie, Gloss: high eyrie, Tags: [high, hill]}
+  - {Form: hamlet, Gloss: hamlet, Tags: [village]}
+  - {Form: roost, Gloss: airy roost, Tags: [town, village]}
+  - {Form: bastion, Gloss: sky bastion, Tags: [city, hold]}
+  - {Form: lodge, Gloss: wind lodge, Tags: [camp]}
+  - {Form: knoll, Gloss: windy knoll, Tags: [hill]}
+  - {Form: dell, Gloss: sheltered dell, Tags: [valley]}
+  - {Form: pinnacle, Gloss: pinnacle, Tags: [mountain, high]}
+  - {Form: race, Gloss: gale race, Tags: [river]}
+  - {Form: torrent, Gloss: torrent, Tags: [river]}
+  - {Form: basin, Gloss: basin, Tags: [lake]}
+  - {Form: grove, Gloss: whispering grove, Tags: [forest]}
+  - {Form: bower, Gloss: bower, Tags: [forest]}
+  - {Form: expanse, Gloss: sky-sea expanse, Tags: [sea]}

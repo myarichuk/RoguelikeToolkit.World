@@ -52,7 +52,31 @@ Descriptors:
   - {Form: Copper, Gloss: copper-bright, Tags: [deposit]}
   - {Form: Cog, Gloss: cog-turned, Tags: [town, village]}
   - {Form: Burble, Gloss: bubbling, Tags: [river, water]}
+  - {Form: Brass, Gloss: brass, Tags: [deposit]}
+  - {Form: Clockwork, Gloss: clockwork, Tags: [town]}
+  - {Form: Puffing, Gloss: puffing, Tags: [valley]}
+  - {Form: Riveted, Gloss: riveted, Tags: [mountain]}
+  - {Form: Bubbly, Gloss: bubbly, Tags: [lake, water]}
+  - {Form: Wheezing, Gloss: wheezing, Tags: [forest]}
+  - {Form: Smoky, Gloss: smoky, Tags: [dark]}
+  - {Form: Dented, Gloss: dented, Tags: [hill]}
+  - {Form: Jolly, Gloss: jolly, Tags: [village]}
+  - {Form: Ticking, Gloss: ticking, Tags: [hold]}
+  - {Form: Hissing, Gloss: hissing, Tags: [river]}
 Nouns:
   - {Form: workshop, Gloss: workshop, Tags: [town, village]}
   - {Form: warren, Gloss: warren home, Tags: [hill, village]}
   - {Form: tinkery, Gloss: tinker shed, Tags: [town]}
+  - {Form: foundry, Gloss: great foundry, Tags: [city, town]}
+  - {Form: vault, Gloss: vault, Tags: [hold, deposit]}
+  - {Form: lodge, Gloss: lodge camp, Tags: [camp]}
+  - {Form: mound, Gloss: mound, Tags: [hill]}
+  - {Form: dell, Gloss: dell, Tags: [valley]}
+  - {Form: crest, Gloss: crest, Tags: [mountain]}
+  - {Form: spur, Gloss: spur, Tags: [mountain]}
+  - {Form: race, Gloss: race, Tags: [river]}
+  - {Form: channel, Gloss: channel, Tags: [river]}
+  - {Form: basin, Gloss: basin, Tags: [lake]}
+  - {Form: copse, Gloss: copse, Tags: [forest]}
+  - {Form: grove, Gloss: grove, Tags: [forest]}
+  - {Form: wharf, Gloss: wharf, Tags: [town, sea]}

@@ -51,7 +51,31 @@ Descriptors:
   - {Form: Burning, Gloss: burning, Tags: [danger, mountain]}
   - {Form: Smoldering, Gloss: smoldering, Tags: [mountain, deposit]}
   - {Form: Charred, Gloss: charred, Tags: [hill, danger]}
+  - {Form: Scalding, Gloss: scalding, Tags: [danger]}
+  - {Form: Sizzling, Gloss: sizzling, Tags: [danger, valley]}
+  - {Form: Molten, Gloss: molten, Tags: [mountain, danger]}
+  - {Form: Stifling, Gloss: stifling, Tags: [valley, danger]}
+  - {Form: Fierce, Gloss: fierce, Tags: [danger]}
+  - {Form: Sultry, Gloss: sultry, Tags: [valley]}
+  - {Form: Parched, Gloss: parched, Tags: [hill]}
+  - {Form: Cracked, Gloss: cracked, Tags: [valley, mountain]}
+  - {Form: Lava, Gloss: lava-washed, Tags: [mountain, danger]}
+  - {Form: Tarred, Gloss: tar-black, Tags: [deposit]}
+  - {Form: Sulfur, Gloss: sulfur-yellow, Tags: [deposit, mountain]}
 Nouns:
   - {Form: pyre, Gloss: ever-pyre, Tags: [mountain, hill]}
   - {Form: vent, Gloss: fire vent, Tags: [mountain, deposit]}
   - {Form: hearth, Gloss: great hearth, Tags: [town, village]}
+  - {Form: hamlet, Gloss: hamlet, Tags: [village]}
+  - {Form: forum, Gloss: forum town, Tags: [town]}
+  - {Form: citadel, Gloss: citadel of cinders, Tags: [city, hold]}
+  - {Form: lodge, Gloss: forge camp, Tags: [camp]}
+  - {Form: mound, Gloss: ember mound, Tags: [hill]}
+  - {Form: gorge, Gloss: gorge, Tags: [valley, river]}
+  - {Form: rift, Gloss: fire rift, Tags: [valley]}
+  - {Form: torrent, Gloss: lava torrent, Tags: [river]}
+  - {Form: caldera, Gloss: lava lake, Tags: [lake, mountain]}
+  - {Form: crater, Gloss: crater, Tags: [mountain]}
+  - {Form: grove, Gloss: burnt grove, Tags: [forest]}
+  - {Form: brake, Gloss: brake, Tags: [forest]}
+  - {Form: magma, Gloss: magma sea, Tags: [sea]}

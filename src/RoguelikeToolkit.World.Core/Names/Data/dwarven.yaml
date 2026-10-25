@@ -53,8 +53,30 @@ Descriptors:
   - {Form: Iron, Gloss: iron-rich, Tags: [deposit, hill]}
   - {Form: Deep, Gloss: deep, Tags: [mountain, valley]}
   - {Form: Stone, Gloss: stony, Tags: [mountain, hill, deposit]}
+  - {Form: Rugged, Gloss: rugged, Tags: [mountain, danger]}
+  - {Form: Cragged, Gloss: craggy, Tags: [mountain, hill]}
+  - {Form: Flinty, Gloss: flinty, Tags: [hill]}
+  - {Form: Gilded, Gloss: gilded, Tags: [deposit]}
+  - {Form: Bronze, Gloss: bronze-veined, Tags: [deposit]}
+  - {Form: Smoky, Gloss: smoky, Tags: [dark]}
+  - {Form: Runic, Gloss: runic, Tags: [hold]}
+  - {Form: Dim, Gloss: dim, Tags: [dark]}
+  - {Form: Sooty, Gloss: sooty, Tags: [danger]}
+  - {Form: Hewn, Gloss: hewn, Tags: [hold, town]}
 Nouns:
   - {Form: hold, Gloss: stronghold, Tags: [hold, town, city]}
   - {Form: delve, Gloss: mine, Tags: [deposit, hill]}
   - {Form: bar, Gloss: hall, Tags: [hold, town, village]}
   - {Form: peak, Gloss: peak, Tags: [mountain]}
+  - {Form: holdfast, Gloss: holdfast, Tags: [village, hold]}
+  - {Form: muster, Gloss: muster camp, Tags: [camp, hill]}
+  - {Form: spur, Gloss: spur, Tags: [hill, mountain]}
+  - {Form: cleft, Gloss: cleft valley, Tags: [valley, mountain]}
+  - {Form: rill, Gloss: rill, Tags: [river]}
+  - {Form: channel, Gloss: channel, Tags: [river]}
+  - {Form: cistern, Gloss: cistern lake, Tags: [lake]}
+  - {Form: grove, Gloss: grove, Tags: [forest]}
+  - {Form: copse, Gloss: copse, Tags: [forest]}
+  - {Form: fjord, Gloss: sea fjord, Tags: [sea]}
+  - {Form: vault, Gloss: vault, Tags: [hold, deposit]}
+  - {Form: shaft, Gloss: mine shaft, Tags: [deposit, hill]}

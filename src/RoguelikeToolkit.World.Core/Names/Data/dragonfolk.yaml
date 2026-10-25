@@ -53,7 +53,31 @@ Descriptors:
   - {Form: Ember, Gloss: ember-red, Tags: [mountain, danger]}
   - {Form: Scaled, Gloss: scale-ridged, Tags: [mountain, hill]}
   - {Form: Smoking, Gloss: smoking, Tags: [mountain, danger, deposit]}
+  - {Form: Gilded, Gloss: gilded, Tags: [mountain, high]}
+  - {Form: Sulfur, Gloss: sulfur-stained, Tags: [deposit, mountain]}
+  - {Form: Brazen, Gloss: brazen, Tags: [danger]}
+  - {Form: Molten, Gloss: molten, Tags: [mountain, danger]}
+  - {Form: Coppery, Gloss: coppery, Tags: [deposit]}
+  - {Form: Ashen, Gloss: ashen, Tags: [hill]}
+  - {Form: Sunlit, Gloss: sunlit, Tags: [high]}
+  - {Form: Vaulted, Gloss: vaulted, Tags: [hill]}
+  - {Form: Fiery, Gloss: fiery, Tags: [danger, valley]}
+  - {Form: Obsidian, Gloss: obsidian, Tags: [mountain, deposit]}
+  - {Form: Lofty, Gloss: lofty, Tags: [high, mountain]}
 Nouns:
   - {Form: roost, Gloss: high roost, Tags: [mountain, town]}
   - {Form: aerie, Gloss: peak aerie, Tags: [mountain, high]}
   - {Form: clutch, Gloss: brood hollow, Tags: [valley, village]}
+  - {Form: byre, Gloss: ember byre, Tags: [village]}
+  - {Form: forum, Gloss: forum town, Tags: [town]}
+  - {Form: citadel, Gloss: flame citadel, Tags: [city, hold]}
+  - {Form: tower, Gloss: smoke tower, Tags: [hold]}
+  - {Form: lair, Gloss: lair, Tags: [camp, hill]}
+  - {Form: mound, Gloss: ember mound, Tags: [hill]}
+  - {Form: gully, Gloss: scorched gully, Tags: [valley, danger]}
+  - {Form: torrent, Gloss: steam torrent, Tags: [river]}
+  - {Form: rill, Gloss: rill, Tags: [river]}
+  - {Form: caldera, Gloss: caldera lake, Tags: [lake, mountain]}
+  - {Form: grove, Gloss: ash grove, Tags: [forest]}
+  - {Form: copse, Gloss: copse, Tags: [forest]}
+  - {Form: deep, Gloss: deep sea, Tags: [sea]}

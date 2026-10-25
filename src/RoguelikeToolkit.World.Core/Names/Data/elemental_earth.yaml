@@ -51,7 +51,31 @@ Descriptors:
   - {Form: Stony, Gloss: stony, Tags: [hill, mountain]}
   - {Form: Rooted, Gloss: deep-rooted, Tags: [forest, valley]}
   - {Form: Shifting, Gloss: shifting, Tags: [hill, danger]}
+  - {Form: Quarried, Gloss: quarried, Tags: [deposit, hill]}
+  - {Form: Eroded, Gloss: eroded, Tags: [valley, danger]}
+  - {Form: Cavernous, Gloss: cavernous, Tags: [mountain, dark]}
+  - {Form: Umber, Gloss: umber, Tags: [deposit]}
+  - {Form: Ochre, Gloss: ochre, Tags: [deposit, valley]}
+  - {Form: Fallen, Gloss: fallen, Tags: [danger, hill]}
+  - {Form: Tectonic, Gloss: tectonic, Tags: [danger, mountain]}
+  - {Form: Thick, Gloss: thick-set}
+  - {Form: Gnarled, Gloss: gnarled, Tags: [forest]}
+  - {Form: Lichened, Gloss: lichen-grown, Tags: [forest, mountain]}
+  - {Form: Silted, Gloss: silted, Tags: [river, lake]}
 Nouns:
   - {Form: tor, Gloss: rock tor, Tags: [hill, mountain]}
   - {Form: barrow, Gloss: earth barrow, Tags: [hill, valley]}
   - {Form: grotto, Gloss: stone grotto, Tags: [mountain, valley]}
+  - {Form: croft, Gloss: earth croft, Tags: [village, valley]}
+  - {Form: byre, Gloss: byre, Tags: [village]}
+  - {Form: warren, Gloss: warren town, Tags: [town, hold]}
+  - {Form: forum, Gloss: stone forum, Tags: [town]}
+  - {Form: citadel, Gloss: earthen citadel, Tags: [city]}
+  - {Form: muster, Gloss: muster camp, Tags: [camp]}
+  - {Form: massif, Gloss: massif, Tags: [mountain]}
+  - {Form: runnel, Gloss: runnel, Tags: [river]}
+  - {Form: channel, Gloss: channel, Tags: [river]}
+  - {Form: cistern, Gloss: cistern lake, Tags: [lake]}
+  - {Form: grove, Gloss: root grove, Tags: [forest]}
+  - {Form: copse, Gloss: copse, Tags: [forest]}
+  - {Form: shelf, Gloss: sunken shelf, Tags: [sea]}

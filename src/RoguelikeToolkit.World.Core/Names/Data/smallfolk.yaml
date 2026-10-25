@@ -61,7 +61,31 @@ Descriptors:
   - {Form: Green, Gloss: green, Tags: [valley, forest]}
   - {Form: Barley, Gloss: barley-rich, Tags: [valley]}
   - {Form: Mill, Gloss: mill-turned, Tags: [river]}
+  - {Form: Mossy, Gloss: mossy, Tags: [forest, valley]}
+  - {Form: Cozy, Gloss: cozy, Tags: [village]}
+  - {Form: Sleepy, Gloss: sleepy, Tags: [valley]}
+  - {Form: Pudgy, Gloss: pudgy, Tags: [village]}
+  - {Form: Jolly, Gloss: jolly, Tags: [town]}
+  - {Form: Sunny, Gloss: sunny, Tags: [hill]}
+  - {Form: Tidy, Gloss: tidy, Tags: [village]}
+  - {Form: Buttery, Gloss: buttery, Tags: [town]}
+  - {Form: Plump, Gloss: plump, Tags: [valley]}
+  - {Form: Rustic, Gloss: rustic, Tags: [valley]}
+  - {Form: Hilly, Gloss: hilly, Tags: [hill]}
 Nouns:
   - {Form: burrow, Gloss: burrow home, Tags: [village]}
   - {Form: wick, Gloss: hamlet, Tags: [village]}
   - {Form: field, Gloss: open field, Tags: [valley]}
+  - {Form: fair, Gloss: fair town, Tags: [town]}
+  - {Form: bakery, Gloss: bakery town, Tags: [town]}
+  - {Form: capital, Gloss: great capital, Tags: [city]}
+  - {Form: hearth, Gloss: hearth hold, Tags: [hold, village]}
+  - {Form: tent, Gloss: tent camp, Tags: [camp]}
+  - {Form: crest, Gloss: crest, Tags: [mountain]}
+  - {Form: bluff, Gloss: bluff, Tags: [mountain, hill]}
+  - {Form: rill, Gloss: rill, Tags: [river]}
+  - {Form: course, Gloss: slow course, Tags: [river]}
+  - {Form: pond, Gloss: pond, Tags: [lake]}
+  - {Form: copse, Gloss: copse, Tags: [forest]}
+  - {Form: orchard, Gloss: orchard, Tags: [forest, valley]}
+  - {Form: wharf, Gloss: wharf, Tags: [sea]}
