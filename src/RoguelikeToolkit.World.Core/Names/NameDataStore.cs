@@ -94,7 +94,7 @@ public sealed class NameDataStore
         foreach (var name in asm.GetManifestResourceNames()
                      .Where(n => n.StartsWith(prefix, StringComparison.Ordinal)
                               && n.EndsWith(".yaml", StringComparison.OrdinalIgnoreCase))
-                     .OrderBy(n => n))
+                     .OrderBy(n => n, StringComparer.Ordinal))
         {
             var rel = ResourceToRelative(name.Substring(prefix.Length));
             LoadOne(store, problems, des, rel, ReadEmbedded(asm, name), fromDisk: false, embeddedKeys, diskKeys: null);
@@ -103,7 +103,7 @@ public sealed class NameDataStore
         if (overrideDir is not null && Directory.Exists(overrideDir))
         {
             var diskKeys = new HashSet<string>(StringComparer.OrdinalIgnoreCase);
-            foreach (var file in Directory.GetFiles(overrideDir, "*.yaml", SearchOption.AllDirectories).OrderBy(f => f))
+            foreach (var file in Directory.GetFiles(overrideDir, "*.yaml", SearchOption.AllDirectories).OrderBy(f => f, StringComparer.Ordinal))
             {
                 var rel = Path.GetRelativePath(overrideDir, file);
                 string content;

@@ -126,13 +126,13 @@ internal static class NameText
     {
         if (word.Length < 2) return word;
         var lower = word.ToLowerInvariant();
-        if (lower.StartsWith("ch") || lower.StartsWith("th") || lower.StartsWith("ph") ||
-            lower.StartsWith("ff") || lower.StartsWith("dd")) return word;
+        if (lower.StartsWith("ch", StringComparison.Ordinal) || lower.StartsWith("th", StringComparison.Ordinal) || lower.StartsWith("ph", StringComparison.Ordinal) ||
+            lower.StartsWith("ff", StringComparison.Ordinal) || lower.StartsWith("dd", StringComparison.Ordinal)) return word;
         bool afterS = !string.IsNullOrEmpty(previous) && char.ToLowerInvariant(previous[^1]) == 's';
         (int drop, string add) = lower switch
         {
-            _ when lower.StartsWith("ll") => (2, "l"),
-            _ when lower.StartsWith("rh") => (2, "r"),
+            _ when lower.StartsWith("ll", StringComparison.Ordinal) => (2, "l"),
+            _ when lower.StartsWith("rh", StringComparison.Ordinal) => (2, "r"),
             _ when lower[0] is 't' or 'd' && afterS => (0, ""),
             _ => lower[0] switch
             {

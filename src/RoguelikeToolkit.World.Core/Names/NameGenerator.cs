@@ -88,7 +88,7 @@ public static class FantasyNameGenerator
         }
         return styles
             .OrderBy(s => s.Race.Equals(FantasyRaces.Human, StringComparison.OrdinalIgnoreCase) ? 0 : 1)
-            .ThenBy(s => s.Label, StringComparer.CurrentCultureIgnoreCase)
+            .ThenBy(s => s.Label, StringComparer.OrdinalIgnoreCase)
             .ToList();
     }
 

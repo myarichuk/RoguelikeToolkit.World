@@ -61,6 +61,39 @@ public class JintWorldStageTests
     }
 
     [Fact]
+    public void MathRandom_IsSeeded()
+    {
+        const string src = "function execute() { for (var i = 0; i < TILE_COUNT; i++) setPrecip(i, Math.random()); }";
+        using var a = TinyMap();
+        using var b = TinyMap();
+        AridityStage(src).Execute(a);
+        AridityStage(src).Execute(b);
+
+        var ca = a.DataStore.GetSpan<ClimateInfo>();
+        var cb = b.DataStore.GetSpan<ClimateInfo>();
+        for (int i = 0; i < ca.Length; i++) Assert.Equal(cb[i].Precipitation, ca[i].Precipitation);
+        Assert.NotEqual(ca[0].Precipitation, ca[1].Precipitation); // still a stream, not a constant
+    }
+
+    [Theory]
+    [InlineData("setPrecip(0, Date.now() % 1);")]
+    [InlineData("setPrecip(0, new Date().getSeconds() / 60);")]
+    public void Date_IsUnavailable(string body)
+    {
+        using var map = TinyMap();
+        var ex = Assert.Throws<InvalidOperationException>(() => AridityStage("function execute() { " + body + " }").Execute(map));
+        Assert.Contains("Date is not available", ex.Message);
+    }
+
+    [Fact]
+    public void MathRandom_CannotBeReplacedByTheScript()
+    {
+        using var map = TinyMap();
+        Assert.Throws<InvalidOperationException>(() =>
+            AridityStage("function execute() { Math.random = function () { return 0.5; }; }").Execute(map));
+    }
+
+    [Fact]
     public void MissingExecute_ThrowsWithStageName()
     {
         using var map = TinyMap();

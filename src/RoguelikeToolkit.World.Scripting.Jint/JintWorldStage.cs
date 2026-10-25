@@ -338,6 +338,12 @@ public sealed class JintWorldStage : IWorldGeneratorStage, IDeclaredStage, IStag
         engine.SetValue("tileSeed", new Func<int, double>(i => Rng.DeriveTileSeed(seed, CheckIndex(i, tileCount))));
         engine.SetValue("rand01", new Func<int, int, double>(Rand01));
 
+        // Determinism: Math.random becomes a stream seeded by the stage seed (same script, same seed, same numbers),
+        // and Date is gone; a wall clock has no place in a world seed.
+        var scriptRandom = new[] { Rng.Create(seed, ScriptRandomSalt) };
+        engine.SetValue("__detRandom", new Func<double>(() => scriptRandom[0].NextDouble()));
+        engine.Execute(DeterminismPrelude);
+
         try
         {
             engine.Execute(_spec.Source);
@@ -356,6 +362,20 @@ public sealed class JintWorldStage : IWorldGeneratorStage, IDeclaredStage, IStag
             throw new InvalidOperationException($"Jint stage '{stageName}' failed: {TrimMessage(ex)}", ex);
         }
     }
+
+    private const int ScriptRandomSalt = 0x4D52; // "MR"
+
+    private const string DeterminismPrelude = """
+        (function (g) {
+          var next = g.__detRandom;
+          Object.defineProperty(Math, 'random', { value: function random() { return next(); }, writable: false, configurable: false, enumerable: false });
+          g.__detRandom = undefined;
+          Object.defineProperty(g, 'Date', {
+            get: function () { throw new Error('Date is not available in world-generation scripts: it is not deterministic. Use SEED, tileSeed(i) or rand01(i, salt).'); },
+            configurable: false, enumerable: false,
+          });
+        })(globalThis);
+        """;
 
     private enum ReadMode { Direct, Zero, NotRegistered, Undeclared }
 

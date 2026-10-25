@@ -46,7 +46,7 @@ public static class ShockResolver
                 case ShockFootprint.Radius:
                     double dot = Vector3D.Dot(vectors[shock.Tile], vectors[s.Tile]);
                     if (dot < cosRadius) continue;
-                    double angle = Math.Acos(Math.Min(1, dot));
+                    double angle = DetMath.Acos(Math.Min(1, dot));
                     reach = 1 - angle / (shock.RadiusDegrees * GeoCoord.Deg2Rad);
                     break;
             }

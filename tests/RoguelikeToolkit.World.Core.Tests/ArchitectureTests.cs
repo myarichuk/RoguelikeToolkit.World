@@ -122,6 +122,22 @@ public sealed class ArchitectureTests(ITestOutputHelper output)
         Assert.DoesNotContain(SourceFiles(), f => f.Text.Contains("InternalsVisibleTo(", StringComparison.Ordinal));
     }
 
+    [Fact]
+    public void Transcendentals_GoThroughDetMath()
+    {
+        // Math.Exp/Sin/Acos/... defer to the platform libm, whose last bit differs between CoreCLR, Mono and IL2CPP builds;
+        // a world seed must give the same bits everywhere. Sqrt, Floor, Abs, Min/Max and friends are exact and stay allowed.
+        var call = new Regex(@"(?<![\w.])Math\.(Exp|Log|Log2|Log10|Pow|Sin|Cos|Tan|Asin|Acos|Atan|Atan2|Sinh|Cosh|Tanh|Cbrt|SinCos)\s*\(");
+        var bad = new List<string>();
+        foreach (var f in SourceFiles())
+        {
+            if (f.Slice == "Primitives" && f.Name == "DetMath") continue;
+            foreach (Match m in call.Matches(f.Text))
+                bad.Add($"{f.Slice}/{f.Name}.cs:{f.Text.AsSpan(0, m.Index).Count('\n') + 1}: {m.Value} (use DetMath)");
+        }
+        Assert.True(bad.Count == 0, string.Join(Environment.NewLine, bad));
+    }
+
     /// <summary>Report mode: prints slice cycles. Not asserted yet, because the domain slices read each other's layer structs both ways.</summary>
     [Fact]
     public void Report_SliceCycles()
