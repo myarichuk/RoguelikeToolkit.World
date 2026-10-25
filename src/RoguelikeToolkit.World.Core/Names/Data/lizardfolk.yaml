@@ -80,3 +80,8 @@ Nouns:
   - {Form: delta, Gloss: delta, Tags: [river, sea]}
   - {Form: copse, Gloss: copse, Tags: [forest]}
   - {Form: thicket, Gloss: thicket, Tags: [forest]}
+# Realm titles in this people's voice ({n} = the base name); forms not listed use fantasy_common's.
+RealmTitles:
+  LooseAssociation: ["{n} Brood", "Clutches of {n}", "{n} Sun-Circle", "Mirekin of {n}", "{n} Spawning"]
+  Horde: ["{n} Swarm", "Scaled Host of {n}"]
+  Kingdom: ["Sun-Throne of {n}", "{n} Basilisk Court"]

@@ -89,3 +89,8 @@ Nouns:
   - {Form: copse, Gloss: copse, Tags: [forest]}
   - {Form: orchard, Gloss: orchard, Tags: [forest, valley]}
   - {Form: wharf, Gloss: wharf, Tags: [sea]}
+# Realm titles in this people's voice ({n} = the base name); forms not listed use fantasy_common's.
+RealmTitles:
+  LooseAssociation: ["{n} Shire", "The Hundreds of {n}", "{n} Hearths", "Fields of {n}"]
+  Kingdom: ["{n} Mayoralty", "Thain of {n}"]
+  MerchantRepublic: ["{n} Market Moot", "Pantry League of {n}"]

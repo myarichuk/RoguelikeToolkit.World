@@ -80,3 +80,8 @@ Nouns:
   - {Form: fjord, Gloss: sea fjord, Tags: [sea]}
   - {Form: vault, Gloss: vault, Tags: [hold, deposit]}
   - {Form: shaft, Gloss: mine shaft, Tags: [deposit, hill]}
+# Realm titles in this people's voice ({n} = the base name); forms not listed use fantasy_common's.
+RealmTitles:
+  Kingdom: ["Hold of {n}", "{n} Under-Mountain", "Deep Kingdom of {n}", "High Hall of {n}", "{n} Thanedom"]
+  LooseAssociation: ["Clanholds of {n}", "{n} Delvings", "Free Clans of {n}"]
+  MerchantRepublic: ["{n} Guildhold", "Forge League of {n}"]

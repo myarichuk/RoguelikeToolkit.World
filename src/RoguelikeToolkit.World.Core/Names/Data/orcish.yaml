@@ -80,3 +80,8 @@ Nouns:
   - {Form: thicket, Gloss: thorn thicket, Tags: [forest]}
   - {Form: brake, Gloss: bramble brake, Tags: [forest]}
   - {Form: brine, Gloss: bitter brine, Tags: [sea, water]}
+# Realm titles in this people's voice ({n} = the base name); forms not listed use fantasy_common's.
+RealmTitles:
+  Horde: ["{n} Warhost", "Blood Clans of {n}", "{n} Skullbanners", "The Iron Tusk of {n}", "{n} Bloodhorde"]
+  Kingdom: ["{n} Overlordship", "Throne of Skulls at {n}", "{n} Dominion"]
+  LooseAssociation: ["Warbands of {n}", "{n} Gathering", "Tribes of {n}"]

@@ -81,3 +81,7 @@ Nouns:
   - {Form: grove, Gloss: ash grove, Tags: [forest]}
   - {Form: copse, Gloss: copse, Tags: [forest]}
   - {Form: deep, Gloss: deep sea, Tags: [sea]}
+# Realm titles in this people's voice ({n} = the base name); forms not listed use fantasy_common's.
+RealmTitles:
+  Kingdom: ["{n} Wyrmthrone", "Flame Crown of {n}", "{n} Aerie", "Scaled Dominion of {n}"]
+  Horde: ["Wings of {n}", "{n} Firehost"]

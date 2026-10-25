@@ -73,3 +73,7 @@ Nouns:
   - {Form: runnel, Gloss: runnel, Tags: [river]}
   - {Form: pond, Gloss: moss pond, Tags: [lake]}
   - {Form: coast, Gloss: green coast, Tags: [sea]}
+# Realm titles in this people's voice ({n} = the base name); forms not listed use fantasy_common's.
+RealmTitles:
+  Kingdom: ["Greenwood Realm of {n}", "{n} Court", "Sylvan Throne of {n}"]
+  LooseAssociation: ["{n} Kinship", "Circles of {n}", "Wardens of {n}", "{n} Glades"]

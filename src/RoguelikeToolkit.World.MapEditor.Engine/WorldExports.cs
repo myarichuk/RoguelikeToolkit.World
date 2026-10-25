@@ -410,6 +410,27 @@ public static partial class WorldExports
         => FantasyNameGenerator.Styles().Select(s => $"{s.Race}\t{s.Culture}\t{s.Label}").ToArray();
 
     /// <summary>
+    /// How a realm of <paramref name="form"/> founded by this people is named (Core's name data): element 0 is the place
+    /// kinds its base name comes from, tab-joined; the rest are title templates with <c>{n}</c> for the base name.
+    /// </summary>
+    [JSExport]
+    public static string[] RealmNaming(string race, string culture, string form)
+    {
+        try
+        {
+            var (kinds, titles) = FantasyNameGenerator.RealmNaming(race, culture, form);
+            var result = new string[titles.Count + 1];
+            result[0] = string.Join("\t", kinds);
+            for (int i = 0; i < titles.Count; i++) result[i + 1] = titles[i];
+            return result;
+        }
+        catch (Exception e) when (e is ArgumentException or KeyNotFoundException or InvalidOperationException)
+        {
+            return new[] { string.Empty }; // an unknown style: the editor falls back to a bare name
+        }
+    }
+
+    /// <summary>
     /// Batch place naming: one interop hop for the whole map. <paramref name="context"/> bits:
     /// 1 near water, 2 near forest, 4 dark forest, 8 highland, 16 valley, 32 deposit, 64 dangerous.
     /// Latin script: the map fonts are Latin, and labels must render the same on screen and in SVG.

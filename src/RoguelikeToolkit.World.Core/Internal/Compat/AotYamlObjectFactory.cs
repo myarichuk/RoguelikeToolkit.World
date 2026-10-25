@@ -35,6 +35,7 @@ internal sealed class AotYamlObjectFactory : DefaultObjectFactory
         if (type == typeof(LocaleData)) return new LocaleData();
         if (type == typeof(List<MorphemeYaml>)) return new List<MorphemeYaml>();
         if (type == typeof(List<string>)) return new List<string>();
+        if (type == typeof(Dictionary<string, List<string>>)) return new Dictionary<string, List<string>>(StringComparer.OrdinalIgnoreCase);
         if (type == typeof(Dictionary<string, string>)) return new Dictionary<string, string>();
         if (type == typeof(Dictionary<string, int>)) return new Dictionary<string, int>(StringComparer.OrdinalIgnoreCase);
         if (type == typeof(Dictionary<object, object>)) return new Dictionary<object, object>();

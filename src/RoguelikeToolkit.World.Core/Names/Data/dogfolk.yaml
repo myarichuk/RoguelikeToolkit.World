@@ -84,3 +84,8 @@ Nouns:
   - {Form: copse, Gloss: copse, Tags: [forest]}
   - {Form: thicket, Gloss: thicket, Tags: [forest]}
   - {Form: strand, Gloss: salt strand, Tags: [sea]}
+# Realm titles in this people's voice ({n} = the base name); forms not listed use fantasy_common's.
+RealmTitles:
+  LooseAssociation: ["{n} Pack", "Packs of {n}", "{n} Den-Moot", "Howl of {n}"]
+  Horde: ["{n} Hunt", "Great Pack of {n}"]
+  Kingdom: ["Den-Lord of {n}", "{n} Alphacy"]

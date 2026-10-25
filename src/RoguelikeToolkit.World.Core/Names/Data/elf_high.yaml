@@ -74,3 +74,7 @@ Nouns:
   - {Form: bower, Gloss: bower, Tags: [forest]}
   - {Form: lea, Gloss: lea meadow, Tags: [valley]}
   - {Form: shore, Gloss: pearl shore, Tags: [sea]}
+# Realm titles in this people's voice ({n} = the base name); forms not listed use fantasy_common's.
+RealmTitles:
+  Kingdom: ["{n} Ascendancy", "Starthrone of {n}", "High Court of {n}", "Silver Realm of {n}"]
+  MerchantRepublic: ["{n} Concordance", "Luminous Republic of {n}"]

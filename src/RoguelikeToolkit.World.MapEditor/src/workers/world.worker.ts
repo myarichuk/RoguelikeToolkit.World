@@ -7,7 +7,7 @@ import { hash2 } from '../engine/core/rng';
 import { projectClimate } from '../engine/world/physics/climate';
 import { buildAdjacency, extractFeatures } from '../engine/world/features';
 import { polityStyleIndex, tileNamingStyles } from '../engine/world/naming';
-import { realmNameRequest, realmTitle } from '../engine/world/history/realmNames';
+import { parseRealmNaming, realmNameRequest, realmTitle, type RealmNaming } from '../engine/world/history/realmNames';
 import { buildRoads } from '../engine/world/history/roads';
 import type { EventRecord, HistoryRecord, PolityRecord } from '../engine/world/history/record';
 import type { HistoryInput } from '../engine/world/history/historySettlements';
@@ -65,6 +65,7 @@ interface EngineApi {
   CitySiteReasons(max: number): string[];
   NameStyles(): string[];
   NamePlaces(kinds: string[], seeds: number[], races: string[], cultures: string[], context: number[]): string[];
+  RealmNaming(race: string, culture: string, form: string): string[];
 }
 
 let engine: Promise<EngineApi> | null = null;
@@ -192,12 +193,20 @@ function historyInput(e: EngineApi, seed: number, chosen: NameStyle[], all: Name
   // A realm is named in its people's tongue, from the land its form would take a name from: "Kingdom of Eldershaw", "Frostmaw Horde".
   const forms = e.HistoryFormNames();
   const formOf = (i: number) => forms[pol[i * 8 + 1]] ?? '';
+  // How each people names a realm of each form is name data (Core's tables), asked once per (people, form).
+  const namingCache = new Map<string, RealmNaming>();
+  const namingOf = (i: number): RealmNaming => {
+    const st = chosen[style[i]] ?? { race: 'human', culture: 'fantasy_common' }, key = `${st.race}|${st.culture}|${formOf(i)}`;
+    let n = namingCache.get(key);
+    if (!n) namingCache.set(key, n = parseRealmNaming(e.RealmNaming(st.race, st.culture, formOf(i))));
+    return n;
+  };
   const reqs = ids.map((id, i) => {
     const st = chosen[style[i]] ?? { race: 'human', culture: 'fantasy_common' };
-    return realmNameRequest(seed, id, formOf(i), st.race, st.culture);
+    return realmNameRequest(seed, id, namingOf(i), st.race, st.culture);
   });
   const base = uniqueNamesSync(reqs, (r) => names(e, r)).names;
-  const realmNames = ids.map((id, i) => realmTitle(seed, id, formOf(i), base[i]));
+  const realmNames = ids.map((id, i) => realmTitle(seed, id, namingOf(i), base[i]));
   return {
     settlements: Int32Array.from(e.HistorySettlements()), polityIds: ids, polityNames: realmNames, polityBases: base, polityFolk: folk, polityStyle: style,
     endCauses: e.HistorySettlementEndCauses(), scars: Int32Array.from(e.HistoryScars()), scarKinds: e.HistoryScarKinds(), holy: holySites(e),

@@ -45,6 +45,16 @@ public sealed class CultureData
     public double OwnWordWeight { get; set; } = 2.0;
     /// <summary>Extra race names that resolve to this table (YAML-only extension).</summary>
     public List<string> Aliases { get; set; } = new();
+    /// <summary>
+    /// Realm titles per polity form (<c>Kingdom</c>, <c>Horde</c>, ...), each a template with <c>{n}</c> for the realm's
+    /// base place name ("Kingdom of {n}", "{n} Warhost"). A table without an entry for a form uses <c>fantasy_common</c>'s.
+    /// </summary>
+    public Dictionary<string, List<string>> RealmTitles { get; set; } = new(StringComparer.OrdinalIgnoreCase);
+    /// <summary>
+    /// Place kinds a realm of each polity form takes its base name from (<c>Horde: [mountain, hold, valley]</c>); a table
+    /// without an entry for a form uses <c>fantasy_common</c>'s.
+    /// </summary>
+    public Dictionary<string, List<string>> RealmNameKinds { get; set; } = new(StringComparer.OrdinalIgnoreCase);
     /// <summary>Whether person names get a patronymic/matronymic slot. Orcs, gnomes etc. set false.</summary>
     public bool Patronymic { get; set; } = true;
     /// <summary>

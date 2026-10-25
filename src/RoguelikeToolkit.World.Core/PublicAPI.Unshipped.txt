@@ -3203,3 +3203,8 @@ RoguelikeToolkit.World.Core.Peoples.TerritoryDef.Biomes.get -> System.Collection
 RoguelikeToolkit.World.Core.Peoples.TerritoryDef.Biomes.set -> void
 RoguelikeToolkit.World.Core.Names.CultureData.OwnWordWeight.get -> double
 RoguelikeToolkit.World.Core.Names.CultureData.OwnWordWeight.set -> void
+RoguelikeToolkit.World.Core.Names.CultureData.RealmTitles.get -> System.Collections.Generic.Dictionary<string!, System.Collections.Generic.List<string!>!>!
+RoguelikeToolkit.World.Core.Names.CultureData.RealmTitles.set -> void
+RoguelikeToolkit.World.Core.Names.CultureData.RealmNameKinds.get -> System.Collections.Generic.Dictionary<string!, System.Collections.Generic.List<string!>!>!
+RoguelikeToolkit.World.Core.Names.CultureData.RealmNameKinds.set -> void
+static RoguelikeToolkit.World.Core.Names.FantasyNameGenerator.RealmNaming(string! race, string! culture, string! form, RoguelikeToolkit.World.Core.Names.NameDataStore? store = null) -> (System.Collections.Generic.IReadOnlyList<string!>! Kinds, System.Collections.Generic.IReadOnlyList<string!>! Titles)

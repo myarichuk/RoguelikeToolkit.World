@@ -79,3 +79,8 @@ Nouns:
     - {Form: pond, Gloss: pond, Tags: [lake]}
     - {Form: copse, Gloss: copse, Tags: [forest]}
     - {Form: strand, Gloss: moonlit strand, Tags: [sea]}
+# Realm titles in this people's voice ({n} = the base name); forms not listed use fantasy_common's.
+RealmTitles:
+  LooseAssociation: ["{n} Prowl", "Prides of {n}", "{n} Whisker-Moot"]
+  Kingdom: ["Pride-Throne of {n}", "{n} Sultanate"]
+  MerchantRepublic: ["{n} Silk Compact", "Caravanserai of {n}"]

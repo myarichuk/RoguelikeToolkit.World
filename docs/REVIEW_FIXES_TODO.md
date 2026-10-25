@@ -22,7 +22,7 @@ Branch: `claude/gallant-knuth-1ctv0z`. Build/test: `dotnet build RoguelikeToolki
 > Batches A-E (review section 1) done and pushed. User asked (2026-10-25) for: **F** history defects, **G** hydrology
 > defects (review section 2), then **H** 2D-map/history-overlay issues (diagnosis delegated, results go in H), then the
 > history expansion (battles, logistics events, advisors/merchant princes/rebels/outlaws; design in
-> `docs/HISTORY_EXPANSION_PLAN.md` once written). Current batch: **H** (start with H1 cost-weighted territory).
+> `docs/HISTORY_EXPANSION_PLAN.md` once written). Batches A-H done (H6 folded into the expansion). Next: HISTORY_EXPANSION_PLAN X0 (ask the user first).
 
 ## Batch A — determinism
 
@@ -152,9 +152,9 @@ rebellion gated on Collectivism >= 60, so lizardfolk/orc/dogfolk breakaways mult
 - [x] H1 Cost-weighted territory flood (terrain/rivers/ranges; deterministic PQ) so borders follow geography
 - [x] H2 Rebellion gate and breakaway culture: no collectivism-driven multiplication of a few peoples; founders drawn without replacement
 - [x] H3 Name variety: bigger non-human tables, lower own-word weight, joint realm+place uniqueness with fallback
-- [ ] H4 Realm labels join collision avoidance (candidate cells, place labels yield)
-- [ ] H5 Surface ruins/holy sites/battlefields (Realms preset stamps, minZoom), richer event lines (villain agenda, myths)
-- [ ] H6 Export villains/faiths/culture traits; notable-figures + culture card in the history window (personas proper come with the expansion)
+- [x] H4 Realm labels join collision avoidance (candidate cells, place labels yield)
+- [x] H5 Surface ruins/holy sites/battlefields (Realms preset stamps, minZoom), richer event lines (villain agenda, myths)
+- [ ] H6 Export villains/faiths/culture traits; notable-figures + culture card in the history window -> folded into HISTORY_EXPANSION_PLAN X8 (personas come from X2)
 
 Log:
 - 2026-10-25. H1: HistoryTerritory.AssignOwners is a Dijkstra (key cost, owner, tile) with StepCost = 1 + 6*climb +
@@ -172,4 +172,12 @@ Log:
   16 nouns (delegated, cherry-picked 3ff7cd2); own-word weight is data (CultureData.OwnWordWeight, default 2, was a
   hardcoded 3); editor de-duplicates places against realm bases and re-rolls 12x. 100-seed probe: worst repeat 20 -> 10,
   distinct 44-64 per (people, kind). Core 963, Engine 73.
+- 2026-10-25. H4: realm names try interior spots (chamfer distance, spaced) largest realm first, avoid other realm names
+  and on-screen place labels; a forced name hides the place labels under it (RealmLayer.covering). H5: Realms preset keeps
+  stamps; ruin/shrine/battlefield minZoom 1.0 (all themes); villain agenda and myth lines; Myth is major. Realm naming is
+  data: CultureData.RealmTitles / RealmNameKinds per polity form (fantasy_common defaults, 11 people overrides), engine
+  RealmNaming export, worker caches per (people, form). Verified in the browser (engine rebuilt, Playwright screenshots of
+  the Realms view, seed 7 size 5, 8 peoples): no label collisions seen, titles culture-specific, 102 place names, 0 dupes.
+  Open: halfling realm got an elf_high title (style resolution of the realm, pre-existing); tint shows latitude stripes
+  from the styled base (not realm code). Core 965, vitest 402, tsc clean.
 

@@ -80,3 +80,8 @@ Nouns:
   - {Form: copse, Gloss: copse, Tags: [forest]}
   - {Form: grove, Gloss: grove, Tags: [forest]}
   - {Form: wharf, Gloss: wharf, Tags: [town, sea]}
+# Realm titles in this people's voice ({n} = the base name); forms not listed use fantasy_common's.
+RealmTitles:
+  MerchantRepublic: ["{n} Guildery", "Clockwork League of {n}", "{n} Tinkerdom"]
+  Kingdom: ["{n} Burrowcrown", "Gearthrone of {n}"]
+  LooseAssociation: ["Burrows of {n}", "{n} Workshops"]

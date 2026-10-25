@@ -74,3 +74,7 @@ Nouns:
   - {Form: grove, Gloss: fungal grove, Tags: [forest, dark]}
   - {Form: thicket, Gloss: web thicket, Tags: [forest]}
   - {Form: abyss, Gloss: unlit abyss, Tags: [sea, dark]}
+# Realm titles in this people's voice ({n} = the base name); forms not listed use fantasy_common's.
+RealmTitles:
+  Kingdom: ["{n} Matriarchy", "Webthrone of {n}", "Underdark Court of {n}"]
+  LooseAssociation: ["Houses of {n}", "{n} Cabal", "Shadow Compact of {n}"]
