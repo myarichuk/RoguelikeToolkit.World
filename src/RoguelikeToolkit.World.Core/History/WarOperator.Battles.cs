@@ -17,6 +17,9 @@ public sealed partial class WarOperator
     /// <summary>Tag of a campaign whose attacker refused a hopeless field and turned back.</summary>
     public const string DeclinedTag = "declined";
 
+    /// <summary>Tag of a war or campaign whose host wintered in quarters and marched in the spring (logistics on).</summary>
+    public const string WinterQuartersTag = "winter_quarters";
+
     private WarfareProfile? _warfare;
     private CourtProfile? _court;
 
@@ -50,8 +53,10 @@ public sealed partial class WarOperator
         var a = SideOf(view, profile, attacker);
         var d = SideOf(view, profile, defender);
         bool sieges = view.Has(HistoryFeatures.Sieges);
-        var fields = Fields(view, sink.Rng(key, "battle:fields"), profile, attacker.Id, defender, a.Way, d.Way, sieges);
-        var result = BattleResolver.Resolve(profile, a, d, fields, purpose => sink.Rng(key, purpose), view.TurnYears);
+        bool logistics = view.Has(HistoryFeatures.Logistics);
+        var fields = Fields(view, sink.Rng(key, "battle:fields"), profile, attacker.Id, defender, a.Way, d.Way, sieges,
+            logistics ? view.Logistics(profile) : null);
+        var result = BattleResolver.Resolve(profile, a, d, fields, purpose => sink.Rng(key, purpose), view.TurnYears, winterQuarters: logistics);
         var field = fields[result.Field];
         int tile = field.Tile;
         var tags = new List<string>
@@ -60,6 +65,7 @@ public sealed partial class WarOperator
             $"outcome:{OutcomeTag(result.Outcome)}",
         };
         if (result.Outcome == BattleOutcome.Averted) tags.Add(result.Declined ? DeclinedTag : SupplyFailedTag);
+        if (result.Wintered) tags.Add(WinterQuartersTag);
         var participants = new List<EventParticipant>();
         if (a.General != null) participants.Add(sink.Participant(a.General.Person, ParticipantRoles.PersonPrefix + "attacker_general"));
         if (d.General != null) participants.Add(sink.Participant(d.General.Person, ParticipantRoles.PersonPrefix + "defender_general"));
@@ -102,9 +108,10 @@ public sealed partial class WarOperator
     /// Up to <see cref="BattleDef.FieldCandidates"/> distinct tiles drawn from the attacker's frontier into the defender (the
     /// defender's capital when they share none), each described by its ground, river, forage, seasons, the attacker's distance
     /// from its nearest settlement, whose holy ground it is, and the share of each side's people near enough to muster there.
+    /// With <paramref name="network"/> (logistics on) the attacker's distance is its network cost to the field instead.
     /// </summary>
     private static List<BattleResolver.Field> Fields(TurnView view, Rng rng, WarfareProfile profile, int attacker, TurnView.PolityState defender,
-        WarfareProfile.Way attackerWay, WarfareProfile.Way defenderWay, bool sieges)
+        WarfareProfile.Way attackerWay, WarfareProfile.Way defenderWay, bool sieges, LogisticsGraph? network = null)
     {
         var forts = profile.Forts;
         var fort = sieges ? defenderWay.Fort : null;
@@ -182,9 +189,16 @@ public sealed partial class WarOperator
                     garrison += fort.Garrison * DetMath.Exp(-d / forts.GarrisonDegrees);
                     if (d <= forts.WatchDegrees) watch = Math.Max(watch, fort.Watch);
                 }
+            double reachScale = 0;
+            if (network != null)
+            {
+                double cost = network.CostTo(attacker, tile, defender.Id);
+                distance = double.IsPositiveInfinity(cost) ? 1e6 : cost;
+                reachScale = profile.Logistics.ReachCost;
+            }
             fields.Add(new BattleResolver.Field(tile, terrain, hasHydro && hydro[tile].IsRiver != 0, forage,
                 hasClimate ? climate[tile].SeasonalRange : 0, distance, holy, popA > 0 ? musterA / popA : 0, popD > 0 ? musterD / popD : 1,
-                garrison, watch));
+                garrison, watch, reachScale));
         }
         return fields;
     }

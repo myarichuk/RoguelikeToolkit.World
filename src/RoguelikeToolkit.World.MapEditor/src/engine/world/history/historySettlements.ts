@@ -51,14 +51,14 @@ export function polityArchitectures(h: HistoryInput): Map<number, string> {
 }
 
 const TIER = ['Hamlet', 'Village', 'Town', 'City'];
-const ROLE = ['Capital', 'Colony', 'Trade node', 'Garrison post', 'Shrine town', 'Refuge'];
+const ROLE = ['Capital', 'Colony', 'Trade node', 'Garrison post', 'Shrine town', 'Refuge', 'Waystation'];
 
 /** Settlement role of a military post (Core's `SettlementRole.Post`). */
 export const ROLE_POST = 3;
 
 /**
  * History's tier and role as the map's settlement kind: a polity seat is a capital and a garrison post
- * a fort, whatever their size; a hamlet draws as a village.
+ * a fort, whatever their size; a hamlet (a waystation among them) draws as a village.
  */
 export function settlementKind(tier: number, role: number): FeatureKind {
   if (role === 0) return 'capital';

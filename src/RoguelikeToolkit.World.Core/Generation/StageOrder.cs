@@ -59,6 +59,9 @@ public static class StageOrder
     /// <summary>History operator: the court (rulers, heirs, offices, deaths); runs only with <c>HistoryFeatures.Persons</c>.</summary>
     public const int Court = 38;
 
+    /// <summary>History operator: the logistics network's waystations and road safety; runs only with <c>HistoryFeatures.Logistics</c>.</summary>
+    public const int Logistics = 40;
+
     /// <summary>History operator: forts and road safety; runs only with <c>HistoryFeatures.Sieges</c>.</summary>
     public const int Fortification = 42;
 

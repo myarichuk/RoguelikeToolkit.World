@@ -1,6 +1,6 @@
 # History expansion: battles, logistics, named persons
 
-Status: **in progress** (X0–X4 done; progress in [REVIEW_FIXES_TODO.md](REVIEW_FIXES_TODO.md), section Expansion X). Requested 2026-10-25. Builds on `Proposal.Requires` (batch F of
+Status: **in progress** (X0–X5 done; progress in [REVIEW_FIXES_TODO.md](REVIEW_FIXES_TODO.md), section Expansion X). Requested 2026-10-25. Builds on `Proposal.Requires` (batch F of
 [REVIEW_FIXES_TODO.md](REVIEW_FIXES_TODO.md), landed in `d7492ac`). Phases are **X0–X9** (§10).
 
 ## 0. Facts that shape the design
@@ -353,7 +353,7 @@ About 3k persons expected at 300 turns.
 | X2 | `CourtOperator`, persons, relations, tenures (observer only) | flag on: the existing kinds' projection equals flag off; one ruler per polity per turn; no participation after death; age at death ≤ 1.5× lifespan; traits stable when a plugin adds persons. **Done** (see §12) |
 | X3 | Tactics/Warfare/Traits YAML, `BattleResolver`, generals; War/Conquest behind the flag | statistical tests (§11); flag off identical. **Done** (see §12) |
 | X4 | `SiegeResolver`, relief battles; forts (pulled forward from X5) and per-culture map stamps | siege invariants; resupply lengthens sieges; cut supply raises the lifted share. **Done** (see §12) |
-| X5 | `LogisticsGraph`, `LogisticsOperator`, forts/waystations, winter quarters, route samples | safety in [0,1]; forts raise it; 300 turns at size 7 < 5 s |
+| X5 | `LogisticsGraph`, `LogisticsOperator`, forts/waystations, winter quarters, route samples | safety in [0,1]; forts raise it; 300 turns at size 7 < 5 s. **Done** (see §12) |
 | X6 | Commerce, Outlaw, Merchant, Intrigue; `CourtInfluence` | corpus bands; an exposed sponsorship leads to a war in ≥1/25 worlds |
 | X7 | Lexicon, Chronicle grammar, renderer | catalog bytes unchanged by rendering; repetition metrics; every template resolves for all 12 cultures |
 | X8 | Exports, TS overlay, person panel | layout tests, vitest, a Playwright path |
@@ -537,3 +537,44 @@ About 3k persons expected at 300 turns.
   tests exercise them.
 - **Map editor:** a `fort` feature kind (`Role = Post` draws as a fort, named as a `hold`) and per-culture stamps for
   settlements, forts and ruins. `HistoryPolityKeys` gains a seventh field, the founding culture's `Architecture`.
+- **X5 logistics, all tuning in data** (`Logistics/default.yaml`, `LogisticsDef`; flag `Logistics`). Requested 2026-10-25.
+  - **`LogisticsGraph`** (built once per turn view and profile): standing settlements are the nodes. Links: the road between
+    two capitals (its segments' length × `RoadCost` × (1 + `RoadUnsafe` × (1 − safety)), × `SeveredCost` when severed, less
+    `WaystationRelief` per waystation); a river between two river settlements within `RiverDegrees`; a sea lane between two
+    coastal settlements within `SeaDegrees`; open country within `OverlandDegrees` at `OverlandCost` × the mean ground factor
+    (`TerrainCost` per battle terrain class). Costs are road-degrees.
+  - Per mover (cached): a Dijkstra seeded at every own settlement with its `SourceCost` (by tier; a waystation
+    `WaystationSource`). Only a seafaring mover sails (`Seafaring ≥ SeaFrom` in its way of war, or a form in `SeaForms`). A link
+    touching a third party's land costs `ForeignCost` more, one touching the land of a polity the mover fought within `WarTurns`
+    `HostileCost` more; the host's target is exempt (its land is where the host is going). The cost to a tile adds an overland
+    last leg from the cheapest node.
+  - Seafaring: dogfolk 70, lizardfolk 65, high elves 60, catfolk 55, humans 50, gnomes 40, default and halflings 30, wood and
+    dark elves and orcs 20, dragonfolk 15, dwarves 10. Merchant republics sail whatever their people.
+- **War with logistics on.**
+  - A field's distance is the attacker's network cost to it, against `ReachCost` 140 instead of `ReachDegrees` 40. The fields
+    of the corpus lie a median 20° from the attacker's nearest settlement and cost 3.65× that on the network; 140 ≈ 40 × 3.65
+    keeps the X3 calibration while roads, rivers, sea lanes, ground and hostile land move individual campaigns. (A first run
+    at 60 averted 71% of campaigns.)
+  - **Winter quarters:** a winter host whose supply is under `WinterQuartersBelow` (0.6) winters in quarters: it loses
+    `WinterQuartersLoss` (0.12) × (1 − ColdTolerance/100) of itself, and fights in the spring of the next year (within the
+    turn) with spring supply and no winter penalty. No extra draws. The war or campaign event is tagged `winter_quarters` and
+    told by the always-beat `winter_quarters` (condition `wintered`).
+  - **Sieges:** the relief army marches on the defender's network (the besieged place left out), so `ReliefDegreesPerMonth`
+    reads road-degrees; only a seafaring besieger closes the sea to a coastal town.
+- **`LogisticsOperator`** (order 40) owns the route-safety drift with logistics on (`FortificationOperator` keeps building
+  forts). Every route drifts (`SafetyDrift`) toward `BaseSafety` + `ProjectionSafety` × hold + `FortSafety` × forts +
+  `WaystationSafety` × waystations − `SeveredSafety` (severed) − `BelligerentSafety` (its keepers, or a keeper and a polity it
+  crosses, fought within `WarTurns`) − `OutlawSafety` (a band works it, X6), clamped to 0..1. The hold is the mean over the
+  route's two keepers of `FormProjection` × max(0, 1 − network cost to the route's middle / `ProjectionCost`).
+  - **Waystations** (`SettlementRole.Waystation`, `why:waystation`, a hamlet): a keeper builds one on a route at least
+    `WaystationLength` long, under `WaystationBelow` safety and with fewer than one per `WaystationSpacing` degrees, at the
+    owned road tile farthest from any settlement (at least `WaystationClearance`). Chance `WaystationChance` × (0.5 +
+    Stewardship/100) of the first held office in `WaystationOffices`; at most `MaxWaystations` each.
+  - Every route now carries a state (X4 wrote one only once a route had a fort, since an unguarded route's drift was zero), and
+    the timeline samples them every turn.
+- **Corpus (12 seeds, 30 turns, size 3, Persons + Battles + Sieges + Logistics):** averted 26% (X4 31%), decisive 27% of fought
+  (27%), sieges 27% of wars (22%), 38 hosts wintered in quarters; route safety spans 0.11–0.84, guarded routes 0.56 against
+  0.49 unguarded; 21 waystations.
+- **Performance:** 300 turns at size 7, history only: 3.5 s with X4's flags, 3.9 s with logistics as well (acceptance < 5 s).
+- **Not in X5:** traffic and caravans (X6 commerce), outlaws reading safety (X6), sabotage (X6 intrigue), a dedicated waystation
+  map stamp (the editor draws one as a village and names its role; X8).

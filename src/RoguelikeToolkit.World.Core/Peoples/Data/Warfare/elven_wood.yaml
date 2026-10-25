@@ -11,6 +11,7 @@ Forage: 85
 ColdTolerance: 55
 Fortify: 15
 FortKind: thorn_ward
+Seafaring: 20
 Levy: 0.9
 CampaignSeasons: { Spring: 3, Summer: 3, Autumn: 3, Winter: 1 }
 Customs: []

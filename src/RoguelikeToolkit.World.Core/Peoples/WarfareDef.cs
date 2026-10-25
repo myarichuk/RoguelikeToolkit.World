@@ -31,6 +31,8 @@ public sealed class WarfareDef
     public double Fortify { get; set; } = 40;
     /// <summary>The kind of fort it builds (a key of <see cref="FortificationDef.Kinds"/>).</summary>
     public string FortKind { get; set; } = string.Empty;
+    /// <summary>How much at home on the sea this people is (0-100): from <see cref="LogisticsDef.SeaFrom"/> its hosts and supply sail.</summary>
+    public double Seafaring { get; set; } = 30;
     /// <summary>Customs of war (keys of <see cref="BattleDef.Customs"/>): change model terms and unlock beats.</summary>
     public List<string> Customs { get; set; } = new();
 }

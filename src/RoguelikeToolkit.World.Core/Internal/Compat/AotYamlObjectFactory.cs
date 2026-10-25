@@ -54,6 +54,7 @@ internal sealed class AotYamlObjectFactory : DefaultObjectFactory
         if (type == typeof(FortKindDef)) return new FortKindDef();
         if (type == typeof(Dictionary<string, FortKindDef>)) return new Dictionary<string, FortKindDef>(StringComparer.OrdinalIgnoreCase);
         if (type == typeof(SiegeDef)) return new SiegeDef();
+        if (type == typeof(LogisticsDef)) return new LogisticsDef();
         if (type == typeof(Dictionary<string, double>)) return new Dictionary<string, double>(StringComparer.OrdinalIgnoreCase);
         if (type == typeof(LocaleData)) return new LocaleData();
         if (type == typeof(List<MorphemeYaml>)) return new List<MorphemeYaml>();
@@ -91,6 +92,7 @@ internal sealed class AotYamlObjectFactory : DefaultObjectFactory
     [DynamicDependency(DynamicallyAccessedMemberTypes.PublicProperties | DynamicallyAccessedMemberTypes.PublicParameterlessConstructor, typeof(FortificationDef))]
     [DynamicDependency(DynamicallyAccessedMemberTypes.PublicProperties | DynamicallyAccessedMemberTypes.PublicParameterlessConstructor, typeof(FortKindDef))]
     [DynamicDependency(DynamicallyAccessedMemberTypes.PublicProperties | DynamicallyAccessedMemberTypes.PublicParameterlessConstructor, typeof(SiegeDef))]
+    [DynamicDependency(DynamicallyAccessedMemberTypes.PublicProperties | DynamicallyAccessedMemberTypes.PublicParameterlessConstructor, typeof(LogisticsDef))]
     [DynamicDependency(DynamicallyAccessedMemberTypes.PublicProperties | DynamicallyAccessedMemberTypes.PublicParameterlessConstructor, typeof(LocaleData))]
     public static IDeserializer CreateDeserializer() => new DeserializerBuilder()
         .WithObjectFactory(new AotYamlObjectFactory())

@@ -39,10 +39,11 @@ internal static class BattleResolver
     /// seasonal temperature range, the attacker's distance in degrees from its nearest settlement (its supply line), the polity
     /// whose holy ground it is (or -1), the share of each side's levy that musters there (1 = all of it), the strength of the
     /// defender's fort garrisons that join (standing troops: always ready), and how much the defender's forts add to its chance
-    /// to be warned.
+    /// to be warned. <see cref="ReachScale"/> &gt; 0 replaces <see cref="Peoples.BattleDef.ReachDegrees"/> (with logistics on,
+    /// <see cref="Distance"/> is a network cost and this is <see cref="Peoples.LogisticsDef.ReachCost"/>).
     /// </summary>
     internal readonly record struct Field(int Tile, int Terrain, bool River, double Forage, double SeasonalRange, double Distance, int HolyOwner = -1,
-        double AttackerMuster = 1, double DefenderMuster = 1, double DefenderGarrison = 0, double Watch = 0);
+        double AttackerMuster = 1, double DefenderMuster = 1, double DefenderGarrison = 0, double Watch = 0, double ReachScale = 0);
 
     /// <summary>One side after the battle. <see cref="Tactic"/> is a tactic index or -1.</summary>
     internal sealed record SideResult(double Strength, double Loss, double Supply, double Morale, int Tactic, string Unit, bool GeneralFell,
@@ -51,7 +52,7 @@ internal static class BattleResolver
     /// <summary>The battle.</summary>
     internal sealed record Result(int Field, HistorySeason Season, int Year, BattleKind Kind, int Terrain, bool River, bool RiverBypassed,
         bool AttackerInitiative, bool Warned, BattleOutcome Outcome, double Margin, SideResult Attacker, SideResult Defender,
-        IReadOnlyList<string> Beats, bool Declined = false)
+        IReadOnlyList<string> Beats, bool Declined = false, bool Wintered = false)
     {
         /// <summary>True when the attacker won (decisive, victory or pyrrhic).</summary>
         public bool AttackerWon => Outcome is BattleOutcome.AttackerDecisive or BattleOutcome.AttackerVictory or BattleOutcome.AttackerPyrrhic;
@@ -78,9 +79,13 @@ internal static class BattleResolver
         return (e - 1) / (e + 1);
     }
 
-    /// <summary>Resolves the battle between <paramref name="attacker"/> and <paramref name="defender"/> over <paramref name="fields"/> (at least one).</summary>
+    /// <summary>
+    /// Resolves the battle between <paramref name="attacker"/> and <paramref name="defender"/> over <paramref name="fields"/> (at least
+    /// one). With <paramref name="winterQuarters"/>, a winter host short of supply (<see cref="Peoples.LogisticsDef.WinterQuartersBelow"/>)
+    /// winters in quarters, losing part of itself, and fights in the spring of the next year; no extra draws are made.
+    /// </summary>
     public static Result Resolve(WarfareProfile profile, Side attacker, Side defender, IReadOnlyList<Field> fields, Func<string, Rng> draws, int turnYears,
-        BattleKind kind = BattleKind.Field)
+        BattleKind kind = BattleKind.Field, bool winterQuarters = false)
     {
         if (fields == null || fields.Count == 0) throw new ArgumentException("A battle needs at least one candidate field.", nameof(fields));
         var data = profile.Data;
@@ -100,11 +105,23 @@ internal static class BattleResolver
         var field = fields[fieldIndex];
         bool bypassed = field.River && attackerInitiative && bypassRoll < data.RiverBypass * attacker.Way.Mobility / 100.0;
         bool river = field.River && !bypassed;
-        double reach = DetMath.Exp(-Math.Max(0, field.Distance) / (data.ReachDegrees * (0.5 + attacker.Way.Mobility / 100.0)));
+        double reachScale = field.ReachScale > 0 ? field.ReachScale : data.ReachDegrees;
+        double reach = DetMath.Exp(-Math.Max(0, field.Distance) / (reachScale * (0.5 + attacker.Way.Mobility / 100.0)));
         bool warned = warnRoll < data.WarnedBase + data.WarnedPerIntrigue * (defender.SpyIntrigue - attacker.SpyIntrigue) + Math.Max(0, field.Watch);
         double fa = Math.Max(0, attacker.Levy) * Muster(data, field.AttackerMuster) * reach;
         double fd = Math.Max(0, defender.Levy) * Muster(data, field.DefenderMuster) * (warned ? 1 : data.DefenderReadiness) + Math.Max(0, field.DefenderGarrison);
         double sa = Clamp(reach * profile.SeasonSupply[season] + attacker.Way.Forage / 100.0 * Clamp(field.Forage, 0, 1) * (1 - reach), data.SupplyMin, 1);
+        // A wintering host fights at its spring strength; the record keeps the host that marched, its winter in the loss share.
+        double quartered = 0, marched = fa;
+        bool wintered = winterQuarters && season == (int)HistorySeason.Winter && sa < profile.Logistics.WinterQuartersBelow;
+        if (wintered)
+        {
+            quartered = Clamp(profile.Logistics.WinterQuartersLoss * (1 - attacker.Way.ColdTolerance / 100.0), 0, 0.95);
+            fa *= 1 - quartered;
+            season = (int)HistorySeason.Spring;
+            if (year + 1 < turnYears) year++;
+            sa = Clamp(reach * profile.SeasonSupply[season] + attacker.Way.Forage / 100.0 * Clamp(field.Forage, 0, 1) * (1 - reach), data.SupplyMin, 1);
+        }
         const double sd = 1;
         double winter = season == (int)HistorySeason.Winter ? data.WinterPenalty * Clamp(field.SeasonalRange / data.WinterRange, 0, 1) : 0;
         double wa = Clamp(winter * (1 - attacker.Way.ColdTolerance / 100.0), 0, 1);
@@ -120,10 +137,12 @@ internal static class BattleResolver
 
         if (sa < data.AvertedBelow)
         {
-            double attrition = Clamp(data.WinterAttrition * wa + (1 - sa) * data.LoserLossBase, 0, 0.95);
+            double attrition = Quartered(Clamp(data.WinterAttrition * wa + (1 - sa) * data.LoserLossBase, 0, 0.95), quartered);
             var none = new SideResult(fd, 0, sd, md, -1, string.Empty, false, false);
             return new Result(fieldIndex, (HistorySeason)season, year, kind, field.Terrain, river, bypassed, attackerInitiative, warned,
-                BattleOutcome.Averted, 0, new SideResult(fa, attrition, sa, ma, -1, string.Empty, false, false), none, Array.Empty<string>());
+                BattleOutcome.Averted, 0, new SideResult(marched, attrition, sa, ma, -1, string.Empty, false, false), none,
+                wintered ? Beats(profile, new Facts(season, field.Terrain, kind, river, bypassed, attackerInitiative ? 0 : 1, 2, OutcomeClass(BattleOutcome.Averted),
+                    -1, -1, null, false, false, Wintered: true), 1, alwaysOnly: true) : Array.Empty<string>(), Wintered: wintered);
         }
 
         int ta = DrawTactic(profile, attacker, attackerInitiative, field.Terrain, season, tacticA, kind);
@@ -146,14 +165,14 @@ internal static class BattleResolver
         {
             var declined = new Facts(season, field.Terrain, kind == BattleKind.Ambush ? BattleKind.Field : kind, river, bypassed, attackerInitiative ? 0 : 1, defenderDeclines ? 0 : 2,
                 OutcomeClass(defenderDeclines ? BattleOutcome.AttackerVictory : BattleOutcome.Averted), defenderDeclines ? ta : -1, defenderDeclines ? td : -1,
-                defenderDeclines ? attacker : null, false, false, Declined: true);
-            double lw = Clamp(data.WinnerLossMin + data.WinterAttrition * wa, 0, 0.95);
+                defenderDeclines ? attacker : null, false, false, Declined: true, Wintered: wintered);
+            double lw = Quartered(Clamp(data.WinnerLossMin + data.WinterAttrition * wa, 0, 0.95), quartered);
             return new Result(fieldIndex, (HistorySeason)season, year, kind == BattleKind.Ambush ? BattleKind.Field : kind, field.Terrain, river, bypassed,
                 attackerInitiative, warned, defenderDeclines ? BattleOutcome.AttackerVictory : BattleOutcome.Averted, defenderDeclines ? data.VictoryMargin : 0,
-                new SideResult(fa, lw, sa, ma, ta, Unit(profile, attacker, ta, unitA), false, false),
+                new SideResult(marched, lw, sa, ma, ta, Unit(profile, attacker, ta, unitA), false, false),
                 new SideResult(fd, Clamp((defenderDeclines ? data.LoserLossMin : 0) + data.WinterAttrition * wd, 0, 0.95), sd, md, td,
                     Unit(profile, defender, td, unitD), false, false),
-                Beats(profile, declined, beatRoll), Declined: true);
+                Beats(profile, declined, beatRoll), Declined: true, Wintered: wintered);
         }
 
         // 4. Rout: losses, pursuit, winter, commanders, beats.
@@ -173,7 +192,7 @@ internal static class BattleResolver
             if (attackerWon) ld += Math.Max(0, pursuit);
             else la += Math.Max(0, pursuit);
         }
-        la = Clamp(la + data.WinterAttrition * wa, 0, 0.95);
+        la = Quartered(Clamp(la + data.WinterAttrition * wa, 0, 0.95), quartered);
         ld = Clamp(ld + data.WinterAttrition * wd, 0, 0.95);
 
         var (fellA, takenA) = Fate(profile, attacker, defender, defenderWon, outcome == BattleOutcome.DefenderDecisive, fateA, ransomA);
@@ -182,14 +201,17 @@ internal static class BattleResolver
         var facts = new Facts(season, field.Terrain, kind, river, bypassed, attackerInitiative ? 0 : 1,
             attackerWon ? 0 : defenderWon ? 1 : 2, OutcomeClass(outcome),
             attackerWon ? ta : defenderWon ? td : -1, attackerWon ? td : defenderWon ? ta : -1,
-            attackerWon ? attacker : defenderWon ? defender : null, fellA || fellD, takenA || takenD);
+            attackerWon ? attacker : defenderWon ? defender : null, fellA || fellD, takenA || takenD, Wintered: wintered);
         var beats = Beats(profile, facts, beatRoll);
 
         return new Result(fieldIndex, (HistorySeason)season, year, kind, field.Terrain, river, bypassed, attackerInitiative, warned, outcome, margin,
-            new SideResult(fa, la, sa, ma, ta, Unit(profile, attacker, ta, unitA), fellA, takenA),
+            new SideResult(marched, la, sa, ma, ta, Unit(profile, attacker, ta, unitA), fellA, takenA),
             new SideResult(fd, ld, sd, md, td, Unit(profile, defender, td, unitD), fellD, takenD),
-            beats);
+            beats, Wintered: wintered);
     }
+
+    /// <summary>A loss share after a winter in quarters took <paramref name="quartered"/> of the host first (identity at 0).</summary>
+    private static double Quartered(double loss, double quartered) => quartered > 0 ? 1 - (1 - loss) * (1 - quartered) : loss;
 
     private static double Muster(Peoples.BattleDef data, double local) => data.MusterFloor + (1 - data.MusterFloor) * Clamp(local, 0, 1);
 
@@ -359,7 +381,7 @@ internal static class BattleResolver
     /// <summary>What the beat conditions test.</summary>
     internal sealed record Facts(int Season, int Terrain, BattleKind Kind, bool River, bool RiverBypassed, int Initiative, int Winner,
         int OutcomeClass, int WinnerTactic, int LoserTactic, Side? WinnerSide, bool GeneralFell, bool GeneralCaptured, bool Declined = false,
-        string SiegeEnd = "");
+        string SiegeEnd = "", bool Wintered = false);
 
     private static bool Holds(WarfareProfile profile, WarfareProfile.Condition c, Facts f)
     {
@@ -383,6 +405,7 @@ internal static class BattleResolver
             WarfareProfile.Test.GeneralCaptured => f.GeneralCaptured,
             WarfareProfile.Test.Declined => f.Declined,
             WarfareProfile.Test.SiegeEnd => string.Equals(f.SiegeEnd, c.Name, StringComparison.OrdinalIgnoreCase),
+            WarfareProfile.Test.Wintered => f.Wintered,
             _ => false,
         };
         return v != c.Negate;
@@ -399,7 +422,7 @@ internal static class BattleResolver
         => b.When.Any(c => !c.Negate && (c.Test == WarfareProfile.Test.SiegeEnd || (c.Test == WarfareProfile.Test.Kind && c.Value == (int)BattleKind.Siege)));
 
     /// <summary>One turning point drawn by weight among the eligible beats, then every always-beat whose conditions hold.</summary>
-    internal static IReadOnlyList<string> Beats(WarfareProfile profile, Facts f, double roll)
+    internal static IReadOnlyList<string> Beats(WarfareProfile profile, Facts f, double roll, bool alwaysOnly = false)
     {
         var winnerBeats = f.WinnerTactic >= 0 ? profile.Tactics[f.WinnerTactic].Beats : Array.Empty<string>();
         bool Eligible(WarfareProfile.Beat b)
@@ -413,7 +436,7 @@ internal static class BattleResolver
         }
         var list = new List<string>();
         double total = 0;
-        foreach (var b in profile.Beats) if (Eligible(b)) total += b.Weight;
+        if (!alwaysOnly) foreach (var b in profile.Beats) if (Eligible(b)) total += b.Weight;
         if (total > 0)
         {
             double target = roll * total;

@@ -133,6 +133,7 @@ Beats:
   - { Key: general_fell, Always: true, When: [general_fell] }
   - { Key: general_captured, Always: true, When: [general_captured] }
   - { Key: heads_taken, Always: true, When: [outcome=decisive, custom=take_heads] }
+  - { Key: winter_quarters, Always: true, When: [wintered] }   # logistics: the host wintered in quarters and fought in spring
 
 # Commanders' epithets (Peoples/Data/Traits/epithets.yaml) in battle.
 Epithets:

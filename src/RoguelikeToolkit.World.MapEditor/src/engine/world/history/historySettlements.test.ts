@@ -16,6 +16,12 @@ describe('settlementKind', () => {
   it('makes a garrison post (role 3) a fort whatever its size', () => {
     for (const tier of [0, 1, 2, 3]) expect(settlementKind(tier, 3)).toBe('fort');
   });
+
+  it('draws a waystation (role 6, a hamlet) as a village and names its role', () => {
+    expect(settlementKind(0, 6)).toBe('village');
+    const picks = historyPicks({ settlements: s(30, 2, 0, 6) }, () => true);
+    expect(picks[0].facts).toContainEqual(['Role', 'Waystation']);
+  });
 });
 
 describe('historyPicks', () => {

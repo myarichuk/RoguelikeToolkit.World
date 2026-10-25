@@ -11,6 +11,7 @@ Forage: 35
 ColdTolerance: 50
 Fortify: 75
 FortKind: bastion
+Seafaring: 40
 Levy: 0.9
 CampaignSeasons: { Spring: 3, Summer: 4, Autumn: 2, Winter: 1 }
 Customs: [ransom]

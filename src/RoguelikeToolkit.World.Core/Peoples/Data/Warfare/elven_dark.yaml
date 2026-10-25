@@ -11,6 +11,7 @@ Forage: 50
 ColdTolerance: 50
 Fortify: 55
 FortKind: spike_keep
+Seafaring: 20
 Levy: 1.0
 CampaignSeasons: { Spring: 2, Summer: 2, Autumn: 3, Winter: 2 }
 Customs: [no_quarter, ransom]

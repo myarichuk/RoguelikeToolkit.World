@@ -11,6 +11,7 @@ Forage: 40
 ColdTolerance: 50
 Fortify: 65
 FortKind: spire_keep
+Seafaring: 60
 Levy: 0.8
 CampaignSeasons: { Spring: 3, Summer: 4, Autumn: 2, Winter: 1 }
 Customs: [ransom]

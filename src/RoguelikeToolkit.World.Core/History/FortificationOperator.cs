@@ -16,7 +16,7 @@ namespace RoguelikeToolkit.World.Core.History;
 /// <c>ceil(MaxForts × Fortify/100)</c> military posts. The fort stands on its own land facing the threat (or on the unguarded
 /// road), on high ground or a river where it can, apart from other settlements. A fort is a garrison post
 /// (<see cref="SettlementRole.Post"/>, <c>why:fort</c>) manned from its nearest settlement.</item>
-/// <item>Every road's safety drifts toward a level that each guarding post raises and a severance lowers; the route state
+/// <item>Without <see cref="HistoryFeatures.Logistics"/> (with it <see cref="LogisticsOperator"/> owns the drift): every road's safety drifts toward a level that each guarding post raises and a severance lowers; the route state
 /// records the guarding forts. Outlaws (X6) read that safety.</item>
 /// </list>
 /// In battle a post's garrison joins a defence nearby and its watch warns of an invasion (<see cref="WarOperator"/>); in a
@@ -52,7 +52,8 @@ public sealed class FortificationOperator : IHistoryOperator
         var profile = Profile;
         foreach (var polity in view.Polities)
             if (polity.Alive) Build(view, sink, profile, polity);
-        Roads(view, sink, profile);
+        // With logistics on, LogisticsOperator owns the road drift (and projection).
+        if (!view.Has(HistoryFeatures.Logistics)) Roads(view, sink, profile);
     }
 
     private static double Degrees(Vector3D a, Vector3D b) => DetMath.Acos(Math.Max(-1, Math.Min(1, Vector3D.Dot(a, b)))) * (180 / Math.PI);
@@ -63,15 +64,16 @@ public sealed class FortificationOperator : IHistoryOperator
         var way = profile.WayOf(polity.CultureKey);
         double fortify = Math.Max(0, Math.Min(1, way.Fortify / 100.0));
         if (fortify <= 0 || way.Fort == null) return;
-        int standing = 0, posts = 0;
+        int standing = 0, posts = 0, stations = 0;
         foreach (var s in view.Settlements)
         {
             if (s.Ended || s.PolityId != polity.Id) continue;
             standing++;
             if (s.Role == SettlementRole.Post) posts++;
+            else if (s.Role == SettlementRole.Waystation) stations++;
         }
         int cap = Math.Max(1, (int)Math.Ceiling(f.MaxForts * fortify));
-        if (standing - posts < Math.Max(1, f.MinSettlements) || posts >= cap || standing >= view.MaxSettlementsPerPolity) return;
+        if (standing - posts - stations < Math.Max(1, f.MinSettlements) || posts >= cap || standing >= view.MaxSettlementsPerPolity) return;
 
         var store = view.Map.DataStore;
         var vectors = store.GetTileVectors();

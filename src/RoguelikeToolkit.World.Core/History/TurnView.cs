@@ -319,6 +319,20 @@ public sealed class TurnView
     /// <summary>The borders of the snapshot ownership, built on first use (one pass over the tiles).</summary>
     internal BorderIndex Borders => _borders ??= new BorderIndex(Map.DataStore, _ownership);
 
+    private LogisticsGraph? _logistics;
+    private WarfareProfile? _logisticsProfile;
+
+    /// <summary>The turn's logistics network under <paramref name="profile"/>, built on first use (rebuilt only for another profile).</summary>
+    internal LogisticsGraph Logistics(WarfareProfile profile)
+    {
+        if (_logistics == null || !ReferenceEquals(_logisticsProfile, profile))
+        {
+            _logistics = LogisticsGraph.Build(this, profile);
+            _logisticsProfile = profile;
+        }
+        return _logistics;
+    }
+
     /// <summary>Polities bordering <paramref name="polityId"/> at the snapshot, ascending (never <paramref name="polityId"/> itself).</summary>
     public IReadOnlyList<int> BorderingPolities(int polityId) => Borders.Bordering(polityId);
 

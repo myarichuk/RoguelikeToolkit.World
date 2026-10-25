@@ -42,8 +42,10 @@ public sealed partial class WarOperator
         double garrison = target.Population * profile.GarrisonShare(target.Tier) + (fort ? d.Way.Fort?.Garrison ?? 0 : 0);
         bool river = hasHydro && hydro[tile].IsRiver != 0;
         bool coastal = Coastal(store, elev, hasElev, tile);
+        bool logistics = view.Has(HistoryFeatures.Logistics);
         bool attackerAtSea = false;
-        if (coastal)
+        // With logistics on, only a people at home on the sea can close the sea to the town.
+        if (coastal && (!logistics || profile.Sails(attacker.Form, a.Way)))
             foreach (var s in view.Settlements)
                 if (!s.Ended && s.PolityId == attacker.Id && Coastal(store, elev, hasElev, s.Tile)) { attackerAtSea = true; break; }
         int terrain = hasBiome ? profile.TerrainOf(biomes[tile].Biome, height) : profile.DefaultTerrain;
@@ -54,9 +56,11 @@ public sealed partial class WarOperator
         // settlement.
         double free = Math.Max(0, d.Levy - field.Defender.Strength * field.Defender.Loss - garrison);
         double reliefFrom = double.PositiveInfinity;
-        foreach (var s in view.Settlements)
-            if (!s.Ended && s.PolityId == defender.Id && s.Index != target.Index)
-                reliefFrom = Math.Min(reliefFrom, Degrees(vectors[tile], vectors[s.Tile]));
+        if (logistics) reliefFrom = view.Logistics(profile).CostTo(defender.Id, tile, attacker.Id, target.Index);
+        else
+            foreach (var s in view.Settlements)
+                if (!s.Ended && s.PolityId == defender.Id && s.Index != target.Index)
+                    reliefFrom = Math.Min(reliefFrom, Degrees(vectors[tile], vectors[s.Tile]));
         var relief = double.IsInfinity(reliefFrom) ? default : new SiegeResolver.Relief(free, reliefFrom);
 
         double host = field.Attacker.Strength * (1 - field.Attacker.Loss);

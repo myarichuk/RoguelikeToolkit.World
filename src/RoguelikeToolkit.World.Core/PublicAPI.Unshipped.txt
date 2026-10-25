@@ -7,6 +7,7 @@ const RoguelikeToolkit.World.Core.Generation.StageOrder.Fortification = 42 -> in
 const RoguelikeToolkit.World.Core.Generation.StageOrder.Hazard = 36 -> int
 const RoguelikeToolkit.World.Core.Generation.StageOrder.HolySite = 44 -> int
 const RoguelikeToolkit.World.Core.Generation.StageOrder.Khan = 46 -> int
+const RoguelikeToolkit.World.Core.Generation.StageOrder.Logistics = 40 -> int
 const RoguelikeToolkit.World.Core.Generation.StageOrder.Settle = 34 -> int
 const RoguelikeToolkit.World.Core.Generation.StageOrder.Tier = 35 -> int
 const RoguelikeToolkit.World.Core.Generation.StageOrder.Treaty = 48 -> int
@@ -64,6 +65,7 @@ const RoguelikeToolkit.World.Core.History.KhanOperator.TributeIncome = 0.05 -> d
 const RoguelikeToolkit.World.Core.History.KhanOperator.TributeRelief = 0.1 -> double
 const RoguelikeToolkit.World.Core.History.KhanOperator.TributeWindowTurns = 5 -> int
 const RoguelikeToolkit.World.Core.History.KhanOperator.UltimatumChance = 0.35 -> double
+const RoguelikeToolkit.World.Core.History.LogisticsOperator.WaystationWhy = "waystation" -> string!
 const RoguelikeToolkit.World.Core.History.ParticipantRoles.PersonPrefix = "person:" -> string!
 const RoguelikeToolkit.World.Core.History.ParticipantRoles.SettlementPrefix = "settlement:" -> string!
 const RoguelikeToolkit.World.Core.History.PluginStateBag.MaxKeyLength = 128 -> int
@@ -123,6 +125,7 @@ const RoguelikeToolkit.World.Core.History.WarOperator.SackDisplacement = 0.15 ->
 const RoguelikeToolkit.World.Core.History.WarOperator.SupplyFailedTag = "supply_failed" -> string!
 const RoguelikeToolkit.World.Core.History.WarOperator.WarPressureScale = 0.4 -> double
 const RoguelikeToolkit.World.Core.History.WarOperator.WarXenophobiaScale = 0.0015 -> double
+const RoguelikeToolkit.World.Core.History.WarOperator.WinterQuartersTag = "winter_quarters" -> string!
 const RoguelikeToolkit.World.Core.Settlement.SettlementScoring.Fishing = 0.25 -> double
 const RoguelikeToolkit.World.Core.Settlement.SettlementScoring.River = 0.5 -> double
 override RoguelikeToolkit.World.Core.History.HistoryDriver.Apply(RoguelikeToolkit.World.Core.Topology.WorldMap! map, RoguelikeToolkit.World.Core.History.HistoryCatalog! history, RoguelikeToolkit.World.Core.History.HistoryContext! context) -> void
@@ -606,6 +609,11 @@ RoguelikeToolkit.World.Core.History.KhanOperator.KhanOperator() -> void
 RoguelikeToolkit.World.Core.History.KhanOperator.Name.get -> string!
 RoguelikeToolkit.World.Core.History.KhanOperator.Order.get -> int
 RoguelikeToolkit.World.Core.History.KhanOperator.Propose(RoguelikeToolkit.World.Core.History.TurnView! view, RoguelikeToolkit.World.Core.History.ProposalSink! sink) -> void
+RoguelikeToolkit.World.Core.History.LogisticsOperator
+RoguelikeToolkit.World.Core.History.LogisticsOperator.LogisticsOperator() -> void
+RoguelikeToolkit.World.Core.History.LogisticsOperator.Name.get -> string!
+RoguelikeToolkit.World.Core.History.LogisticsOperator.Order.get -> int
+RoguelikeToolkit.World.Core.History.LogisticsOperator.Propose(RoguelikeToolkit.World.Core.History.TurnView! view, RoguelikeToolkit.World.Core.History.ProposalSink! sink) -> void
 RoguelikeToolkit.World.Core.History.ParticipantEntity
 RoguelikeToolkit.World.Core.History.ParticipantEntity.Person = 1 -> RoguelikeToolkit.World.Core.History.ParticipantEntity
 RoguelikeToolkit.World.Core.History.ParticipantEntity.Polity = 0 -> RoguelikeToolkit.World.Core.History.ParticipantEntity
@@ -1116,6 +1124,7 @@ RoguelikeToolkit.World.Core.History.SettlementRole.Node = 2 -> RoguelikeToolkit.
 RoguelikeToolkit.World.Core.History.SettlementRole.Post = 3 -> RoguelikeToolkit.World.Core.History.SettlementRole
 RoguelikeToolkit.World.Core.History.SettlementRole.Refuge = 5 -> RoguelikeToolkit.World.Core.History.SettlementRole
 RoguelikeToolkit.World.Core.History.SettlementRole.Shrine = 4 -> RoguelikeToolkit.World.Core.History.SettlementRole
+RoguelikeToolkit.World.Core.History.SettlementRole.Waystation = 6 -> RoguelikeToolkit.World.Core.History.SettlementRole
 RoguelikeToolkit.World.Core.History.SettlementTier
 RoguelikeToolkit.World.Core.History.SettlementTier.City = 3 -> RoguelikeToolkit.World.Core.History.SettlementTier
 RoguelikeToolkit.World.Core.History.SettlementTier.Hamlet = 0 -> RoguelikeToolkit.World.Core.History.SettlementTier
@@ -1799,9 +1808,88 @@ RoguelikeToolkit.World.Core.Peoples.FortKindDef.Walls.get -> double
 RoguelikeToolkit.World.Core.Peoples.FortKindDef.Walls.set -> void
 RoguelikeToolkit.World.Core.Peoples.FortKindDef.Watch.get -> double
 RoguelikeToolkit.World.Core.Peoples.FortKindDef.Watch.set -> void
+RoguelikeToolkit.World.Core.Peoples.LogisticsDef
+RoguelikeToolkit.World.Core.Peoples.LogisticsDef.BaseSafety.get -> double
+RoguelikeToolkit.World.Core.Peoples.LogisticsDef.BaseSafety.set -> void
+RoguelikeToolkit.World.Core.Peoples.LogisticsDef.BelligerentSafety.get -> double
+RoguelikeToolkit.World.Core.Peoples.LogisticsDef.BelligerentSafety.set -> void
+RoguelikeToolkit.World.Core.Peoples.LogisticsDef.ForeignCost.get -> double
+RoguelikeToolkit.World.Core.Peoples.LogisticsDef.ForeignCost.set -> void
+RoguelikeToolkit.World.Core.Peoples.LogisticsDef.FormProjection.get -> System.Collections.Generic.Dictionary<string!, double>!
+RoguelikeToolkit.World.Core.Peoples.LogisticsDef.FormProjection.set -> void
+RoguelikeToolkit.World.Core.Peoples.LogisticsDef.HostileCost.get -> double
+RoguelikeToolkit.World.Core.Peoples.LogisticsDef.HostileCost.set -> void
+RoguelikeToolkit.World.Core.Peoples.LogisticsDef.Key.get -> string!
+RoguelikeToolkit.World.Core.Peoples.LogisticsDef.Key.set -> void
+RoguelikeToolkit.World.Core.Peoples.LogisticsDef.LogisticsDef() -> void
+RoguelikeToolkit.World.Core.Peoples.LogisticsDef.MaxWaystations.get -> int
+RoguelikeToolkit.World.Core.Peoples.LogisticsDef.MaxWaystations.set -> void
+RoguelikeToolkit.World.Core.Peoples.LogisticsDef.OutlawSafety.get -> double
+RoguelikeToolkit.World.Core.Peoples.LogisticsDef.OutlawSafety.set -> void
+RoguelikeToolkit.World.Core.Peoples.LogisticsDef.OverlandCost.get -> double
+RoguelikeToolkit.World.Core.Peoples.LogisticsDef.OverlandCost.set -> void
+RoguelikeToolkit.World.Core.Peoples.LogisticsDef.OverlandDegrees.get -> double
+RoguelikeToolkit.World.Core.Peoples.LogisticsDef.OverlandDegrees.set -> void
+RoguelikeToolkit.World.Core.Peoples.LogisticsDef.ProjectionCost.get -> double
+RoguelikeToolkit.World.Core.Peoples.LogisticsDef.ProjectionCost.set -> void
+RoguelikeToolkit.World.Core.Peoples.LogisticsDef.ProjectionSafety.get -> double
+RoguelikeToolkit.World.Core.Peoples.LogisticsDef.ProjectionSafety.set -> void
+RoguelikeToolkit.World.Core.Peoples.LogisticsDef.ReachCost.get -> double
+RoguelikeToolkit.World.Core.Peoples.LogisticsDef.ReachCost.set -> void
+RoguelikeToolkit.World.Core.Peoples.LogisticsDef.RiverCost.get -> double
+RoguelikeToolkit.World.Core.Peoples.LogisticsDef.RiverCost.set -> void
+RoguelikeToolkit.World.Core.Peoples.LogisticsDef.RiverDegrees.get -> double
+RoguelikeToolkit.World.Core.Peoples.LogisticsDef.RiverDegrees.set -> void
+RoguelikeToolkit.World.Core.Peoples.LogisticsDef.RoadCost.get -> double
+RoguelikeToolkit.World.Core.Peoples.LogisticsDef.RoadCost.set -> void
+RoguelikeToolkit.World.Core.Peoples.LogisticsDef.RoadUnsafe.get -> double
+RoguelikeToolkit.World.Core.Peoples.LogisticsDef.RoadUnsafe.set -> void
+RoguelikeToolkit.World.Core.Peoples.LogisticsDef.SeaCost.get -> double
+RoguelikeToolkit.World.Core.Peoples.LogisticsDef.SeaCost.set -> void
+RoguelikeToolkit.World.Core.Peoples.LogisticsDef.SeaDegrees.get -> double
+RoguelikeToolkit.World.Core.Peoples.LogisticsDef.SeaDegrees.set -> void
+RoguelikeToolkit.World.Core.Peoples.LogisticsDef.SeaForms.get -> System.Collections.Generic.List<string!>!
+RoguelikeToolkit.World.Core.Peoples.LogisticsDef.SeaForms.set -> void
+RoguelikeToolkit.World.Core.Peoples.LogisticsDef.SeaFrom.get -> double
+RoguelikeToolkit.World.Core.Peoples.LogisticsDef.SeaFrom.set -> void
+RoguelikeToolkit.World.Core.Peoples.LogisticsDef.SeveredCost.get -> double
+RoguelikeToolkit.World.Core.Peoples.LogisticsDef.SeveredCost.set -> void
+RoguelikeToolkit.World.Core.Peoples.LogisticsDef.SourceCost.get -> System.Collections.Generic.Dictionary<string!, double>!
+RoguelikeToolkit.World.Core.Peoples.LogisticsDef.SourceCost.set -> void
+RoguelikeToolkit.World.Core.Peoples.LogisticsDef.TerrainCost.get -> System.Collections.Generic.Dictionary<string!, double>!
+RoguelikeToolkit.World.Core.Peoples.LogisticsDef.TerrainCost.set -> void
+RoguelikeToolkit.World.Core.Peoples.LogisticsDef.WarTurns.get -> int
+RoguelikeToolkit.World.Core.Peoples.LogisticsDef.WarTurns.set -> void
+RoguelikeToolkit.World.Core.Peoples.LogisticsDef.WaystationBelow.get -> double
+RoguelikeToolkit.World.Core.Peoples.LogisticsDef.WaystationBelow.set -> void
+RoguelikeToolkit.World.Core.Peoples.LogisticsDef.WaystationChance.get -> double
+RoguelikeToolkit.World.Core.Peoples.LogisticsDef.WaystationChance.set -> void
+RoguelikeToolkit.World.Core.Peoples.LogisticsDef.WaystationClearance.get -> double
+RoguelikeToolkit.World.Core.Peoples.LogisticsDef.WaystationClearance.set -> void
+RoguelikeToolkit.World.Core.Peoples.LogisticsDef.WaystationDegrees.get -> double
+RoguelikeToolkit.World.Core.Peoples.LogisticsDef.WaystationDegrees.set -> void
+RoguelikeToolkit.World.Core.Peoples.LogisticsDef.WaystationLength.get -> double
+RoguelikeToolkit.World.Core.Peoples.LogisticsDef.WaystationLength.set -> void
+RoguelikeToolkit.World.Core.Peoples.LogisticsDef.WaystationOffices.get -> System.Collections.Generic.List<string!>!
+RoguelikeToolkit.World.Core.Peoples.LogisticsDef.WaystationOffices.set -> void
+RoguelikeToolkit.World.Core.Peoples.LogisticsDef.WaystationRelief.get -> double
+RoguelikeToolkit.World.Core.Peoples.LogisticsDef.WaystationRelief.set -> void
+RoguelikeToolkit.World.Core.Peoples.LogisticsDef.WaystationSafety.get -> double
+RoguelikeToolkit.World.Core.Peoples.LogisticsDef.WaystationSafety.set -> void
+RoguelikeToolkit.World.Core.Peoples.LogisticsDef.WaystationsCounted.get -> int
+RoguelikeToolkit.World.Core.Peoples.LogisticsDef.WaystationsCounted.set -> void
+RoguelikeToolkit.World.Core.Peoples.LogisticsDef.WaystationSource.get -> double
+RoguelikeToolkit.World.Core.Peoples.LogisticsDef.WaystationSource.set -> void
+RoguelikeToolkit.World.Core.Peoples.LogisticsDef.WaystationSpacing.get -> double
+RoguelikeToolkit.World.Core.Peoples.LogisticsDef.WaystationSpacing.set -> void
+RoguelikeToolkit.World.Core.Peoples.LogisticsDef.WinterQuartersBelow.get -> double
+RoguelikeToolkit.World.Core.Peoples.LogisticsDef.WinterQuartersBelow.set -> void
+RoguelikeToolkit.World.Core.Peoples.LogisticsDef.WinterQuartersLoss.get -> double
+RoguelikeToolkit.World.Core.Peoples.LogisticsDef.WinterQuartersLoss.set -> void
 RoguelikeToolkit.World.Core.Peoples.PeoplesStore.Battles.get -> System.Collections.Generic.Dictionary<string!, RoguelikeToolkit.World.Core.Peoples.BattleDef!>!
 RoguelikeToolkit.World.Core.Peoples.PeoplesStore.Courts.get -> System.Collections.Generic.Dictionary<string!, RoguelikeToolkit.World.Core.Peoples.CourtDef!>!
 RoguelikeToolkit.World.Core.Peoples.PeoplesStore.Fortifications.get -> System.Collections.Generic.Dictionary<string!, RoguelikeToolkit.World.Core.Peoples.FortificationDef!>!
+RoguelikeToolkit.World.Core.Peoples.PeoplesStore.Logistics.get -> System.Collections.Generic.Dictionary<string!, RoguelikeToolkit.World.Core.Peoples.LogisticsDef!>!
 RoguelikeToolkit.World.Core.Peoples.PeoplesStore.Sieges.get -> System.Collections.Generic.Dictionary<string!, RoguelikeToolkit.World.Core.Peoples.SiegeDef!>!
 RoguelikeToolkit.World.Core.Peoples.PeoplesStore.Tactics.get -> System.Collections.Generic.Dictionary<string!, RoguelikeToolkit.World.Core.Peoples.TacticDef!>!
 RoguelikeToolkit.World.Core.Peoples.PeoplesStore.TraitTables.get -> System.Collections.Generic.Dictionary<string!, RoguelikeToolkit.World.Core.Peoples.TraitTableDef!>!
@@ -1919,6 +2007,8 @@ RoguelikeToolkit.World.Core.Peoples.WarfareDef.Levy.get -> double
 RoguelikeToolkit.World.Core.Peoples.WarfareDef.Levy.set -> void
 RoguelikeToolkit.World.Core.Peoples.WarfareDef.Mobility.get -> double
 RoguelikeToolkit.World.Core.Peoples.WarfareDef.Mobility.set -> void
+RoguelikeToolkit.World.Core.Peoples.WarfareDef.Seafaring.get -> double
+RoguelikeToolkit.World.Core.Peoples.WarfareDef.Seafaring.set -> void
 RoguelikeToolkit.World.Core.Peoples.WarfareDef.SiegeSkill.get -> double
 RoguelikeToolkit.World.Core.Peoples.WarfareDef.SiegeSkill.set -> void
 RoguelikeToolkit.World.Core.Peoples.WarfareDef.Units.get -> System.Collections.Generic.List<RoguelikeToolkit.World.Core.Peoples.WarfareUnitDef!>!

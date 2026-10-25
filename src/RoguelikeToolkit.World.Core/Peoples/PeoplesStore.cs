@@ -45,6 +45,9 @@ public sealed class PeoplesStore
     /// <summary>Loaded siege models keyed by <see cref="SiegeDef.Key"/> (case-insensitive).</summary>
     public Dictionary<string, SiegeDef> Sieges { get; } = new(StringComparer.OrdinalIgnoreCase);
 
+    /// <summary>Loaded logistics models keyed by <see cref="LogisticsDef.Key"/> (case-insensitive).</summary>
+    public Dictionary<string, LogisticsDef> Logistics { get; } = new(StringComparer.OrdinalIgnoreCase);
+
     /// <summary>Pairwise offspring rules from <c>compat.yaml</c>; unlisted pairs blend.</summary>
     public CompatibilityMatrix Compatibility { get; } = new();
 
@@ -246,8 +249,10 @@ public sealed class PeoplesStore
             LoadKeyed(store.Fortifications, "fortification", d => d.Key, ValidateFortification);
         else if (rel.StartsWith("Siege/", StringComparison.OrdinalIgnoreCase))
             LoadKeyed(store.Sieges, "siege", d => d.Key, ValidateSiege);
+        else if (rel.StartsWith("Logistics/", StringComparison.OrdinalIgnoreCase))
+            LoadKeyed(store.Logistics, "logistics", d => d.Key, ValidateLogistics);
         else
-            problems.Add($"{rel}: unrecognized location (want Folks/, Cultures/, Subsistence/, Resources/, Territory/, Court/, Traits/, Tactics/, Warfare/, Battle/, Fortification/ or Siege/*.yaml, or compat.yaml).");
+            problems.Add($"{rel}: unrecognized location (want Folks/, Cultures/, Subsistence/, Resources/, Territory/, Court/, Traits/, Tactics/, Warfare/, Battle/, Fortification/, Siege/ or Logistics/*.yaml, or compat.yaml).");
 
         void LoadKeyed<T>(Dictionary<string, T> into, string kind, Func<T, string> key, Action<string, T, List<string>> validate)
         {
@@ -479,6 +484,48 @@ public sealed class PeoplesStore
         CheckTiers(rel, "TierWalls", data.TierWalls, 10, problems);
     }
 
+    private static void ValidateLogistics(string rel, LogisticsDef data, List<string> problems)
+    {
+        foreach (var (field, v) in new[]
+                 {
+                     ("WaystationRelief", data.WaystationRelief), ("WinterQuartersBelow", data.WinterQuartersBelow), ("WinterQuartersLoss", data.WinterQuartersLoss),
+                     ("BaseSafety", data.BaseSafety), ("ProjectionSafety", data.ProjectionSafety), ("WaystationSafety", data.WaystationSafety),
+                     ("BelligerentSafety", data.BelligerentSafety), ("OutlawSafety", data.OutlawSafety), ("WaystationChance", data.WaystationChance),
+                     ("WaystationBelow", data.WaystationBelow),
+                 })
+            if (!(v >= 0 && v <= 1)) problems.Add($"{rel}: {field} must be in 0-1.");
+        foreach (var (field, v) in new[]
+                 {
+                     ("RoadCost", data.RoadCost), ("RiverCost", data.RiverCost), ("SeaCost", data.SeaCost), ("OverlandCost", data.OverlandCost),
+                     ("ReachCost", data.ReachCost), ("ProjectionCost", data.ProjectionCost), ("WaystationSpacing", data.WaystationSpacing),
+                 })
+            if (!(v > 0) || !Finite(v)) problems.Add($"{rel}: {field} must be a positive number.");
+        foreach (var (field, v) in new[]
+                 {
+                     ("RoadUnsafe", data.RoadUnsafe), ("RiverDegrees", data.RiverDegrees), ("SeaDegrees", data.SeaDegrees), ("OverlandDegrees", data.OverlandDegrees),
+                     ("WaystationSource", data.WaystationSource), ("WaystationDegrees", data.WaystationDegrees), ("WaystationLength", data.WaystationLength),
+                     ("WaystationClearance", data.WaystationClearance),
+                 })
+            if (!(v >= 0) || !Finite(v)) problems.Add($"{rel}: {field} must be a non-negative number.");
+        foreach (var (field, v) in new[] { ("SeveredCost", data.SeveredCost), ("ForeignCost", data.ForeignCost), ("HostileCost", data.HostileCost) })
+            if (!(v >= 1) || !Finite(v)) problems.Add($"{rel}: {field} must be at least 1 (a multiplier on cost).");
+        if (!(data.SeaFrom >= 0 && data.SeaFrom <= 100)) problems.Add($"{rel}: SeaFrom must be in 0-100.");
+        if (data.WarTurns < 0 || data.WaystationsCounted < 0 || data.MaxWaystations < 0)
+            problems.Add($"{rel}: WarTurns, WaystationsCounted and MaxWaystations cannot be negative.");
+        if (data.TerrainCost is null) problems.Add($"{rel}: TerrainCost is null (use an empty map).");
+        else
+            foreach (var kv in data.TerrainCost)
+                if (!(kv.Value > 0) || !Finite(kv.Value)) problems.Add($"{rel}: TerrainCost.{kv.Key} must be a positive number.");
+        if (data.FormProjection is null) problems.Add($"{rel}: FormProjection is null (use an empty map).");
+        else
+            foreach (var kv in data.FormProjection)
+                if (!(kv.Value >= 0 && kv.Value <= 1)) problems.Add($"{rel}: FormProjection.{kv.Key} must be in 0-1.");
+        CheckTiers(rel, "SourceCost", data.SourceCost, 1000, problems);
+        if (data.SeaForms is null || data.SeaForms.Any(string.IsNullOrWhiteSpace)) problems.Add($"{rel}: SeaForms must be a list of form names (may be empty).");
+        if (data.WaystationOffices is null || data.WaystationOffices.Any(string.IsNullOrWhiteSpace))
+            problems.Add($"{rel}: WaystationOffices must be a list of office names (may be empty).");
+    }
+
     private static void ValidateSiege(string rel, SiegeDef data, List<string> problems)
     {
         CheckTiers(rel, "GarrisonShare", data.GarrisonShare, 1, problems);
@@ -571,6 +618,7 @@ public sealed class PeoplesStore
             if (!(v >= 0 && v <= 100)) problems.Add($"{rel}: {field} {v} is out of range (0-100).");
         if (!(data.Levy > 0) || !Finite(data.Levy)) problems.Add($"{rel}: Levy must be a positive number.");
         if (!(data.Fortify >= 0 && data.Fortify <= 100)) problems.Add($"{rel}: Fortify {data.Fortify} is out of range (0-100).");
+        if (!(data.Seafaring >= 0 && data.Seafaring <= 100)) problems.Add($"{rel}: Seafaring {data.Seafaring} is out of range (0-100).");
         CheckSeasons(rel, "CampaignSeasons", data.CampaignSeasons, problems);
         if (data.CampaignSeasons != null && data.CampaignSeasons.Count > 0 && !(data.CampaignSeasons.Values.Sum() > 0))
             problems.Add($"{rel}: CampaignSeasons weights are all zero.");

@@ -100,7 +100,7 @@ export const tagValue = (e: EventRecord, key: string): string | undefined => {
   return t === undefined ? undefined : t.slice(key.length + 1);
 };
 
-const ROLE_TEXT: Record<string, string> = { Capital: 'a capital', Colony: 'a colony', Node: 'a trade node', Post: 'a garrison post', Shrine: 'a shrine town', Refuge: 'a refuge' };
+const ROLE_TEXT: Record<string, string> = { Capital: 'a capital', Colony: 'a colony', Node: 'a trade node', Post: 'a garrison post', Shrine: 'a shrine town', Refuge: 'a refuge', Waystation: 'a waystation' };
 /** A numeric `key:id` tag (a realm id), if the event has one. */
 export const tagNumber = (e: EventRecord, key: string): number | undefined => {
   const n = Number(tagValue(e, key));

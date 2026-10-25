@@ -15,4 +15,6 @@ public enum SettlementRole
     Shrine = 4,
     /// <summary>Refuge founded by displaced population.</summary>
     Refuge = 5,
+    /// <summary>Depot on a long road: supply, a change of horses, a little safety (<c>LogisticsOperator</c>).</summary>
+    Waystation = 6,
 }

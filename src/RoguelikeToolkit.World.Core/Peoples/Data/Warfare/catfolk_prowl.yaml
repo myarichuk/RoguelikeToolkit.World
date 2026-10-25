@@ -11,6 +11,7 @@ Forage: 70
 ColdTolerance: 30
 Fortify: 25
 FortKind: mudbrick_fort
+Seafaring: 55
 Levy: 0.9
 CampaignSeasons: { Spring: 3, Summer: 3, Autumn: 3, Winter: 1 }
 Customs: [duel_of_champions]

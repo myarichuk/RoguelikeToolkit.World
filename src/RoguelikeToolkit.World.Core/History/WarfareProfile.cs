@@ -29,7 +29,7 @@ internal sealed class WarfareProfile
     /// <summary>One way of war: doctrine weight per tactic, units, scores, campaign weight per season, customs.</summary>
     internal sealed record Way(string Key, double[] Doctrine, IReadOnlyList<WarfareUnitDef> Units, double Mobility, double Discipline,
         double SiegeSkill, double Forage, double ColdTolerance, double Levy, double[] CampaignSeasons, IReadOnlyList<Custom> Customs,
-        double Fortify = 40, FortKindDef? Fort = null)
+        double Fortify = 40, FortKindDef? Fort = null, double Seafaring = 30)
     {
         /// <summary>True when the way keeps custom <paramref name="key"/>.</summary>
         public bool Keeps(string key)
@@ -43,7 +43,7 @@ internal sealed class WarfareProfile
     internal enum Test : byte
     {
         Season, Terrain, Kind, River, RiverBypassed, Initiative, Winner, Outcome, WinnerTactic, LoserTactic, WinnerArm, LoserArm, Custom,
-        GeneralFell, GeneralCaptured, Declined, SiegeEnd,
+        GeneralFell, GeneralCaptured, Declined, SiegeEnd, Wintered,
     }
 
     /// <summary>One compiled beat condition: the test, its operand (an index or a name) and whether it is negated.</summary>
@@ -59,13 +59,19 @@ internal sealed class WarfareProfile
     private readonly Dictionary<string, Epithet> _epithets = new(StringComparer.OrdinalIgnoreCase);
     private readonly Dictionary<string, Custom> _customs = new(StringComparer.OrdinalIgnoreCase);
     private readonly string[] _aftermath;
+    private readonly double[] _formProjection;
+    private readonly bool[] _seaForm;
+    private readonly double[] _sourceCost = new double[4];
     private Way? _fallback;
 
-    private WarfareProfile(BattleDef data, FortificationDef forts, SiegeDef siege, PeoplesStore? store)
+    private WarfareProfile(BattleDef data, FortificationDef forts, SiegeDef siege, LogisticsDef logistics, PeoplesStore? store)
     {
         Data = data;
         Forts = forts;
         Siege = siege;
+        Logistics = logistics;
+        _formProjection = new double[Enum.GetValues(typeof(PolityForm)).Length];
+        _seaForm = new bool[_formProjection.Length];
         _store = store;
         _biomeTerrain = new int[256];
         _formLevy = new double[Enum.GetValues(typeof(PolityForm)).Length];
@@ -80,6 +86,21 @@ internal sealed class WarfareProfile
 
     /// <summary>The siege tuning.</summary>
     public SiegeDef Siege { get; }
+
+    /// <summary>The logistics tuning.</summary>
+    public LogisticsDef Logistics { get; }
+
+    /// <summary>Overland ground factor per terrain index.</summary>
+    public double[] TerrainCost { get; private set; } = Array.Empty<double>();
+
+    /// <summary>What a settlement of <paramref name="tier"/> costs as a source of supply.</summary>
+    public double SourceCost(SettlementTier tier) => (uint)tier < (uint)_sourceCost.Length ? _sourceCost[(int)tier] : 0;
+
+    /// <summary>A polity of <paramref name="form"/>'s hold on its roads at full strength.</summary>
+    public double FormProjection(PolityForm form) => (uint)form < (uint)_formProjection.Length ? _formProjection[(int)form] : 0.5;
+
+    /// <summary>True when a polity of <paramref name="form"/> whose people fight the <paramref name="way"/> sails its hosts and supply.</summary>
+    public bool Sails(PolityForm form, Way way) => way.Seafaring >= Logistics.SeaFrom || ((uint)form < (uint)_seaForm.Length && _seaForm[(int)form]);
 
     /// <summary>Months of food the season a siege begins in adds or takes, per season.</summary>
     public double[] FoodSeason { get; } = new double[Seasons];
@@ -179,10 +200,12 @@ internal sealed class WarfareProfile
         BattleDef? battle = null;
         FortificationDef? forts = null;
         SiegeDef? siege = null;
+        LogisticsDef? logistics = null;
+        store?.Logistics.TryGetValue("default", out logistics);
         store?.Battles.TryGetValue("default", out battle);
         store?.Fortifications.TryGetValue("default", out forts);
         store?.Sieges.TryGetValue("default", out siege);
-        var profile = new WarfareProfile(battle ?? new BattleDef(), forts ?? new FortificationDef(), siege ?? new SiegeDef(), store);
+        var profile = new WarfareProfile(battle ?? new BattleDef(), forts ?? new FortificationDef(), siege ?? new SiegeDef(), logistics ?? new LogisticsDef(), store);
         var unknown = new SortedSet<string>(StringComparer.Ordinal);
         profile.Build(unknown);
         // Lint every shipped way of war now, so its unknown names surface without a battle.
@@ -237,6 +260,23 @@ internal sealed class WarfareProfile
         }
         foreach (var t in Forts.TierWalls.Keys.Concat(Siege.GarrisonShare.Keys))
             if (!Enum.TryParse(t, ignoreCase: true, out SettlementTier _)) unknown.Add($"tier:{t}");
+        TerrainCost = Factors(terrains, Logistics.TerrainCost, "logistics.terrain", unknown);
+        for (int f = 0; f < _formProjection.Length; f++) _formProjection[f] = 0.5;
+        foreach (var kv in Logistics.FormProjection)
+        {
+            if (Enum.TryParse(kv.Key, ignoreCase: true, out PolityForm form) && Enum.IsDefined(typeof(PolityForm), form)) _formProjection[(int)form] = kv.Value;
+            else unknown.Add($"form:{kv.Key}");
+        }
+        foreach (var name in Logistics.SeaForms)
+        {
+            if (Enum.TryParse(name, ignoreCase: true, out PolityForm form) && Enum.IsDefined(typeof(PolityForm), form)) _seaForm[(int)form] = true;
+            else unknown.Add($"form:{name}");
+        }
+        foreach (var kv in Logistics.SourceCost)
+        {
+            if (Enum.TryParse(kv.Key, ignoreCase: true, out SettlementTier tier) && (uint)tier < (uint)_sourceCost.Length) _sourceCost[(int)tier] = kv.Value;
+            else unknown.Add($"tier:{kv.Key}");
+        }
         for (int o = 0; o < _aftermath.Length; o++) _aftermath[o] = "none";
         foreach (var kv in data.Aftermath)
         {
@@ -359,7 +399,7 @@ internal sealed class WarfareProfile
             if (!Tactics.Any(t => string.Equals(t.Arm, u.Arm, StringComparison.OrdinalIgnoreCase))) unknown?.Add($"warfare:{def.Key}.arm:{u.Arm}");
         if (!string.IsNullOrWhiteSpace(def.FortKind) && !Forts.Kinds.ContainsKey(def.FortKind)) unknown?.Add($"warfare:{def.Key}.fort:{def.FortKind}");
         return new Way(def.Key, doctrine, def.Units.ToArray(), def.Mobility, def.Discipline, def.SiegeSkill, def.Forage, def.ColdTolerance,
-            def.Levy, seasons, customs, def.Fortify, FortOf(def.FortKind));
+            def.Levy, seasons, customs, def.Fortify, FortOf(def.FortKind), def.Seafaring);
     }
 
     private Way Fallback()
@@ -394,6 +434,7 @@ internal sealed class WarfareProfile
             case "general_fell" when eq < 0: condition = new Condition(Test.GeneralFell, 0, string.Empty, negate); return true;
             case "general_captured" when eq < 0: condition = new Condition(Test.GeneralCaptured, 0, string.Empty, negate); return true;
             case "declined" when eq < 0: condition = new Condition(Test.Declined, 0, string.Empty, negate); return true;
+            case "wintered" when eq < 0: condition = new Condition(Test.Wintered, 0, string.Empty, negate); return true;
             case "end":
                 if (value.Length == 0) return false;
                 condition = new Condition(Test.SiegeEnd, 0, value, negate);

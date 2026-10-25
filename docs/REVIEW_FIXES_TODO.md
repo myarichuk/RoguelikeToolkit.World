@@ -211,5 +211,12 @@ Log:
   watch); `Siege/` and `Fortification/` YAML, `Fortify`/`FortKind` per way of war, `Architecture` per culture; the commit
   resolves chained `Requires`. `SiegeResolverTests` (8), `SiegeWorldTests` (13, incl. X3 byte pins). Editor: `fort` kind and
   per-culture settlement/fort/ruin stamps. Notes in the plan's §12.
-- [ ] X5 `LogisticsGraph`, `LogisticsOperator` (takes over the route-safety drift), waystations, winter quarters
+- [x] X5 `LogisticsGraph` (settlement nodes; road, river, sea and overland links; per-mover Dijkstra with foreign/hostile
+  passage, the target exempt) and `LogisticsOperator` (order 40) behind flag `Logistics`: battle reach is the attacker's
+  network cost (`ReachCost`), winter quarters (a winter host short of supply winters and fights in the spring), relief marches
+  on the network, only a seafaring people (`Seafaring` per way of war, or a `SeaForms` form) closes the sea; the operator owns
+  the route-safety drift (projection from the keepers' network, forts, waystations, severance, war, outlaws) and builds
+  waystations (`SettlementRole.Waystation`). `Logistics/` YAML. `LogisticsGraphTests` (6), `LogisticsWorldTests` (13, incl. X4
+  byte pins). 300 turns at size 7: history 3.9 s with all flags. Notes in the plan's §12.
+- [ ] X6 Commerce, outlaws, merchant princes, intrigue (`CourtInfluence`); outlaws read route safety
 

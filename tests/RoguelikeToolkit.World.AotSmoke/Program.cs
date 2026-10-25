@@ -123,10 +123,15 @@ Check(peoples.Battles.TryGetValue("default", out var battle) && battle.Beats.Cou
 // Walls, forts and sieges (a dictionary of fort-kind DTOs), then the history runs with them on.
 Check(peoples.Fortifications.TryGetValue("default", out var fortification) && fortification.Kinds.Count > 0 && fortification.TierWalls.Count > 0, "fortification table");
 Check(peoples.Sieges.TryGetValue("default", out var siegeTable) && siegeTable.GarrisonShare.Count > 0 && siegeTable.FoodSeason.Count > 0, "siege table");
-Check(horde.Fortify < peoples.Warfare["dwarven_clan"].Fortify && !string.IsNullOrEmpty(peoples.GetCulture("dwarven_clan").Architecture), "fortify and architecture");
+// The logistics network (a dictionary of terrain costs, lists of forms and offices), then the history runs with it on too.
+Check(peoples.Logistics.TryGetValue("default", out var logistics) && logistics.TerrainCost.Count > 0 && logistics.SourceCost.Count > 0
+    && logistics.SeaForms.Count > 0 && logistics.FormProjection.Count > 0, "logistics table");
+Check(peoples.Warfare["dogfolk_pack"].Seafaring > peoples.Warfare["dwarven_clan"].Seafaring, "seafaring");
+Check(horde!.Fortify < peoples.Warfare["dwarven_clan"].Fortify && !string.IsNullOrEmpty(peoples.GetCulture("dwarven_clan").Architecture), "fortify and architecture");
 using (var courtly = new WorldBuilder().WithSize(3).WithSeed(7)
            .WithHistory(c => c.Features = RoguelikeToolkit.World.Core.History.HistoryFeatures.Persons
-               | RoguelikeToolkit.World.Core.History.HistoryFeatures.Battles | RoguelikeToolkit.World.Core.History.HistoryFeatures.Sieges).Build())
+               | RoguelikeToolkit.World.Core.History.HistoryFeatures.Battles | RoguelikeToolkit.World.Core.History.HistoryFeatures.Sieges
+               | RoguelikeToolkit.World.Core.History.HistoryFeatures.Logistics).Build())
 {
     Check(courtly.History.Persons.Count > 0 && courtly.History.Tenures.Count > 0, "court persons");
     Check(courtly.History.Battles.Count > 0, "battles");
@@ -134,8 +139,10 @@ using (var courtly = new WorldBuilder().WithSize(3).WithSeed(7)
     foreach (var b in courtly.History.Battles)
     {
         Mix((ulong)b.Outcome); Mix((ulong)(uint)b.Tile); Mix((ulong)(uint)b.Attacker.Tactic); Mix((ulong)b.Kind); Mix((ulong)(uint)b.SiegeMonths);
-        Mix((ulong)(long)(b.Attacker.LossShare * 1e9)); Mix((ulong)(long)(b.Defender.Strength * 1e3));
+        Mix((ulong)(long)(b.Attacker.LossShare * 1e9)); Mix((ulong)(long)(b.Defender.Strength * 1e3)); Mix((ulong)b.Season);
     }
+    Check(courtly.History.RouteStates.Count > 0, "route states");
+    foreach (var r in courtly.History.RouteStates) { Mix((ulong)(long)(r.Safety * 1e9)); Mix((ulong)(uint)r.Forts); Mix((ulong)(uint)r.Waystations); }
 }
 
 // 5. Entity store: spawn, snapshot, reload.

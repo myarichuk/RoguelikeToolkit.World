@@ -11,6 +11,7 @@ Forage: 50
 ColdTolerance: 45
 Fortify: 60
 FortKind: stone_keep
+Seafaring: 50
 Levy: 1.0
 CampaignSeasons: { Spring: 2, Summer: 4, Autumn: 3, Winter: 1 }
 Customs: [ransom]
