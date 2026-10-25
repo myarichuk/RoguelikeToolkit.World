@@ -1,6 +1,7 @@
 using System.Globalization;
 using RoguelikeToolkit.World.Core.Elevation;
 using RoguelikeToolkit.World.Core.Integration;
+using RoguelikeToolkit.World.Core.Peoples;
 using RoguelikeToolkit.World.Core.Primitives;
 using RoguelikeToolkit.World.Core.Settlement;
 using RoguelikeToolkit.World.Core.Storage;
@@ -390,6 +391,8 @@ public sealed class HistoryCatalog : IHistoricalContext
         // start turn 1 from the previous run's ledgers and save different bytes than a fresh build.
         PluginState.Clear();
         Strings.Clear();
+        _territoryPeoples = null;
+        _territoryPeoplesLoaded = false;
     }
 
     /// <summary>Counts polities that broke away from a parent that was still standing when they were founded.</summary>
@@ -436,10 +439,28 @@ public sealed class HistoryCatalog : IHistoricalContext
         var pins = new Dictionary<int, int>();
         foreach (var kv in Overrides.PinnedTiles)
             if (kv.Value >= 0 && kv.Value < Polities.Count && Polities[kv.Value].Alive) pins[kv.Key] = kv.Value;
-        var owners = HistoryTerritory.AssignOwners(store, capitals, pins);
+        var cultures = new string[Polities.Count];
+        // An absorbed people's old land is still crossed on its own people's terms: the flood credits it to the absorber
+        // but keeps its reach, so an absorption hands over exactly the land the polity held.
+        for (int i = 0; i < Polities.Count; i++) cultures[i] = Polities[i].CultureKey;
+        var owners = HistoryTerritory.AssignOwners(store, capitals, pins, TerritoryCostsFor(cultures));
         for (int t = 0; t < owners.Length; t++)
             if (owners[t] >= 0) owners[t] = heir[owners[t]];
         return owners;
+    }
+
+    private PeoplesStore? _territoryPeoples;
+    private bool _territoryPeoplesLoaded;
+
+    /// <summary>Territory step costs for owners with these cultures, from the peoples data (loaded once per catalog run).</summary>
+    internal TerritoryCosts TerritoryCostsFor(IReadOnlyList<string> culturePerOwner)
+    {
+        if (!_territoryPeoplesLoaded)
+        {
+            _territoryPeoples = PeoplesLoader.LoadStore(this);
+            _territoryPeoplesLoaded = true;
+        }
+        return TerritoryCosts.FromPeoples(_territoryPeoples, culturePerOwner);
     }
 
     /// <summary>The living polity <paramref name="id"/>'s land belongs to: itself, its absorber (followed through chains), or -1.</summary>

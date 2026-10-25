@@ -30,6 +30,12 @@ public sealed class CultureDef
     /// <c>History.FormAffinity</c> (Peoples sits below History).
     /// </summary>
     public Dictionary<string, int> FormAffinity { get; set; } = new(StringComparer.OrdinalIgnoreCase);
+    /// <summary>
+    /// Multipliers on the territory step costs of <see cref="TerritoryDef"/> for this culture's states: per target biome
+    /// name (<c>Swamp: 0.5</c> lets a marsh people spread through marsh) or per term (<c>Climb</c>, <c>High</c>, <c>River</c>).
+    /// Values &gt; 0; unlisted entries are 1.
+    /// </summary>
+    public Dictionary<string, double> TerrainAffinity { get; set; } = new(StringComparer.OrdinalIgnoreCase);
     /// <summary>Whose line names follow when the caller does not choose: <c>Patrilineal</c>, <c>Matrilineal</c> or <c>Bilineal</c> (validated at load, case-insensitive).</summary>
     public string LineageDefault { get; set; } = "Patrilineal";
     /// <summary>Xenophobia (parochial altruism axis), 0-100.</summary>

@@ -30,6 +30,8 @@ internal sealed class AotYamlObjectFactory : DefaultObjectFactory
         if (type == typeof(SubsistenceExploit)) return new SubsistenceExploit();
         if (type == typeof(List<SubsistenceExploit>)) return new List<SubsistenceExploit>();
         if (type == typeof(ResourceDef)) return new ResourceDef();
+        if (type == typeof(TerritoryDef)) return new TerritoryDef();
+        if (type == typeof(Dictionary<string, double>)) return new Dictionary<string, double>(StringComparer.OrdinalIgnoreCase);
         if (type == typeof(LocaleData)) return new LocaleData();
         if (type == typeof(List<MorphemeYaml>)) return new List<MorphemeYaml>();
         if (type == typeof(List<string>)) return new List<string>();
@@ -50,6 +52,7 @@ internal sealed class AotYamlObjectFactory : DefaultObjectFactory
     [DynamicDependency(DynamicallyAccessedMemberTypes.PublicProperties | DynamicallyAccessedMemberTypes.PublicParameterlessConstructor, typeof(SubsistenceDef))]
     [DynamicDependency(DynamicallyAccessedMemberTypes.PublicProperties | DynamicallyAccessedMemberTypes.PublicParameterlessConstructor, typeof(SubsistenceExploit))]
     [DynamicDependency(DynamicallyAccessedMemberTypes.PublicProperties | DynamicallyAccessedMemberTypes.PublicParameterlessConstructor, typeof(ResourceDef))]
+    [DynamicDependency(DynamicallyAccessedMemberTypes.PublicProperties | DynamicallyAccessedMemberTypes.PublicParameterlessConstructor, typeof(TerritoryDef))]
     [DynamicDependency(DynamicallyAccessedMemberTypes.PublicProperties | DynamicallyAccessedMemberTypes.PublicParameterlessConstructor, typeof(LocaleData))]
     public static IDeserializer CreateDeserializer() => new DeserializerBuilder()
         .WithObjectFactory(new AotYamlObjectFactory())

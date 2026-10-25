@@ -199,7 +199,7 @@ function historyInput(e: EngineApi, seed: number, chosen: NameStyle[], all: Name
   const base = uniqueNamesSync(reqs, (r) => names(e, r)).names;
   const realmNames = ids.map((id, i) => realmTitle(seed, id, formOf(i), base[i]));
   return {
-    settlements: Int32Array.from(e.HistorySettlements()), polityIds: ids, polityNames: realmNames, polityFolk: folk, polityStyle: style,
+    settlements: Int32Array.from(e.HistorySettlements()), polityIds: ids, polityNames: realmNames, polityBases: base, polityFolk: folk, polityStyle: style,
     endCauses: e.HistorySettlementEndCauses(), scars: Int32Array.from(e.HistoryScars()), scarKinds: e.HistoryScarKinds(), holy: holySites(e),
   };
 }
@@ -271,9 +271,11 @@ function pull(e: EngineApi, p: GenerateParams, tileCount: number, timings: Recor
   let features: WorldSnapshot['features'] = { features: [], rivers: [], roads: [] };
   let tileStyle = new Uint8Array(0);
   let history: HistoryRecord | null = null;
+  let realmBases: string[] = [];
   if (want.features) {
     t = performance.now();
     const historyIn = historyInput(e, p.seed, chosen, all);
+    realmBases = Array.from(historyIn.polityBases ?? []);
     history = historyRecord(e, historyIn, chosen.length);
     const adj = buildAdjacency(tileCount, faces);
     const polityStyle = new Map<number, number>();
@@ -291,8 +293,9 @@ function pull(e: EngineApi, p: GenerateParams, tileCount: number, timings: Recor
   if (want.names) {
     t = performance.now();
     const named = features.features.filter((f) => f.request);
-    // No two places share a name; a re-rolled place keeps the request that named it.
-    const got = uniqueNamesSync(named.map((f) => f.request!), (r) => names(e, r));
+    // No two places share a name, and no place takes a realm's name ("Ashmaw" beside the "Kingdom of Ashmaw");
+    // a re-rolled place keeps the request that named it.
+    const got = uniqueNamesSync(named.map((f) => f.request!), (r) => names(e, r), realmBases);
     named.forEach((f, i) => { f.name = got.names[i]; f.request = got.requests[i]; });
     timings.namesMs = performance.now() - t;
   }

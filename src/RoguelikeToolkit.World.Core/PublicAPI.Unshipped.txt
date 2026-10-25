@@ -3177,3 +3177,27 @@ static RoguelikeToolkit.World.Core.History.FormAffinity.Pick(int[]! weights, Rog
 static RoguelikeToolkit.World.Core.History.FormAffinity.Problems(RoguelikeToolkit.World.Core.Peoples.PeoplesStore! store) -> System.Collections.Generic.IReadOnlyList<string!>!
 RoguelikeToolkit.World.Core.Peoples.CultureDef.FormAffinity.get -> System.Collections.Generic.Dictionary<string!, int>!
 RoguelikeToolkit.World.Core.Peoples.CultureDef.FormAffinity.set -> void
+static RoguelikeToolkit.World.Core.History.HistoryTerritory.AssignOwners(RoguelikeToolkit.World.Core.Storage.WorldDataStore! store, System.Collections.Generic.IReadOnlyList<int>! capitals, System.Collections.Generic.IReadOnlyDictionary<int, int>! pinnedTiles, RoguelikeToolkit.World.Core.History.TerritoryCosts! costs) -> int[]!
+RoguelikeToolkit.World.Core.History.TerritoryCosts
+static RoguelikeToolkit.World.Core.History.TerritoryCosts.Uniform.get -> RoguelikeToolkit.World.Core.History.TerritoryCosts!
+RoguelikeToolkit.World.Core.History.TerritoryCosts.UnknownKeys.get -> System.Collections.Generic.IReadOnlyList<string!>!
+static RoguelikeToolkit.World.Core.History.TerritoryCosts.FromPeoples(RoguelikeToolkit.World.Core.Peoples.PeoplesStore? store, System.Collections.Generic.IReadOnlyList<string!>! culturePerOwner) -> RoguelikeToolkit.World.Core.History.TerritoryCosts!
+RoguelikeToolkit.World.Core.Peoples.CultureDef.TerrainAffinity.get -> System.Collections.Generic.Dictionary<string!, double>!
+RoguelikeToolkit.World.Core.Peoples.CultureDef.TerrainAffinity.set -> void
+RoguelikeToolkit.World.Core.Peoples.PeoplesStore.Territories.get -> System.Collections.Generic.Dictionary<string!, RoguelikeToolkit.World.Core.Peoples.TerritoryDef!>!
+RoguelikeToolkit.World.Core.Peoples.TerritoryDef
+RoguelikeToolkit.World.Core.Peoples.TerritoryDef.TerritoryDef() -> void
+RoguelikeToolkit.World.Core.Peoples.TerritoryDef.Key.get -> string!
+RoguelikeToolkit.World.Core.Peoples.TerritoryDef.Key.set -> void
+RoguelikeToolkit.World.Core.Peoples.TerritoryDef.Step.get -> double
+RoguelikeToolkit.World.Core.Peoples.TerritoryDef.Step.set -> void
+RoguelikeToolkit.World.Core.Peoples.TerritoryDef.Climb.get -> double
+RoguelikeToolkit.World.Core.Peoples.TerritoryDef.Climb.set -> void
+RoguelikeToolkit.World.Core.Peoples.TerritoryDef.High.get -> double
+RoguelikeToolkit.World.Core.Peoples.TerritoryDef.High.set -> void
+RoguelikeToolkit.World.Core.Peoples.TerritoryDef.HighFrom.get -> double
+RoguelikeToolkit.World.Core.Peoples.TerritoryDef.HighFrom.set -> void
+RoguelikeToolkit.World.Core.Peoples.TerritoryDef.River.get -> double
+RoguelikeToolkit.World.Core.Peoples.TerritoryDef.River.set -> void
+RoguelikeToolkit.World.Core.Peoples.TerritoryDef.Biomes.get -> System.Collections.Generic.Dictionary<string!, double>!
+RoguelikeToolkit.World.Core.Peoples.TerritoryDef.Biomes.set -> void

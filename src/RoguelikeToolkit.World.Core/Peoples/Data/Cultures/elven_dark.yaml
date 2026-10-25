@@ -20,3 +20,8 @@ FormAffinity:
   LooseAssociation: 30
   Horde: 15
   MerchantRepublic: 10
+# Multipliers on the territory step costs (Territory/default.yaml): where this people's reach runs easily.
+TerrainAffinity:
+  Mountain: 0.85
+  Canyon: 0.75
+  Climb: 0.9

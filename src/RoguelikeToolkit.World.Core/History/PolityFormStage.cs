@@ -180,7 +180,8 @@ public sealed class PolityFormStage : HistoryPluginBase
         {
             if (kv.Value >= 0 && kv.Value < history.Polities.Count) pins[kv.Key] = kv.Value;
         }
-        history.Ownership = HistoryTerritory.AssignOwners(store, capitals, pins);
+        history.Ownership = HistoryTerritory.AssignOwners(store, capitals, pins,
+            history.TerritoryCostsFor(history.Polities.Select(p => p.CultureKey).ToList()));
         history.PolitiesFormed = true;
     }
 

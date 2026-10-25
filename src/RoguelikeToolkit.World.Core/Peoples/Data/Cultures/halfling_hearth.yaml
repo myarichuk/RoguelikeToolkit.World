@@ -20,3 +20,7 @@ FormAffinity:
   MerchantRepublic: 25
   Kingdom: 25
   Horde: 5
+# Multipliers on the territory step costs (Territory/default.yaml): where this people's reach runs easily.
+TerrainAffinity:
+  River: 0.7
+  Forest: 0.95

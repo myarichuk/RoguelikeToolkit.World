@@ -10,6 +10,8 @@ export interface HistoryInput {
   settlements: ArrayLike<number>;
   /** Display name per polity id (the index is the polity id's position in `HistoryPolities()`; see `polityIndex`). */
   polityNames?: ArrayLike<string>;
+  /** Base place name each realm title is built on ("Ashmaw" in "Kingdom of Ashmaw"), aligned with `polityNames`. */
+  polityBases?: ArrayLike<string>;
   /** Polity id per `polityNames` entry. */
   polityIds?: ArrayLike<number>;
   /** Founding folk key per `polityIds` entry (`human`, `dwarf`, ...). */

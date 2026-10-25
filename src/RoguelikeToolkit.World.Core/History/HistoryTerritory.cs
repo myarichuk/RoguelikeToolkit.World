@@ -18,19 +18,26 @@ public static class HistoryTerritory
     public const double LandThreshold = 0.0;
 
     /// <summary>
+    /// Assigns every tile an owner by plain hop count (<see cref="TerritoryCosts.Uniform"/>); see the overload taking costs.
+    /// </summary>
+    public static int[] AssignOwners(WorldDataStore store, IReadOnlyList<int> capitals, IReadOnlyDictionary<int, int> pinnedTiles)
+        => AssignOwners(store, capitals, pinnedTiles, TerritoryCosts.Uniform);
+
+    /// <summary>
     /// Assigns every tile an owner: the index into <paramref name="capitals"/> of the capital with the cheapest path to
     /// it (multi-source shortest path; ties to the lowest capital index, then the lowest tile), or -1 for water and
-    /// unreachable land. A step costs more where the ground resists a state's reach: climbing, high mountains, a river
-    /// to cross, desert, marsh, ice (<see cref="StepCost"/>), so borders settle on ranges, rivers and wastes instead of
-    /// the straight bisectors of a plain hop count. Pins (<paramref name="pinnedTiles"/>, tile to owner) win over the
-    /// flood and are ignored on water, on out-of-range tiles and on capital tiles (a capital always keeps its own
-    /// polity). Pure function of its inputs.
+    /// unreachable land. Step costs come from <paramref name="costs"/> (data: <c>Peoples/Data/Territory/default.yaml</c>
+    /// scaled per owner's culture), so borders settle on ranges, rivers and wastes instead of the straight bisectors of a
+    /// plain hop count. Pins (<paramref name="pinnedTiles"/>, tile to owner) win over the flood and are ignored on water,
+    /// on out-of-range tiles and on capital tiles (a capital always keeps its own polity). Pure function of its inputs.
     /// </summary>
     /// <param name="store">Tile store (elevation for the land mask and terrain, hydrology and biomes when registered, adjacency).</param>
     /// <param name="capitals">Capital tiles in polity-id order.</param>
     /// <param name="pinnedTiles">Forced tile ownership, applied before the flood.</param>
-    public static int[] AssignOwners(WorldDataStore store, IReadOnlyList<int> capitals, IReadOnlyDictionary<int, int> pinnedTiles)
+    /// <param name="costs">Per-owner step costs (owner = index into <paramref name="capitals"/>).</param>
+    public static int[] AssignOwners(WorldDataStore store, IReadOnlyList<int> capitals, IReadOnlyDictionary<int, int> pinnedTiles, TerritoryCosts costs)
     {
+        ArgumentNullException.ThrowIfNull(costs);
         int n = store.TileCount;
         var owners = new int[n];
         for (int i = 0; i < owners.Length; i++) owners[i] = -1;
@@ -86,7 +93,7 @@ public static class HistoryTerritory
                 if (settled[next]) continue;
                 if (hasElev && elev[next].Height < LandThreshold) continue;
                 if (pinnedTiles != null && owners[next] != -1 && cost[next] == double.PositiveInfinity) continue; // a pin
-                double c = key.Cost + StepCost(tile, next, elev, hydro, biome);
+                double c = key.Cost + costs.Step(key.Owner, tile, next, elev, hydro, biome);
                 if (c < cost[next] || (c == cost[next] && key.Owner < owners[next]))
                 {
                     cost[next] = c;
@@ -98,34 +105,4 @@ public static class HistoryTerritory
 
         return owners;
     }
-
-    /// <summary>
-    /// Cost of carrying a state's reach from <paramref name="from"/> into <paramref name="to"/>: one per step, plus the climb,
-    /// plus high ground (a range is a frontier), plus crossing onto a river, scaled by how hostile the ground is to hold
-    /// (desert, marsh, tundra, ice; forest a little). Missing layers contribute nothing, which is the plain hop count.
-    /// </summary>
-    internal static double StepCost(int from, int to, ReadOnlySpan<ElevationInfo> elev, ReadOnlySpan<HydrologyInfo> hydro, ReadOnlySpan<BiomeInfo> biome)
-    {
-        double c = 1.0;
-        if (!elev.IsEmpty)
-        {
-            double rise = Math.Abs(elev[to].Height - elev[from].Height);
-            c += 6.0 * rise;
-            double high = elev[to].Height - 0.35;
-            if (high > 0) c += 4.0 * high;
-        }
-        if (!hydro.IsEmpty && hydro[to].IsRiver == 1 && hydro[from].IsRiver == 0) c += 1.0;
-        if (!biome.IsEmpty) c *= Hostility(biome[to].Biome);
-        return c;
-    }
-
-    private static double Hostility(BiomeType biome) => biome switch
-    {
-        BiomeType.Glacier => 2.5,
-        BiomeType.Desert or BiomeType.RockDesert or BiomeType.SaltFlat or BiomeType.ColdDesert or BiomeType.Badlands => 1.8,
-        BiomeType.Swamp or BiomeType.Tundra or BiomeType.Mountain or BiomeType.Canyon => 1.6,
-        BiomeType.Jungle => 1.4,
-        BiomeType.Forest => 1.15,
-        _ => 1.0,
-    };
 }

@@ -22,6 +22,8 @@ public sealed class PeoplesStore
     public Dictionary<string, SubsistenceDef> Subsistence { get; } = new(StringComparer.OrdinalIgnoreCase);
     /// <summary>Loaded resources keyed by <see cref="ResourceDef.Key"/> (case-insensitive).</summary>
     public Dictionary<string, ResourceDef> Resources { get; } = new(StringComparer.OrdinalIgnoreCase);
+    /// <summary>Loaded territory step-cost profiles keyed by <see cref="TerritoryDef.Key"/> (case-insensitive).</summary>
+    public Dictionary<string, TerritoryDef> Territories { get; } = new(StringComparer.OrdinalIgnoreCase);
     /// <summary>Pairwise offspring rules from <c>compat.yaml</c>; unlisted pairs blend.</summary>
     public CompatibilityMatrix Compatibility { get; } = new();
 
@@ -207,8 +209,10 @@ public sealed class PeoplesStore
             LoadKeyed(store.Subsistence, "subsistence", d => d.Key, ValidateSubsistence);
         else if (rel.StartsWith("Resources/", StringComparison.OrdinalIgnoreCase))
             LoadKeyed(store.Resources, "resource", d => d.Key, ValidateResource);
+        else if (rel.StartsWith("Territory/", StringComparison.OrdinalIgnoreCase))
+            LoadKeyed(store.Territories, "territory", d => d.Key, ValidateTerritory);
         else
-            problems.Add($"{rel}: unrecognized location (want Folks/, Cultures/, Subsistence/ or Resources/*.yaml, or compat.yaml).");
+            problems.Add($"{rel}: unrecognized location (want Folks/, Cultures/, Subsistence/, Resources/ or Territory/*.yaml, or compat.yaml).");
 
         void LoadKeyed<T>(Dictionary<string, T> into, string kind, Func<T, string> key, Action<string, T, List<string>> validate)
         {
@@ -282,6 +286,8 @@ public sealed class PeoplesStore
     {
         if (string.IsNullOrWhiteSpace(data.NamingTable)) problems.Add($"{rel}: NamingTable is blank.");
         if (string.IsNullOrWhiteSpace(data.Subsistence)) problems.Add($"{rel}: Subsistence is blank.");
+        foreach (var kv in data.TerrainAffinity)
+            if (!(kv.Value > 0) || double.IsInfinity(kv.Value)) problems.Add($"{rel}: TerrainAffinity.{kv.Key} must be a positive number.");
         if (!string.Equals(data.LineageDefault, "patrilineal", StringComparison.OrdinalIgnoreCase) &&
             !string.Equals(data.LineageDefault, "matrilineal", StringComparison.OrdinalIgnoreCase) &&
             !string.Equals(data.LineageDefault, "bilineal", StringComparison.OrdinalIgnoreCase))
@@ -314,6 +320,16 @@ public sealed class PeoplesStore
                      ("NeuroticismOffset", data.NeuroticismOffset),
                  })
             if (v < -100 || v > 100) problems.Add($"{rel}: {field} {v} is out of range (-100-100).");
+    }
+
+    private static void ValidateTerritory(string rel, TerritoryDef data, List<string> problems)
+    {
+        if (!(data.Step > 0) || double.IsInfinity(data.Step)) problems.Add($"{rel}: Step must be a positive number.");
+        foreach (var (field, v) in new[] { ("Climb", data.Climb), ("High", data.High), ("River", data.River) })
+            if (!(v >= 0) || double.IsInfinity(v)) problems.Add($"{rel}: {field} must be a non-negative number.");
+        if (double.IsNaN(data.HighFrom) || double.IsInfinity(data.HighFrom)) problems.Add($"{rel}: HighFrom must be a number.");
+        foreach (var kv in data.Biomes)
+            if (!(kv.Value > 0) || double.IsInfinity(kv.Value)) problems.Add($"{rel}: Biomes.{kv.Key} must be a positive number.");
     }
 
     private static void ValidateSubsistence(string rel, SubsistenceDef data, List<string> problems)
