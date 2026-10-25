@@ -1,3 +1,4 @@
+using RoguelikeToolkit.World.Core.Actors;
 using RoguelikeToolkit.World.Core.Primitives;
 using RoguelikeToolkit.World.Core.Topology;
 
@@ -36,7 +37,26 @@ public sealed class TurnView
     /// <summary>One displaced group at the snapshot; <see cref="Index"/> is its position in <see cref="HistoryCatalog.Displaced"/>.</summary>
     public readonly record struct DisplacedState(int Index, int PolityId, string Culture, int Turn, double Amount, int Origin, int Cause);
 
+    /// <summary>One person at the snapshot; <see cref="Id"/> is its index in <see cref="HistoryCatalog.Persons"/>. Epithets are names.</summary>
+    public sealed record PersonState(int Id, PersonKind Kind, string FolkKey, string CultureKey, int PolityId, int SeatSettlement,
+        int HouseId, int Parent, bool Feminine, int BornTurn, int BornYear, bool Alive, ActorTraits Traits, byte Martial, byte Intrigue,
+        byte Stewardship, byte Charisma, IReadOnlyList<string> Epithets, int Renown, double Wealth, sbyte Loyalty, double Pledged,
+        int StableKey);
+
+    /// <summary>One open bond at the snapshot; the kind is a name.</summary>
+    public readonly record struct RelationState(int A, int B, string Kind, int FromTurn, int Weight);
+
+    /// <summary>One engagement at the snapshot (the parts operators decide on; the full record is in <see cref="HistoryCatalog.Battles"/>).</summary>
+    public readonly record struct BattleState(int Id, int Turn, BattleKind Kind, BattleOutcome Outcome, int Attacker, int Defender,
+        int GeneralA, int GeneralD, int Tile, int Settlement);
+
+    /// <summary>One route's state at the snapshot.</summary>
+    public readonly record struct RouteStateView(int RouteA, int RouteB, double Safety, double Traffic, int Forts, int Waystations,
+        int OutlawBand, int Sponsor, int SabotagedTurn, int LastIncidentTurn);
+
     private readonly HashSet<int> _siteTiles = new();
+    private readonly List<RelationState> _openRelations = new();
+    private readonly Dictionary<(int Polity, string Office), int> _offices = new();
 
     internal TurnView(WorldMap? map, HistoryCatalog history, HistoryContext context, int turn)
     {
@@ -91,7 +111,96 @@ public sealed class TurnView
         var scars = new List<ScarState>(history.Scars.Count);
         foreach (var sc in history.Scars) scars.Add(new ScarState(sc.TileIndex, sc.PolityId, sc.Kind, sc.Active));
         Scars = scars;
+
+        Features = context.Features;
+        MaxPersons = context.MaxPersons;
+        MaxLivingPersonsPerPolity = context.MaxLivingPersonsPerPolity;
+        MaxAppointmentsPerTurn = context.MaxAppointmentsPerTurn;
+        MaxOutlawBands = context.MaxOutlawBands;
+        MaxSiegeMonths = context.MaxSiegeMonths;
+        var persons = new List<PersonState>(history.Persons.Count);
+        foreach (var p in history.Persons)
+        {
+            var epithets = new string[p.Epithets.Count];
+            for (int i = 0; i < epithets.Length; i++) epithets[i] = history.Strings.NameOf(p.Epithets[i]);
+            persons.Add(new PersonState(p.Id, p.Kind, p.FolkKey, p.CultureKey, p.PolityId, p.SeatSettlement, p.HouseId, p.Parent,
+                p.Feminine, p.BornTurn, p.BornYear, p.Alive, p.Traits, p.Martial, p.Intrigue, p.Stewardship, p.Charisma, epithets,
+                p.Renown, p.Wealth, p.Loyalty, p.Pledged, p.StableKey));
+        }
+        Persons = persons;
+        foreach (var r in history.Relations)
+            if (r.Open) _openRelations.Add(new RelationState(r.A, r.B, history.Strings.NameOf(r.Kind), r.FromTurn, r.Weight));
+        foreach (var t in history.Tenures)
+            if (t.Open) _offices[(t.Polity, history.Strings.NameOf(t.Office))] = t.Person;
+        var battles = new List<BattleState>(history.Battles.Count);
+        foreach (var b in history.Battles)
+            battles.Add(new BattleState(b.Id, b.Turn, b.Kind, b.Outcome, b.Attacker.Polity, b.Defender.Polity, b.Attacker.General,
+                b.Defender.General, b.Tile, b.Settlement));
+        Battles = battles;
+        var routes = new List<RouteStateView>(history.RouteStates.Count);
+        foreach (var r in history.RouteStates)
+            routes.Add(new RouteStateView(r.RouteA, r.RouteB, r.Safety, r.Traffic, r.Forts, r.Waystations, r.OutlawBand, r.Sponsor,
+                r.SabotagedTurn, r.LastIncidentTurn));
+        RouteStates = routes;
     }
+
+    /// <summary>The expansion features this run has on.</summary>
+    public HistoryFeatures Features { get; }
+
+    /// <summary>True when every flag of <paramref name="features"/> is on.</summary>
+    public bool Has(HistoryFeatures features) => (Features & features) == features;
+
+    /// <summary>The person cap over the whole history (<see cref="HistoryContext.MaxPersons"/>).</summary>
+    public int MaxPersons { get; }
+
+    /// <summary>The cap on living persons per polity, ruler not counted (<see cref="HistoryContext.MaxLivingPersonsPerPolity"/>).</summary>
+    public int MaxLivingPersonsPerPolity { get; }
+
+    /// <summary>The per-turn appointment budget (<see cref="HistoryContext.MaxAppointmentsPerTurn"/>).</summary>
+    public int MaxAppointmentsPerTurn { get; }
+
+    /// <summary>The cap on outlaw bands at large (<see cref="HistoryContext.MaxOutlawBands"/>).</summary>
+    public int MaxOutlawBands { get; }
+
+    /// <summary>The longest siege (<see cref="HistoryContext.MaxSiegeMonths"/>).</summary>
+    public int MaxSiegeMonths { get; }
+
+    /// <summary>Every person (dead included) in id order.</summary>
+    public IReadOnlyList<PersonState> Persons { get; }
+
+    /// <summary>Living persons loyal to <paramref name="polityId"/>, in id order.</summary>
+    public IReadOnlyList<PersonState> PersonsOf(int polityId)
+    {
+        var list = new List<PersonState>();
+        foreach (var p in Persons) if (p.Alive && p.PolityId == polityId) list.Add(p);
+        return list;
+    }
+
+    /// <summary>Person id holding <paramref name="office"/> of <paramref name="polityId"/> at the snapshot, or -1.</summary>
+    public int OfficeHolder(int polityId, string office)
+        => office != null && _offices.TryGetValue((polityId, office), out int person) ? person : -1;
+
+    /// <summary>Open bonds of person <paramref name="personId"/> (either side), in (A, B, Kind, FromTurn) order.</summary>
+    public IReadOnlyList<RelationState> RelationsOf(int personId)
+    {
+        var list = new List<RelationState>();
+        foreach (var r in _openRelations) if (r.A == personId || r.B == personId) list.Add(r);
+        return list;
+    }
+
+    /// <summary>Every engagement in id order.</summary>
+    public IReadOnlyList<BattleState> Battles { get; }
+
+    /// <summary>Engagements <paramref name="polityId"/> fought on either side, in id order.</summary>
+    public IReadOnlyList<BattleState> BattlesOf(int polityId)
+    {
+        var list = new List<BattleState>();
+        foreach (var b in Battles) if (b.Attacker == polityId || b.Defender == polityId) list.Add(b);
+        return list;
+    }
+
+    /// <summary>Route states in (RouteA, RouteB) order.</summary>
+    public IReadOnlyList<RouteStateView> RouteStates { get; }
 
     /// <summary>
     /// Reads a plugin state blob as it stood at the snapshot (operators write it through <see cref="ProposalSink.SetState"/>,

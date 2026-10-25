@@ -193,6 +193,9 @@ Log:
     tile × commodity before the host test; now lazy, 796 → 90 ms, also speeds world builds) and `CitySiteScorer`'s
     water-radius test (hop-nearest water verified exactly first; `SpatialIndex.AnyWithin` prunes by measured cell
     radius instead of a fixed slack). Size-7 history ~1.5 s → ~0.8 s, catalog hash unchanged.
-- [ ] X1 Kernel (types, proposals 28-36, pending person handles, detail quota, participant prefixes, schema 13,
-  TurnView accessors, `HistoryFeatures` default None)
+- [x] X1 Kernel (types, proposals 28-36, pending person handles, detail quota, participant prefixes, schema 13,
+  TurnView accessors, `HistoryFeatures` default None). `ExpansionCommit` holds the turn's kernel commit; decisions in
+  the plan's §12. Fixture projections unchanged, byte hashes re-pinned once. `HistoryExpansionKernelTests` (23).
+- [ ] X2 `CourtOperator`: rulers, heirs, offices by form, death hazard (observer only; flag `Persons`). Data first:
+  offices per form and lifespans in Peoples YAML, not code
 

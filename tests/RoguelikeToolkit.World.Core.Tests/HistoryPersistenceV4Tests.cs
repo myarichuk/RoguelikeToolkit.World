@@ -39,7 +39,7 @@ public class HistoryPersistenceV4Tests
         var h = Rich();
         var loaded = RoundTrip(h);
         Assert.Equal(h.ToBytes(), loaded.ToBytes());
-        Assert.Equal(12, HistoryCatalog.SchemaVersion);
+        Assert.Equal(13, HistoryCatalog.SchemaVersion);
         Assert.Equal(h.Strings.Count, loaded.Strings.Count);
         Assert.Equal(7.5, loaded.Polities[0].GetScalar(1, loaded.Scalars));
         Assert.Equal(12, loaded.Polities[1].EndedTurn);

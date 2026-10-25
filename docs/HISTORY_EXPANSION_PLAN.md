@@ -1,6 +1,6 @@
 # History expansion: battles, logistics, named persons
 
-Status: **in progress** (X0 done; progress in [REVIEW_FIXES_TODO.md](REVIEW_FIXES_TODO.md), section Expansion X). Requested 2026-10-25. Builds on `Proposal.Requires` (batch F of
+Status: **in progress** (X0, X1 done; progress in [REVIEW_FIXES_TODO.md](REVIEW_FIXES_TODO.md), section Expansion X). Requested 2026-10-25. Builds on `Proposal.Requires` (batch F of
 [REVIEW_FIXES_TODO.md](REVIEW_FIXES_TODO.md), landed in `d7492ac`). Phases are **X0–X9** (§10).
 
 ## 0. Facts that shape the design
@@ -349,7 +349,7 @@ About 3k persons expected at 300 turns.
 | Phase | Work | Acceptance |
 |---|---|---|
 | X0 | Legacy catalog hash fixtures (sizes 3/4 × seeds 1–5) plus a legacy event projection; `BorderIndex` speed-up | bytes identical; size-7 history ≥20% faster. **Done:** profiling showed the border scans were minor; the win came from lazy deposit noise and an exact faster water-radius test (~1.5 s → ~0.8 s) |
-| X1 | Kernel: types, proposals 28–36, pending handles, detail quota, participant prefixes, schema 13, TurnView accessors, `HistoryFeatures` | flags off: legacy projection identical (hash re-captured once for the empty sections); round trip; corrupt-reference rejection |
+| X1 | Kernel: types, proposals 28–36, pending handles, detail quota, participant prefixes, schema 13, TurnView accessors, `HistoryFeatures` | flags off: legacy projection identical (hash re-captured once for the empty sections); round trip; corrupt-reference rejection. **Done** (see §12) |
 | X2 | `CourtOperator`, persons, relations, tenures (observer only) | flag on: the existing kinds' projection equals flag off; one ruler per polity per turn; no participation after death; age at death ≤ 1.5× lifespan; traits stable when a plugin adds persons |
 | X3 | Tactics/Warfare/Traits YAML, `BattleResolver`, generals; War/Conquest behind the flag | statistical tests (§11); flag off identical |
 | X4 | `SiegeResolver`, relief battles | siege invariants; resupply lengthens sieges; cut supply raises the lifted share |
@@ -377,3 +377,35 @@ About 3k persons expected at 300 turns.
   raids under 30% of route-turns.
 - **Chronicle:** the most frequent full sentence under 2%; trigram repeats under 15% in a 20-event window; lint for every
   symbol, slot and predicate; every template reachable.
+
+## 12. As built (deviations and decisions)
+
+- **X0.** The size-7 profile put border scans under 100 ms. The cost was deposit noise and the city-site water radius;
+  both are fixed exactly (catalog bytes unchanged). `BorderIndex` landed anyway: it is the battlefield source for X3.
+- **Open vocabularies are interned names, not enums.** Offices, relation kinds, death causes, epithets, terrain classes,
+  tactics, units, beats and siege ends are strings in proposals, interned at commit. Data can add any of them without
+  code. Enums remain only where code dispatches: `PersonKind`, `BattleKind`, `BattleOutcome`, `HistorySeason`,
+  `RouteFlag`.
+- **Persons reference by pending handle in every person field**, tags (`person:-2`) and participants. Each sink has its
+  own handle space. A proposal that names a refused person is refused too; `AddPerson` house/parent fields fall back to
+  −1 instead.
+- **Detail events never touch the legacy log.**
+  - Only kinds 25–35 draw on the detail budget. Legacy Minor kinds stay on the 64 they always shared.
+  - Compaction removes detail events first and does not count them in `Compactions`, so flags-on leaves the legacy
+    projection intact.
+  - Detail drops are counted in `DroppedDetailEvents`.
+  - The per-polity cap is `MaxDetailEventsPerPolityOperator` (2).
+- **Participant roles are interned by the sink** (`ProposalSink.Participant`). This runs in canonical operator order, so
+  ids stay deterministic; interned names in the projection make it id-independent either way.
+- **No `EndPerson` conflict key.** A second end of the same person is refused because the person is already dead, which
+  also works for pending handles. Pending handles from different operators would otherwise collide on a raw key.
+- **Lifecycle the kernel enforces:**
+  - an ended person's open tenures close;
+  - an ended polity's offices close at the next commit;
+  - the dead cannot be appointed or related;
+  - a ruler is exempt from the per-polity person cap and from the appointment budget.
+- **Route state** is created on first write for a route that has road segments, at `HistoryRouteState.NewRouteSafety`
+  (0.5). It is sampled at the end of every recorded turn.
+- **Schema 13** appends the kernel after the timeline. A v12 file is byte-identical to a v13 file with an empty kernel
+  minus the trailing 32 bytes (tested).
+

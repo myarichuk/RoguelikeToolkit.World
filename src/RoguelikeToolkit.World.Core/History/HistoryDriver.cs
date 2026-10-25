@@ -69,6 +69,7 @@ public sealed class HistoryDriver : HistoryPluginBase
         context.ClearOperatorBudgets();
         RejectedProposals = 0;
         history.Timeline.Begin(history);
+        history.RouteSamples.Clear();
         _recording = true;
         try
         {
@@ -93,7 +94,7 @@ public sealed class HistoryDriver : HistoryPluginBase
         foreach (var op in ordered)
         {
             var own = new List<Proposal>();
-            op.Propose(view, new ProposalSink(op.Name, turn, history.Seed, context, own));
+            op.Propose(view, new ProposalSink(op.Name, turn, history.Seed, context, own, history.Strings));
             proposals.AddRange(own);
         }
         Commit(map, history, context, turn, proposals);
@@ -101,8 +102,13 @@ public sealed class HistoryDriver : HistoryPluginBase
         {
             history.Timeline.RecordTerritory(turn, view.OwnershipSnapshot(), history.Ownership);
             history.Timeline.Sample(history, turn);
+            foreach (var r in history.RouteStates) history.RouteSamples.Add(new RouteSample(turn, r.RouteA, r.RouteB, r.Safety, r.Traffic));
         }
-        else history.Timeline.Clear();
+        else
+        {
+            history.Timeline.Clear();
+            history.RouteSamples.Clear();
+        }
     }
 
     private void Commit(WorldMap map, HistoryCatalog history, HistoryContext context, int turn, List<Proposal> proposals)
@@ -120,6 +126,11 @@ public sealed class HistoryDriver : HistoryPluginBase
         var applied = new HashSet<Proposal>(); // proposals are classes without value equality: identity
         if (AddPolities(map, history, context, turn, proposals, dirty, applied))
             proposals.RemoveAll(static p => p is Proposal.AddPolity or Proposal.SplitPolity or Proposal.AbsorbPolity);
+        // Expansion kernel: persons join in a pre-pass of their own, so the turn's other proposals can name them.
+        var expansion = new ExpansionCommit(history, context, turn);
+        expansion.CloseEndedOffices();
+        RejectedProposals += expansion.AddPersons(proposals, applied);
+        proposals.RemoveAll(static p => p is Proposal.AddPerson);
         var claimed = new HashSet<(ProposalKind, long)>();
         var deltas = new SortedDictionary<(int Polity, int Scalar), double>();
         bool reassigned = false;
@@ -195,7 +206,13 @@ public sealed class HistoryDriver : HistoryPluginBase
                         if (!TryEndSettlement(history, turn, ens, dirty)) RejectedProposals++;
                         break;
                     case Proposal.AppendEvent e:
-                        history.AppendLinked(e.EventKind, turn, e.EntityId, e.Tile, e.Tags, e.Cause, e.Participants, e.PluginKind);
+                        if (expansion.Event(e) is { } resolved)
+                            history.AppendLinked(e.EventKind, turn, e.EntityId, e.Tile, resolved.Tags, e.Cause, resolved.Participants, e.PluginKind);
+                        else RejectedProposals++;
+                        break;
+                    case Proposal.EndPerson or Proposal.SetTenure or Proposal.AddRelation or Proposal.EndRelation or Proposal.AdjustPerson
+                        or Proposal.AddBattle or Proposal.AdjustRoute or Proposal.SetRouteFlag:
+                        if (!expansion.Apply(p)) RejectedProposals++;
                         break;
                     case Proposal.SetPluginState sps:
                         history.PluginState.Set(sps.Key, sps.Version, sps.Data);
@@ -237,6 +254,7 @@ public sealed class HistoryDriver : HistoryPluginBase
                 }
             if (RejectedProposals == rejectedBefore) applied.Add(p);
         }
+        expansion.Finish();
         if (reassigned) SyncSettlementOwners(history, reassignedTiles, dirty);
         DecayDisplaced(history, context, turn, dirty);
         ResyncPopulations(history, dirty, reassigned);

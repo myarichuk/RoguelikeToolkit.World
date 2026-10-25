@@ -53,4 +53,26 @@ public static class EventKinds
     public static readonly EventKind PolityAbsorbed = HistoryEventKind.PolityAbsorbed;
     /// <summary>A plugin-defined event; the name is on <see cref="HistoryEvent.PluginKind"/>.</summary>
     public static readonly EventKind Plugin = HistoryEventKind.Plugin;
+    /// <summary>A siege ended.</summary>
+    public static readonly EventKind Siege = HistoryEventKind.Siege;
+    /// <summary>A person rose.</summary>
+    public static readonly EventKind PersonRose = HistoryEventKind.PersonRose;
+    /// <summary>A person died.</summary>
+    public static readonly EventKind PersonDied = HistoryEventKind.PersonDied;
+    /// <summary>A plot or covert act.</summary>
+    public static readonly EventKind Intrigue = HistoryEventKind.Intrigue;
+    /// <summary>Outlaws struck a caravan.</summary>
+    public static readonly EventKind CaravanRaided = HistoryEventKind.CaravanRaided;
+    /// <summary>An outlaw band formed.</summary>
+    public static readonly EventKind OutlawRose = HistoryEventKind.OutlawRose;
+    /// <summary>An outlaw band ended.</summary>
+    public static readonly EventKind OutlawEnded = HistoryEventKind.OutlawEnded;
+    /// <summary>Goods moved over a severed route.</summary>
+    public static readonly EventKind Smuggling = HistoryEventKind.Smuggling;
+    /// <summary>A licensed raider struck at sea.</summary>
+    public static readonly EventKind Privateering = HistoryEventKind.Privateering;
+    /// <summary>Campaign hardship.</summary>
+    public static readonly EventKind Campaign = HistoryEventKind.Campaign;
+    /// <summary>A prophet spoke.</summary>
+    public static readonly EventKind Prophecy = HistoryEventKind.Prophecy;
 }
