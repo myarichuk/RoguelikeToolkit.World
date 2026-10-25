@@ -1,3 +1,4 @@
+using System.Globalization;
 using RoguelikeToolkit.World.Core.Elevation;
 using RoguelikeToolkit.World.Core.Integration;
 using RoguelikeToolkit.World.Core.Primitives;
@@ -16,8 +17,8 @@ namespace RoguelikeToolkit.World.Core.History;
 /// </summary>
 public sealed class HistoryCatalog : IHistoricalContext
 {
-    /// <summary>Persistence schema version, written first by <see cref="Save"/> and checked by <see cref="Load"/>: 1 is the P2a shape (capitals only), 2 adds polity demography and road routes, 3 adds P2c treaty/faith state (grudges, windows, faiths, holy sites, villains, heirs), 4 adds the generic-kernel state (string table, declared scalars and per-polity scalar values, polity lifecycle, event ids, causes, importance and participants, grudge turn stamps), 9 adds the plugin state bag (keyed versioned blobs and reset notes), 10 adds plugin event kinds (a name after the kind byte of a <see cref="HistoryEventKind.Plugin"/> event), 11 adds the <see cref="Timeline"/> (turn-0 ownership, per-turn territory changes and polity samples).</summary>
-    public const int SchemaVersion = 11;
+    /// <summary>Persistence schema version, written first by <see cref="Save"/> and checked by <see cref="Load"/>: 1 is the P2a shape (capitals only), 2 adds polity demography and road routes, 3 adds P2c treaty/faith state (grudges, windows, faiths, holy sites, villains, heirs), 4 adds the generic-kernel state (string table, declared scalars and per-polity scalar values, polity lifecycle, event ids, causes, importance and participants, grudge turn stamps), 9 adds the plugin state bag (keyed versioned blobs and reset notes), 10 adds plugin event kinds (a name after the kind byte of a <see cref="HistoryEventKind.Plugin"/> event), 11 adds the <see cref="Timeline"/> (turn-0 ownership, per-turn territory changes and polity samples), 12 adds <see cref="Polity.AbsorbedInto"/> (older files recover it from their <see cref="HistoryEventKind.PolityAbsorbed"/> events).</summary>
+    public const int SchemaVersion = 12;
 
     /// <summary>Planet radius in kilometres, matching <c>World.EarthRadiusKm</c> (kept literal: the root slice is above History).</summary>
     private const double EarthRadiusKm = 6371.0;
@@ -351,7 +352,7 @@ public sealed class HistoryCatalog : IHistoricalContext
     }
 
     /// <summary>
-    /// Clears the simulation, keeping <see cref="Seed"/>, the budgets and <see cref="Overrides"/>:
+    /// Clears the simulation (plugin state and interned names included), keeping <see cref="Seed"/>, the budgets and <see cref="Overrides"/>:
     /// renames and pins survive and are re-applied by the next run. Called by
     /// <c>World.RegenerateHistory</c> before re-running the history band.
     /// </summary>
@@ -385,6 +386,10 @@ public sealed class HistoryCatalog : IHistoricalContext
         PeoplesFallbacks = 0;
         _appendTurn = int.MinValue;
         _appendCount = 0;
+        // Plugin blobs and interned end causes belong to the run that wrote them: a regeneration that kept them would
+        // start turn 1 from the previous run's ledgers and save different bytes than a fresh build.
+        PluginState.Clear();
+        Strings.Clear();
     }
 
     /// <summary>Counts polities that broke away from a parent that was still standing when they were founded.</summary>
@@ -411,12 +416,41 @@ public sealed class HistoryCatalog : IHistoricalContext
     /// </summary>
     internal int[] FloodOwnership(WorldDataStore store)
     {
+        // An absorbed polity's capital keeps seeding and its land is credited to its living absorber, so the flood
+        // reproduces the absorption instead of handing that land to the neighbours on the next re-flood.
+        var heir = new int[Polities.Count];
+        var living = new HashSet<int>();
+        for (int i = 0; i < Polities.Count; i++)
+        {
+            heir[i] = LivingHeir(i);
+            if (Polities[i].Alive) living.Add(Polities[i].CapitalTile);
+        }
         var capitals = new List<int>(Polities.Count);
-        foreach (var p in Polities) capitals.Add(p.Alive ? p.CapitalTile : -1);
+        for (int i = 0; i < Polities.Count; i++)
+        {
+            var p = Polities[i];
+            bool seeds = heir[i] >= 0 && (p.Alive || !living.Contains(p.CapitalTile)); // a living capital is never claimed for another
+            capitals.Add(seeds ? p.CapitalTile : -1);
+        }
         var pins = new Dictionary<int, int>();
         foreach (var kv in Overrides.PinnedTiles)
             if (kv.Value >= 0 && kv.Value < Polities.Count && Polities[kv.Value].Alive) pins[kv.Key] = kv.Value;
-        return HistoryTerritory.AssignOwners(store, capitals, pins);
+        var owners = HistoryTerritory.AssignOwners(store, capitals, pins);
+        for (int t = 0; t < owners.Length; t++)
+            if (owners[t] >= 0) owners[t] = heir[owners[t]];
+        return owners;
+    }
+
+    /// <summary>The living polity <paramref name="id"/>'s land belongs to: itself, its absorber (followed through chains), or -1.</summary>
+    internal int LivingHeir(int id)
+    {
+        for (int steps = 0; steps <= Polities.Count && (uint)id < (uint)Polities.Count; steps++)
+        {
+            var p = Polities[id];
+            if (p.Alive) return id;
+            id = p.AbsorbedInto;
+        }
+        return -1;
     }
 
     /// <summary>
@@ -574,6 +608,7 @@ public sealed class HistoryCatalog : IHistoricalContext
             writer.Write(polity.EndedTurn);
             writer.Write(polity.EndCause);
             writer.Write(polity.Parent);
+            writer.Write(polity.AbsorbedInto);
             writer.Write(Scalars.Count);
             for (int k = 0; k < Scalars.Count; k++) writer.Write(polity.GetScalar(k, Scalars));
         }
@@ -752,6 +787,13 @@ public sealed class HistoryCatalog : IHistoricalContext
         }
     }
 
+    private static int RemapString(int fileId, int[] strings, bool allowNone)
+    {
+        if (fileId == -1 && allowNone) return -1;
+        if ((uint)fileId >= (uint)strings.Length) throw new InvalidDataException($"Corrupt history catalog (string id {fileId}).");
+        return strings[fileId];
+    }
+
     /// <summary>
     /// Reads a catalog written by <see cref="Save"/>. Throws <see cref="InvalidDataException"/> for a
     /// bad magic, an unknown schema version, or truncated/corrupt content.
@@ -786,13 +828,18 @@ public sealed class HistoryCatalog : IHistoricalContext
             catalog.Compactions = reader.ReadInt32();
             catalog.DroppedEvents = reader.ReadInt32();
             int nextEventId = 0;
+            // File string id -> id in this build's table. A file written before an event kind was added has its own
+            // names after a shorter built-in prefix, so ids are remapped by name rather than required to line up.
+            int[] strings = Array.Empty<int>();
             if (version >= 4)
             {
                 int names = CheckedCount(reader.ReadInt32());
+                strings = new int[names];
+                var seen = new HashSet<int>();
                 for (int i = 0; i < names; i++)
                 {
                     string name = reader.ReadString();
-                    if (string.IsNullOrWhiteSpace(name) || catalog.Strings.Intern(name) != i)
+                    if (string.IsNullOrWhiteSpace(name) || !seen.Add(strings[i] = catalog.Strings.Intern(name)))
                         throw new InvalidDataException("Corrupt history catalog (string table).");
                 }
                 int declared = CheckedCount(reader.ReadInt32());
@@ -844,8 +891,9 @@ public sealed class HistoryCatalog : IHistoricalContext
                 if (version >= 4)
                 {
                     polity.EndedTurn = reader.ReadInt32();
-                    polity.EndCause = reader.ReadInt32();
+                    polity.EndCause = RemapString(reader.ReadInt32(), strings, allowNone: true);
                     polity.Parent = reader.ReadInt32();
+                    if (version >= 12) polity.AbsorbedInto = reader.ReadInt32();
                     int slots = CheckedCount(reader.ReadInt32());
                     if (slots > catalog.Scalars.Count) throw new InvalidDataException("Corrupt history catalog (scalar slots).");
                     for (int k = 0; k < slots; k++) polity.SetScalar(k, reader.ReadDouble(), catalog.Scalars);
@@ -875,7 +923,7 @@ public sealed class HistoryCatalog : IHistoricalContext
                     importance = (EventImportance)reader.ReadByte();
                     int parts = CheckedCount(reader.ReadInt32());
                     partList = new List<EventParticipant>(Math.Min(parts, 64));
-                    for (int k = 0; k < parts; k++) partList.Add(new EventParticipant(reader.ReadInt32(), reader.ReadInt32()));
+                    for (int k = 0; k < parts; k++) partList.Add(new EventParticipant(reader.ReadInt32(), RemapString(reader.ReadInt32(), strings, allowNone: false)));
                 }
                 var entry = new HistoryEvent
                 {
@@ -1080,6 +1128,7 @@ public sealed class HistoryCatalog : IHistoricalContext
                 }
             }
             if (version >= 4) catalog._nextEventId = nextEventId;
+            if (version < 12) catalog.RecoverAbsorbers();
             catalog.ValidateReferences();
             catalog.Timeline.Validate(catalog);
             return catalog;
@@ -1095,6 +1144,22 @@ public sealed class HistoryCatalog : IHistoricalContext
     /// file throws <see cref="InvalidDataException"/> here instead of failing later in a stage.
     /// Event, ownership and settlement ids may be -1 (none / unclaimed).
     /// </summary>
+    /// <summary>Pre-v12 files did not store <see cref="Polity.AbsorbedInto"/>; the absorption event names it in an <c>into:</c> tag.</summary>
+    private void RecoverAbsorbers()
+    {
+        foreach (var e in Events)
+        {
+            if (e.Kind != HistoryEventKind.PolityAbsorbed || (uint)e.PolityId >= (uint)Polities.Count) continue;
+            foreach (var tag in e.Tags)
+            {
+                if (tag.StartsWith("into:", StringComparison.Ordinal)
+                    && int.TryParse(tag.AsSpan(5), NumberStyles.None, CultureInfo.InvariantCulture, out int into)
+                    && into < Polities.Count && into != e.PolityId)
+                    Polities[e.PolityId].AbsorbedInto = into;
+            }
+        }
+    }
+
     private void ValidateReferences()
     {
         int count = Polities.Count;
@@ -1130,6 +1195,7 @@ public sealed class HistoryCatalog : IHistoricalContext
         foreach (var p in Polities)
         {
             Check(p.Parent, "polity parent", true);
+            Check(p.AbsorbedInto, "polity absorber", true);
             if (p.EndCause >= Strings.Count || p.EndCause < -1) throw new InvalidDataException($"Corrupt history catalog (polity {p.Id} end cause {p.EndCause}).");
         }
         var seenIds = new HashSet<int>();

@@ -1,3 +1,4 @@
+using System.Globalization;
 using RoguelikeToolkit.World.Core.Generation;
 using RoguelikeToolkit.World.Core.History;
 using Xunit.Abstractions;
@@ -21,6 +22,21 @@ public class HistoryOperatorsTests
         var builder = new WorldBuilder().WithSize(size).WithSeed(seed).WithUserEdits();
         if (configure != null) builder.WithHistory(configure);
         return builder.Build();
+    }
+
+    /// <summary>Tags of the roads built between capitals of polities that existed from turn 0.</summary>
+    private static List<string> FoundingRoutes(World w)
+    {
+        var founding = w.History.Polities.Where(p => p.FoundedTurn == 0).Select(p => p.CapitalTile).ToHashSet();
+        return w.History.Events
+            .Where(e => e.Kind == HistoryEventKind.RoadBuilt)
+            .Where(e =>
+            {
+                var ends = TagPrefix(e.Tags, "route:")["route:".Length..].Split('-');
+                return ends.Length == 2 && founding.Contains(int.Parse(ends[0], CultureInfo.InvariantCulture))
+                    && founding.Contains(int.Parse(ends[1], CultureInfo.InvariantCulture));
+            })
+            .SelectMany(e => e.Tags).OrderBy(t => t, StringComparer.Ordinal).ToList();
     }
 
     private static string TagPrefix(IReadOnlyList<string> tags, string prefix)
@@ -215,18 +231,15 @@ public class HistoryOperatorsTests
     [Fact]
     public void StarvedWar_LeavesRoadBuildingUntouched()
     {
-        // Colonies split population by catchment and wars now sack settlements, so demography is not compared.
+        // Colonies split population by catchment and wars now sack settlements, so demography is not compared, and neither
+        // are roads to polities founded mid-run: rebellions follow demography and territory, which wars change.
         using var full = Build(configure: ctx => ctx.MaxSettlementsPerPolity = 1);
         using var starved = Build(configure: ctx => { ctx.MaxDecisionsPerTurn = 0; ctx.MaxSettlementsPerPolity = 1; });
         Assert.DoesNotContain(starved.History.Events, e => e.Kind == HistoryEventKind.War);
         Assert.DoesNotContain(starved.History.Events, e => e.Kind == HistoryEventKind.Conquest);
-        var fullBuilt = full.History.Events
-            .Where(e => e.Kind == HistoryEventKind.RoadBuilt)
-            .SelectMany(e => e.Tags).OrderBy(t => t).ToList();
-        var starvedBuilt = starved.History.Events
-            .Where(e => e.Kind == HistoryEventKind.RoadBuilt)
-            .SelectMany(e => e.Tags).OrderBy(t => t).ToList();
-        Assert.Equal(fullBuilt, starvedBuilt);
+        var fullBuilt = FoundingRoutes(full);
+        Assert.NotEmpty(fullBuilt);
+        Assert.Equal(fullBuilt, FoundingRoutes(starved));
         Assert.Equal(full.History.Polities.Count, starved.History.Polities.Count);
     }
 

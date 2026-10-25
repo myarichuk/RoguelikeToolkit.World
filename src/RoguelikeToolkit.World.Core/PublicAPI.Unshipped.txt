@@ -35,7 +35,7 @@ const RoguelikeToolkit.World.Core.History.HazardOperator.Plague = "plague" -> st
 const RoguelikeToolkit.World.Core.History.HistoryCatalog.HolyDangerDelta = -1 -> float
 const RoguelikeToolkit.World.Core.History.HistoryCatalog.ScarDangerDelta = 1 -> float
 const RoguelikeToolkit.World.Core.History.HistoryCatalog.ScarHabitabilityDelta = -0.25 -> float
-const RoguelikeToolkit.World.Core.History.HistoryCatalog.SchemaVersion = 11 -> int
+const RoguelikeToolkit.World.Core.History.HistoryCatalog.SchemaVersion = 12 -> int
 const RoguelikeToolkit.World.Core.History.HistoryDemography.ColonistShare = 0.15 -> double
 const RoguelikeToolkit.World.Core.History.HistoryNaming.NamespaceSeparator = '/' -> char
 const RoguelikeToolkit.World.Core.History.HistoryNaming.PluginOrderMax = 899 -> int
@@ -383,6 +383,8 @@ RoguelikeToolkit.World.Core.History.Polity.HeirBornTurn.get -> int
 RoguelikeToolkit.World.Core.History.Polity.HeirBornTurn.set -> void
 RoguelikeToolkit.World.Core.History.Polity.Parent.get -> int
 RoguelikeToolkit.World.Core.History.Polity.Parent.set -> void
+RoguelikeToolkit.World.Core.History.Polity.AbsorbedInto.get -> int
+RoguelikeToolkit.World.Core.History.Polity.AbsorbedInto.set -> void
 RoguelikeToolkit.World.Core.History.Polity.SetScalar(int id, double value, RoguelikeToolkit.World.Core.History.ScalarRegistry? registry = null) -> void
 RoguelikeToolkit.World.Core.History.PopulationOperator
 RoguelikeToolkit.World.Core.History.PopulationOperator.Name.get -> string!

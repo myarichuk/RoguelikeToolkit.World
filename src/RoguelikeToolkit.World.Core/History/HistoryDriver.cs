@@ -491,7 +491,7 @@ public sealed class HistoryDriver : HistoryPluginBase
             if (!TrySplit(map, history, context, turn, sp, dirty, split)) { RejectedProposals++; continue; }
             changed = true;
         }
-        var absorbed = new List<(Polity Polity, int Into, List<int> Tiles)>();
+        var absorbed = new List<(Polity Polity, int Into)>();
         foreach (var p in proposals)
         {
             if (p is not Proposal.AbsorbPolity ab) continue;
@@ -501,9 +501,8 @@ public sealed class HistoryDriver : HistoryPluginBase
         }
         if (!changed) return any;
         history.Ownership = history.FloodOwnership(map.DataStore);
-        foreach (var (gone, into, tiles) in absorbed)
+        foreach (var (gone, into) in absorbed)
         {
-            foreach (int tile in tiles) history.Ownership[tile] = into;
             foreach (var settlement in history.Settlements)
                 if (!settlement.Ended && settlement.PolityId == gone.Id) settlement.PolityId = into;
         }
@@ -569,23 +568,21 @@ public sealed class HistoryDriver : HistoryPluginBase
     }
 
     private static bool TryAbsorb(HistoryCatalog history, int turn, Proposal.AbsorbPolity ab, HashSet<int> dirty,
-        List<(Polity Polity, int Into, List<int> Tiles)> absorbed)
+        List<(Polity Polity, int Into)> absorbed)
     {
         if ((uint)ab.EntityId >= (uint)history.Polities.Count || (uint)ab.Into >= (uint)history.Polities.Count || ab.EntityId == ab.Into) return false;
         var gone = history.Polities[ab.EntityId];
         var into = history.Polities[ab.Into];
         if (!gone.Alive || !into.Alive || gone.FoundedTurn >= turn) return false;
-        var tiles = new List<int>();
-        for (int t = 0; t < history.Ownership.Length; t++)
-            if (history.Ownership[t] == gone.Id) tiles.Add(t);
         gone.EndedTurn = turn;
         gone.EndCause = history.Strings.Intern("absorbed");
+        gone.AbsorbedInto = into.Id; // the re-flood credits its land to the absorber
         into.Population += gone.Population;
         gone.Population = 0;
         dirty.Add(gone.Id);
         dirty.Add(into.Id);
         history.AppendLinked(HistoryEventKind.PolityAbsorbed, turn, gone.Id, gone.CapitalTile, new List<string> { "absorbed", $"into:{into.Id}" }, -1, null);
-        absorbed.Add((gone, into.Id, tiles));
+        absorbed.Add((gone, into.Id));
         return true;
     }
 

@@ -19,7 +19,7 @@ Branch: `claude/gallant-knuth-1ctv0z`. Build/test: `dotnet build RoguelikeToolki
 
 ## Rehydration
 
-> Batch A done and pushed. Current batch: **B** (history integrity), nothing started. Start with B1.
+> Batches A, B done and pushed. Current batch: **C** (hierarchy and picking), nothing started. Start with C1.
 
 ## Batch A — determinism
 
@@ -39,11 +39,19 @@ Log:
 
 ## Batch B — history integrity
 
-- [ ] B1 `HistoryCatalog.Reset` clears `PluginState` and rebuilds `Strings` (+ regenerate ≡ fresh test)
-- [ ] B2 Null-edit `Recompute` must not fork after absorption (+ multi-seed test)
-- [ ] B3 String table load remaps old saves instead of requiring the built-in prefix
+- [x] B1 `HistoryCatalog.Reset` clears `PluginState` and rebuilds `Strings` (+ regenerate ≡ fresh test)
+- [x] B2 Null-edit `Recompute` must not fork after absorption (+ multi-seed test)
+- [x] B3 String table load remaps old saves instead of requiring the built-in prefix
 
 Log:
+- 2026-10-25. B1: StringTable.Clear/PluginStateBag.Clear called from HistoryCatalog.Reset (test fails without: probe read 7, want -1).
+  B2: Polity.AbsorbedInto (schema 12; <12 recovered from PolityAbsorbed "into:" tags); FloodOwnership seeds an absorbed capital
+  for its living heir (LivingHeir follows chains; never claims a living capital tile); driver no longer forces tiles.
+  Changes history on absorption worlds (absorbed land no longer drifts to neighbours on later re-floods).
+  StarvedWar_LeavesRoadBuildingUntouched narrowed to founding-capital routes (a mid-run rebellion differs between the two
+  runs: wars change demography). B3: Load remaps string ids by name (EndCause, participant Role), rejects duplicates.
+  Tests: RecomputeNullEditTests (30 seeds + absorber keeps land), HistoryStringTableLoadTests, PluginEventAndState regen test.
+  Core 942/942 (net10), 940/940 (netstandard2.1); MapEditor.Engine 73/73. Not covered by a test: the <v12 absorber recovery.
 
 ## Batch C — hierarchy and picking
 

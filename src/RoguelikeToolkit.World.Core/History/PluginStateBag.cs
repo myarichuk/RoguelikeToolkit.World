@@ -66,6 +66,13 @@ public sealed class PluginStateBag
 
     internal void AddNote(string note) => _notes.Add(note);
 
+    /// <summary>Drops every blob and note (a history regeneration starts from nothing).</summary>
+    internal void Clear()
+    {
+        _entries.Clear();
+        _notes.Clear();
+    }
+
     internal IEnumerable<(string Key, int Version, byte[] Data)> Entries()
     {
         foreach (var kv in _entries) yield return (kv.Key, kv.Value.Version, kv.Value.Data);

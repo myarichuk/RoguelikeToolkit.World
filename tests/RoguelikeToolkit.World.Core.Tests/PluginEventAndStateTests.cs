@@ -45,6 +45,20 @@ public class PluginEventAndStateTests
     }
 
     [Fact]
+    public void RegenerateHistory_StartsPluginStateFromNothing()
+    {
+        var probe = new Probe();
+        using var w = Build(probe);
+        var fresh = w.History.ToBytes();
+        Assert.Equal(-1, probe.Seen);
+
+        w.RegenerateHistory();
+
+        Assert.Equal(-1, probe.Seen); // turn 3 must not see the previous run's blob
+        Assert.Equal(fresh, w.History.ToBytes());
+    }
+
+    [Fact]
     public void PluginEvent_MustBeInTheOperatorsNamespace()
     {
         Assert.ThrowsAny<Exception>(() => Build(new Probe { EventKind = "other/seen" }).Dispose());

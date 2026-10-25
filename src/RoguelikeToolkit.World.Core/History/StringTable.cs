@@ -12,7 +12,17 @@ public sealed class StringTable
     private readonly Dictionary<string, int> _ids = new(StringComparer.Ordinal);
 
     /// <summary>Creates a table seeded with the built-in event kind names (id == enum value).</summary>
-    public StringTable()
+    public StringTable() => SeedBuiltIns();
+
+    /// <summary>Drops every interned name and re-seeds the built-ins, as a new table would be.</summary>
+    internal void Clear()
+    {
+        _names.Clear();
+        _ids.Clear();
+        SeedBuiltIns();
+    }
+
+    private void SeedBuiltIns()
     {
         foreach (var kind in Enum.GetValues<HistoryEventKind>().OrderBy(k => (byte)k))
         {
