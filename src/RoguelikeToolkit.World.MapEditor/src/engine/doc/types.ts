@@ -112,4 +112,6 @@ export interface FeatureEntity extends Entity {
   details: [string, string][];
   culture: string;
   request?: import('../world/protocol').NameRequest;
+  /** Architectural style its marker is drawn in (the holding realm's culture); absent = the default look, and in older files. */
+  architecture?: string;
 }

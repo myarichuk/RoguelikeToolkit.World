@@ -51,7 +51,7 @@ public sealed class TurnView
 
     /// <summary>One engagement at the snapshot (the parts operators decide on; the full record is in <see cref="HistoryCatalog.Battles"/>).</summary>
     public readonly record struct BattleState(int Id, int Turn, BattleKind Kind, BattleOutcome Outcome, int Attacker, int Defender,
-        int GeneralA, int GeneralD, int Tile, int Settlement);
+        int GeneralA, int GeneralD, int Tile, int Settlement, int Parent = -1, string SiegeEnd = "");
 
     /// <summary>One route's state at the snapshot.</summary>
     public readonly record struct RouteStateView(int RouteA, int RouteB, double Safety, double Traffic, int Forts, int Waystations,
@@ -141,7 +141,7 @@ public sealed class TurnView
         var battles = new List<BattleState>(history.Battles.Count);
         foreach (var b in history.Battles)
             battles.Add(new BattleState(b.Id, b.Turn, b.Kind, b.Outcome, b.Attacker.Polity, b.Defender.Polity, b.Attacker.General,
-                b.Defender.General, b.Tile, b.Settlement));
+                b.Defender.General, b.Tile, b.Settlement, b.Parent, b.SiegeEnd >= 0 ? history.Strings.NameOf(b.SiegeEnd) : string.Empty));
         Battles = battles;
         var routes = new List<RouteStateView>(history.RouteStates.Count);
         foreach (var r in history.RouteStates)

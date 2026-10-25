@@ -9,6 +9,8 @@ Discipline: 45
 SiegeSkill: 25
 Forage: 60
 ColdTolerance: 40
+Fortify: 25
+FortKind: hedge_mound
 Levy: 0.7
 CampaignSeasons: { Spring: 2, Summer: 3, Autumn: 3, Winter: 1 }
 Customs: [ransom]

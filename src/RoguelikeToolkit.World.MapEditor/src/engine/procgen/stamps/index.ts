@@ -13,7 +13,7 @@ import { resolveParams } from './common';
 import type { Params, ParamSpec } from './common';
 import { genMountain, genVolcano, genHill } from './mountains';
 import { genConifer, genDeciduous, genPalm, genDeadTree, genShrub, genGrassTuft, genReeds, genCactus, genDunes, genRock, genCrevasse } from './vegetation';
-import { genVillage, genTown, walledCity, genCastle, genTower, genRuins, genTemple, genPort, genLighthouse } from './architecture';
+import { genVillage, genTown, walledCity, genCastle, genFort, genTower, genRuins, genTemple, genPort, genLighthouse, ARCH_PARAMS } from './architecture';
 import { genWave, genShip, genSeaMonster, genWhirlpool } from './water';
 import { genCompass } from './decoration';
 
@@ -90,15 +90,17 @@ const LIST: GeneratorInfo[] = [
   def('dunes', 'Dunes', 'terrain', 4, genDunes),
   def('rock', 'Rocks', 'terrain', 3, genRock),
   def('glacierCrack', 'Glacier crevasses', 'terrain', 4, genCrevasse),
-  def('village', 'Village', 'settlement', 8, genVillage, { houses: { min: 0, max: 5, default: 0 } }),
-  def('town', 'Town', 'settlement', 11, genTown),
-  def('city', 'City', 'settlement', 16, (r) => walledCity(r, false)),
-  def('capital', 'Capital', 'settlement', 22, (r) => walledCity(r, true)),
-  def('castle', 'Castle', 'structure', 11, genCastle),
+  // Settlements, forts and ruins share one style vocabulary (see architecture.ts): a culture's look is params in its pack asset.
+  def('village', 'Village', 'settlement', 8, genVillage, ARCH_PARAMS.village),
+  def('town', 'Town', 'settlement', 11, genTown, ARCH_PARAMS.settlement),
+  def('city', 'City', 'settlement', 16, (r, p) => walledCity(r, false, p), ARCH_PARAMS.settlement),
+  def('capital', 'Capital', 'settlement', 22, (r, p) => walledCity(r, true, p), ARCH_PARAMS.settlement),
+  def('castle', 'Castle', 'structure', 11, genCastle, ARCH_PARAMS.castle),
+  def('fort', 'Fort', 'structure', 9.5, genFort, ARCH_PARAMS.fort),
   def('tower', 'Tower', 'structure', 8, genTower),
-  def('ruins', 'Ruins', 'structure', 5, genRuins),
+  def('ruins', 'Ruins', 'structure', 5, genRuins, ARCH_PARAMS.ruins),
   def('temple', 'Temple', 'structure', 8, genTemple),
-  def('port', 'Port', 'settlement', 8, genPort),
+  def('port', 'Port', 'settlement', 8, genPort, ARCH_PARAMS.port),
   def('lighthouse', 'Lighthouse', 'structure', 9, genLighthouse),
   def('wave', 'Wave', 'water', 2, genWave),
   def('ship', 'Ship', 'water', 8, genShip),

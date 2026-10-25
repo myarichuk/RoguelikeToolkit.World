@@ -120,16 +120,20 @@ Check(peoples.Tactics.TryGetValue("ambush", out var ambush) && ambush.Initiative
 Check(peoples.Warfare.TryGetValue("orcish_horde", out var horde) && horde.Units.Count > 0 && horde.Doctrine.Count > 0 && horde.Customs.Count > 0, "warfare table");
 Check(peoples.Battles.TryGetValue("default", out var battle) && battle.Beats.Count > 0 && battle.Epithets.Count > 0 && battle.Customs.Count > 0
     && battle.BiomeTerrain.Count > 0 && battle.Aftermath.Count > 0, "battle table");
+// Walls, forts and sieges (a dictionary of fort-kind DTOs), then the history runs with them on.
+Check(peoples.Fortifications.TryGetValue("default", out var fortification) && fortification.Kinds.Count > 0 && fortification.TierWalls.Count > 0, "fortification table");
+Check(peoples.Sieges.TryGetValue("default", out var siegeTable) && siegeTable.GarrisonShare.Count > 0 && siegeTable.FoodSeason.Count > 0, "siege table");
+Check(horde.Fortify < peoples.Warfare["dwarven_clan"].Fortify && !string.IsNullOrEmpty(peoples.GetCulture("dwarven_clan").Architecture), "fortify and architecture");
 using (var courtly = new WorldBuilder().WithSize(3).WithSeed(7)
            .WithHistory(c => c.Features = RoguelikeToolkit.World.Core.History.HistoryFeatures.Persons
-               | RoguelikeToolkit.World.Core.History.HistoryFeatures.Battles).Build())
+               | RoguelikeToolkit.World.Core.History.HistoryFeatures.Battles | RoguelikeToolkit.World.Core.History.HistoryFeatures.Sieges).Build())
 {
     Check(courtly.History.Persons.Count > 0 && courtly.History.Tenures.Count > 0, "court persons");
     Check(courtly.History.Battles.Count > 0, "battles");
     foreach (var p in courtly.History.Persons) { Mix((ulong)(uint)p.StableKey); Mix(p.Martial); Mix((ulong)(uint)p.DiedTurn); }
     foreach (var b in courtly.History.Battles)
     {
-        Mix((ulong)b.Outcome); Mix((ulong)(uint)b.Tile); Mix((ulong)(uint)b.Attacker.Tactic);
+        Mix((ulong)b.Outcome); Mix((ulong)(uint)b.Tile); Mix((ulong)(uint)b.Attacker.Tactic); Mix((ulong)b.Kind); Mix((ulong)(uint)b.SiegeMonths);
         Mix((ulong)(long)(b.Attacker.LossShare * 1e9)); Mix((ulong)(long)(b.Defender.Strength * 1e3));
     }
 }

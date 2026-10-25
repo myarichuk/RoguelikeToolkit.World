@@ -10,7 +10,7 @@ import type { FeatureKind } from '../protocol';
 const AREA_FAMILY: Partial<Record<FeatureKind, string>> = {
   lake: 'lake', sea: 'sea', ocean: 'sea', mountain: 'mountain', valley: 'valley', forest: 'forest',
 };
-const SETTLEMENTS: ReadonlySet<FeatureKind> = new Set(['capital', 'city', 'town', 'village', 'ruin', 'shrine', 'battlefield']);
+const SETTLEMENTS: ReadonlySet<FeatureKind> = new Set(['capital', 'city', 'town', 'village', 'fort', 'ruin', 'shrine', 'battlefield']);
 
 /** Shared-tile share needed for two area features to be the same thing. */
 export const AREA_MATCH = 0.25;

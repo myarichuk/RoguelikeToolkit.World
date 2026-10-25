@@ -3,9 +3,10 @@ import type { ContentPack } from './types';
 /**
  * Structural validation for packs from untrusted JSON. Hand-rolled (no schema dependency): it
  * checks what the editor relies on and reports every problem with a path, so a pack author sees
- * all mistakes at once. Unknown fields are allowed (forward compatibility).
+ * all mistakes at once. Unknown fields are allowed (forward compatibility). `knownAssets` are asset ids
+ * other packs already provide, which this pack's `architecture` may name besides its own assets.
  */
-export function validatePack(raw: unknown): { pack?: ContentPack; errors: string[] } {
+export function validatePack(raw: unknown, knownAssets: ReadonlySet<string> = new Set()): { pack?: ContentPack; errors: string[] } {
   const errors: string[] = [];
   const obj = (v: unknown, path: string): v is Record<string, unknown> => {
     if (v && typeof v === 'object' && !Array.isArray(v)) return true;
@@ -73,6 +74,20 @@ export function validatePack(raw: unknown): { pack?: ContentPack; errors: string
       if (arr(t.assets, `${p}.tiers[${j}].assets`)) t.assets.forEach((a, k) => str(a, `${p}.tiers[${j}].assets[${k}]`));
     });
   });
+  if (raw.architecture !== undefined && obj(raw.architecture, 'architecture')) {
+    const own = new Set(Array.isArray(raw.assets) ? raw.assets.map((a) => (a && typeof a === 'object' ? (a as { id?: unknown }).id : undefined)) : []);
+    for (const [style, kinds] of Object.entries(raw.architecture)) {
+      const p = `architecture.${style}`;
+      if (!obj(kinds, p)) continue;
+      for (const [kind, list] of Object.entries(kinds)) {
+        if (!Array.isArray(list)) { errors.push(`${p}.${kind}: expected an array`); continue; }
+        list.forEach((id, j) => {
+          str(id, `${p}.${kind}[${j}]`);
+          if (typeof id === 'string' && id && !own.has(id) && !knownAssets.has(id)) errors.push(`${p}.${kind}[${j}]: unknown asset "${id}"`);
+        });
+      }
+    }
+  }
   if (raw.fonts !== undefined && obj(raw.fonts, 'fonts')) for (const [k, v] of Object.entries(raw.fonts)) str(v, `fonts.${k}`);
   return errors.length ? { errors } : { pack: raw as unknown as ContentPack, errors };
 }

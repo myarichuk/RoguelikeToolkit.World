@@ -9,6 +9,8 @@ Discipline: 65
 SiegeSkill: 85
 Forage: 35
 ColdTolerance: 50
+Fortify: 75
+FortKind: bastion
 Levy: 0.9
 CampaignSeasons: { Spring: 3, Summer: 4, Autumn: 2, Winter: 1 }
 Customs: [ransom]

@@ -7,22 +7,22 @@ export interface NameStyle { race: string; culture: string; label: string; }
 
 /** Kinds of map features the editor can select, filter, label and inspect. */
 export type FeatureKind =
-  | 'capital' | 'city' | 'town' | 'village'
+  | 'capital' | 'city' | 'town' | 'village' | 'fort'
   | 'ruin' | 'shrine' | 'battlefield'
   | 'river' | 'lake' | 'sea' | 'ocean'
   | 'mountain' | 'valley' | 'forest'
   | 'deposit';
 
 export const FEATURE_KINDS: readonly FeatureKind[] = [
-  'capital', 'city', 'town', 'village', 'ruin', 'shrine', 'battlefield', 'river', 'lake', 'sea', 'ocean', 'mountain', 'valley', 'forest', 'deposit',
+  'capital', 'city', 'town', 'village', 'fort', 'ruin', 'shrine', 'battlefield', 'river', 'lake', 'sea', 'ocean', 'mountain', 'valley', 'forest', 'deposit',
 ];
 
 /** The kinds that are places: a tile of their own that history events are logged against. */
-export const PLACE_KINDS: ReadonlySet<FeatureKind> = new Set<FeatureKind>(['capital', 'city', 'town', 'village', 'ruin', 'shrine', 'battlefield']);
+export const PLACE_KINDS: ReadonlySet<FeatureKind> = new Set<FeatureKind>(['capital', 'city', 'town', 'village', 'fort', 'ruin', 'shrine', 'battlefield']);
 
 /** Name generator kind for a feature kind (Core's PlaceKinds); deposits are not named. */
 export const NAME_KIND: Record<Exclude<FeatureKind, 'deposit'>, string> = {
-  capital: 'city', city: 'city', town: 'town', village: 'village',
+  capital: 'city', city: 'city', town: 'town', village: 'village', fort: 'hold',
   ruin: 'village', shrine: 'hold', battlefield: 'camp',
   river: 'river', lake: 'lake', sea: 'sea', ocean: 'sea',
   mountain: 'mountain', valley: 'valley', forest: 'forest',
@@ -62,6 +62,8 @@ export interface MapFeature {
   /** Inspector facts, already formatted: [label, value]. */
   details: [string, string][];
   request?: NameRequest;
+  /** Architectural style of the realm that holds (or held) the place, from its culture's data; absent = the default look. */
+  architecture?: string;
 }
 
 export interface RiverGeometry {

@@ -206,5 +206,10 @@ Log:
   attrition +8pp, monotone per key), generals from the court (General-kind office, else the ruler). War and Conquest use
   it behind flag `Battles`; the decision to go to war is the legacy draw. `WarBattleTests` (17): corpus decisive 29% of
   fought battles. Lexicon moved to X7 (prose only). Notes in the plan's §12.
-- [ ] X4 `SiegeResolver`, relief battles
+- [x] X4 `SiegeResolver` (pure month loop) and relief battles behind flag `Sieges`; forts (`FortificationOperator`, order 42):
+  built by need and the culture's `Fortify`, guarding roads (route safety and fort counts), joining defences (garrison and
+  watch); `Siege/` and `Fortification/` YAML, `Fortify`/`FortKind` per way of war, `Architecture` per culture; the commit
+  resolves chained `Requires`. `SiegeResolverTests` (8), `SiegeWorldTests` (13, incl. X3 byte pins). Editor: `fort` kind and
+  per-culture settlement/fort/ruin stamps. Notes in the plan's §12.
+- [ ] X5 `LogisticsGraph`, `LogisticsOperator` (takes over the route-safety drift), waystations, winter quarters
 

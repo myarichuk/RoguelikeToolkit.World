@@ -12,6 +12,10 @@ describe('settlementKind', () => {
     expect(settlementKind(1, 1)).toBe('village');
     expect(settlementKind(0, 1)).toBe('village');
   });
+
+  it('makes a garrison post (role 3) a fort whatever its size', () => {
+    for (const tier of [0, 1, 2, 3]) expect(settlementKind(tier, 3)).toBe('fort');
+  });
 });
 
 describe('historyPicks', () => {
@@ -35,6 +39,11 @@ describe('historyPicks', () => {
     expect(picks.map((p) => p.tile)).toEqual([20]);
   });
 
+  it('carries the holding realm\'s architecture, none for a realm without one', () => {
+    const picks = historyPicks({ settlements: [...s(10, 7, 2, 3), ...s(20, 8, 1, 1), ...s(30, 9, 1, 1)], polityIds: [7, 8], polityArchitecture: ['dwarven', ''] }, all);
+    expect(picks.map((p) => [p.kind, p.architecture])).toEqual([['fort', 'dwarven'], ['village', undefined], ['village', undefined]]);
+  });
+
   it('names an unknown polity by its id', () => {
     const [p] = historyPicks({ settlements: s(10, 3, 2, 1) }, all);
     expect(p.facts).toContainEqual(['Realm', 'Polity 3']);
@@ -48,6 +57,13 @@ describe('historySites', () => {
   it('turns an ended settlement into a ruin that says what it was and why it ended', () => {
     const picks = historySites({ ...base, settlements: s(10, 1, 2, 2, 9), endCauses: ['razed'] }, new Set(), all);
     expect(picks).toEqual([{ tile: 10, kind: 'ruin', polity: 1, facts: [['Was', 'Town of Veldmark'], ['Founded', 'turn 4'], ['Ended', 'turn 9 (being razed)']], span: { from: 9, until: -1 } }]);
+  });
+
+  it('draws a ruin, a fallen fort included, in the architecture of the realm that held it', () => {
+    const h = { polityIds: [1, 2], polityNames: ['Veldmark', 'Orgrim'], polityArchitecture: ['dwarven', 'horde'] };
+    const picks = historySites({ ...h, settlements: [...s(10, 1, 2, 2, 9), ...s(11, 2, 1, 3, 12)], scars: [12, 2, 5, 1, 13, 2, 6, 1], scarKinds: ['ruin\twar', 'battlefield\twar'] }, new Set(), all);
+    expect(picks.map((p) => [p.tile, p.kind, p.architecture])).toEqual([[10, 'ruin', 'dwarven'], [11, 'ruin', 'horde'], [12, 'ruin', 'horde'], [13, 'battlefield', undefined]]);
+    expect(picks[1].facts[0]).toEqual(['Was', 'Fort of Orgrim']);
   });
 
   it('adds ruin and war scars and holy sites, one mark per tile and none on a living settlement', () => {

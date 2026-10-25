@@ -37,10 +37,12 @@ internal static class BattleResolver
     /// <summary>
     /// A candidate field: terrain index, whether the attacker must cross a river, what the land offers a forager (0..1), the
     /// seasonal temperature range, the attacker's distance in degrees from its nearest settlement (its supply line), the polity
-    /// whose holy ground it is (or -1), and the share of each side's levy that musters there (1 = all of it).
+    /// whose holy ground it is (or -1), the share of each side's levy that musters there (1 = all of it), the strength of the
+    /// defender's fort garrisons that join (standing troops: always ready), and how much the defender's forts add to its chance
+    /// to be warned.
     /// </summary>
     internal readonly record struct Field(int Tile, int Terrain, bool River, double Forage, double SeasonalRange, double Distance, int HolyOwner = -1,
-        double AttackerMuster = 1, double DefenderMuster = 1);
+        double AttackerMuster = 1, double DefenderMuster = 1, double DefenderGarrison = 0, double Watch = 0);
 
     /// <summary>One side after the battle. <see cref="Tactic"/> is a tactic index or -1.</summary>
     internal sealed record SideResult(double Strength, double Loss, double Supply, double Morale, int Tactic, string Unit, bool GeneralFell,
@@ -77,7 +79,8 @@ internal static class BattleResolver
     }
 
     /// <summary>Resolves the battle between <paramref name="attacker"/> and <paramref name="defender"/> over <paramref name="fields"/> (at least one).</summary>
-    public static Result Resolve(WarfareProfile profile, Side attacker, Side defender, IReadOnlyList<Field> fields, Func<string, Rng> draws, int turnYears)
+    public static Result Resolve(WarfareProfile profile, Side attacker, Side defender, IReadOnlyList<Field> fields, Func<string, Rng> draws, int turnYears,
+        BattleKind kind = BattleKind.Field)
     {
         if (fields == null || fields.Count == 0) throw new ArgumentException("A battle needs at least one candidate field.", nameof(fields));
         var data = profile.Data;
@@ -93,14 +96,14 @@ internal static class BattleResolver
         double ia = Initiative(profile, attacker, ref move), id = Initiative(profile, defender, ref move);
         bool attackerInitiative = ia > id;
         double pick = move.NextDouble(), bypassRoll = move.NextDouble(), warnRoll = move.NextDouble();
-        int fieldIndex = PickField(profile, attackerInitiative ? attacker : defender, !attackerInitiative, fields, season, pick);
+        int fieldIndex = PickField(profile, attackerInitiative ? attacker : defender, !attackerInitiative, fields, season, pick, kind);
         var field = fields[fieldIndex];
         bool bypassed = field.River && attackerInitiative && bypassRoll < data.RiverBypass * attacker.Way.Mobility / 100.0;
         bool river = field.River && !bypassed;
         double reach = DetMath.Exp(-Math.Max(0, field.Distance) / (data.ReachDegrees * (0.5 + attacker.Way.Mobility / 100.0)));
-        bool warned = warnRoll < data.WarnedBase + data.WarnedPerIntrigue * (defender.SpyIntrigue - attacker.SpyIntrigue);
+        bool warned = warnRoll < data.WarnedBase + data.WarnedPerIntrigue * (defender.SpyIntrigue - attacker.SpyIntrigue) + Math.Max(0, field.Watch);
         double fa = Math.Max(0, attacker.Levy) * Muster(data, field.AttackerMuster) * reach;
-        double fd = Math.Max(0, defender.Levy) * Muster(data, field.DefenderMuster) * (warned ? 1 : data.DefenderReadiness);
+        double fd = Math.Max(0, defender.Levy) * Muster(data, field.DefenderMuster) * (warned ? 1 : data.DefenderReadiness) + Math.Max(0, field.DefenderGarrison);
         double sa = Clamp(reach * profile.SeasonSupply[season] + attacker.Way.Forage / 100.0 * Clamp(field.Forage, 0, 1) * (1 - reach), data.SupplyMin, 1);
         const double sd = 1;
         double winter = season == (int)HistorySeason.Winter ? data.WinterPenalty * Clamp(field.SeasonalRange / data.WinterRange, 0, 1) : 0;
@@ -119,13 +122,13 @@ internal static class BattleResolver
         {
             double attrition = Clamp(data.WinterAttrition * wa + (1 - sa) * data.LoserLossBase, 0, 0.95);
             var none = new SideResult(fd, 0, sd, md, -1, string.Empty, false, false);
-            return new Result(fieldIndex, (HistorySeason)season, year, BattleKind.Field, field.Terrain, river, bypassed, attackerInitiative, warned,
+            return new Result(fieldIndex, (HistorySeason)season, year, kind, field.Terrain, river, bypassed, attackerInitiative, warned,
                 BattleOutcome.Averted, 0, new SideResult(fa, attrition, sa, ma, -1, string.Empty, false, false), none, Array.Empty<string>());
         }
 
-        int ta = DrawTactic(profile, attacker, attackerInitiative, field.Terrain, season, tacticA);
-        int td = DrawTactic(profile, defender, !attackerInitiative, field.Terrain, season, tacticD);
-        var kind = (ta >= 0 && profile.Tactics[ta].Initiative) || (td >= 0 && profile.Tactics[td].Initiative) ? BattleKind.Ambush : BattleKind.Field;
+        int ta = DrawTactic(profile, attacker, attackerInitiative, field.Terrain, season, tacticA, kind);
+        int td = DrawTactic(profile, defender, !attackerInitiative, field.Terrain, season, tacticD, kind);
+        if ((ta >= 0 && profile.Tactics[ta].Initiative) || (td >= 0 && profile.Tactics[td].Initiative)) kind = BattleKind.Ambush;
         double delta = profile.Defence[field.Terrain] + (river ? data.RiverDefence : 0);
         if (ta >= 0) delta *= profile.Tactics[ta].Cover;
         double pa = fa * ma * (1 - data.SupplyPower * (1 - sa)) * Fit(profile, ta, td, field.Terrain, season) * (1 + data.MartialPower * (MartialOf(attacker) - 50)) * (1 - wa);
@@ -141,12 +144,12 @@ internal static class BattleResolver
         bool defenderDeclines = !attackerInitiative && pd < data.DeclineBelow * pa;
         if (attackerDeclines || defenderDeclines)
         {
-            var declined = new Facts(season, field.Terrain, BattleKind.Field, river, bypassed, attackerInitiative ? 0 : 1, defenderDeclines ? 0 : 2,
+            var declined = new Facts(season, field.Terrain, kind == BattleKind.Ambush ? BattleKind.Field : kind, river, bypassed, attackerInitiative ? 0 : 1, defenderDeclines ? 0 : 2,
                 OutcomeClass(defenderDeclines ? BattleOutcome.AttackerVictory : BattleOutcome.Averted), defenderDeclines ? ta : -1, defenderDeclines ? td : -1,
                 defenderDeclines ? attacker : null, false, false, Declined: true);
             double lw = Clamp(data.WinnerLossMin + data.WinterAttrition * wa, 0, 0.95);
-            return new Result(fieldIndex, (HistorySeason)season, year, BattleKind.Field, field.Terrain, river, bypassed, attackerInitiative, warned,
-                defenderDeclines ? BattleOutcome.AttackerVictory : BattleOutcome.Averted, defenderDeclines ? data.VictoryMargin : 0,
+            return new Result(fieldIndex, (HistorySeason)season, year, kind == BattleKind.Ambush ? BattleKind.Field : kind, field.Terrain, river, bypassed,
+                attackerInitiative, warned, defenderDeclines ? BattleOutcome.AttackerVictory : BattleOutcome.Averted, defenderDeclines ? data.VictoryMargin : 0,
                 new SideResult(fa, lw, sa, ma, ta, Unit(profile, attacker, ta, unitA), false, false),
                 new SideResult(fd, Clamp((defenderDeclines ? data.LoserLossMin : 0) + data.WinterAttrition * wd, 0, 0.95), sd, md, td,
                     Unit(profile, defender, td, unitD), false, false),
@@ -232,18 +235,18 @@ internal static class BattleResolver
         return w;
     }
 
-    private static int DrawTactic(WarfareProfile profile, Side side, bool initiative, int terrain, int season, double roll)
+    internal static int DrawTactic(WarfareProfile profile, Side side, bool initiative, int terrain, int season, double roll, BattleKind kind)
     {
         var tactics = profile.Tactics;
         double total = 0;
         for (int t = 0; t < tactics.Length; t++)
-            if (Usable(tactics[t], initiative)) total += TacticWeight(profile, side, t, terrain, season);
+            if (Usable(tactics[t], initiative, kind)) total += TacticWeight(profile, side, t, terrain, season);
         if (!(total > 0)) return -1;
         double target = roll * total;
         int last = -1;
         for (int t = 0; t < tactics.Length; t++)
         {
-            if (!Usable(tactics[t], initiative)) continue;
+            if (!Usable(tactics[t], initiative, kind)) continue;
             double w = TacticWeight(profile, side, t, terrain, season);
             if (!(w > 0)) continue;
             last = t;
@@ -253,8 +256,8 @@ internal static class BattleResolver
         return last;
     }
 
-    private static bool Usable(WarfareProfile.Tactic tactic, bool initiative)
-        => tactic.Kinds[(int)BattleKind.Field] && (initiative || !tactic.Initiative);
+    private static bool Usable(WarfareProfile.Tactic tactic, bool initiative, BattleKind kind)
+        => tactic.Kinds[(int)kind] && (initiative || !tactic.Initiative);
 
     /// <summary>Terrain and season fit, counter against the enemy's tactic, and surprise.</summary>
     private static double Fit(WarfareProfile profile, int mine, int theirs, int terrain, int season)
@@ -265,7 +268,7 @@ internal static class BattleResolver
     }
 
     /// <summary>The manoeuvre winner's choice of field: expected doctrine fit, times cover for a defender (over cover for an attacker), sharpened.</summary>
-    private static int PickField(WarfareProfile profile, Side chooser, bool chooserDefends, IReadOnlyList<Field> fields, int season, double roll)
+    private static int PickField(WarfareProfile profile, Side chooser, bool chooserDefends, IReadOnlyList<Field> fields, int season, double roll, BattleKind kind)
     {
         if (fields.Count == 1) return 0;
         var data = profile.Data;
@@ -273,13 +276,13 @@ internal static class BattleResolver
         double total = 0;
         double doctrine = 0;
         for (int t = 0; t < profile.Tactics.Length; t++)
-            if (Usable(profile.Tactics[t], initiative: true)) doctrine += chooser.Way.Doctrine[t];
+            if (Usable(profile.Tactics[t], initiative: true, kind)) doctrine += chooser.Way.Doctrine[t];
         for (int f = 0; f < fields.Count; f++)
         {
             int terrain = fields[f].Terrain;
             double fit = 0;
             for (int t = 0; t < profile.Tactics.Length; t++)
-                if (Usable(profile.Tactics[t], initiative: true)) fit += chooser.Way.Doctrine[t] * profile.Tactics[t].Fit[terrain] * profile.Tactics[t].Season[season];
+                if (Usable(profile.Tactics[t], initiative: true, kind)) fit += chooser.Way.Doctrine[t] * profile.Tactics[t].Fit[terrain] * profile.Tactics[t].Season[season];
             fit = doctrine > 0 ? fit / doctrine : 1;
             double cover = 1 + profile.Defence[terrain] + (fields[f].River ? data.RiverDefence : 0);
             double score = fit * (chooserDefends ? cover : 1 / cover);
@@ -354,8 +357,9 @@ internal static class BattleResolver
     }
 
     /// <summary>What the beat conditions test.</summary>
-    private sealed record Facts(int Season, int Terrain, BattleKind Kind, bool River, bool RiverBypassed, int Initiative, int Winner,
-        int OutcomeClass, int WinnerTactic, int LoserTactic, Side? WinnerSide, bool GeneralFell, bool GeneralCaptured, bool Declined = false);
+    internal sealed record Facts(int Season, int Terrain, BattleKind Kind, bool River, bool RiverBypassed, int Initiative, int Winner,
+        int OutcomeClass, int WinnerTactic, int LoserTactic, Side? WinnerSide, bool GeneralFell, bool GeneralCaptured, bool Declined = false,
+        string SiegeEnd = "");
 
     private static bool Holds(WarfareProfile profile, WarfareProfile.Condition c, Facts f)
     {
@@ -378,6 +382,7 @@ internal static class BattleResolver
             WarfareProfile.Test.GeneralFell => f.GeneralFell,
             WarfareProfile.Test.GeneralCaptured => f.GeneralCaptured,
             WarfareProfile.Test.Declined => f.Declined,
+            WarfareProfile.Test.SiegeEnd => string.Equals(f.SiegeEnd, c.Name, StringComparison.OrdinalIgnoreCase),
             _ => false,
         };
         return v != c.Negate;
@@ -390,14 +395,19 @@ internal static class BattleResolver
         return true;
     }
 
+    private static bool IsSiegeBeat(WarfareProfile.Beat b)
+        => b.When.Any(c => !c.Negate && (c.Test == WarfareProfile.Test.SiegeEnd || (c.Test == WarfareProfile.Test.Kind && c.Value == (int)BattleKind.Siege)));
+
     /// <summary>One turning point drawn by weight among the eligible beats, then every always-beat whose conditions hold.</summary>
-    private static IReadOnlyList<string> Beats(WarfareProfile profile, Facts f, double roll)
+    internal static IReadOnlyList<string> Beats(WarfareProfile profile, Facts f, double roll)
     {
         var winnerBeats = f.WinnerTactic >= 0 ? profile.Tactics[f.WinnerTactic].Beats : Array.Empty<string>();
         bool Eligible(WarfareProfile.Beat b)
         {
             // A refused field has no fighting: only the beats that ask for one (a positive <c>declined</c>) can tell it.
             if (b.Always || f.Declined != b.When.Any(c => c.Test == WarfareProfile.Test.Declined && !c.Negate)) return false;
+            // Likewise a siege is told only by the beats that ask for one (a positive kind=Siege or end=), and a battle never by those.
+            if ((f.Kind == BattleKind.Siege) != IsSiegeBeat(b)) return false;
             if (b.TacticBound && Array.FindIndex(winnerBeats, k => string.Equals(k, b.Key, StringComparison.OrdinalIgnoreCase)) < 0) return false;
             return AllHold(profile, b, f);
         }

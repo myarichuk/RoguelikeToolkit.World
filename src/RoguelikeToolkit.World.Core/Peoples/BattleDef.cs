@@ -158,10 +158,18 @@ public sealed class BattleDef
     // Aftermath.
     /// <summary>
     /// Outcome name (<c>AttackerDecisive</c>...) to what it does to the defender's settlement nearest the field: <c>capture</c>,
-    /// <c>raze</c>, <c>sack</c>, <c>grudge</c> (the defender's grudge against the attacker grows by <see cref="AftermathGrudge"/>) or
-    /// <c>none</c>. A capital is only ever sacked; a capture the attacker cannot hold is a sack.
+    /// <c>raze</c>, <c>sack</c>, <c>grudge</c> (the defender's grudge against the attacker grows by <see cref="AftermathGrudge"/>)
+    /// or <c>none</c>. A capital is only ever sacked outright; a capture the attacker cannot hold is a sack. With sieges on,
+    /// <see cref="Besiege"/> may send it into a siege first.
     /// </summary>
     public Dictionary<string, string> Aftermath { get; set; } = new(StringComparer.OrdinalIgnoreCase);
+    /// <summary>
+    /// With sieges on: outcome names after which the defender's settlement nearest the field is besieged instead of suffering the
+    /// outcome's <see cref="Aftermath"/>, when its walls can stand a siege (otherwise the aftermath applies).
+    /// </summary>
+    public List<string> Besiege { get; set; } = new();
+    /// <summary>With sieges on: a raid the defender refused to meet sends it behind the walls of the place nearest the field.</summary>
+    public bool BesiegeDeclined { get; set; } = true;
     /// <summary>Grudge weight of a <c>grudge</c> aftermath.</summary>
     public int AftermathGrudge { get; set; } = 2;
     /// <summary>Share of a sacked settlement's people who die.</summary>

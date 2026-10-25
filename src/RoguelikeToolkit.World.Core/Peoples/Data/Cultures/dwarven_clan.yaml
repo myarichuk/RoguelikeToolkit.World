@@ -15,6 +15,7 @@ ConscientiousnessOffset: 10
 ExtraversionOffset: 0
 AgreeablenessOffset: 0
 NeuroticismOffset: 0
+Architecture: dwarven
 # Multipliers on the territory step costs (Territory/default.yaml): where this people's reach runs easily.
 TerrainAffinity:
   Mountain: 0.7

@@ -39,6 +39,12 @@ public sealed class PeoplesStore
     /// <summary>Loaded battle models keyed by <see cref="BattleDef.Key"/> (case-insensitive).</summary>
     public Dictionary<string, BattleDef> Battles { get; } = new(StringComparer.OrdinalIgnoreCase);
 
+    /// <summary>Loaded wall and fort models keyed by <see cref="FortificationDef.Key"/> (case-insensitive).</summary>
+    public Dictionary<string, FortificationDef> Fortifications { get; } = new(StringComparer.OrdinalIgnoreCase);
+
+    /// <summary>Loaded siege models keyed by <see cref="SiegeDef.Key"/> (case-insensitive).</summary>
+    public Dictionary<string, SiegeDef> Sieges { get; } = new(StringComparer.OrdinalIgnoreCase);
+
     /// <summary>Pairwise offspring rules from <c>compat.yaml</c>; unlisted pairs blend.</summary>
     public CompatibilityMatrix Compatibility { get; } = new();
 
@@ -236,8 +242,12 @@ public sealed class PeoplesStore
             LoadKeyed(store.Warfare, "warfare", d => d.Key, ValidateWarfare);
         else if (rel.StartsWith("Battle/", StringComparison.OrdinalIgnoreCase))
             LoadKeyed(store.Battles, "battle", d => d.Key, ValidateBattle);
+        else if (rel.StartsWith("Fortification/", StringComparison.OrdinalIgnoreCase))
+            LoadKeyed(store.Fortifications, "fortification", d => d.Key, ValidateFortification);
+        else if (rel.StartsWith("Siege/", StringComparison.OrdinalIgnoreCase))
+            LoadKeyed(store.Sieges, "siege", d => d.Key, ValidateSiege);
         else
-            problems.Add($"{rel}: unrecognized location (want Folks/, Cultures/, Subsistence/, Resources/, Territory/, Court/, Traits/, Tactics/, Warfare/ or Battle/*.yaml, or compat.yaml).");
+            problems.Add($"{rel}: unrecognized location (want Folks/, Cultures/, Subsistence/, Resources/, Territory/, Court/, Traits/, Tactics/, Warfare/, Battle/, Fortification/ or Siege/*.yaml, or compat.yaml).");
 
         void LoadKeyed<T>(Dictionary<string, T> into, string kind, Func<T, string> key, Action<string, T, List<string>> validate)
         {
@@ -428,6 +438,83 @@ public sealed class PeoplesStore
 
     private static readonly string[] AftermathActions = { "capture", "raze", "sack", "grudge", "none" };
 
+    private static readonly string[] TierNames = { "Hamlet", "Village", "Town", "City" };
+
+    private static void CheckTiers(string rel, string field, Dictionary<string, double>? tiers, double max, List<string> problems)
+    {
+        if (tiers is null) { problems.Add($"{rel}: {field} is null (use an empty map)."); return; }
+        foreach (var kv in tiers)
+        {
+            if (!TierNames.Contains(kv.Key, StringComparer.OrdinalIgnoreCase)) problems.Add($"{rel}: {field}.{kv.Key} is not a tier (want Hamlet, Village, Town or City).");
+            if (!(kv.Value >= 0 && kv.Value <= max)) problems.Add($"{rel}: {field}.{kv.Key} must be in 0-{max}.");
+        }
+    }
+
+    private static void ValidateFortification(string rel, FortificationDef data, List<string> problems)
+    {
+        if (data.Kinds is null || data.Kinds.Count == 0) problems.Add($"{rel}: Kinds needs at least one fort kind.");
+        else
+            foreach (var kv in data.Kinds)
+                if (kv.Value is null || !(kv.Value.Walls >= 0) || !Finite(kv.Value.Walls) || !(kv.Value.Garrison >= 0) || !Finite(kv.Value.Garrison)
+                    || !(kv.Value.Watch >= 0 && kv.Value.Watch <= 1))
+                    problems.Add($"{rel}: Kinds.{kv.Key} needs non-negative Walls and Garrison and a Watch in 0-1.");
+        if (string.IsNullOrWhiteSpace(data.DefaultKind) || data.Kinds is null || !data.Kinds.ContainsKey(data.DefaultKind))
+            problems.Add($"{rel}: DefaultKind '{data.DefaultKind}' is not one of Kinds.");
+        foreach (var (field, v) in new[]
+                 {
+                     ("FortChance", data.FortChance), ("SafetyDrift", data.SafetyDrift), ("FortSafety", data.FortSafety), ("SeveredSafety", data.SeveredSafety),
+                 })
+            if (!(v >= 0 && v <= 1)) problems.Add($"{rel}: {field} must be in 0-1.");
+        foreach (var (field, v) in new[]
+                 {
+                     ("ThreatNeed", data.ThreatNeed), ("InvadedNeed", data.InvadedNeed), ("RouteNeed", data.RouteNeed), ("SpacingDegrees", data.SpacingDegrees),
+                     ("GuardDegrees", data.GuardDegrees), ("WatchDegrees", data.WatchDegrees), ("CapitalWalls", data.CapitalWalls), ("WallFloor", data.WallFloor),
+                     ("WallFortify", data.WallFortify), ("HighWalls", data.HighWalls), ("SiegeWalls", data.SiegeWalls),
+                 })
+            if (!(v >= 0) || !Finite(v)) problems.Add($"{rel}: {field} must be a non-negative number.");
+        if (!(data.GarrisonDegrees > 0) || !Finite(data.GarrisonDegrees)) problems.Add($"{rel}: GarrisonDegrees must be a positive number.");
+        if (!Finite(data.HighFrom)) problems.Add($"{rel}: HighFrom must be a number.");
+        if (data.RecentTurns < 0 || data.MaxForts < 0 || data.SafetyForts < 0 || data.MinSettlements < 0)
+            problems.Add($"{rel}: RecentTurns, MaxForts, MinSettlements and SafetyForts cannot be negative.");
+        CheckTiers(rel, "TierWalls", data.TierWalls, 10, problems);
+    }
+
+    private static void ValidateSiege(string rel, SiegeDef data, List<string> problems)
+    {
+        CheckTiers(rel, "GarrisonShare", data.GarrisonShare, 1, problems);
+        CheckSeasonOffsets(rel, "FoodSeason", data.FoodSeason, problems);
+        foreach (var (field, v) in new[]
+                 {
+                     ("DefenderMorale", data.DefenderMorale), ("StarveMorale", data.StarveMorale), ("SurrenderPerMonth", data.SurrenderPerMonth),
+                     ("SupplyDecay", data.SupplyDecay), ("LiftBelow", data.LiftBelow), ("Disease", data.Disease), ("StormChance", data.StormChance),
+                     ("StormLoss", data.StormLoss), ("StormedCasualtyMin", data.StormedCasualtyMin), ("StormedCasualtyMax", data.StormedCasualtyMax),
+                     ("BetrayalBase", data.BetrayalBase), ("BetrayalSpy", data.BetrayalSpy), ("BetrayalStarving", data.BetrayalStarving),
+                     ("ReliefFailedMorale", data.ReliefFailedMorale), ("CasualtyCap", data.CasualtyCap),
+                 })
+            if (!(v >= 0 && v <= 1)) problems.Add($"{rel}: {field} must be in 0-1.");
+        foreach (var (field, v) in new[]
+                 {
+                     ("FoodBase", data.FoodBase), ("FoodCity", data.FoodCity), ("FoodResupply", data.FoodResupply), ("WinterDecay", data.WinterDecay),
+                     ("DiseaseRife", data.DiseaseRife), ("StormRatio", data.StormRatio), ("EnginePower", data.EnginePower), ("BetrayalIntrigue", data.BetrayalIntrigue),
+                     ("ReliefShare", data.ReliefShare),
+                 })
+            if (!(v >= 0) || !Finite(v)) problems.Add($"{rel}: {field} must be a non-negative number.");
+        if (!(data.ReliefDegreesPerMonth > 0) || !Finite(data.ReliefDegreesPerMonth)) problems.Add($"{rel}: ReliefDegreesPerMonth must be a positive number.");
+        if (data.StormedCasualtyMin > data.StormedCasualtyMax) problems.Add($"{rel}: StormedCasualtyMin exceeds StormedCasualtyMax.");
+        if (data.FailedGrudge < 0 || data.TributeTurns < 0) problems.Add($"{rel}: FailedGrudge and TributeTurns cannot be negative.");
+    }
+
+    private static void CheckSeasonOffsets(string rel, string field, Dictionary<string, double>? seasons, List<string> problems)
+    {
+        if (seasons is null) { problems.Add($"{rel}: {field} is null (use an empty map)."); return; }
+        foreach (var kv in seasons)
+        {
+            if (!SeasonNames.Contains(kv.Key, StringComparer.OrdinalIgnoreCase))
+                problems.Add($"{rel}: {field}.{kv.Key} is not a season (want Spring, Summer, Autumn or Winter).");
+            if (!Finite(kv.Value)) problems.Add($"{rel}: {field}.{kv.Key} must be a number.");
+        }
+    }
+
     private static void CheckSeasons(string rel, string field, Dictionary<string, double>? seasons, List<string> problems)
     {
         if (seasons is null) { problems.Add($"{rel}: {field} is null (use an empty map)."); return; }
@@ -483,6 +570,7 @@ public sealed class PeoplesStore
                  })
             if (!(v >= 0 && v <= 100)) problems.Add($"{rel}: {field} {v} is out of range (0-100).");
         if (!(data.Levy > 0) || !Finite(data.Levy)) problems.Add($"{rel}: Levy must be a positive number.");
+        if (!(data.Fortify >= 0 && data.Fortify <= 100)) problems.Add($"{rel}: Fortify {data.Fortify} is out of range (0-100).");
         CheckSeasons(rel, "CampaignSeasons", data.CampaignSeasons, problems);
         if (data.CampaignSeasons != null && data.CampaignSeasons.Count > 0 && !(data.CampaignSeasons.Values.Sum() > 0))
             problems.Add($"{rel}: CampaignSeasons weights are all zero.");
@@ -577,6 +665,8 @@ public sealed class PeoplesStore
                 problems.Add($"{rel}: Aftermath.{kv.Key} '{kv.Value}' is not an action (want capture, raze, sack, grudge or none).");
         }
         if (!(data.SackDisplacement < 1)) problems.Add($"{rel}: SackDisplacement must be below 1.");
+        foreach (var o in data.Besiege ?? new List<string>())
+            if (!OutcomeNames.Contains(o, StringComparer.OrdinalIgnoreCase)) problems.Add($"{rel}: Besiege names '{o}', which is not a battle outcome.");
         if (data.AftermathGrudge < 0) problems.Add($"{rel}: AftermathGrudge cannot be negative.");
         if (string.IsNullOrWhiteSpace(data.NemesisRelation)) problems.Add($"{rel}: NemesisRelation is blank.");
     }
@@ -659,6 +749,9 @@ public sealed class PeoplesStore
                 problems.Add($"Warfare/{w.Key}.yaml: '{w.Key}' is neither a culture nor default.");
             foreach (var t in w.Doctrine.Keys)
                 if (!store.Tactics.ContainsKey(t)) problems.Add($"Warfare/{w.Key}.yaml: unknown tactic '{t}' in Doctrine.");
+            if (!string.IsNullOrWhiteSpace(w.FortKind) && store.Fortifications.TryGetValue("default", out var fortification)
+                && !fortification.Kinds.ContainsKey(w.FortKind))
+                problems.Add($"Warfare/{w.Key}.yaml: unknown FortKind '{w.FortKind}' (want a key of Fortification/default.yaml Kinds).");
             if (store.Battles.TryGetValue("default", out var battle))
                 foreach (var c in w.Customs)
                     if (!battle.Customs.ContainsKey(c)) problems.Add($"Warfare/{w.Key}.yaml: unknown custom '{c}' (want a key of Battle/default.yaml Customs).");

@@ -27,6 +27,10 @@ public sealed class WarfareDef
     public double Levy { get; set; } = 1.0;
     /// <summary>Season name to the weight of campaigning in it (&gt;= 0; at least one positive).</summary>
     public Dictionary<string, double> CampaignSeasons { get; set; } = new(StringComparer.OrdinalIgnoreCase);
+    /// <summary>How readily this people fortifies (0-100): the chance and number of forts it builds, and how strong its towns' walls are.</summary>
+    public double Fortify { get; set; } = 40;
+    /// <summary>The kind of fort it builds (a key of <see cref="FortificationDef.Kinds"/>).</summary>
+    public string FortKind { get; set; } = string.Empty;
     /// <summary>Customs of war (keys of <see cref="BattleDef.Customs"/>): change model terms and unlock beats.</summary>
     public List<string> Customs { get; set; } = new();
 }

@@ -210,7 +210,7 @@ public class WorldExportsLayoutTests
         Assert.Equal(changes * WorldExports.TerritoryChangeStride, WorldExports.HistoryTerritoryChanges().Length);
         Assert.Equal(polities * WorldExports.PolityStride, WorldExports.HistoryPolities().Length);
         Assert.Equal(polities, WorldExports.HistoryPolityKeys().Length);
-        Assert.All(WorldExports.HistoryPolityKeys(), k => Assert.Equal(6, k.Split('\t').Length));   // folk, culture, overlay, name, name race, name culture
+        Assert.All(WorldExports.HistoryPolityKeys(), k => Assert.Equal(7, k.Split('\t').Length));   // folk, culture, overlay, name, name race, name culture, architecture
         Assert.Equal(settlements * WorldExports.SettlementStride, WorldExports.HistorySettlements().Length);
         Assert.Equal(settlements, WorldExports.HistorySettlementEndCauses().Length);
         Assert.Equal(roads * WorldExports.RoadStride, WorldExports.HistoryRoads().Length);

@@ -108,7 +108,6 @@ Beats:
   - { Key: night_attack, Weight: 1 }
   - { Key: frenzy, Weight: 2 }
   - { Key: stampede, Weight: 2 }
-  - { Key: walls_breached, Weight: 3 }
   - { Key: rain_on_bowstrings, Weight: 4, When: [season=Spring, loser_arm=missile] }
   - { Key: river_ford_held, Weight: 4, When: [river, winner=defender] }
   - { Key: forded_upstream, Weight: 3, When: [river_bypassed, winner=attacker] }
@@ -122,6 +121,15 @@ Beats:
   - { Key: rout, Weight: 0.5, When: [outcome=decisive] }
   - { Key: field_refused, Weight: 1, When: [declined, winner=attacker] }
   - { Key: withdrew, Weight: 1, When: [declined, winner=none] }
+  # Sieges are told only by beats that ask for one (kind=Siege or end=...), and battles never by those.
+  - { Key: walls_breached, Weight: 3, When: [end=stormed] }
+  - { Key: escalade, Weight: 2, When: [end=stormed] }
+  - { Key: starved_out, Weight: 3, When: [end=surrendered] }
+  - { Key: gate_opened, Weight: 3, When: [end=betrayed] }
+  - { Key: relief_arrived, Weight: 3, When: [end=relieved] }
+  - { Key: camp_fever, Weight: 2, When: [end=lifted] }
+  - { Key: winter_camp, Weight: 3, When: [end=lifted, season=Winter] }
+  - { Key: held_out, Weight: 3, When: [end=abandoned] }
   - { Key: general_fell, Always: true, When: [general_fell] }
   - { Key: general_captured, Always: true, When: [general_captured] }
   - { Key: heads_taken, Always: true, When: [outcome=decisive, custom=take_heads] }
@@ -151,6 +159,10 @@ Aftermath:
   Stalemate: none
   DefenderVictory: none
   DefenderDecisive: grudge
+# With sieges on: after these outcomes (and after a raid the defender refused to meet) the place is besieged instead, when
+# its walls can stand a siege.
+Besiege: [AttackerDecisive, AttackerVictory]
+BesiegeDeclined: true
 AftermathGrudge: 2
 SackCasualty: 0.08
 SackDisplacement: 0.15

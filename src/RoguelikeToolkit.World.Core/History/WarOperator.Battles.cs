@@ -49,7 +49,8 @@ public sealed partial class WarOperator
         int key = sink.StableKey(attacker.Id, defender.Id);
         var a = SideOf(view, profile, attacker);
         var d = SideOf(view, profile, defender);
-        var fields = Fields(view, sink.Rng(key, "battle:fields"), profile, attacker.Id, defender, a.Way, d.Way);
+        bool sieges = view.Has(HistoryFeatures.Sieges);
+        var fields = Fields(view, sink.Rng(key, "battle:fields"), profile, attacker.Id, defender, a.Way, d.Way, sieges);
         var result = BattleResolver.Resolve(profile, a, d, fields, purpose => sink.Rng(key, purpose), view.TurnYears);
         var field = fields[result.Field];
         int tile = field.Tile;
@@ -62,7 +63,7 @@ public sealed partial class WarOperator
         var participants = new List<EventParticipant>();
         if (a.General != null) participants.Add(sink.Participant(a.General.Person, ParticipantRoles.PersonPrefix + "attacker_general"));
         if (d.General != null) participants.Add(sink.Participant(d.General.Person, ParticipantRoles.PersonPrefix + "defender_general"));
-        sink.Emit(new Proposal.AddBattle
+        var battle = new Proposal.AddBattle
         {
             EntityId = attacker.Id,
             EventKind = result.Outcome == BattleOutcome.Averted ? HistoryEventKind.Campaign : HistoryEventKind.War,
@@ -74,7 +75,8 @@ public sealed partial class WarOperator
             Defender = SideRecord(profile, d, result.Defender),
             Outcome = result.Outcome,
             Beats = result.Beats,
-        });
+        };
+        sink.Emit(battle);
 
         SeverRoutes(view, sink, severedNow, attacker.Id, attacker.CapitalTile, defender.CapitalTile);
         sink.Adjust(attacker.Id, ScalarRegistry.Pressure, HistoryDemography.WarPressureBump);
@@ -92,8 +94,8 @@ public sealed partial class WarOperator
         CheckDesecration(view, sink, attacker.Id, defender.Id, tile);
         Casualties(view, sink, profile, attacker.Id, tile, result.Attacker, result.DefenderWon ? d.Way : null);
         Casualties(view, sink, profile, defender.Id, tile, result.Defender, result.AttackerWon ? a.Way : null);
-        Aftermath(view, sink, severedNow, profile, attacker, defender, a.Way, tile, result.Outcome);
         Commanders(view, sink, data, a, d, result);
+        Aftermath(view, sink, severedNow, profile, attacker, defender, a, d, tile, result, battle, key, sieges);
     }
 
     /// <summary>
@@ -102,8 +104,10 @@ public sealed partial class WarOperator
     /// from its nearest settlement, whose holy ground it is, and the share of each side's people near enough to muster there.
     /// </summary>
     private static List<BattleResolver.Field> Fields(TurnView view, Rng rng, WarfareProfile profile, int attacker, TurnView.PolityState defender,
-        WarfareProfile.Way attackerWay, WarfareProfile.Way defenderWay)
+        WarfareProfile.Way attackerWay, WarfareProfile.Way defenderWay, bool sieges)
     {
+        var forts = profile.Forts;
+        var fort = sieges ? defenderWay.Fort : null;
         double musterScaleA = profile.Data.MusterDegrees * (0.5 + attackerWay.Mobility / 100.0);
         double musterScaleD = profile.Data.MusterDegrees * (0.5 + defenderWay.Mobility / 100.0);
         var frontier = view.FrontierTiles(attacker, defender.Id);
@@ -168,8 +172,19 @@ public sealed partial class WarOperator
             int holy = -1;
             foreach (var site in view.HolySites)
                 if (site.Active && site.Tile == tile) { holy = site.PolityId; break; }
+            // With sieges on, the defender's posts stand guard: their garrisons join a defence nearby, their watch warns of it.
+            double garrison = 0, watch = 0;
+            if (fort != null)
+                foreach (var s in view.Settlements)
+                {
+                    if (s.Ended || s.PolityId != defender.Id || s.Role != SettlementRole.Post) continue;
+                    double d = Degrees(vectors[tile], vectors[s.Tile]);
+                    garrison += fort.Garrison * DetMath.Exp(-d / forts.GarrisonDegrees);
+                    if (d <= forts.WatchDegrees) watch = Math.Max(watch, fort.Watch);
+                }
             fields.Add(new BattleResolver.Field(tile, terrain, hasHydro && hydro[tile].IsRiver != 0, forage,
-                hasClimate ? climate[tile].SeasonalRange : 0, distance, holy, popA > 0 ? musterA / popA : 0, popD > 0 ? musterD / popD : 1));
+                hasClimate ? climate[tile].SeasonalRange : 0, distance, holy, popA > 0 ? musterA / popA : 0, popD > 0 ? musterD / popD : 1,
+                garrison, watch));
         }
         return fields;
     }
@@ -235,18 +250,36 @@ public sealed partial class WarOperator
         return found;
     }
 
-    /// <summary>The outcome's aftermath (<see cref="BattleDef.Aftermath"/>) on the defender's settlement nearest the field.</summary>
-    private static void Aftermath(TurnView view, ProposalSink sink, HashSet<(int, int)> severedNow, WarfareProfile profile,
-        TurnView.PolityState attacker, TurnView.PolityState defender, WarfareProfile.Way attackerWay, int tile, BattleOutcome outcome)
+    /// <summary>
+    /// The outcome's aftermath (<see cref="BattleDef.Aftermath"/>) on the defender's settlement nearest the field. With sieges on,
+    /// after a <see cref="BattleDef.Besiege"/> outcome (or a refused field, <see cref="BattleDef.BesiegeDeclined"/>) the place is
+    /// besieged instead when its walls can stand one (<see cref="Besiege"/>).
+    /// </summary>
+    private void Aftermath(TurnView view, ProposalSink sink, HashSet<(int, int)> severedNow, WarfareProfile profile,
+        TurnView.PolityState attacker, TurnView.PolityState defender, BattleResolver.Side a, BattleResolver.Side d, int tile,
+        BattleResolver.Result result, Proposal.AddBattle battle, int key, bool sieges)
     {
         var data = profile.Data;
-        string action = profile.Aftermath(outcome);
+        string action = profile.Aftermath(result.Outcome);
+        bool besiege = sieges && (result.Declined ? data.BesiegeDeclined && result.AttackerWon
+            : data.Besiege.Any(o => string.Equals(o, result.Outcome.ToString(), StringComparison.OrdinalIgnoreCase)));
+        if (besiege && TryNearest(view, defender.Id, tile, out var walled)
+            && Besiege(view, sink, severedNow, profile, attacker, defender, a, d, walled, result, battle, key))
+            return;
         if (action == "grudge")
         {
             if (data.AftermathGrudge > 0) sink.Emit(new Proposal.AddGrudge { EntityId = defender.Id, Other = attacker.Id, Weight = data.AftermathGrudge });
             return;
         }
         if (action is not ("capture" or "raze" or "sack") || !TryNearest(view, defender.Id, tile, out var target)) return;
+        Take(view, sink, severedNow, profile, attacker, defender, a.Way, target, action, null);
+    }
+
+    /// <summary>Takes <paramref name="target"/>: a capture (razed under a razing custom, sacked over the cap), a raze or a sack; a capital is only sacked.</summary>
+    private static void Take(TurnView view, ProposalSink sink, HashSet<(int, int)> severedNow, WarfareProfile profile, TurnView.PolityState attacker,
+        TurnView.PolityState defender, WarfareProfile.Way attackerWay, TurnView.SettlementState target, string action, Proposal? requires)
+    {
+        var data = profile.Data;
         if (action == "capture")
         {
             foreach (var c in attackerWay.Customs) if (c.Raze) action = "raze";
@@ -257,9 +290,9 @@ public sealed partial class WarOperator
         if (target.Role == SettlementRole.Capital) action = "sack";
         switch (action)
         {
-            case "capture": Capture(sink, attacker.Id, defender.Id, target); break;
-            case "raze": Raze(view, sink, severedNow, attacker.Id, defender.Id, target, data.RazeCasualty); break;
-            default: Sack(sink, defender.Id, target, data.SackDisplacement, data.SackCasualty); break;
+            case "capture": Capture(sink, attacker.Id, defender.Id, target, requires); break;
+            case "raze": Raze(view, sink, severedNow, attacker.Id, defender.Id, target, data.RazeCasualty, requires); break;
+            default: Sack(sink, defender.Id, target, data.SackDisplacement, data.SackCasualty, requires); break;
         }
     }
 

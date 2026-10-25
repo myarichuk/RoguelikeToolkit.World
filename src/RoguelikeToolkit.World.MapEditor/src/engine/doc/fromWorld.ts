@@ -18,6 +18,7 @@ export function entitiesFromSnapshot(w: WorldSnapshot): { features: FeatureEntit
       id: `f_${f.key}`, kind: f.kind, name: f.name, x: f.x, y: f.y, angle: f.angle, extent: f.extent, weight: f.weight, tile: f.tile, span: f.span,
       tiles: f.tiles ? Array.from(f.tiles) : undefined, riverId, deposit: f.deposit, details: f.details,
       culture: w.styles[f.style]?.label ?? '', request: f.request,
+      ...(f.architecture ? { architecture: f.architecture } : {}),
     };
   });
   return { features, rivers };

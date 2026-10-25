@@ -9,6 +9,8 @@ Discipline: 35
 SiegeSkill: 25
 Forage: 90
 ColdTolerance: 60
+Fortify: 10
+FortKind: stake_fort
 Levy: 1.4
 CampaignSeasons: { Spring: 2, Summer: 3, Autumn: 2, Winter: 1 }
 Customs: [take_heads, no_quarter, duel_of_champions]

@@ -110,6 +110,17 @@
      "minZoom": 1.6,
      "sizeExp": 0
     },
+    "fort": {
+     "font": "serif",
+     "size": 6.5,
+     "spacing": 0.02,
+     "uppercase": false,
+     "fill": "#2b2119",
+     "halo": "#ece0c2",
+     "haloWidth": 1.2,
+     "minZoom": 0.9,
+     "sizeExp": 0
+    },
     "river": {
      "font": "italic",
      "size": 5,
@@ -356,6 +367,17 @@
      "halo": "#e8d9b5",
      "haloWidth": 1.0,
      "minZoom": 1.6,
+     "sizeExp": 0
+    },
+    "fort": {
+     "font": "serif",
+     "size": 6.5,
+     "spacing": 0.02,
+     "uppercase": false,
+     "fill": "#2b1e14",
+     "halo": "#e8d9b5",
+     "haloWidth": 1.2,
+     "minZoom": 0.9,
      "sizeExp": 0
     },
     "river": {
@@ -647,6 +669,17 @@
      "minZoom": 1.6,
      "sizeExp": 0
     },
+    "fort": {
+     "font": "serif",
+     "size": 6.5,
+     "spacing": 0.02,
+     "uppercase": false,
+     "fill": "#2f2622",
+     "halo": "#fbf6e8",
+     "haloWidth": 1.2,
+     "minZoom": 0.9,
+     "sizeExp": 0
+    },
     "river": {
      "font": "italic",
      "size": 5,
@@ -893,6 +926,17 @@
      "halo": "#1c2533",
      "haloWidth": 1.0,
      "minZoom": 1.6,
+     "sizeExp": 0
+    },
+    "fort": {
+     "font": "serif",
+     "size": 6.5,
+     "spacing": 0.02,
+     "uppercase": false,
+     "fill": "#e2e8f0",
+     "halo": "#1c2533",
+     "haloWidth": 1.2,
+     "minZoom": 0.9,
      "sizeExp": 0
     },
     "river": {
@@ -1294,6 +1338,14 @@
    "variants": 4
   },
   {
+   "id": "core.fort",
+   "name": "Fort",
+   "category": "structure",
+   "size": 9,
+   "generator": "fort",
+   "variants": 4
+  },
+  {
    "id": "core.tower",
    "name": "Tower",
    "category": "structure",
@@ -1372,6 +1424,1153 @@
    "size": 60,
    "generator": "compass",
    "variants": 1
+  },
+  {
+   "id": "core.capital.dwarven",
+   "name": "Dwarven capital",
+   "category": "settlement",
+   "size": 18,
+   "generator": "capital",
+   "params": {
+    "house": 1,
+    "crag": 1,
+    "towerForm": 1,
+    "spire": 1,
+    "towerW": 1.2,
+    "towerH": 0.85,
+    "wallH": 1.2,
+    "centre": 4
+   },
+   "variants": 2
+  },
+  {
+   "id": "core.city.dwarven",
+   "name": "Dwarven city",
+   "category": "settlement",
+   "size": 14,
+   "generator": "city",
+   "params": {
+    "house": 1,
+    "crag": 1,
+    "towerForm": 1,
+    "spire": 1,
+    "towerW": 1.2,
+    "towerH": 0.85,
+    "wallH": 1.2,
+    "centre": 4
+   },
+   "variants": 3
+  },
+  {
+   "id": "core.town.dwarven",
+   "name": "Dwarven town",
+   "category": "settlement",
+   "size": 10,
+   "generator": "town",
+   "params": {
+    "house": 1,
+    "crag": 1,
+    "towerForm": 1,
+    "spire": 1,
+    "towerW": 1.2,
+    "towerH": 0.85,
+    "wallH": 1.2,
+    "centre": 4
+   },
+   "variants": 3
+  },
+  {
+   "id": "core.village.dwarven",
+   "name": "Dwarven village",
+   "category": "settlement",
+   "size": 7,
+   "generator": "village",
+   "params": {
+    "house": 1,
+    "crag": 1,
+    "wall": 5
+   },
+   "variants": 4
+  },
+  {
+   "id": "core.port.dwarven",
+   "name": "Dwarven port",
+   "category": "settlement",
+   "size": 10,
+   "generator": "port",
+   "params": {
+    "house": 1,
+    "crag": 1
+   },
+   "variants": 3
+  },
+  {
+   "id": "core.fort.dwarven",
+   "name": "Dwarven fort",
+   "category": "structure",
+   "size": 9,
+   "generator": "fort",
+   "params": {
+    "layout": 1,
+    "towerForm": 1,
+    "spire": 1,
+    "towerW": 1.2,
+    "towerH": 0.85,
+    "wallH": 1.2
+   },
+   "variants": 3
+  },
+  {
+   "id": "core.ruin.dwarven",
+   "name": "Dwarven ruins",
+   "category": "structure",
+   "size": 8,
+   "generator": "ruins",
+   "params": {
+    "ruin": 0,
+    "crag": 1
+   },
+   "variants": 3
+  },
+  {
+   "id": "core.capital.elven_high",
+   "name": "High elven capital",
+   "category": "settlement",
+   "size": 18,
+   "generator": "capital",
+   "params": {
+    "house": 0,
+    "alt": 2,
+    "mix": 0.4,
+    "wall": 7,
+    "towerW": 0.7,
+    "towerH": 1.6,
+    "spire": 3,
+    "centre": 1,
+    "keep": 1
+   },
+   "variants": 2
+  },
+  {
+   "id": "core.city.elven_high",
+   "name": "High elven city",
+   "category": "settlement",
+   "size": 14,
+   "generator": "city",
+   "params": {
+    "house": 0,
+    "alt": 2,
+    "mix": 0.4,
+    "wall": 7,
+    "towerW": 0.7,
+    "towerH": 1.6,
+    "spire": 3,
+    "centre": 1,
+    "keep": 1
+   },
+   "variants": 3
+  },
+  {
+   "id": "core.town.elven_high",
+   "name": "High elven town",
+   "category": "settlement",
+   "size": 10,
+   "generator": "town",
+   "params": {
+    "house": 0,
+    "alt": 2,
+    "mix": 0.4,
+    "wall": 7,
+    "towerW": 0.7,
+    "towerH": 1.6,
+    "spire": 3,
+    "centre": 1,
+    "keep": 1
+   },
+   "variants": 3
+  },
+  {
+   "id": "core.village.elven_high",
+   "name": "High elven village",
+   "category": "settlement",
+   "size": 7,
+   "generator": "village",
+   "params": {
+    "house": 0,
+    "alt": 2,
+    "mix": 0.4,
+    "wall": 5
+   },
+   "variants": 4
+  },
+  {
+   "id": "core.port.elven_high",
+   "name": "High elven port",
+   "category": "settlement",
+   "size": 10,
+   "generator": "port",
+   "params": {
+    "house": 0,
+    "alt": 2,
+    "mix": 0.4
+   },
+   "variants": 3
+  },
+  {
+   "id": "core.fort.elven_high",
+   "name": "High elven fort",
+   "category": "structure",
+   "size": 9,
+   "generator": "fort",
+   "params": {
+    "layout": 2,
+    "wall": 7,
+    "towerW": 0.7,
+    "towerH": 1.3,
+    "spire": 3
+   },
+   "variants": 3
+  },
+  {
+   "id": "core.ruin.elven_high",
+   "name": "High elven ruins",
+   "category": "structure",
+   "size": 8,
+   "generator": "ruins",
+   "params": {
+    "ruin": 3
+   },
+   "variants": 3
+  },
+  {
+   "id": "core.capital.sylvan",
+   "name": "Sylvan capital",
+   "category": "settlement",
+   "size": 18,
+   "generator": "capital",
+   "params": {
+    "house": 7,
+    "alt": 2,
+    "mix": 0.2,
+    "wall": 2,
+    "towerForm": 3,
+    "centre": 3,
+    "keep": 3
+   },
+   "variants": 2
+  },
+  {
+   "id": "core.city.sylvan",
+   "name": "Sylvan city",
+   "category": "settlement",
+   "size": 14,
+   "generator": "city",
+   "params": {
+    "house": 7,
+    "alt": 2,
+    "mix": 0.2,
+    "wall": 2,
+    "towerForm": 3,
+    "centre": 3,
+    "keep": 3
+   },
+   "variants": 3
+  },
+  {
+   "id": "core.town.sylvan",
+   "name": "Sylvan town",
+   "category": "settlement",
+   "size": 10,
+   "generator": "town",
+   "params": {
+    "house": 7,
+    "alt": 2,
+    "mix": 0.2,
+    "wall": 2,
+    "towerForm": 3,
+    "centre": 3,
+    "keep": 3
+   },
+   "variants": 3
+  },
+  {
+   "id": "core.village.sylvan",
+   "name": "Sylvan village",
+   "category": "settlement",
+   "size": 7,
+   "generator": "village",
+   "params": {
+    "house": 7,
+    "alt": 2,
+    "mix": 0.2,
+    "wall": 2
+   },
+   "variants": 4
+  },
+  {
+   "id": "core.port.sylvan",
+   "name": "Sylvan port",
+   "category": "settlement",
+   "size": 10,
+   "generator": "port",
+   "params": {
+    "house": 7,
+    "alt": 2,
+    "mix": 0.3
+   },
+   "variants": 3
+  },
+  {
+   "id": "core.fort.sylvan",
+   "name": "Sylvan fort",
+   "category": "structure",
+   "size": 9,
+   "generator": "fort",
+   "params": {
+    "wall": 2,
+    "towerForm": 3,
+    "keep": 7,
+    "huts": 1,
+    "house": 7
+   },
+   "variants": 3
+  },
+  {
+   "id": "core.ruin.sylvan",
+   "name": "Sylvan ruins",
+   "category": "structure",
+   "size": 8,
+   "generator": "ruins",
+   "params": {
+    "ruin": 6
+   },
+   "variants": 3
+  },
+  {
+   "id": "core.capital.drow",
+   "name": "Drow capital",
+   "category": "settlement",
+   "size": 18,
+   "generator": "capital",
+   "params": {
+    "house": 8,
+    "wall": 6,
+    "towerForm": 1,
+    "spire": 3,
+    "towerW": 0.8,
+    "towerH": 1.3,
+    "centre": 4,
+    "keep": 1,
+    "dark": 1
+   },
+   "variants": 2
+  },
+  {
+   "id": "core.city.drow",
+   "name": "Drow city",
+   "category": "settlement",
+   "size": 14,
+   "generator": "city",
+   "params": {
+    "house": 8,
+    "wall": 6,
+    "towerForm": 1,
+    "spire": 3,
+    "towerW": 0.8,
+    "towerH": 1.3,
+    "centre": 4,
+    "keep": 1,
+    "dark": 1
+   },
+   "variants": 3
+  },
+  {
+   "id": "core.town.drow",
+   "name": "Drow town",
+   "category": "settlement",
+   "size": 10,
+   "generator": "town",
+   "params": {
+    "house": 8,
+    "wall": 6,
+    "towerForm": 1,
+    "spire": 3,
+    "towerW": 0.8,
+    "towerH": 1.3,
+    "centre": 4,
+    "keep": 1,
+    "dark": 1
+   },
+   "variants": 3
+  },
+  {
+   "id": "core.village.drow",
+   "name": "Drow village",
+   "category": "settlement",
+   "size": 7,
+   "generator": "village",
+   "params": {
+    "house": 8,
+    "wall": 5,
+    "dark": 1
+   },
+   "variants": 4
+  },
+  {
+   "id": "core.port.drow",
+   "name": "Drow port",
+   "category": "settlement",
+   "size": 10,
+   "generator": "port",
+   "params": {
+    "house": 8,
+    "dark": 1
+   },
+   "variants": 3
+  },
+  {
+   "id": "core.fort.drow",
+   "name": "Drow fort",
+   "category": "structure",
+   "size": 9,
+   "generator": "fort",
+   "params": {
+    "layout": 2,
+    "wall": 6,
+    "towerForm": 1,
+    "spire": 3,
+    "towerW": 0.8,
+    "towerH": 1.2,
+    "dark": 1
+   },
+   "variants": 3
+  },
+  {
+   "id": "core.ruin.drow",
+   "name": "Drow ruins",
+   "category": "structure",
+   "size": 8,
+   "generator": "ruins",
+   "params": {
+    "ruin": 3,
+    "dark": 1
+   },
+   "variants": 3
+  },
+  {
+   "id": "core.capital.horde",
+   "name": "Horde capital",
+   "category": "settlement",
+   "size": 18,
+   "generator": "capital",
+   "params": {
+    "house": 3,
+    "wall": 1,
+    "towerForm": 2,
+    "spire": 1,
+    "centre": 2,
+    "keep": 2
+   },
+   "variants": 2
+  },
+  {
+   "id": "core.city.horde",
+   "name": "Horde city",
+   "category": "settlement",
+   "size": 14,
+   "generator": "city",
+   "params": {
+    "house": 3,
+    "wall": 1,
+    "towerForm": 2,
+    "spire": 1,
+    "centre": 2,
+    "keep": 2
+   },
+   "variants": 3
+  },
+  {
+   "id": "core.town.horde",
+   "name": "Horde town",
+   "category": "settlement",
+   "size": 10,
+   "generator": "town",
+   "params": {
+    "house": 3,
+    "wall": 1,
+    "towerForm": 2,
+    "spire": 1,
+    "centre": 2,
+    "keep": 2
+   },
+   "variants": 3
+  },
+  {
+   "id": "core.village.horde",
+   "name": "Horde village",
+   "category": "settlement",
+   "size": 7,
+   "generator": "village",
+   "params": {
+    "house": 3,
+    "wall": 1
+   },
+   "variants": 4
+  },
+  {
+   "id": "core.port.horde",
+   "name": "Horde port",
+   "category": "settlement",
+   "size": 10,
+   "generator": "port",
+   "params": {
+    "house": 3
+   },
+   "variants": 3
+  },
+  {
+   "id": "core.fort.horde",
+   "name": "Horde fort",
+   "category": "structure",
+   "size": 9,
+   "generator": "fort",
+   "params": {
+    "wall": 1,
+    "towerForm": 2,
+    "spire": 1,
+    "keep": 7,
+    "huts": 2,
+    "house": 3
+   },
+   "variants": 3
+  },
+  {
+   "id": "core.ruin.horde",
+   "name": "Horde ruins",
+   "category": "structure",
+   "size": 8,
+   "generator": "ruins",
+   "params": {
+    "ruin": 1,
+    "house": 3
+   },
+   "variants": 3
+  },
+  {
+   "id": "core.capital.longhouse",
+   "name": "Longhouse capital",
+   "category": "settlement",
+   "size": 18,
+   "generator": "capital",
+   "params": {
+    "house": 6,
+    "wall": 1,
+    "towerForm": 2,
+    "spire": 2,
+    "centre": 6,
+    "keep": 2
+   },
+   "variants": 2
+  },
+  {
+   "id": "core.city.longhouse",
+   "name": "Longhouse city",
+   "category": "settlement",
+   "size": 14,
+   "generator": "city",
+   "params": {
+    "house": 6,
+    "wall": 1,
+    "towerForm": 2,
+    "spire": 2,
+    "centre": 6,
+    "keep": 2
+   },
+   "variants": 3
+  },
+  {
+   "id": "core.town.longhouse",
+   "name": "Longhouse town",
+   "category": "settlement",
+   "size": 10,
+   "generator": "town",
+   "params": {
+    "house": 6,
+    "wall": 1,
+    "towerForm": 2,
+    "spire": 2,
+    "centre": 6,
+    "keep": 2
+   },
+   "variants": 3
+  },
+  {
+   "id": "core.village.longhouse",
+   "name": "Longhouse village",
+   "category": "settlement",
+   "size": 7,
+   "generator": "village",
+   "params": {
+    "house": 6,
+    "wall": 5
+   },
+   "variants": 4
+  },
+  {
+   "id": "core.port.longhouse",
+   "name": "Longhouse port",
+   "category": "settlement",
+   "size": 10,
+   "generator": "port",
+   "params": {
+    "house": 6
+   },
+   "variants": 3
+  },
+  {
+   "id": "core.fort.longhouse",
+   "name": "Longhouse fort",
+   "category": "structure",
+   "size": 9,
+   "generator": "fort",
+   "params": {
+    "wall": 1,
+    "towerForm": 2,
+    "spire": 2,
+    "keep": 2,
+    "huts": 1,
+    "house": 6
+   },
+   "variants": 3
+  },
+  {
+   "id": "core.ruin.longhouse",
+   "name": "Longhouse ruins",
+   "category": "structure",
+   "size": 8,
+   "generator": "ruins",
+   "params": {
+    "ruin": 1,
+    "house": 6
+   },
+   "variants": 3
+  },
+  {
+   "id": "core.capital.desert",
+   "name": "Desert capital",
+   "category": "settlement",
+   "size": 18,
+   "generator": "capital",
+   "params": {
+    "house": 1,
+    "alt": 2,
+    "mix": 0.3,
+    "wall": 3,
+    "towerForm": 1,
+    "spire": 4,
+    "centre": 1
+   },
+   "variants": 2
+  },
+  {
+   "id": "core.city.desert",
+   "name": "Desert city",
+   "category": "settlement",
+   "size": 14,
+   "generator": "city",
+   "params": {
+    "house": 1,
+    "alt": 2,
+    "mix": 0.3,
+    "wall": 3,
+    "towerForm": 1,
+    "spire": 4,
+    "centre": 1
+   },
+   "variants": 3
+  },
+  {
+   "id": "core.town.desert",
+   "name": "Desert town",
+   "category": "settlement",
+   "size": 10,
+   "generator": "town",
+   "params": {
+    "house": 1,
+    "alt": 2,
+    "mix": 0.3,
+    "wall": 3,
+    "towerForm": 1,
+    "spire": 4,
+    "centre": 1
+   },
+   "variants": 3
+  },
+  {
+   "id": "core.village.desert",
+   "name": "Desert village",
+   "category": "settlement",
+   "size": 7,
+   "generator": "village",
+   "params": {
+    "house": 1,
+    "alt": 2,
+    "mix": 0.3,
+    "wall": 5
+   },
+   "variants": 4
+  },
+  {
+   "id": "core.port.desert",
+   "name": "Desert port",
+   "category": "settlement",
+   "size": 10,
+   "generator": "port",
+   "params": {
+    "house": 1,
+    "alt": 2,
+    "mix": 0.3
+   },
+   "variants": 3
+  },
+  {
+   "id": "core.fort.desert",
+   "name": "Desert fort",
+   "category": "structure",
+   "size": 9,
+   "generator": "fort",
+   "params": {
+    "wall": 3,
+    "towerForm": 1,
+    "spire": 1,
+    "keep": 0
+   },
+   "variants": 3
+  },
+  {
+   "id": "core.ruin.desert",
+   "name": "Desert ruins",
+   "category": "structure",
+   "size": 8,
+   "generator": "ruins",
+   "params": {
+    "ruin": 4
+   },
+   "variants": 3
+  },
+  {
+   "id": "core.capital.aerie",
+   "name": "Aerie capital",
+   "category": "settlement",
+   "size": 18,
+   "generator": "capital",
+   "params": {
+    "house": 0,
+    "alt": 1,
+    "mix": 0.3,
+    "crag": 1,
+    "towerW": 0.9,
+    "towerH": 1.5,
+    "spire": 2,
+    "centre": 4,
+    "keep": 5
+   },
+   "variants": 2
+  },
+  {
+   "id": "core.city.aerie",
+   "name": "Aerie city",
+   "category": "settlement",
+   "size": 14,
+   "generator": "city",
+   "params": {
+    "house": 0,
+    "alt": 1,
+    "mix": 0.3,
+    "crag": 1,
+    "towerW": 0.9,
+    "towerH": 1.5,
+    "spire": 2,
+    "centre": 4,
+    "keep": 5
+   },
+   "variants": 3
+  },
+  {
+   "id": "core.town.aerie",
+   "name": "Aerie town",
+   "category": "settlement",
+   "size": 10,
+   "generator": "town",
+   "params": {
+    "house": 0,
+    "alt": 1,
+    "mix": 0.3,
+    "crag": 1,
+    "towerW": 0.9,
+    "towerH": 1.5,
+    "spire": 2,
+    "centre": 4,
+    "keep": 5
+   },
+   "variants": 3
+  },
+  {
+   "id": "core.village.aerie",
+   "name": "Aerie village",
+   "category": "settlement",
+   "size": 7,
+   "generator": "village",
+   "params": {
+    "house": 0,
+    "alt": 1,
+    "mix": 0.3,
+    "crag": 1,
+    "wall": 5
+   },
+   "variants": 4
+  },
+  {
+   "id": "core.port.aerie",
+   "name": "Aerie port",
+   "category": "settlement",
+   "size": 10,
+   "generator": "port",
+   "params": {
+    "house": 0,
+    "alt": 1,
+    "mix": 0.3,
+    "crag": 1
+   },
+   "variants": 3
+  },
+  {
+   "id": "core.fort.aerie",
+   "name": "Aerie fort",
+   "category": "structure",
+   "size": 9,
+   "generator": "fort",
+   "params": {
+    "layout": 3,
+    "spire": 2,
+    "towerH": 1.2
+   },
+   "variants": 3
+  },
+  {
+   "id": "core.ruin.aerie",
+   "name": "Aerie ruins",
+   "category": "structure",
+   "size": 8,
+   "generator": "ruins",
+   "params": {
+    "ruin": 8,
+    "crag": 1
+   },
+   "variants": 3
+  },
+  {
+   "id": "core.capital.tinker",
+   "name": "Tinker capital",
+   "category": "settlement",
+   "size": 18,
+   "generator": "capital",
+   "params": {
+    "house": 2,
+    "wallH": 0.6,
+    "spire": 4,
+    "centre": 1,
+    "keep": 4
+   },
+   "variants": 2
+  },
+  {
+   "id": "core.city.tinker",
+   "name": "Tinker city",
+   "category": "settlement",
+   "size": 14,
+   "generator": "city",
+   "params": {
+    "house": 2,
+    "wallH": 0.6,
+    "spire": 4,
+    "centre": 1,
+    "keep": 4
+   },
+   "variants": 3
+  },
+  {
+   "id": "core.town.tinker",
+   "name": "Tinker town",
+   "category": "settlement",
+   "size": 10,
+   "generator": "town",
+   "params": {
+    "house": 2,
+    "wallH": 0.6,
+    "spire": 4,
+    "centre": 1,
+    "keep": 4
+   },
+   "variants": 3
+  },
+  {
+   "id": "core.village.tinker",
+   "name": "Tinker village",
+   "category": "settlement",
+   "size": 7,
+   "generator": "village",
+   "params": {
+    "house": 2,
+    "wall": 5
+   },
+   "variants": 4
+  },
+  {
+   "id": "core.port.tinker",
+   "name": "Tinker port",
+   "category": "settlement",
+   "size": 10,
+   "generator": "port",
+   "params": {
+    "house": 2
+   },
+   "variants": 3
+  },
+  {
+   "id": "core.fort.tinker",
+   "name": "Tinker fort",
+   "category": "structure",
+   "size": 9,
+   "generator": "fort",
+   "params": {
+    "wallH": 0.6,
+    "spire": 4,
+    "keep": 4
+   },
+   "variants": 3
+  },
+  {
+   "id": "core.ruin.tinker",
+   "name": "Tinker ruins",
+   "category": "structure",
+   "size": 8,
+   "generator": "ruins",
+   "params": {
+    "ruin": 7
+   },
+   "variants": 3
+  },
+  {
+   "id": "core.capital.burrow",
+   "name": "Burrow capital",
+   "category": "settlement",
+   "size": 18,
+   "generator": "capital",
+   "params": {
+    "house": 4,
+    "alt": 0,
+    "mix": 0.3,
+    "wall": 2,
+    "towerForm": 2,
+    "spire": 2,
+    "centre": 3,
+    "keep": 2
+   },
+   "variants": 2
+  },
+  {
+   "id": "core.city.burrow",
+   "name": "Burrow city",
+   "category": "settlement",
+   "size": 14,
+   "generator": "city",
+   "params": {
+    "house": 4,
+    "alt": 0,
+    "mix": 0.3,
+    "wall": 2,
+    "towerForm": 2,
+    "spire": 2,
+    "centre": 3,
+    "keep": 2
+   },
+   "variants": 3
+  },
+  {
+   "id": "core.town.burrow",
+   "name": "Burrow town",
+   "category": "settlement",
+   "size": 10,
+   "generator": "town",
+   "params": {
+    "house": 4,
+    "alt": 0,
+    "mix": 0.3,
+    "wall": 2,
+    "towerForm": 2,
+    "spire": 2,
+    "centre": 3,
+    "keep": 2
+   },
+   "variants": 3
+  },
+  {
+   "id": "core.village.burrow",
+   "name": "Burrow village",
+   "category": "settlement",
+   "size": 7,
+   "generator": "village",
+   "params": {
+    "house": 4,
+    "alt": 0,
+    "mix": 0.3,
+    "wall": 2
+   },
+   "variants": 4
+  },
+  {
+   "id": "core.port.burrow",
+   "name": "Burrow port",
+   "category": "settlement",
+   "size": 10,
+   "generator": "port",
+   "params": {
+    "house": 4,
+    "alt": 0,
+    "mix": 0.3
+   },
+   "variants": 3
+  },
+  {
+   "id": "core.fort.burrow",
+   "name": "Burrow fort",
+   "category": "structure",
+   "size": 9,
+   "generator": "fort",
+   "params": {
+    "wall": 2,
+    "towerForm": 2,
+    "spire": 2,
+    "keep": 2,
+    "house": 4
+   },
+   "variants": 3
+  },
+  {
+   "id": "core.ruin.burrow",
+   "name": "Burrow ruins",
+   "category": "structure",
+   "size": 8,
+   "generator": "ruins",
+   "params": {
+    "ruin": 2
+   },
+   "variants": 3
+  },
+  {
+   "id": "core.capital.stilt",
+   "name": "Stilt capital",
+   "category": "settlement",
+   "size": 18,
+   "generator": "capital",
+   "params": {
+    "house": 5,
+    "water": 1,
+    "wall": 4,
+    "towerForm": 2,
+    "spire": 2,
+    "centre": 2,
+    "keep": 2
+   },
+   "variants": 2
+  },
+  {
+   "id": "core.city.stilt",
+   "name": "Stilt city",
+   "category": "settlement",
+   "size": 14,
+   "generator": "city",
+   "params": {
+    "house": 5,
+    "water": 1,
+    "wall": 4,
+    "towerForm": 2,
+    "spire": 2,
+    "centre": 2,
+    "keep": 2
+   },
+   "variants": 3
+  },
+  {
+   "id": "core.town.stilt",
+   "name": "Stilt town",
+   "category": "settlement",
+   "size": 10,
+   "generator": "town",
+   "params": {
+    "house": 5,
+    "water": 1,
+    "wall": 4,
+    "towerForm": 2,
+    "spire": 2,
+    "centre": 2,
+    "keep": 2
+   },
+   "variants": 3
+  },
+  {
+   "id": "core.village.stilt",
+   "name": "Stilt village",
+   "category": "settlement",
+   "size": 7,
+   "generator": "village",
+   "params": {
+    "house": 5,
+    "water": 1,
+    "wall": 4
+   },
+   "variants": 4
+  },
+  {
+   "id": "core.port.stilt",
+   "name": "Stilt port",
+   "category": "settlement",
+   "size": 10,
+   "generator": "port",
+   "params": {
+    "house": 5
+   },
+   "variants": 3
+  },
+  {
+   "id": "core.fort.stilt",
+   "name": "Stilt fort",
+   "category": "structure",
+   "size": 9,
+   "generator": "fort",
+   "params": {
+    "water": 1,
+    "wall": 4,
+    "towerForm": 2,
+    "spire": 2,
+    "keep": 7,
+    "huts": 1,
+    "house": 5
+   },
+   "variants": 3
+  },
+  {
+   "id": "core.ruin.stilt",
+   "name": "Stilt ruins",
+   "category": "structure",
+   "size": 8,
+   "generator": "ruins",
+   "params": {
+    "ruin": 5,
+    "water": 1
+   },
+   "variants": 3
   }
  ],
  "rules": [
@@ -1661,7 +2860,288 @@
   ],
   "shrine": [
    "core.temple"
+  ],
+  "fort": [
+   "core.fort"
   ]
+ },
+ "architecture": {
+  "human": {
+   "capital": [
+    "core.capital"
+   ],
+   "city": [
+    "core.city"
+   ],
+   "town": [
+    "core.town"
+   ],
+   "village": [
+    "core.village"
+   ],
+   "port": [
+    "core.port"
+   ],
+   "fort": [
+    "core.fort"
+   ],
+   "ruin": [
+    "core.ruins"
+   ]
+  },
+  "dwarven": {
+   "capital": [
+    "core.capital.dwarven"
+   ],
+   "city": [
+    "core.city.dwarven"
+   ],
+   "town": [
+    "core.town.dwarven"
+   ],
+   "village": [
+    "core.village.dwarven"
+   ],
+   "port": [
+    "core.port.dwarven"
+   ],
+   "fort": [
+    "core.fort.dwarven"
+   ],
+   "ruin": [
+    "core.ruin.dwarven"
+   ]
+  },
+  "elven_high": {
+   "capital": [
+    "core.capital.elven_high"
+   ],
+   "city": [
+    "core.city.elven_high"
+   ],
+   "town": [
+    "core.town.elven_high"
+   ],
+   "village": [
+    "core.village.elven_high"
+   ],
+   "port": [
+    "core.port.elven_high"
+   ],
+   "fort": [
+    "core.fort.elven_high"
+   ],
+   "ruin": [
+    "core.ruin.elven_high"
+   ]
+  },
+  "sylvan": {
+   "capital": [
+    "core.capital.sylvan"
+   ],
+   "city": [
+    "core.city.sylvan"
+   ],
+   "town": [
+    "core.town.sylvan"
+   ],
+   "village": [
+    "core.village.sylvan"
+   ],
+   "port": [
+    "core.port.sylvan"
+   ],
+   "fort": [
+    "core.fort.sylvan"
+   ],
+   "ruin": [
+    "core.ruin.sylvan"
+   ]
+  },
+  "drow": {
+   "capital": [
+    "core.capital.drow"
+   ],
+   "city": [
+    "core.city.drow"
+   ],
+   "town": [
+    "core.town.drow"
+   ],
+   "village": [
+    "core.village.drow"
+   ],
+   "port": [
+    "core.port.drow"
+   ],
+   "fort": [
+    "core.fort.drow"
+   ],
+   "ruin": [
+    "core.ruin.drow"
+   ]
+  },
+  "horde": {
+   "capital": [
+    "core.capital.horde"
+   ],
+   "city": [
+    "core.city.horde"
+   ],
+   "town": [
+    "core.town.horde"
+   ],
+   "village": [
+    "core.village.horde"
+   ],
+   "port": [
+    "core.port.horde"
+   ],
+   "fort": [
+    "core.fort.horde"
+   ],
+   "ruin": [
+    "core.ruin.horde"
+   ]
+  },
+  "longhouse": {
+   "capital": [
+    "core.capital.longhouse"
+   ],
+   "city": [
+    "core.city.longhouse"
+   ],
+   "town": [
+    "core.town.longhouse"
+   ],
+   "village": [
+    "core.village.longhouse"
+   ],
+   "port": [
+    "core.port.longhouse"
+   ],
+   "fort": [
+    "core.fort.longhouse"
+   ],
+   "ruin": [
+    "core.ruin.longhouse"
+   ]
+  },
+  "desert": {
+   "capital": [
+    "core.capital.desert"
+   ],
+   "city": [
+    "core.city.desert"
+   ],
+   "town": [
+    "core.town.desert"
+   ],
+   "village": [
+    "core.village.desert"
+   ],
+   "port": [
+    "core.port.desert"
+   ],
+   "fort": [
+    "core.fort.desert"
+   ],
+   "ruin": [
+    "core.ruin.desert"
+   ]
+  },
+  "aerie": {
+   "capital": [
+    "core.capital.aerie"
+   ],
+   "city": [
+    "core.city.aerie"
+   ],
+   "town": [
+    "core.town.aerie"
+   ],
+   "village": [
+    "core.village.aerie"
+   ],
+   "port": [
+    "core.port.aerie"
+   ],
+   "fort": [
+    "core.fort.aerie"
+   ],
+   "ruin": [
+    "core.ruin.aerie"
+   ]
+  },
+  "tinker": {
+   "capital": [
+    "core.capital.tinker"
+   ],
+   "city": [
+    "core.city.tinker"
+   ],
+   "town": [
+    "core.town.tinker"
+   ],
+   "village": [
+    "core.village.tinker"
+   ],
+   "port": [
+    "core.port.tinker"
+   ],
+   "fort": [
+    "core.fort.tinker"
+   ],
+   "ruin": [
+    "core.ruin.tinker"
+   ]
+  },
+  "burrow": {
+   "capital": [
+    "core.capital.burrow"
+   ],
+   "city": [
+    "core.city.burrow"
+   ],
+   "town": [
+    "core.town.burrow"
+   ],
+   "village": [
+    "core.village.burrow"
+   ],
+   "port": [
+    "core.port.burrow"
+   ],
+   "fort": [
+    "core.fort.burrow"
+   ],
+   "ruin": [
+    "core.ruin.burrow"
+   ]
+  },
+  "stilt": {
+   "capital": [
+    "core.capital.stilt"
+   ],
+   "city": [
+    "core.city.stilt"
+   ],
+   "town": [
+    "core.town.stilt"
+   ],
+   "village": [
+    "core.village.stilt"
+   ],
+   "port": [
+    "core.port.stilt"
+   ],
+   "fort": [
+    "core.fort.stilt"
+   ],
+   "ruin": [
+    "core.ruin.stilt"
+   ]
+  }
  },
  "fonts": {
   "serif": "fonts/IMFellEnglish-Regular.woff",

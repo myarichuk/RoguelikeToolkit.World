@@ -10,6 +10,8 @@ Discipline: 60
 SiegeSkill: 45
 Forage: 45
 ColdTolerance: 25
+Fortify: 50
+FortKind: aerie
 Levy: 0.8
 CampaignSeasons: { Spring: 2, Summer: 4, Autumn: 2, Winter: 0 }
 Customs: [duel_of_champions, salt_fields]

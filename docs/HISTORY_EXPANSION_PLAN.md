@@ -1,6 +1,6 @@
 # History expansion: battles, logistics, named persons
 
-Status: **in progress** (X0–X3 done; progress in [REVIEW_FIXES_TODO.md](REVIEW_FIXES_TODO.md), section Expansion X). Requested 2026-10-25. Builds on `Proposal.Requires` (batch F of
+Status: **in progress** (X0–X4 done; progress in [REVIEW_FIXES_TODO.md](REVIEW_FIXES_TODO.md), section Expansion X). Requested 2026-10-25. Builds on `Proposal.Requires` (batch F of
 [REVIEW_FIXES_TODO.md](REVIEW_FIXES_TODO.md), landed in `d7492ac`). Phases are **X0–X9** (§10).
 
 ## 0. Facts that shape the design
@@ -352,7 +352,7 @@ About 3k persons expected at 300 turns.
 | X1 | Kernel: types, proposals 28–36, pending handles, detail quota, participant prefixes, schema 13, TurnView accessors, `HistoryFeatures` | flags off: legacy projection identical (hash re-captured once for the empty sections); round trip; corrupt-reference rejection. **Done** (see §12) |
 | X2 | `CourtOperator`, persons, relations, tenures (observer only) | flag on: the existing kinds' projection equals flag off; one ruler per polity per turn; no participation after death; age at death ≤ 1.5× lifespan; traits stable when a plugin adds persons. **Done** (see §12) |
 | X3 | Tactics/Warfare/Traits YAML, `BattleResolver`, generals; War/Conquest behind the flag | statistical tests (§11); flag off identical. **Done** (see §12) |
-| X4 | `SiegeResolver`, relief battles | siege invariants; resupply lengthens sieges; cut supply raises the lifted share |
+| X4 | `SiegeResolver`, relief battles; forts (pulled forward from X5) and per-culture map stamps | siege invariants; resupply lengthens sieges; cut supply raises the lifted share. **Done** (see §12) |
 | X5 | `LogisticsGraph`, `LogisticsOperator`, forts/waystations, winter quarters, route samples | safety in [0,1]; forts raise it; 300 turns at size 7 < 5 s |
 | X6 | Commerce, Outlaw, Merchant, Intrigue; `CourtInfluence` | corpus bands; an exposed sponsorship leads to a war in ≥1/25 worlds |
 | X7 | Lexicon, Chronicle grammar, renderer | catalog bytes unchanged by rendering; repetition metrics; every template resolves for all 12 cultures |
@@ -483,3 +483,57 @@ About 3k persons expected at 300 turns.
   only and never read by the simulation).
 - **NativeAOT:** the smoke test checks the tactic, warfare and battle tables and a Persons + Battles history; the JIT and
   native checksums match.
+- **X4 sieges, forts and architecture, all tuning in data.** Requested 2026-10-25 with forts as defence and power projection
+  and per-culture map stamps for settlements, forts and ruins.
+  - `Siege/default.yaml` (`SiegeDef`): garrison shares per tier, food (base, city, resupply, season), the besiegers' supply
+    decay and disease, storming, hunger and surrender, betrayal, relief, tribute and grudges.
+  - `Fortification/default.yaml` (`FortificationDef`): 11 fort kinds (walls, garrison, watch), when and where forts are built,
+    how they guard roads and defences, and settlement walls per tier.
+  - Each way of war names its appetite for forts (`Fortify` 0–100) and the kind it builds (`FortKind`). Dwarves 90
+    (`rock_hold`), gnomes 75 (`bastion`), high elves 65, humans 60 (`stone_keep`), dark elves 55, dragonfolk 50 (`aerie`),
+    dogfolk 40, catfolk and halflings 25, lizardfolk 20, wood elves 15 (`thorn_ward`), orcs 10 (`stake_fort`).
+  - Each culture names its `Architecture` (a style key the editor's content pack resolves; the simulation never reads it).
+- **Sieges** (flag `Sieges`) follow a field battle the attacker won (`Besiege: [AttackerDecisive, AttackerVictory]` in the
+  battle data), or a raid the defender refused to meet (`BesiegeDeclined`), when the defender's settlement nearest the field
+  has walls of at least `SiegeWalls`; otherwise the outcome's own aftermath applies. With the flag off the battle data is
+  read exactly as in X3, and Persons + Battles worlds are byte-identical to X3 (four pinned hashes).
+  - Walls = (tier + capital + high ground) × (0.4 + 0.8 × Fortify/100) of the holder's people, plus a fort's own walls.
+  - `SiegeResolver` is pure and runs a month loop with a fixed four draws a month: supply decay (double in winter), disease
+    (double in a marsh camp or summer), a relief army arriving after its march, storms, hunger and surrender, betrayal
+    (a cunning enemy spymaster, a starving town). It ends stormed, surrendered, betrayed, relieved, lifted or abandoned.
+  - A relief army is the defender's levy less the field's dead and the garrison. It marches from its nearest other
+    settlement when it is at least `ReliefShare` (0.35) of the besiegers, and fights through `BattleResolver` with kind
+    `Relief`. Both new beats and tactics honour the kind (`Kinds` in a tactic).
+  - Records: the siege is a `HistoryBattle` (kind `Siege`, months, end, the besieged settlement, `Parent` = the field
+    battle) narrated by a `Siege` event; a relief battle is another (`Parent` = the siege). Sieges are told only by beats
+    that ask for one (`kind=Siege` or the new `end=` condition), and battles never by those.
+  - Consequences wait on the siege record (`Requires`). A fall takes the place (capture; a razing custom razes; a capital
+    is sacked and pays tribute as a non-aggression window). A siege that held leaves the besiegers a grudge. The garrison's
+    dead and a stormed town's toll fall unconditionally, so they land before any change of owner.
+  - `ConquestOperator` overlays after a decisive field battle or a fallen capital; a relief battle never counts.
+  - **Commit change:** deferred proposals now resolve pass after pass in canonical order, so a chain (a capture event that
+    waits on a capture that waits on a siege) applies. Single-level dependencies, the only kind before X4, resolve in the
+    first pass exactly as before (the legacy and X3 fixtures are unchanged).
+- **Forts** (`FortificationOperator`, order 42, flag `Sieges`) are garrison posts (`Role = Post`, `why:fort`).
+  - Need = a bordering polity held in grudge + an invasion within `RecentTurns` + an own road no post guards. Chance per
+    turn = `FortChance × Fortify/100 × need`.
+  - A polity holds at most `ceil(MaxForts × Fortify/100)` posts, and builds none before it holds `MinSettlements` (2)
+    other settlements: the first runs gave half of all settlements to forts.
+  - The site is own land facing the threat or on the unguarded road, preferring high ground, a river and the road itself,
+    `SpacingDegrees` from any settlement.
+  - In a field battle the defender's posts add their garrison (`exp(-d/GarrisonDegrees)` of it, standing troops, always
+    ready) and their watch (a better chance to be warned). In a siege a fort holds with its own walls and garrison.
+  - Road safety: every route drifts toward 0.5 + `FortSafety` per guarding post (at most `SafetyForts`), less
+    `SeveredSafety` when severed. The route state records the guarding forts. Outlaws (X6) will read it; X5's
+    `LogisticsOperator` should take over this drift and add projection.
+- **Corpus (12 seeds, 30 turns, size 3, all three flags):**
+  - sieges follow 22% of wars;
+  - ends: surrendered 29%, lifted 40%, betrayed 13%, stormed 13%, abandoned 4%;
+  - mean siege 10 months;
+  - forts per 100 polity-turns: dwarves 1.50, humans 1.08 (the default roster has only these two peoples);
+  - guarded routes average 0.62 safety.
+
+  Relief battles are rare in the corpus because most besieged places are the capitals of one-city realms. The synthetic
+  tests exercise them.
+- **Map editor:** a `fort` feature kind (`Role = Post` draws as a fort, named as a `hold`) and per-culture stamps for
+  settlements, forts and ruins. `HistoryPolityKeys` gains a seventh field, the founding culture's `Architecture`.

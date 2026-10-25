@@ -18,6 +18,8 @@ export interface HistoryInput {
   polityFolk?: ArrayLike<string>;
   /** Name style (index into the chosen styles) each `polityIds` entry renders its places through, -1 when it has none. */
   polityStyle?: ArrayLike<number>;
+  /** Architectural style key per `polityIds` entry (its culture's `architecture`), '' for the default look. */
+  polityArchitecture?: ArrayLike<string>;
   /** Why each settlement ended, aligned with `settlements`; empty while it stands. */
   endCauses?: ArrayLike<string>;
   /** Flat `HistoryScars()`: tile, polity, founded turn, active. */
@@ -37,14 +39,30 @@ export interface HistoryPick {
   facts: [string, string][];
   /** The turns it can be seen on the map. A ruin appears when its settlement falls: before that, only the living town was drawn. */
   span: Span;
+  /** Architectural style of the realm that holds (held, for a ruin) it; absent = the default look. */
+  architecture?: string;
+}
+
+/** Polity id -> its architectural style key, for the polities that have one. */
+export function polityArchitectures(h: HistoryInput): Map<number, string> {
+  const out = new Map<number, string>();
+  if (h.polityIds && h.polityArchitecture) for (let i = 0; i < h.polityIds.length; i++) if (h.polityArchitecture[i]) out.set(h.polityIds[i], h.polityArchitecture[i]);
+  return out;
 }
 
 const TIER = ['Hamlet', 'Village', 'Town', 'City'];
 const ROLE = ['Capital', 'Colony', 'Trade node', 'Garrison post', 'Shrine town', 'Refuge'];
 
-/** History's tier and role as the map's settlement kind: a polity seat is a capital, whatever its size; a hamlet draws as a village. */
+/** Settlement role of a military post (Core's `SettlementRole.Post`). */
+export const ROLE_POST = 3;
+
+/**
+ * History's tier and role as the map's settlement kind: a polity seat is a capital and a garrison post
+ * a fort, whatever their size; a hamlet draws as a village.
+ */
 export function settlementKind(tier: number, role: number): FeatureKind {
   if (role === 0) return 'capital';
+  if (role === ROLE_POST) return 'fort';
   return tier >= 3 ? 'city' : tier === 2 ? 'town' : 'village';
 }
 
@@ -58,6 +76,7 @@ export function historyPicks(h: HistoryInput, allowed: (tile: number) => boolean
   const n = Math.floor(h.settlements.length / SETTLEMENT_STRIDE);
   const names = new Map<number, string>();
   if (h.polityNames && h.polityIds) for (let i = 0; i < h.polityIds.length; i++) names.set(h.polityIds[i], h.polityNames[i]);
+  const arch = polityArchitectures(h);
   const taken = new Set<number>();
   const out: HistoryPick[] = [];
   for (let i = 0; i < n; i++) {
@@ -74,7 +93,10 @@ export function historyPicks(h: HistoryInput, allowed: (tile: number) => boolean
       ['Population', String(pop)],
     ];
     if (parent >= 0 && parent < n) facts.push(['Founded from', `settlement ${parent}`]);
-    out.push({ tile, kind: settlementKind(tier, role), polity, facts, span: since(founded) });
+    const pick: HistoryPick = { tile, kind: settlementKind(tier, role), polity, facts, span: since(founded) };
+    const a = arch.get(polity);
+    if (a) pick.architecture = a;
+    out.push(pick);
   }
   return out;
 }
@@ -97,12 +119,17 @@ export function historySites(h: HistoryInput, taken: ReadonlySet<number>, allowe
   const names = new Map<number, string>();
   if (h.polityNames && h.polityIds) for (let i = 0; i < h.polityIds.length; i++) names.set(h.polityIds[i], h.polityNames[i]);
   const realm = (p: number) => names.get(p) ?? (p >= 0 ? `Polity ${p}` : 'None');
+  const arch = polityArchitectures(h);
   const used = new Set(taken);
   const out: HistoryPick[] = [];
   const add = (tile: number, kind: FeatureKind, polity: number, from: number, facts: [string, string][]) => {
     if (used.has(tile) || !allowed(tile)) return;
     used.add(tile);
-    out.push({ tile, kind, polity, facts, span: since(from) });
+    const pick: HistoryPick = { tile, kind, polity, facts, span: since(from) };
+    // A ruin is drawn in the style of the realm that built it.
+    const a = arch.get(polity);
+    if (a && kind !== 'battlefield') pick.architecture = a;
+    out.push(pick);
   };
   const n = Math.floor(h.settlements.length / SETTLEMENT_STRIDE);
   for (let i = 0; i < n; i++) {
@@ -110,7 +137,7 @@ export function historySites(h: HistoryInput, taken: ReadonlySet<number>, allowe
     if (h.settlements[o + 3] < 0) continue;
     const end = h.endCauses?.[i] ?? '';
     add(h.settlements[o], 'ruin', h.settlements[o + 1], h.settlements[o + 3], [
-      ['Was', `${TIER[h.settlements[o + 4]] ?? 'Settlement'} of ${realm(h.settlements[o + 1])}`],
+      ['Was', `${h.settlements[o + 5] === ROLE_POST ? 'Fort' : TIER[h.settlements[o + 4]] ?? 'Settlement'} of ${realm(h.settlements[o + 1])}`],
       ['Founded', `turn ${h.settlements[o + 2]}`], ['Ended', `turn ${h.settlements[o + 3]}${end ? ` (${cause(end)})` : ''}`],
     ]);
   }

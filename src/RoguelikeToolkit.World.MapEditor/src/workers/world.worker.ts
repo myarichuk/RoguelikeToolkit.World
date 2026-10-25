@@ -11,6 +11,7 @@ import { parseRealmNaming, realmNameRequest, realmTitle, type RealmNaming } from
 import { buildRoads } from '../engine/world/history/roads';
 import type { EventRecord, HistoryRecord, PolityRecord } from '../engine/world/history/record';
 import type { HistoryInput } from '../engine/world/history/historySettlements';
+import { parsePolityKey } from '../engine/world/history/polityKeys';
 import {
   CLIMATE_MODEL_DEFAULTS, DEFAULT_HISTORY, DEFAULT_STYLES, EARTH, snapshotTransfer, styleKey,
   type GenerateParams, type HistorySettings, type NameRequest, type NameStyle, type RecomputeParams, type WorkerRequest, type WorkerResponse, type WorldSnapshot,
@@ -166,11 +167,11 @@ function holySites(e: EngineApi): { tile: number; polity: number; turn: number }
  */
 function historyInput(e: EngineApi, seed: number, chosen: NameStyle[], all: NameStyle[]): HistoryInput {
   const pol = e.HistoryPolities(), keys = e.HistoryPolityKeys();
-  const ids: number[] = [], folk: string[] = [], style: number[] = [];
+  const ids: number[] = [], folk: string[] = [], style: number[] = [], architecture: string[] = [];
   const indexIn = (list: NameStyle[], race: string, culture: string) => list.findIndex((s) => s.race === race && s.culture === culture);
   for (let i = 0; i < keys.length; i++) {
-    const [f = '', , , , race = '', culture = ''] = keys[i].split('\t');
-    ids.push(pol[i * 8]); folk.push(f);
+    const { folk: f, styleRace: race, styleCulture: culture, architecture: arch } = parsePolityKey(keys[i]);
+    ids.push(pol[i * 8]); folk.push(f); architecture.push(arch);
     // Exact style among the chosen, else exact among all (added), else any of the folk's race, chosen first.
     let at = race ? indexIn(chosen, race, culture) : -1;
     // Humans have one shipped people, named through the shared fantasy table: a human_* tradition the user picked takes its place.
@@ -208,7 +209,7 @@ function historyInput(e: EngineApi, seed: number, chosen: NameStyle[], all: Name
   const base = uniqueNamesSync(reqs, (r) => names(e, r)).names;
   const realmNames = ids.map((id, i) => realmTitle(seed, id, namingOf(i), base[i]));
   return {
-    settlements: Int32Array.from(e.HistorySettlements()), polityIds: ids, polityNames: realmNames, polityBases: base, polityFolk: folk, polityStyle: style,
+    settlements: Int32Array.from(e.HistorySettlements()), polityIds: ids, polityNames: realmNames, polityBases: base, polityFolk: folk, polityStyle: style, polityArchitecture: architecture,
     endCauses: e.HistorySettlementEndCauses(), scars: Int32Array.from(e.HistoryScars()), scarKinds: e.HistoryScarKinds(), holy: holySites(e),
   };
 }
@@ -220,7 +221,7 @@ function historyRecord(e: EngineApi, input: HistoryInput, chosenCount: number): 
   const info = Int32Array.from(e.HistoryInfo()), pol = e.HistoryPolities(), keys = e.HistoryPolityKeys();
   const strings = e.HistoryStrings(), forms = e.HistoryFormNames(), kinds = e.HistoryEventKindNames();
   const polities: PolityRecord[] = ids.map((id, i) => {
-    const [folk = '', culture = '', overlay = ''] = keys[i].split('\t'), o = i * 8;
+    const { folk, culture, overlay } = parsePolityKey(keys[i]), o = i * 8;
     const cause = pol[o + 6];
     return {
       id, form: forms[pol[o + 1]] ?? '', capital: pol[o + 2], founded: pol[o + 3], ended: pol[o + 4], parent: pol[o + 5],

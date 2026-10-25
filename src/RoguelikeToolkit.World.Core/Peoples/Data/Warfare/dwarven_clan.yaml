@@ -9,6 +9,8 @@ Discipline: 85
 SiegeSkill: 90
 Forage: 30
 ColdTolerance: 75
+Fortify: 90
+FortKind: rock_hold
 Levy: 1.1
 CampaignSeasons: { Spring: 2, Summer: 3, Autumn: 3, Winter: 2 }
 Customs: [ransom, duel_of_champions]

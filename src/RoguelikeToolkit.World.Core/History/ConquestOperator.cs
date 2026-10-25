@@ -13,7 +13,8 @@ namespace RoguelikeToolkit.World.Core.History;
 /// which renders the losing polity through the winning table late. Conquests cost one decision
 /// from this operator's own per-turn budget. No tile changes hands: conquest is a cultural overlay,
 /// so the ownership projection stays valid. With <see cref="HistoryFeatures.Battles"/> on, the battle decides instead of the
-/// population ratio: only a war whose battle the attacker won decisively can become an overlay.
+/// population ratio: only a war whose field battle the attacker won decisively, or whose siege took the loser's capital, can
+/// become an overlay.
 /// </summary>
 public sealed class ConquestOperator : IHistoryOperator
 {
@@ -63,7 +64,10 @@ public sealed class ConquestOperator : IHistoryOperator
         }
     }
 
-    /// <summary>True when <paramref name="war"/> narrates a battle the attacker won decisively.</summary>
+    /// <summary>
+    /// True when <paramref name="war"/> narrates a field battle the attacker won decisively, or one whose siege took the
+    /// defender's capital (stormed, surrendered or betrayed). A relief battle never counts.
+    /// </summary>
     private static bool RoutedDefender(TurnView view, HistoryEvent war)
     {
         foreach (string tag in war.Tags)
@@ -72,7 +76,14 @@ public sealed class ConquestOperator : IHistoryOperator
                 || !int.TryParse(tag.Substring(7), System.Globalization.NumberStyles.None, System.Globalization.CultureInfo.InvariantCulture, out int id)
                 || (uint)id >= (uint)view.Battles.Count)
                 continue;
-            return view.Battles[id].Outcome == BattleOutcome.AttackerDecisive;
+            var battle = view.Battles[id];
+            if (battle.Kind is not (BattleKind.Field or BattleKind.Ambush)) return false;
+            if (battle.Outcome == BattleOutcome.AttackerDecisive) return true;
+            foreach (var siege in view.Battles)
+                if (siege.Parent == id && siege.Kind == BattleKind.Siege && SiegeResolver.Fell(siege.SiegeEnd)
+                    && (uint)siege.Settlement < (uint)view.Settlements.Count && view.Settlements[siege.Settlement].Role == SettlementRole.Capital)
+                    return true;
+            return false;
         }
         return false;
     }

@@ -28,7 +28,8 @@ internal sealed class WarfareProfile
 
     /// <summary>One way of war: doctrine weight per tactic, units, scores, campaign weight per season, customs.</summary>
     internal sealed record Way(string Key, double[] Doctrine, IReadOnlyList<WarfareUnitDef> Units, double Mobility, double Discipline,
-        double SiegeSkill, double Forage, double ColdTolerance, double Levy, double[] CampaignSeasons, IReadOnlyList<Custom> Customs)
+        double SiegeSkill, double Forage, double ColdTolerance, double Levy, double[] CampaignSeasons, IReadOnlyList<Custom> Customs,
+        double Fortify = 40, FortKindDef? Fort = null)
     {
         /// <summary>True when the way keeps custom <paramref name="key"/>.</summary>
         public bool Keeps(string key)
@@ -42,7 +43,7 @@ internal sealed class WarfareProfile
     internal enum Test : byte
     {
         Season, Terrain, Kind, River, RiverBypassed, Initiative, Winner, Outcome, WinnerTactic, LoserTactic, WinnerArm, LoserArm, Custom,
-        GeneralFell, GeneralCaptured, Declined,
+        GeneralFell, GeneralCaptured, Declined, SiegeEnd,
     }
 
     /// <summary>One compiled beat condition: the test, its operand (an index or a name) and whether it is negated.</summary>
@@ -60,9 +61,11 @@ internal sealed class WarfareProfile
     private readonly string[] _aftermath;
     private Way? _fallback;
 
-    private WarfareProfile(BattleDef data, PeoplesStore? store)
+    private WarfareProfile(BattleDef data, FortificationDef forts, SiegeDef siege, PeoplesStore? store)
     {
         Data = data;
+        Forts = forts;
+        Siege = siege;
         _store = store;
         _biomeTerrain = new int[256];
         _formLevy = new double[Enum.GetValues(typeof(PolityForm)).Length];
@@ -71,6 +74,35 @@ internal sealed class WarfareProfile
 
     /// <summary>The battle tuning.</summary>
     public BattleDef Data { get; }
+
+    /// <summary>The wall and fort tuning.</summary>
+    public FortificationDef Forts { get; }
+
+    /// <summary>The siege tuning.</summary>
+    public SiegeDef Siege { get; }
+
+    /// <summary>Months of food the season a siege begins in adds or takes, per season.</summary>
+    public double[] FoodSeason { get; } = new double[Seasons];
+
+    /// <summary>Wall strength of a settlement of <paramref name="tier"/> before its people's appetite for walls.</summary>
+    public double TierWalls(SettlementTier tier) => ByTier(Forts.TierWalls, tier);
+
+    /// <summary>Share of a settlement of <paramref name="tier"/>'s people who hold its walls.</summary>
+    public double GarrisonShare(SettlementTier tier) => ByTier(Siege.GarrisonShare, tier);
+
+    private static double ByTier(Dictionary<string, double> table, SettlementTier tier)
+        => table.TryGetValue(tier.ToString(), out double v) ? v : 0;
+
+    /// <summary>
+    /// Wall strength of a settlement of <paramref name="tier"/> held by a people of <paramref name="way"/>: tier, capital and
+    /// high ground, scaled by the people's appetite for walls, plus the fort's own walls when it is a fort.
+    /// </summary>
+    public double Walls(SettlementTier tier, bool capital, bool high, bool fort, Way way)
+    {
+        var f = Forts;
+        double walls = (TierWalls(tier) + (capital ? f.CapitalWalls : 0) + (high ? f.HighWalls : 0)) * (f.WallFloor + f.WallFortify * way.Fortify / 100.0);
+        return walls + (fort ? way.Fort?.Walls ?? 0 : 0);
+    }
 
     /// <summary>Terrain class names, ordinal order; a terrain index points here.</summary>
     public string[] Terrains { get; private set; } = Array.Empty<string>();
@@ -145,8 +177,12 @@ internal sealed class WarfareProfile
     public static WarfareProfile From(PeoplesStore? store)
     {
         BattleDef? battle = null;
+        FortificationDef? forts = null;
+        SiegeDef? siege = null;
         store?.Battles.TryGetValue("default", out battle);
-        var profile = new WarfareProfile(battle ?? new BattleDef(), store);
+        store?.Fortifications.TryGetValue("default", out forts);
+        store?.Sieges.TryGetValue("default", out siege);
+        var profile = new WarfareProfile(battle ?? new BattleDef(), forts ?? new FortificationDef(), siege ?? new SiegeDef(), store);
         var unknown = new SortedSet<string>(StringComparer.Ordinal);
         profile.Build(unknown);
         // Lint every shipped way of war now, so its unknown names surface without a battle.
@@ -193,6 +229,14 @@ internal sealed class WarfareProfile
             if (c < 0) unknown.Add($"forage:{kv.Key}");
             else Forage[c] = kv.Value;
         }
+        foreach (var kv in Siege.FoodSeason)
+        {
+            int season = SeasonIndex(kv.Key);
+            if (season < 0) unknown.Add($"season:{kv.Key}");
+            else FoodSeason[season] = kv.Value;
+        }
+        foreach (var t in Forts.TierWalls.Keys.Concat(Siege.GarrisonShare.Keys))
+            if (!Enum.TryParse(t, ignoreCase: true, out SettlementTier _)) unknown.Add($"tier:{t}");
         for (int o = 0; o < _aftermath.Length; o++) _aftermath[o] = "none";
         foreach (var kv in data.Aftermath)
         {
@@ -313,8 +357,9 @@ internal sealed class WarfareProfile
         }
         foreach (var u in def.Units)
             if (!Tactics.Any(t => string.Equals(t.Arm, u.Arm, StringComparison.OrdinalIgnoreCase))) unknown?.Add($"warfare:{def.Key}.arm:{u.Arm}");
+        if (!string.IsNullOrWhiteSpace(def.FortKind) && !Forts.Kinds.ContainsKey(def.FortKind)) unknown?.Add($"warfare:{def.Key}.fort:{def.FortKind}");
         return new Way(def.Key, doctrine, def.Units.ToArray(), def.Mobility, def.Discipline, def.SiegeSkill, def.Forage, def.ColdTolerance,
-            def.Levy, seasons, customs);
+            def.Levy, seasons, customs, def.Fortify, FortOf(def.FortKind));
     }
 
     private Way Fallback()
@@ -323,7 +368,14 @@ internal sealed class WarfareProfile
         for (int i = 0; i < doctrine.Length; i++) doctrine[i] = Tactics[i].Kinds[(int)BattleKind.Field] ? 1 : 0;
         var seasons = new double[Seasons];
         for (int s = 0; s < Seasons; s++) seasons[s] = 1;
-        return new Way("default", doctrine, Array.Empty<WarfareUnitDef>(), 50, 50, 50, 50, 50, 1, seasons, Array.Empty<Custom>());
+        return new Way("default", doctrine, Array.Empty<WarfareUnitDef>(), 50, 50, 50, 50, 50, 1, seasons, Array.Empty<Custom>(), 40, FortOf(null));
+    }
+
+    /// <summary>Fort kind <paramref name="key"/>, else the data's default kind, else null (no forts).</summary>
+    private FortKindDef? FortOf(string? key)
+    {
+        if (!string.IsNullOrWhiteSpace(key) && Forts.Kinds.TryGetValue(key!, out var kind)) return kind;
+        return !string.IsNullOrWhiteSpace(Forts.DefaultKind) && Forts.Kinds.TryGetValue(Forts.DefaultKind, out var fallback) ? fallback : null;
     }
 
     private bool TryCondition(string token, out Condition condition)
@@ -342,6 +394,10 @@ internal sealed class WarfareProfile
             case "general_fell" when eq < 0: condition = new Condition(Test.GeneralFell, 0, string.Empty, negate); return true;
             case "general_captured" when eq < 0: condition = new Condition(Test.GeneralCaptured, 0, string.Empty, negate); return true;
             case "declined" when eq < 0: condition = new Condition(Test.Declined, 0, string.Empty, negate); return true;
+            case "end":
+                if (value.Length == 0) return false;
+                condition = new Condition(Test.SiegeEnd, 0, value, negate);
+                return true;
             case "season":
             {
                 int s = SeasonIndex(value);

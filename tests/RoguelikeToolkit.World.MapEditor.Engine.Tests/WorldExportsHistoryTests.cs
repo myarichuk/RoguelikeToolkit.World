@@ -74,7 +74,7 @@ public class WorldExportsHistoryTests : IDisposable
         var polities = WorldExports.HistoryPolities();
         Assert.Equal((int)PolityForm.Horde, polities[1]);                  // polity 0's form
         Assert.StartsWith("orc\torcish_horde", WorldExports.HistoryPolityKeys()[0]);
-        Assert.EndsWith("\torc\tfantasy_common", WorldExports.HistoryPolityKeys()[0]);   // an orc realm names through the orc table
+        Assert.EndsWith("\torc\tfantasy_common\thorde", WorldExports.HistoryPolityKeys()[0]);   // an orc realm names through the orc table, builds as a horde
         Assert.All(Enumerable.Range(0, polities.Length / WorldExports.PolityStride), i =>
             Assert.StartsWith("orc\t", WorldExports.HistoryPolityKeys()[i]));   // the roster is orcs only
     }

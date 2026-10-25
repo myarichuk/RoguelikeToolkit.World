@@ -59,6 +59,9 @@ public static class StageOrder
     /// <summary>History operator: the court (rulers, heirs, offices, deaths); runs only with <c>HistoryFeatures.Persons</c>.</summary>
     public const int Court = 38;
 
+    /// <summary>History operator: forts and road safety; runs only with <c>HistoryFeatures.Sieges</c>.</summary>
+    public const int Fortification = 42;
+
     /// <summary>Holy-site raising: high-surplus owned tiles become shrines with sheltering auras.</summary>
     public const int HolySite = 44;
 

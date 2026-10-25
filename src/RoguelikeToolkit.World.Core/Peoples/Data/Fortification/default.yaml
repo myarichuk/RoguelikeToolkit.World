@@ -1,0 +1,48 @@
+# Walls and forts (FortificationDef). A people's appetite for them is Fortify in Warfare/<culture>.yaml, and the kind of fort
+# it builds is FortKind there. Forts are garrison posts (settlement role Post, why: fort).
+Key: default
+DefaultKind: palisade_fort
+Kinds:
+  stone_keep:    { Walls: 1.0, Garrison: 120, Watch: 0.25 }   # humans: a keep and curtain wall
+  rock_hold:     { Walls: 1.4, Garrison: 150, Watch: 0.20 }   # dwarves: a gate cut into the rock
+  spire_keep:    { Walls: 0.9, Garrison: 100, Watch: 0.35 }   # high elves: watch spires
+  spike_keep:    { Walls: 0.9, Garrison: 110, Watch: 0.30 }   # dark elves
+  bastion:       { Walls: 1.1, Garrison: 110, Watch: 0.20 }   # gnomes: a squat round bastion
+  palisade_fort: { Walls: 0.5, Garrison: 100, Watch: 0.20 }
+  stake_fort:    { Walls: 0.35, Garrison: 130, Watch: 0.15 }  # orcs: a ring of stakes and a war band
+  mudbrick_fort: { Walls: 0.7, Garrison: 90, Watch: 0.20 }    # catfolk
+  thorn_ward:    { Walls: 0.4, Garrison: 70, Watch: 0.45 }    # wood elves: tree-top watchers in a thorn ring
+  hedge_mound:   { Walls: 0.4, Garrison: 60, Watch: 0.30 }    # halflings
+  aerie:         { Walls: 0.9, Garrison: 70, Watch: 0.50 }    # dragonfolk: a tower on a crag
+  stilt_fort:    { Walls: 0.5, Garrison: 80, Watch: 0.25 }    # lizardfolk
+
+# Building: chance per turn = FortChance x Fortify/100 x need, need = the sum of the reasons that hold. A polity holds at most
+# ceil(MaxForts x Fortify/100) posts, and builds none before it holds MinSettlements other settlements.
+FortChance: 0.08
+ThreatNeed: 1.0
+InvadedNeed: 1.0
+RouteNeed: 0.3
+RecentTurns: 3
+MaxForts: 2
+MinSettlements: 2
+SpacingDegrees: 3
+HighFrom: 0.2
+
+# Guarding.
+GuardDegrees: 5
+WatchDegrees: 8
+GarrisonDegrees: 6
+
+# Road safety drifts toward 0.5 + FortSafety x guarding forts (at most SafetyForts) - SeveredSafety if severed.
+FortSafety: 0.15
+SafetyForts: 3
+SeveredSafety: 0.2
+SafetyDrift: 0.3
+
+# Walls = (TierWalls + CapitalWalls + HighWalls) x (WallFloor + WallFortify x Fortify/100), plus the fort's own Walls.
+TierWalls: { Hamlet: 0.0, Village: 0.2, Town: 0.5, City: 0.8 }
+CapitalWalls: 0.2
+WallFloor: 0.4
+WallFortify: 0.8
+HighWalls: 0.2
+SiegeWalls: 0.3

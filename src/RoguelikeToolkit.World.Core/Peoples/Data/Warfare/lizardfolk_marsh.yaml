@@ -9,6 +9,8 @@ Discipline: 50
 SiegeSkill: 20
 Forage: 80
 ColdTolerance: 10
+Fortify: 20
+FortKind: stilt_fort
 Levy: 1.2
 CampaignSeasons: { Spring: 3, Summer: 4, Autumn: 2, Winter: 0 }
 Customs: [no_quarter]

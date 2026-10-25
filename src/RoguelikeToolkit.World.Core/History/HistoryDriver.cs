@@ -142,8 +142,20 @@ public sealed class HistoryDriver : HistoryPluginBase
             if (p.Requires != null) deferred.Add(p);
             else Apply(p);
         }
-        foreach (var p in deferred)
-            if (applied.Contains(p.Requires!)) Apply(p);
+        // In canonical order, pass after pass, so a chain (an event on a capture that waits on a siege) resolves; a pass that
+        // applies nothing ends it. A single-level dependency resolves in the first pass, as it always did.
+        while (deferred.Count > 0)
+        {
+            var waiting = new List<Proposal>();
+            int before = applied.Count;
+            foreach (var p in deferred)
+            {
+                if (applied.Contains(p.Requires!)) Apply(p);
+                else if (deferred.Contains(p.Requires!)) waiting.Add(p);
+            }
+            if (applied.Count == before) break;
+            deferred = waiting;
+        }
 
         void Apply(Proposal p)
         {

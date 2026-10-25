@@ -225,8 +225,9 @@ public static partial class WorldExports
         return result;
     }
 
-    /// <summary>Per polity, aligned with <see cref="HistoryPolities"/>: <c>folk\tculture\tcultureOverlay\tdisplayName\tnameRace\tnameCulture</c>; the last two are the
-    /// name style (race, culture) the polity's effective culture renders through, blank when none matches.</summary>
+    /// <summary>Per polity, aligned with <see cref="HistoryPolities"/>: <c>folk\tculture\tcultureOverlay\tdisplayName\tnameRace\tnameCulture\tarchitecture</c>;
+    /// name race and culture are the name style the polity's effective culture renders through, blank when none matches;
+    /// architecture is the founding culture's <c>Architecture</c> style key (how its places are drawn), blank when it has none.</summary>
     [JSExport]
     public static string[] HistoryPolityKeys()
     {
@@ -245,7 +246,9 @@ public static partial class WorldExports
                 .FirstOrDefault();
             return s is null ? new[] { string.Empty, string.Empty } : new[] { s.Race, s.Culture };
         }
-        return h.Polities.Select(p => { var s = StyleOf(p); return $"{p.FolkKey}\t{p.CultureKey}\t{p.CultureOverlay}\t{h.DisplayNameOf(p.Id)}\t{s[0]}\t{s[1]}"; }).ToArray();
+        // How its places are drawn follows the founding culture: a conquered people goes on building as it always did.
+        string ArchitectureOf(Polity p) => store.Cultures.TryGetValue(p.CultureKey, out var c) ? c.Architecture ?? string.Empty : string.Empty;
+        return h.Polities.Select(p => { var s = StyleOf(p); return $"{p.FolkKey}\t{p.CultureKey}\t{p.CultureOverlay}\t{h.DisplayNameOf(p.Id)}\t{s[0]}\t{s[1]}\t{ArchitectureOf(p)}"; }).ToArray();
     }
 
     /// <summary>

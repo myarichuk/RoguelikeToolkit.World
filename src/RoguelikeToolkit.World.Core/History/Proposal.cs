@@ -622,7 +622,7 @@ public abstract class Proposal
         public int SiegeMonths { get; init; }
         /// <summary>Siege end name, or empty.</summary>
         public string SiegeEnd { get; init; } = string.Empty;
-        /// <summary>The siege this relief battle broke into, proposed the same turn, or <c>null</c>.</summary>
+        /// <summary>The engagement this one followed from (a siege's field battle, a relief battle's siege), proposed the same turn and committed before it, or <c>null</c>.</summary>
         public AddBattle? ParentBattle { get; init; }
     }
 

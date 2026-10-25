@@ -6,13 +6,13 @@
 import { MAP_H, dxWrap, vecToMap } from '../core/geo';
 import { hash2, mulberry32 } from '../core/rng';
 import {
-  DEPOSIT_TYPES, NAME_KIND, NameCtx,
+  DEPOSIT_TYPES, NAME_KIND, NameCtx, PLACE_KINDS,
   type DepositType, type FeatureKind, type FeatureSet, type MapFeature, type NameStyle, type RiverGeometry,
 } from './protocol';
 
 import { tileNamingStyles } from './naming';
 import type { Span } from './history/timeline';
-import { historyPicks, historySites, type HistoryInput } from './history/historySettlements';
+import { historyPicks, historySites, polityArchitectures, type HistoryInput } from './history/historySettlements';
 
 export interface CatalogInput {
   seed: number;
@@ -189,6 +189,8 @@ export function extractFeatures(c: CatalogInput): FeatureSet {
   const polityStyle = new Map<number, number>();
   if (c.history?.polityIds && c.history.polityStyle) for (let i = 0; i < c.history.polityIds.length; i++) if (c.history.polityStyle[i] >= 0) polityStyle.set(c.history.polityIds[i], c.history.polityStyle[i]);
   const styleOfPolity = (polity: number): number | undefined => polityStyle.get(polity);
+  // A place is drawn in the architecture of the realm that holds it (a ruin: held it); none outside a realm.
+  const polityArch = c.history ? polityArchitectures(c.history) : new Map<number, string>();
   const tileStyle = c.tileStyle ?? tileNamingStyles({ seed: c.seed, n, adj, isLand, owner: [], polityStyle, styleCount: c.styles.length });
   const styleOf = (t: number) => tileStyle[t];
   const near = (t: number, pred: (u: number) => boolean) => {
@@ -251,6 +253,7 @@ export function extractFeatures(c: CatalogInput): FeatureSet {
       key, kind, x: shape.x, y: shape.y, angle: shape.angle, extent: shape.extent, weight, name: '', style, tile: anchor, details: facts,
       request: kind === 'deposit' ? undefined
         : { kind: NAME_KIND[kind], seed: hash2(c.seed, hashKey(key)) & 0x7fffffff, race: s.race, culture: s.culture, context: contextOf(anchor) },
+      ...(polity >= 0 && kind !== 'battlefield' && PLACE_KINDS.has(kind) && polityArch.has(polity) ? { architecture: polityArch.get(polity) } : {}),
       ...extra,
     });
   };
@@ -452,8 +455,8 @@ export function extractFeatures(c: CatalogInput): FeatureSet {
     if (fromHistory || p.kind !== 'city' || hasCapital.has(landmass[p.tile])) continue;
     hasCapital.add(landmass[p.tile]); p.kind = 'capital';
   }
-  const tierWeight: Partial<Record<FeatureKind, number>> = { capital: 4, city: 3, town: 2, village: 1 };
-  const tierName: Partial<Record<FeatureKind, string>> = { capital: 'Capital', city: 'City', town: 'Town', village: 'Village' };
+  const tierWeight: Partial<Record<FeatureKind, number>> = { capital: 4, city: 3, town: 2, fort: 1.5, village: 1 };
+  const tierName: Partial<Record<FeatureKind, string>> = { capital: 'Capital', city: 'City', town: 'Town', fort: 'Fort', village: 'Village' };
   for (const p of picked) {
     const t = p.tile;
     const rng = mulberry32(hash2(c.seed, 0x6000 + t));

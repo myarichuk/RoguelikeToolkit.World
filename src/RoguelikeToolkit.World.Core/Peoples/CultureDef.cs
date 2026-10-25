@@ -65,4 +65,9 @@ public sealed class CultureDef
     public int AgreeablenessOffset { get; set; } = 0;
     /// <summary>Culture's filter on trait expression: neuroticism offset, -100-100.</summary>
     public int NeuroticismOffset { get; set; } = 0;
+    /// <summary>
+    /// Architectural style key (<c>human</c>, <c>dwarven</c>, <c>horde</c>...): how this people's settlements, forts and ruins are
+    /// drawn. A reference resolved late by the map editor's content pack, never read by the simulation; blank draws the default.
+    /// </summary>
+    public string Architecture { get; set; } = string.Empty;
 }

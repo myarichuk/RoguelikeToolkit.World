@@ -9,6 +9,8 @@ Discipline: 80
 SiegeSkill: 55
 Forage: 40
 ColdTolerance: 50
+Fortify: 65
+FortKind: spire_keep
 Levy: 0.8
 CampaignSeasons: { Spring: 3, Summer: 4, Autumn: 2, Winter: 1 }
 Customs: [ransom]

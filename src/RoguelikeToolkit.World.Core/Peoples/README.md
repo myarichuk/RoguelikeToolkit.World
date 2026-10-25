@@ -8,7 +8,7 @@ Namespace `RoguelikeToolkit.World.Core.Peoples`, layer rank 2 (see `docs/ARCHITE
 ## Contents
 
 - **FolkDef**: sapience (`full` people / `instinct` titles-only / `setting`-dependent), embodiment, habitat affinity, lifespan/maturation, growth-`r`, personality priors, compat group, and the subsistence allow-list (empty means any). Lives in `Data/Folks/`.
-- **CultureDef**: naming-table ref, `FormAffinity` (government-form weights, bound to `PolityForm` by `History.FormAffinity`), default subsistence profile key, lineage default, value axes (xenophobia / hierarchy-claim / collectivism / honor), faith form, trait-expression offsets, mixed-naming strategy + hypodescent threshold. Lives in `Data/Cultures/`.
+- **CultureDef**: naming-table ref, architecture style key (resolved by the map editor's content pack), `FormAffinity` (government-form weights, bound to `PolityForm` by `History.FormAffinity`), default subsistence profile key, lineage default, value axes (xenophobia / hierarchy-claim / collectivism / honor), faith form, trait-expression offsets, mixed-naming strategy + hypodescent threshold. Lives in `Data/Cultures/`.
 - **SubsistenceDef / SubsistenceExploit**: one way of making a living:
   - whether the people are sedentary;
   - yield weights on the land-capacity channels;
@@ -28,13 +28,18 @@ Namespace `RoguelikeToolkit.World.Core.Peoples`, layer rank 2 (see `docs/ARCHITE
 - **BattleDef / BattleBeatDef / BattleEpithetDef / BattleCustomDef**: the battle model, every term of it (levies, muster,
   reach and supply, morale, terrain classes, initiative, margin bands, losses, commanders' fates, beats, epithets, customs,
   aftermath). Lives in `Data/Battle/`; the history reads `default`.
+- **FortificationDef / FortKindDef**: walls and forts (fort kinds, when and where forts are built, road guarding, garrisons
+  and watch in battle, settlement walls per tier). Lives in `Data/Fortification/`; the history reads `default`.
+- **SiegeDef**: the siege month loop (garrisons, food, supply and disease, storming, hunger, betrayal, relief, tribute).
+  Lives in `Data/Siege/`; the history reads `default`.
 - **CompatData**: pairwise offspring rules (`Data/compat.yaml`); unlisted pairs blend.
 - **PeoplesStore**: loads and validates the tables (shipped embedded resources plus an optional override dir); `FolkKeys` is the generated folk index. After every file loads, it checks cross-file references:
   - culture → profile;
   - folk → profile;
   - profile → resource;
   - one resource per deposit name;
-  - way of war → culture (or `default`), doctrine → tactic, custom → the battle model's customs;
+  - way of war → culture (or `default`), doctrine → tactic, custom → the battle model's customs, fort kind → the
+    fortification model's kinds;
   - tactic counters → tactic.
 
   `ExploitsOf(profile, maxEra)` is the era gate. `PairingProblem(folk, culture)` checks a culture's default profile against its folk's allow-list. That check is per pair, because cultures don't name a folk.

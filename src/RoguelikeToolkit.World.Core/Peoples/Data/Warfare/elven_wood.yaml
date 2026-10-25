@@ -9,6 +9,8 @@ Discipline: 60
 SiegeSkill: 20
 Forage: 85
 ColdTolerance: 55
+Fortify: 15
+FortKind: thorn_ward
 Levy: 0.9
 CampaignSeasons: { Spring: 3, Summer: 3, Autumn: 3, Winter: 1 }
 Customs: []

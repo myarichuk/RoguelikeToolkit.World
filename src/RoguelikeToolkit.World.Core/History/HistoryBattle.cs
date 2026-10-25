@@ -35,7 +35,7 @@ public sealed class HistoryBattle
     public int SiegeMonths { get; init; }
     /// <summary>Interned siege end (<c>stormed</c>, <c>surrendered</c>, <c>betrayed</c>, <c>relieved</c>, <c>lifted</c>...), or -1.</summary>
     public int SiegeEnd { get; init; } = -1;
-    /// <summary>Battle id of the siege a relief battle broke into, or -1.</summary>
+    /// <summary>Battle id of the engagement this one followed from (a siege's field battle, a relief battle's siege), or -1.</summary>
     public int Parent { get; init; } = -1;
     /// <summary>Id of the event that narrates the battle, or -1 when the event budget dropped it.</summary>
     public int EventId { get; set; } = -1;

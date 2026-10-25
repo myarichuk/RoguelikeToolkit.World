@@ -8,7 +8,7 @@ import { layoutLabel } from '../text/LabelLayout';
 
 /** Placement priority: big, important names claim space first. */
 const PRIORITY: Record<string, number> = {
-  ocean: 0, capital: 1, sea: 2, city: 3, mountain: 4, forest: 5, lake: 6, town: 7, river: 8, valley: 9, village: 10, shrine: 11, ruin: 12, battlefield: 13,
+  ocean: 0, capital: 1, sea: 2, city: 3, mountain: 4, forest: 5, lake: 6, town: 7, river: 8, valley: 9, village: 10, fort: 11, shrine: 12, ruin: 13, battlefield: 14,
 };
 
 /**
@@ -60,7 +60,7 @@ export function placeLabels(doc: MapDocument, theme: Theme, fonts: FontLibrary, 
   };
   // Settlement markers are obstacles too.
   for (const s of doc.stamps.all()) {
-    if (!/capital|city|town|village|port/.test(s.asset)) continue;
+    if (!/capital|city|town|village|port|fort/.test(s.asset)) continue;
     placed.push({ x0: s.x - 3, y0: s.y - 6, x1: s.x + 3, y1: s.y });
   }
 
@@ -98,7 +98,7 @@ interface Candidate { x: number; y: number; angle: number; curve: number; path?:
 function candidates(f: FeatureEntity, size: number, doc: MapDocument, seed: number, textWidth: number): Candidate[] {
   const bend = ((hash2(seed, hashString(f.id)) % 2) ? 1 : -1);
   switch (f.kind) {
-    case 'capital': case 'city': case 'town': case 'village': case 'ruin': case 'shrine': case 'battlefield': {
+    case 'capital': case 'city': case 'town': case 'village': case 'fort': case 'ruin': case 'shrine': case 'battlefield': {
       const g = size * 0.9;
       return [
         { x: f.x, y: f.y + g * 1.2, angle: 0, curve: 0 },

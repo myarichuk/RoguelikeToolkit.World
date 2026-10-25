@@ -175,18 +175,18 @@ public sealed partial class WarOperator : IHistoryOperator
             Sack(sink, defender.Id, target, SackDisplacement, SackCasualty);
     }
 
-    private static void Capture(ProposalSink sink, int attacker, int defender, TurnView.SettlementState target)
+    private static void Capture(ProposalSink sink, int attacker, int defender, TurnView.SettlementState target, Proposal? requires = null)
     {
-        var capture = new Proposal.CaptureSettlement { EntityId = attacker, Settlement = target.Index };
+        var capture = new Proposal.CaptureSettlement { EntityId = attacker, Settlement = target.Index, Requires = requires };
         sink.Emit(capture);
         sink.EventIfApplied(capture, HistoryEventKind.SettlementCaptured, attacker, target.Tile,
             new[] { $"settlement:{target.Index}", $"from:{defender}", $"to:{attacker}" });
     }
 
     private static void Raze(TurnView view, ProposalSink sink, HashSet<(int, int)> severedNow, int attacker, int defender,
-        TurnView.SettlementState target, double casualty)
+        TurnView.SettlementState target, double casualty, Proposal? requires = null)
     {
-        var raze = new Proposal.EndSettlement { EntityId = defender, Settlement = target.Index, EndCause = "razed", LostShare = casualty };
+        var raze = new Proposal.EndSettlement { EntityId = defender, Settlement = target.Index, EndCause = "razed", LostShare = casualty, Requires = requires };
         sink.Emit(raze);
         sink.Emit(new Proposal.AddScar
         {
@@ -200,12 +200,12 @@ public sealed partial class WarOperator : IHistoryOperator
         foreach (var (a, b) in live) SeverRoutes(view, sink, severedNow, attacker, a, b);
     }
 
-    private static void Sack(ProposalSink sink, int defender, TurnView.SettlementState target, double displacement, double casualty)
+    private static void Sack(ProposalSink sink, int defender, TurnView.SettlementState target, double displacement, double casualty, Proposal? requires = null)
     {
-        sink.Emit(new Proposal.ReleasePopulation { EntityId = defender, Settlement = target.Index, Share = displacement });
+        sink.Emit(new Proposal.ReleasePopulation { EntityId = defender, Settlement = target.Index, Share = displacement, Requires = requires });
         sink.Emit(new Proposal.KillPopulation
         {
-            EntityId = defender, Settlement = target.Index, Share = Math.Min(1, casualty / (1 - displacement)),
+            EntityId = defender, Settlement = target.Index, Share = Math.Min(1, casualty / (1 - displacement)), Requires = requires,
         });
     }
 
