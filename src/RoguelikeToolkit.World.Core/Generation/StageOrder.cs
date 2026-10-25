@@ -56,6 +56,9 @@ public static class StageOrder
     /// <summary>Hazard operator: physics-driven shocks (quake, volcano, tsunami, flood, drought) drawn against the hazard maps.</summary>
     public const int Hazard = 36;
 
+    /// <summary>History operator: the court (rulers, heirs, offices, deaths); runs only with <c>HistoryFeatures.Persons</c>.</summary>
+    public const int Court = 38;
+
     /// <summary>Holy-site raising: high-surplus owned tiles become shrines with sheltering auras.</summary>
     public const int HolySite = 44;
 

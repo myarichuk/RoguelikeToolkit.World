@@ -1,6 +1,6 @@
 # History expansion: battles, logistics, named persons
 
-Status: **in progress** (X0, X1 done; progress in [REVIEW_FIXES_TODO.md](REVIEW_FIXES_TODO.md), section Expansion X). Requested 2026-10-25. Builds on `Proposal.Requires` (batch F of
+Status: **in progress** (X0–X2 done; progress in [REVIEW_FIXES_TODO.md](REVIEW_FIXES_TODO.md), section Expansion X). Requested 2026-10-25. Builds on `Proposal.Requires` (batch F of
 [REVIEW_FIXES_TODO.md](REVIEW_FIXES_TODO.md), landed in `d7492ac`). Phases are **X0–X9** (§10).
 
 ## 0. Facts that shape the design
@@ -350,7 +350,7 @@ About 3k persons expected at 300 turns.
 |---|---|---|
 | X0 | Legacy catalog hash fixtures (sizes 3/4 × seeds 1–5) plus a legacy event projection; `BorderIndex` speed-up | bytes identical; size-7 history ≥20% faster. **Done:** profiling showed the border scans were minor; the win came from lazy deposit noise and an exact faster water-radius test (~1.5 s → ~0.8 s) |
 | X1 | Kernel: types, proposals 28–36, pending handles, detail quota, participant prefixes, schema 13, TurnView accessors, `HistoryFeatures` | flags off: legacy projection identical (hash re-captured once for the empty sections); round trip; corrupt-reference rejection. **Done** (see §12) |
-| X2 | `CourtOperator`, persons, relations, tenures (observer only) | flag on: the existing kinds' projection equals flag off; one ruler per polity per turn; no participation after death; age at death ≤ 1.5× lifespan; traits stable when a plugin adds persons |
+| X2 | `CourtOperator`, persons, relations, tenures (observer only) | flag on: the existing kinds' projection equals flag off; one ruler per polity per turn; no participation after death; age at death ≤ 1.5× lifespan; traits stable when a plugin adds persons. **Done** (see §12) |
 | X3 | Tactics/Warfare/Traits YAML, `BattleResolver`, generals; War/Conquest behind the flag | statistical tests (§11); flag off identical |
 | X4 | `SiegeResolver`, relief battles | siege invariants; resupply lengthens sieges; cut supply raises the lifted share |
 | X5 | `LogisticsGraph`, `LogisticsOperator`, forts/waystations, winter quarters, route samples | safety in [0,1]; forts raise it; 300 turns at size 7 < 5 s |
@@ -408,4 +408,31 @@ About 3k persons expected at 300 turns.
   (0.5). It is sampled at the end of every recorded turn.
 - **Schema 13** appends the kernel after the timeline. A v12 file is byte-identical to a v13 file with an empty kernel
   minus the trailing 32 bytes (tested).
+- **X2 court, all tuning in data.**
+  - `Peoples/Data/Court/default.yaml` holds:
+    - offices per government form, each with its holder kind and judging skill;
+    - the Gompertz hazard (`a`, `b`) and the 1.5-lifespan hard cap;
+    - ruler death-age and office-age bands, and early-death causes (with a women-only pool);
+    - candidates per vacancy, the favouritism and rivalry thresholds;
+    - the skill formulas, as linear weights on OCEAN plus a roll and an offset.
+  - `Peoples/Data/Traits/epithets.yaml` holds 15 epithets with min/max bounds on traits and skills.
+  - `CourtProfile` compiles both and lists any name it cannot place; the shipped data has none.
+  - Culture OCEAN offsets apply to rolled traits. Trait bytes are 0–255; the data reads them on a 0–100 scale.
+- **Successions observe the legacy tick without bookkeeping.** A reign ends when `(turn − founded)` is a positive
+  multiple of `GenerationTurns`, which is exactly when `PopulationOperator` raises `RulerGeneration`. There is no tick
+  while a villain rules. A risen villain overthrows the ruler and takes the throne (`villain`, `agenda:` tags). A new
+  ruler is born so that they die at the next tick, aged in the data's band.
+- **Taking the `ruler` office makes the holder's kind `Ruler`** (an heir or a kinsman on accession).
+- **Treaties:**
+  - a marriage turns both treaty heirs into persons and betroths them;
+  - fostering binds the elder party's heir to the other ruler (`fostered_by`).
+- **The people of an ended polity leave the story** with cause `exile`; persons have no allegiance-change proposal
+  yet.
+- **Loyalty stays 0.** It matters from X6 (intrigue, betrayal), where its model belongs.
+- **Corpus (30 turns, size 3):**
+  - about 300 persons per world and about 32 living over about 10 polities;
+  - about 40% of deaths are old age;
+  - favouritism produces many `patron` bonds; rivalry is rare under the default thresholds.
+- **NativeAOT:** the smoke test checks the court and epithet tables and a Persons-enabled history; the JIT and native
+  checksums match.
 

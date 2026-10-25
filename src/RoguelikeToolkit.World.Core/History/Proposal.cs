@@ -511,7 +511,8 @@ public abstract class Proposal
     /// <summary>
     /// Appoints <see cref="Person"/> to office <see cref="Office"/> of polity <see cref="Proposal.EntityId"/>, closing the open
     /// tenure of that office; <see cref="Person"/> -1 only vacates it. Refused for a dead polity or person, and past
-    /// <see cref="HistoryContext.MaxAppointmentsPerTurn"/> (the <c>ruler</c> office is exempt). Conflicts per polity and office.
+    /// <see cref="HistoryContext.MaxAppointmentsPerTurn"/> (the <c>ruler</c> office is exempt). Taking the <c>ruler</c> office
+    /// makes the person's kind <see cref="PersonKind.Ruler"/>. Conflicts per polity and office.
     /// </summary>
     public sealed class SetTenure : Proposal
     {

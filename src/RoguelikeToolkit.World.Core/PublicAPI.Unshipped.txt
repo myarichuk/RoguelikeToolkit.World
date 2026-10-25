@@ -1,6 +1,7 @@
 abstract RoguelikeToolkit.World.Core.History.Proposal.Kind.get -> RoguelikeToolkit.World.Core.History.ProposalKind
 const RoguelikeToolkit.World.Core.Generation.StageOrder.Absorb = 73 -> int
 const RoguelikeToolkit.World.Core.Generation.StageOrder.Collapse = 72 -> int
+const RoguelikeToolkit.World.Core.Generation.StageOrder.Court = 38 -> int
 const RoguelikeToolkit.World.Core.Generation.StageOrder.Faith = 84 -> int
 const RoguelikeToolkit.World.Core.Generation.StageOrder.Hazard = 36 -> int
 const RoguelikeToolkit.World.Core.Generation.StageOrder.HolySite = 44 -> int
@@ -20,6 +21,9 @@ const RoguelikeToolkit.World.Core.History.CollapseOperator.MinSettlements = 4 ->
 const RoguelikeToolkit.World.Core.History.CollapseOperator.MinTiles = 20 -> int
 const RoguelikeToolkit.World.Core.History.CollapseOperator.PressureThreshold = 0.7 -> double
 const RoguelikeToolkit.World.Core.History.ConquestOperator.ConquestChance = 0.5 -> double
+const RoguelikeToolkit.World.Core.History.CourtOperator.AgeCause = "age" -> string!
+const RoguelikeToolkit.World.Core.History.CourtOperator.ExileCause = "exile" -> string!
+const RoguelikeToolkit.World.Core.History.CourtOperator.OverthrownCause = "overthrown" -> string!
 const RoguelikeToolkit.World.Core.History.ExchangeOperator.ExchangeChance = 0.5 -> double
 const RoguelikeToolkit.World.Core.History.FaithPostPass.MaxPowers = 7 -> int
 const RoguelikeToolkit.World.Core.History.FaithPostPass.MaxTraumaSlots = 3 -> int
@@ -209,6 +213,11 @@ RoguelikeToolkit.World.Core.History.ConquestOperator.ConquestOperator() -> void
 RoguelikeToolkit.World.Core.History.ConquestOperator.Name.get -> string!
 RoguelikeToolkit.World.Core.History.ConquestOperator.Order.get -> int
 RoguelikeToolkit.World.Core.History.ConquestOperator.Propose(RoguelikeToolkit.World.Core.History.TurnView! view, RoguelikeToolkit.World.Core.History.ProposalSink! sink) -> void
+RoguelikeToolkit.World.Core.History.CourtOperator
+RoguelikeToolkit.World.Core.History.CourtOperator.CourtOperator() -> void
+RoguelikeToolkit.World.Core.History.CourtOperator.Name.get -> string!
+RoguelikeToolkit.World.Core.History.CourtOperator.Order.get -> int
+RoguelikeToolkit.World.Core.History.CourtOperator.Propose(RoguelikeToolkit.World.Core.History.TurnView! view, RoguelikeToolkit.World.Core.History.ProposalSink! sink) -> void
 RoguelikeToolkit.World.Core.History.DisplacedGroup
 RoguelikeToolkit.World.Core.History.DisplacedGroup.Amount.get -> double
 RoguelikeToolkit.World.Core.History.DisplacedGroup.Amount.set -> void
@@ -1424,6 +1433,20 @@ RoguelikeToolkit.World.Core.History.TurnView.TileCount.get -> int
 RoguelikeToolkit.World.Core.History.TurnView.Turn.get -> int
 RoguelikeToolkit.World.Core.History.TurnView.TurnYears.get -> int
 RoguelikeToolkit.World.Core.History.TurnView.VillainCount.get -> int
+RoguelikeToolkit.World.Core.History.TurnView.Villains.get -> System.Collections.Generic.IReadOnlyList<RoguelikeToolkit.World.Core.History.TurnView.VillainState>!
+RoguelikeToolkit.World.Core.History.TurnView.VillainState
+RoguelikeToolkit.World.Core.History.TurnView.VillainState.Agenda.get -> string!
+RoguelikeToolkit.World.Core.History.TurnView.VillainState.Agenda.init -> void
+RoguelikeToolkit.World.Core.History.TurnView.VillainState.FolkKey.get -> string!
+RoguelikeToolkit.World.Core.History.TurnView.VillainState.FolkKey.init -> void
+RoguelikeToolkit.World.Core.History.TurnView.VillainState.Id.get -> int
+RoguelikeToolkit.World.Core.History.TurnView.VillainState.Id.init -> void
+RoguelikeToolkit.World.Core.History.TurnView.VillainState.PolityId.get -> int
+RoguelikeToolkit.World.Core.History.TurnView.VillainState.PolityId.init -> void
+RoguelikeToolkit.World.Core.History.TurnView.VillainState.RisenTurn.get -> int
+RoguelikeToolkit.World.Core.History.TurnView.VillainState.RisenTurn.init -> void
+RoguelikeToolkit.World.Core.History.TurnView.VillainState.VillainState() -> void
+RoguelikeToolkit.World.Core.History.TurnView.VillainState.VillainState(int Id, int PolityId, string! FolkKey, int RisenTurn, string! Agenda) -> void
 RoguelikeToolkit.World.Core.History.VillainOperator
 RoguelikeToolkit.World.Core.History.VillainOperator.Name.get -> string!
 RoguelikeToolkit.World.Core.History.VillainOperator.Order.get -> int
@@ -1453,6 +1476,70 @@ RoguelikeToolkit.World.Core.Integration.TemplateMythTextProvider.Render(string! 
 RoguelikeToolkit.World.Core.Integration.TemplateMythTextProvider.TemplateMythTextProvider() -> void
 RoguelikeToolkit.World.Core.Lithosphere.IslandChainOptions.BridgeReach.get -> int
 RoguelikeToolkit.World.Core.Lithosphere.IslandChainOptions.BridgeReach.set -> void
+RoguelikeToolkit.World.Core.Peoples.CourtDef
+RoguelikeToolkit.World.Core.Peoples.CourtDef.Candidates.get -> int
+RoguelikeToolkit.World.Core.Peoples.CourtDef.Candidates.set -> void
+RoguelikeToolkit.World.Core.Peoples.CourtDef.CourtDef() -> void
+RoguelikeToolkit.World.Core.Peoples.CourtDef.FavouriteBelowAgreeableness.get -> double
+RoguelikeToolkit.World.Core.Peoples.CourtDef.FavouriteBelowAgreeableness.set -> void
+RoguelikeToolkit.World.Core.Peoples.CourtDef.FeminineDeathCauses.get -> System.Collections.Generic.List<string!>!
+RoguelikeToolkit.World.Core.Peoples.CourtDef.FeminineDeathCauses.set -> void
+RoguelikeToolkit.World.Core.Peoples.CourtDef.FeminineShare.get -> double
+RoguelikeToolkit.World.Core.Peoples.CourtDef.FeminineShare.set -> void
+RoguelikeToolkit.World.Core.Peoples.CourtDef.Forms.get -> System.Collections.Generic.Dictionary<string!, System.Collections.Generic.List<RoguelikeToolkit.World.Core.Peoples.CourtOfficeDef!>!>!
+RoguelikeToolkit.World.Core.Peoples.CourtDef.Forms.set -> void
+RoguelikeToolkit.World.Core.Peoples.CourtDef.HardCap.get -> double
+RoguelikeToolkit.World.Core.Peoples.CourtDef.HardCap.set -> void
+RoguelikeToolkit.World.Core.Peoples.CourtDef.HazardBase.get -> double
+RoguelikeToolkit.World.Core.Peoples.CourtDef.HazardBase.set -> void
+RoguelikeToolkit.World.Core.Peoples.CourtDef.HazardGrowth.get -> double
+RoguelikeToolkit.World.Core.Peoples.CourtDef.HazardGrowth.set -> void
+RoguelikeToolkit.World.Core.Peoples.CourtDef.Key.get -> string!
+RoguelikeToolkit.World.Core.Peoples.CourtDef.Key.set -> void
+RoguelikeToolkit.World.Core.Peoples.CourtDef.MaxEpithets.get -> int
+RoguelikeToolkit.World.Core.Peoples.CourtDef.MaxEpithets.set -> void
+RoguelikeToolkit.World.Core.Peoples.CourtDef.OfficeAgeMax.get -> double
+RoguelikeToolkit.World.Core.Peoples.CourtDef.OfficeAgeMax.set -> void
+RoguelikeToolkit.World.Core.Peoples.CourtDef.OfficeAgeMin.get -> double
+RoguelikeToolkit.World.Core.Peoples.CourtDef.OfficeAgeMin.set -> void
+RoguelikeToolkit.World.Core.Peoples.CourtDef.OldAge.get -> double
+RoguelikeToolkit.World.Core.Peoples.CourtDef.OldAge.set -> void
+RoguelikeToolkit.World.Core.Peoples.CourtDef.RivalAboveExtraversion.get -> double
+RoguelikeToolkit.World.Core.Peoples.CourtDef.RivalAboveExtraversion.set -> void
+RoguelikeToolkit.World.Core.Peoples.CourtDef.RivalBelowAgreeableness.get -> double
+RoguelikeToolkit.World.Core.Peoples.CourtDef.RivalBelowAgreeableness.set -> void
+RoguelikeToolkit.World.Core.Peoples.CourtDef.RulerDeathAgeMax.get -> double
+RoguelikeToolkit.World.Core.Peoples.CourtDef.RulerDeathAgeMax.set -> void
+RoguelikeToolkit.World.Core.Peoples.CourtDef.RulerDeathAgeMin.get -> double
+RoguelikeToolkit.World.Core.Peoples.CourtDef.RulerDeathAgeMin.set -> void
+RoguelikeToolkit.World.Core.Peoples.CourtDef.Skills.get -> System.Collections.Generic.Dictionary<string!, System.Collections.Generic.Dictionary<string!, double>!>!
+RoguelikeToolkit.World.Core.Peoples.CourtDef.Skills.set -> void
+RoguelikeToolkit.World.Core.Peoples.CourtDef.UntimelyDeathCauses.get -> System.Collections.Generic.List<string!>!
+RoguelikeToolkit.World.Core.Peoples.CourtDef.UntimelyDeathCauses.set -> void
+RoguelikeToolkit.World.Core.Peoples.CourtOfficeDef
+RoguelikeToolkit.World.Core.Peoples.CourtOfficeDef.CourtOfficeDef() -> void
+RoguelikeToolkit.World.Core.Peoples.CourtOfficeDef.Kind.get -> string!
+RoguelikeToolkit.World.Core.Peoples.CourtOfficeDef.Kind.set -> void
+RoguelikeToolkit.World.Core.Peoples.CourtOfficeDef.Office.get -> string!
+RoguelikeToolkit.World.Core.Peoples.CourtOfficeDef.Office.set -> void
+RoguelikeToolkit.World.Core.Peoples.CourtOfficeDef.Skill.get -> string!
+RoguelikeToolkit.World.Core.Peoples.CourtOfficeDef.Skill.set -> void
+RoguelikeToolkit.World.Core.Peoples.EpithetDef
+RoguelikeToolkit.World.Core.Peoples.EpithetDef.EpithetDef() -> void
+RoguelikeToolkit.World.Core.Peoples.EpithetDef.Key.get -> string!
+RoguelikeToolkit.World.Core.Peoples.EpithetDef.Key.set -> void
+RoguelikeToolkit.World.Core.Peoples.EpithetDef.Max.get -> System.Collections.Generic.Dictionary<string!, double>!
+RoguelikeToolkit.World.Core.Peoples.EpithetDef.Max.set -> void
+RoguelikeToolkit.World.Core.Peoples.EpithetDef.Min.get -> System.Collections.Generic.Dictionary<string!, double>!
+RoguelikeToolkit.World.Core.Peoples.EpithetDef.Min.set -> void
+RoguelikeToolkit.World.Core.Peoples.PeoplesStore.Courts.get -> System.Collections.Generic.Dictionary<string!, RoguelikeToolkit.World.Core.Peoples.CourtDef!>!
+RoguelikeToolkit.World.Core.Peoples.PeoplesStore.TraitTables.get -> System.Collections.Generic.Dictionary<string!, RoguelikeToolkit.World.Core.Peoples.TraitTableDef!>!
+RoguelikeToolkit.World.Core.Peoples.TraitTableDef
+RoguelikeToolkit.World.Core.Peoples.TraitTableDef.Epithets.get -> System.Collections.Generic.List<RoguelikeToolkit.World.Core.Peoples.EpithetDef!>!
+RoguelikeToolkit.World.Core.Peoples.TraitTableDef.Epithets.set -> void
+RoguelikeToolkit.World.Core.Peoples.TraitTableDef.Key.get -> string!
+RoguelikeToolkit.World.Core.Peoples.TraitTableDef.Key.set -> void
+RoguelikeToolkit.World.Core.Peoples.TraitTableDef.TraitTableDef() -> void
 RoguelikeToolkit.World.Core.Tectonics.NoisyFloodFillPlatePartitioner.MinSpeed.get -> double
 RoguelikeToolkit.World.Core.Tectonics.NoisyFloodFillPlatePartitioner.MinSpeed.set -> void
 RoguelikeToolkit.World.Core.Tectonics.NoisyFloodFillPlatePartitioner.SpeedRange.get -> double

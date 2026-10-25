@@ -24,6 +24,12 @@ public sealed class PeoplesStore
     public Dictionary<string, ResourceDef> Resources { get; } = new(StringComparer.OrdinalIgnoreCase);
     /// <summary>Loaded territory step-cost profiles keyed by <see cref="TerritoryDef.Key"/> (case-insensitive).</summary>
     public Dictionary<string, TerritoryDef> Territories { get; } = new(StringComparer.OrdinalIgnoreCase);
+
+    /// <summary>Loaded court profiles keyed by <see cref="CourtDef.Key"/> (case-insensitive).</summary>
+    public Dictionary<string, CourtDef> Courts { get; } = new(StringComparer.OrdinalIgnoreCase);
+
+    /// <summary>Loaded epithet tables keyed by <see cref="TraitTableDef.Key"/> (case-insensitive).</summary>
+    public Dictionary<string, TraitTableDef> TraitTables { get; } = new(StringComparer.OrdinalIgnoreCase);
     /// <summary>Pairwise offspring rules from <c>compat.yaml</c>; unlisted pairs blend.</summary>
     public CompatibilityMatrix Compatibility { get; } = new();
 
@@ -211,8 +217,12 @@ public sealed class PeoplesStore
             LoadKeyed(store.Resources, "resource", d => d.Key, ValidateResource);
         else if (rel.StartsWith("Territory/", StringComparison.OrdinalIgnoreCase))
             LoadKeyed(store.Territories, "territory", d => d.Key, ValidateTerritory);
+        else if (rel.StartsWith("Court/", StringComparison.OrdinalIgnoreCase))
+            LoadKeyed(store.Courts, "court", d => d.Key, ValidateCourt);
+        else if (rel.StartsWith("Traits/", StringComparison.OrdinalIgnoreCase))
+            LoadKeyed(store.TraitTables, "traits", d => d.Key, ValidateTraits);
         else
-            problems.Add($"{rel}: unrecognized location (want Folks/, Cultures/, Subsistence/, Resources/ or Territory/*.yaml, or compat.yaml).");
+            problems.Add($"{rel}: unrecognized location (want Folks/, Cultures/, Subsistence/, Resources/, Territory/, Court/ or Traits/*.yaml, or compat.yaml).");
 
         void LoadKeyed<T>(Dictionary<string, T> into, string kind, Func<T, string> key, Action<string, T, List<string>> validate)
         {
@@ -330,6 +340,66 @@ public sealed class PeoplesStore
         if (double.IsNaN(data.HighFrom) || double.IsInfinity(data.HighFrom)) problems.Add($"{rel}: HighFrom must be a number.");
         foreach (var kv in data.Biomes)
             if (!(kv.Value > 0) || double.IsInfinity(kv.Value)) problems.Add($"{rel}: Biomes.{kv.Key} must be a positive number.");
+    }
+
+    private static bool Finite(double v) => !double.IsNaN(v) && !double.IsInfinity(v);
+
+    private static void ValidateCourt(string rel, CourtDef data, List<string> problems)
+    {
+        if (!(data.HazardBase >= 0) || !Finite(data.HazardBase)) problems.Add($"{rel}: HazardBase must be a non-negative number.");
+        if (!(data.HazardGrowth >= 0) || !Finite(data.HazardGrowth)) problems.Add($"{rel}: HazardGrowth must be a non-negative number.");
+        if (!(data.HardCap >= 1) || !Finite(data.HardCap)) problems.Add($"{rel}: HardCap must be at least 1.");
+        foreach (var (field, lo, hi) in new[]
+                 {
+                     ("RulerDeathAge", data.RulerDeathAgeMin, data.RulerDeathAgeMax), ("OfficeAge", data.OfficeAgeMin, data.OfficeAgeMax),
+                 })
+            if (!(lo > 0) || !(hi >= lo) || !(hi <= data.HardCap)) problems.Add($"{rel}: {field}Min/Max must satisfy 0 < min <= max <= HardCap.");
+        if (!(data.OldAge > 0) || !Finite(data.OldAge)) problems.Add($"{rel}: OldAge must be positive.");
+        if (data.UntimelyDeathCauses is null || data.UntimelyDeathCauses.Count == 0 || data.UntimelyDeathCauses.Any(string.IsNullOrWhiteSpace))
+            problems.Add($"{rel}: UntimelyDeathCauses needs at least one non-blank cause.");
+        if (data.FeminineDeathCauses is null || data.FeminineDeathCauses.Any(string.IsNullOrWhiteSpace))
+            problems.Add($"{rel}: FeminineDeathCauses must be a list of non-blank causes (may be empty).");
+        if (data.Candidates < 1) problems.Add($"{rel}: Candidates must be at least 1.");
+        if (data.MaxEpithets < 0) problems.Add($"{rel}: MaxEpithets cannot be negative.");
+        if (!(data.FeminineShare >= 0 && data.FeminineShare <= 1)) problems.Add($"{rel}: FeminineShare must be in 0-1.");
+        foreach (var (field, v) in new[]
+                 {
+                     ("FavouriteBelowAgreeableness", data.FavouriteBelowAgreeableness), ("RivalAboveExtraversion", data.RivalAboveExtraversion),
+                     ("RivalBelowAgreeableness", data.RivalBelowAgreeableness),
+                 })
+            if (!(v >= 0 && v <= 100)) problems.Add($"{rel}: {field} must be in 0-100.");
+        if (data.Skills is null) problems.Add($"{rel}: Skills is null.");
+        else
+            foreach (var skill in data.Skills)
+                foreach (var w in skill.Value ?? new Dictionary<string, double>())
+                    if (!Finite(w.Value)) problems.Add($"{rel}: Skills.{skill.Key}.{w.Key} must be a number.");
+        if (data.Forms is null) problems.Add($"{rel}: Forms is null.");
+        else
+            foreach (var form in data.Forms)
+            {
+                var seen = new HashSet<string>(StringComparer.Ordinal);
+                foreach (var office in form.Value ?? new List<CourtOfficeDef>())
+                {
+                    if (office is null || string.IsNullOrWhiteSpace(office.Office) || string.IsNullOrWhiteSpace(office.Kind) || string.IsNullOrWhiteSpace(office.Skill))
+                        problems.Add($"{rel}: Forms.{form.Key} has an office without Office, Kind or Skill.");
+                    else if (!seen.Add(office.Office)) problems.Add($"{rel}: Forms.{form.Key} lists office '{office.Office}' twice.");
+                    else if (data.Skills != null && !data.Skills.ContainsKey(office.Skill))
+                        problems.Add($"{rel}: Forms.{form.Key}.{office.Office} judges by unknown skill '{office.Skill}'.");
+                }
+            }
+    }
+
+    private static void ValidateTraits(string rel, TraitTableDef data, List<string> problems)
+    {
+        if (data.Epithets is null) { problems.Add($"{rel}: Epithets is null (use an empty list)."); return; }
+        var seen = new HashSet<string>(StringComparer.OrdinalIgnoreCase);
+        foreach (var e in data.Epithets)
+        {
+            if (e is null || string.IsNullOrWhiteSpace(e.Key)) { problems.Add($"{rel}: an epithet has no Key."); continue; }
+            if (!seen.Add(e.Key)) problems.Add($"{rel}: epithet '{e.Key}' is listed twice.");
+            foreach (var bound in (e.Min ?? new()).Concat(e.Max ?? new()))
+                if (!(bound.Value >= 0 && bound.Value <= 100)) problems.Add($"{rel}: epithet '{e.Key}' bound {bound.Key} must be in 0-100.");
+        }
     }
 
     private static void ValidateSubsistence(string rel, SubsistenceDef data, List<string> problems)

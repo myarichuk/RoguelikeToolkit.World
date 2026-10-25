@@ -43,6 +43,9 @@ public sealed class TurnView
         byte Stewardship, byte Charisma, IReadOnlyList<string> Epithets, int Renown, double Wealth, sbyte Loyalty, double Pledged,
         int StableKey);
 
+    /// <summary>One risen villain at the snapshot.</summary>
+    public readonly record struct VillainState(int Id, int PolityId, string FolkKey, int RisenTurn, string Agenda);
+
     /// <summary>One open bond at the snapshot; the kind is a name.</summary>
     public readonly record struct RelationState(int A, int B, string Kind, int FromTurn, int Weight);
 
@@ -112,6 +115,9 @@ public sealed class TurnView
         foreach (var sc in history.Scars) scars.Add(new ScarState(sc.TileIndex, sc.PolityId, sc.Kind, sc.Active));
         Scars = scars;
 
+        var villains = new List<VillainState>(history.Villains.Count);
+        foreach (var v in history.Villains) villains.Add(new VillainState(v.Id, v.PolityId, v.FolkKey, v.RisenTurn, v.Agenda));
+        Villains = villains;
         Features = context.Features;
         MaxPersons = context.MaxPersons;
         MaxLivingPersonsPerPolity = context.MaxLivingPersonsPerPolity;
@@ -143,6 +149,9 @@ public sealed class TurnView
                 r.SabotagedTurn, r.LastIncidentTurn));
         RouteStates = routes;
     }
+
+    /// <summary>Risen villains in rise order.</summary>
+    public IReadOnlyList<VillainState> Villains { get; }
 
     /// <summary>The expansion features this run has on.</summary>
     public HistoryFeatures Features { get; }

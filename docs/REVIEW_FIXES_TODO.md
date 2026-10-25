@@ -196,6 +196,10 @@ Log:
 - [x] X1 Kernel (types, proposals 28-36, pending person handles, detail quota, participant prefixes, schema 13,
   TurnView accessors, `HistoryFeatures` default None). `ExpansionCommit` holds the turn's kernel commit; decisions in
   the plan's §12. Fixture projections unchanged, byte hashes re-pinned once. `HistoryExpansionKernelTests` (23).
-- [ ] X2 `CourtOperator`: rulers, heirs, offices by form, death hazard (observer only; flag `Persons`). Data first:
-  offices per form and lifespans in Peoples YAML, not code
+- [x] X2 `CourtOperator` (order 38, flag `Persons`, observer only): rulers on the legacy succession tick, villains,
+  treaty heirs and betrothals, offices per form with candidates/favourites/rivals, Gompertz deaths. All tuning in
+  `Peoples/Data/Court/default.yaml` + `Traits/epithets.yaml` (`CourtProfile`). `CourtOperatorTests` (13); AOT smoke
+  extended. Notes in the plan's §12.
+- [ ] X3 Tactics/Warfare YAML (+ lexicon stubs), `BattleResolver` (pure, statistical tests), generals from the court;
+  War/Conquest use it behind flag `Battles`
 

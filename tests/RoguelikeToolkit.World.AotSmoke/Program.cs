@@ -112,6 +112,15 @@ var dwarf = peoples.GetFolk("dwarf");
 Check(dwarf.MaturationYears == 50, "folk table");
 Check(!peoples.Compatibility.TryUnion("demon", "angel", out _), "compat table");
 foreach (var c in dwarf.Key + peoples.GetCulture("dwarven_clan").NamingTable) Mix(c);
+// Court and epithet tables (nested dictionaries and lists of DTOs), then a history with named persons on them.
+Check(peoples.Courts.TryGetValue("default", out var court) && court.Forms.Count == 4 && court.Skills.Count == 4, "court table");
+Check(peoples.TraitTables.TryGetValue("epithets", out var epithets) && epithets.Epithets.Count > 0 && epithets.Epithets[0].Min.Count > 0, "epithet table");
+using (var courtly = new WorldBuilder().WithSize(3).WithSeed(7)
+           .WithHistory(c => c.Features = RoguelikeToolkit.World.Core.History.HistoryFeatures.Persons).Build())
+{
+    Check(courtly.History.Persons.Count > 0 && courtly.History.Tenures.Count > 0, "court persons");
+    foreach (var p in courtly.History.Persons) { Mix((ulong)(uint)p.StableKey); Mix(p.Martial); Mix((ulong)(uint)p.DiedTurn); }
+}
 
 // 5. Entity store: spawn, snapshot, reload.
 var store = new EntityStore();

@@ -12,6 +12,7 @@ public static class StandardHistory
             .AddOperator(new SettleOperator())
             .AddOperator(new TierOperator())
             .AddOperator(new HazardOperator())
+            .AddOperator(new CourtOperator())
             .AddOperator(new TradeRoadOperator())
             .AddOperator(new HolySiteOperator())
             .AddOperator(new KhanOperator())

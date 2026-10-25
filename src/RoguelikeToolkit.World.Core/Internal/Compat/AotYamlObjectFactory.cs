@@ -31,6 +31,14 @@ internal sealed class AotYamlObjectFactory : DefaultObjectFactory
         if (type == typeof(List<SubsistenceExploit>)) return new List<SubsistenceExploit>();
         if (type == typeof(ResourceDef)) return new ResourceDef();
         if (type == typeof(TerritoryDef)) return new TerritoryDef();
+        if (type == typeof(CourtDef)) return new CourtDef();
+        if (type == typeof(CourtOfficeDef)) return new CourtOfficeDef();
+        if (type == typeof(List<CourtOfficeDef>)) return new List<CourtOfficeDef>();
+        if (type == typeof(Dictionary<string, List<CourtOfficeDef>>)) return new Dictionary<string, List<CourtOfficeDef>>(StringComparer.OrdinalIgnoreCase);
+        if (type == typeof(Dictionary<string, Dictionary<string, double>>)) return new Dictionary<string, Dictionary<string, double>>(StringComparer.OrdinalIgnoreCase);
+        if (type == typeof(TraitTableDef)) return new TraitTableDef();
+        if (type == typeof(EpithetDef)) return new EpithetDef();
+        if (type == typeof(List<EpithetDef>)) return new List<EpithetDef>();
         if (type == typeof(Dictionary<string, double>)) return new Dictionary<string, double>(StringComparer.OrdinalIgnoreCase);
         if (type == typeof(LocaleData)) return new LocaleData();
         if (type == typeof(List<MorphemeYaml>)) return new List<MorphemeYaml>();
@@ -54,6 +62,10 @@ internal sealed class AotYamlObjectFactory : DefaultObjectFactory
     [DynamicDependency(DynamicallyAccessedMemberTypes.PublicProperties | DynamicallyAccessedMemberTypes.PublicParameterlessConstructor, typeof(SubsistenceExploit))]
     [DynamicDependency(DynamicallyAccessedMemberTypes.PublicProperties | DynamicallyAccessedMemberTypes.PublicParameterlessConstructor, typeof(ResourceDef))]
     [DynamicDependency(DynamicallyAccessedMemberTypes.PublicProperties | DynamicallyAccessedMemberTypes.PublicParameterlessConstructor, typeof(TerritoryDef))]
+    [DynamicDependency(DynamicallyAccessedMemberTypes.PublicProperties | DynamicallyAccessedMemberTypes.PublicParameterlessConstructor, typeof(CourtDef))]
+    [DynamicDependency(DynamicallyAccessedMemberTypes.PublicProperties | DynamicallyAccessedMemberTypes.PublicParameterlessConstructor, typeof(CourtOfficeDef))]
+    [DynamicDependency(DynamicallyAccessedMemberTypes.PublicProperties | DynamicallyAccessedMemberTypes.PublicParameterlessConstructor, typeof(TraitTableDef))]
+    [DynamicDependency(DynamicallyAccessedMemberTypes.PublicProperties | DynamicallyAccessedMemberTypes.PublicParameterlessConstructor, typeof(EpithetDef))]
     [DynamicDependency(DynamicallyAccessedMemberTypes.PublicProperties | DynamicallyAccessedMemberTypes.PublicParameterlessConstructor, typeof(LocaleData))]
     public static IDeserializer CreateDeserializer() => new DeserializerBuilder()
         .WithObjectFactory(new AotYamlObjectFactory())

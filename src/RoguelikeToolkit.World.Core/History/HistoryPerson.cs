@@ -36,7 +36,7 @@ public sealed class HistoryPerson
     public int DiedTurn { get; set; } = -1;
     /// <summary>Interned death cause (<c>age</c>, <c>battle</c>, <c>executed</c>...), or -1 while alive.</summary>
     public int DeathCause { get; set; } = -1;
-    /// <summary>Personality (OCEAN, 0..100).</summary>
+    /// <summary>Personality (OCEAN bytes, 0..255; the court data reads them on a 0-100 scale).</summary>
     public ActorTraits Traits { get; init; }
     /// <summary>Command in the field, 0..100.</summary>
     public byte Martial { get; init; }

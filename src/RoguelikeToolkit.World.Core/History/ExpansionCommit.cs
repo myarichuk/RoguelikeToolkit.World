@@ -154,7 +154,8 @@ internal sealed class ExpansionCommit
         if (person >= 0)
         {
             _history.Tenures.Add(new HistoryTenure { Person = person, Polity = st.EntityId, Office = office, FromTurn = _turn });
-            if (!ruler) _appointments++;
+            if (ruler) _history.Persons[person].Kind = PersonKind.Ruler; // taking the throne makes an heir or a kinsman the ruler
+            else _appointments++;
         }
         return true;
     }
