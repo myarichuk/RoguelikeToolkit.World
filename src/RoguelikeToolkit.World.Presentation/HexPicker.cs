@@ -31,6 +31,7 @@ public static class HexPicker
         return model * viewProj;
     }
 
+    /// <summary>Picks against a fixed sphere of <paramref name="pickRadius"/> (globe) or the z=0 map plane (when <paramref name="projection"/> is set).</summary>
     public static bool TryPick(
         double mouseX,
         double mouseY,
@@ -43,112 +44,120 @@ public static class HexPicker
         Func<GeoCoord, int> resolveTile,
         int tileCount,
         out HexPickResult result)
+        => TryPick(mouseX, mouseY, viewWidth, viewHeight, camera, pickRadius, positions, projection, resolveTile, tileCount, null, out result);
+
+    /// <summary>
+    /// Resolves the tile under the mouse. Flat maps (<paramref name="projection"/> set) intersect the z=0 plane they are
+    /// drawn on and invert the projection at the hit. The globe intersects a sphere: of <paramref name="pickRadius"/>, or,
+    /// for displaced terrain, of each candidate tile's own radius from <paramref name="surfaceRadius"/>, starting at
+    /// <paramref name="pickRadius"/> (an upper bound on the relief) and re-intersecting until the tile stops changing.
+    /// </summary>
+    public static bool TryPick(
+        double mouseX,
+        double mouseY,
+        double viewWidth,
+        double viewHeight,
+        PickCamera camera,
+        float pickRadius,
+        float[] positions,
+        IProjection? projection,
+        Func<GeoCoord, int> resolveTile,
+        int tileCount,
+        Func<int, float>? surfaceRadius,
+        out HexPickResult result)
     {
         result = default;
 
         if (positions == null || positions.Length == 0) return false;
 
         var mvp = BuildMvp(viewWidth, viewHeight, camera);
-
         if (!Matrix4x4.Invert(mvp, out Matrix4x4 invMvp)) return false;
 
-        // NDC Coordinates
         float ndcX = (float)((2.0 * mouseX) / viewWidth - 1.0);
         float ndcY = (float)(1.0 - (2.0 * mouseY) / viewHeight); // Invert Y
 
-        Vector4 rayClipNear = new Vector4(ndcX, ndcY, -1.0f, 1.0f);
-        Vector4 rayClipFar = new Vector4(ndcX, ndcY, 1.0f, 1.0f);
+        var near = Unproject(new Vector4(ndcX, ndcY, -1.0f, 1.0f), invMvp);
+        var far = Unproject(new Vector4(ndcX, ndcY, 1.0f, 1.0f), invMvp);
+        var dir = far - near;
+        float len = dir.Length();
+        if (!(len > 0f)) return false;
+        dir /= len;
 
-        Vector4 rayObjNearV = Vector4.Transform(rayClipNear, invMvp);
-        Vector4 rayObjFarV = Vector4.Transform(rayClipFar, invMvp);
-
-        if (rayObjNearV.W != 0.0f) { rayObjNearV.X /= rayObjNearV.W; rayObjNearV.Y /= rayObjNearV.W; rayObjNearV.Z /= rayObjNearV.W; }
-        if (rayObjFarV.W != 0.0f) { rayObjFarV.X /= rayObjFarV.W; rayObjFarV.Y /= rayObjFarV.W; rayObjFarV.Z /= rayObjFarV.W; }
-
-        float[] rayObjNear = new float[] { rayObjNearV.X, rayObjNearV.Y, rayObjNearV.Z, rayObjNearV.W };
-        float[] rayObjFar = new float[] { rayObjFarV.X, rayObjFarV.Y, rayObjFarV.Z, rayObjFarV.W };
-
-        float rayDirX = rayObjFar[0] - rayObjNear[0];
-        float rayDirY = rayObjFar[1] - rayObjNear[1];
-        float rayDirZ = rayObjFar[2] - rayObjNear[2];
-
-        float len = (float)Math.Sqrt(rayDirX * rayDirX + rayDirY * rayDirY + rayDirZ * rayDirZ);
-        rayDirX /= len; rayDirY /= len; rayDirZ /= len;
-
-        float a = rayDirX * rayDirX + rayDirY * rayDirY + rayDirZ * rayDirZ;
-        float b = 2.0f * (rayDirX * rayObjNear[0] + rayDirY * rayObjNear[1] + rayDirZ * rayObjNear[2]);
-        float c = (rayObjNear[0] * rayObjNear[0] + rayObjNear[1] * rayObjNear[1] + rayObjNear[2] * rayObjNear[2]) - pickRadius * pickRadius;
-
-        float discriminant = b * b - 4 * a * c;
-
-        if (discriminant < 0) return false;
-
-        float t = (-b - (float)Math.Sqrt(discriminant)) / (2.0f * a);
-        if (t < 0) return false;
-
-        float hitX = rayObjNear[0] + t * rayDirX;
-        float hitY = rayObjNear[1] + t * rayDirY;
-        float hitZ = rayObjNear[2] + t * rayDirZ;
-
-        float hitLen = (float)Math.Sqrt(hitX * hitX + hitY * hitY + hitZ * hitZ);
-        if (hitLen < 1e-6f) return false;
-
-        double lat;
-        double lon;
         if (projection != null)
         {
-            // Only the flat projections need the nearest mesh vertex (its
-            // projected XY is what gets inverted); 3D picks use the hit direction
-            // and skip this O(n) scan.
-            float minDistsq = float.MaxValue;
-            int nearestIdx = -1;
-
-            for (int i = 0; i < positions.Length / 3; i++)
-            {
-                float dx = positions[i * 3] - hitX;
-                float dy = positions[i * 3 + 1] - hitY;
-                float dz = positions[i * 3 + 2] - hitZ;
-                float distSq = dx * dx + dy * dy + dz * dz;
-
-                if (distSq < minDistsq)
-                {
-                    minDistsq = distSq;
-                    nearestIdx = i;
-                }
-            }
-
-            if (nearestIdx == -1) return false;
-
-            float selX = positions[nearestIdx * 3];
-            float selY = positions[nearestIdx * 3 + 1];
-            float selZ = positions[nearestIdx * 3 + 2];
-
-            var geo = projection.Inverse(new Vector2D(selX, selY));
-            lat = geo.Latitude;
-            lon = geo.Longitude;
+            // Flat maps lie on z = 0: intersect that plane, not a sphere (a sphere hit sits in front of the plane and
+            // perspective pulls it towards the centre; beyond the unit circle it misses outright).
+            if (Math.Abs(dir.Z) < 1e-9f) return false;
+            float tPlane = -near.Z / dir.Z;
+            if (tPlane < 0f) return false;
+            var hit = near + dir * tPlane;
+            var geo = projection.Inverse(new Vector2D(hit.X, hit.Y));
+            // The inverses do not wrap: off the map's edge they return longitudes past 180 or latitudes past 90. A hair
+            // over is still on the map: unprojecting through a float matrix loses ~1e-4 units, a few hundredths of a degree.
+            const double Slack = 0.05;
+            if (!double.IsFinite(geo.Latitude) || !double.IsFinite(geo.Longitude)
+                || Math.Abs(geo.Latitude) > 90.0 + Slack || Math.Abs(geo.Longitude) > 180.0 + Slack) return false;
+            return Resolve(Math.Clamp(geo.Latitude, -90.0, 90.0), Math.Clamp(geo.Longitude, -180.0, 180.0), hit, resolveTile, tileCount, out result);
         }
-        else
+
+        if (!IntersectSphere(near, dir, pickRadius, out var sphereHit)) return false;
+        if (!ToLatLon(sphereHit, out double lat, out double lon)) return false;
+        int tile = resolveTile(new GeoCoord(lat, lon));
+        if (surfaceRadius != null && (uint)tile < (uint)tileCount)
         {
-            // From the normalized pick direction, NOT the mesh vertex: terrain
-            // displacement pushes vertices off the unit sphere, and Asin(|z| > 1)
-            // is NaN — which used to poison GetTileIndex into returning -1 and
-            // crash GetGeoCoord below with IndexOutOfRangeException.
-            lat = Math.Asin(Math.Clamp(hitZ / hitLen, -1.0f, 1.0f)) * 180.0 / Math.PI;
-            lon = Math.Atan2(hitY, hitX) * 180.0 / Math.PI;
+            // Displaced terrain: the outer sphere's hit lies above the ground and towards the limb. Walk down onto the
+            // candidate tile's own surface; a few rounds settle except on a cliff edge, where either side is a fair answer.
+            for (int round = 0; round < 6; round++)
+            {
+                if (!IntersectSphere(near, dir, surfaceRadius(tile), out var h) || !ToLatLon(h, out double la, out double lo)) break;
+                int next = resolveTile(new GeoCoord(la, lo));
+                if ((uint)next >= (uint)tileCount) break;
+                sphereHit = h; lat = la; lon = lo;
+                if (next == tile) break;
+                tile = next;
+            }
         }
+        return Resolve(lat, lon, sphereHit, resolveTile, tileCount, out result);
+    }
 
-        // Projection inverses return NaN off-map; a click there is a miss, not tile 0.
-        if (!double.IsFinite(lat) || !double.IsFinite(lon)) return false;
+    private static Vector3 Unproject(Vector4 clip, Matrix4x4 inv)
+    {
+        var v = Vector4.Transform(clip, inv);
+        return v.W != 0f ? new Vector3(v.X / v.W, v.Y / v.W, v.Z / v.W) : new Vector3(v.X, v.Y, v.Z);
+    }
 
-        // Resolve the tile through the store's canonical topology (exact nearest-center
-        // search). The previous ring-based heuristic disagreed with the store on
-        // ~160/162 tiles at size 2 and routinely displayed the wrong plate/biome.
+    private static bool IntersectSphere(Vector3 origin, Vector3 dir, float radius, out Vector3 hit)
+    {
+        hit = default;
+        float b = 2.0f * Vector3.Dot(dir, origin);
+        float c = origin.LengthSquared() - radius * radius;
+        float discriminant = b * b - 4f * c;
+        if (discriminant < 0f) return false;
+        float t = (-b - (float)Math.Sqrt(discriminant)) / 2f;
+        if (t < 0f) return false;
+        hit = origin + dir * t;
+        return true;
+    }
+
+    private static bool ToLatLon(Vector3 hit, out double lat, out double lon)
+    {
+        float hitLen = hit.Length();
+        lat = lon = 0;
+        if (hitLen < 1e-6f) return false;
+        // From the hit direction, not a mesh vertex: displaced vertices sit off the unit sphere.
+        lat = Math.Asin(Math.Clamp(hit.Z / hitLen, -1.0f, 1.0f)) * 180.0 / Math.PI;
+        lon = Math.Atan2(hit.Y, hit.X) * 180.0 / Math.PI;
+        return double.IsFinite(lat) && double.IsFinite(lon);
+    }
+
+    private static bool Resolve(double lat, double lon, Vector3 hit, Func<GeoCoord, int> resolveTile, int tileCount, out HexPickResult result)
+    {
+        result = default;
+        // Resolve through the store's canonical topology (exact nearest-center search).
         int tileIndex = resolveTile(new GeoCoord(lat, lon));
-
         // A click handler must never throw: a failed pick clears the panel.
         if (tileIndex < 0 || tileIndex >= tileCount) return false;
-
-        result = new HexPickResult(tileIndex, lat, lon, hitX, hitY, hitZ);
+        result = new HexPickResult(tileIndex, lat, lon, hit.X, hit.Y, hit.Z);
         return true;
     }
 }

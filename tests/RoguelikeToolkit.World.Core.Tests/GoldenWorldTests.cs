@@ -80,9 +80,9 @@ public class GoldenWorldTests
     // The pre-balanced generator, pinned with the hashes it had before balanced plates became the default:
     // WithLegacyPlates() must keep reproducing those worlds bit for bit.
     [Theory]
-    [InlineData(42, 3, false, "B58259095A40915CD3F166D4E2A5F62D3AC7965347FA5A2A201A477083925AFE")]
-    [InlineData(7, 4, false, "DCEC3714CDC1FCFEA955C563D1CE43A904D990C61554EA66003E56E11CEB1DFC")]
-    [InlineData(42, 3, true, "10A2C0D257D29B3F226AE7DC25AB275AA8DD70BF71AB3107BD98204CFC86C192")]
+    [InlineData(42, 3, false, "D43E534E49575D9BF25B66198CB9DF13DB452122EEDF56D063C2DD1A0831F107")]
+    [InlineData(7, 4, false, "E4EEED798432B8E73CBA58C1C856ED1E53AAD8651D71B43DA8521548488D3EAB")]
+    [InlineData(42, 3, true, "8209A4830BC2617CEECDD8058C8373E5BC5295A2D807100995E0ED275D7324B7")]
     public void LegacyPlates_AreBitStable(int seed, int size, bool tidallyLocked, string expected)
     {
         var actual = Fingerprint(seed, size, tidallyLocked, legacyPlates: true);
@@ -91,9 +91,9 @@ public class GoldenWorldTests
 
     // The default generator (balanced plates). Re-pin deliberately, in its own commit, when generation changes on purpose.
     [Theory]
-    [InlineData(42, 3, false, "8DA7A4EA7205376702DD009DF0352D07C732E53B32C9EE4B68E7B7EDCE58B731")]
-    [InlineData(7, 4, false, "16FC9C5D4ACEC020B2B6013B25448901F5A1C6CD5859EFE5F556FABE13FA61F1")]
-    [InlineData(42, 3, true, "00CB7C2EAF9799795488F5A058333508A0D32026353A2989983B3C535169BD7A")]
+    [InlineData(42, 3, false, "B923330F2F662ACDA07FE524CFE9F42865E777632455F25D0FC0CE02573AF1DB")]
+    [InlineData(7, 4, false, "0C3DBE467A8E945A602BDC3FA5A0C88BA681D080D8FCD8BD158FAA56347C7460")]
+    [InlineData(42, 3, true, "DB883968BF8BA90AB70AD7E4E9A4B69BB8C7DB8EF912ADF8791273570ED2760C")]
     public void Output_IsBitStable(int seed, int size, bool tidallyLocked, string expected)
     {
         var actual = Fingerprint(seed, size, tidallyLocked);

@@ -19,7 +19,7 @@ Branch: `claude/gallant-knuth-1ctv0z`. Build/test: `dotnet build RoguelikeToolki
 
 ## Rehydration
 
-> Batches A, B done and pushed. Current batch: **C** (hierarchy and picking), nothing started. Start with C1.
+> Batches A, B, C done and pushed. Current batch: **D** (hydrology), nothing started. Start with D1 (read `Hydrology/LakeSolver.cs:140-243` and `HydrologyStage.cs:150-235` first).
 
 ## Batch A — determinism
 
@@ -55,10 +55,17 @@ Log:
 
 ## Batch C — hierarchy and picking
 
-- [ ] C1 `ChildContextDeriver.FitGradient` centres E/N (+ planar-input test)
-- [ ] C2 `HexPicker` plane picking for flat projections; displaced-surface picking for terrain (+ round-trip tests)
+- [x] C1 `ChildContextDeriver.FitGradient` centres E/N (+ planar-input test)
+- [x] C2 `HexPicker` plane picking for flat projections; displaced-surface picking for terrain (+ round-trip tests)
 
 Log:
+- 2026-10-25. C1: FitGradient centres E/N on the sample centroid (GradientFitTests, 4 offsets exact to 1e-9). Golden hashes
+  re-pinned (local maps move: downhill aspect changes); identical on net10 and netstandard2.1.
+  C2: HexPicker flat = z=0 plane + inverse projection (0.05 deg edge slack, clamp); new overload with surfaceRadius walks
+  down from the outer sphere onto each candidate tile's radius (<=6 rounds). GlControl passes TileTerrainRadius in Terrain
+  mode and puts the flat-map selection highlight in plane space. FlatAndTerrainPickTests: equirect 499, mercator 471,
+  gnomonic 195 tiles exact; terrain 49/49 (fixed 1.42 sphere: 7/49). Presentation 108/108, Core 946/946 (+944 ns2.1),
+  MapEditor.Engine 73/73. App not run (no display); only compiled.
 
 ## Batch D — hydrology
 
