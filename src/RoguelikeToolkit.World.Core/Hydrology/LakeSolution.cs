@@ -16,5 +16,13 @@ internal sealed class LakeSolution
     public bool[] Sink = Array.Empty<bool>();
     /// <summary>Playa floors, terminal-lake tiles, and the exposed lakebed ringing them.</summary>
     public bool[] Saline = Array.Empty<bool>();
+    /// <summary>
+    /// Receiver of an unponded tile of a closed lake's basin (-1 elsewhere): the next tile on its way down to the lake.
+    /// The basin's routing surface is a plateau at the pour level, and resolving that flat by distance would hand part
+    /// of the basin to the pour point outside it.
+    /// </summary>
+    public int[] BasinReceiver = Array.Empty<int>();
+    /// <summary>Hops to the lake along <see cref="BasinReceiver"/> (0 elsewhere); orders the plateau donors-first.</summary>
+    public int[] BasinDepth = Array.Empty<int>();
     public List<Lake> Lakes { get; } = new();
 }

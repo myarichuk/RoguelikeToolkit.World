@@ -172,6 +172,13 @@ public partial class HydrologyStage : IWorldGeneratorStage
         var receiver = new int[n];
         var depth = new int[n];
         Hydrography.ComputeReceivers(store, lakes.Surface, receiver, depth);
+        for (int i = 0; i < n; i++)
+        {
+            // A closed lake's dry basin drains down its own tree to the shore, never over the pour point.
+            if (lakes.BasinReceiver[i] < 0) continue;
+            receiver[i] = lakes.BasinReceiver[i];
+            depth[i] = lakes.BasinDepth[i];
+        }
         var flow = new float[n];
         // One sort of the final routing serves accumulation, channel extraction and the endorheic walk.
         int[] drainOrder = Hydrography.DrainageOrder(lakes.Surface, depth);

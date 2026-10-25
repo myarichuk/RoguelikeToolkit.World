@@ -81,7 +81,7 @@ public class GoldenWorldTests
     // WithLegacyPlates() must keep reproducing those worlds bit for bit.
     [Theory]
     [InlineData(42, 3, false, "D43E534E49575D9BF25B66198CB9DF13DB452122EEDF56D063C2DD1A0831F107")]
-    [InlineData(7, 4, false, "E4EEED798432B8E73CBA58C1C856ED1E53AAD8651D71B43DA8521548488D3EAB")]
+    [InlineData(7, 4, false, "29736ACB1B598EE5369C1D5CC7EF6D8AEFFEB0AD3762A1CE2EA4C574B6617C2A")]
     [InlineData(42, 3, true, "8209A4830BC2617CEECDD8058C8373E5BC5295A2D807100995E0ED275D7324B7")]
     public void LegacyPlates_AreBitStable(int seed, int size, bool tidallyLocked, string expected)
     {

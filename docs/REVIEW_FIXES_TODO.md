@@ -19,7 +19,7 @@ Branch: `claude/gallant-knuth-1ctv0z`. Build/test: `dotnet build RoguelikeToolki
 
 ## Rehydration
 
-> Batches A, B, C done and pushed. Current batch: **D** (hydrology), nothing started. Start with D1 (read `Hydrology/LakeSolver.cs:140-243` and `HydrologyStage.cs:150-235` first).
+> Batches A-D done and pushed. Current batch: **E** (robustness), nothing started. Start with E1 (`WorldBuilder.Build` ~L244-316, `WorldDataStore.Allocate` ~L159-191).
 
 ## Batch A — determinism
 
@@ -69,10 +69,16 @@ Log:
 
 ## Batch D — hydrology
 
-- [ ] D1 Closed lakes do not leak over the pour point
-- [ ] D2 Lake supply counts the unflooded basin's runoff
+- [x] D1 Closed lakes do not leak over the pour point
+- [x] D2 Lake supply counts the unflooded basin's runoff
 
 Log:
+- 2026-10-25. D1: LakeSolution.BasinReceiver/BasinDepth = priority flood (by bed) from a closed lake over its dry basin;
+  HydrologyStage overrides receivers/depth with it (the basin plateau sits exactly at the spill level, so depth ordering
+  stays donors-first). D2: LakeSolver supply = external + every basin tile's runoff less channel loss (whole runoff once
+  ponded). ClosedBasinTests: synthetic notched funnel; asserts distance-only routing leaks there, the tree never does,
+  supply >= basin runoff. Only the legacy (7, 4) golden moved (re-pinned); closed lakes are rare in default worlds.
+  Known gap: Hydrography.ReceiverAt (single-tile queries) does not see the override. Core 947 (+945 ns2.1), others green.
 
 ## Batch E — robustness
 
