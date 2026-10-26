@@ -1,4 +1,6 @@
+using RoguelikeToolkit.World.Core.Biomes;
 using RoguelikeToolkit.World.Core.Elevation;
+using RoguelikeToolkit.World.Core.Hydrology;
 using RoguelikeToolkit.World.Core.Storage;
 
 namespace RoguelikeToolkit.World.Core.History;
@@ -16,24 +18,37 @@ public static class HistoryTerritory
     public const double LandThreshold = 0.0;
 
     /// <summary>
-    /// Assigns every tile an owner: the index into <paramref name="capitals"/> of the nearest capital by
-    /// tile-graph distance (multi-source flood fill, ties to the lowest capital index), or -1 for water
-    /// and unreachable land. Pins (<paramref name="pinnedTiles"/>, tile to owner) win over the flood fill
-    /// and are ignored on water, on out-of-range tiles and on capital tiles (a capital always keeps its own polity). Pure function of its inputs.
+    /// Assigns every tile an owner by plain hop count (<see cref="TerritoryCosts.Uniform"/>); see the overload taking costs.
     /// </summary>
-    /// <param name="store">Tile store (elevation span for the land mask, adjacency for the flood fill).</param>
-    /// <param name="capitals">Capital tiles in polity-id order.</param>
-    /// <param name="pinnedTiles">Forced tile ownership, applied before the flood fill.</param>
     public static int[] AssignOwners(WorldDataStore store, IReadOnlyList<int> capitals, IReadOnlyDictionary<int, int> pinnedTiles)
+        => AssignOwners(store, capitals, pinnedTiles, TerritoryCosts.Uniform);
+
+    /// <summary>
+    /// Assigns every tile an owner: the index into <paramref name="capitals"/> of the capital with the cheapest path to
+    /// it (multi-source shortest path; ties to the lowest capital index, then the lowest tile), or -1 for water and
+    /// unreachable land. Step costs come from <paramref name="costs"/> (data: <c>Peoples/Data/Territory/default.yaml</c>
+    /// scaled per owner's culture), so borders settle on ranges, rivers and wastes instead of the straight bisectors of a
+    /// plain hop count. Pins (<paramref name="pinnedTiles"/>, tile to owner) win over the flood and are ignored on water,
+    /// on out-of-range tiles and on capital tiles (a capital always keeps its own polity). Pure function of its inputs.
+    /// </summary>
+    /// <param name="store">Tile store (elevation for the land mask and terrain, hydrology and biomes when registered, adjacency).</param>
+    /// <param name="capitals">Capital tiles in polity-id order.</param>
+    /// <param name="pinnedTiles">Forced tile ownership, applied before the flood.</param>
+    /// <param name="costs">Per-owner step costs (owner = index into <paramref name="capitals"/>).</param>
+    public static int[] AssignOwners(WorldDataStore store, IReadOnlyList<int> capitals, IReadOnlyDictionary<int, int> pinnedTiles, TerritoryCosts costs)
     {
+        ArgumentNullException.ThrowIfNull(costs);
         int n = store.TileCount;
         var owners = new int[n];
         for (int i = 0; i < owners.Length; i++) owners[i] = -1;
         if (n == 0) return owners;
 
-        var elev = store.IsLayerRegistered<ElevationInfo>() ? store.GetSpan<ElevationInfo>() : default;
         bool hasElev = store.IsLayerRegistered<ElevationInfo>();
-
+        var elev = hasElev ? store.GetSpan<ElevationInfo>() : default;
+        bool hasHydro = store.IsLayerRegistered<HydrologyInfo>();
+        var hydro = hasHydro ? store.GetSpan<HydrologyInfo>() : default;
+        bool hasBiome = store.IsLayerRegistered<BiomeInfo>();
+        var biome = hasBiome ? store.GetSpan<BiomeInfo>() : default;
 
         if (pinnedTiles != null)
         {
@@ -50,7 +65,11 @@ public static class HistoryTerritory
 
         if (capitals.Count == 0) return owners;
 
-        var queue = new Queue<int>();
+        // Dijkstra over land; the key orders by cost, then owner, then tile, so the result never depends on heap shape.
+        var cost = new double[n];
+        for (int i = 0; i < n; i++) cost[i] = double.PositiveInfinity;
+        var settled = new bool[n];
+        var queue = new PriorityQueue<int, (double Cost, int Owner, int Tile)>();
         for (int id = 0; id < capitals.Count; id++)
         {
             int capital = capitals[id];
@@ -58,22 +77,29 @@ public static class HistoryTerritory
             if (hasElev && elev[capital].Height < LandThreshold) continue;
             if (owners[capital] != -1) continue;
             owners[capital] = id;
-            queue.Enqueue(capital);
+            cost[capital] = 0;
+            queue.Enqueue(capital, (0, id, capital));
         }
 
         Span<int> neighbors = stackalloc int[6];
-        while (queue.Count > 0)
+        while (queue.TryDequeue(out int tile, out var key))
         {
-            int tile = queue.Dequeue();
-            int owner = owners[tile];
+            if (settled[tile] || key.Cost > cost[tile] || key.Owner != owners[tile]) continue; // stale entry
+            settled[tile] = true;
             int adjacent = store.GetAdjacent(tile, neighbors);
             for (int k = 0; k < adjacent; k++)
             {
                 int next = neighbors[k];
-                if (owners[next] != -1) continue;
+                if (settled[next]) continue;
                 if (hasElev && elev[next].Height < LandThreshold) continue;
-                owners[next] = owner;
-                queue.Enqueue(next);
+                if (pinnedTiles != null && owners[next] != -1 && cost[next] == double.PositiveInfinity) continue; // a pin
+                double c = key.Cost + costs.Step(key.Owner, tile, next, elev, hydro, biome);
+                if (c < cost[next] || (c == cost[next] && key.Owner < owners[next]))
+                {
+                    cost[next] = c;
+                    owners[next] = key.Owner;
+                    queue.Enqueue(next, (c, key.Owner, next));
+                }
             }
         }
 

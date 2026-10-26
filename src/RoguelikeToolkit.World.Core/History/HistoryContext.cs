@@ -23,6 +23,14 @@ public sealed class HistoryContext
     private int _maxSuccessors = 6;
     private int _maxRebellions = 3;
     private double _hazardRate = 1;
+    private int _maxPersons = 4096;
+    private int _maxLivingPersonsPerPolity = 6;
+    private int _maxAppointmentsPerTurn = 12;
+    private int _maxOutlawBands = 16;
+    private int _maxDetailEventsPerTurn = 32;
+    private int _maxDetailEventsPerPolityOperator = 2;
+    private int _maxOpenRelationsPerPerson = 8;
+    private int _maxSiegeMonths = 18;
 
     /// <summary>Default peoples roster: one human and one non-human folk, matching the shipped tables.</summary>
     public HistoryContext()
@@ -115,6 +123,75 @@ public sealed class HistoryContext
     {
         get => _maxSettlementsPerPolity;
         set => _maxSettlementsPerPolity = value >= 0 ? value : throw new ArgumentOutOfRangeException(nameof(value), "MaxSettlementsPerPolity cannot be negative.");
+    }
+
+    /// <summary>
+    /// Which parts of the history expansion run (default <see cref="HistoryFeatures.All"/>). <see cref="HistoryFeatures.None"/>
+    /// is the legacy simulation: no operator writes persons, battles or route state, and the catalog is byte-identical to the
+    /// one before the expansion (the legacy fixtures pin it).
+    /// </summary>
+    public HistoryFeatures Features { get; set; } = HistoryFeatures.All;
+
+    /// <summary>True when every flag of <paramref name="features"/> is on.</summary>
+    public bool Has(HistoryFeatures features) => (Features & features) == features;
+
+    /// <summary>Upper bound on persons over the whole history, dead included (default 4096). Must be non-negative.</summary>
+    public int MaxPersons
+    {
+        get => _maxPersons;
+        set => _maxPersons = value >= 0 ? value : throw new ArgumentOutOfRangeException(nameof(value), "MaxPersons cannot be negative.");
+    }
+
+    /// <summary>Upper bound on living persons loyal to one polity, its ruler not counted (default 6). Must be non-negative.</summary>
+    public int MaxLivingPersonsPerPolity
+    {
+        get => _maxLivingPersonsPerPolity;
+        set => _maxLivingPersonsPerPolity = value >= 0 ? value : throw new ArgumentOutOfRangeException(nameof(value), "MaxLivingPersonsPerPolity cannot be negative.");
+    }
+
+    /// <summary>Upper bound on office appointments per turn over the whole catalog, rulers not counted (default 12). Must be non-negative.</summary>
+    public int MaxAppointmentsPerTurn
+    {
+        get => _maxAppointmentsPerTurn;
+        set => _maxAppointmentsPerTurn = value >= 0 ? value : throw new ArgumentOutOfRangeException(nameof(value), "MaxAppointmentsPerTurn cannot be negative.");
+    }
+
+    /// <summary>Upper bound on outlaw bands at large at once (default 16). Must be non-negative.</summary>
+    public int MaxOutlawBands
+    {
+        get => _maxOutlawBands;
+        set => _maxOutlawBands = value >= 0 ? value : throw new ArgumentOutOfRangeException(nameof(value), "MaxOutlawBands cannot be negative.");
+    }
+
+    /// <summary>
+    /// Per-turn budget for detail events (sieges, persons, raids, intrigue...; see <see cref="EventImportanceMap.IsDetail"/>),
+    /// separate from <see cref="MaxEventsPerTurn"/> so detail never crowds out structure (default 32). Must be non-negative.
+    /// </summary>
+    public int MaxDetailEventsPerTurn
+    {
+        get => _maxDetailEventsPerTurn;
+        set => _maxDetailEventsPerTurn = value >= 0 ? value : throw new ArgumentOutOfRangeException(nameof(value), "Budget cannot be negative.");
+    }
+
+    /// <summary>Detail events one operator may write about one polity per turn (default 2). Must be non-negative.</summary>
+    public int MaxDetailEventsPerPolityOperator
+    {
+        get => _maxDetailEventsPerPolityOperator;
+        set => _maxDetailEventsPerPolityOperator = value >= 0 ? value : throw new ArgumentOutOfRangeException(nameof(value), "Budget cannot be negative.");
+    }
+
+    /// <summary>Open relations one person may hold (default 8). Must be non-negative.</summary>
+    public int MaxOpenRelationsPerPerson
+    {
+        get => _maxOpenRelationsPerPerson;
+        set => _maxOpenRelationsPerPerson = value >= 0 ? value : throw new ArgumentOutOfRangeException(nameof(value), "MaxOpenRelationsPerPerson cannot be negative.");
+    }
+
+    /// <summary>Longest a siege runs before it lifts (default 18 months). Must be positive.</summary>
+    public int MaxSiegeMonths
+    {
+        get => _maxSiegeMonths;
+        set => _maxSiegeMonths = value >= 1 ? value : throw new ArgumentOutOfRangeException(nameof(value), "MaxSiegeMonths must be positive.");
     }
 
     /// <summary>Turns a displaced group waits for a taker before the pool re-absorbs it into its origin polity (or records it lost). Default 3.</summary>

@@ -1,0 +1,29 @@
+# Wood elves: the forest is the realm, arrows come from nowhere, and every oak has a memory.
+battle.intro:
+  - { id: we_bi1, w: 3, t: "In {year} the wardens of {att.realm} slipped through the green dark like smoke, and {def.realm} learned that the forest had chosen a side." }
+  - { id: we_bi2, when: [terrain=forest], w: 4, t: "{def.realm|cap} made the mistake, in {year}, of bringing its {def.host} under the trees of {att.realm}." }
+  - { id: we_bi3, when: [att.general], w: 3, t: "{att.general} read the year's omens in the turning of the leaves, and in {season.word} of {year} led the {att.host} of {att.realm} against {def.realm}." }
+battle.engage:
+  - { id: we_en1, w: 2, t: "The {att.adj} bowmen were never seen, only heard: the hiss of shafts out of the leaves." }
+battle.after:
+  - { id: we_ba1, when: [winner=attacker], w: 3, t: "{att.realm|cap} planted a sapling where each of its dead had fallen, and the forest grew a little closer to {def.realm}." }
+  - { id: we_ba2, when: [winner=defender], w: 3, t: "The wardens of {att.realm} melted back into the trees, and the forest closed behind them like water." }
+event.Founding:
+  - { id: we_fo1, w: 3, t: "In {year} the wood elves sang to the oldest tree in the forest, and when it answered they named their realm {realm}." }
+  - { id: we_fo2, when: [place], w: 3, t: "In {year} the green kin wove their first flets among the boughs above {place}, and {realm} began." }
+event.PersonRose:
+  - { id: we_ru1, when: [office=ruler], w: 3, t: "In {year} {who} was crowned with a circlet of living leaves and named {who.office} of {realm}." }
+  - { id: we_ap1, when: [office!=ruler, who.office], w: 2, t: "In {year} the glades of {realm} chose {who} as {who.office}, by a vote of whispers." }
+event.PersonDied:
+  - { id: we_dd1, when: [cause=age, who], w: 3, t: "In {year} {who} lay down beneath the eldest oak of {realm} and did not rise; the tree bloomed out of season." }
+  - { id: we_dd2, when: [cause=hunting, who], w: 3, t: "Even the wood elves misjudge a hunt: {who} died in {year}, gored by a stag that the forest had not given leave to kill." }
+event.Grudge:
+  - { id: we_gr1, when: [other.realm], w: 3, t: "In {year} {realm} turned its back on {other.realm}, and the forest paths to that realm grew over in a single season." }
+event.Treaty:
+  - { id: we_tr1, when: [other.realm], w: 2, t: "In {year} {realm} and {other.realm} planted a single tree together, and swore their pact would stand while it stood." }
+event.SettlementFounded:
+  - { id: we_sf1, when: [settlement], w: 3, t: "In {year} a ring of flets went up in the canopy at {settlement}, so well hidden that travellers walked beneath it for years without knowing." }
+event.Shock:
+  - { id: we_sh1, when: [shock.word], w: 2, t: "{shock.word|cap} struck {realm} in {year}; the wood elves mourned the trees before they mourned their own." }
+event.Conquest:
+  - { id: we_cq1, when: [other.realm], w: 3, t: "In {year} {realm} took {other.realm} into the forest's keeping, and its fields went slowly back to wood." }

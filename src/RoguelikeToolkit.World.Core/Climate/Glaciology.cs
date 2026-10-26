@@ -48,7 +48,7 @@ public static class Glaciology
     /// <summary>
     /// True for land tiles at or above the local snowline. The snowline
     /// descends from the equator toward the poles; noise raggeds the margin.
-    /// Ocean tiles are never glaciers (sea ice is not modeled).
+    /// Ocean tiles are never glaciers (sea ice is modelled separately, by <see cref="SeaIce"/>).
     /// Fallback for pipelines without a climate layer; prefer the
     /// climate-aware overload whenever temperature is modeled.
     /// </summary>

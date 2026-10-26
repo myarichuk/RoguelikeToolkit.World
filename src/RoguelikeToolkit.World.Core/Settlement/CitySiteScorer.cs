@@ -56,6 +56,7 @@ public static class CitySiteScorer
         // Exact bucketed "any water within radius" instead of scanning every water
         // tile (mostly ocean) per candidate: that was O(land x water).
         SpatialIndex? waterIndex = null;
+        int[]? nearestWater = null;
         double radiusKm = filter.FreshWaterRadiusKm;
         bool useRadius = !double.IsNaN(radiusKm) && radiusKm > 0 && radiusKm < Math.PI * World.EarthRadiusKm;
         double cosThreshold = useRadius ? DetMath.Cos(radiusKm / World.EarthRadiusKm) : double.NaN;
@@ -117,8 +118,16 @@ public static class CitySiteScorer
                 if (radiusCoversGlobe) water = true;
                 else if (useRadius)
                 {
-                    waterIndex ??= new SpatialIndex(store, isWater: waterTiles.Contains, isGlacier: _ => false);
-                    water = waterIndex.AnyWithin(tileVectors[i], FeatureKind.WaterBody, cosThreshold, exceptTile: i);
+                    // The hop-nearest water tile is almost always within the radius when any is; it settles the answer
+                    // exactly (the same dot test), and only the rest pay for the indexed scan.
+                    nearestWater ??= NearestByHops(store, waterTiles);
+                    int near = nearestWater[i];
+                    water = near >= 0 && near != i && Vector3D.Dot(tileVectors[i], tileVectors[near]) >= cosThreshold;
+                    if (!water)
+                    {
+                        waterIndex ??= new SpatialIndex(store, isWater: waterTiles.Contains, isGlacier: _ => false);
+                        water = waterIndex.AnyWithin(tileVectors[i], FeatureKind.WaterBody, cosThreshold, exceptTile: i);
+                    }
                 }
             }
             if (filter.RequireFreshWater && !water) continue;
@@ -149,5 +158,30 @@ public static class CitySiteScorer
         int topN = Math.Max(0, filter.TopN);
         if (result.Count > topN) result.RemoveRange(topN, result.Count - topN);
         return result;
+    }
+
+    /// <summary>Multi-source BFS over adjacency: for every tile, the first water tile that reaches it (-1 when none does).</summary>
+    private static int[] NearestByHops(WorldDataStore store, HashSet<int> waterTiles)
+    {
+        int n = store.TileCount;
+        var source = new int[n];
+        for (int i = 0; i < n; i++) source[i] = -1;
+        var queue = new Queue<int>();
+        for (int i = 0; i < n; i++)
+            if (waterTiles.Contains(i)) { source[i] = i; queue.Enqueue(i); }
+        Span<int> neighbors = stackalloc int[6];
+        while (queue.Count > 0)
+        {
+            int cur = queue.Dequeue();
+            int adj = store.GetAdjacent(cur, neighbors);
+            for (int k = 0; k < adj; k++)
+            {
+                int next = neighbors[k];
+                if (source[next] >= 0) continue;
+                source[next] = source[cur];
+                queue.Enqueue(next);
+            }
+        }
+        return source;
     }
 }

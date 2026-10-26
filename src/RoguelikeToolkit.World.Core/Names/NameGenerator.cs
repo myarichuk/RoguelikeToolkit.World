@@ -88,7 +88,7 @@ public static class FantasyNameGenerator
         }
         return styles
             .OrderBy(s => s.Race.Equals(FantasyRaces.Human, StringComparison.OrdinalIgnoreCase) ? 0 : 1)
-            .ThenBy(s => s.Label, StringComparer.CurrentCultureIgnoreCase)
+            .ThenBy(s => s.Label, StringComparer.OrdinalIgnoreCase)
             .ToList();
     }
 
@@ -113,6 +113,24 @@ public static class FantasyNameGenerator
     {
         store ??= Shared;
         return NameThemes.ForPlaces(store.Get(TableKey(race, culture, store)), store.Get(Cultures.FantasyCommon));
+    }
+
+    /// <summary>
+    /// How a realm of <paramref name="form"/> founded by this people is named: the place kinds its base name is drawn from,
+    /// and its title templates (<c>{n}</c> = the base name). The people's own table wins per form, then
+    /// <c>fantasy_common</c>; empty lists when neither has the form (callers fall back to a bare name).
+    /// </summary>
+    public static (IReadOnlyList<string> Kinds, IReadOnlyList<string> Titles) RealmNaming(string race, string culture, string form, NameDataStore? store = null)
+    {
+        store ??= Shared;
+        var table = store.Get(TableKey(race, culture, store));
+        store.Tables.TryGetValue(Cultures.FantasyCommon, out var common);
+        static List<string>? Pick(CultureData? t, Dictionary<string, List<string>>? map, string key)
+            => t != null && map != null && map.TryGetValue(key, out var list) && list.Count > 0 ? list : null;
+        var kinds = Pick(table, table.RealmNameKinds, form) ?? Pick(common, common?.RealmNameKinds, form) ?? new List<string>();
+        var titles = (Pick(table, table.RealmTitles, form) ?? Pick(common, common?.RealmTitles, form) ?? new List<string>())
+            .Where(t => t.Contains("{n}", StringComparison.Ordinal)).ToList();
+        return (kinds, titles);
     }
 
     /// <summary>

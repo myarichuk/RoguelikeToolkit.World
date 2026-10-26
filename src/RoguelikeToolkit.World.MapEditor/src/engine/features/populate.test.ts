@@ -2,7 +2,8 @@ import { describe, expect, it } from 'vitest';
 import type { AssetLibrary } from '../content/AssetLibrary';
 import type { PlacementRule } from '../content/types';
 import type { MapDocument } from '../doc/MapDocument';
-import { placeVariant, populate, tuneRules } from './populate';
+import { placeVariant, populate, settlementAsset, tuneRules } from './populate';
+import type { FeatureEntity } from '../doc/types';
 
 const stubDoc = (biome: number) => ({
   elevationAt: () => 0.3,
@@ -86,5 +87,34 @@ describe('tuneRules', () => {
 
   it('passes rules through without tuning', () => {
     expect(tuneRules(rules, undefined)).toBe(rules);
+  });
+});
+
+describe('settlementAsset', () => {
+  const styled: Record<string, Record<string, string[]>> = { dwarven: { village: ['core.village.dwarven'], port: ['core.port.dwarven'], fort: ['core.fort.dwarven'], ruin: ['core.ruin.dwarven'] } };
+  const plain: Record<string, string[]> = { village: ['core.village'], town: ['core.town'], port: ['core.port'], fort: ['core.fort'], ruin: ['core.ruins'], shrine: ['core.temple'] };
+  // The registry's contract: the style's assets for the kind, else the kind's plain ones.
+  const lookup = (kind: string, arch?: string) => (arch && styled[arch]?.[kind]) || plain[kind] || [];
+  const feature = (kind: FeatureEntity['kind'], architecture?: string, coast = false): FeatureEntity => ({
+    id: 'f_1', kind, name: '', x: 0, y: 0, angle: 0, extent: 0, weight: 1, culture: '', details: coast ? [['Water access', 'coast']] : [], ...(architecture ? { architecture } : {}),
+  });
+
+  it('draws a place in its realm\'s architecture', () => {
+    expect(settlementAsset(feature('village', 'dwarven'), lookup)).toBe('core.village.dwarven');
+    expect(settlementAsset(feature('fort', 'dwarven'), lookup)).toBe('core.fort.dwarven');
+    expect(settlementAsset(feature('ruin', 'dwarven'), lookup)).toBe('core.ruin.dwarven');
+  });
+
+  it('makes a coastal town a port in its style', () => {
+    expect(settlementAsset(feature('town', 'dwarven', true), lookup)).toBe('core.port.dwarven');
+    expect(settlementAsset(feature('town', undefined, true), lookup)).toBe('core.port');
+  });
+
+  it('falls back to the plain asset for a kind or style without one, and for places without history', () => {
+    expect(settlementAsset(feature('town', 'dwarven'), lookup)).toBe('core.town');
+    expect(settlementAsset(feature('village', 'unknown'), lookup)).toBe('core.village');
+    expect(settlementAsset(feature('village'), lookup)).toBe('core.village');
+    expect(settlementAsset(feature('fort'), lookup)).toBe('core.fort');
+    expect(settlementAsset(feature('river'), lookup)).toBeNull();
   });
 });

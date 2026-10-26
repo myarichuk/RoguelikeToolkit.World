@@ -1,0 +1,42 @@
+Key: default
+# The court's sway (HistoryFeatures.Intrigue): hawk = weighted mean over the ruler and office holders of (100 - A + E)/200.
+WarBase: 0.7
+WarHawk: 0.6
+TreatyBase: 0.7
+TreatyDove: 0.6
+RulerWeight: 2
+MerchantPeace: 0.6
+CasusBelliGrudge: 3      # a grudge this heavy (an exposed plot gives ExposedGrudge) picks the war's target ...
+CasusBelliChance: 0.1    # ... and adds this to the war chance
+
+# Plots a court starts against the rival it holds the heaviest grudge against: pay (or hire) the band on a road of the rival's,
+# or plant a spy network (an agent) in the rival's seat. Every covert act has a sponsor and an operative who can be caught.
+PlotChance: 0.3
+Plots: { sponsorship: 6, spy_network: 4 }
+# What an agent does, a turn in AgentOpChance x (0.5 + Intrigue/100): each operation risks the agent (ExposeBase, ExposeSpy).
+AgentOps: { sabotage: 2, bribe: 2, assassination: 1, theft: 2 }
+AgentOpChance: 0.4
+AgentDiscovery: 0.05     # counter-intelligence uncovers an idle agent, x the rival's spy/100
+AgentAgeMin: 0.25
+AgentAgeMax: 0.5
+MaxAgents: 2
+TheftShare: 0.2
+SponsoredSabotage: 0.15  # a sponsored band cuts its road on its sponsor's account
+PlotOffices: [spymaster, council, seer, elder, chancellor, treasurer]   # whoever holds the first of these runs the plots
+NoSpymaster: 30
+ExposeBase: 0.25
+ExposeSpy: 0.5
+SponsorExposeBase: 0.2
+SponsorExposeSpy: 0.4
+ConfessChance: 0.5       # a hanged leader of a sponsored band names the sponsor
+ExposedGrudge: 3
+AssassinBase: 0.35
+AssassinSpy: 0.5
+BribeLoyalty: 40
+
+# Loyalty of office holders drifts toward LoyaltyBase + PatronLoyalty [patron] - RivalLoyalty x rivalries + AgreeablenessLoyalty x (A - 50).
+LoyaltyBase: 20
+PatronLoyalty: 30
+RivalLoyalty: 15
+AgreeablenessLoyalty: 0.6
+LoyaltyDrift: 0.3

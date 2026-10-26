@@ -1,0 +1,17 @@
+Key: orcish_horde
+Doctrine: { berserk_rush: 40, horse_archers: 30, ambush: 20, shieldwall: 10 }
+Units:
+  - { Key: wolf_riders, Arm: horse, Weight: 3 }
+  - { Key: boar_tuskers, Arm: beast, Weight: 1 }
+  - { Key: blood_howlers, Arm: foot, Weight: 3 }
+Mobility: 80
+Discipline: 35
+SiegeSkill: 25
+Forage: 90
+ColdTolerance: 60
+Fortify: 10
+FortKind: stake_fort
+Seafaring: 20
+Levy: 1.4
+CampaignSeasons: { Spring: 2, Summer: 3, Autumn: 2, Winter: 1 }
+Customs: [take_heads, no_quarter, duel_of_champions]

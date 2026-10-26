@@ -53,7 +53,31 @@ Descriptors:
   - {Form: Blighted, Gloss: blighted, Tags: [danger, valley]}
   - {Form: Howling, Gloss: howl-haunted, Tags: [danger, hill]}
   - {Form: Cinder, Gloss: cinder-black, Tags: [mountain, danger]}
+  - {Form: Scorched, Gloss: scorched, Tags: [danger, valley]}
+  - {Form: Sulfur, Gloss: sulfur-stained, Tags: [deposit, mountain]}
+  - {Form: Sooty, Gloss: sooty, Tags: [mountain, dark]}
+  - {Form: Gnawed, Gloss: gnawed, Tags: [hill, danger]}
+  - {Form: Festering, Gloss: festering, Tags: [valley, danger]}
+  - {Form: Bleak, Gloss: bleak, Tags: [hill, dark]}
+  - {Form: Drowned, Gloss: drowned, Tags: [sea, danger]}
+  - {Form: Ruined, Gloss: ruined, Tags: [town, danger]}
+  - {Form: Sunless, Gloss: sunless, Tags: [dark, valley]}
+  - {Form: Crimson, Gloss: crimson, Tags: [danger]}
+  - {Form: Endless, Gloss: endless}
 Nouns:
   - {Form: pit, Gloss: pit hold, Tags: [deposit, hill]}
   - {Form: wound, Gloss: scarred hollow, Tags: [valley]}
   - {Form: maw, Gloss: ravine, Tags: [mountain, valley]}
+  - {Form: hovel, Gloss: ash hovel, Tags: [village]}
+  - {Form: shanty, Gloss: ash shanty, Tags: [village, valley]}
+  - {Form: gutter, Gloss: gutter town, Tags: [town, city]}
+  - {Form: warren, Gloss: warren town, Tags: [town]}
+  - {Form: bastion, Gloss: iron bastion, Tags: [hold]}
+  - {Form: horde, Gloss: war horde, Tags: [camp]}
+  - {Form: spine, Gloss: spine ridge, Tags: [mountain]}
+  - {Form: sluice, Gloss: blood sluice, Tags: [river]}
+  - {Form: gorge, Gloss: gorge, Tags: [river, valley]}
+  - {Form: mire, Gloss: mire-lake, Tags: [lake, water]}
+  - {Form: grove, Gloss: twisted grove, Tags: [forest]}
+  - {Form: brake, Gloss: thorn brake, Tags: [forest]}
+  - {Form: abyss, Gloss: abyssal sea, Tags: [sea, dark]}

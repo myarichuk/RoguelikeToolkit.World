@@ -77,12 +77,14 @@ public sealed class Polity
     public int HeirBornTurn { get; set; } = -1;
     /// <summary>True once a <c>VillainOperator</c> villain rose to rule this polity; successions freeze at the rise turn.</summary>
     public bool HasVillain { get; set; }
-    /// <summary>History turn the polity ended (collapsed, absorbed), or -1 while alive. Unused by the ported operators in M1.</summary>
+    /// <summary>History turn the polity ended (collapsed, absorbed), or -1 while alive.</summary>
     public int EndedTurn { get; set; } = -1;
     /// <summary>Interned end cause (<see cref="StringTable"/>), or -1 while alive.</summary>
     public int EndCause { get; set; } = -1;
     /// <summary>Id of the polity this one split from, or -1 for a founding polity.</summary>
     public int Parent { get; set; } = -1;
+    /// <summary>Id of the polity that absorbed this one, or -1. Its old capital keeps seeding territory for that polity (or whoever absorbed it in turn).</summary>
+    public int AbsorbedInto { get; set; } = -1;
     /// <summary>True until <see cref="EndedTurn"/> is set.</summary>
     public bool Alive => EndedTurn < 0;
 }

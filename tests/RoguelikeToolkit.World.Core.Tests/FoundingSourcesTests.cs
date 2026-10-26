@@ -27,9 +27,12 @@ public sealed class FoundingSourcesTests
                     "pilgrimage" => SettlementRole.Shrine,
                     "route" => SettlementRole.Node,
                     "sedentarized" => SettlementRole.Colony,
+                    FortificationOperator.FortWhy => SettlementRole.Post,
+                    LogisticsOperator.WaystationWhy => SettlementRole.Waystation,
                     _ => throw new Xunit.Sdk.XunitException("unknown why " + why),
                 };
-                Assert.Equal(expected, s.Role);
+                // A settlement keeps its founding role unless a split later made it a new polity's seat.
+                Assert.True(s.Role == expected || s.Role == SettlementRole.Capital, $"{why} settlement is a {s.Role}");
                 Assert.Equal($"role:{expected}", e.Tags.First(t => t.StartsWith("role:", StringComparison.Ordinal)));
                 Assert.True(s.Parent >= 0);
                 seen.Add(why);
@@ -49,7 +52,11 @@ public sealed class FoundingSourcesTests
             var h = w.History;
             // After a collapse a shrine may sit in a successor that owns no holy site of its own.
             if (h.Events.Any(e => e.Kind == HistoryEventKind.PolityCollapsed)) continue;
-            foreach (var s in h.Settlements.Where(s => s.Role == SettlementRole.Shrine))
+            // A shrine taken in war stays a shrine of its captor while the holy site stays with the land's owner.
+            var captured = h.Events.Where(e => e.Kind == HistoryEventKind.SettlementCaptured)
+                .Select(e => int.Parse(e.Tags.First(t => t.StartsWith("settlement:", StringComparison.Ordinal))["settlement:".Length..]))
+                .ToHashSet();
+            foreach (var (s, i) in h.Settlements.Select((s, i) => (s, i)).Where(x => x.s.Role == SettlementRole.Shrine && !captured.Contains(x.i)))
                 Assert.Contains(h.HolySites, hs => hs.PolityId == s.PolityId);
             foreach (var s in h.Settlements.Where(s => s.Role == SettlementRole.Post))
                 Assert.True(h.Polities.Any(p => p.Id != s.PolityId), "A post needs a rival polity to face.");

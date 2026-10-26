@@ -1,0 +1,12 @@
+# Gnomish burrows.
+host: ["engine-company", "burrow-guard", "tinker-regiment"]
+cry!: ["Wind the springs!", "Loose the engines!", "Precision!", "For the Burrow, and for science!"]
+office.ruler!: ["first engineer", "chair of the high committee"]
+office.chancellor: ["master of the ledgers"]
+office.marshal: ["master of engines"]
+terrain.hills: ["warren-riddled hills"]
+season.spring: ["the season of new designs"]
+noun.song: ["treatises", "commemorative pamphlets"]
+noun.grief: ["a minute's silence, precisely timed"]
+verb.won: ["prevailed, as calculated", "won by a measurable margin"]
+noun.goods: ["clockwork and lenses", "springs, gears and fine tools"]

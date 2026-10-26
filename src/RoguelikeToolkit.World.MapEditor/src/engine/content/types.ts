@@ -67,7 +67,7 @@ export interface Theme {
   map: MapStyle;
   /** Biome id -> land color (styled view). */
   biomes: Record<string, string>;
-  /** Label kind -> typography. Kinds: capital, city, town, village, ruin, shrine, battlefield, river, lake, sea, ocean, mountain, valley, forest, region, title. */
+  /** Label kind -> typography. Kinds: capital, city, town, village, fort, ruin, shrine, battlefield, river, lake, sea, ocean, mountain, valley, forest, region, title. */
   labels: Record<string, LabelStyle>;
   /** Optional UI chrome colors as CSS custom properties ("--bg": "#1d1a17"). */
   ui?: Record<string, string>;
@@ -146,6 +146,12 @@ export interface ContentPack {
   rules?: PlacementRule[];
   /** Feature kind -> asset ids used for settlement/feature markers ("capital": ["core.capital"]). */
   featureAssets?: Record<string, string[]>;
+  /**
+   * Architectural styles: style key (a culture's `architecture`, e.g. "dwarven") -> feature kind -> asset ids,
+   * the markers a place of that kind owned by a realm of that culture is drawn with. A style or kind left out
+   * falls back to `featureAssets[kind]`, so a pack can style just the kinds it cares about.
+   */
+  architecture?: Record<string, Record<string, string[]>>;
   /** Font key -> URL (relative URLs resolve against the pack's own URL). */
   fonts?: Record<string, string>;
 }

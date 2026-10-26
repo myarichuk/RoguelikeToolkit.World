@@ -21,7 +21,7 @@ export class PackRegistry {
 
   /** Adds (or replaces, by id) a pack. Throws with all validation errors. */
   add(raw: unknown, baseUrl: string): ContentPack {
-    const { pack, errors } = validatePack(raw);
+    const { pack, errors } = validatePack(raw, new Set(this.loaded.flatMap((l) => (l.pack.assets ?? []).map((a) => a.id))));
     if (!pack) throw new Error(`Invalid content pack:\n${errors.join('\n')}`);
     const existing = this.loaded.findIndex((l) => l.pack.id === pack.id);
     const entry = { pack, baseUrl, enabled: true };
@@ -62,10 +62,26 @@ export class PackRegistry {
     return new Map(this.merged((p) => p.assets).map((a) => [a.id, a]));
   }
 
-  featureAssets(kind: string): string[] {
+  /**
+   * Marker assets for a feature kind; with an architectural style, that style's assets for the kind
+   * (later packs win), else the kind's plain `featureAssets`.
+   */
+  featureAssets(kind: string, architecture?: string): string[] {
+    if (architecture) {
+      let styled: string[] | undefined;
+      for (const l of this.active()) styled = l.pack.architecture?.[architecture]?.[kind] ?? styled;
+      if (styled?.length) return styled;
+    }
     let out: string[] = [];
     for (const l of this.active()) out = l.pack.featureAssets?.[kind] ?? out;
     return out;
+  }
+
+  /** Architectural style keys the active packs define. */
+  architectures(): string[] {
+    const out = new Set<string>();
+    for (const l of this.active()) for (const k of Object.keys(l.pack.architecture ?? {})) out.add(k);
+    return [...out];
   }
 
   /** Font key -> absolute URL. */

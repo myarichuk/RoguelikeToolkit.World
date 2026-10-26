@@ -1,6 +1,6 @@
 // Main-thread proxy for the world worker (Proxy pattern): promise-based RPC over postMessage.
 // Callers never see the worker, the .NET runtime, or message ids.
-import type { GenerateParams, NameRequest, PeopleOption, RecomputeParams, NameStyle, WorkerRequest, WorkerResponse, WorldSnapshot } from './protocol';
+import type { GenerateParams, HistoryFeature, NameRequest, PeopleOption, RecomputeParams, NameStyle, WorkerRequest, WorkerResponse, WorldSnapshot } from './protocol';
 
 type Ok = Extract<WorkerResponse, { ok: true }>;
 type Pending = { resolve: (r: Ok) => void; reject: (e: Error) => void };
@@ -42,6 +42,9 @@ export class WorldService {
     const timer = setTimeout(() => this.fail(worker, new Error(`The world engine did not start within ${Math.round(this.bootTimeoutMs / 1000)} s. Check the connection and reload; if it keeps happening the host may be throttling the download.`)), this.bootTimeoutMs);
     const stop = () => clearTimeout(timer);
     void boot.then(stop, stop);
+    // A boot the engine itself rejected (a failed download, a runtime error) marks the worker dead like a crash
+    // would, so the next call spawns a fresh one instead of awaiting this rejection forever.
+    void boot.catch((err: unknown) => this.fail(worker, err instanceof Error ? err : new Error(String(err))));
     return boot;
   }
 
@@ -97,11 +100,11 @@ export class WorldService {
     return (await this.call<'styles'>({ type: 'styles' })).styles;
   }
 
-  /** The peoples a world can be founded by, and the polity form names (indexed by the value founders pin). */
-  async peoples(): Promise<{ peoples: PeopleOption[]; forms: string[] }> {
+  /** The peoples a world can be founded by, the polity form names (indexed by the value founders pin) and the history expansion features. */
+  async peoples(): Promise<{ peoples: PeopleOption[]; forms: string[]; features: HistoryFeature[] }> {
     await this.alive();
     const r = await this.call<'peoples'>({ type: 'peoples' });
-    return { peoples: r.peoples, forms: r.forms };
+    return { peoples: r.peoples, forms: r.forms, features: r.features ?? [] };
   }
 
   /** The engine, restarted first when the last one died. */

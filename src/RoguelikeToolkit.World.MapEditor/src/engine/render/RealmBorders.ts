@@ -8,12 +8,15 @@ export interface RealmOutline {
   path: Path2D;
 }
 
-/** Where a realm's name goes and how big it is (map units). */
+/** Where a realm's name may go and how big it is (map units). */
 export interface RealmLabel {
   id: number;
   text: string;
+  /** Preferred spot: the realm's own cell nearest its centroid. */
   x: number;
   y: number;
+  /** Fallback spots, deepest inside the realm first, for when the preferred one collides with another name. */
+  candidates: [number, number][];
   size: number;
 }
 
@@ -28,7 +31,7 @@ const MIN_CELLS = 4;
 const TOLERANCE = 0.6;
 const LABEL_MIN = 6, LABEL_MAX = 14;
 
-interface Extent { id: number; x0: number; y0: number; x1: number; y1: number; count: number; sumX: number; sumY: number; }
+export interface Extent { id: number; x0: number; y0: number; x1: number; y1: number; count: number; sumX: number; sumY: number; }
 
 /** Per realm: its bounding box in cells, its size and the sum of its cell coordinates (for the centroid). */
 function measure(cells: Int32Array): Map<number, Extent> {
@@ -76,6 +79,39 @@ function labelCell(cells: Int32Array, e: Extent): [number, number] {
   return best;
 }
 
+/** Most fallback spots kept per realm, and how far apart (cells) they must be to be worth trying. */
+const MAX_CANDIDATES = 6, CANDIDATE_SPACING = 8;
+
+/**
+ * The realm's interior cells, deepest first: a chamfer distance to the nearest cell that is not the realm's, over its
+ * bounding box. Deep cells hold a name without spilling over the border; spacing keeps the list from being one blob.
+ */
+export function interiorCandidates(cells: Int32Array, e: Extent): [number, number][] {
+  const w = e.x1 - e.x0 + 1, h = e.y1 - e.y0 + 1, d = new Float32Array(w * h);
+  const own = (x: number, y: number) => x >= 0 && y >= 0 && x < w && y < h && cells[(y + e.y0) * GRID_W + (x + e.x0)] === e.id;
+  for (let y = 0; y < h; y++) for (let x = 0; x < w; x++) {
+    if (!own(x, y)) { d[y * w + x] = 0; continue; }
+    const up = y > 0 ? d[(y - 1) * w + x] : 0, left = x > 0 ? d[y * w + x - 1] : 0;
+    d[y * w + x] = Math.min(up, left) + 1;
+  }
+  for (let y = h - 1; y >= 0; y--) for (let x = w - 1; x >= 0; x--) {
+    if (!own(x, y)) continue;
+    const down = y < h - 1 ? d[(y + 1) * w + x] : 0, right = x < w - 1 ? d[y * w + x + 1] : 0;
+    d[y * w + x] = Math.min(d[y * w + x], Math.min(down, right) + 1);
+  }
+  const order: number[] = [];
+  for (let i = 0; i < d.length; i++) if (d[i] > 1) order.push(i);
+  order.sort((a, b) => d[b] - d[a] || a - b);
+  const picked: [number, number][] = [];
+  for (const i of order) {
+    const x = i % w, y = (i - x) / w;
+    if (picked.some(([px, py]) => Math.abs(px - x) + Math.abs(py - y) < CANDIDATE_SPACING)) continue;
+    picked.push([x, y]);
+    if (picked.length >= MAX_CANDIDATES) break;
+  }
+  return picked.map(([x, y]) => [(x + e.x0 + 0.5) * CELL, (y + e.y0 + 0.5) * CELL]);
+}
+
 /**
  * Realm outlines and names for the overlay, traced from the realm grid. Rebuilt only when the grid changes (a new
  * turn, document or history), so panning and zooming just replay the cached paths.
@@ -99,7 +135,7 @@ export class RealmBorders {
       outlines.push({ id: e.id, path: outline(grid.cells, e) });
       const [cx, cy] = labelCell(grid.cells, e);
       labels.push({
-        id: e.id, text: realmName(grid.history, e.id), x: (cx + 0.5) * CELL, y: (cy + 0.5) * CELL,
+        id: e.id, text: realmName(grid.history, e.id), x: (cx + 0.5) * CELL, y: (cy + 0.5) * CELL, candidates: interiorCandidates(grid.cells, e),
         size: Math.min(LABEL_MAX, Math.max(LABEL_MIN, Math.sqrt(e.count) * CELL * 0.12)),
       });
     }

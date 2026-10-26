@@ -46,7 +46,35 @@ Descriptors:
   - {Form: Night, Gloss: nighted, Tags: [dark, danger]}
   - {Form: Deep, Gloss: deep, Tags: [mountain, valley, dark]}
   - {Form: Pale, Gloss: lamplit, Tags: [dark, deposit]}
+  - {Form: Umbral, Gloss: umbral, Tags: [dark]}
+  - {Form: Gloomy, Gloss: gloomy, Tags: [dark, valley]}
+  - {Form: Sable, Gloss: sable, Tags: [dark]}
+  - {Form: Obsidian, Gloss: obsidian, Tags: [mountain, deposit]}
+  - {Form: Cavernous, Gloss: cavernous, Tags: [mountain, dark]}
+  - {Form: Lightless, Gloss: lightless, Tags: [dark]}
+  - {Form: Inky, Gloss: inky, Tags: [lake, dark]}
+  - {Form: Silent, Gloss: silent, Tags: [valley]}
+  - {Form: Glassy, Gloss: glass-smooth, Tags: [lake]}
+  - {Form: Starless, Gloss: starless, Tags: [dark]}
+  - {Form: Webbed, Gloss: webbed, Tags: [forest, dark]}
 Nouns:
   - {Form: hollow, Gloss: cavern hall, Tags: [town, city, mountain]}
   - {Form: veil, Gloss: shrouded vale, Tags: [valley]}
   - {Form: deep, Gloss: the deep, Tags: [mountain]}
+  - {Form: nest, Gloss: web nest, Tags: [village, valley]}
+  - {Form: hive, Gloss: hive, Tags: [village]}
+  - {Form: enclave, Gloss: walled enclave, Tags: [town, city]}
+  - {Form: spire, Gloss: obsidian spire, Tags: [hold, mountain]}
+  - {Form: fold, Gloss: shadow fold, Tags: [camp]}
+  - {Form: knoll, Gloss: webbed knoll, Tags: [hill]}
+  - {Form: rift, Gloss: gloom rift, Tags: [valley]}
+  - {Form: seep, Gloss: seep, Tags: [river]}
+  - {Form: runnel, Gloss: sunless runnel, Tags: [river]}
+  - {Form: basin, Gloss: black basin, Tags: [lake, dark]}
+  - {Form: grove, Gloss: fungal grove, Tags: [forest, dark]}
+  - {Form: thicket, Gloss: web thicket, Tags: [forest]}
+  - {Form: abyss, Gloss: unlit abyss, Tags: [sea, dark]}
+# Realm titles in this people's voice ({n} = the base name); forms not listed use fantasy_common's.
+RealmTitles:
+  Kingdom: ["{n} Matriarchy", "Webthrone of {n}", "Underdark Court of {n}"]
+  LooseAssociation: ["Houses of {n}", "{n} Cabal", "Shadow Compact of {n}"]

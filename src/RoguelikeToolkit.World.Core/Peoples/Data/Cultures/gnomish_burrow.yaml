@@ -15,8 +15,14 @@ ConscientiousnessOffset: 0
 ExtraversionOffset: 0
 AgreeablenessOffset: 0
 NeuroticismOffset: 0
+Architecture: tinker
 FormAffinity:
   MerchantRepublic: 35
   LooseAssociation: 35
   Kingdom: 25
   Horde: 5
+# Multipliers on the territory step costs (Territory/default.yaml): where this people's reach runs easily.
+TerrainAffinity:
+  Mountain: 0.8
+  Climb: 0.8
+  High: 0.75

@@ -15,8 +15,14 @@ ConscientiousnessOffset: 0
 ExtraversionOffset: 0
 AgreeablenessOffset: 0
 NeuroticismOffset: 0
+Architecture: longhouse
 FormAffinity:
   Horde: 35
   Kingdom: 30
   LooseAssociation: 30
   MerchantRepublic: 5
+# Multipliers on the territory step costs (Territory/default.yaml): where this people's reach runs easily.
+TerrainAffinity:
+  Tundra: 0.8
+  Forest: 0.93
+  ColdDesert: 0.9

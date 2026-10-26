@@ -1,37 +1,30 @@
 import { hash2 } from '../../core/rng';
 import type { NameRequest } from '../protocol';
 
+/** How one people names realms of one form: the place kinds a base name is drawn from, and title templates (`{n}`). */
+export interface RealmNaming { kinds: readonly string[]; titles: readonly string[] }
+
+/** Used when the name data has nothing for a people and form: a valley or hold name, untitled. */
+export const FALLBACK_NAMING: RealmNaming = { kinds: ['valley', 'hold'], titles: ['{n}'] };
+
+/** The engine's `RealmNaming` export (element 0: tab-joined kinds; the rest: titles) as a `RealmNaming`. */
+export function parseRealmNaming(raw: readonly string[]): RealmNaming {
+  const kinds = (raw[0] ?? '').split('\t').filter(Boolean), titles = raw.slice(1).filter((t) => t.includes('{n}'));
+  return { kinds: kinds.length ? kinds : FALLBACK_NAMING.kinds, titles: titles.length ? titles : FALLBACK_NAMING.titles };
+}
+
 /**
- * Realms are named from the land, not the town: a city roll gives "Goldhaven, Greyhaven, Greyburg" for every realm,
- * while valleys, forests, mountains and seas each bring their own endings (-dale, -holt, -fell, -strait). Each form
- * leans on the places its people would take their name from.
+ * The place name a realm is built on, asked of the naming style of its people. Realms are named from the land, not the
+ * town ("Goldhaven" for every realm): the name data lists, per people and form, the kinds of place that name a realm.
  */
-const NAME_KINDS: Record<string, readonly string[]> = {
-  Kingdom: ['valley', 'forest', 'hold'],
-  MerchantRepublic: ['sea', 'lake', 'river'],
-  LooseAssociation: ['river', 'valley', 'forest'],
-  Horde: ['mountain', 'hold', 'valley'],
-};
-
-/** How a form's realm is titled; `{n}` is the name. Several per form, so a world of kingdoms is not all "Kingdom of". */
-const TITLES: Record<string, readonly string[]> = {
-  Kingdom: ['Kingdom of {n}', 'Realm of {n}', '{n} Crown', 'Principality of {n}'],
-  MerchantRepublic: ['{n} Republic', 'Free Ports of {n}', '{n} Compact', 'Commonwealth of {n}'],
-  LooseAssociation: ['{n} League', '{n} Confederacy', '{n} Concord', 'Free Holds of {n}'],
-  Horde: ['{n} Horde', 'Host of {n}', 'Clans of {n}', '{n} Warband'],
-};
-
-const FALLBACK_KINDS = ['valley', 'hold'], FALLBACK_TITLES = ['{n}'];
-
-/** The place name a realm is built on, asked of the naming style of its people. */
-export function realmNameRequest(seed: number, polity: number, form: string, race: string, culture: string): NameRequest {
-  const kinds = NAME_KINDS[form] ?? FALLBACK_KINDS;
+export function realmNameRequest(seed: number, polity: number, naming: RealmNaming, race: string, culture: string): NameRequest {
+  const kinds = naming.kinds.length ? naming.kinds : FALLBACK_NAMING.kinds;
   const h = hash2(seed, 0x7e11 + polity);
   return { kind: kinds[h % kinds.length], seed: h & 0x7fffffff, race, culture, context: 0 };
 }
 
-/** The realm's full title around its base name. */
-export function realmTitle(seed: number, polity: number, form: string, name: string): string {
-  const titles = TITLES[form] ?? FALLBACK_TITLES;
+/** The realm's full title around its base name, from the people's title templates. */
+export function realmTitle(seed: number, polity: number, naming: RealmNaming, name: string): string {
+  const titles = naming.titles.length ? naming.titles : FALLBACK_NAMING.titles;
   return titles[hash2(seed, 0x7171 + polity) % titles.length].replace('{n}', name);
 }

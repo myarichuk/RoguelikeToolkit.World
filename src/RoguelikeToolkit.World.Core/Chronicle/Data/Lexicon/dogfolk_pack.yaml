@@ -1,0 +1,12 @@
+# Dogfolk packs.
+host: ["pack", "war-pack", "hunting pack", "running host"]
+cry!: ["For the Pack!", "Bite and hold!", "Run them down!", "Loyal unto death!", "Hold the scent!"]
+office.ruler!: ["pack-leader", "first of the pack"]
+office.war_leader: ["lead hound"]
+office.elder: ["grey-muzzle"]
+season.winter: ["the season of the long howl"]
+noun.song: ["howls", "moon-songs"]
+noun.grief: ["howling grief"]
+verb.won: ["ran the enemy to ground", "brought the quarry down"]
+verb.fled: ["scattered like hunted hares"]
+noun.goods: ["salt fish and tanned hides", "rope and sea-salt"]

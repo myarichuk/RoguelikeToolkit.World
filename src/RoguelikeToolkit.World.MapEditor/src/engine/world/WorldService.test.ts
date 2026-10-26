@@ -5,13 +5,18 @@ import { WorldService } from './WorldService';
 class FakeWorker {
   static all: FakeWorker[] = [];
   static bootAfterMs: number | null = 10;
+  /** How many of the next workers answer `init` with an error (a failed download, a runtime error). */
+  static failBoots = 0;
   onmessage: ((e: MessageEvent) => void) | null = null;
   onerror: ((e: { message: string }) => void) | null = null;
   terminated = false;
   constructor() { FakeWorker.all.push(this); }
   postMessage(req: { id: number; type: string }) {
     if (req.type === 'init') {
-      if (FakeWorker.bootAfterMs !== null) setTimeout(() => this.onmessage?.({ data: { id: req.id, ok: true, type: 'init', bootMs: 7 } } as MessageEvent), FakeWorker.bootAfterMs);
+      if (FakeWorker.failBoots > 0) {
+        FakeWorker.failBoots--;
+        setTimeout(() => this.onmessage?.({ data: { id: req.id, ok: false, error: 'download failed' } } as MessageEvent), 1);
+      } else if (FakeWorker.bootAfterMs !== null) setTimeout(() => this.onmessage?.({ data: { id: req.id, ok: true, type: 'init', bootMs: 7 } } as MessageEvent), FakeWorker.bootAfterMs);
     } else if (req.type === 'styles') {
       setTimeout(() => this.onmessage?.({ data: { id: req.id, ok: true, type: 'styles', styles: [] } } as MessageEvent), 1);
     }
@@ -20,7 +25,7 @@ class FakeWorker {
 }
 
 describe('WorldService', () => {
-  beforeEach(() => { FakeWorker.all = []; FakeWorker.bootAfterMs = 10; vi.stubGlobal('Worker', FakeWorker); vi.useFakeTimers(); });
+  beforeEach(() => { FakeWorker.all = []; FakeWorker.bootAfterMs = 10; FakeWorker.failBoots = 0; vi.stubGlobal('Worker', FakeWorker); vi.useFakeTimers(); });
   afterEach(() => { vi.useRealTimers(); vi.unstubAllGlobals(); });
 
   it('boots and answers calls', async () => {
@@ -60,6 +65,19 @@ describe('WorldService', () => {
     await vi.advanceTimersByTimeAsync(0);
     FakeWorker.all[0].onerror?.({ message: 'out of memory' });
     await failed;
+  });
+
+  it('starts a fresh engine for the next call after a failed boot', async () => {
+    FakeWorker.failBoots = 1;
+    const svc = new WorldService('x', 1000);
+    const failed = expect(svc.ready).rejects.toThrow(/download failed/);
+    await vi.advanceTimersByTimeAsync(5);
+    await failed;
+    expect(FakeWorker.all[0].terminated).toBe(true);
+    const styles = svc.styles();
+    await vi.advanceTimersByTimeAsync(50);
+    await expect(styles).resolves.toEqual([]);
+    expect(FakeWorker.all).toHaveLength(2);
   });
 
   it('restart drops the running work and boots a new engine', async () => {

@@ -44,7 +44,8 @@ public sealed class FaithPostPass : IHistoryPostPass
             var tags = new List<string> { "myth", $"faith:{faith.Form}" };
             foreach (string power in faith.Powers) tags.Add($"power:{power}");
             tags.AddRange(faith.MythSlots);
-            history.AppendEvent(HistoryEventKind.Myth, Math.Max(context.TurnCount - 1, 0), polity.Id, polity.CapitalTile, tags);
+            // Unbudgeted: the last simulated turn may have spent its event allowance, and a faith without its myth is a hole.
+            history.AppendPriorityEvent(HistoryEventKind.Myth, Math.Max(context.TurnCount - 1, 0), polity.Id, polity.CapitalTile, tags);
         }
     }
 

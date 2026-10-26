@@ -69,6 +69,7 @@ public sealed class HistoryDriver : HistoryPluginBase
         context.ClearOperatorBudgets();
         RejectedProposals = 0;
         history.Timeline.Begin(history);
+        history.RouteSamples.Clear();
         _recording = true;
         try
         {
@@ -93,7 +94,7 @@ public sealed class HistoryDriver : HistoryPluginBase
         foreach (var op in ordered)
         {
             var own = new List<Proposal>();
-            op.Propose(view, new ProposalSink(op.Name, turn, history.Seed, context, own));
+            op.Propose(view, new ProposalSink(op.Name, turn, history.Seed, context, own, history.Strings));
             proposals.AddRange(own);
         }
         Commit(map, history, context, turn, proposals);
@@ -101,8 +102,13 @@ public sealed class HistoryDriver : HistoryPluginBase
         {
             history.Timeline.RecordTerritory(turn, view.OwnershipSnapshot(), history.Ownership);
             history.Timeline.Sample(history, turn);
+            foreach (var r in history.RouteStates) history.RouteSamples.Add(new RouteSample(turn, r.RouteA, r.RouteB, r.Safety, r.Traffic));
         }
-        else history.Timeline.Clear();
+        else
+        {
+            history.Timeline.Clear();
+            history.RouteSamples.Clear();
+        }
     }
 
     private void Commit(WorldMap map, HistoryCatalog history, HistoryContext context, int turn, List<Proposal> proposals)
@@ -117,113 +123,150 @@ public sealed class HistoryDriver : HistoryPluginBase
             return c != 0 ? c : a.Sequence.CompareTo(b.Sequence);
         });
         var dirty = new HashSet<int>();
-        if (AddPolities(map, history, context, turn, proposals, dirty))
+        var applied = new HashSet<Proposal>(); // proposals are classes without value equality: identity
+        if (AddPolities(map, history, context, turn, proposals, dirty, applied))
             proposals.RemoveAll(static p => p is Proposal.AddPolity or Proposal.SplitPolity or Proposal.AbsorbPolity);
+        // Expansion kernel: persons join in a pre-pass of their own, so the turn's other proposals can name them.
+        var expansion = new ExpansionCommit(history, context, turn);
+        expansion.CloseEndedOffices();
+        RejectedProposals += expansion.AddPersons(proposals, applied);
+        proposals.RemoveAll(static p => p is Proposal.AddPerson);
         var claimed = new HashSet<(ProposalKind, long)>();
         var deltas = new SortedDictionary<(int Polity, int Scalar), double>();
         bool reassigned = false;
         var reassignedTiles = new HashSet<int>();
+        // Proposals that require another commit after every independent one, and only when it was applied.
+        var deferred = new List<Proposal>();
         foreach (var p in proposals)
         {
-            if (p.ConflictKey is long key && !claimed.Add((p.Kind, key))) { RejectedProposals++; continue; }
-            switch (p)
-            {
-                case Proposal.ReassignTile r:
-                    if ((uint)r.Tile < (uint)history.Ownership.Length) { history.Ownership[r.Tile] = r.EntityId; reassigned = true; reassignedTiles.Add(r.Tile); }
-                    break;
-                case Proposal.AddRoad r:
-                    history.Roads.Add(new HistoryRoad { TileA = r.TileA, TileB = r.TileB, PolityId = r.EntityId, RouteA = r.RouteA, RouteB = r.RouteB, FoundedTurn = turn });
-                    break;
-                case Proposal.SeverRoute s:
-                    foreach (var road in history.Roads)
-                        if (!road.Severed && road.RouteA == s.RouteA && road.RouteB == s.RouteB) { road.Severed = true; road.SeveredTurn = turn; }
-                    break;
-                case Proposal.AddHolySite h:
-                    history.HolySites.Add(new HistoryHolySite { TileIndex = h.Tile, PolityId = h.EntityId, FoundedTurn = turn, Position = h.Position });
-                    break;
-                case Proposal.AddGrudge g:
-                    history.AddGrudge(g.EntityId, g.Other, g.Weight, turn);
-                    break;
-                case Proposal.RepayGrudge g:
-                    history.RepayGrudges(g.EntityId, g.Other);
-                    break;
-                case Proposal.AddWindow w:
-                    history.AddWindow(w.EntityId, w.Other, w.UntilTurn);
-                    break;
-                case Proposal.AddScar sc:
-                    if (!string.IsNullOrWhiteSpace(sc.ScarKind) && !history.Scars.Any(x => x.TileIndex == sc.Tile && x.Kind == sc.ScarKind))
-                        history.Scars.Add(new HistoryScar { TileIndex = sc.Tile, PolityId = sc.EntityId, FoundedTurn = turn, Kind = sc.ScarKind, Cause = sc.Cause ?? string.Empty, Position = sc.Position });
-                    break;
-                case Proposal.SetOverlay so:
-                    var overlaid = history.Polities.Find(p => p.Id == so.EntityId);
-                    if (overlaid != null) overlaid.CultureOverlay = so.Culture;
-                    break;
-                case Proposal.SetHeir sh:
-                    var heirOwner = history.Polities.Find(p => p.Id == sh.EntityId);
-                    if (heirOwner != null) heirOwner.HeirBornTurn = sh.HeirBornTurn;
-                    break;
-                case Proposal.AddVillain av:
-                    var ruled = history.Polities.Find(p => p.Id == av.EntityId);
-                    if (ruled == null || ruled.HasVillain || history.Villains.Count >= context.MaxVillains) { RejectedProposals++; break; }
-                    history.Villains.Add(new VillainRecord
-                    {
-                        Id = history.Villains.Count, PolityId = ruled.Id, FolkKey = ruled.FolkKey, RisenTurn = turn, Agenda = av.Agenda,
-                    });
-                    ruled.HasVillain = true;
-                    ruled.RulerGeneration = av.RulerGeneration;
-                    break;
-                case Proposal.DriftOpenness dr:
-                    var drifting = history.Polities.Find(p => p.Id == dr.EntityId);
-                    if (drifting != null && drifting.OpennessDrift < HistoryDemography.MaxOpennessDrift) drifting.OpennessDrift++;
-                    break;
-                case Proposal.AddSettlement ads:
-                    if (!TryFoundSettlement(map, history, context, turn, ads, dirty)) RejectedProposals++;
-                    break;
-                case Proposal.EndSettlement ens:
-                    if (!TryEndSettlement(history, turn, ens, dirty)) RejectedProposals++;
-                    break;
-                case Proposal.AppendEvent e:
-                    history.AppendLinked(e.EventKind, turn, e.EntityId, e.Tile, e.Tags, e.Cause, e.Participants, e.PluginKind);
-                    break;
-                case Proposal.SetPluginState sps:
-                    history.PluginState.Set(sps.Key, sps.Version, sps.Data);
-                    break;
-                case Proposal.SetPopulation sp:
-                    var target = history.Polities.Find(p => p.Id == sp.EntityId);
-                    if (target != null) { target.Population = sp.Population; target.RulerGeneration = sp.RulerGeneration; }
-                    break;
-                case Proposal.GrowSettlement gs:
-                    if ((uint)gs.Settlement < (uint)history.Settlements.Count)
-                    {
-                        var grown = history.Settlements[gs.Settlement];
-                        if (!grown.Ended && grown.PolityId == gs.EntityId)
-                        {
-                            grown.Population = Math.Max(0, grown.Population + gs.Delta);
-                            dirty.Add(grown.PolityId);
-                        }
-                    }
-                    break;
-                case Proposal.ReleasePopulation rp:
-                    if (!TryRelease(history, turn, rp, dirty)) RejectedProposals++;
-                    break;
-                case Proposal.KillPopulation kp:
-                    if (!TryKill(history, kp, dirty)) RejectedProposals++;
-                    break;
-                case Proposal.CaptureSettlement cap:
-                    if (!TryCapture(history, context, cap, dirty)) RejectedProposals++;
-                    break;
-                case Proposal.ChangeTier ct:
-                    if (!TryChangeTier(history, turn, ct)) RejectedProposals++;
-                    break;
-                case Proposal.AbsorbDisplaced ab:
-                    if (!TryAbsorb(history, ab, dirty)) RejectedProposals++;
-                    break;
-                case Proposal.AdjustScalar a:
-                    var k = (a.EntityId, a.ScalarId);
-                    deltas[k] = deltas.GetValueOrDefault(k) + a.Delta;
-                    break;
-            }
+            if (p.Requires != null) deferred.Add(p);
+            else Apply(p);
         }
+        // In canonical order, pass after pass, so a chain (an event on a capture that waits on a siege) resolves; a pass that
+        // applies nothing ends it. A single-level dependency resolves in the first pass, as it always did.
+        while (deferred.Count > 0)
+        {
+            var waiting = new List<Proposal>();
+            int before = applied.Count;
+            foreach (var p in deferred)
+            {
+                if (applied.Contains(p.Requires!)) Apply(p);
+                else if (deferred.Contains(p.Requires!)) waiting.Add(p);
+            }
+            if (applied.Count == before) break;
+            deferred = waiting;
+        }
+
+        void Apply(Proposal p)
+        {
+            if (p.ConflictKey is long key && !claimed.Add((p.Kind, key))) { RejectedProposals++; return; }
+            int rejectedBefore = RejectedProposals;
+                switch (p)
+                {
+                    case Proposal.ReassignTile r:
+                        if ((uint)r.Tile < (uint)history.Ownership.Length) { history.Ownership[r.Tile] = r.EntityId; reassigned = true; reassignedTiles.Add(r.Tile); }
+                        break;
+                    case Proposal.AddRoad r:
+                        history.Roads.Add(new HistoryRoad { TileA = r.TileA, TileB = r.TileB, PolityId = r.EntityId, RouteA = r.RouteA, RouteB = r.RouteB, FoundedTurn = turn });
+                        break;
+                    case Proposal.SeverRoute s:
+                        foreach (var road in history.Roads)
+                            if (!road.Severed && road.RouteA == s.RouteA && road.RouteB == s.RouteB) { road.Severed = true; road.SeveredTurn = turn; }
+                        break;
+                    case Proposal.AddHolySite h:
+                        history.HolySites.Add(new HistoryHolySite { TileIndex = h.Tile, PolityId = h.EntityId, FoundedTurn = turn, Position = h.Position });
+                        break;
+                    case Proposal.AddGrudge g:
+                        history.AddGrudge(g.EntityId, g.Other, g.Weight, turn);
+                        break;
+                    case Proposal.RepayGrudge g:
+                        history.RepayGrudges(g.EntityId, g.Other);
+                        break;
+                    case Proposal.AddWindow w:
+                        history.AddWindow(w.EntityId, w.Other, w.UntilTurn);
+                        break;
+                    case Proposal.AddScar sc:
+                        if (!string.IsNullOrWhiteSpace(sc.ScarKind) && !history.Scars.Any(x => x.TileIndex == sc.Tile && x.Kind == sc.ScarKind))
+                            history.Scars.Add(new HistoryScar { TileIndex = sc.Tile, PolityId = sc.EntityId, FoundedTurn = turn, Kind = sc.ScarKind, Cause = sc.Cause ?? string.Empty, Position = sc.Position });
+                        break;
+                    case Proposal.SetOverlay so:
+                        var overlaid = history.Polities.Find(p => p.Id == so.EntityId);
+                        if (overlaid != null) overlaid.CultureOverlay = so.Culture;
+                        break;
+                    case Proposal.SetHeir sh:
+                        var heirOwner = history.Polities.Find(p => p.Id == sh.EntityId);
+                        if (heirOwner != null) heirOwner.HeirBornTurn = sh.HeirBornTurn;
+                        break;
+                    case Proposal.AddVillain av:
+                        var ruled = history.Polities.Find(p => p.Id == av.EntityId);
+                        if (ruled == null || ruled.HasVillain || history.Villains.Count >= context.MaxVillains) { RejectedProposals++; break; }
+                        history.Villains.Add(new VillainRecord
+                        {
+                            Id = history.Villains.Count, PolityId = ruled.Id, FolkKey = ruled.FolkKey, RisenTurn = turn, Agenda = av.Agenda,
+                        });
+                        ruled.HasVillain = true;
+                        ruled.RulerGeneration = av.RulerGeneration;
+                        break;
+                    case Proposal.DriftOpenness dr:
+                        var drifting = history.Polities.Find(p => p.Id == dr.EntityId);
+                        if (drifting != null && drifting.OpennessDrift < HistoryDemography.MaxOpennessDrift) drifting.OpennessDrift++;
+                        break;
+                    case Proposal.AddSettlement ads:
+                        if (!TryFoundSettlement(map, history, context, turn, ads, dirty)) RejectedProposals++;
+                        break;
+                    case Proposal.EndSettlement ens:
+                        if (!TryEndSettlement(history, turn, ens, dirty)) RejectedProposals++;
+                        break;
+                    case Proposal.AppendEvent e:
+                        if (expansion.Event(e) is { } resolved)
+                            history.AppendLinked(e.EventKind, turn, e.EntityId, e.Tile, resolved.Tags, e.Cause, resolved.Participants, e.PluginKind);
+                        else RejectedProposals++;
+                        break;
+                    case Proposal.EndPerson or Proposal.SetTenure or Proposal.AddRelation or Proposal.EndRelation or Proposal.AdjustPerson
+                        or Proposal.AddBattle or Proposal.AdjustRoute or Proposal.SetRouteFlag:
+                        if (!expansion.Apply(p)) RejectedProposals++;
+                        break;
+                    case Proposal.SetPluginState sps:
+                        history.PluginState.Set(sps.Key, sps.Version, sps.Data);
+                        break;
+                    case Proposal.SetPopulation sp:
+                        var target = history.Polities.Find(p => p.Id == sp.EntityId);
+                        if (target != null) { target.Population = sp.Population; target.RulerGeneration = sp.RulerGeneration; }
+                        break;
+                    case Proposal.GrowSettlement gs:
+                        if ((uint)gs.Settlement < (uint)history.Settlements.Count)
+                        {
+                            var grown = history.Settlements[gs.Settlement];
+                            if (!grown.Ended && grown.PolityId == gs.EntityId)
+                            {
+                                grown.Population = Math.Max(0, grown.Population + gs.Delta);
+                                dirty.Add(grown.PolityId);
+                            }
+                        }
+                        break;
+                    case Proposal.ReleasePopulation rp:
+                        if (!TryRelease(history, turn, rp, dirty)) RejectedProposals++;
+                        break;
+                    case Proposal.KillPopulation kp:
+                        if (!TryKill(history, kp, dirty)) RejectedProposals++;
+                        break;
+                    case Proposal.CaptureSettlement cap:
+                        if (!TryCapture(history, context, cap, dirty)) RejectedProposals++;
+                        break;
+                    case Proposal.ChangeTier ct:
+                        if (!TryChangeTier(history, turn, ct)) RejectedProposals++;
+                        break;
+                    case Proposal.AbsorbDisplaced ab:
+                        if (!TryAbsorb(history, ab, dirty)) RejectedProposals++;
+                        break;
+                    case Proposal.AdjustScalar a:
+                        var k = (a.EntityId, a.ScalarId);
+                        deltas[k] = deltas.GetValueOrDefault(k) + a.Delta;
+                        break;
+                }
+            if (RejectedProposals == rejectedBefore) applied.Add(p);
+        }
+        expansion.Finish();
         if (reassigned) SyncSettlementOwners(history, reassignedTiles, dirty);
         DecayDisplaced(history, context, turn, dirty);
         ResyncPopulations(history, dirty, reassigned);
@@ -465,7 +508,8 @@ public sealed class HistoryDriver : HistoryPluginBase
     /// from every living capital and syncs holy-site owners. Returns true when the turn had any
     /// <see cref="Proposal.AddPolity"/> or <see cref="Proposal.SplitPolity"/> (all of them are consumed).
     /// </summary>
-    private bool AddPolities(WorldMap map, HistoryCatalog history, HistoryContext context, int turn, List<Proposal> proposals, HashSet<int> dirty)
+    private bool AddPolities(WorldMap map, HistoryCatalog history, HistoryContext context, int turn, List<Proposal> proposals, HashSet<int> dirty,
+        HashSet<Proposal> applied)
     {
         bool any = false;
         bool changed = false;
@@ -481,6 +525,7 @@ public sealed class HistoryDriver : HistoryPluginBase
             };
             history.Polities.Add(polity);
             CapitalSettlements.Add(map.DataStore, history, polity, turn);
+            applied.Add(ap);
             changed = true;
         }
         var split = new List<(Polity Parent, List<int> Successors)>();
@@ -489,21 +534,22 @@ public sealed class HistoryDriver : HistoryPluginBase
             if (p is not Proposal.SplitPolity sp) continue;
             any = true;
             if (!TrySplit(map, history, context, turn, sp, dirty, split)) { RejectedProposals++; continue; }
+            applied.Add(sp);
             changed = true;
         }
-        var absorbed = new List<(Polity Polity, int Into, List<int> Tiles)>();
+        var absorbed = new List<(Polity Polity, int Into)>();
         foreach (var p in proposals)
         {
             if (p is not Proposal.AbsorbPolity ab) continue;
             any = true;
             if (!TryAbsorb(history, turn, ab, dirty, absorbed)) { RejectedProposals++; continue; }
+            applied.Add(ab);
             changed = true;
         }
         if (!changed) return any;
         history.Ownership = history.FloodOwnership(map.DataStore);
-        foreach (var (gone, into, tiles) in absorbed)
+        foreach (var (gone, into) in absorbed)
         {
-            foreach (int tile in tiles) history.Ownership[tile] = into;
             foreach (var settlement in history.Settlements)
                 if (!settlement.Ended && settlement.PolityId == gone.Id) settlement.PolityId = into;
         }
@@ -513,7 +559,38 @@ public sealed class HistoryDriver : HistoryPluginBase
             if (owner >= 0) site.PolityId = owner;
         }
         foreach (var (parent, successors) in split) HandOver(history, parent, successors, dirty);
+        if (split.Count > 0 || absorbed.Count > 0) RehomeDisplaced(history, dirty);
         return any;
+    }
+
+    /// <summary>
+    /// People in the displaced pool whose polity just ended follow the land: the living owner of the settlement they
+    /// left, else the absorber, else the first successor. Left with a dead polity's id, asylum and refuge never pick
+    /// them up and the decay writes them all off as lost.
+    /// </summary>
+    private static void RehomeDisplaced(HistoryCatalog history, HashSet<int> dirty)
+    {
+        foreach (var group in history.Displaced)
+        {
+            if (!(group.Amount > 0) || (uint)group.PolityId >= (uint)history.Polities.Count) continue;
+            var dead = history.Polities[group.PolityId];
+            if (dead.Alive) continue;
+            int heir = -1;
+            if ((uint)group.Origin < (uint)history.Settlements.Count)
+            {
+                int owner = history.OwnerOf(history.Settlements[group.Origin].TileIndex);
+                if ((uint)owner < (uint)history.Polities.Count && history.Polities[owner].Alive) heir = owner;
+            }
+            if (heir < 0) heir = history.LivingHeir(dead.Id);
+            if (heir < 0)
+            {
+                foreach (var p in history.Polities)
+                    if (p.Alive && p.Parent == dead.Id && p.FoundedTurn == dead.EndedTurn) { heir = p.Id; break; }
+            }
+            if (heir < 0) continue;
+            group.PolityId = heir;
+            dirty.Add(heir);
+        }
     }
 
     private static bool TrySplit(WorldMap map, HistoryCatalog history, HistoryContext context, int turn, Proposal.SplitPolity sp,
@@ -558,7 +635,15 @@ public sealed class HistoryDriver : HistoryPluginBase
             tags.Add($"successor:{successor.Id}");
             bool seated = false;
             foreach (var s in history.Settlements)
-                if (!s.Ended && s.PolityId == parent.Id && s.TileIndex == tile) { seated = true; break; }
+            {
+                if (s.Ended || s.PolityId != parent.Id || s.TileIndex != tile) continue;
+                // The successor's seat is its capital now, whatever the parent used it for: only ever sacked, never
+                // captured or razed, and held at the capital tier floor.
+                s.Role = SettlementRole.Capital;
+                if (s.Tier < TierOperator.CapitalFloor) s.Tier = TierOperator.CapitalFloor;
+                seated = true;
+                break;
+            }
             if (!seated) CapitalSettlements.Add(map.DataStore, history, successor, turn);
             dirty.Add(successor.Id);
         }
@@ -569,23 +654,21 @@ public sealed class HistoryDriver : HistoryPluginBase
     }
 
     private static bool TryAbsorb(HistoryCatalog history, int turn, Proposal.AbsorbPolity ab, HashSet<int> dirty,
-        List<(Polity Polity, int Into, List<int> Tiles)> absorbed)
+        List<(Polity Polity, int Into)> absorbed)
     {
         if ((uint)ab.EntityId >= (uint)history.Polities.Count || (uint)ab.Into >= (uint)history.Polities.Count || ab.EntityId == ab.Into) return false;
         var gone = history.Polities[ab.EntityId];
         var into = history.Polities[ab.Into];
         if (!gone.Alive || !into.Alive || gone.FoundedTurn >= turn) return false;
-        var tiles = new List<int>();
-        for (int t = 0; t < history.Ownership.Length; t++)
-            if (history.Ownership[t] == gone.Id) tiles.Add(t);
         gone.EndedTurn = turn;
         gone.EndCause = history.Strings.Intern("absorbed");
+        gone.AbsorbedInto = into.Id; // the re-flood credits its land to the absorber
         into.Population += gone.Population;
         gone.Population = 0;
         dirty.Add(gone.Id);
         dirty.Add(into.Id);
         history.AppendLinked(HistoryEventKind.PolityAbsorbed, turn, gone.Id, gone.CapitalTile, new List<string> { "absorbed", $"into:{into.Id}" }, -1, null);
-        absorbed.Add((gone, into.Id, tiles));
+        absorbed.Add((gone, into.Id));
         return true;
     }
 

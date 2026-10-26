@@ -1,0 +1,29 @@
+# High elves: long memory, starlight, white towers, and a disdain they do not trouble to hide.
+battle.intro:
+  - { id: he_bi1, w: 3, t: "In {year} the silver trumpets of {att.realm} sounded from the white towers, and the {att.host} rode out against {def.realm} as if to a festival." }
+  - { id: he_bi2, when: [att.general], w: 3, t: "{att.general} had watched {def.realm} for a century, by elven reckoning; in {year} {att.general.he} judged the time had come." }
+  - { id: he_bi3, w: 2, t: "The star-readers of {att.realm} named the hour, and in {season.word} of {year} the {att.host} moved against {def.realm} without haste and without mercy." }
+battle.after:
+  - { id: he_ba1, when: [winner=attacker], w: 3, t: "The loremasters of {att.realm} wrote the victory into the long annals, between a wedding and a comet." }
+  - { id: he_ba2, when: [winner=defender], w: 3, t: "{att.realm|cap} did not speak of the defeat; the high elves have long memories, and longer silences." }
+event.Founding:
+  - { id: he_fo1, w: 3, t: "In {year} the elder kin raised a white tower under the stars and named the realm around it {realm}." }
+  - { id: he_fo2, when: [place], w: 3, t: "In {year} the high elves laid the first moonstone at {place}, and {realm} began, as they say, in the right way." }
+event.PersonRose:
+  - { id: he_ru1, when: [office=ruler], w: 3, t: "In {year} {who} was crowned with starlight in the high hall of {realm}, and the old songs were sung in full, which takes nine days." }
+  - { id: he_ru2, when: [office=ruler, who.age], w: 3, t: "At {who.age}, barely grown by elven measure, {who} took the throne of {realm} in {year}." }
+  - { id: he_ap1, when: [office!=ruler, who.office], w: 2, t: "In {year} {who} was granted the silver seal of the {who.office} of {realm}." }
+event.PersonDied:
+  - { id: he_dd1, when: [cause=age, who], w: 3, t: "In {year} {who} grew weary of the world and passed into the West, as the elder kin do; {realm} wore grey for a year." }
+  - { id: he_dd2, when: [who], w: 2, t: "{who} died in {year}, and the lamps of {realm} were veiled; an elf's death is always too soon." }
+event.Grudge:
+  - { id: he_gr1, when: [other.realm], w: 3, t: "{realm|cap} took the refusal of {other.realm} in {year} with perfect courtesy, and never forgave it." }
+  - { id: he_gr2, when: [other.realm], w: 2, t: "In {year} {other.realm} was written into the long annals of {realm} as a people of small manners." }
+event.Treaty:
+  - { id: he_tr1, when: [other.realm], w: 2, t: "In {year} {realm} and {other.realm} exchanged vows beneath the stars, in words older than either realm." }
+event.SettlementFounded:
+  - { id: he_sf1, when: [settlement], w: 3, t: "In {year} {realm} raised a slender tower at {settlement}, and a town of white stone grew at its feet." }
+event.Conquest:
+  - { id: he_cq1, when: [other.realm], w: 3, t: "In {year} {realm} brought {other.realm} under its gentle and unbending rule, and taught its children the proper way to speak." }
+siege.intro:
+  - { id: he_si1, when: [settlement], w: 2, t: "In {year} the {att.host} of {att.realm} encircled {settlement} and waited, with the patience of those who live a thousand years." }

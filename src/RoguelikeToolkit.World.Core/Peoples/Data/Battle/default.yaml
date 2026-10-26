@@ -1,0 +1,179 @@
+# The battle model (BattleDef). Every term the resolver uses is here; see docs/HISTORY_EXPANSION_PLAN.md §3.
+Key: default
+
+# Forces (a side always brings MusterFloor of its levy; the rest musters by distance): levy = population x FormLevy x culture Levy x (1 + CollectivismLevy x (collectivism - 50)); a settlement d degrees from
+# the field sends exp(-d / (MusterDegrees x (0.5 + Mobility/100))) of its share. The attacker's host also thins with its supply
+# line: x exp(-d / (ReachDegrees x (0.5 + Mobility/100))), d from its nearest settlement.
+FormLevy: { Horde: 0.20, LooseAssociation: 0.10, Kingdom: 0.07, MerchantRepublic: 0.04 }
+CollectivismLevy: 0.005
+ReachDegrees: 40
+MusterDegrees: 15
+MusterFloor: 0.5
+DefenderReadiness: 0.6
+WarnedBase: 0.5
+WarnedPerIntrigue: 0.004
+
+# Supply: reach x SeasonSupply + Forage/100 x forage(field) x (1 - reach), clamped to SupplyMin..1; power x (1 - SupplyPower x (1 - supply)).
+SeasonSupply: { Spring: 0.9, Summer: 1.0, Autumn: 1.0, Winter: 0.7 }
+ForageChannels: { Arable: 0.5, Pasture: 0.3, Game: 0.2 }
+SupplyMin: 0.25
+SupplyPower: 0.3
+AvertedBelow: 0.35
+
+# Morale.
+MoraleBase: 0.5
+MoraleHonor: 0.003
+MoraleHome: 0.12
+MoraleHoly: 0.1
+MoraleRenown: 0.05
+RenownScale: 10
+MoralePressure: 0
+PressureFrom: 0.5
+MoraleHunger: 0.1
+MoraleMin: 0.2
+MoraleMax: 1.2
+
+# Terrain: the keys of TerrainDefence are the terrain classes tactics fit to.
+TerrainDefence: { open: 0.0, forest: 0.10, hills: 0.20, mountain: 0.35, marsh: 0.15, desert: 0.0, snow: 0.05 }
+BiomeTerrain:
+  Plains: open
+  Savanna: open
+  Mediterranean: open
+  Forest: forest
+  Jungle: forest
+  Mountain: mountain
+  Swamp: marsh
+  Tundra: snow
+  Glacier: snow
+  Desert: desert
+  RockDesert: desert
+  SaltFlat: desert
+  ColdDesert: desert
+  Badlands: hills
+  Canyon: hills
+DefaultTerrain: open
+HillsTerrain: hills
+HillsFrom: 0.3
+RiverDefence: 0.3
+RiverBypass: 0.5
+FieldCandidates: 6
+FieldSharpness: 2
+
+# Initiative: mobility, the commander's martial and intrigue, and noise.
+InitiativeMobility: 0.01
+InitiativeMartial: 0.01
+InitiativeIntrigue: 0.003
+InitiativeNoise: 0.5
+
+# Engagement: margin = MarginScale x log(power ratio) + spread x logistic noise.
+MarginScale: 2
+MarginSpread: 1
+MarginSpreadMin: 0.3
+DecisiveMargin: 3.25
+VictoryMargin: 0.6
+StalemateMargin: 0.15
+DeclineBelow: 0.4
+MartialPower: 0.008
+BetrayalBelow: -30     # intrigue: a commander this disloyal betrays the host (it loses BetrayalPower of its power)
+BetrayalPower: 0.25
+WinterPenalty: 0.5
+WinterRange: 20
+WinterDefenderShare: 0.5
+WinterAttrition: 0.2
+
+# Losses and commanders.
+LoserLossBase: 0.10
+LoserLossPerMargin: 0.08
+LoserLossMin: 0.05
+LoserLossMax: 0.6
+WinnerLossBase: 0.12
+WinnerLossMin: 0.02
+WinnerLossMax: 0.3
+PursuitLoss: 0.15
+PursuitDiscipline: 200
+GeneralDeathBase: 0.03
+GeneralDeathLost: 0.10
+GeneralDeathRouted: 0.15
+GeneralDeathCause: battle
+
+# Beats. A beat a tactic lists is drawn only for a winner fighting that tactic; the others by their conditions.
+# One turning point is drawn by weight; Always beats are added whenever their conditions hold.
+Beats:
+  - { Key: flank, Weight: 3, When: [winner_arm=horse] }
+  - { Key: broke_the_line, Weight: 2, When: ["!outcome=pyrrhic"] }
+  - { Key: feigned_retreat, Weight: 3 }
+  - { Key: arrow_storm, Weight: 2, When: ["!season=Spring"] }
+  - { Key: shields_locked, Weight: 2 }
+  - { Key: pikes_held, Weight: 2 }
+  - { Key: harried, Weight: 2 }
+  - { Key: trap_sprung, Weight: 3 }
+  - { Key: night_attack, Weight: 1 }
+  - { Key: frenzy, Weight: 2 }
+  - { Key: stampede, Weight: 2 }
+  - { Key: rain_on_bowstrings, Weight: 4, When: [season=Spring, loser_arm=missile] }
+  - { Key: river_ford_held, Weight: 4, When: [river, winner=defender] }
+  - { Key: forded_upstream, Weight: 3, When: [river_bypassed, winner=attacker] }
+  - { Key: snowbound, Weight: 3, When: [season=Winter, terrain=snow] }
+  - { Key: mired, Weight: 2, When: [terrain=marsh, loser_arm=horse] }
+  - { Key: champion_duel, Weight: 1, When: [custom=duel_of_champions, "!outcome=stalemate"] }
+  - { Key: held_the_line, Weight: 3, When: [outcome=stalemate] }
+  - { Key: last_stand, Weight: 2, When: [outcome=decisive, winner=attacker] }
+  - { Key: slaughter, Weight: 3, When: [outcome=decisive, custom=no_quarter] }
+  - { Key: hard_fought, Weight: 0.5, When: ["!outcome=decisive"] }
+  - { Key: rout, Weight: 0.5, When: [outcome=decisive] }
+  - { Key: field_refused, Weight: 1, When: [declined, winner=attacker] }
+  - { Key: withdrew, Weight: 1, When: [declined, winner=none] }
+  # Sieges are told only by beats that ask for one (kind=Siege or end=...), and battles never by those.
+  - { Key: walls_breached, Weight: 3, When: [end=stormed] }
+  - { Key: escalade, Weight: 2, When: [end=stormed] }
+  - { Key: starved_out, Weight: 3, When: [end=surrendered] }
+  - { Key: gate_opened, Weight: 3, When: [end=betrayed] }
+  - { Key: relief_arrived, Weight: 3, When: [end=relieved] }
+  - { Key: camp_fever, Weight: 2, When: [end=lifted] }
+  - { Key: winter_camp, Weight: 3, When: [end=lifted, season=Winter] }
+  - { Key: held_out, Weight: 3, When: [end=abandoned] }
+  - { Key: general_fell, Always: true, When: [general_fell] }
+  - { Key: general_captured, Always: true, When: [general_captured] }
+  - { Key: heads_taken, Always: true, When: [outcome=decisive, custom=take_heads] }
+  - { Key: winter_quarters, Always: true, When: [wintered] }
+  - { Key: turncoat, Always: true, When: [betrayed] }   # intrigue: a bribed or disloyal commander turned on his own host   # logistics: the host wintered in quarters and fought in spring
+
+# Commanders' epithets (Peoples/Data/Traits/epithets.yaml) in battle.
+Epithets:
+  reckless: { Spread: 0.5, Death: 0.08, Initiative: 0.1, Tactics: { berserk_rush: 1.5, heavy_charge: 1.5, ambush: 0.7 } }
+  cautious: { Spread: -0.3, Death: -0.01, Tactics: { shieldwall: 1.5, pike_square: 1.3, skirmish: 1.2, berserk_rush: 0.6 } }
+  bold: { Initiative: 0.1, Death: 0.03 }
+  craven: { Spread: 0.2, Death: -0.02, Initiative: -0.1 }
+  cunning: { Initiative: 0.15, Tactics: { ambush: 1.6, horse_archers: 1.2 } }
+  wise: { Spread: -0.1 }
+
+# Customs of war (Warfare/*.yaml lists the ones each culture keeps).
+Customs:
+  ransom: { Capture: 0.6 }
+  no_quarter: { Pursuit: 1.5, Casualties: 1.3 }
+  take_heads: { Morale: 0.05 }
+  duel_of_champions: {}
+  salt_fields: { Raze: true }
+
+# What each outcome does to the defender's settlement nearest the field.
+Aftermath:
+  AttackerDecisive: capture
+  AttackerVictory: sack
+  AttackerPyrrhic: none
+  Stalemate: none
+  DefenderVictory: none
+  DefenderDecisive: grudge
+# With sieges on: after these outcomes (and after a raid the defender refused to meet) the place is besieged instead, when
+# its walls can stand a siege.
+Besiege: [AttackerDecisive, AttackerVictory]
+BesiegeDeclined: true
+AftermathGrudge: 2
+SackCasualty: 0.08
+SackDisplacement: 0.15
+RazeCasualty: 0.3
+CasualtyCap: 0.05
+RenownWin: 2
+RenownDecisive: 2
+RenownLoss: -1
+NemesisMeetings: 2
+NemesisRelation: nemesis

@@ -1,0 +1,18 @@
+Key: dragonfolk_aerie
+Doctrine: { berserk_rush: 30, war_beasts: 30, heavy_charge: 20, massed_archery: 20 }
+Units:
+  - { Key: scale_guard, Arm: foot, Weight: 2 }
+  - { Key: drakes, Arm: beast, Weight: 2 }
+  - { Key: flame_spitters, Arm: missile, Weight: 1 }
+  - { Key: wyrm_lancers, Arm: horse, Weight: 1 }
+Mobility: 70
+Discipline: 60
+SiegeSkill: 45
+Forage: 45
+ColdTolerance: 25
+Fortify: 50
+FortKind: aerie
+Seafaring: 15
+Levy: 0.8
+CampaignSeasons: { Spring: 2, Summer: 4, Autumn: 2, Winter: 0 }
+Customs: [duel_of_champions, salt_fields]

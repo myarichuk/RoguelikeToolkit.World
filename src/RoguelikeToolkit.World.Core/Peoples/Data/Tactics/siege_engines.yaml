@@ -1,0 +1,7 @@
+# Engines and sappers: only against walls.
+Key: siege_engines
+Arm: siege
+Kinds: [Siege]
+TerrainFit: { open: 1.0, forest: 0.8, hills: 0.9, mountain: 0.7, marsh: 0.7, desert: 1.0, snow: 0.8 }
+Seasons: { Winter: 0.8 }
+Beats: [walls_breached]

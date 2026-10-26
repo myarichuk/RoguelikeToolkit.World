@@ -45,7 +45,7 @@ public sealed class AbsorbOperator : IHistoryOperator
             if (owned[polity.Id] > MaxTiles) continue;
             if (sink.Rng(polity.Id, "absorb").NextDouble() >= AbsorbChance) continue;
             int best = -1;
-            foreach (int other in HistoryNeighbors.Bordering(view.Map.DataStore, ownership, polity.Id))
+            foreach (int other in view.BorderingPolities(polity.Id))
             {
                 var o = polities[other];
                 if (!o.Alive || busy.Contains(other) || o.FolkKey != polity.FolkKey) continue;

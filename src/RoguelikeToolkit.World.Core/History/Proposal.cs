@@ -1,3 +1,4 @@
+using RoguelikeToolkit.World.Core.Actors;
 using RoguelikeToolkit.World.Core.Primitives;
 
 namespace RoguelikeToolkit.World.Core.History;
@@ -22,6 +23,13 @@ public abstract class Proposal
     public int Sequence { get; internal set; }
 
     /// <summary>
+    /// A proposal this one only makes sense after (the event narrating a capture, the ruin a razing leaves), or
+    /// <c>null</c>. It commits after every independent proposal of the turn, and only when <see cref="Requires"/> was
+    /// applied: a capture lost to a rival's razing must not leave a "captured" event behind.
+    /// </summary>
+    public Proposal? Requires { get; init; }
+
+    /// <summary>
     /// Key of the resource a structural proposal claims, or <c>null</c> when proposals of this kind never
     /// conflict. A second proposal with the same <c>(Kind, ConflictKey)</c> in one turn is rejected.
     /// </summary>
@@ -37,7 +45,8 @@ public abstract class Proposal
         internal override long? ConflictKey => Tile;
     }
 
-    /// <summary>Opens a road segment kept by polity <see cref="Proposal.EntityId"/>. Conflicts per tile pair.</summary>
+    /// <summary>Opens a road segment kept by polity <see cref="Proposal.EntityId"/>. Conflicts per tile pair within one route: two
+    /// routes laid the same turn may share a segment (each keeps its own, so severing one leaves the other whole).</summary>
     public sealed class AddRoad : Proposal
     {
         /// <inheritdoc />
@@ -50,7 +59,15 @@ public abstract class Proposal
         public int RouteA { get; init; }
         /// <summary>Route endpoint: the larger capital tile.</summary>
         public int RouteB { get; init; }
-        internal override long? ConflictKey => ((long)Math.Min(TileA, TileB) << 32) | (uint)Math.Max(TileA, TileB);
+        internal override long? ConflictKey
+        {
+            get
+            {
+                long pair = ((long)Math.Min(TileA, TileB) << 32) | (uint)Math.Max(TileA, TileB);
+                long route = ((long)RouteA << 32) | (uint)RouteB;
+                return unchecked(pair * -7046029254386353131L ^ route); // golden-ratio mix of (segment, route)
+            }
+        }
     }
 
     /// <summary>Severs every active segment between two capital tiles. Conflicts per route.</summary>
@@ -417,5 +434,238 @@ public abstract class Proposal
         public int Version { get; init; }
         /// <summary>The blob; copied on commit.</summary>
         public byte[] Data { get; init; } = Array.Empty<byte>();
+    }
+
+    /// <summary>FNV-1a of a name, for conflict keys over open vocabularies (offices, flags).</summary>
+    private static uint NameHash(string name)
+    {
+        uint h = 2166136261;
+        foreach (char c in name ?? string.Empty) h = (h ^ c) * 16777619;
+        return h;
+    }
+
+    /// <summary>
+    /// Adds a person loyal to polity <see cref="Proposal.EntityId"/> (-1 for none). Emit it through
+    /// <see cref="ProposalSink.ProposePerson"/>, which returns a pending handle that this operator's other proposals of the turn
+    /// may use wherever they name a person. The commit applies persons in a pre-pass after the polity pre-pass, assigns ids in
+    /// canonical order and refuses a person past <see cref="HistoryContext.MaxPersons"/> or, unless a ruler, past
+    /// <see cref="HistoryContext.MaxLivingPersonsPerPolity"/>; proposals naming a refused person are dropped.
+    /// </summary>
+    public sealed class AddPerson : Proposal
+    {
+        /// <inheritdoc />
+        public override ProposalKind Kind => ProposalKind.AddPerson;
+        /// <summary>The person's role in the story.</summary>
+        public PersonKind PersonKind { get; init; }
+        /// <summary>Folk key.</summary>
+        public string FolkKey { get; init; } = string.Empty;
+        /// <summary>Culture key.</summary>
+        public string CultureKey { get; init; } = string.Empty;
+        /// <summary>Index into <see cref="HistoryCatalog.Settlements"/> of the seat, or -1.</summary>
+        public int SeatSettlement { get; init; } = -1;
+        /// <summary>Person id (or this operator's pending handle) of the house founder, or -1.</summary>
+        public int HouseId { get; init; } = -1;
+        /// <summary>Person id (or this operator's pending handle) of a parent, or -1.</summary>
+        public int Parent { get; init; } = -1;
+        /// <summary>Grammatical gender.</summary>
+        public bool Feminine { get; init; }
+        /// <summary>Birth turn (an adult appointed now was born turns ago, so it may be negative).</summary>
+        public int BornTurn { get; init; }
+        /// <summary>Year within the birth turn.</summary>
+        public int BornYear { get; init; }
+        /// <summary>Personality, rolled by the proposer from <see cref="StableKey"/>.</summary>
+        public ActorTraits Traits { get; init; }
+        /// <summary>Command in the field, 0..100.</summary>
+        public byte Martial { get; init; }
+        /// <summary>Plots and spycraft, 0..100.</summary>
+        public byte Intrigue { get; init; }
+        /// <summary>Running a household or a realm, 0..100.</summary>
+        public byte Stewardship { get; init; }
+        /// <summary>Swaying people, 0..100.</summary>
+        public byte Charisma { get; init; }
+        /// <summary>Epithet names from the traits data (at most three are kept).</summary>
+        public IReadOnlyList<string> Epithets { get; init; } = Array.Empty<string>();
+        /// <summary>Starting renown.</summary>
+        public int Renown { get; init; }
+        /// <summary>Starting wealth.</summary>
+        public double Wealth { get; init; }
+        /// <summary>Starting loyalty to the ruler, -100..100.</summary>
+        public sbyte Loyalty { get; init; }
+        /// <summary>The key every draw about the person derives from (<see cref="ProposalSink.StableKey"/>).</summary>
+        public int StableKey { get; init; }
+        /// <summary>This operator's pending handle for the person (-2, -3, ...); set by <see cref="ProposalSink.ProposePerson"/>.</summary>
+        public int Pending { get; internal set; }
+    }
+
+    /// <summary>Ends person <see cref="Person"/> with <see cref="Cause"/>. A person already dead (this turn included) is refused.</summary>
+    public sealed class EndPerson : Proposal
+    {
+        /// <inheritdoc />
+        public override ProposalKind Kind => ProposalKind.EndPerson;
+        /// <summary>Person id or this operator's pending handle.</summary>
+        public int Person { get; init; } = -1;
+        /// <summary>Death cause name (<c>age</c>, <c>battle</c>, <c>executed</c>...).</summary>
+        public string Cause { get; init; } = string.Empty;
+    }
+
+    /// <summary>
+    /// Appoints <see cref="Person"/> to office <see cref="Office"/> of polity <see cref="Proposal.EntityId"/>, closing the open
+    /// tenure of that office; <see cref="Person"/> -1 only vacates it. Refused for a dead polity or person, and past
+    /// <see cref="HistoryContext.MaxAppointmentsPerTurn"/> (the <c>ruler</c> office is exempt). Taking the <c>ruler</c> office
+    /// makes the person's kind <see cref="PersonKind.Ruler"/>. Conflicts per polity and office.
+    /// </summary>
+    public sealed class SetTenure : Proposal
+    {
+        /// <summary>The office every polity has: its ruler. Exempt from the appointment budget.</summary>
+        public const string RulerOffice = "ruler";
+        /// <inheritdoc />
+        public override ProposalKind Kind => ProposalKind.SetTenure;
+        /// <summary>Office name (<c>ruler</c>, <c>chancellor</c>, <c>marshal</c>... or any name data adds).</summary>
+        public string Office { get; init; } = string.Empty;
+        /// <summary>Person id or this operator's pending handle; -1 vacates.</summary>
+        public int Person { get; init; } = -1;
+        internal override long? ConflictKey => ((long)EntityId << 32) | NameHash(Office);
+    }
+
+    /// <summary>
+    /// Opens a bond of <see cref="RelationKind"/> from <see cref="A"/> to <see cref="B"/>; an open bond of the same kind deepens by
+    /// <see cref="Weight"/> instead. Refused for a person with itself, a dead person, or past
+    /// <see cref="HistoryContext.MaxOpenRelationsPerPerson"/>.
+    /// </summary>
+    public sealed class AddRelation : Proposal
+    {
+        /// <inheritdoc />
+        public override ProposalKind Kind => ProposalKind.AddRelation;
+        /// <summary>Person id or pending handle of the first party.</summary>
+        public int A { get; init; } = -1;
+        /// <summary>Person id or pending handle of the second party.</summary>
+        public int B { get; init; } = -1;
+        /// <summary>Relation kind name (<c>parent</c>, <c>spouse</c>, <c>rival</c>...).</summary>
+        public string RelationKind { get; init; } = string.Empty;
+        /// <summary>Strength added.</summary>
+        public int Weight { get; init; } = 1;
+    }
+
+    /// <summary>Closes the open bond of <see cref="RelationKind"/> from <see cref="A"/> to <see cref="B"/>; refused when there is none.</summary>
+    public sealed class EndRelation : Proposal
+    {
+        /// <inheritdoc />
+        public override ProposalKind Kind => ProposalKind.EndRelation;
+        /// <summary>Person id or pending handle of the first party.</summary>
+        public int A { get; init; } = -1;
+        /// <summary>Person id or pending handle of the second party.</summary>
+        public int B { get; init; } = -1;
+        /// <summary>Relation kind name.</summary>
+        public string RelationKind { get; init; } = string.Empty;
+    }
+
+    /// <summary>
+    /// Adds deltas to person <see cref="Person"/>. All deltas to one person in a turn are summed, then applied and clamped once
+    /// (loyalty to -100..100, wealth and pledge at or above zero), so the order operators emit them in never matters.
+    /// </summary>
+    public sealed class AdjustPerson : Proposal
+    {
+        /// <inheritdoc />
+        public override ProposalKind Kind => ProposalKind.AdjustPerson;
+        /// <summary>Person id or pending handle.</summary>
+        public int Person { get; init; } = -1;
+        /// <summary>Renown delta.</summary>
+        public int Renown { get; init; }
+        /// <summary>Wealth delta.</summary>
+        public double Wealth { get; init; }
+        /// <summary>Loyalty delta.</summary>
+        public int Loyalty { get; init; }
+        /// <summary>Pledged-funds delta (negative when a campaign spends them).</summary>
+        public double Pledged { get; init; }
+    }
+
+    /// <summary>
+    /// Records an engagement (attacker polity <see cref="Proposal.EntityId"/>) as a <see cref="HistoryBattle"/>, then appends the
+    /// <see cref="EventKind"/> event that narrates it with a <c>battle:{id}</c> tag. Names (terrain, tactics, units, beats, siege
+    /// end) are interned at commit. Refused for unknown polities, non-finite or negative strengths and loss shares outside 0..1.
+    /// </summary>
+    public sealed class AddBattle : Proposal
+    {
+        /// <summary>One side as proposed: names rather than interned ids, a person id or pending handle for the general.</summary>
+        public sealed record Side(int Polity, int General, double Strength, double LossShare, double Supply, double Morale,
+            string Tactic = "", string Unit = "");
+
+        /// <inheritdoc />
+        public override ProposalKind Kind => ProposalKind.AddBattle;
+        /// <summary>Kind of the narrating event (<see cref="HistoryEventKind.War"/> for a field battle, <see cref="HistoryEventKind.Siege"/>...).</summary>
+        public HistoryEventKind EventKind { get; init; } = HistoryEventKind.War;
+        /// <summary>Tags of the narrating event; the commit adds <c>battle:{id}</c>.</summary>
+        public IReadOnlyList<string> Tags { get; init; } = Array.Empty<string>();
+        /// <summary>Participants of the narrating event.</summary>
+        public IReadOnlyList<EventParticipant>? Participants { get; init; }
+        /// <summary>Year within the turn.</summary>
+        public int Year { get; init; }
+        /// <summary>Season.</summary>
+        public HistorySeason Season { get; init; }
+        /// <summary>How it was fought.</summary>
+        public BattleKind BattleKind { get; init; }
+        /// <summary>Planet tile of the field.</summary>
+        public int Tile { get; init; } = -1;
+        /// <summary>Terrain class name, or empty.</summary>
+        public string Terrain { get; init; } = string.Empty;
+        /// <summary>Besieged settlement index, or -1.</summary>
+        public int Settlement { get; init; } = -1;
+        /// <summary>The attacking side.</summary>
+        public Side Attacker { get; init; } = new(-1, -1, 0, 0, 0, 0);
+        /// <summary>The defending side.</summary>
+        public Side Defender { get; init; } = new(-1, -1, 0, 0, 0, 0);
+        /// <summary>How it ended.</summary>
+        public BattleOutcome Outcome { get; init; }
+        /// <summary>Beat names in order.</summary>
+        public IReadOnlyList<string> Beats { get; init; } = Array.Empty<string>();
+        /// <summary>Months a siege lasted.</summary>
+        public int SiegeMonths { get; init; }
+        /// <summary>Siege end name, or empty.</summary>
+        public string SiegeEnd { get; init; } = string.Empty;
+        /// <summary>The engagement this one followed from (a siege's field battle, a relief battle's siege), proposed the same turn and committed before it, or <c>null</c>.</summary>
+        public AddBattle? ParentBattle { get; init; }
+    }
+
+    /// <summary>
+    /// Adds deltas to the state of route (<see cref="RouteA"/>, <see cref="RouteB"/>), creating it for a route that has road
+    /// segments. All deltas to one route in a turn are summed, then applied and clamped once (safety and traffic to 0..1,
+    /// forts and waystations at or above zero).
+    /// </summary>
+    public sealed class AdjustRoute : Proposal
+    {
+        /// <inheritdoc />
+        public override ProposalKind Kind => ProposalKind.AdjustRoute;
+        /// <summary>Route endpoint: the smaller capital tile.</summary>
+        public int RouteA { get; init; }
+        /// <summary>Route endpoint: the larger capital tile.</summary>
+        public int RouteB { get; init; }
+        /// <summary>Safety delta.</summary>
+        public double Safety { get; init; }
+        /// <summary>Traffic delta.</summary>
+        public double Traffic { get; init; }
+        /// <summary>Forts delta.</summary>
+        public int Forts { get; init; }
+        /// <summary>Waystations delta.</summary>
+        public int Waystations { get; init; }
+    }
+
+    /// <summary>
+    /// Sets <see cref="Flag"/> of route (<see cref="RouteA"/>, <see cref="RouteB"/>) to <see cref="Value"/> (a person id or pending
+    /// handle for <see cref="RouteFlag.OutlawBand"/>, a polity id for <see cref="RouteFlag.Sponsor"/>, a turn otherwise; -1 clears).
+    /// Conflicts per route and flag.
+    /// </summary>
+    public sealed class SetRouteFlag : Proposal
+    {
+        /// <inheritdoc />
+        public override ProposalKind Kind => ProposalKind.SetRouteFlag;
+        /// <summary>Route endpoint: the smaller capital tile.</summary>
+        public int RouteA { get; init; }
+        /// <summary>Route endpoint: the larger capital tile.</summary>
+        public int RouteB { get; init; }
+        /// <summary>Which field.</summary>
+        public RouteFlag Flag { get; init; }
+        /// <summary>The new value.</summary>
+        public int Value { get; init; } = -1;
+        internal override long? ConflictKey => unchecked((((long)RouteA << 32) | (uint)RouteB) * -7046029254386353131L ^ (long)Flag);
     }
 }

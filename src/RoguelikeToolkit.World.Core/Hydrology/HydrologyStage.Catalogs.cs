@@ -66,12 +66,14 @@ public partial class HydrologyStage
                 bool marine = elev[old.Tiles[0]].Height < ElevationGenerationStage.SeaLevel;
                 var kind = !marine ? WaterBodyKind.Lake
                     : old.Id == oceanId ? WaterBodyKind.Ocean
-                    : old.Tiles.Count > n / 40 ? WaterBodyKind.Sea : WaterBodyKind.Lake;
+                    : IsLandlockedMarineSize(old.Tiles.Count, n) ? WaterBodyKind.Lake : WaterBodyKind.Sea;
                 var rebuilt = new WaterBody(old.Id, kind);
                 rebuilt.Tiles.AddRange(old.Tiles);
                 bodies.Bodies[k] = rebuilt;
             }
         }
+        var kindOf = new Dictionary<int, WaterBodyKind>();
+        foreach (var body in bodies.Bodies) kindOf[body.Id] = body.Kind;
         // Boundaries: water tiles adjacent to land (or, for lakes, to dry land).
         Span<int> scratch = stackalloc int[6];
         foreach (var body in bodies.Bodies)
@@ -177,7 +179,15 @@ public partial class HydrologyStage
             else
             {
                 int tail = full[^1];
-                if (elev[tail].Height < ElevationGenerationStage.SeaLevel)
+                bool landlockedTail = elev[tail].Height < ElevationGenerationStage.SeaLevel
+                    && kindOf.TryGetValue(hydro[tail].WaterBodyId, out var tailKind) && tailKind == WaterBodyKind.Lake;
+                if (landlockedTail)
+                {
+                    // A small marine group is a lake in the catalog: the river ends there, not at the sea.
+                    river.Terminal = RiverTerminal.Lake;
+                    river.TerminalBody = hydro[tail].WaterBodyId;
+                }
+                else if (elev[tail].Height < ElevationGenerationStage.SeaLevel)
                 {
                     river.Terminal = RiverTerminal.Sea;
                     river.TerminalBody = hydro[tail].WaterBodyId;
@@ -189,7 +199,8 @@ public partial class HydrologyStage
                 }
                 else
                 {
-                    river.Terminal = RiverTerminal.Sink;
+                    // The channel ends on dry land: a sink only where that ground has no way to the sea.
+                    river.Terminal = hydro[tail].Endorheic == 1 ? RiverTerminal.Sink : RiverTerminal.DriesOut;
                     river.TerminalBody = -1;
                 }
             }

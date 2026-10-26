@@ -54,7 +54,7 @@ public sealed class LocaleStore
         foreach (var name in asm.GetManifestResourceNames()
                      .Where(n => n.StartsWith(prefix, StringComparison.Ordinal)
                               && n.EndsWith(".yaml", StringComparison.OrdinalIgnoreCase))
-                     .OrderBy(n => n))
+                     .OrderBy(n => n, StringComparer.Ordinal))
         {
             var data = des.Deserialize<LocaleData>(ReadEmbedded(asm, name));
             if (data is not null && !string.IsNullOrWhiteSpace(data.Language))
@@ -70,7 +70,7 @@ public sealed class LocaleStore
         var all = LoadAll();
         if (!all.TryGetValue(language, out var data))
             throw new LocaleDataException(
-                $"Unknown UI language '{language}'. Available: {string.Join(", ", all.Keys.OrderBy(k => k))}.");
+                $"Unknown UI language '{language}'. Available: {string.Join(", ", all.Keys.OrderBy(k => k, StringComparer.Ordinal))}.");
         var english = all["en"];
         var missing = english.Strings.Keys.Where(k => !data.Strings.ContainsKey(k)).ToArray();
         var extra = data.Strings.Keys.Where(k => !english.Strings.ContainsKey(k)).ToArray();
@@ -91,7 +91,7 @@ public sealed class LocaleStore
         foreach (var name in asm.GetManifestResourceNames()
                      .Where(n => n.StartsWith(prefix, StringComparison.Ordinal)
                               && n.EndsWith(".yaml", StringComparison.OrdinalIgnoreCase))
-                     .OrderBy(n => n))
+                     .OrderBy(n => n, StringComparer.Ordinal))
         {
             LocaleData? data;
             try

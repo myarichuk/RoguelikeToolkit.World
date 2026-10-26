@@ -61,6 +61,63 @@ public class JintWorldStageTests
     }
 
     [Fact]
+    public void MathRandom_IsSeeded()
+    {
+        const string src = "function execute() { for (var i = 0; i < TILE_COUNT; i++) setPrecip(i, Math.random()); }";
+        using var a = TinyMap();
+        using var b = TinyMap();
+        AridityStage(src).Execute(a);
+        AridityStage(src).Execute(b);
+
+        var ca = a.DataStore.GetSpan<ClimateInfo>();
+        var cb = b.DataStore.GetSpan<ClimateInfo>();
+        for (int i = 0; i < ca.Length; i++) Assert.Equal(cb[i].Precipitation, ca[i].Precipitation);
+        Assert.NotEqual(ca[0].Precipitation, ca[1].Precipitation); // still a stream, not a constant
+    }
+
+    [Theory]
+    [InlineData("setPrecip(0, Date.now() % 1);")]
+    [InlineData("setPrecip(0, new Date().getSeconds() / 60);")]
+    public void Date_IsUnavailable(string body)
+    {
+        using var map = TinyMap();
+        var ex = Assert.Throws<InvalidOperationException>(() => AridityStage("function execute() { " + body + " }").Execute(map));
+        Assert.Contains("Date is not available", ex.Message);
+    }
+
+    [Fact]
+    public void MathRandom_CannotBeReplacedByTheScript()
+    {
+        using var map = TinyMap();
+        Assert.Throws<InvalidOperationException>(() =>
+            AridityStage("function execute() { Math.random = function () { return 0.5; }; }").Execute(map));
+    }
+
+    [Fact]
+    public void UndeclaredRead_OfARegisteredLayer_Throws()
+    {
+        // ElevationInfo is registered on the map, but the stage only declared ClimateInfo.
+        using var map = TinyMap();
+        var ex = Assert.Throws<InvalidOperationException>(() => AridityStage("function execute() { setPrecip(0, height(0)); }").Execute(map));
+        Assert.Contains("without declaring", ex.Message);
+    }
+
+    [Fact]
+    public void ReadOfAWrittenLayer_IsAllowed()
+    {
+        using var map = TinyMap();
+        var stage = new JintWorldStage(new JintStageSpec
+        {
+            Name = "rmw-js",
+            Order = 19,
+            Source = "function execute() { setHeight(0, height(0) + 1); }",
+            Writes = new[] { typeof(ElevationInfo) },
+        });
+        stage.Execute(map);
+        Assert.Equal(1f, map.DataStore.GetSpan<ElevationInfo>()[0].Height);
+    }
+
+    [Fact]
     public void MissingExecute_ThrowsWithStageName()
     {
         using var map = TinyMap();

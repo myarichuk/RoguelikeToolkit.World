@@ -1,0 +1,43 @@
+# Sieges (SiegeDef): a month loop, up to the history's MaxSiegeMonths. See docs/HISTORY_EXPANSION_PLAN.md §3.1.
+Key: default
+GarrisonShare: { Hamlet: 0.05, Village: 0.05, Town: 0.08, City: 0.10 }
+DefenderMorale: 0.8
+
+# Food in months: base, +city, +resupply by river or sea (unless blockaded), +/- the season the siege begins.
+FoodBase: 6
+FoodCity: 6
+FoodResupply: 4
+FoodSeason: { Spring: -2, Summer: -1, Autumn: 2, Winter: 0 }
+StarveMorale: 0.15
+SurrenderPerMonth: 0.1
+
+# The besiegers.
+SupplyDecay: 0.02
+WinterDecay: 2
+LiftBelow: 0.25
+Disease: 0.02
+DiseaseRife: 2
+
+# Storming.
+StormRatio: 1.2
+StormChance: 0.15
+EnginePower: 1.3
+StormLoss: 0.1
+StormedCasualtyMin: 0.1
+StormedCasualtyMax: 0.3
+
+# Betrayal.
+BetrayalBase: 0.01
+BetrayalSpy: 0.03
+BetrayalIntrigue: 70
+BetrayalStarving: 0.04
+
+# Relief.
+ReliefShare: 0.35
+ReliefDegreesPerMonth: 6
+ReliefFailedMorale: 0.15
+
+# What follows.
+FailedGrudge: 1
+TributeTurns: 2
+CasualtyCap: 0.15

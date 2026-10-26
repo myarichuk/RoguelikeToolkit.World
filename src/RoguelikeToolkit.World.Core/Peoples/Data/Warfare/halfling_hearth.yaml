@@ -1,0 +1,17 @@
+Key: halfling_hearth
+Doctrine: { skirmish: 35, ambush: 30, massed_archery: 25, shieldwall: 10 }
+Units:
+  - { Key: slingers, Arm: missile, Weight: 3 }
+  - { Key: hedge_wardens, Arm: foot, Weight: 2 }
+  - { Key: pony_scouts, Arm: horse, Weight: 1 }
+Mobility: 55
+Discipline: 45
+SiegeSkill: 25
+Forage: 60
+ColdTolerance: 40
+Fortify: 25
+FortKind: hedge_mound
+Seafaring: 30
+Levy: 0.7
+CampaignSeasons: { Spring: 2, Summer: 3, Autumn: 3, Winter: 1 }
+Customs: [ransom]

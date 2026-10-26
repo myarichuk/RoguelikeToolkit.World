@@ -1,0 +1,17 @@
+Key: lizardfolk_marsh
+Doctrine: { ambush: 35, skirmish: 30, war_beasts: 20, berserk_rush: 15 }
+Units:
+  - { Key: reed_stalkers, Arm: foot, Weight: 3 }
+  - { Key: snapjaws, Arm: beast, Weight: 2 }
+  - { Key: dart_throwers, Arm: missile, Weight: 1 }
+Mobility: 55
+Discipline: 50
+SiegeSkill: 20
+Forage: 80
+ColdTolerance: 10
+Fortify: 20
+FortKind: stilt_fort
+Seafaring: 65
+Levy: 1.2
+CampaignSeasons: { Spring: 3, Summer: 4, Autumn: 2, Winter: 0 }
+Customs: [no_quarter]

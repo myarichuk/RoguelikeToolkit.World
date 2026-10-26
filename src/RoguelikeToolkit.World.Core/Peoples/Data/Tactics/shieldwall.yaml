@@ -1,0 +1,6 @@
+# A locked wall of shields: slow, stubborn, hard to break on rising ground.
+Key: shieldwall
+Arm: foot
+TerrainFit: { open: 1.0, forest: 1.05, hills: 1.15, mountain: 1.0, marsh: 0.85, desert: 0.95, snow: 0.95 }
+Counters: { heavy_charge: 1.2, berserk_rush: 1.15, war_beasts: 1.05, massed_archery: 0.8, horse_archers: 0.8 }
+Beats: [shields_locked]

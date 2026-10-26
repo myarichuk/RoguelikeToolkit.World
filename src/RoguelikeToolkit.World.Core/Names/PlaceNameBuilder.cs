@@ -38,14 +38,15 @@ internal static class PlaceNameBuilder
         // than a generic "-burg", even though fantasy_common has more words.
         bool topUp = table.PlaceFallback && !ReferenceEquals(table, common);
         var own = topUp ? new HashSet<MorphemeYaml>(table.Descriptors.Concat(table.Nouns), ReferenceEqualityComparer.Instance) : null;
-        int Own(MorphemeYaml m) => own is not null && own.Contains(m) ? 3 : 1;
+        double ownWeight = Math.Max(1.0, table.OwnWordWeight);
+        double Own(MorphemeYaml m) => own is not null && own.Contains(m) ? ownWeight : 1;
 
         int DescWeight(MorphemeYaml d)
         {
             // Untagged descriptors are generic ("Great"); tagged ones must fit the kind or terrain.
             int overlap = d.Tags.Count(t => tags.Contains(t));
             int w = d.Tags.Count == 0 ? 1 : overlap > 0 ? 1 + 2 * overlap : 0;
-            return w == 0 ? 5 * CountMatches(d, tokens) : w * Own(d) + 5 * CountMatches(d, tokens);
+            return w == 0 ? 5 * CountMatches(d, tokens) : (int)Math.Round(w * Own(d)) + 5 * CountMatches(d, tokens);
         }
         int NounWeight(MorphemeYaml n)
         {
@@ -53,7 +54,7 @@ internal static class PlaceNameBuilder
             for (int i = 0; i < kindTags.Length; i++)
                 if (HasTag(n, kindTags[i])) w += i == 0 ? 3 : 1;
             w += n.Tags.Count(t => tags.Contains(t) && !kindTags.Contains(t, StringComparer.OrdinalIgnoreCase));
-            return w * Own(n) + 5 * CountMatches(n, tokens);
+            return (int)Math.Round(w * Own(n)) + 5 * CountMatches(n, tokens);
         }
 
         MorphemeYaml? desc = null, noun = null;

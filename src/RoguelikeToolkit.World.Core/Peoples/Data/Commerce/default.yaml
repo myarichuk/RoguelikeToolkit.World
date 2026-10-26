@@ -1,0 +1,38 @@
+Key: default
+# Trade (HistoryFeatures.Commerce). Route traffic drifts (TrafficDrift) toward
+#   (TrafficBase + TrafficWealth x min(1, endpoint merchants' wealth / WealthScale)) x safety, x SeveredTraffic when severed.
+TrafficBase: 0.6
+TrafficWealth: 0.4
+WealthScale: 100
+TrafficDrift: 0.3
+SeveredTraffic: 0.1
+
+# Merchant princes rise in towns and cities on a road (or the coast), gain WealthGrowth x traffic x (0.5 + Stewardship/100)
+# a turn, and pledge PledgeShare of what they hold above PledgeFloor to a polity nursing a grudge; the next campaign spends the pledges on mercenaries.
+MerchantChance: 0.2
+MerchantTier: Town
+MerchantRouteDegrees: 4
+MaxMerchantsPerSettlement: 2
+MaxMerchantsPerPolity: 2
+CourtReserve: 2
+PersonReserve: 512        # no merchant or privateer within this many of the world's person cap
+MerchantWealth: 10
+WealthGrowth: 8
+AgeMin: 0.25
+AgeMax: 0.5
+PledgeShare: 0.3
+PledgeGrudge: 1
+PledgeFloor: 10
+MercenaryPerWealth: 2.0
+MercenaryCap: 0.5
+
+# Smuggling across severed roads; privateers commissioned by seafaring polities against coastal rivals.
+SmuggleChance: 0.3
+SmuggleGain: 5
+PrivateerGrudge: 2
+PrivateerChance: 0.2
+PrivateerRaidChance: 0.5
+PrivateerLoot: 0.2
+PrivateerDegrees: 20
+MaxPrivateers: 1
+RuinBelow: 2

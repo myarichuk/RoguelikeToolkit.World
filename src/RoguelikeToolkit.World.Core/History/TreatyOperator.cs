@@ -44,6 +44,8 @@ public sealed class TreatyOperator : IHistoryOperator
     /// <summary><see cref="StageOrder.Treaty"/> (48).</summary>
     public int Order => StageOrder.Treaty;
 
+    private TradeProfile? _trade;
+
     /// <summary>Proposes this turn's treaties and refusals from the snapshot.</summary>
     public void Propose(TurnView view, ProposalSink sink)
     {
@@ -54,24 +56,33 @@ public sealed class TreatyOperator : IHistoryOperator
             _store = view.LoadPeoples();
             _storeLoaded = true;
         }
-        int[] ownership = view.OwnershipSnapshot();
         var married = new HashSet<int>();
         foreach (var first in polities)
         {
             if (!first.Alive || first.FoundedTurn >= view.Turn) continue;
             int a = first.Id;
-            foreach (int b in HistoryNeighbors.Bordering(view.Map.DataStore, ownership, a))
+            foreach (int b in view.BorderingPolities(a))
             {
                 if (b <= a || (uint)b >= (uint)polities.Count) continue;
                 var second = polities[b];
                 if (!second.Alive || second.FoundedTurn >= view.Turn) continue;
                 if (view.IsWindowed(a, b)) continue;
-                bool aHeir = first.HeirBornTurn >= 0 || married.Contains(a);
-                bool bHeir = second.HeirBornTurn >= 0 || married.Contains(b);
+                // A polity that married this turn has no heir in the snapshot yet: pairing it again (fostering a child
+                // that is not born) could only end in a refusal and a grudge. It waits for next turn.
+                if (married.Contains(a) || married.Contains(b)) continue;
+                bool aHeir = first.HeirBornTurn >= 0;
+                bool bHeir = second.HeirBornTurn >= 0;
                 if (aHeir != bHeir) continue;
                 var stream = sink.Rng(a * 100003 + b, "bond");
                 double chance = Math.Max(TreatyBase - (XenophobiaOf(first.CultureKey, _store)
                     + XenophobiaOf(second.CultureKey, _store)) / 2.0 * TreatyXenophobiaScale, MinTreatyChance);
+                if (view.Has(HistoryFeatures.Intrigue))
+                {
+                    // Dovish courts accept more readily (intrigue on): TreatyBase + TreatyDove x (1 - mean hawk of both courts).
+                    var t = _trade ??= TradeProfile.From(_store);
+                    double dove = 1 - (t.Hawk(view, a) + t.Hawk(view, b)) / 2;
+                    chance = Math.Min(1, chance * (t.Intrigue.TreatyBase + t.Intrigue.TreatyDove * dove));
+                }
                 bool accepted = stream.NextDouble() < chance;
                 if (!sink.TrySpendDecision()) continue;
                 if (!aHeir)

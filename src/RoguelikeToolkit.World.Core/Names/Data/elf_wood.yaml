@@ -45,7 +45,35 @@ Descriptors:
   - {Form: Moss, Gloss: mossy, Tags: [forest]}
   - {Form: Brook, Gloss: brook-fed, Tags: [river, forest]}
   - {Form: Green, Gloss: green, Tags: [forest, valley]}
+  - {Form: Sylvan, Gloss: sylvan, Tags: [forest]}
+  - {Form: Dewy, Gloss: dewy, Tags: [lake]}
+  - {Form: Gentle, Gloss: gentle, Tags: [valley]}
+  - {Form: Hushed, Gloss: hushed, Tags: [forest, valley]}
+  - {Form: Dappled, Gloss: dappled, Tags: [forest]}
+  - {Form: Russet, Gloss: russet, Tags: [forest]}
+  - {Form: Lichen, Gloss: lichen-grown, Tags: [forest]}
+  - {Form: Sunbright, Gloss: sunbright, Tags: [high]}
+  - {Form: Bramble, Gloss: bramble-tangled, Tags: [forest, danger]}
+  - {Form: Quiet, Gloss: quiet, Tags: [valley]}
+  - {Form: Ruddy, Gloss: ruddy, Tags: [hill]}
 Nouns:
   - {Form: grove, Gloss: grove, Tags: [forest, village]}
   - {Form: shaw, Gloss: copse, Tags: [forest]}
   - {Form: combe, Gloss: hollow, Tags: [valley]}
+  - {Form: bough, Gloss: treetop bough, Tags: [village, forest]}
+  - {Form: hall, Gloss: hall of boughs, Tags: [town]}
+  - {Form: court, Gloss: leaf court, Tags: [town]}
+  - {Form: spire, Gloss: canopy spire, Tags: [city, forest]}
+  - {Form: tower, Gloss: watch tower, Tags: [hold]}
+  - {Form: lodge, Gloss: lodge, Tags: [camp]}
+  - {Form: glade, Gloss: glade, Tags: [valley, forest]}
+  - {Form: crest, Gloss: crest, Tags: [mountain]}
+  - {Form: ridge, Gloss: ridge, Tags: [mountain, hill]}
+  - {Form: rill, Gloss: rill, Tags: [river]}
+  - {Form: runnel, Gloss: runnel, Tags: [river]}
+  - {Form: pond, Gloss: moss pond, Tags: [lake]}
+  - {Form: coast, Gloss: green coast, Tags: [sea]}
+# Realm titles in this people's voice ({n} = the base name); forms not listed use fantasy_common's.
+RealmTitles:
+  Kingdom: ["Greenwood Realm of {n}", "{n} Court", "Sylvan Throne of {n}"]
+  LooseAssociation: ["{n} Kinship", "Circles of {n}", "Wardens of {n}", "{n} Glades"]

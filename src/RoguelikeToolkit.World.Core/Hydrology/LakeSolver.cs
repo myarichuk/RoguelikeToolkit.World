@@ -1,4 +1,5 @@
 using RoguelikeToolkit.World.Core.Biomes;
+using RoguelikeToolkit.World.Core.Primitives;
 using RoguelikeToolkit.World.Core.Storage;
 
 namespace RoguelikeToolkit.World.Core.Hydrology;
@@ -43,12 +44,15 @@ internal static class LakeSolver
             IsPlaya = new bool[n],
             Endorheic = new bool[n],
             Sink = new bool[n],
-            Saline = new bool[n]
+            Saline = new bool[n],
+            BasinReceiver = new int[n],
+            BasinDepth = new int[n],
         };
         for (int i = 0; i < n; i++)
         {
             solution.Surface[i] = filled[i];
             solution.LakeId[i] = -1;
+            solution.BasinReceiver[i] = -1;
         }
 
         // Depression regions: connected land tiles strictly above their bed.
@@ -136,6 +140,11 @@ internal static class LakeSolver
             }
         }
 
+        // The basin's own slopes drain to its floor too: their runoff, less what the ground takes on the way, joins the
+        // supply whether or not the water ever stands on them. A tile that floods gives its rain to the lake whole.
+        double caught = 0;
+        foreach (int t in region) caught += DryRunoff(runoff, channelLoss, t);
+
         // Grow the ponded set while supply beats evaporation (lowest tiles first).
         region.Sort((a, b) =>
         {
@@ -143,22 +152,21 @@ internal static class LakeSolver
             return c != 0 ? c : a.CompareTo(b);
         });
         var ponded = new List<int>();
-        double water = 0;
         double evapSum = 0;
         foreach (int t in region)
         {
-            double w = water + runoff[t];
+            double w = caught + runoff[t] - DryRunoff(runoff, channelLoss, t);
             double e = evapSum + TileLoss(evap, cover, t);
-            // The ponded set grows while external inflow plus its own caught
-            // runoff still beats the open-water evaporation over its area.
+            // The ponded set grows while the inflow still beats the open-water evaporation over its area.
             if (external + w > e)
             {
                 ponded.Add(t);
-                water = w;
+                caught = w;
                 evapSum = e;
             }
             else break;
         }
+        double water = caught;
 
         if (ponded.Count == 0)
         {
@@ -236,12 +244,76 @@ internal static class LakeSolver
                 }
             }
             lake.Outlet = outlet;
+            RouteLakeToOutlet(store, ponded, outlet, solution, scratch);
         }
         // Terminal lake: every tile of its basin drains to it and nowhere else.
-        if (!full) foreach (int t in region) solution.Endorheic[t] = true;
+        if (!full)
+        {
+            foreach (int t in region) solution.Endorheic[t] = true;
+            RouteBasinToLake(store, bed, inRegion, ponded, solution, scratch);
+        }
         if (lake.IsSaline) MarkSaline(store, heights, ponded, solution, scratch);
         solution.Lakes.Add(lake);
     }
+
+    /// <summary>
+    /// Drainage tree of a closed lake's dry basin: a priority flood from the lake over the basin by bed height (the
+    /// lowest pass first, ties by index), so water follows the ground down to the shore instead of the pour-level
+    /// plateau, and every unponded basin tile ends in the lake.
+    /// </summary>
+    private static void RouteBasinToLake(WorldDataStore store, float[] bed, HashSet<int> inRegion, List<int> ponded,
+        LakeSolution solution, Span<int> scratch)
+    {
+        var reached = new HashSet<int>(ponded);
+        var heap = new PriorityQueue<int, ulong>();
+        foreach (int t in ponded) heap.Enqueue(t, TileOrdering.AscendingKey(bed[t], t));
+        var level = new Dictionary<int, float>();
+        foreach (int t in ponded) level[t] = bed[t];
+        while (heap.Count > 0)
+        {
+            int cur = heap.Dequeue();
+            int adjacent = store.GetAdjacent(cur, scratch);
+            for (int k = 0; k < adjacent; k++)
+            {
+                int nb = scratch[k];
+                if (!inRegion.Contains(nb) || !reached.Add(nb)) continue;
+                solution.BasinReceiver[nb] = cur;
+                solution.BasinDepth[nb] = solution.BasinDepth[cur] + 1;
+                float pass = Math.Max(bed[nb], level[cur]);
+                level[nb] = pass;
+                heap.Enqueue(nb, TileOrdering.AscendingKey(pass, nb));
+            }
+        }
+    }
+
+    /// <summary>
+    /// An open lake's surface is level: resolved by distance alone, the tiles nearest the rim leave over it without
+    /// passing the outlet, where the lake's evaporation is charged. A breadth-first tree over the lake (ties by index)
+    /// sends every lake tile through the outlet.
+    /// </summary>
+    private static void RouteLakeToOutlet(WorldDataStore store, List<int> ponded, int outlet, LakeSolution solution, Span<int> scratch)
+    {
+        var inLake = new HashSet<int>(ponded);
+        var queue = new Queue<int>();
+        var reached = new HashSet<int> { outlet };
+        queue.Enqueue(outlet);
+        while (queue.Count > 0)
+        {
+            int cur = queue.Dequeue();
+            int adjacent = store.GetAdjacent(cur, scratch);
+            for (int k = 0; k < adjacent; k++)
+            {
+                int nb = scratch[k];
+                if (!inLake.Contains(nb) || !reached.Add(nb)) continue;
+                solution.BasinReceiver[nb] = cur;
+                solution.BasinDepth[nb] = solution.BasinDepth[cur] + 1;
+                queue.Enqueue(nb);
+            }
+        }
+    }
+
+    private static double DryRunoff(ReadOnlySpan<float> runoff, ReadOnlySpan<float> channelLoss, int tile)
+        => channelLoss.IsEmpty ? runoff[tile] : Math.Max(0.0, runoff[tile] - channelLoss[tile]);
 
     /// <summary>
     /// Salt crust: the brine tiles themselves plus the dry land they touch, the margin the water has

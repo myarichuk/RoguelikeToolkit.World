@@ -1,5 +1,7 @@
+using System.Globalization;
 using RoguelikeToolkit.World.Core.Elevation;
 using RoguelikeToolkit.World.Core.Integration;
+using RoguelikeToolkit.World.Core.Peoples;
 using RoguelikeToolkit.World.Core.Primitives;
 using RoguelikeToolkit.World.Core.Settlement;
 using RoguelikeToolkit.World.Core.Storage;
@@ -16,14 +18,15 @@ namespace RoguelikeToolkit.World.Core.History;
 /// </summary>
 public sealed class HistoryCatalog : IHistoricalContext
 {
-    /// <summary>Persistence schema version, written first by <see cref="Save"/> and checked by <see cref="Load"/>: 1 is the P2a shape (capitals only), 2 adds polity demography and road routes, 3 adds P2c treaty/faith state (grudges, windows, faiths, holy sites, villains, heirs), 4 adds the generic-kernel state (string table, declared scalars and per-polity scalar values, polity lifecycle, event ids, causes, importance and participants, grudge turn stamps), 9 adds the plugin state bag (keyed versioned blobs and reset notes), 10 adds plugin event kinds (a name after the kind byte of a <see cref="HistoryEventKind.Plugin"/> event), 11 adds the <see cref="Timeline"/> (turn-0 ownership, per-turn territory changes and polity samples).</summary>
-    public const int SchemaVersion = 11;
+    /// <summary>Persistence schema version, written first by <see cref="Save"/> and checked by <see cref="Load"/>: 1 is the P2a shape (capitals only), 2 adds polity demography and road routes, 3 adds P2c treaty/faith state (grudges, windows, faiths, holy sites, villains, heirs), 4 adds the generic-kernel state (string table, declared scalars and per-polity scalar values, polity lifecycle, event ids, causes, importance and participants, grudge turn stamps), 9 adds the plugin state bag (keyed versioned blobs and reset notes), 10 adds plugin event kinds (a name after the kind byte of a <see cref="HistoryEventKind.Plugin"/> event), 11 adds the <see cref="Timeline"/> (turn-0 ownership, per-turn territory changes and polity samples), 12 adds <see cref="Polity.AbsorbedInto"/> (older files recover it from their <see cref="HistoryEventKind.PolityAbsorbed"/> events), 13 adds the expansion kernel (persons, relations, tenures, battles, route states and samples, the detail-event budget and its drop count; older files load with them empty).</summary>
+    public const int SchemaVersion = 13;
 
     /// <summary>Planet radius in kilometres, matching <c>World.EarthRadiusKm</c> (kept literal: the root slice is above History).</summary>
     private const double EarthRadiusKm = 6371.0;
 
     private int _appendTurn = int.MinValue;
     private int _appendCount;
+    private int _detailCount;
 
     /// <summary>Builds an empty catalog for <paramref name="seed"/>.</summary>
     public HistoryCatalog(int seed)
@@ -99,6 +102,12 @@ public sealed class HistoryCatalog : IHistoricalContext
     /// <summary>Events dropped by the per-turn budget.</summary>
     public int DroppedEvents { get; private set; }
 
+    /// <summary>Per-turn budget for detail events (<see cref="EventImportanceMap.IsDetail"/>), synced from the context (default 32).</summary>
+    public int MaxDetailEventsPerTurn { get; internal set; } = 32;
+
+    /// <summary>Detail events dropped by their per-turn budget (counted apart from <see cref="DroppedEvents"/>).</summary>
+    public int DroppedDetailEvents { get; private set; }
+
     /// <summary>
     /// Times an operator fell back to built-in folk numbers because the peoples tables failed to
     /// load (see <see cref="PeoplesLoader"/>). Zero on a healthy build; nonzero means the data
@@ -142,6 +151,24 @@ public sealed class HistoryCatalog : IHistoricalContext
     /// <summary>Risen long-life villains, bounded by <see cref="HistoryContext.MaxVillains"/>.</summary>
     public List<VillainRecord> Villains { get; } = new();
 
+    /// <summary>Named persons; a person's <see cref="HistoryPerson.Id"/> is its index here. Empty unless <see cref="HistoryFeatures.Persons"/> runs.</summary>
+    public List<HistoryPerson> Persons { get; } = new();
+
+    /// <summary>Bonds between persons, sorted by (A, B, Kind, FromTurn).</summary>
+    public List<HistoryRelation> Relations { get; } = new();
+
+    /// <summary>Office tenures in the order they began; at most one open per (polity, office).</summary>
+    public List<HistoryTenure> Tenures { get; } = new();
+
+    /// <summary>Engagements; a battle's <see cref="HistoryBattle.Id"/> is its index here.</summary>
+    public List<HistoryBattle> Battles { get; } = new();
+
+    /// <summary>Living state of trade routes, sorted by (RouteA, RouteB).</summary>
+    public List<HistoryRouteState> RouteStates { get; } = new();
+
+    /// <summary>Route state at the end of each recorded turn, in turn then route order.</summary>
+    public List<RouteSample> RouteSamples { get; } = new();
+
     /// <summary>User renames and pinned tiles; written by the game, never by a stage.</summary>
     public HistoryOverrides Overrides { get; } = new();
 
@@ -158,10 +185,11 @@ public sealed class HistoryCatalog : IHistoricalContext
     public int SimulatedTurns { get; internal set; }
 
     /// <summary>Copies the event budgets from the context; called by <see cref="CultureSeedStage"/>.</summary>
-    internal void SyncBudgets(int maxEventsPerTurn, int maxEvents)
+    internal void SyncBudgets(int maxEventsPerTurn, int maxEvents, int maxDetailEventsPerTurn = 32)
     {
         MaxEventsPerTurn = maxEventsPerTurn;
         MaxEvents = maxEvents;
+        MaxDetailEventsPerTurn = maxDetailEventsPerTurn;
     }
 
     /// <summary>Owner polity id of <paramref name="tileIndex"/>, or -1 when unclaimed or unknown.</summary>
@@ -290,9 +318,18 @@ public sealed class HistoryCatalog : IHistoricalContext
         IReadOnlyList<string> tags, int cause, IReadOnlyList<EventParticipant>? participants, string pluginKind = "")
     {
         if (turn < 0) throw new ArgumentOutOfRangeException(nameof(turn), "Event turn cannot be negative.");
-        if (turn != _appendTurn) { _appendTurn = turn; _appendCount = 0; }
-        if (_appendCount >= MaxEventsPerTurn) { DroppedEvents++; return -1; }
-        _appendCount++;
+        if (turn != _appendTurn) { _appendTurn = turn; _appendCount = 0; _detailCount = 0; }
+        // Detail kinds draw on their own budget, so turning a feature on never costs a structural event its slot.
+        if (EventImportanceMap.IsDetail(kind))
+        {
+            if (_detailCount >= MaxDetailEventsPerTurn) { DroppedDetailEvents++; return -1; }
+            _detailCount++;
+        }
+        else
+        {
+            if (_appendCount >= MaxEventsPerTurn) { DroppedEvents++; return -1; }
+            _appendCount++;
+        }
         var entry = NewEvent(kind, turn, polityId, tileIndex, tags, cause, pluginKind);
         if (participants != null) entry.Participants.AddRange(participants);
         Register(entry);
@@ -320,10 +357,11 @@ public sealed class HistoryCatalog : IHistoricalContext
     }
 
     /// <summary>
-    /// Compacts to <see cref="MaxEvents"/>: the oldest <see cref="EventImportance.Minor"/> event goes
-    /// first, then the oldest structural one, then the oldest founding one. An event that a retained
-    /// event cites as its cause is skipped while anything uncited is left; only when every candidate is
-    /// cited does the oldest of the lowest class go, so the cap always holds.
+    /// Compacts to <see cref="MaxEvents"/>: detail events (<see cref="EventImportanceMap.IsDetail"/>) go first, oldest uncited
+    /// first, so the legacy log compacts exactly as it would without them; then the oldest <see cref="EventImportance.Minor"/>
+    /// event, then the oldest structural one, then the oldest founding one. An event that a retained event cites as its cause
+    /// is skipped while anything uncited is left; only when every candidate is cited does the oldest of the lowest class go,
+    /// so the cap always holds.
     /// </summary>
     private void EnforceCap()
     {
@@ -331,6 +369,14 @@ public sealed class HistoryCatalog : IHistoricalContext
         bool removed = false;
         while (Events.Count > MaxEvents)
         {
+            int detail = OldestDetail();
+            if (detail >= 0)
+            {
+                // Not counted in Compactions: that counter describes the legacy log, which this removal leaves untouched.
+                Events.RemoveAt(detail);
+                _eventVersion++;
+                continue;
+            }
             var cited = new HashSet<int>();
             foreach (var e in Events) if (e.Cause >= 0) cited.Add(e.Cause);
             int victim = -1, fallback = -1;
@@ -350,8 +396,27 @@ public sealed class HistoryCatalog : IHistoricalContext
         if (removed) Compactions++;
     }
 
+    /// <summary>Index of the oldest uncited detail event, else the oldest detail event, else -1.</summary>
+    private int OldestDetail()
+    {
+        int first = -1;
+        HashSet<int>? cited = null;
+        for (int i = 0; i < Events.Count; i++)
+        {
+            if (!EventImportanceMap.IsDetail(new EventKind((int)Events[i].Kind))) continue;
+            if (first < 0)
+            {
+                first = i;
+                cited = new HashSet<int>();
+                foreach (var e in Events) if (e.Cause >= 0) cited.Add(e.Cause);
+            }
+            if (!cited!.Contains(Events[i].Id)) return i;
+        }
+        return first;
+    }
+
     /// <summary>
-    /// Clears the simulation, keeping <see cref="Seed"/>, the budgets and <see cref="Overrides"/>:
+    /// Clears the simulation (plugin state and interned names included), keeping <see cref="Seed"/>, the budgets and <see cref="Overrides"/>:
     /// renames and pins survive and are re-applied by the next run. Called by
     /// <c>World.RegenerateHistory</c> before re-running the history band.
     /// </summary>
@@ -377,6 +442,14 @@ public sealed class HistoryCatalog : IHistoricalContext
         HolySites.Clear();
         Scars.Clear();
         Villains.Clear();
+        Persons.Clear();
+        Relations.Clear();
+        Tenures.Clear();
+        Battles.Clear();
+        RouteStates.Clear();
+        RouteSamples.Clear();
+        DroppedDetailEvents = 0;
+        _detailCount = 0;
         Stale = false;
         ForkedAtTurn = null;
         SimulatedTurns = 0;
@@ -385,6 +458,12 @@ public sealed class HistoryCatalog : IHistoricalContext
         PeoplesFallbacks = 0;
         _appendTurn = int.MinValue;
         _appendCount = 0;
+        // Plugin blobs and interned end causes belong to the run that wrote them: a regeneration that kept them would
+        // start turn 1 from the previous run's ledgers and save different bytes than a fresh build.
+        PluginState.Clear();
+        Strings.Clear();
+        _territoryPeoples = null;
+        _territoryPeoplesLoaded = false;
     }
 
     /// <summary>Counts polities that broke away from a parent that was still standing when they were founded.</summary>
@@ -396,12 +475,13 @@ public sealed class HistoryCatalog : IHistoricalContext
         return count;
     }
 
-    /// <summary>Counts polities founded by a collapse (their parent has ended).</summary>
+    /// <summary>Counts polities founded by a collapse: their parent ended on the turn they were founded. A rebel's parent was
+    /// still standing then, even if it fell later, so rebels never use up the successor allowance.</summary>
     internal int SuccessorCount()
     {
         int count = 0;
         foreach (var p in Polities)
-            if (p.Parent >= 0 && !Polities[p.Parent].Alive) count++;
+            if (p.Parent >= 0 && Polities[p.Parent].EndedTurn == p.FoundedTurn) count++;
         return count;
     }
 
@@ -411,12 +491,59 @@ public sealed class HistoryCatalog : IHistoricalContext
     /// </summary>
     internal int[] FloodOwnership(WorldDataStore store)
     {
+        // An absorbed polity's capital keeps seeding and its land is credited to its living absorber, so the flood
+        // reproduces the absorption instead of handing that land to the neighbours on the next re-flood.
+        var heir = new int[Polities.Count];
+        var living = new HashSet<int>();
+        for (int i = 0; i < Polities.Count; i++)
+        {
+            heir[i] = LivingHeir(i);
+            if (Polities[i].Alive) living.Add(Polities[i].CapitalTile);
+        }
         var capitals = new List<int>(Polities.Count);
-        foreach (var p in Polities) capitals.Add(p.Alive ? p.CapitalTile : -1);
+        for (int i = 0; i < Polities.Count; i++)
+        {
+            var p = Polities[i];
+            bool seeds = heir[i] >= 0 && (p.Alive || !living.Contains(p.CapitalTile)); // a living capital is never claimed for another
+            capitals.Add(seeds ? p.CapitalTile : -1);
+        }
         var pins = new Dictionary<int, int>();
         foreach (var kv in Overrides.PinnedTiles)
             if (kv.Value >= 0 && kv.Value < Polities.Count && Polities[kv.Value].Alive) pins[kv.Key] = kv.Value;
-        return HistoryTerritory.AssignOwners(store, capitals, pins);
+        var cultures = new string[Polities.Count];
+        // An absorbed people's old land is still crossed on its own people's terms: the flood credits it to the absorber
+        // but keeps its reach, so an absorption hands over exactly the land the polity held.
+        for (int i = 0; i < Polities.Count; i++) cultures[i] = Polities[i].CultureKey;
+        var owners = HistoryTerritory.AssignOwners(store, capitals, pins, TerritoryCostsFor(cultures));
+        for (int t = 0; t < owners.Length; t++)
+            if (owners[t] >= 0) owners[t] = heir[owners[t]];
+        return owners;
+    }
+
+    private PeoplesStore? _territoryPeoples;
+    private bool _territoryPeoplesLoaded;
+
+    /// <summary>Territory step costs for owners with these cultures, from the peoples data (loaded once per catalog run).</summary>
+    internal TerritoryCosts TerritoryCostsFor(IReadOnlyList<string> culturePerOwner)
+    {
+        if (!_territoryPeoplesLoaded)
+        {
+            _territoryPeoples = PeoplesLoader.LoadStore(this);
+            _territoryPeoplesLoaded = true;
+        }
+        return TerritoryCosts.FromPeoples(_territoryPeoples, culturePerOwner);
+    }
+
+    /// <summary>The living polity <paramref name="id"/>'s land belongs to: itself, its absorber (followed through chains), or -1.</summary>
+    internal int LivingHeir(int id)
+    {
+        for (int steps = 0; steps <= Polities.Count && (uint)id < (uint)Polities.Count; steps++)
+        {
+            var p = Polities[id];
+            if (p.Alive) return id;
+            id = p.AbsorbedInto;
+        }
+        return -1;
     }
 
     /// <summary>
@@ -574,6 +701,7 @@ public sealed class HistoryCatalog : IHistoricalContext
             writer.Write(polity.EndedTurn);
             writer.Write(polity.EndCause);
             writer.Write(polity.Parent);
+            writer.Write(polity.AbsorbedInto);
             writer.Write(Scalars.Count);
             for (int k = 0; k < Scalars.Count; k++) writer.Write(polity.GetScalar(k, Scalars));
         }
@@ -750,6 +878,225 @@ public sealed class HistoryCatalog : IHistoricalContext
             writer.Write(sample.Scalars.Length);
             foreach (double value in sample.Scalars) writer.Write(value);
         }
+        SaveExpansion(writer);
+    }
+
+    /// <summary>Schema 13: the expansion kernel. Interned names are written as string-table ids (remapped by name on load).</summary>
+    private void SaveExpansion(BinaryWriter writer)
+    {
+        writer.Write(MaxDetailEventsPerTurn);
+        writer.Write(DroppedDetailEvents);
+        writer.Write(Persons.Count);
+        foreach (var p in Persons)
+        {
+            writer.Write(p.Id);
+            writer.Write((byte)p.Kind);
+            writer.Write(p.FolkKey ?? string.Empty);
+            writer.Write(p.CultureKey ?? string.Empty);
+            writer.Write(p.PolityId);
+            writer.Write(p.SeatSettlement);
+            writer.Write(p.HouseId);
+            writer.Write(p.Parent);
+            writer.Write(p.Feminine);
+            writer.Write(p.BornTurn);
+            writer.Write(p.BornYear);
+            writer.Write(p.DiedTurn);
+            writer.Write(p.DeathCause);
+            writer.Write(p.Traits.Openness);
+            writer.Write(p.Traits.Conscientiousness);
+            writer.Write(p.Traits.Extraversion);
+            writer.Write(p.Traits.Agreeableness);
+            writer.Write(p.Traits.Neuroticism);
+            writer.Write(p.Martial);
+            writer.Write(p.Intrigue);
+            writer.Write(p.Stewardship);
+            writer.Write(p.Charisma);
+            writer.Write(p.Epithets.Count);
+            foreach (int e in p.Epithets) writer.Write(e);
+            writer.Write(p.Renown);
+            writer.Write(p.Wealth);
+            writer.Write(p.Loyalty);
+            writer.Write(p.Pledged);
+            writer.Write(p.StableKey);
+        }
+        writer.Write(Relations.Count);
+        foreach (var r in Relations)
+        {
+            writer.Write(r.A);
+            writer.Write(r.B);
+            writer.Write(r.Kind);
+            writer.Write(r.FromTurn);
+            writer.Write(r.ToTurn);
+            writer.Write(r.Weight);
+        }
+        writer.Write(Tenures.Count);
+        foreach (var t in Tenures)
+        {
+            writer.Write(t.Person);
+            writer.Write(t.Polity);
+            writer.Write(t.Office);
+            writer.Write(t.FromTurn);
+            writer.Write(t.ToTurn);
+        }
+        writer.Write(Battles.Count);
+        foreach (var b in Battles)
+        {
+            writer.Write(b.Id);
+            writer.Write(b.Turn);
+            writer.Write(b.Year);
+            writer.Write((byte)b.Season);
+            writer.Write((byte)b.Kind);
+            writer.Write(b.Tile);
+            writer.Write(b.Terrain);
+            writer.Write(b.Settlement);
+            WriteSide(writer, b.Attacker);
+            WriteSide(writer, b.Defender);
+            writer.Write((byte)b.Outcome);
+            writer.Write(b.Beats.Count);
+            foreach (int beat in b.Beats) writer.Write(beat);
+            writer.Write(b.SiegeMonths);
+            writer.Write(b.SiegeEnd);
+            writer.Write(b.Parent);
+            writer.Write(b.EventId);
+        }
+        writer.Write(RouteStates.Count);
+        foreach (var r in RouteStates)
+        {
+            writer.Write(r.RouteA);
+            writer.Write(r.RouteB);
+            writer.Write(r.Safety);
+            writer.Write(r.Traffic);
+            writer.Write(r.Forts);
+            writer.Write(r.Waystations);
+            writer.Write(r.OutlawBand);
+            writer.Write(r.Sponsor);
+            writer.Write(r.SabotagedTurn);
+            writer.Write(r.LastIncidentTurn);
+        }
+        writer.Write(RouteSamples.Count);
+        foreach (var r in RouteSamples)
+        {
+            writer.Write(r.Turn);
+            writer.Write(r.RouteA);
+            writer.Write(r.RouteB);
+            writer.Write(r.Safety);
+            writer.Write(r.Traffic);
+        }
+    }
+
+    private static void WriteSide(BinaryWriter writer, BattleSide side)
+    {
+        writer.Write(side.Polity);
+        writer.Write(side.General);
+        writer.Write(side.Strength);
+        writer.Write(side.LossShare);
+        writer.Write(side.Supply);
+        writer.Write(side.Morale);
+        writer.Write(side.Tactic);
+        writer.Write(side.Unit);
+    }
+
+    /// <summary>Reads the schema-13 section (see <see cref="SaveExpansion"/>), remapping interned ids through <paramref name="strings"/>.</summary>
+    private void LoadExpansion(BinaryReader reader, int[] strings)
+    {
+        MaxDetailEventsPerTurn = reader.ReadInt32();
+        DroppedDetailEvents = reader.ReadInt32();
+        int persons = CheckedCount(reader.ReadInt32());
+        for (int i = 0; i < persons; i++)
+        {
+            int id = reader.ReadInt32();
+            var kind = (PersonKind)reader.ReadByte();
+            string folk = reader.ReadString(), culture = reader.ReadString();
+            int polity = reader.ReadInt32(), seat = reader.ReadInt32(), house = reader.ReadInt32(), parent = reader.ReadInt32();
+            bool feminine = reader.ReadBoolean();
+            int born = reader.ReadInt32(), bornYear = reader.ReadInt32(), died = reader.ReadInt32();
+            int cause = RemapString(reader.ReadInt32(), strings, allowNone: true);
+            var traits = new Actors.ActorTraits(reader.ReadByte(), reader.ReadByte(), reader.ReadByte(), reader.ReadByte(), reader.ReadByte());
+            byte martial = reader.ReadByte(), intrigue = reader.ReadByte(), stewardship = reader.ReadByte(), charisma = reader.ReadByte();
+            int epithets = CheckedCount(reader.ReadInt32());
+            var epithetIds = new List<int>(Math.Min(epithets, 8));
+            for (int k = 0; k < epithets; k++) epithetIds.Add(RemapString(reader.ReadInt32(), strings, allowNone: false));
+            var person = new HistoryPerson
+            {
+                Id = id, Kind = kind, FolkKey = folk, CultureKey = culture, PolityId = polity, SeatSettlement = seat, HouseId = house,
+                Parent = parent, Feminine = feminine, BornTurn = born, BornYear = bornYear, DiedTurn = died, DeathCause = cause,
+                Traits = traits, Martial = martial, Intrigue = intrigue, Stewardship = stewardship, Charisma = charisma,
+                Renown = reader.ReadInt32(), Wealth = reader.ReadDouble(), Loyalty = reader.ReadSByte(), Pledged = reader.ReadDouble(),
+                StableKey = reader.ReadInt32(),
+            };
+            person.Epithets.AddRange(epithetIds);
+            Persons.Add(person);
+        }
+        int relations = CheckedCount(reader.ReadInt32());
+        for (int i = 0; i < relations; i++)
+        {
+            Relations.Add(new HistoryRelation
+            {
+                A = reader.ReadInt32(), B = reader.ReadInt32(), Kind = RemapString(reader.ReadInt32(), strings, allowNone: false),
+                FromTurn = reader.ReadInt32(), ToTurn = reader.ReadInt32(), Weight = reader.ReadInt32(),
+            });
+        }
+        int tenures = CheckedCount(reader.ReadInt32());
+        for (int i = 0; i < tenures; i++)
+        {
+            Tenures.Add(new HistoryTenure
+            {
+                Person = reader.ReadInt32(), Polity = reader.ReadInt32(), Office = RemapString(reader.ReadInt32(), strings, allowNone: false),
+                FromTurn = reader.ReadInt32(), ToTurn = reader.ReadInt32(),
+            });
+        }
+        int battles = CheckedCount(reader.ReadInt32());
+        for (int i = 0; i < battles; i++)
+        {
+            int id = reader.ReadInt32(), turn = reader.ReadInt32(), year = reader.ReadInt32();
+            var season = (HistorySeason)reader.ReadByte();
+            var kind = (BattleKind)reader.ReadByte();
+            int tile = reader.ReadInt32();
+            int terrain = RemapString(reader.ReadInt32(), strings, allowNone: true);
+            int settlement = reader.ReadInt32();
+            var attacker = ReadSide(reader, strings);
+            var defender = ReadSide(reader, strings);
+            var outcome = (BattleOutcome)reader.ReadByte();
+            int beats = CheckedCount(reader.ReadInt32());
+            var beatList = new List<int>(Math.Min(beats, 64));
+            for (int k = 0; k < beats; k++) beatList.Add(RemapString(reader.ReadInt32(), strings, allowNone: false));
+            var battle = new HistoryBattle
+            {
+                Id = id, Turn = turn, Year = year, Season = season, Kind = kind, Tile = tile, Terrain = terrain, Settlement = settlement,
+                Attacker = attacker, Defender = defender, Outcome = outcome, SiegeMonths = reader.ReadInt32(),
+                SiegeEnd = RemapString(reader.ReadInt32(), strings, allowNone: true), Parent = reader.ReadInt32(),
+            };
+            battle.EventId = reader.ReadInt32();
+            battle.Beats.AddRange(beatList);
+            Battles.Add(battle);
+        }
+        int routes = CheckedCount(reader.ReadInt32());
+        for (int i = 0; i < routes; i++)
+        {
+            RouteStates.Add(new HistoryRouteState
+            {
+                RouteA = reader.ReadInt32(), RouteB = reader.ReadInt32(), Safety = reader.ReadDouble(), Traffic = reader.ReadDouble(),
+                Forts = reader.ReadInt32(), Waystations = reader.ReadInt32(), OutlawBand = reader.ReadInt32(), Sponsor = reader.ReadInt32(),
+                SabotagedTurn = reader.ReadInt32(), LastIncidentTurn = reader.ReadInt32(),
+            });
+        }
+        int samples = CheckedCount(reader.ReadInt32());
+        for (int i = 0; i < samples; i++)
+            RouteSamples.Add(new RouteSample(reader.ReadInt32(), reader.ReadInt32(), reader.ReadInt32(), reader.ReadDouble(), reader.ReadDouble()));
+    }
+
+    private static BattleSide ReadSide(BinaryReader reader, int[] strings) => new()
+    {
+        Polity = reader.ReadInt32(), General = reader.ReadInt32(), Strength = reader.ReadDouble(), LossShare = reader.ReadDouble(),
+        Supply = reader.ReadDouble(), Morale = reader.ReadDouble(),
+        Tactic = RemapString(reader.ReadInt32(), strings, allowNone: true), Unit = RemapString(reader.ReadInt32(), strings, allowNone: true),
+    };
+
+    private static int RemapString(int fileId, int[] strings, bool allowNone)
+    {
+        if (fileId == -1 && allowNone) return -1;
+        if ((uint)fileId >= (uint)strings.Length) throw new InvalidDataException($"Corrupt history catalog (string id {fileId}).");
+        return strings[fileId];
     }
 
     /// <summary>
@@ -786,13 +1133,18 @@ public sealed class HistoryCatalog : IHistoricalContext
             catalog.Compactions = reader.ReadInt32();
             catalog.DroppedEvents = reader.ReadInt32();
             int nextEventId = 0;
+            // File string id -> id in this build's table. A file written before an event kind was added has its own
+            // names after a shorter built-in prefix, so ids are remapped by name rather than required to line up.
+            int[] strings = Array.Empty<int>();
             if (version >= 4)
             {
                 int names = CheckedCount(reader.ReadInt32());
+                strings = new int[names];
+                var seen = new HashSet<int>();
                 for (int i = 0; i < names; i++)
                 {
                     string name = reader.ReadString();
-                    if (string.IsNullOrWhiteSpace(name) || catalog.Strings.Intern(name) != i)
+                    if (string.IsNullOrWhiteSpace(name) || !seen.Add(strings[i] = catalog.Strings.Intern(name)))
                         throw new InvalidDataException("Corrupt history catalog (string table).");
                 }
                 int declared = CheckedCount(reader.ReadInt32());
@@ -844,8 +1196,9 @@ public sealed class HistoryCatalog : IHistoricalContext
                 if (version >= 4)
                 {
                     polity.EndedTurn = reader.ReadInt32();
-                    polity.EndCause = reader.ReadInt32();
+                    polity.EndCause = RemapString(reader.ReadInt32(), strings, allowNone: true);
                     polity.Parent = reader.ReadInt32();
+                    if (version >= 12) polity.AbsorbedInto = reader.ReadInt32();
                     int slots = CheckedCount(reader.ReadInt32());
                     if (slots > catalog.Scalars.Count) throw new InvalidDataException("Corrupt history catalog (scalar slots).");
                     for (int k = 0; k < slots; k++) polity.SetScalar(k, reader.ReadDouble(), catalog.Scalars);
@@ -875,7 +1228,7 @@ public sealed class HistoryCatalog : IHistoricalContext
                     importance = (EventImportance)reader.ReadByte();
                     int parts = CheckedCount(reader.ReadInt32());
                     partList = new List<EventParticipant>(Math.Min(parts, 64));
-                    for (int k = 0; k < parts; k++) partList.Add(new EventParticipant(reader.ReadInt32(), reader.ReadInt32()));
+                    for (int k = 0; k < parts; k++) partList.Add(new EventParticipant(reader.ReadInt32(), RemapString(reader.ReadInt32(), strings, allowNone: false)));
                 }
                 var entry = new HistoryEvent
                 {
@@ -1079,7 +1432,9 @@ public sealed class HistoryCatalog : IHistoricalContext
                     catalog.Timeline.AddLoaded(new PolitySample { Turn = sampleTurn, PolityId = samplePolity, Population = population, Scalars = values });
                 }
             }
+            if (version >= 13) catalog.LoadExpansion(reader, strings);
             if (version >= 4) catalog._nextEventId = nextEventId;
+            if (version < 12) catalog.RecoverAbsorbers();
             catalog.ValidateReferences();
             catalog.Timeline.Validate(catalog);
             return catalog;
@@ -1095,6 +1450,22 @@ public sealed class HistoryCatalog : IHistoricalContext
     /// file throws <see cref="InvalidDataException"/> here instead of failing later in a stage.
     /// Event, ownership and settlement ids may be -1 (none / unclaimed).
     /// </summary>
+    /// <summary>Pre-v12 files did not store <see cref="Polity.AbsorbedInto"/>; the absorption event names it in an <c>into:</c> tag.</summary>
+    private void RecoverAbsorbers()
+    {
+        foreach (var e in Events)
+        {
+            if (e.Kind != HistoryEventKind.PolityAbsorbed || (uint)e.PolityId >= (uint)Polities.Count) continue;
+            foreach (var tag in e.Tags)
+            {
+                if (tag.StartsWith("into:", StringComparison.Ordinal)
+                    && int.TryParse(tag.AsSpan(5), NumberStyles.None, CultureInfo.InvariantCulture, out int into)
+                    && into < Polities.Count && into != e.PolityId)
+                    Polities[e.PolityId].AbsorbedInto = into;
+            }
+        }
+    }
+
     private void ValidateReferences()
     {
         int count = Polities.Count;
@@ -1130,6 +1501,7 @@ public sealed class HistoryCatalog : IHistoricalContext
         foreach (var p in Polities)
         {
             Check(p.Parent, "polity parent", true);
+            Check(p.AbsorbedInto, "polity absorber", true);
             if (p.EndCause >= Strings.Count || p.EndCause < -1) throw new InvalidDataException($"Corrupt history catalog (polity {p.Id} end cause {p.EndCause}).");
         }
         var seenIds = new HashSet<int>();
@@ -1141,10 +1513,98 @@ public sealed class HistoryCatalog : IHistoricalContext
             if (e.Importance > EventImportance.Founding) throw new InvalidDataException($"Corrupt history catalog (event {e.Id} importance).");
             foreach (var part in e.Participants)
             {
-                Check(part.EntityId, "event participant", false);
                 if ((uint)part.Role >= (uint)Strings.Count) throw new InvalidDataException($"Corrupt history catalog (event {e.Id} role {part.Role}).");
+                switch (ParticipantRoles.EntityOf(Strings.NameOf(part.Role)))
+                {
+                    case ParticipantEntity.Person:
+                        if ((uint)part.EntityId >= (uint)Persons.Count) throw new InvalidDataException($"Corrupt history catalog (event {e.Id} person {part.EntityId}).");
+                        break;
+                    case ParticipantEntity.Settlement:
+                        if ((uint)part.EntityId >= (uint)Settlements.Count) throw new InvalidDataException($"Corrupt history catalog (event {e.Id} settlement {part.EntityId}).");
+                        break;
+                    default:
+                        Check(part.EntityId, "event participant", false);
+                        break;
+                }
             }
         }
+        ValidateExpansion(Check);
+    }
+
+    /// <summary>Rejects a corrupt schema-13 section: dangling ids, bad names, unsorted lists, non-finite or out-of-range values.</summary>
+    private void ValidateExpansion(Action<int, string, bool> checkPolity)
+    {
+        static InvalidDataException Corrupt(string what) => new($"Corrupt history catalog ({what}).");
+        bool Name(int id, bool allowNone) => (allowNone && id == -1) || (uint)id < (uint)Strings.Count;
+        bool PersonRef(int id) => id == -1 || (uint)id < (uint)Persons.Count;
+        static bool Finite(double v) => !double.IsNaN(v) && !double.IsInfinity(v);
+        if (MaxDetailEventsPerTurn < 0 || DroppedDetailEvents < 0) throw Corrupt("detail budget");
+        for (int i = 0; i < Persons.Count; i++)
+        {
+            var p = Persons[i];
+            if (p.Id != i || !Enum.IsDefined(typeof(PersonKind), p.Kind)) throw Corrupt($"person {i}");
+            checkPolity(p.PolityId, "person", true);
+            if (p.SeatSettlement < -1 || p.SeatSettlement >= Settlements.Count || !PersonRef(p.HouseId) || !PersonRef(p.Parent))
+                throw Corrupt($"person {i} references");
+            if (p.DiedTurn != -1 && p.DiedTurn < p.BornTurn) throw Corrupt($"person {i} died before birth");
+            if (p.Alive ? p.DeathCause != -1 : !Name(p.DeathCause, false)) throw Corrupt($"person {i} death cause");
+            foreach (int e in p.Epithets) if (!Name(e, false)) throw Corrupt($"person {i} epithet");
+            if (!Finite(p.Wealth) || p.Wealth < 0 || !Finite(p.Pledged) || p.Pledged < 0 || p.Loyalty < -100 || p.Loyalty > 100)
+                throw Corrupt($"person {i} values");
+        }
+        for (int i = 0; i < Relations.Count; i++)
+        {
+            var r = Relations[i];
+            if ((uint)r.A >= (uint)Persons.Count || (uint)r.B >= (uint)Persons.Count || !Name(r.Kind, false) || (r.ToTurn != -1 && r.ToTurn < r.FromTurn))
+                throw Corrupt($"relation {i}");
+            if (i > 0 && CompareRelations(Relations[i - 1], r) > 0) throw Corrupt("relation order");
+        }
+        var openOffices = new HashSet<(int, int)>();
+        foreach (var t in Tenures)
+        {
+            if ((uint)t.Person >= (uint)Persons.Count || !Name(t.Office, false) || (t.ToTurn != -1 && t.ToTurn < t.FromTurn)) throw Corrupt("tenure");
+            checkPolity(t.Polity, "tenure", false);
+            if (t.Open && !openOffices.Add((t.Polity, t.Office))) throw Corrupt("two open tenures of one office");
+        }
+        for (int i = 0; i < Battles.Count; i++)
+        {
+            var b = Battles[i];
+            if (b.Id != i || !Enum.IsDefined(typeof(BattleKind), b.Kind) || !Enum.IsDefined(typeof(BattleOutcome), b.Outcome)
+                || !Enum.IsDefined(typeof(HistorySeason), b.Season) || !Name(b.Terrain, true) || !Name(b.SiegeEnd, true)
+                || b.Settlement < -1 || b.Settlement >= Settlements.Count || b.Parent < -1 || b.Parent >= i || b.SiegeMonths < 0
+                || b.EventId < -1 || b.EventId >= _nextEventId)
+                throw Corrupt($"battle {i}");
+            foreach (int beat in b.Beats) if (!Name(beat, false)) throw Corrupt($"battle {i} beat");
+            foreach (var side in new[] { b.Attacker, b.Defender })
+            {
+                checkPolity(side.Polity, "battle side", false);
+                if (!PersonRef(side.General) || !Name(side.Tactic, true) || !Name(side.Unit, true)
+                    || !Finite(side.Strength) || side.Strength < 0 || !(side.LossShare >= 0 && side.LossShare <= 1)
+                    || !Finite(side.Supply) || !Finite(side.Morale))
+                    throw Corrupt($"battle {i} side");
+            }
+        }
+        for (int i = 0; i < RouteStates.Count; i++)
+        {
+            var r = RouteStates[i];
+            if (!(r.Safety >= 0 && r.Safety <= 1) || !(r.Traffic >= 0 && r.Traffic <= 1) || r.Forts < 0 || r.Waystations < 0 || !PersonRef(r.OutlawBand))
+                throw Corrupt($"route state {i}");
+            checkPolity(r.Sponsor, "route sponsor", true);
+            if (i > 0 && (RouteStates[i - 1].RouteA, RouteStates[i - 1].RouteB).CompareTo((r.RouteA, r.RouteB)) >= 0) throw Corrupt("route state order");
+        }
+        foreach (var r in RouteSamples)
+            if (!(r.Safety >= 0 && r.Safety <= 1) || !(r.Traffic >= 0 && r.Traffic <= 1)) throw Corrupt("route sample");
+    }
+
+    /// <summary>The order of <see cref="Relations"/>: (A, B, Kind, FromTurn).</summary>
+    internal static int CompareRelations(HistoryRelation x, HistoryRelation y)
+    {
+        int c = x.A.CompareTo(y.A);
+        if (c != 0) return c;
+        c = x.B.CompareTo(y.B);
+        if (c != 0) return c;
+        c = x.Kind.CompareTo(y.Kind);
+        return c != 0 ? c : x.FromTurn.CompareTo(y.FromTurn);
     }
 
     private static int CheckedCount(int count)

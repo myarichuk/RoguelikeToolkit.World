@@ -210,7 +210,7 @@ public class WorldExportsLayoutTests
         Assert.Equal(changes * WorldExports.TerritoryChangeStride, WorldExports.HistoryTerritoryChanges().Length);
         Assert.Equal(polities * WorldExports.PolityStride, WorldExports.HistoryPolities().Length);
         Assert.Equal(polities, WorldExports.HistoryPolityKeys().Length);
-        Assert.All(WorldExports.HistoryPolityKeys(), k => Assert.Equal(6, k.Split('\t').Length));   // folk, culture, overlay, name, name race, name culture
+        Assert.All(WorldExports.HistoryPolityKeys(), k => Assert.Equal(7, k.Split('\t').Length));   // folk, culture, overlay, name, name race, name culture, architecture
         Assert.Equal(settlements * WorldExports.SettlementStride, WorldExports.HistorySettlements().Length);
         Assert.Equal(settlements, WorldExports.HistorySettlementEndCauses().Length);
         Assert.Equal(roads * WorldExports.RoadStride, WorldExports.HistoryRoads().Length);
@@ -224,6 +224,69 @@ public class WorldExportsLayoutTests
     }
 
     [Fact]
+    public void ExpansionArrays_HaveTheirDocumentedStride_AndPointAtRealThings()
+    {
+        WorldExports.ResetHistoryConfig();
+        WorldExports.ConfigureHistoryFeatures((int)RoguelikeToolkit.World.Core.History.HistoryFeatures.All);
+        try
+        {
+            Tiles();
+            var info = WorldExports.HistoryInfo();
+            int persons = info[11], relations = info[12], tenures = info[13], battles = info[14], routes = info[15];
+            Assert.True(persons > 0 && tenures > 0 && battles > 0 && routes > 0);
+            int strings = WorldExports.HistoryStrings().Length;
+            var p = WorldExports.HistoryPersons();
+            Assert.Equal(persons * WorldExports.PersonStride, p.Length);
+            Assert.Equal(persons, WorldExports.HistoryPersonText().Length);
+            Assert.All(WorldExports.HistoryPersonText(), t => Assert.Equal(3, t.Split('\t').Length));
+            var kinds = WorldExports.HistoryPersonKindNames();
+            for (int i = 0; i < persons; i++)
+            {
+                int o = i * WorldExports.PersonStride;
+                Assert.Equal(i, p[o]);
+                Assert.False(string.IsNullOrEmpty(kinds[p[o + 1]]));
+                Assert.InRange(p[o + 10], -1, strings - 1);
+            }
+            Assert.Equal(relations * WorldExports.RelationStride, WorldExports.HistoryRelations().Length);
+            var t = WorldExports.HistoryTenures();
+            Assert.Equal(tenures * WorldExports.TenureStride, t.Length);
+            for (int i = 0; i < tenures; i++) Assert.InRange(t[i * WorldExports.TenureStride], 0, persons - 1);
+            var b = WorldExports.HistoryBattles();
+            Assert.Equal(battles * WorldExports.BattleStride, b.Length);
+            Assert.Equal(battles, WorldExports.HistoryBattleText().Length);
+            Assert.All(WorldExports.HistoryBattleText(), x => Assert.Equal(6, x.Split('\t').Length));
+            var outcomes = WorldExports.HistoryBattleOutcomeNames();
+            for (int i = 0; i < battles; i++) Assert.False(string.IsNullOrEmpty(outcomes[b[i * WorldExports.BattleStride + 7]]));
+            Assert.Equal(routes * WorldExports.RouteStateStride, WorldExports.HistoryRouteStates().Length);
+            Assert.Equal(0, WorldExports.HistoryRouteSeries().Length % WorldExports.RouteSampleStride);
+            Assert.Contains(WorldExports.HistoryFeatureNames(), n => n.StartsWith("Battles\t", StringComparison.Ordinal));
+        }
+        finally
+        {
+            WorldExports.ResetHistoryConfig();
+        }
+    }
+
+    [Fact]
+    public void HistoryChronicle_AlignsWithTheLog_AndUsesTheHostsNames()
+    {
+        WorldExports.ResetHistoryConfig();
+        Tiles();
+        int total = WorldExports.HistoryInfo()[7], polities = WorldExports.HistoryInfo()[3];
+        var prose = WorldExports.HistoryChronicle(0, total);
+        Assert.Equal(total, prose.Length);
+        Assert.True(prose.Count(t => t.Length > 0) > total / 2, "most events read as prose");
+        Assert.DoesNotContain(prose, t => t.Contains('{') || t.Contains('}'));
+        Assert.Equal(prose.Skip(5).Take(7), WorldExports.HistoryChronicle(5, 7)); // pages are slices of one rendering
+        // The host's realm titles take over (a title "X of Y" reads with "the" mid-sentence).
+        var titles = Enumerable.Range(0, polities).Select(i => $"Realm of Test{i}").ToArray();
+        WorldExports.ConfigureChronicleNames(titles, Enumerable.Range(0, polities).Select(i => $"Test{i}").ToArray(), Array.Empty<string>(), Array.Empty<string>());
+        var renamed = WorldExports.HistoryChronicle(0, total);
+        Assert.Contains(renamed, t => t.Contains("Realm of Test", StringComparison.Ordinal));
+        Assert.NotEqual(prose, renamed);
+    }
+
+    [Fact]
     public void HistoryEvents_DecodeWithACursor_AndMatchTheirTextPage()
     {
         WorldExports.ResetHistoryConfig();
@@ -231,7 +294,8 @@ public class WorldExportsLayoutTests
         int total = WorldExports.HistoryInfo()[7];
         int polities = WorldExports.HistoryInfo()[3];
         var kinds = WorldExports.HistoryEventKindNames();
-        int strings = WorldExports.HistoryStrings().Length;
+        var names = WorldExports.HistoryStrings();
+        int strings = names.Length, persons = WorldExports.HistoryInfo()[11], settlements = WorldExports.HistoryInfo()[4];
         var page = WorldExports.HistoryEvents(0, total);
         Assert.Equal(total, page[0]);
         Assert.Equal(total, WorldExports.HistoryEventText(0, total).Length);
@@ -248,8 +312,12 @@ public class WorldExportsLayoutTests
             c += 8;
             for (int k = 0; k < parts; k++, c += 2)
             {
-                Assert.InRange(page[c], 0, polities - 1);
                 Assert.InRange(page[c + 1], 0, strings - 1);
+                // A participant's role names its entity: person:, settlement:, else a polity.
+                string role = names[page[c + 1]];
+                int limit = role.StartsWith("person:", StringComparison.Ordinal) ? persons
+                    : role.StartsWith("settlement:", StringComparison.Ordinal) ? settlements : polities;
+                Assert.InRange(page[c], 0, limit - 1);
             }
         }
         Assert.Equal(page.Length, c);

@@ -1,0 +1,29 @@
+# Catfolk prowls: pride, curiosity, the night, and a habit of pretending nothing was ever their idea.
+battle.intro:
+  - { id: ct_bi1, w: 3, t: "In {year} {att.realm} grew curious about the lands of {def.realm}, which for catfolk is the same thing as declaring war." }
+  - { id: ct_bi2, when: [att.general], w: 3, t: "{att.general} stalked the {def.host} of {def.realm} for nine nights in {year} before showing so much as a whisker." }
+  - { id: ct_bi3, w: 2, t: "The prowl of {att.realm} came over the {terrain.noun} on silent feet in {season.word} of {year}, and {def.realm} heard nothing until the screaming started." }
+battle.engage:
+  - { id: ct_en1, w: 2, t: "The {att.adj} warriors would not stand in a line; they struck, vanished, and struck again from somewhere else." }
+battle.after:
+  - { id: ct_ba1, when: [winner=attacker], w: 3, t: "{att.realm|cap} lost interest in the war the moment it was won, and went home to sleep in the sun." }
+  - { id: ct_ba2, when: [winner=defender], w: 3, t: "{att.realm|cap} let it be known that it had never really wanted the war, and that it had all been {def.realm|poss} fault anyway." }
+event.Founding:
+  - { id: ct_fo1, w: 3, t: "In {year} the prowls agreed, after much yowling, to share a single territory, and named it {realm}." }
+  - { id: ct_fo2, when: [place], w: 3, t: "In {year} the catfolk claimed the warm stones of {place}, and nobody dared move them; thus {realm}." }
+event.PersonRose:
+  - { id: ct_ru1, when: [office=ruler], w: 3, t: "In {year} {who} took the sunniest seat in the hall of {realm}, and nobody dared ask {who.him} to move; {who.he} was {who.office} from then on." }
+  - { id: ct_ap1, when: [office!=ruler, who.office], w: 2, t: "In {year} {who} accepted the post of {who.office} of {realm}, with an air of doing everyone a great favour." }
+event.PersonDied:
+  - { id: ct_dd1, when: [cause=age, who], w: 3, t: "In {year} {who} curled up in a patch of sunlight and did not wake; {realm} said it was the way {who.he} would have wanted it." }
+  - { id: ct_dd2, when: [cause=accident, who], w: 3, t: "{who} died in {year} in a fall from a great height, which every catfolk in {realm} insisted was impossible." }
+event.Grudge:
+  - { id: ct_gr1, when: [other.realm], w: 3, t: "In {year} {other.realm} offended the pride of {realm}. Catfolk can wait a very long time to pounce." }
+event.Treaty:
+  - { id: ct_tr1, when: [other.realm], w: 2, t: "In {year} {realm} graciously permitted {other.realm} to be its friend, on terms." }
+event.SettlementFounded:
+  - { id: ct_sf1, when: [settlement], w: 3, t: "In {year} a restless prowl of {realm} wandered off and decided {settlement} was theirs now." }
+event.Conquest:
+  - { id: ct_cq1, when: [other.realm], w: 3, t: "In {year} {realm} conquered {other.realm} and then mostly ignored it, which the conquered found almost worse." }
+event.Intrigue:
+  - { id: ct_in1, when: [other.realm], w: 3, t: "In {year} the soft-footed agents of {realm} padded through the halls of {other.realm}, listening at every door." }

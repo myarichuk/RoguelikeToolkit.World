@@ -172,6 +172,16 @@ public partial class HydrologyStage : IWorldGeneratorStage
         var receiver = new int[n];
         var depth = new int[n];
         Hydrography.ComputeReceivers(store, lakes.Surface, receiver, depth);
+        bool overridden = false;
+        for (int i = 0; i < n; i++)
+        {
+            // A closed lake's dry basin drains down its own tree to the shore, never over the pour point, and an open
+            // lake drains through its outlet, where its evaporation is charged.
+            if (lakes.BasinReceiver[i] < 0) continue;
+            receiver[i] = lakes.BasinReceiver[i];
+            overridden = true;
+        }
+        if (overridden) LevelDepths(lakes.Surface, receiver, depth);
         var flow = new float[n];
         // One sort of the final routing serves accumulation, channel extraction and the endorheic walk.
         int[] drainOrder = Hydrography.DrainageOrder(lakes.Surface, depth);
@@ -206,6 +216,17 @@ public partial class HydrologyStage : IWorldGeneratorStage
             }
             nextBody++;
         }
+        // Marine groups other than the ocean that are small enough to be lakes in the catalog (landlocked seas, the
+        // Caspian rule) have no path to the sea either: what drains into them is endorheic.
+        var landlocked = new bool[nextBody];
+        if (nextBody > 1)
+        {
+            var bodySize = new int[nextBody];
+            for (int i = 0; i < n; i++) if (bodyId[i] >= 0) bodySize[bodyId[i]]++;
+            int ocean = 0;
+            for (int b = 1; b < nextBody; b++) if (bodySize[b] > bodySize[ocean]) ocean = b;
+            for (int b = 0; b < nextBody; b++) landlocked[b] = b != ocean && IsLandlockedMarineSize(bodySize[b], n);
+        }
         foreach (var lake in lakes.Lakes)
         {
             foreach (int t in lake.Tiles) bodyId[t] = nextBody;
@@ -239,7 +260,11 @@ public partial class HydrologyStage : IWorldGeneratorStage
         for (int k = drainOrder.Length - 1; k >= 0; k--)
         {
             int i = drainOrder[k];
-            if (elev[i].Height < ElevationGenerationStage.SeaLevel) continue;
+            if (elev[i].Height < ElevationGenerationStage.SeaLevel)
+            {
+                endorheic[i] = landlocked[bodyId[i]];
+                continue;
+            }
             int rcv = receiver[i];
             endorheic[i] = lakes.Endorheic[i] || rcv < 0 || endorheic[rcv];
         }
@@ -259,4 +284,34 @@ public partial class HydrologyStage : IWorldGeneratorStage
             };
         }
     }
+
+    /// <summary>
+    /// Drain depth on level ground recomputed from the receivers themselves: hops to the first receiver that is lower (or
+    /// none). Drainage order sorts level ground by this depth, farthest first, so every donor is visited before its
+    /// receiver whatever produced the receivers (flat resolution or a lake's own tree).
+    /// </summary>
+    private static void LevelDepths(ReadOnlySpan<float> surface, ReadOnlySpan<int> receiver, Span<int> depth)
+    {
+        int n = receiver.Length;
+        for (int i = 0; i < n; i++) depth[i] = -1;
+        var chain = new List<int>();
+        for (int i = 0; i < n; i++)
+        {
+            if (depth[i] >= 0) continue;
+            int t = i;
+            while (depth[t] < 0)
+            {
+                int r = receiver[t];
+                if (r < 0 || surface[r] != surface[t]) { depth[t] = 0; break; }
+                chain.Add(t);
+                t = r;
+                if (chain.Count > n) throw new InvalidOperationException("Drainage receivers form a cycle.");
+            }
+            for (int k = chain.Count - 1; k >= 0; k--) depth[chain[k]] = depth[receiver[chain[k]]] + 1;
+            chain.Clear();
+        }
+    }
+
+    /// <summary>A marine group (below sea level, not the ocean) of at most this share of the world is a lake, not a sea: one fortieth.</summary>
+    internal static bool IsLandlockedMarineSize(int tiles, int tileCount) => tiles <= tileCount / 40;
 }

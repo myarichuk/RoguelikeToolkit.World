@@ -242,6 +242,20 @@ public sealed class WorldBuilder
     public World Build()
     {
         var map = new WorldMap(_size, _filePath);
+        try
+        {
+            return Build(map);
+        }
+        catch
+        {
+            // The store is native memory (or a mapped file) with no finalizer: a failed build must release it.
+            map.Dispose();
+            throw;
+        }
+    }
+
+    private World Build(WorldMap map)
+    {
         // Field layers (dense, in-store). Feature catalogs attach to World, not the store.
         var platesLayer = new TectonicPlateLayer(map.DataStore, _seedCount, _seed);
         map.RegisterLayer<TectonicPlate>(platesLayer);

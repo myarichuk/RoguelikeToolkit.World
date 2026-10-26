@@ -17,7 +17,7 @@ export interface ViewFiltersState {
 }
 
 const KIND_LABEL: Record<FeatureKind, string> = {
-  capital: 'Capitals', city: 'Cities', town: 'Towns', village: 'Villages', ruin: 'Ruins', shrine: 'Holy sites', battlefield: 'Battlefields', river: 'Rivers', lake: 'Lakes', sea: 'Seas',
+  capital: 'Capitals', city: 'Cities', town: 'Towns', village: 'Villages', fort: 'Forts', ruin: 'Ruins', shrine: 'Holy sites', battlefield: 'Battlefields', river: 'Rivers', lake: 'Lakes', sea: 'Seas',
   ocean: 'Oceans', mountain: 'Mountain ranges', valley: 'Valleys & canyons', forest: 'Forests', deposit: 'Resources',
 };
 

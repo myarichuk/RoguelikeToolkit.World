@@ -10,8 +10,8 @@ export interface PopulateOptions {
   seed: number;
   rules: PlacementRule[];
   library: AssetLibrary;
-  /** Feature kind -> asset ids for settlement markers. */
-  featureAssets: (kind: string) => string[];
+  /** Feature kind (and the place's architectural style, when it has one) -> asset ids for settlement markers. */
+  featureAssets: (kind: string, architecture?: string) => string[];
   /** Density multiplier, 0..2. */
   density?: number;
 }
@@ -125,11 +125,18 @@ export function populate(doc: MapDocument, o: PopulateOptions): StampEntity[] {
   return kept.concat(settlements);
 }
 
-function settlementAsset(f: FeatureEntity, featureAssets: (kind: string) => string[]): string | null {
-  if (!['capital', 'city', 'town', 'village', 'ruin', 'shrine'].includes(f.kind)) return null;
+/** Feature kinds drawn with a marker stamp. */
+const MARKED: ReadonlySet<string> = new Set(['capital', 'city', 'town', 'village', 'fort', 'ruin', 'shrine']);
+
+/**
+ * The marker a place is drawn with: its kind's asset in the architectural style of the realm that
+ * holds (or held) it, else the kind's plain asset (the pack registry falls back). A coastal town is a port.
+ */
+export function settlementAsset(f: FeatureEntity, featureAssets: (kind: string, architecture?: string) => string[]): string | null {
+  if (!MARKED.has(f.kind)) return null;
   const coastal = f.details.some(([k, v]) => k === 'Water access' && v.includes('coast'));
-  const port = featureAssets('port');
+  const port = featureAssets('port', f.architecture);
   if (coastal && f.kind === 'town' && port.length) return port[0];
-  const list = featureAssets(f.kind);
+  const list = featureAssets(f.kind, f.architecture);
   return list.length ? list[0] : null;
 }

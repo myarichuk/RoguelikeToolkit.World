@@ -1,0 +1,13 @@
+# Dragonfolk aeries.
+host: ["flight", "brood-host", "scale-host", "fire-wing"]
+cry!: ["Fire and wing!", "By the First Flame!", "Burn bright!", "The hoard remembers!"]
+office.ruler!: ["keeper of the hoard", "flame-crowned"]
+office.treasurer: ["hoard-counter"]
+office.admiral: ["wing-marshal"]
+terrain.mountain: ["aerie crags"]
+season.summer: ["the season of fire"]
+noun.song: ["fire-hymns", "hoard-sagas"]
+noun.grief: ["ash and silence"]
+verb.won: ["scorched the field clean", "won in fire"]
+noun.goods: ["gold and gemstones", "brass and copper ingots"]
+noun.loot: ["the guarded strongbox, in its entirety"]

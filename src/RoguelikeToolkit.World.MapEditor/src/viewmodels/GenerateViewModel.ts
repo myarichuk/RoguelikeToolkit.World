@@ -1,5 +1,5 @@
 import type { Editor } from '../engine/Editor';
-import { CLIMATE_MODEL_DEFAULTS, CLIMATE_MODEL_LIMITS, DEFAULT_HISTORY, DEFAULT_STYLES, EARTH, PLANET_LIMITS, styleKey, type FounderPin, type HistorySettings, type PeopleOption } from '../engine/world/protocol';
+import { CLIMATE_MODEL_DEFAULTS, CLIMATE_MODEL_LIMITS, DEFAULT_HISTORY, DEFAULT_STYLES, EARTH, PLANET_LIMITS, styleKey, type FounderPin, type HistoryFeature, type HistorySettings, type PeopleOption } from '../engine/world/protocol';
 import type { DocSettings } from '../engine/doc/types';
 import type { ClimateModelSettings, PlanetSettings } from '../engine/world/protocol';
 import { modelFor, type PlanetPreset, type TectonicPreset } from '../engine/world/presets';
@@ -33,6 +33,8 @@ export interface GenerateState extends ClimateModelSettings {
   /** The peoples a world can be founded by, and the polity form names. */
   peoples: PeopleOption[];
   forms: string[];
+  /** The history expansion features the engine offers (Core's `HistoryFeatures` flags). */
+  historyFeatures: HistoryFeature[];
   busy: boolean;
   /** True when a generator input differs from what the current document was generated or loaded with. */
   stale: boolean;
@@ -46,7 +48,7 @@ export class GenerateViewModel extends ViewModel<GenerateState> {
   constructor(private readonly editor: Editor) {
     const s = editor.doc.settings;
     super({
-      seed: 1337, size: 5, plates: 14, ...EARTH, ...CLIMATE_MODEL_DEFAULTS, density: 1, styles: [...DEFAULT_STYLES], available: [], history: structuredClone(DEFAULT_HISTORY), peoples: [], forms: [], busy: false, stale: false,
+      seed: 1337, size: 5, plates: 14, ...EARTH, ...CLIMATE_MODEL_DEFAULTS, density: 1, styles: [...DEFAULT_STYLES], available: [], history: structuredClone(DEFAULT_HISTORY), peoples: [], forms: [], historyFeatures: [], busy: false, stale: false,
       warp: s.warp, detail: s.detail, ring: s.ring,
     });
     this.baseline = this.paramsKey();
@@ -79,6 +81,7 @@ export class GenerateViewModel extends ViewModel<GenerateState> {
   private syncPeoples(): void {
     const { peoples, formNames } = this.editor;
     if (peoples.length !== this.state.peoples.length) this.set({ peoples: [...peoples], forms: [...formNames] });
+    if (this.editor.historyFeatures.length !== this.state.historyFeatures.length) this.set({ historyFeatures: [...this.editor.historyFeatures] });
   }
 
   private syncStyles(): void {
@@ -146,6 +149,22 @@ export class GenerateViewModel extends ViewModel<GenerateState> {
   };
   removeFounder = (i: number): void => this.setHistory({ founders: this.state.history.founders.filter((_, k) => k !== i) });
   resetRealms = (): void => this.set({ history: structuredClone(DEFAULT_HISTORY) });
+
+  /**
+   * Turns one expansion feature on or off. Until the first change the settings carry no features at all, which means Core's
+   * default (and keeps an old document's settings as they were); the first change starts from none.
+   */
+  toggleFeature = (bit: number): void => {
+    const now = this.state.history.features ?? -1, base = now < 0 ? 0 : now;
+    this.setHistory({ features: base & bit ? base & ~bit : base | bit });
+  };
+  /** Every expansion feature the engine offers. */
+  allFeatures = (): void => this.setHistory({ features: this.state.historyFeatures.reduce((m, f) => m | f.bit, 0) });
+  /** Back to Core's default features. */
+  defaultFeatures = (): void => {
+    const { features: _, ...rest } = this.state.history;
+    this.set({ history: rest });
+  };
 
   toggleStyle = (key: string): void => {
     const has = this.state.styles.includes(key);

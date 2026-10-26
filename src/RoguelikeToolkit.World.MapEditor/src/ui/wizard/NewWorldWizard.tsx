@@ -183,6 +183,7 @@ function RealmsStep() {
         <Slider label="Turns" value={h.turns} min={2} max={200} step={1} onChange={vm.setTurns} format={(v) => `${v} turns`} hint="How long history runs." />
         <Slider label="Years per turn" value={h.years} min={1} max={100} step={1} onChange={vm.setYears} format={(v) => `${v} y`} hint="Longer turns age people and realms faster." />
         <p className="hint">History runs {h.turns * h.years} years. It decides where the cities, roads, ruins, holy sites and battlefields are.</p>
+        {s.historyFeatures.length > 0 && <HistoryFeatures />}
       </div>
       <div className={styles.side}>
         <h3>Pin realms <small className="muted">{h.founders.length}/{h.maxPolities}</small></h3>
@@ -202,6 +203,47 @@ function RealmsStep() {
         <button disabled={h.founders.length >= h.maxPolities} onClick={vm.addFounder}>Pin a realm</button>
       </div>
     </div>
+  );
+}
+
+/** What each expansion feature adds, by Core's flag name; a flag the editor does not know yet shows its name alone. */
+const FEATURE_HINTS: Record<string, string> = {
+  Persons: 'Named rulers, heirs and office holders, with their bonds and offices.',
+  Battles: 'Wars are fought as battles, with generals, tactics and terrain, instead of a coin flip.',
+  Sieges: 'Walled places are besieged after a won battle; relief armies; forts on the borders.',
+  Logistics: 'Supply over roads, rivers and sea lanes; road safety, waystations, winter quarters.',
+  Commerce: 'Caravans and traffic on the roads, merchant princes who fund wars, smugglers and privateers.',
+  Outlaws: 'Outlaw bands that hide beside the roads and raid caravans until hanged or pardoned.',
+  Intrigue: 'Spymasters plot: agents, bribes, sabotage, assassinations and sponsored bands.',
+};
+
+/** ", with persons and battles" for the review; nothing for Core's default. */
+const featureSummary = (features: number | undefined, offered: readonly { name: string; bit: number }[]): string => {
+  if (features === undefined || features < 0) return '';
+  const on = offered.filter((f) => features & f.bit).map((f) => f.name.toLowerCase());
+  return on.length ? `, with ${on.join(', ')}` : ', no expansion';
+};
+
+/** The history expansion's features: unticked and untouched means Core's default. */
+function HistoryFeatures() {
+  const { vms } = useApp();
+  const vm = vms.generate;
+  const s = useViewModel(vm);
+  const chosen = s.history.features;
+  return (
+    <>
+      <h3>What does history tell?</h3>
+      <p className="hint">{chosen === undefined || chosen < 0 ? 'Nothing ticked: the engine\'s default. ' : ''}Each one adds detail to history: slower to run, fuller to read (people, battles and outlaws on the History tab and the map).</p>
+      <div role="group" aria-label="History features" data-testid="history-features">
+        {s.historyFeatures.map((f) => (
+          <Toggle key={f.bit} label={f.name.replace(/([a-z])([A-Z])/g, '$1 $2')} on={chosen !== undefined && chosen >= 0 && (chosen & f.bit) !== 0} onChange={() => vm.toggleFeature(f.bit)} hint={FEATURE_HINTS[f.name]} />
+        ))}
+      </div>
+      <div className={styles.row}>
+        <button className="mini" onClick={vm.allFeatures}>All</button>
+        <button className="mini" disabled={chosen === undefined} onClick={vm.defaultFeatures}>Engine default</button>
+      </div>
+    </>
   );
 }
 
@@ -249,7 +291,7 @@ function ReviewStep() {
     ['Planet', planet ? planet.label : `custom: tilt ${s.obliquity}°, ${s.flux.toFixed(2)}× light, ${s.rotation.toFixed(2)}× spin`, 0],
     ['Land', `${land ? land.label : 'custom'}, ${s.plates} plates, ${detail?.label ?? s.size} detail (${tilesOf(s.size).toLocaleString()} tiles)`, 1],
     ['Peoples', h.enabled ? (h.roster.length ? h.roster.map((r) => s.peoples.find((p) => p.folk === r.folk)?.folkName ?? r.folk).join(', ') : 'humans and dwarves') : 'no history', 2],
-    ['Realms', h.enabled ? `${h.maxPolities} realms over ${h.turns * h.years} years${h.founders.length ? `, ${h.founders.length} pinned` : ''}` : 'none', 3],
+    ['Realms', h.enabled ? `${h.maxPolities} realms over ${h.turns * h.years} years${h.founders.length ? `, ${h.founders.length} pinned` : ''}${featureSummary(h.features, s.historyFeatures)}` : 'none', 3],
     ['Look', `${vms.shell.state.themes.find((t) => t.id === vms.shell.state.themeId)?.name ?? vms.shell.state.themeId}, decals ${s.density.toFixed(2)}×`, 4],
   ];
   return (

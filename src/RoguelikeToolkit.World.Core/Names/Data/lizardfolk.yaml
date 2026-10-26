@@ -53,8 +53,35 @@ Descriptors:
   - {Form: Reedy, Gloss: reedy, Tags: [river, water]}
   - {Form: Mired, Gloss: mired, Tags: [valley, water]}
   - {Form: Hissing, Gloss: hiss-haunted, Tags: [forest, danger]}
+  - {Form: Sodden, Gloss: sodden, Tags: [valley, water]}
+  - {Form: Murky, Gloss: murky, Tags: [lake, water]}
+  - {Form: Boggy, Gloss: boggy, Tags: [valley]}
+  - {Form: Tepid, Gloss: tepid, Tags: [lake]}
+  - {Form: Sedgy, Gloss: sedge-grown, Tags: [river, water]}
+  - {Form: Steamy, Gloss: steamy, Tags: [valley, danger]}
+  - {Form: Verdant, Gloss: verdant, Tags: [forest, valley]}
+  - {Form: Brackish, Gloss: brackish, Tags: [sea, water]}
+  - {Form: Hot, Gloss: sun-baked, Tags: [danger]}
+  - {Form: Glossy, Gloss: glossy-scaled, Tags: [lake]}
 Nouns:
   - {Form: wallow, Gloss: wallow hollow, Tags: [village, valley]}
   - {Form: bask, Gloss: basking flat, Tags: [hill, high]}
   - {Form: mere, Gloss: swamp lake, Tags: [lake, water]}
   - {Form: brine, Gloss: brine sea, Tags: [sea, water]}
+  - {Form: nest, Gloss: clutch nest, Tags: [village, valley]}
+  - {Form: stilt, Gloss: stilt town, Tags: [town, water]}
+  - {Form: quay, Gloss: reed quay, Tags: [town, river]}
+  - {Form: bastion, Gloss: sun bastion, Tags: [city, hold]}
+  - {Form: lodge, Gloss: lodge, Tags: [camp]}
+  - {Form: crest, Gloss: crest, Tags: [mountain]}
+  - {Form: spur, Gloss: spur, Tags: [mountain]}
+  - {Form: runnel, Gloss: reed runnel, Tags: [river]}
+  - {Form: course, Gloss: slow course, Tags: [river]}
+  - {Form: delta, Gloss: delta, Tags: [river, sea]}
+  - {Form: copse, Gloss: copse, Tags: [forest]}
+  - {Form: thicket, Gloss: thicket, Tags: [forest]}
+# Realm titles in this people's voice ({n} = the base name); forms not listed use fantasy_common's.
+RealmTitles:
+  LooseAssociation: ["{n} Brood", "Clutches of {n}", "{n} Sun-Circle", "Mirekin of {n}", "{n} Spawning"]
+  Horde: ["{n} Swarm", "Scaled Host of {n}"]
+  Kingdom: ["Sun-Throne of {n}", "{n} Basilisk Court"]

@@ -51,7 +51,31 @@ Descriptors:
   - {Form: Radiant, Gloss: radiant, Tags: [high, mountain]}
   - {Form: Still, Gloss: still and clear, Tags: [water, lake]}
   - {Form: Dawning, Gloss: dawn-touched, Tags: [high, valley]}
+  - {Form: Gilded, Gloss: gilded, Tags: [high]}
+  - {Form: Pure, Gloss: pure}
+  - {Form: Sunlit, Gloss: sunlit, Tags: [high, valley]}
+  - {Form: Hallowed, Gloss: hallowed, Tags: [high, hill]}
+  - {Form: Lucent, Gloss: lucent, Tags: [water, lake]}
+  - {Form: Shining, Gloss: shining, Tags: [mountain, high]}
+  - {Form: Azure, Gloss: azure, Tags: [sea]}
+  - {Form: Opal, Gloss: opal-bright, Tags: [lake, sea]}
+  - {Form: Ivory, Gloss: ivory, Tags: [hill, high]}
+  - {Form: Clement, Gloss: clement}
+  - {Form: Halcyon, Gloss: halcyon, Tags: [sea, valley]}
 Nouns:
   - {Form: spire, Gloss: light spire, Tags: [town, city, mountain]}
   - {Form: beacon, Gloss: beacon hill, Tags: [hill]}
   - {Form: glade, Gloss: shining glade, Tags: [forest, valley]}
+  - {Form: abode, Gloss: light abode, Tags: [village]}
+  - {Form: hamlet, Gloss: hamlet, Tags: [village]}
+  - {Form: commune, Gloss: commune, Tags: [town]}
+  - {Form: bourne, Gloss: bourne town, Tags: [town]}
+  - {Form: bastion, Gloss: bright bastion, Tags: [city, hold]}
+  - {Form: retreat, Gloss: hill retreat, Tags: [camp, hill]}
+  - {Form: dell, Gloss: sheltered dell, Tags: [valley]}
+  - {Form: pinnacle, Gloss: pinnacle, Tags: [mountain, high]}
+  - {Form: rivulet, Gloss: bright rivulet, Tags: [river]}
+  - {Form: fountain, Gloss: fountain-spring, Tags: [river, water]}
+  - {Form: lagoon, Gloss: still lagoon, Tags: [lake, sea]}
+  - {Form: grove, Gloss: quiet grove, Tags: [forest]}
+  - {Form: shore, Gloss: radiant shore, Tags: [sea]}

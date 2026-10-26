@@ -7,22 +7,22 @@ export interface NameStyle { race: string; culture: string; label: string; }
 
 /** Kinds of map features the editor can select, filter, label and inspect. */
 export type FeatureKind =
-  | 'capital' | 'city' | 'town' | 'village'
+  | 'capital' | 'city' | 'town' | 'village' | 'fort'
   | 'ruin' | 'shrine' | 'battlefield'
   | 'river' | 'lake' | 'sea' | 'ocean'
   | 'mountain' | 'valley' | 'forest'
   | 'deposit';
 
 export const FEATURE_KINDS: readonly FeatureKind[] = [
-  'capital', 'city', 'town', 'village', 'ruin', 'shrine', 'battlefield', 'river', 'lake', 'sea', 'ocean', 'mountain', 'valley', 'forest', 'deposit',
+  'capital', 'city', 'town', 'village', 'fort', 'ruin', 'shrine', 'battlefield', 'river', 'lake', 'sea', 'ocean', 'mountain', 'valley', 'forest', 'deposit',
 ];
 
 /** The kinds that are places: a tile of their own that history events are logged against. */
-export const PLACE_KINDS: ReadonlySet<FeatureKind> = new Set<FeatureKind>(['capital', 'city', 'town', 'village', 'ruin', 'shrine', 'battlefield']);
+export const PLACE_KINDS: ReadonlySet<FeatureKind> = new Set<FeatureKind>(['capital', 'city', 'town', 'village', 'fort', 'ruin', 'shrine', 'battlefield']);
 
 /** Name generator kind for a feature kind (Core's PlaceKinds); deposits are not named. */
 export const NAME_KIND: Record<Exclude<FeatureKind, 'deposit'>, string> = {
-  capital: 'city', city: 'city', town: 'town', village: 'village',
+  capital: 'city', city: 'city', town: 'town', village: 'village', fort: 'hold',
   ruin: 'village', shrine: 'hold', battlefield: 'camp',
   river: 'river', lake: 'lake', sea: 'sea', ocean: 'sea',
   mountain: 'mountain', valley: 'valley', forest: 'forest',
@@ -62,6 +62,8 @@ export interface MapFeature {
   /** Inspector facts, already formatted: [label, value]. */
   details: [string, string][];
   request?: NameRequest;
+  /** Architectural style of the realm that holds (or held) the place, from its culture's data; absent = the default look. */
+  architecture?: string;
 }
 
 export interface RiverGeometry {
@@ -160,7 +162,15 @@ export interface HistorySettings {
   /** Peoples (`folk`, `culture`) the unpinned founders are drawn from; empty = Core's default roster (human, dwarf). */
   roster: { folk: string; culture: string }[];
   founders: FounderPin[];
+  /**
+   * The history expansion features (Core's `HistoryFeatures` bits, named by `HistoryFeature`): persons, battles, sieges,
+   * logistics, commerce, outlaws, intrigue. Absent or -1 = Core's default; absent keeps old documents' settings as they were.
+   */
+  features?: number;
 }
+
+/** One of Core's `HistoryFeatures` flags (the engine's `HistoryFeatureNames`). */
+export interface HistoryFeature { name: string; bit: number; }
 
 export const DEFAULT_HISTORY: HistorySettings = { enabled: true, turns: 30, years: 10, maxPolities: 8, roster: [], founders: [] };
 
@@ -210,7 +220,7 @@ export type WorkerResponse =
   | { id: number; ok: true; type: 'recompute'; world: WorldSnapshot }
   | { id: number; ok: true; type: 'names'; names: string[] }
   | { id: number; ok: true; type: 'styles'; styles: NameStyle[] }
-  | { id: number; ok: true; type: 'peoples'; peoples: PeopleOption[]; forms: string[] }
+  | { id: number; ok: true; type: 'peoples'; peoples: PeopleOption[]; forms: string[]; features: HistoryFeature[] }
   | { id: number; ok: false; error: string };
 
 /** Transferable buffers of a snapshot (zero-copy handoff). */
@@ -218,6 +228,8 @@ export function snapshotTransfer(w: WorldSnapshot): Transferable[] {
   const r = w.rasters;
   const out: Transferable[] = [r.elevation.buffer, r.biome.buffer, r.tile.buffer, r.waterPixels.buffer, w.tilePlate.buffer, w.tileStyle.buffer, w.plateDrift.buffer, w.tileXY.buffer, w.capacity.buffer, w.seaIce.buffer, w.climate.buffer];
   if (w.history) out.push(w.history.ownerBase.buffer, w.history.changes.buffer);
+  const x = w.history?.expansion;
+  if (x) out.push(x.persons.buffer, x.relations.buffer, x.tenures.buffer, x.battles.buffer, x.routeStates.buffer, x.routeSeries.buffer, x.roads.buffer, x.settlementTiles.buffer);
   for (const rv of w.features.rivers) out.push(rv.points.buffer);
   for (const rd of w.features.roads) out.push(rd.points.buffer);
   for (const f of w.features.features) if (f.tiles) out.push(f.tiles.buffer);

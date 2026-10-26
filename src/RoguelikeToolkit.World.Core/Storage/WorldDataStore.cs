@@ -142,7 +142,21 @@ public unsafe class WorldDataStore : IDisposable
         if (_currentTotalBytes == 0)
             throw new InvalidOperationException("No layers registered. Call RegisterLayer<T>() before Allocate().");
         if (IsAllocated) return;
+        try
+        {
+            AllocateCore();
+        }
+        catch
+        {
+            // A half-built mapping (bad header, view creation failure) must not leave the store looking allocated:
+            // release what exists so the error repeats on a retry instead of handing out spans over bad bytes.
+            Dispose();
+            throw;
+        }
+    }
 
+    private void AllocateCore()
+    {
         string? fullPath = null;
         if (_filePath != null)
         {

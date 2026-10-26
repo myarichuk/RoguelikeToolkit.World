@@ -15,8 +15,15 @@ ConscientiousnessOffset: 0
 ExtraversionOffset: 0
 AgreeablenessOffset: 0
 NeuroticismOffset: 0
+Architecture: aerie
 FormAffinity:
   Kingdom: 60
   Horde: 20
   LooseAssociation: 15
   MerchantRepublic: 5
+# Multipliers on the territory step costs (Territory/default.yaml): where this people's reach runs easily.
+TerrainAffinity:
+  Mountain: 0.75
+  Desert: 0.9
+  High: 0.7
+  Climb: 0.75

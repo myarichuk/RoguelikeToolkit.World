@@ -31,6 +31,12 @@ export interface Layers {
   realms: boolean;
   /** Realm outlines and names at the same turn. */
   borders: boolean;
+  /** Battle markers coloured by outcome and rings on besieged places, at the history turn (expansion worlds). */
+  battles: boolean;
+  /** Outlaw havens and caravan raids at the history turn. */
+  outlaws: boolean;
+  /** Trade roads coloured by how safe they were at the history turn. */
+  routeSafety: boolean;
 }
 
 /**
@@ -58,6 +64,7 @@ const allDeposits = (v: boolean) => Object.fromEntries(DEPOSIT_TYPES.map((k) => 
 const LAYERS_OFF: Layers = {
   hillshade: false, contours: false, plateBoundaries: false, plateMotion: false, graticule: false,
   ripples: false, coastline: false, rivers: false, roads: false, stamps: false, labels: false, resources: false, climatePaint: false, capacity: false, climate: false, wind: false, currents: false, realms: false, borders: false,
+  battles: false, outlaws: false, routeSafety: false,
 };
 
 export const DEFAULT_VIEW: ViewSettings = {
@@ -74,7 +81,8 @@ export const VIEW_PRESETS: ViewPreset[] = [
   { id: 'map', label: 'Map', apply: (v) => ({ ...v, base: 'styled', layers: { ...LAYERS_OFF, ripples: true, rivers: true, roads: true, stamps: true, labels: true } }) },
   { id: 'plates', label: 'Plates', apply: (v) => ({ ...v, base: 'plates', plateTopo: 0, layers: { ...LAYERS_OFF, plateBoundaries: true, plateMotion: true, coastline: true } }) },
   { id: 'plates-topo', label: 'Plates + topography', apply: (v) => ({ ...v, base: 'plates', plateTopo: 0.75, layers: { ...LAYERS_OFF, hillshade: true, plateBoundaries: true, plateMotion: true, coastline: true } }) },
-  { id: 'realms', label: 'Realms', apply: (v) => ({ ...v, base: 'styled', layers: { ...LAYERS_OFF, ripples: true, rivers: true, roads: true, labels: true, realms: true, borders: true } }) },
+  // Stamps stay on: ruins, holy sites and battlefields are what a history map is for.
+  { id: 'realms', label: 'Realms', apply: (v) => ({ ...v, base: 'styled', layers: { ...LAYERS_OFF, ripples: true, rivers: true, roads: true, stamps: true, labels: true, realms: true, borders: true } }) },
   { id: 'topo', label: 'Topography', apply: (v) => ({ ...v, base: 'elevation', layers: { ...LAYERS_OFF, hillshade: true, contours: true, coastline: true, rivers: true } }) },
   { id: 'biomes', label: 'Biomes', apply: (v) => ({ ...v, base: 'biomes', layers: { ...LAYERS_OFF, hillshade: true, coastline: true, rivers: true } }) },
   { id: 'land', label: 'Land capacity', apply: (v) => ({ ...v, base: 'biomes', layers: { ...LAYERS_OFF, hillshade: true, coastline: true, rivers: true, capacity: true } }) },

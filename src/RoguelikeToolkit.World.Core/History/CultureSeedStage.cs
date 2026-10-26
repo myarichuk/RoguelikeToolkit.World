@@ -23,7 +23,7 @@ public sealed class CultureSeedStage : HistoryPluginBase
     /// <summary>Copies the configured roster (blank keys rejected, exact duplicates folded) and syncs budgets.</summary>
     public override void Apply(WorldMap map, HistoryCatalog history, HistoryContext context)
     {
-        history.SyncBudgets(context.MaxEventsPerTurn, context.MaxEvents);
+        history.SyncBudgets(context.MaxEventsPerTurn, context.MaxEvents, context.MaxDetailEventsPerTurn);
         var seen = new HashSet<(string, string)>();
         foreach (var people in context.Peoples)
         {

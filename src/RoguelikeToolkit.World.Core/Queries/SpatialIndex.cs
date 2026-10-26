@@ -33,6 +33,8 @@ public sealed class SpatialIndex
     private readonly Vector3D[] _cellCenters;
     private readonly int[] _cellOffsets;
     private readonly int[] _cellTiles;
+    // Per cell, cos and sin of the largest angle from its center to one of its tiles: the exact radius AnyWithin prunes with.
+    private readonly double[] _cellCos, _cellSin;
     private readonly Dictionary<FeatureKind, int[]> _tilesByKind = new();
     private readonly Dictionary<FeatureKind, bool[]> _masksByKind = new();
     private readonly bool _hasDeposits;
@@ -166,6 +168,18 @@ public sealed class SpatialIndex
         Array.Copy(_cellOffsets, cursors, sizes.Length);
         for (int i = 0; i < n; i++)
             _cellTiles[cursors[tileCell[i]]++] = i;
+
+        _cellCos = new double[sizes.Length];
+        _cellSin = new double[sizes.Length];
+        for (int c = 0; c < sizes.Length; c++)
+        {
+            double min = 1;
+            for (int k = _cellOffsets[c]; k < _cellOffsets[c + 1]; k++)
+                min = Math.Min(min, Vector3D.Dot(_cellCenters[c], _vectors[_cellTiles[k]]));
+            min = Math.Max(-1, Math.Min(1, min));
+            _cellCos[c] = min;
+            _cellSin[c] = Math.Sqrt(1 - min * min);
+        }
     }
 
     /// <summary>Tiles carrying the given feature kind, ascending.</summary>
@@ -184,15 +198,22 @@ public sealed class SpatialIndex
     /// True when any tile carrying <paramref name="kind"/> (other than
     /// <paramref name="exceptTile"/>) lies within the angle whose cosine is
     /// <paramref name="cosThreshold"/> of <paramref name="from"/>. Exact: cells
-    /// that provably cannot hold a qualifying tile (same slack bound as
-    /// <see cref="NearestInMask"/>) are skipped; no sort, no allocation.
+    /// that provably cannot hold a qualifying tile (by each cell's measured
+    /// radius, the triangle inequality) are skipped; no sort, no allocation.
     /// </summary>
     public bool AnyWithin(Vector3D from, FeatureKind kind, double cosThreshold, int exceptTile = -1)
     {
         if (!_masksByKind.TryGetValue(kind, out var mask)) return false;
+        double cosR = Math.Max(-1, Math.Min(1, cosThreshold));
+        double sinR = Math.Sqrt(1 - cosR * cosR);
         for (int c = 0; c < _cellCenters.Length; c++)
         {
-            if (Vector3D.Dot(from, _cellCenters[c]) + Slack < cosThreshold) continue;
+            // Triangle inequality: every tile of the cell is within (angle to center + cell radius), so the cell can hold
+            // a hit only if the center lies within R + radius, i.e. dot >= cos(R + radius) (always true once R + radius
+            // reaches pi). The small margin absorbs rounding; it only ever keeps a cell, never drops one.
+            double cosSum = cosR * _cellCos[c] - sinR * _cellSin[c];
+            bool wraps = cosR * _cellSin[c] + sinR * _cellCos[c] < 0; // sin(R + radius) < 0: the sum is past pi
+            if (!wraps && Vector3D.Dot(from, _cellCenters[c]) < cosSum - 1e-9) continue;
             for (int k = _cellOffsets[c]; k < _cellOffsets[c + 1]; k++)
             {
                 int t = _cellTiles[k];

@@ -77,6 +77,8 @@ public static partial class WorldExports
             throw;
         }
         _world = built;
+        _chronicleNames = new(); // a new world's names come with it (ConfigureChronicleNames)
+        _chronicle = null;
         return built.TileCount;
     }
 
@@ -410,6 +412,27 @@ public static partial class WorldExports
         => FantasyNameGenerator.Styles().Select(s => $"{s.Race}\t{s.Culture}\t{s.Label}").ToArray();
 
     /// <summary>
+    /// How a realm of <paramref name="form"/> founded by this people is named (Core's name data): element 0 is the place
+    /// kinds its base name comes from, tab-joined; the rest are title templates with <c>{n}</c> for the base name.
+    /// </summary>
+    [JSExport]
+    public static string[] RealmNaming(string race, string culture, string form)
+    {
+        try
+        {
+            var (kinds, titles) = FantasyNameGenerator.RealmNaming(race, culture, form);
+            var result = new string[titles.Count + 1];
+            result[0] = string.Join("\t", kinds);
+            for (int i = 0; i < titles.Count; i++) result[i + 1] = titles[i];
+            return result;
+        }
+        catch (Exception e) when (e is ArgumentException or KeyNotFoundException or InvalidOperationException)
+        {
+            return new[] { string.Empty }; // an unknown style: the editor falls back to a bare name
+        }
+    }
+
+    /// <summary>
     /// Batch place naming: one interop hop for the whole map. <paramref name="context"/> bits:
     /// 1 near water, 2 near forest, 4 dark forest, 8 highland, 16 valley, 32 deposit, 64 dangerous.
     /// Latin script: the map fonts are Latin, and labels must render the same on screen and in SVG.
@@ -436,6 +459,34 @@ public static partial class WorldExports
             catch (Exception e) when (e is ArgumentException or KeyNotFoundException or InvalidOperationException)
             {
                 // An unknown kind/style from a content pack must not take the whole batch down.
+                result[i] = string.Empty;
+            }
+        }
+        return result;
+    }
+
+    /// <summary>
+    /// Batch person naming for history's persons: each is named by its folk under its culture's naming rule (the Peoples
+    /// culture key, as <see cref="HistoryPersonText"/> gives it), feminine where <paramref name="feminine"/> is non-zero.
+    /// Latin script, as for places. An unknown folk or culture names nobody (an empty string) rather than failing the batch.
+    /// </summary>
+    [JSExport]
+    public static string[] NamePersons(int[] seeds, string[] folks, string[] cultures, int[] feminine)
+    {
+        if (folks.Length != seeds.Length || cultures.Length != seeds.Length || feminine.Length != seeds.Length)
+            throw new ArgumentException("Person arrays must have equal lengths.");
+        var peoples = Core.Peoples.PeoplesStore.Load();
+        var result = new string[seeds.Length];
+        for (int i = 0; i < seeds.Length; i++)
+        {
+            try
+            {
+                var ancestry = Core.Lineage.Ancestry.From(new Core.Lineage.AncestryShare(string.IsNullOrWhiteSpace(folks[i]) ? FantasyRaces.Human : folks[i], 1));
+                result[i] = FantasyNameGenerator.GenerateMixedPerson(ancestry, cultures[i], peoples, seeds[i], feminine: feminine[i] != 0, script: NameScript.Latin).Text;
+            }
+            catch (Exception e) when (e is ArgumentException or KeyNotFoundException or InvalidOperationException
+                or Core.Peoples.UnknownPeoplesKeyException or UnknownNameKeyException)
+            {
                 result[i] = string.Empty;
             }
         }

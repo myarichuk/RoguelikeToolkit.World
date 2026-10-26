@@ -15,8 +15,13 @@ ConscientiousnessOffset: 0
 ExtraversionOffset: 0
 AgreeablenessOffset: 0
 NeuroticismOffset: 0
+Architecture: horde
 FormAffinity:
   Horde: 55
   LooseAssociation: 25
   Kingdom: 15
   MerchantRepublic: 5
+# Multipliers on the territory step costs (Territory/default.yaml): where this people's reach runs easily.
+TerrainAffinity:
+  Badlands: 0.8
+  RockDesert: 0.85

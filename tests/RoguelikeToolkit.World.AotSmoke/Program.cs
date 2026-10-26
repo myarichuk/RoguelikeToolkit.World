@@ -112,6 +112,58 @@ var dwarf = peoples.GetFolk("dwarf");
 Check(dwarf.MaturationYears == 50, "folk table");
 Check(!peoples.Compatibility.TryUnion("demon", "angel", out _), "compat table");
 foreach (var c in dwarf.Key + peoples.GetCulture("dwarven_clan").NamingTable) Mix(c);
+// Court and epithet tables (nested dictionaries and lists of DTOs), then a history with named persons on them.
+Check(peoples.Courts.TryGetValue("default", out var court) && court.Forms.Count == 4 && court.Skills.Count == 4, "court table");
+Check(peoples.TraitTables.TryGetValue("epithets", out var epithets) && epithets.Epithets.Count > 0 && epithets.Epithets[0].Min.Count > 0, "epithet table");
+// Tactics, ways of war and the battle model (dictionaries of DTOs, lists of DTOs), then a history with persons and battles.
+Check(peoples.Tactics.TryGetValue("ambush", out var ambush) && ambush.Initiative && ambush.TerrainFit.Count > 0, "tactic table");
+Check(peoples.Warfare.TryGetValue("orcish_horde", out var horde) && horde.Units.Count > 0 && horde.Doctrine.Count > 0 && horde.Customs.Count > 0, "warfare table");
+Check(peoples.Battles.TryGetValue("default", out var battle) && battle.Beats.Count > 0 && battle.Epithets.Count > 0 && battle.Customs.Count > 0
+    && battle.BiomeTerrain.Count > 0 && battle.Aftermath.Count > 0, "battle table");
+// Walls, forts and sieges (a dictionary of fort-kind DTOs), then the history runs with them on.
+Check(peoples.Fortifications.TryGetValue("default", out var fortification) && fortification.Kinds.Count > 0 && fortification.TierWalls.Count > 0, "fortification table");
+Check(peoples.Sieges.TryGetValue("default", out var siegeTable) && siegeTable.GarrisonShare.Count > 0 && siegeTable.FoodSeason.Count > 0, "siege table");
+// The logistics network (a dictionary of terrain costs, lists of forms and offices), then the history runs with it on too.
+Check(peoples.Logistics.TryGetValue("default", out var logistics) && logistics.TerrainCost.Count > 0 && logistics.SourceCost.Count > 0
+    && logistics.SeaForms.Count > 0 && logistics.FormProjection.Count > 0, "logistics table");
+// Trade, outlaws and intrigue (lists of terrain and office names, a dictionary of plot weights).
+Check(peoples.Commerce.TryGetValue("default", out var commerce) && commerce.MerchantWealth > 0, "commerce table");
+Check(peoples.Outlaws.TryGetValue("default", out var outlaws) && outlaws.HavenTerrains.Count > 0, "outlaw table");
+Check(peoples.Intrigues.TryGetValue("default", out var intrigue) && intrigue.Plots.Count > 0 && intrigue.PlotOffices.Count > 0, "intrigue table");
+Check(peoples.Warfare["dogfolk_pack"].Seafaring > peoples.Warfare["dwarven_clan"].Seafaring, "seafaring");
+Check(horde!.Fortify < peoples.Warfare["dwarven_clan"].Fortify && !string.IsNullOrEmpty(peoples.GetCulture("dwarven_clan").Architecture), "fortify and architecture");
+using (var courtly = new WorldBuilder().WithSize(3).WithSeed(7)
+           .WithHistory(c => c.Features = RoguelikeToolkit.World.Core.History.HistoryFeatures.Persons
+               | RoguelikeToolkit.World.Core.History.HistoryFeatures.All).Build())
+{
+    Check(courtly.History.Persons.Count > 0 && courtly.History.Tenures.Count > 0, "court persons");
+    Check(courtly.History.Battles.Count > 0, "battles");
+    foreach (var p in courtly.History.Persons)
+    {
+        Mix((ulong)(uint)p.StableKey); Mix(p.Martial); Mix((ulong)(uint)p.DiedTurn); Mix((ulong)p.Kind); Mix((ulong)(long)(p.Wealth * 1e6)); Mix((ulong)(long)p.Loyalty);
+    }
+    foreach (var b in courtly.History.Battles)
+    {
+        Mix((ulong)b.Outcome); Mix((ulong)(uint)b.Tile); Mix((ulong)(uint)b.Attacker.Tactic); Mix((ulong)b.Kind); Mix((ulong)(uint)b.SiegeMonths);
+        Mix((ulong)(long)(b.Attacker.LossShare * 1e9)); Mix((ulong)(long)(b.Defender.Strength * 1e3)); Mix((ulong)b.Season);
+    }
+    Check(courtly.History.RouteStates.Count > 0, "route states");
+    foreach (var r in courtly.History.RouteStates)
+    {
+        Mix((ulong)(long)(r.Safety * 1e9)); Mix((ulong)(long)(r.Traffic * 1e9)); Mix((ulong)(uint)r.Forts); Mix((ulong)(uint)r.Waystations);
+        Mix((ulong)(uint)r.OutlawBand); Mix((ulong)(uint)r.Sponsor);
+    }
+    // The chronicle: its grammar and lexicon YAML (lists of rule DTOs) and a render of the whole log; rendering leaves the bytes alone.
+    int before = courtly.History.ToBytes().Length;
+    var chronicle = new RoguelikeToolkit.World.Core.Chronicle.TemplateChronicleTextProvider().RenderAll(courtly.History);
+    Check(chronicle.Count == courtly.History.Events.Count && chronicle.All(t => t.Length > 0 && t.IndexOf('{') < 0), "chronicle render");
+    Check(courtly.History.ToBytes().Length == before, "chronicle leaves the catalog unchanged");
+    for (int i = 0; i < chronicle.Count; i += 9)
+    {
+        Mix((ulong)chronicle[i].Length);
+        foreach (var ch in chronicle[i]) Mix(ch);
+    }
+}
 
 // 5. Entity store: spawn, snapshot, reload.
 var store = new EntityStore();

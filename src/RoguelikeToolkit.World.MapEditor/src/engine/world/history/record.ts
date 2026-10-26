@@ -39,9 +39,51 @@ export interface EventRecord {
   /** Plugin-defined kind (`namespace/name`), empty for built-ins. */
   plugin: string;
   tags: string[];
+  /**
+   * Who took part, when anyone did (absent otherwise, as on every legacy event): an entity id and its role. The role's
+   * prefix names the entity: `person:commander` is a person, `settlement:besieged` a settlement, a bare role a realm.
+   */
+  parts?: { entity: number; role: string }[];
 }
 
-/** A run's output. The two typed arrays travel as blobs in a `.wmap`; everything else is JSON. */
+/**
+ * The history expansion's records (docs/HISTORY_EXPANSION_PLAN.md §7): persons, their bonds and offices, battles and route
+ * states, as the engine exports them (strides in persons.ts, battles.ts, routes.ts). Present only when a run wrote any, so a
+ * world generated with every expansion feature off keeps exactly the record (and `.wmap`) it always had.
+ */
+export interface ExpansionRecord {
+  /** The catalog's interned strings: relation kinds, offices, death causes, siege ends. */
+  strings: string[];
+  /** `PersonKind`, `BattleKind` and `BattleOutcome` names by value. */
+  personKinds: string[];
+  battleKinds: string[];
+  battleOutcomes: string[];
+  /** Persons (`PERSON_STRIDE` ints each), their `folk\tculture\tepithets` text, and their names (made by the editor). */
+  persons: Int32Array;
+  personText: string[];
+  personNames: string[];
+  relations: Int32Array;
+  tenures: Int32Array;
+  battles: Int32Array;
+  /** Per battle: `terrain\tattackerTactic\tattackerUnit\tdefenderTactic\tdefenderUnit\tbeats`. */
+  battleText: string[];
+  routeStates: Int32Array;
+  /** Every route sample by turn, then route. */
+  routeSeries: Int32Array;
+  /** The engine's `HistoryRoads()` segments: where each route runs, for the route-safety overlay. */
+  roads: Int32Array;
+  /** Tile of each history settlement by index (sieges name the besieged place by index). */
+  settlementTiles: Int32Array;
+  /** Rendered prose per event, aligned with `events`, when the engine has a chronicle; absent otherwise. */
+  chronicle?: string[];
+}
+
+/** The typed arrays of an expansion record, which travel as blobs in a `.wmap`; the string tables go in the header. */
+export const EXPANSION_ARRAYS = ['persons', 'relations', 'tenures', 'battles', 'routeStates', 'routeSeries', 'roads', 'settlementTiles'] as const;
+export type ExpansionArray = (typeof EXPANSION_ARRAYS)[number];
+export type ExpansionRecordJson = Omit<ExpansionRecord, ExpansionArray>;
+
+/** A run's output. The typed arrays travel as blobs in a `.wmap`; everything else is JSON. */
 export interface HistoryRecord {
   /** Turns simulated, and years per turn. */
   turns: number;
@@ -52,10 +94,12 @@ export interface HistoryRecord {
   ownerBase: Int32Array;
   /** `(turn, tile, owner)` triples by turn: from that turn on the tile belongs to `owner`. */
   changes: Int32Array;
+  /** Persons, battles and route states, when the run had any expansion feature on. */
+  expansion?: ExpansionRecord;
 }
 
 /** The record without its typed arrays, as written into a `.wmap` header. */
-export type HistoryRecordJson = Omit<HistoryRecord, 'ownerBase' | 'changes'>;
+export type HistoryRecordJson = Omit<HistoryRecord, 'ownerBase' | 'changes' | 'expansion'> & { expansion?: ExpansionRecordJson };
 
 /** A realm's colour as 0..255 RGB: golden-angle hues keep neighbouring ids apart. The map, the list and the borders share it. */
 export function realmRgb(id: number): [number, number, number] {
@@ -87,10 +131,13 @@ const KIND_TEXT: Record<string, string> = {
   HolyFound: 'raised a holy site', Desecration: 'desecrated a holy site', Villain: 'saw a tyrant rise', Ultimatum: 'issued an ultimatum', Tribute: 'paid tribute',
   Myth: 'told a myth', SettlementFounded: 'founded a settlement', SettlementEnded: 'lost a settlement', Shock: 'was struck by disaster',
   SettlementCaptured: 'took a settlement', SettlementTierChanged: 'saw a settlement change', PolityCollapsed: 'collapsed', PolityAbsorbed: 'was absorbed', Plugin: 'event',
+  Siege: 'laid a siege', PersonRose: 'saw someone rise', PersonDied: 'mourned a death', Intrigue: 'plotted', CaravanRaided: 'lost a caravan to raiders',
+  OutlawRose: 'saw an outlaw band rise', OutlawEnded: 'saw an outlaw band end', Smuggling: 'saw smugglers at work', Privateering: 'sent out privateers',
+  Campaign: 'campaigned', Prophecy: 'heard a prophecy',
 };
 
 /** Events that change the political map; the default log shows only these. */
-export const MAJOR_KINDS: ReadonlySet<string> = new Set(['Founding', 'War', 'Conquest', 'Rebellion', 'PolityCollapsed', 'PolityAbsorbed', 'HolyFound', 'Desecration', 'Shock', 'Villain', 'SettlementCaptured']);
+export const MAJOR_KINDS: ReadonlySet<string> = new Set(['Founding', 'War', 'Conquest', 'Rebellion', 'PolityCollapsed', 'PolityAbsorbed', 'HolyFound', 'Desecration', 'Shock', 'Villain', 'SettlementCaptured', 'Myth', 'Siege']);
 
 export const kindText = (kind: string): string => KIND_TEXT[kind] ?? kind;
 
@@ -100,7 +147,7 @@ export const tagValue = (e: EventRecord, key: string): string | undefined => {
   return t === undefined ? undefined : t.slice(key.length + 1);
 };
 
-const ROLE_TEXT: Record<string, string> = { Capital: 'a capital', Colony: 'a colony', Node: 'a trade node', Post: 'a garrison post', Shrine: 'a shrine town', Refuge: 'a refuge' };
+const ROLE_TEXT: Record<string, string> = { Capital: 'a capital', Colony: 'a colony', Node: 'a trade node', Post: 'a garrison post', Shrine: 'a shrine town', Refuge: 'a refuge', Waystation: 'a waystation' };
 /** A numeric `key:id` tag (a realm id), if the event has one. */
 export const tagNumber = (e: EventRecord, key: string): number | undefined => {
   const n = Number(tagValue(e, key));
@@ -113,18 +160,68 @@ export const humanize = (key: string): string => key.replace(/_/g, ' ').replace(
 const CAUSE_TEXT: Record<string, string> = {
   war: 'war', plague: 'plague', famine: 'famine', drought: 'drought', quake: 'an earthquake', flood: 'a flood', eruption: 'an eruption', abandoned: 'abandonment', razed: 'being razed',
 };
+/** What a risen villain wants (Core's VillainOperator agendas). */
+const AGENDA_TEXT: Record<string, string> = { dominion: 'dominion', ruin: 'ruin', hunger: 'endless hunger', shadow: 'the shadow' };
+
 /** An end cause as it reads after "by": `razed` becomes "being razed". */
 export const causeText = (key: string): string => CAUSE_TEXT[key] ?? (key.replace(/_/g, ' ') || 'unknown causes');
 
-/** A plain-words line for the log: the realm, what it did, and what else the tags say. */
-export function eventLine(e: EventRecord, nameOf: (polity: number) => string): string {
+/** `attacker_decisive` (an `outcome:` tag) in words. */
+const OUTCOME_TEXT: Record<string, string> = {
+  attacker_decisive: 'a rout of the defenders', attacker_victory: 'a victory for the attackers', attacker_pyrrhic: 'a costly victory for the attackers',
+  stalemate: 'a stalemate', defender_victory: 'the defenders holding', defender_decisive: 'a rout of the attackers', averted: 'no battle',
+};
+const outcomeText = (e: EventRecord): string => {
+  const o = tagValue(e, 'outcome');
+  return o ? `, ending in ${OUTCOME_TEXT[o] ?? o.replace(/_/g, ' ')}` : '';
+};
+
+/**
+ * A plain-words line for the log: the realm, what it did, and what else the tags say. `personOf` names a person id (the
+ * expansion's `person:`, `band:`, `agent:` tags); without it a person reads as "someone".
+ */
+export function eventLine(e: EventRecord, nameOf: (polity: number) => string, personOf?: (person: number) => string): string {
   const who = e.polity >= 0 ? nameOf(e.polity) : 'The world';
   const other = (key: string) => {
     const id = tagNumber(e, key);
     return id === undefined ? undefined : nameOf(id);
   };
+  const person = (key: string) => {
+    const id = tagNumber(e, key);
+    return id === undefined ? undefined : personOf ? personOf(id) : 'someone';
+  };
   switch (e.kind) {
-    case 'War': { const a = other('attacker'), d = other('defender'); return a && d ? `${a} attacked ${d}` : `${who} went to war`; }
+    case 'War': { const a = other('attacker'), d = other('defender'); return a && d ? `${a} attacked ${d}${outcomeText(e)}` : `${who} went to war`; }
+    case 'Campaign': { const a = other('attacker'), d = other('defender'); return a && d ? `${a} marched on ${d} but never gave battle${e.tags.includes('declined') ? ' (declined the field)' : e.tags.includes('supply_failed') ? ' (supply failed)' : ''}` : `${who} campaigned`; }
+    case 'Siege': {
+      const a = other('attacker'), d = other('defender'), end = tagValue(e, 'end');
+      return a && d ? `${a} besieged a settlement of ${d}${end ? `: ${end.replace(/_/g, ' ')}` : ''}` : `${who} laid a siege`;
+    }
+    case 'PersonRose': {
+      const p = person('person') ?? 'someone', office = tagValue(e, 'office');
+      if (e.tags.includes('merchant')) return `${p} rose as a merchant prince of ${who}`;
+      return office ? `${p} became ${humanize(office).toLowerCase()} of ${who}` : `${p} rose in ${who}`;
+    }
+    case 'PersonDied': {
+      const p = person('person') ?? 'someone', cause = e.tags.find((t) => !t.includes(':') && t !== 'deceased');
+      return `${p} of ${who} died${cause ? ` (${cause.replace(/_/g, ' ')})` : ''}`;
+    }
+    case 'Intrigue': {
+      const plot = tagValue(e, 'plot'), target = other('target'), actor = other('actor') ?? who;
+      const exposed = e.tags.includes('exposed') || e.tags.includes('caught');
+      return `${actor} ${exposed ? 'was caught plotting' : 'plotted'}${plot ? ` (${plot.replace(/_/g, ' ')})` : ''}${target ? ` against ${target}` : ''}`;
+    }
+    case 'CaravanRaided': {
+      const band = person('band');
+      return `${band ? `${band}'s band` : 'Brigands'} raided a caravan of ${other('victim') ?? who}`;
+    }
+    case 'OutlawRose': return `${person('person') ?? 'An outlaw'} raised a band on the road${tagValue(e, 'source') ? ` (${tagValue(e, 'source')!.replace(/_/g, ' ')})` : ''}`;
+    case 'OutlawEnded': return `${person('person') ?? 'An outlaw'}'s band came to an end${tagValue(e, 'end') ? ` (${tagValue(e, 'end')!.replace(/_/g, ' ')})` : ''}`;
+    case 'Privateering': {
+      const p = person('privateer') ?? person('person') ?? 'a privateer', prey = other('victim');
+      return e.tags.includes('commission') ? `${who} commissioned ${p}${prey ? ` against ${prey}` : ''}` : `${p} took a prize${prey ? ` from ${prey}` : ''} for ${who}`;
+    }
+    case 'Smuggling': return `smugglers worked a cut road of ${who}`;
     case 'Conquest': { const w = other('winner'), l = other('loser'); return w && l ? `${w} conquered ${l}` : `${who} conquered a rival`; }
     case 'Rebellion': { const p = other('parent'); return p ? `${who} broke away from ${p}` : `${who} rebelled`; }
     case 'PolityAbsorbed': { const into = other('into'); return into ? `${who} was absorbed by ${into}` : `${who} was absorbed`; }
@@ -135,6 +232,14 @@ export function eventLine(e: EventRecord, nameOf: (polity: number) => string): s
       const to = tagValue(e, 'to')?.toLowerCase();
       const grew = e.tags.includes('up');
       return `a settlement of ${who} ${grew ? 'grew into' : 'shrank to'} ${to ? `a ${to}` : 'another size'}`;
+    }
+    case 'Villain': {
+      const agenda = tagValue(e, 'agenda');
+      return `${who} fell under a tyrant${agenda ? ` bent on ${AGENDA_TEXT[agenda] ?? agenda}` : ''}`;
+    }
+    case 'Myth': {
+      const faith = tagValue(e, 'faith'), powers = e.tags.filter((t) => t.startsWith('power:')).map((t) => t.slice(6).replace(/_/g, ' '));
+      return `${who} told the myth of its ${faith ? humanize(faith).toLowerCase() : ''} faith${powers.length ? `, of ${powers.join(' and ')}` : ''}`.replace('its  faith', 'its faith');
     }
     case 'Plugin': return `${who}: ${e.plugin}`;
     default: return `${who} ${kindText(e.kind)}`;

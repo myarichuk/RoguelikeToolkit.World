@@ -58,4 +58,26 @@ public enum HistoryEventKind : byte
     PolityAbsorbed = 23,
     /// <summary>An event defined by a plugin. <see cref="HistoryEvent.PluginKind"/> names it (<c>namespace/name</c>); the tags carry the detail.</summary>
     Plugin = 24,
+    /// <summary>A siege ended. Tags <c>battle:{id}</c>, <c>settlement:{index}</c> and the end (<c>stormed</c>, <c>surrendered</c>...); the tile is the settlement. Detail quota.</summary>
+    Siege = 25,
+    /// <summary>A person rose: took office, raised a band, won a seat. Tags <c>person:{id}</c> and the office or kind. Detail quota.</summary>
+    PersonRose = 26,
+    /// <summary>A person died. Tags <c>person:{id}</c> and the cause. Detail quota.</summary>
+    PersonDied = 27,
+    /// <summary>A plot, assassination, bribe, sabotage or an exposed sponsorship. Tags the act and the parties. Detail quota.</summary>
+    Intrigue = 28,
+    /// <summary>Outlaws struck a caravan on a route. Tags <c>route:{a}-{b}</c> and the band. Detail quota.</summary>
+    CaravanRaided = 29,
+    /// <summary>An outlaw band formed. Tags <c>person:{id}</c> and its origin. Detail quota.</summary>
+    OutlawRose = 30,
+    /// <summary>An outlaw band ended (hanged, pardoned, settled...). Tags <c>person:{id}</c> and the end. Detail quota.</summary>
+    OutlawEnded = 31,
+    /// <summary>Goods moved over a severed route. Tags <c>route:{a}-{b}</c>. Detail quota.</summary>
+    Smuggling = 32,
+    /// <summary>A licensed raider struck at sea. Tags <c>person:{id}</c> and the sponsor. Detail quota.</summary>
+    Privateering = 33,
+    /// <summary>Campaign hardship (winter_quarters, supply_failed, foraging, forced_march). Tags the hardship. Detail quota.</summary>
+    Campaign = 34,
+    /// <summary>A prophet spoke after a calamity. Tags <c>person:{id}</c>. Detail quota.</summary>
+    Prophecy = 35,
 }

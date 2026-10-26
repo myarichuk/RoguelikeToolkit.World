@@ -1,0 +1,13 @@
+# Wood elves.
+host: ["wardens", "green company", "glade-host", "leaf-shadows"]
+cry!: ["Root and branch!", "The forest remembers!", "Let the leaves fall!", "Swift as the wind in the boughs!"]
+office.ruler!: ["warden of the eldest grove", "crowned of the leaves"]
+office.war_leader: ["first bow"]
+office.elder: ["voice of the grove"]
+terrain.forest: ["eldest grove", "leaf-dark", "home-woods"]
+terrain.open: ["felled clearings"]
+season.spring: ["the budding of the oaks"]
+season.autumn: ["the red fall of the leaves"]
+noun.song: ["tree-songs", "laments among the leaves"]
+verb.won: ["vanished with the victory", "won without being seen"]
+noun.goods: ["honey and yew staves", "herbs and fine leathers"]

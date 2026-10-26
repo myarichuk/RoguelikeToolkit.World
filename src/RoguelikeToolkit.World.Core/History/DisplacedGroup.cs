@@ -7,8 +7,8 @@ namespace RoguelikeToolkit.World.Core.History;
 /// </summary>
 public sealed class DisplacedGroup
 {
-    /// <summary>Polity the people belonged to when they left.</summary>
-    public int PolityId { get; init; }
+    /// <summary>Polity the people belong to: the one they left, or its heir once it collapsed or was absorbed.</summary>
+    public int PolityId { get; set; }
     /// <summary>Culture key of that polity at the time.</summary>
     public string Culture { get; init; } = string.Empty;
     /// <summary>History turn they were displaced on.</summary>

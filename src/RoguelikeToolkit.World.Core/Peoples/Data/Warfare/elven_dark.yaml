@@ -1,0 +1,17 @@
+Key: elven_dark
+Doctrine: { ambush: 35, skirmish: 20, massed_archery: 20, war_beasts: 15, shieldwall: 10 }
+Units:
+  - { Key: shade_blades, Arm: foot, Weight: 3 }
+  - { Key: repeater_crossbows, Arm: missile, Weight: 2 }
+  - { Key: cave_lizards, Arm: beast, Weight: 1 }
+Mobility: 65
+Discipline: 70
+SiegeSkill: 50
+Forage: 50
+ColdTolerance: 50
+Fortify: 55
+FortKind: spike_keep
+Seafaring: 20
+Levy: 1.0
+CampaignSeasons: { Spring: 2, Summer: 2, Autumn: 3, Winter: 2 }
+Customs: [no_quarter, ransom]

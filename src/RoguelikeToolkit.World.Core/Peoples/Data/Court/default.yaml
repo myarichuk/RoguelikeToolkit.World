@@ -1,0 +1,42 @@
+Key: default
+# Death: Gompertz hazard per year a*exp(b*age/lifespan); nobody passes HardCap lifespans.
+# With a=0.0004, b=7 a human (80 years) has ~2% a turn at 20, ~12% at 40 and ~85% at 70.
+HazardBase: 0.0004
+HazardGrowth: 7.0
+HardCap: 1.5
+# A ruler's reign ends with the folk generation (the legacy succession tick); the age they die at is drawn here.
+RulerDeathAgeMin: 0.55
+RulerDeathAgeMax: 0.95
+OfficeAgeMin: 0.25
+OfficeAgeMax: 0.6
+OldAge: 0.7
+UntimelyDeathCauses: [illness, fever, accident, hunting, poison]
+FeminineDeathCauses: [childbed]
+Candidates: 3
+FavouriteBelowAgreeableness: 35
+RivalAboveExtraversion: 65
+RivalBelowAgreeableness: 40
+FeminineShare: 0.5
+MaxEpithets: 2
+# Skill = sum(weight * trait) + Roll * uniform(0-100) + Offset, clamped to 0-100.
+Skills:
+  Martial:     { Agreeableness: -0.4, Conscientiousness: 0.3, Roll: 0.3, Offset: 40 }
+  Intrigue:    { Openness: 0.4, Agreeableness: -0.3, Roll: 0.3, Offset: 30 }
+  Stewardship: { Conscientiousness: 0.6, Roll: 0.4 }
+  Charisma:    { Extraversion: 0.6, Roll: 0.4 }
+# Offices per government form. Kind is the holder's person kind; Skill picks the fittest candidate.
+Forms:
+  Kingdom:
+    - { Office: chancellor, Kind: Advisor, Skill: Stewardship }
+    - { Office: marshal, Kind: General, Skill: Martial }
+    - { Office: spymaster, Kind: Spymaster, Skill: Intrigue }
+  MerchantRepublic:
+    - { Office: treasurer, Kind: MerchantPrince, Skill: Stewardship }
+    - { Office: admiral, Kind: General, Skill: Martial }
+    - { Office: council, Kind: MerchantPrince, Skill: Charisma }
+  Horde:
+    - { Office: war_chief, Kind: General, Skill: Martial }
+    - { Office: seer, Kind: Advisor, Skill: Charisma }
+  LooseAssociation:
+    - { Office: elder, Kind: Advisor, Skill: Charisma }
+    - { Office: war_leader, Kind: General, Skill: Martial }

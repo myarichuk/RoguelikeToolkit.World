@@ -1,8 +1,9 @@
 import { hash2 } from '../../core/rng';
 import type { NameRequest } from '../protocol';
 
-/** Re-rolls a colliding name gets before it is kept as it is. */
-const MAX_REROLLS = 4;
+/** Re-rolls a colliding name gets before it is kept as it is. Cheap (one batched engine call per round, only for the
+ * colliders), and four was too few: small vocabularies collided on every re-roll and kept their duplicate. */
+const MAX_REROLLS = 12;
 
 const key = (name: string) => name.trim().toLocaleLowerCase();
 

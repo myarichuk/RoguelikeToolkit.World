@@ -52,7 +52,35 @@ Descriptors:
     - {Form: Dappled, Gloss: dappled, Tags: [forest]}
     - {Form: Prowled, Gloss: prowled, Tags: [forest, danger]}
     - {Form: Warm, Gloss: warm, Tags: [valley]}
+    - {Form: Sunwarm, Gloss: sun-warmed, Tags: [hill, high]}
+    - {Form: Silken, Gloss: silk-soft, Tags: [water, river]}
+    - {Form: Velvet, Gloss: velvet-dark, Tags: [dark, forest]}
+    - {Form: Stalking, Gloss: stalked, Tags: [danger, forest]}
+    - {Form: Tawny, Gloss: tawny, Tags: [hill]}
+    - {Form: Sleek, Gloss: sleek}
+    - {Form: Twilit, Gloss: twilight-lit, Tags: [dark, valley]}
+    - {Form: Glimmer, Gloss: glimmering, Tags: [water, lake]}
+    - {Form: Mossy, Gloss: mossy, Tags: [forest, valley]}
+    - {Form: Clawed, Gloss: clawed, Tags: [mountain, danger]}
 Nouns:
     - {Form: perch, Gloss: high perch, Tags: [hill, village]}
     - {Form: den, Gloss: warm den, Tags: [village, valley]}
     - {Form: shade, Gloss: cool shade, Tags: [forest]}
+    - {Form: nook, Gloss: sunny nook, Tags: [village]}
+    - {Form: croft, Gloss: sunny croft, Tags: [village, valley]}
+    - {Form: court, Gloss: court town, Tags: [town]}
+    - {Form: bazaar, Gloss: lantern bazaar, Tags: [town, city]}
+    - {Form: lair, Gloss: lair-hold, Tags: [hold, danger]}
+    - {Form: bask, Gloss: basking camp, Tags: [camp, hill]}
+    - {Form: spur, Gloss: mountain spur, Tags: [mountain]}
+    - {Form: ridge, Gloss: ridge-crest, Tags: [mountain, hill]}
+    - {Form: rill, Gloss: whisker rill, Tags: [river]}
+    - {Form: runnel, Gloss: winding runnel, Tags: [river]}
+    - {Form: pond, Gloss: pond, Tags: [lake]}
+    - {Form: copse, Gloss: copse, Tags: [forest]}
+    - {Form: strand, Gloss: moonlit strand, Tags: [sea]}
+# Realm titles in this people's voice ({n} = the base name); forms not listed use fantasy_common's.
+RealmTitles:
+  LooseAssociation: ["{n} Prowl", "Prides of {n}", "{n} Whisker-Moot"]
+  Kingdom: ["Pride-Throne of {n}", "{n} Sultanate"]
+  MerchantRepublic: ["{n} Silk Compact", "Caravanserai of {n}"]

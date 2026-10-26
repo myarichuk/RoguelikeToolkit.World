@@ -1,0 +1,19 @@
+Key: epithets
+# A person earns every epithet whose bounds they meet (0-100 scales; traits and skills), and keeps up to
+# Court.MaxEpithets of them, drawn. Order breaks ties only.
+Epithets:
+  - { Key: cautious,   Min: { Neuroticism: 60, Conscientiousness: 55 } }
+  - { Key: reckless,   Min: { Extraversion: 60 }, Max: { Conscientiousness: 35 } }
+  - { Key: cruel,      Max: { Agreeableness: 20 } }
+  - { Key: gentle,     Min: { Agreeableness: 80 } }
+  - { Key: pious,      Min: { Conscientiousness: 60 }, Max: { Openness: 35 } }
+  - { Key: greedy,     Max: { Agreeableness: 35 }, Min: { Stewardship: 55 } }
+  - { Key: beloved,    Min: { Charisma: 70, Agreeableness: 55 } }
+  - { Key: cunning,    Min: { Intrigue: 70 } }
+  - { Key: craven,     Min: { Neuroticism: 75 }, Max: { Martial: 35 } }
+  - { Key: bold,       Min: { Martial: 70 }, Max: { Neuroticism: 40 } }
+  - { Key: wise,       Min: { Openness: 70, Stewardship: 60 } }
+  - { Key: melancholy, Min: { Neuroticism: 80 }, Max: { Extraversion: 30 } }
+  - { Key: just,       Min: { Conscientiousness: 75, Agreeableness: 55 } }
+  - { Key: silver_tongued, Min: { Charisma: 80 } }
+  - { Key: iron_willed, Min: { Conscientiousness: 80 }, Max: { Neuroticism: 30 } }

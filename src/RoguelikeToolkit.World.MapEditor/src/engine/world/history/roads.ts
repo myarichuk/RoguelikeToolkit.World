@@ -18,7 +18,9 @@ export interface RoadSource {
   /** Flat `HistoryRoads()` output. */
   segments: ArrayLike<number>;
   /** Unit vectors per tile (xyz). */
-  vectors: Float64Array;
+  vectors?: Float64Array;
+  /** Map position of a tile, instead of `vectors` (a document keeps tile positions, not vectors). */
+  xy?: (tile: number) => [number, number];
   /** True where a map point is open water. */
   wet: (x: number, y: number) => boolean;
   seed: number;
@@ -34,10 +36,11 @@ export interface RoadSource {
  */
 export function buildRoads(src: RoadSource): RoadGeometry[] {
   const n = Math.floor(src.segments.length / ROAD_STRIDE);
-  const xy = (t: number): [number, number] => {
-    const q = vecToMap(src.vectors[t * 3], src.vectors[t * 3 + 1], src.vectors[t * 3 + 2]);
+  const v = src.vectors;
+  const xy = src.xy ?? ((t: number): [number, number] => {
+    const q = vecToMap(v![t * 3], v![t * 3 + 1], v![t * 3 + 2]);
     return [q.x, q.y];
-  };
+  });
   const out: RoadGeometry[] = [];
   let chain: number[] = [], key = '', keeper = -1, severed = -1, founded = 0, a = 0, b = 0;
   const flush = () => {

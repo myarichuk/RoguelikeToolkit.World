@@ -361,7 +361,7 @@ public class ClimateStage : IWorldGeneratorStage, ISeededStage
     /// </summary>
     public static double ZonalFactor(double absLatitude, double strength, double bandScale)
     {
-        static double Bump(double x, double centre, double width) { double d = (x - centre) / width; return Math.Exp(-d * d); }
+        static double Bump(double x, double centre, double width) { double d = (x - centre) / width; return DetMath.Exp(-d * d); }
         double w = bandScale == 1.0 ? 1.0 : Math.Sqrt(bandScale);
         double polarStart = Math.Min(80.0, 65.0 * bandScale);
         double polarT = Math.Clamp((absLatitude - polarStart) / (25.0 * w), 0.0, 1.0);
@@ -387,7 +387,10 @@ public class ClimateStage : IWorldGeneratorStage, ISeededStage
     {
         int n = store.TileCount;
         var air = new double[n];
-        var queue = new PriorityQueue<int, double>();
+        // (-air, tile): strongest air first, ties by tile index. Every water tile starts at exactly 1.0, so without the
+        // index the pop order on ties (and with it origin[]) would follow the heap implementation, which differs
+        // between the BCL (4-ary) and the netstandard shim (binary).
+        var queue = new PriorityQueue<int, (double Air, int Tile)>();
         bool track = !origin.IsEmpty;
         for (int i = 0; i < n; i++)
         {
@@ -395,12 +398,12 @@ public class ClimateStage : IWorldGeneratorStage, ISeededStage
             if (elev[i].Height >= ElevationGenerationStage.SeaLevel) continue;
             if (track) origin[i] = i;
             air[i] = 1.0;
-            queue.Enqueue(i, -1.0);
+            queue.Enqueue(i, (-1.0, i));
         }
         Span<int> neighbors = stackalloc int[6];
-        while (queue.TryDequeue(out int i, out double prio))
+        while (queue.TryDequeue(out int i, out var prio))
         {
-            if (-prio < air[i]) continue; // stale entry
+            if (-prio.Air < air[i]) continue; // stale entry
             int adjacent = store.GetAdjacent(i, neighbors);
             for (int k = 0; k < adjacent; k++)
             {
@@ -411,15 +414,15 @@ public class ClimateStage : IWorldGeneratorStage, ISeededStage
                 if (chord <= 0.0) continue;
                 var wind = new Vector3D(climate[j].WindX, climate[j].WindY, climate[j].WindZ);
                 double along = Math.Clamp(Vector3D.Dot(step * (1.0 / chord), wind), -1.0, 1.0);
-                double hop = Math.Exp(-chord / MoistureReach) * (0.25 + 0.75 * (along + 1.0) * 0.5);
+                double hop = DetMath.Exp(-chord / MoistureReach) * (0.25 + 0.75 * (along + 1.0) * 0.5);
                 double rise = elev[j].Height - Math.Max(elev[i].Height, ElevationGenerationStage.SeaLevel);
-                if (rise > 0.0) hop *= Math.Exp(-ClimbLoss * rise);
+                if (rise > 0.0) hop *= DetMath.Exp(-ClimbLoss * rise);
                 double candidate = air[i] * hop;
                 if (candidate > air[j])
                 {
                     air[j] = candidate;
                     if (track) origin[j] = origin[i]; // the water this air mass came from
-                    queue.Enqueue(j, -candidate);
+                    queue.Enqueue(j, (-candidate, j));
                 }
             }
         }

@@ -17,8 +17,11 @@ namespace RoguelikeToolkit.World.Core.History;
 /// decision from this operator's own per-turn budget, so a noisy war exhausts only itself. Every draw
 /// is a pure function of <c>(seed, turn, attacker, purpose)</c>: this stage never reads another
 /// operator's draws.
+/// <para>With <see cref="HistoryFeatures.Battles"/> on, the decision to go to war is unchanged (same <c>raid</c> stream), but the
+/// raid is fought: <see cref="BattleResolver"/> picks the field, season, tactics and outcome from the warfare data, a
+/// <see cref="HistoryBattle"/> record narrates it, and the outcome (not flat chances) decides capture, sack, razing and grudges.</para>
 /// </summary>
-public sealed class WarOperator : IHistoryOperator
+public sealed partial class WarOperator : IHistoryOperator
 {
     /// <summary>War chance per unit of crowding pressure.</summary>
     public const double WarPressureScale = 0.4;
@@ -69,6 +72,43 @@ public sealed class WarOperator : IHistoryOperator
     /// <summary><see cref="StageOrder.War"/> (50).</summary>
     public int Order => StageOrder.War;
 
+    private TradeProfile? _trade;
+
+    internal TradeProfile Trade => _trade ??= TradeProfile.From(_store);
+
+    /// <summary>The bordering polity <paramref name="attacker"/> holds the heaviest grudge of at least <c>CasusBelliGrudge</c> against (not under a window); -1 for none.</summary>
+    private int CasusBelli(TurnView view, int attacker, IReadOnlyList<int> bordering)
+    {
+        int best = -1, heaviest = Math.Max(1, Trade.Intrigue.CasusBelliGrudge) - 1;
+        foreach (int q in bordering)
+        {
+            int g = view.GrudgeWeight(attacker, q);
+            if (g > heaviest && !view.IsWindowed(attacker, q)) { heaviest = g; best = q; }
+        }
+        return best;
+    }
+
+    /// <summary>
+    /// The court's sway on a war (intrigue on): <c>WarBase + WarHawk × hawk</c> of the attacker's court, times
+    /// <c>MerchantPeace</c> when its merchants (commerce on) trade on a road to the defender.
+    /// </summary>
+    private double Lean(TurnView view, int attacker, int defender)
+    {
+        var t = Trade;
+        double lean = t.Intrigue.WarBase + t.Intrigue.WarHawk * t.Hawk(view, attacker);
+        if (!view.Has(HistoryFeatures.Commerce)) return lean;
+        var vectors = view.Map.DataStore.GetTileVectors();
+        foreach (var route in TradeProfile.Routes(view))
+        {
+            if (!((route.KeeperA == attacker && route.KeeperB == defender) || (route.KeeperA == defender && route.KeeperB == attacker)) || route.Severed) continue;
+            foreach (var m in TradeProfile.PersonsOf(view, attacker, PersonKind.MerchantPrince))
+                if ((uint)m.SeatSettlement < (uint)view.Settlements.Count
+                    && TradeProfile.Within(vectors, route, view.Settlements[m.SeatSettlement].Tile, t.Commerce.MerchantRouteDegrees))
+                    return lean * t.Intrigue.MerchantPeace;
+        }
+        return lean;
+    }
+
     /// <summary>Proposes this turn's raids from the snapshot (pressure, grudges and windows as of the end of the last turn).</summary>
     public void Propose(TurnView view, ProposalSink sink)
     {
@@ -80,10 +120,8 @@ public sealed class WarOperator : IHistoryOperator
             _storeLoaded = true;
         }
         var map = view.Map;
-        int[] ownership = view.OwnershipSnapshot();
         var severedNow = new HashSet<(int, int)>();
         var sitedNow = new HashSet<int>();
-        Span<int> neighbors = stackalloc int[6];
 
         foreach (var polity in polities)
         {
@@ -96,16 +134,25 @@ public sealed class WarOperator : IHistoryOperator
                 xeno = XenophobiaOf(polity.CultureKey, _store);
                 _xenophobia[polity.CultureKey] = xeno;
             }
-            var bordering = HistoryNeighbors.Bordering(map.DataStore, ownership, attacker);
+            var bordering = view.BorderingPolities(attacker);
             if (bordering.Count == 0) continue;
             var stream = sink.Rng(attacker, "raid");
             int defender = bordering[(int)stream.NextUInt((uint)bordering.Count)];
+            int casusBelli = view.Has(HistoryFeatures.Intrigue) ? CasusBelli(view, attacker, bordering) : -1;
+            if (casusBelli >= 0) defender = casusBelli; // the draw above is still made: the stream stays aligned
             if (view.IsWindowed(attacker, defender)) continue;
             double chance = Math.Min(pressure * WarPressureScale + xeno * WarXenophobiaScale
                 + view.GrudgeWeight(attacker, defender) * GrudgeWarScale, MaxWarChance);
+            if (view.Has(HistoryFeatures.Intrigue))
+                chance = Math.Min(1, chance * Lean(view, attacker, defender) + (defender == casusBelli ? Trade.Intrigue.CasusBelliChance : 0));
             if (stream.NextDouble() >= chance) continue;
             if (!sink.TrySpendDecision()) continue;
-            int battlefield = BattlefieldTile(view, neighbors, attacker, defender);
+            if (sink.Has(HistoryFeatures.Battles))
+            {
+                Fight(view, sink, severedNow, sitedNow, polity, polities[defender]);
+                continue;
+            }
+            int battlefield = BattlefieldTile(view, attacker, defender);
             sink.Event(HistoryEventKind.War, attacker, battlefield,
                 new[] { "war", $"attacker:{attacker}", $"defender:{defender}" });
             if (!view.HasSite(battlefield) && sitedNow.Add(battlefield))
@@ -119,7 +166,7 @@ public sealed class WarOperator : IHistoryOperator
                     Position = map.DataStore.GetGeoCoord(battlefield),
                 });
             }
-            CheckDesecration(view, sink, ownership, attacker, defender, battlefield);
+            CheckDesecration(view, sink, attacker, defender, battlefield);
             SeverRoutes(view, sink, severedNow, attacker, polity.CapitalTile, polities[defender].CapitalTile);
             Assault(view, sink, severedNow, polity, polities[defender], battlefield);
             sink.Adjust(attacker, ScalarRegistry.Pressure, HistoryDemography.WarPressureBump);
@@ -157,33 +204,50 @@ public sealed class WarOperator : IHistoryOperator
             && attacker.Population >= HistoryDemography.ConquestAdvantage * Math.Max(defender.Population, 1);
         if (strong && canHold && roll < CaptureChance)
         {
-            sink.Emit(new Proposal.CaptureSettlement { EntityId = attacker.Id, Settlement = target.Index });
-            sink.Event(HistoryEventKind.SettlementCaptured, attacker.Id, target.Tile,
-                new[] { $"settlement:{target.Index}", $"from:{defender.Id}", $"to:{attacker.Id}" });
+            Capture(sink, attacker.Id, defender.Id, target);
             return;
         }
         if (strong && roll < CaptureChance + RazeChance)
         {
-            sink.Emit(new Proposal.EndSettlement { EntityId = defender.Id, Settlement = target.Index, EndCause = "razed", LostShare = RazeCasualty });
-            sink.Emit(new Proposal.AddScar
-            {
-                EntityId = defender.Id, Tile = target.Tile, ScarKind = HistoryScar.Ruin, Cause = "war",
-                Position = view.Map.DataStore.GetGeoCoord(target.Tile),
-            });
-            var live = new HashSet<(int, int)>();
-            foreach (var road in view.Roads)
-                if (!road.Severed && (road.RouteA == target.Tile || road.RouteB == target.Tile)) live.Add((road.RouteA, road.RouteB));
-            foreach (var (a, b) in live) SeverRoutes(view, sink, severedNow, attacker.Id, a, b);
+            Raze(view, sink, severedNow, attacker.Id, defender.Id, target, RazeCasualty);
             return;
         }
         if (roll < CaptureChance + RazeChance + SackChance * (1 - CaptureChance - RazeChance))
+            Sack(sink, defender.Id, target, SackDisplacement, SackCasualty);
+    }
+
+    private static void Capture(ProposalSink sink, int attacker, int defender, TurnView.SettlementState target, Proposal? requires = null)
+    {
+        var capture = new Proposal.CaptureSettlement { EntityId = attacker, Settlement = target.Index, Requires = requires };
+        sink.Emit(capture);
+        sink.EventIfApplied(capture, HistoryEventKind.SettlementCaptured, attacker, target.Tile,
+            new[] { $"settlement:{target.Index}", $"from:{defender}", $"to:{attacker}" });
+    }
+
+    private static void Raze(TurnView view, ProposalSink sink, HashSet<(int, int)> severedNow, int attacker, int defender,
+        TurnView.SettlementState target, double casualty, Proposal? requires = null)
+    {
+        var raze = new Proposal.EndSettlement { EntityId = defender, Settlement = target.Index, EndCause = "razed", LostShare = casualty, Requires = requires };
+        sink.Emit(raze);
+        sink.Emit(new Proposal.AddScar
         {
-            sink.Emit(new Proposal.ReleasePopulation { EntityId = defender.Id, Settlement = target.Index, Share = SackDisplacement });
-            sink.Emit(new Proposal.KillPopulation
-            {
-                EntityId = defender.Id, Settlement = target.Index, Share = Math.Min(1, SackCasualty / (1 - SackDisplacement)),
-            });
-        }
+            Requires = raze, // no ruin where a rival already took the town this turn
+            EntityId = defender, Tile = target.Tile, ScarKind = HistoryScar.Ruin, Cause = "war",
+            Position = view.Map.DataStore.GetGeoCoord(target.Tile),
+        });
+        var live = new HashSet<(int, int)>();
+        foreach (var road in view.Roads)
+            if (!road.Severed && (road.RouteA == target.Tile || road.RouteB == target.Tile)) live.Add((road.RouteA, road.RouteB));
+        foreach (var (a, b) in live) SeverRoutes(view, sink, severedNow, attacker, a, b);
+    }
+
+    private static void Sack(ProposalSink sink, int defender, TurnView.SettlementState target, double displacement, double casualty, Proposal? requires = null)
+    {
+        sink.Emit(new Proposal.ReleasePopulation { EntityId = defender, Settlement = target.Index, Share = displacement, Requires = requires });
+        sink.Emit(new Proposal.KillPopulation
+        {
+            EntityId = defender, Settlement = target.Index, Share = Math.Min(1, casualty / (1 - displacement)), Requires = requires,
+        });
     }
 
     private static int XenophobiaOf(string cultureKey, PeoplesStore? store)
@@ -199,7 +263,7 @@ public sealed class WarOperator : IHistoryOperator
     }
 
     private static void CheckDesecration(
-        TurnView view, ProposalSink sink, int[] ownership, int attacker, int defender, int battlefield)
+        TurnView view, ProposalSink sink, int attacker, int defender, int battlefield)
     {
         int holyOwner = -1;
         foreach (var site in view.HolySites)
@@ -210,7 +274,7 @@ public sealed class WarOperator : IHistoryOperator
         sink.Event(HistoryEventKind.Desecration, attacker, battlefield,
             new[] { "desecration", $"by:{attacker}", $"holy:{holyOwner}", $"tile:{battlefield}" });
         sink.Emit(new Proposal.AddGrudge { EntityId = attacker, Other = holyOwner, Weight = DesecrationGrudge });
-        foreach (int neighbor in HistoryNeighbors.Bordering(view.Map.DataStore, ownership, holyOwner))
+        foreach (int neighbor in view.BorderingPolities(holyOwner))
         {
             if (neighbor != attacker)
                 sink.Emit(new Proposal.AddGrudge { EntityId = neighbor, Other = attacker, Weight = DesecrationCoalitionGrudge });
@@ -218,19 +282,11 @@ public sealed class WarOperator : IHistoryOperator
         sink.Adjust(attacker, ScalarRegistry.Pressure, HistoryDemography.WarPressureBump);
     }
 
-    private static int BattlefieldTile(TurnView view, Span<int> neighbors, int attacker, int defender)
+    /// <summary>The lowest-index defender tile on the attacker's frontier, else the defender's capital.</summary>
+    private static int BattlefieldTile(TurnView view, int attacker, int defender)
     {
-        var store = view.Map.DataStore;
-        for (int tile = 0; tile < store.TileCount && tile < view.TileCount; tile++)
-        {
-            if (view.OwnerOf(tile) != defender) continue;
-            int adjacent = store.GetAdjacent(tile, neighbors);
-            for (int k = 0; k < adjacent; k++)
-            {
-                if (view.OwnerOf(neighbors[k]) == attacker) return tile;
-            }
-        }
-        return view.Polities[defender].CapitalTile;
+        var frontier = view.FrontierTiles(attacker, defender);
+        return frontier.Count > 0 ? frontier[0] : view.Polities[defender].CapitalTile;
     }
 
     private static void SeverRoutes(

@@ -60,4 +60,22 @@ public enum ProposalKind
     AbsorbPolity = 26,
     /// <summary>Store a blob in the plugin state bag.</summary>
     SetPluginState = 27,
+    /// <summary>Add a person. Applied in a structural pre-pass after the polity pre-pass, so same-turn proposals can name it.</summary>
+    AddPerson = 28,
+    /// <summary>A person dies or leaves the story.</summary>
+    EndPerson = 29,
+    /// <summary>Appoint a person to a polity office, or vacate it.</summary>
+    SetTenure = 30,
+    /// <summary>Open a bond between two persons.</summary>
+    AddRelation = 31,
+    /// <summary>Close a bond between two persons.</summary>
+    EndRelation = 32,
+    /// <summary>Add deltas to a person's renown, wealth, loyalty and pledge (summed per turn, clamped once).</summary>
+    AdjustPerson = 33,
+    /// <summary>Record an engagement and the event that narrates it.</summary>
+    AddBattle = 34,
+    /// <summary>Add deltas to a route's safety, traffic, forts and waystations (summed per turn, clamped once).</summary>
+    AdjustRoute = 35,
+    /// <summary>Set one field of a route's state outright.</summary>
+    SetRouteFlag = 36,
 }

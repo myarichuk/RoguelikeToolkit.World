@@ -1,6 +1,7 @@
 using System.Globalization;
 using System.Text;
 using RoguelikeToolkit.World.Core.Lithosphere;
+using RoguelikeToolkit.World.Core.Primitives;
 using RoguelikeToolkit.World.Core.Storage;
 
 namespace RoguelikeToolkit.World.Core.Features;
@@ -32,10 +33,10 @@ public static class GeoWkt
         double cx = 0, cy = 0;
         foreach (var p in pts) { cx += p.X; cy += p.Y; }
         cx /= pts.Count; cy /= pts.Count;
-        double k = Math.Cos(cy * Math.PI / 180.0);
+        double k = DetMath.Cos(cy * Math.PI / 180.0);
         pts.Sort((a, b) =>
         {
-            int c = Math.Atan2(a.Y - cy, (a.X - cx) * k).CompareTo(Math.Atan2(b.Y - cy, (b.X - cx) * k));
+            int c = DetMath.Atan2(a.Y - cy, (a.X - cx) * k).CompareTo(DetMath.Atan2(b.Y - cy, (b.X - cx) * k));
             return c != 0 ? c : a.Tile.CompareTo(b.Tile);
         });
 
@@ -72,7 +73,7 @@ public static class GeoWkt
             double mx = 0, my = 0;
             foreach (var p in pts) { mx += p.X; my += p.Y; }
             mx /= pts.Count; my /= pts.Count;
-            double k = Math.Cos(my * Math.PI / 180.0);
+            double k = DetMath.Cos(my * Math.PI / 180.0);
             double sxx = 0, syy = 0, sxy = 0;
             foreach (var p in pts)
             {

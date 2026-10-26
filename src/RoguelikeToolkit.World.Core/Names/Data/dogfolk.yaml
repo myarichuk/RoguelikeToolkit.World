@@ -56,8 +56,36 @@ Descriptors:
   - {Form: Steadfast, Gloss: steadfast, Tags: [valley, village]}
   - {Form: Vigilant, Gloss: watchful, Tags: [hill, danger]}
   - {Form: Hearthwarm, Gloss: hearth-warm, Tags: [village, town]}
+  - {Form: Keen, Gloss: keen-nosed, Tags: [forest]}
+  - {Form: Cozy, Gloss: snug, Tags: [village, valley]}
+  - {Form: Packed, Gloss: pack-filled, Tags: [town]}
+  - {Form: Bayed, Gloss: baying, Tags: [hill, danger]}
+  - {Form: Scented, Gloss: scent-trailed, Tags: [forest, valley]}
+  - {Form: Sheltered, Gloss: sheltered, Tags: [hold]}
+  - {Form: Rugged, Gloss: rugged, Tags: [mountain, danger]}
+  - {Form: Muddy, Gloss: muddy, Tags: [river]}
+  - {Form: Sunny, Gloss: sunny, Tags: [high]}
+  - {Form: Sturdy, Gloss: sturdy}
+  - {Form: Restful, Gloss: restful}
 Nouns:
   - {Form: hall, Gloss: meeting hall, Tags: [village, town]}
   - {Form: stead, Gloss: homestead, Tags: [village, valley]}
   - {Form: beacon, Gloss: signal hill, Tags: [hill, camp]}
   - {Form: mere, Gloss: still lake, Tags: [lake, water]}
+  - {Form: kennel, Gloss: kennel, Tags: [village]}
+  - {Form: courtyard, Gloss: packed courtyard, Tags: [town]}
+  - {Form: bailey, Gloss: walled bailey, Tags: [city, hold]}
+  - {Form: knoll, Gloss: sentinel knoll, Tags: [hill]}
+  - {Form: dingle, Gloss: sheltered dingle, Tags: [valley, forest]}
+  - {Form: massif, Gloss: massif, Tags: [mountain]}
+  - {Form: ridge, Gloss: watch ridge, Tags: [mountain, hill]}
+  - {Form: rill, Gloss: rill, Tags: [river]}
+  - {Form: race, Gloss: swift race, Tags: [river]}
+  - {Form: copse, Gloss: copse, Tags: [forest]}
+  - {Form: thicket, Gloss: thicket, Tags: [forest]}
+  - {Form: strand, Gloss: salt strand, Tags: [sea]}
+# Realm titles in this people's voice ({n} = the base name); forms not listed use fantasy_common's.
+RealmTitles:
+  LooseAssociation: ["{n} Pack", "Packs of {n}", "{n} Den-Moot", "Howl of {n}"]
+  Horde: ["{n} Hunt", "Great Pack of {n}"]
+  Kingdom: ["Den-Lord of {n}", "{n} Alphacy"]

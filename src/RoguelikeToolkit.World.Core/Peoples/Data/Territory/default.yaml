@@ -1,0 +1,22 @@
+# Territory step costs: how far a state's reach carries over different ground. See TerritoryDef.
+# A step costs (Step + Climb*|dh| + High*max(0, h - HighFrom) + River[onto a river]) * Biomes[target biome].
+# Cultures scale any term or biome with TerrainAffinity (Cultures/*.yaml), so a marsh people spreads through marsh.
+Key: default
+Step: 1.0
+Climb: 6.0
+High: 4.0
+HighFrom: 0.35
+River: 1.0
+Biomes:
+  Glacier: 2.5
+  Desert: 1.8
+  RockDesert: 1.8
+  SaltFlat: 1.8
+  ColdDesert: 1.8
+  Badlands: 1.8
+  Swamp: 1.6
+  Tundra: 1.6
+  Mountain: 1.6
+  Canyon: 1.6
+  Jungle: 1.4
+  Forest: 1.15

@@ -5,6 +5,7 @@ import { GeneratePanel, GenerateFooter } from './GeneratePanel';
 import { useApp, useViewModel } from './hooks';
 import { MapView } from './MapView';
 import { PacksPanel } from './PacksPanel';
+import { PersonCard } from './PersonCard';
 import { StatusBar } from './StatusBar';
 import { ThemePanel } from './ThemePanel';
 import { Properties } from './Properties';
@@ -60,6 +61,7 @@ export function App() {
       <StatusBar />
       <NewWorldWizard />
       <HistoryWindow />
+      <PersonCard />
       {shell.error && <div className={styles.toast} role="alert"><b>Error</b><pre>{shell.error}</pre><button className="dismiss" onClick={vms.shell.dismissError}><small>Dismiss</small></button></div>}
     </div>
   );

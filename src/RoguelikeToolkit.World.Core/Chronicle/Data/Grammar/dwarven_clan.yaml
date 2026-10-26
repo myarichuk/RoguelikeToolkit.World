@@ -1,0 +1,31 @@
+# Dwarven clans: stone, halls, forebears and grudges carved where nobody can scrub them out.
+battle.intro:
+  - { id: dw_bi1, w: 3, t: "In {year} the clan-horns of {att.realm} sounded in the deep halls, and the {att.host} came up out of the mountain to settle a debt with {def.realm}." }
+  - { id: dw_bi2, when: [att.general], w: 3, t: "{att.general} swore on the forebears' stones in {year} that {def.realm} would answer for its insults, and marched the {att.host} out to make it so." }
+  - { id: dw_bi3, when: [season=winter], w: 3, t: "Dwarves do not mind the cold. In {season.word} of {year} the {att.host} of {att.realm} trudged through the snow toward {def.realm}." }
+battle.after:
+  - { id: dw_ba1, when: [winner=attacker], w: 3, t: "The name of {def.realm} was struck from the grudge-wall of {att.realm}, its debt paid in blood." }
+  - { id: dw_ba2, when: [winner=defender], w: 3, t: "The rune-carvers of {att.realm} cut a new line into the grudge-wall that winter, and the name in it was {def.realm}." }
+event.Founding:
+  - { id: dw_fo1, w: 3, t: "In {year} the first forge was lit in {dw.hall}, and the clans of {realm} swore by its fire to hold together for ever." }
+  - { id: dw_fo2, when: [place], w: 3, t: "In {year} the dwarves cut their halls into the rock beneath {place}, and called the delving {realm}." }
+event.PersonRose:
+  - { id: dw_ru1, when: [office=ruler], w: 3, t: "In {year} {who} was raised on a shield before the forebears' stones and hailed {who.office} of {realm}." }
+  - { id: dw_ru2, when: [office=ruler, who.parent], w: 3, t: "In {year} {who} took up the hammer of {who.parent} and the high seat of {realm} with it." }
+  - { id: dw_ap1, when: [office!=ruler, who.office], w: 2, t: "In {year} {who} was given the iron ring of the {who.office} of {realm}." }
+event.PersonDied:
+  - { id: dw_dd1, when: [cause=age, who], w: 3, t: "In {year} {who} went to sit with the forebears, and {who.his} name was carved into the deep stones of {realm}." }
+  - { id: dw_dd2, when: [who, who.age], w: 2, t: "{who} died in {year} at {who.age}, young for a dwarf, and the forges of {realm} were banked in mourning." }
+event.Grudge:
+  - { id: dw_gr1, when: [other.realm], w: 3, t: "In {year} the slight of {other.realm} was carved into the grudge-wall of {realm}, where no rain would ever wash it out." }
+  - { id: dw_gr2, when: [other.realm], w: 3, t: "{realm|cap} added {other.realm} to its grudge-rolls in {year}; dwarves forgive nothing and forget less." }
+event.Treaty:
+  - { id: dw_tr1, when: [other.realm], w: 2, t: "In {year} {realm} and {other.realm} struck their bargain on an anvil, as the dwarves do, and each side kept a half of the broken hammer." }
+event.SettlementFounded:
+  - { id: dw_sf1, when: [settlement], w: 3, t: "In {year} the miners of {realm} broke into a rich seam, and around the shafts grew the delving of {settlement}." }
+event.Siege:
+  - { id: dw_sg1, when: [battle, settlement, att.realm], w: 1, t: "{#siege.intro} The sappers of {att.realm} went underground, as dwarves do. {#siege.end}" }
+siege.end:
+  - { id: dw_se1, when: [end=stormed], w: 3, t: "The {att.adj} sappers brought down a whole tower of {settlement} from beneath, and the clans went in over the rubble." }
+event.Conquest:
+  - { id: dw_cq1, when: [other.realm], w: 3, t: "In {year} {realm} took {other.realm} under the mountain's law, and its folk learned to pay their tithes in ore." }

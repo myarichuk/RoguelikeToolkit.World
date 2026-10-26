@@ -34,7 +34,7 @@ public static partial class WorldExports
     /// <summary>Stride of <see cref="HistoryTerritoryChanges"/>.</summary>
     public const int TerritoryChangeStride = 3;
     /// <summary>Length of <see cref="HistoryInfo"/>.</summary>
-    public const int HistoryInfoLength = 11;
+    public const int HistoryInfoLength = 16;
 
     /// <summary>
     /// Sets how the next <see cref="Generate"/> runs history: off, or on with <paramref name="turnCount"/> turns of
@@ -60,7 +60,29 @@ public static partial class WorldExports
         ConfigureHistory(true, HistoryDefaults.TurnCount, HistoryDefaults.TurnYears, HistoryDefaults.MaxPolities);
         _historyRoster = Array.Empty<(string, string)>();
         _historyFounders = Array.Empty<HistoryFounder>();
+        _historyFeatures = -1;
     }
+
+    // The expansion features for the next Generate (HistoryFeatures bits); -1 = Core's default.
+    private static int _historyFeatures = -1;
+
+    /// <summary>
+    /// Sets the history expansion features (<see cref="HistoryFeatures"/> bits, names in <see cref="HistoryFeatureNames"/>) of the
+    /// next <see cref="Generate"/>; -1 restores Core's default.
+    /// </summary>
+    [JSExport]
+    public static void ConfigureHistoryFeatures(int features)
+    {
+        if (features < -1 || (features >= 0 && (features & ~(int)HistoryFeatures.All) != 0))
+            throw new ArgumentOutOfRangeException(nameof(features), $"Unknown history feature bits in {features}.");
+        _historyFeatures = features;
+    }
+
+    /// <summary><c>name	bit</c> per <see cref="HistoryFeatures"/> flag (not None or All), in bit order.</summary>
+    [JSExport]
+    public static string[] HistoryFeatureNames()
+        => ((HistoryFeatures[])Enum.GetValues(typeof(HistoryFeatures)))
+            .Where(f => f != HistoryFeatures.None && f != HistoryFeatures.All).OrderBy(f => (int)f).Select(f => $"{f}\t{(int)f}").ToArray();
 
     // The peoples roster and pinned founders for the next Generate; empty roster = Core's default, no founders = fully drawn.
     private static (string Folk, string Culture)[] _historyRoster = Array.Empty<(string, string)>();
@@ -158,6 +180,7 @@ public static partial class WorldExports
         builder.WithHistory(c =>
         {
             c.TurnCount = _historyTurnCount; c.TurnYears = _historyTurnYears; c.MaxPolities = _historyMaxPolities;
+            if (_historyFeatures >= 0) c.Features = (HistoryFeatures)_historyFeatures;
             if (_historyRoster.Length > 0)
             {
                 c.Peoples.Clear();
@@ -169,7 +192,8 @@ public static partial class WorldExports
     }
 
     /// <summary>
-    /// <c>[recorded, simulatedTurns, turnYears, polities, settlements, roads, scars, events, territoryChanges, scalars, samples]</c>
+    /// <c>[recorded, simulatedTurns, turnYears, polities, settlements, roads, scars, events, territoryChanges, scalars, samples,
+    /// persons, relations, tenures, battles, routeStates]</c>
     /// (<see cref="HistoryInfoLength"/> ints): the sizes a panel needs before paging. <c>recorded</c> is 1 when a timeline exists.
     /// </summary>
     [JSExport]
@@ -180,6 +204,7 @@ public static partial class WorldExports
         {
             h.Timeline.Recorded ? 1 : 0, h.SimulatedTurns, _builtTurnYears, h.Polities.Count, h.Settlements.Count, h.Roads.Count,
             h.Scars.Count, h.Events.Count, h.Timeline.Changes.Count, h.Scalars.Count, h.Timeline.Samples.Count,
+            h.Persons.Count, h.Relations.Count, h.Tenures.Count, h.Battles.Count, h.RouteStates.Count,
         };
     }
 
@@ -225,8 +250,9 @@ public static partial class WorldExports
         return result;
     }
 
-    /// <summary>Per polity, aligned with <see cref="HistoryPolities"/>: <c>folk\tculture\tcultureOverlay\tdisplayName\tnameRace\tnameCulture</c>; the last two are the
-    /// name style (race, culture) the polity's effective culture renders through, blank when none matches.</summary>
+    /// <summary>Per polity, aligned with <see cref="HistoryPolities"/>: <c>folk\tculture\tcultureOverlay\tdisplayName\tnameRace\tnameCulture\tarchitecture</c>;
+    /// name race and culture are the name style the polity's effective culture renders through, blank when none matches;
+    /// architecture is the founding culture's <c>Architecture</c> style key (how its places are drawn), blank when it has none.</summary>
     [JSExport]
     public static string[] HistoryPolityKeys()
     {
@@ -245,7 +271,9 @@ public static partial class WorldExports
                 .FirstOrDefault();
             return s is null ? new[] { string.Empty, string.Empty } : new[] { s.Race, s.Culture };
         }
-        return h.Polities.Select(p => { var s = StyleOf(p); return $"{p.FolkKey}\t{p.CultureKey}\t{p.CultureOverlay}\t{h.DisplayNameOf(p.Id)}\t{s[0]}\t{s[1]}"; }).ToArray();
+        // How its places are drawn follows the founding culture: a conquered people goes on building as it always did.
+        string ArchitectureOf(Polity p) => store.Cultures.TryGetValue(p.CultureKey, out var c) ? c.Architecture ?? string.Empty : string.Empty;
+        return h.Polities.Select(p => { var s = StyleOf(p); return $"{p.FolkKey}\t{p.CultureKey}\t{p.CultureOverlay}\t{h.DisplayNameOf(p.Id)}\t{s[0]}\t{s[1]}\t{ArchitectureOf(p)}"; }).ToArray();
     }
 
     /// <summary>

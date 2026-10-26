@@ -86,7 +86,7 @@ public sealed class PopulationOperator : IHistoryOperator
                 Population = afterTotal,
                 RulerGeneration = polity.HasVillain
                     ? polity.RulerGeneration
-                    : HistoryDemography.SuccessionsBefore(folk.LifespanYears, view.TurnYears, view.Turn + 1),
+                    : HistoryDemography.SuccessionsBefore(folk.LifespanYears, view.TurnYears, view.Turn + 1 - polity.FoundedTurn),
             });
             double pressureDelta = pressureAfter - pressureBefore;
             if (pressureDelta != 0) sink.Adjust(polity.Id, ScalarRegistry.Pressure, pressureDelta);

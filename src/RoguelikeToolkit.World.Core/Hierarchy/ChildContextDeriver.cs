@@ -92,15 +92,21 @@ internal static class ChildContextDeriver
     /// vector at the region center. Degenerate sample sets fall back to the
     /// parent gradient.
     /// </summary>
-    private static Vector3D FitGradient(
+    internal static Vector3D FitGradient(
         (double E, double N, double H)[] pts, double mean, TangentFrame frame, ParentContext parent)
     {
+        // Positions are centred on the samples' own centroid, like the heights: the samples sit around the cell, not
+        // around the region centre, and a fit through the region centre tilts the plane towards it (a pure east slope
+        // fitted at a corner cell came out pointing 45 degrees off).
+        double meanE = 0, meanN = 0;
+        for (int k = 0; k < pts.Length; k++) { meanE += pts[k].E; meanN += pts[k].N; }
+        meanE /= pts.Length; meanN /= pts.Length;
         double sEE = 0, sEN = 0, sNN = 0, sE = 0, sN = 0;
         for (int k = 0; k < pts.Length; k++)
         {
-            double dh = pts[k].H - mean;
-            sEE += pts[k].E * pts[k].E; sEN += pts[k].E * pts[k].N; sNN += pts[k].N * pts[k].N;
-            sE += dh * pts[k].E; sN += dh * pts[k].N;
+            double dh = pts[k].H - mean, de = pts[k].E - meanE, dn = pts[k].N - meanN;
+            sEE += de * de; sEN += de * dn; sNN += dn * dn;
+            sE += dh * de; sN += dh * dn;
         }
         double det = sEE * sNN - sEN * sEN;
         double gE, gN;

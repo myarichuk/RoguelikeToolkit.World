@@ -46,7 +46,35 @@ Descriptors:
   - {Form: Star, Gloss: starry, Tags: [high]}
   - {Form: Dawn, Gloss: dawn-lit, Tags: [high, valley]}
   - {Form: Silver, Gloss: silvery, Tags: [water, lake]}
+  - {Form: Luminous, Gloss: luminous, Tags: [high]}
+  - {Form: Gleaming, Gloss: gleaming, Tags: [high]}
+  - {Form: Moonlit, Gloss: moonlit, Tags: [dark, high]}
+  - {Form: Lunar, Gloss: lunar, Tags: [high]}
+  - {Form: Verdant, Gloss: verdant, Tags: [forest, valley]}
+  - {Form: Crystal, Gloss: crystal, Tags: [lake]}
+  - {Form: Sapphire, Gloss: sapphire, Tags: [lake, sea]}
+  - {Form: Ivory, Gloss: ivory, Tags: [hill]}
+  - {Form: Sunlit, Gloss: sunlit, Tags: [high, valley]}
+  - {Form: Lofty, Gloss: lofty, Tags: [mountain, high]}
+  - {Form: Tranquil, Gloss: tranquil, Tags: [lake]}
 Nouns:
   - {Form: spire, Gloss: tower, Tags: [town, city, mountain]}
   - {Form: haven, Gloss: refuge, Tags: [village, valley]}
   - {Form: glade, Gloss: clearing, Tags: [forest]}
+  - {Form: hamlet, Gloss: silver hamlet, Tags: [village]}
+  - {Form: court, Gloss: moon court, Tags: [town]}
+  - {Form: citadel, Gloss: lantern citadel, Tags: [city, hold]}
+  - {Form: lodge, Gloss: starlit lodge, Tags: [camp]}
+  - {Form: crest, Gloss: moon crest, Tags: [hill, mountain]}
+  - {Form: dell, Gloss: moonlit dell, Tags: [valley]}
+  - {Form: rill, Gloss: silver rill, Tags: [river]}
+  - {Form: fountain, Gloss: fountain, Tags: [river, water]}
+  - {Form: basin, Gloss: moon basin, Tags: [lake]}
+  - {Form: grove, Gloss: singing grove, Tags: [forest]}
+  - {Form: bower, Gloss: bower, Tags: [forest]}
+  - {Form: lea, Gloss: lea meadow, Tags: [valley]}
+  - {Form: shore, Gloss: pearl shore, Tags: [sea]}
+# Realm titles in this people's voice ({n} = the base name); forms not listed use fantasy_common's.
+RealmTitles:
+  Kingdom: ["{n} Ascendancy", "Starthrone of {n}", "High Court of {n}", "Silver Realm of {n}"]
+  MerchantRepublic: ["{n} Concordance", "Luminous Republic of {n}"]

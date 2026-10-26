@@ -147,3 +147,14 @@ Nouns:
   - {Form: reach, Gloss: open reach, Tags: [sea]}
   - {Form: bight, Gloss: bay, Tags: [sea]}
   - {Form: main, Gloss: open sea, Tags: [sea]}
+# How realms founded by these peoples are named: the place kinds the base name comes from, and title templates ({n}).
+RealmNameKinds:
+  Kingdom: ["valley", "forest", "hold", "river", "hill"]
+  MerchantRepublic: ["sea", "lake", "river", "town"]
+  LooseAssociation: ["river", "valley", "forest", "hill", "lake"]
+  Horde: ["mountain", "hold", "valley", "hill"]
+RealmTitles:
+  Kingdom: ["Kingdom of {n}", "Realm of {n}", "{n} Crown", "Principality of {n}", "Grand Duchy of {n}", "Throne of {n}", "March of {n}", "{n} Kingdom"]
+  MerchantRepublic: ["{n} Republic", "Free Ports of {n}", "{n} Compact", "Commonwealth of {n}", "Most Serene {n}", "{n} Hanse", "Guild Cities of {n}", "{n} Exchange"]
+  LooseAssociation: ["{n} League", "{n} Confederacy", "{n} Concord", "Free Holds of {n}", "{n} Moot", "Kindreds of {n}", "{n} Fellowship", "Assembly of {n}", "{n} Covenant"]
+  Horde: ["{n} Horde", "Host of {n}", "Clans of {n}", "{n} Warband", "{n} Khaganate", "Riders of {n}", "{n} Banners"]

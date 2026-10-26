@@ -7,7 +7,8 @@ import type { LabelCache } from '../text/LabelCache';
 import type { DepositType } from '../world/protocol';
 import type { Camera } from './Camera';
 import { CapacityTint } from './CapacityTint';
-import { RealmLayer } from './RealmLayer';
+import { RealmLayer, overlaps, type Rect } from './RealmLayer';
+import { HistoryMarks } from './HistoryMarks';
 import { ClimateTint } from './ClimateTint';
 import { drawFlowArrows } from './FlowArrows';
 import { ClimatePaint } from './ClimatePaint';
@@ -38,6 +39,7 @@ export class Overlay {
   readonly climatePaint = new ClimatePaint();
   private readonly capacityTint = new CapacityTint();
   private readonly realms = new RealmLayer();
+  private readonly historyMarks = new HistoryMarks();
   private readonly climateTint = new ClimateTint();
   selection: { labels: Set<string>; stamps: Set<string>; feature: string | null; hoverFeature: string | null } = { labels: new Set(), stamps: new Set(), feature: null, hoverFeature: null };
   private plateArrows: { x: number; y: number; dx: number; dy: number }[] | null = null;
@@ -65,8 +67,9 @@ export class Overlay {
       if (view.layers.climate) this.drawClimate(doc, view);
       if (view.layers.capacity) this.drawCapacity(doc, view);
       if (view.layers.realms) this.realms.drawTint(ctx, doc, view.historyTurn);
-      if (view.layers.borders) this.realms.drawBorders(ctx, doc, view.historyTurn, cam.zoom);
+      if (view.layers.borders) this.realms.drawBorders(ctx, doc, view.historyTurn, cam.zoom, view.layers.labels ? this.labelBoxes(cam, doc, theme, view, off, vis) : []);
       if (view.layers.climatePaint || this.showClimatePaint) this.drawClimatePaint(doc);
+      if (view.layers.battles || view.layers.outlaws || view.layers.routeSafety) this.historyMarks.draw(ctx, doc, view, cam.zoom);
       if (view.layers.labels) this.drawLabels(cam, doc, theme, view, off, vis);
       if (view.layers.resources && view.kinds.deposit) this.drawDeposits(cam, doc, view, off);
       if (view.layers.plateMotion) this.drawPlateMotion(cam, doc);
@@ -118,16 +121,33 @@ export class Overlay {
     ctx.drawImage(img, 0, 0, doc.width, doc.height);
   }
 
-  private drawLabels(cam: Camera, doc: MapDocument, theme: Theme, view: ViewSettings, off: number, vis: { x0: number; y0: number; x1: number; y1: number }): void {
-    const ctx = this.ctx;
-    ctx.lineJoin = 'round';
-    ctx.lineCap = 'round';
+  /** Boxes of the place labels on screen (map units), the obstacles realm names steer around. */
+  private labelBoxes(cam: Camera, doc: MapDocument, theme: Theme, view: ViewSettings, off: number, vis: { x0: number; y0: number; x1: number; y1: number }): Rect[] {
+    const out: Rect[] = [];
     for (const l of doc.labels.all()) {
       if (!this.visibleLabel(l, doc, theme, view, cam.zoom)) continue;
       const r = this.labels.resolve(l, theme);
       if (!r) continue;
       const b = r.geo.bounds;
       if (b.x1 + off < vis.x0 || b.x0 + off > vis.x1 || b.y1 < vis.y0 || b.y0 > vis.y1) continue;
+      out.push(b);
+    }
+    return out;
+  }
+
+  private drawLabels(cam: Camera, doc: MapDocument, theme: Theme, view: ViewSettings, off: number, vis: { x0: number; y0: number; x1: number; y1: number }): void {
+    const ctx = this.ctx;
+    ctx.lineJoin = 'round';
+    ctx.lineCap = 'round';
+    // A realm name that had nowhere free to go hides the place labels under it, so names never print over each other.
+    const covering = view.layers.borders ? this.realms.covering : [];
+    for (const l of doc.labels.all()) {
+      if (!this.visibleLabel(l, doc, theme, view, cam.zoom)) continue;
+      const r = this.labels.resolve(l, theme);
+      if (!r) continue;
+      const b = r.geo.bounds;
+      if (b.x1 + off < vis.x0 || b.x0 + off > vis.x1 || b.y1 < vis.y0 || b.y0 > vis.y1) continue;
+      if (covering.length && covering.some((c) => overlaps(c, b))) continue;
       const p = this.labels.path(r);
       if (r.style.haloWidth > 0) {
         ctx.strokeStyle = r.style.halo;

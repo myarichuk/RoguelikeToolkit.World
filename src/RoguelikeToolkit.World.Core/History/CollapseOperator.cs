@@ -51,9 +51,7 @@ public sealed class CollapseOperator : IHistoryOperator
             if (s.Ended || (uint)s.PolityId >= (uint)standing.Length) continue;
             (standing[s.PolityId] ??= new List<int>()).Add(s.Tile);
         }
-        int room = view.MaxSuccessors;
-        foreach (var p in polities)
-            if (p.Parent >= 0 && !polities[p.Parent].Alive) room--;
+        int room = view.MaxSuccessors - view.SuccessorCount;
 
         foreach (var polity in polities)
         {

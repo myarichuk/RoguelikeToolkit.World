@@ -1097,9 +1097,10 @@ namespace RoguelikeToolkit.World.App
             if (_positions == null || _positions.Length == 0) return false;
 
             // Terrain relief rises above the unit sphere (TerrainShading clamps
-            // displacement to radius 1.38), so intersect a slightly larger sphere
-            // or clicks on tall terrain near the limb would miss the pick entirely.
-            float pickRadius = ViewMode == ViewMode.Terrain ? 1.42f : 1.0f;
+            // displacement to radius 1.38): the pick starts on a slightly larger
+            // sphere and then walks down onto each candidate tile's own radius.
+            bool terrain = ViewMode == ViewMode.Terrain;
+            float pickRadius = terrain ? 1.42f : 1.0f;
 
             IProjection? projectionObj = ProjectionMode switch
             {
@@ -1114,18 +1115,28 @@ namespace RoguelikeToolkit.World.App
             var camera = new PickCamera(Yaw, Pitch, PanX, PanY, Distance);
             if (!HexPicker.TryPick(mouseX, mouseY, Bounds.Width, Bounds.Height, camera,
                     pickRadius, _positions, projectionObj,
-                    geo => _map.DataStore.GetTileIndex(geo), _map.DataStore.TileCount, out var pick))
+                    geo => _map.DataStore.GetTileIndex(geo), _map.DataStore.TileCount,
+                    terrain && projectionObj == null ? TileTerrainRadius : null, out var pick))
                 return false;
 
             lat = pick.Latitude;
             lon = pick.Longitude;
             tileIndex = pick.TileIndex;
 
-            // Snap the highlight to the true tile center.
-            var centerVec = RoguelikeToolkit.World.Core.Primitives.Vector3D.FromGeoCoord(_map.DataStore.GetGeoCoord(tileIndex));
-            SelectedHexCenter = new System.Numerics.Vector3((float)centerVec.X, (float)centerVec.Y, (float)centerVec.Z);
-            if (ViewMode == ViewMode.Terrain && tileIndex >= 0)
-                SelectedHexCenter *= TileTerrainRadius(tileIndex);
+            // Snap the highlight to the true tile center, in the space the mesh is drawn in (the shader compares it with aPos).
+            var centerGeo = _map.DataStore.GetGeoCoord(tileIndex);
+            if (projectionObj != null)
+            {
+                var c = projectionObj.Project(centerGeo);
+                SelectedHexCenter = new System.Numerics.Vector3((float)c.X, (float)c.Y, 0f);
+            }
+            else
+            {
+                var centerVec = RoguelikeToolkit.World.Core.Primitives.Vector3D.FromGeoCoord(centerGeo);
+                SelectedHexCenter = new System.Numerics.Vector3((float)centerVec.X, (float)centerVec.Y, (float)centerVec.Z);
+                if (terrain && tileIndex >= 0)
+                    SelectedHexCenter *= TileTerrainRadius(tileIndex);
+            }
 
             RenderFrame();
             return true;

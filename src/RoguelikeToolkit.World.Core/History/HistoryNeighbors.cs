@@ -3,9 +3,9 @@ using RoguelikeToolkit.World.Core.Storage;
 namespace RoguelikeToolkit.World.Core.History;
 
 /// <summary>
-/// One deterministic neighbor lookup for the conflict operators: the polity ids owning a tile
-/// adjacent to <paramref name="polityId"/>'s territory, ascending. Shared by <see cref="WarOperator"/>
-/// and <see cref="KhanOperator"/> so both read the same border.
+/// One deterministic neighbor lookup over any ownership array: the polity ids owning a tile adjacent to a polity's
+/// territory, ascending. One scan per call; operators read the same answer for the turn snapshot from
+/// <see cref="TurnView.BorderingPolities"/>, which indexes every border in one pass.
 /// </summary>
 public static class HistoryNeighbors
 {
