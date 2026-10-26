@@ -1,5 +1,46 @@
 # Changelog
 
+## [3.2.0](https://github.com/myarichuk/RoguelikeToolkit.World/compare/v3.1.0...v3.2.0) (2026-10-26)
+
+
+### Features
+
+* **chronicle:** X7 lexicon, grammar and late renderer for the history log ([e06e303](https://github.com/myarichuk/RoguelikeToolkit.World/commit/e06e3033b4080b0be826aec74b1b9eb07fbee08e))
+* **editor:** chronicle prose in the editor, with the editor's own names ([269bae5](https://github.com/myarichuk/RoguelikeToolkit.World/commit/269bae5ddb7d66df7af3702ef1530ea503e0a895))
+* **editor:** history view, realm borders, place history and per-realm naming ([2f05c9b](https://github.com/myarichuk/RoguelikeToolkit.World/commit/2f05c9b75cbaeb60dcd4bcc30bcc78ab6b5f4b22))
+* **editor:** history view, realm borders, place history, per-realm naming ([815c89f](https://github.com/myarichuk/RoguelikeToolkit.World/commit/815c89f5af9f606831cfb3ba71c32c1c9df6d9a7))
+* **editor:** realm names avoid each other and place labels; ruins, holy sites and myths surface in the history view ([5cd1bd1](https://github.com/myarichuk/RoguelikeToolkit.World/commit/5cd1bd10d4dc1f1c1bfbcf520bbe17628f49fd75))
+* **editor:** X8 expansion exports - persons, bonds, offices, battles, route states ([0dba099](https://github.com/myarichuk/RoguelikeToolkit.World/commit/0dba099603728768b818d655948a58dfd30951b4))
+* **editor:** X8 history expansion in the map editor - persons, battles, routes ([bd6c27c](https://github.com/myarichuk/RoguelikeToolkit.World/commit/bd6c27c19f092beaa82bcd298219820af3185c0f))
+* **history,editor:** data-driven territory costs with per-culture terrain affinity; names unique across realms and places ([b2fc92e](https://github.com/myarichuk/RoguelikeToolkit.World/commit/b2fc92e27bbc4a15786f028e2c87efa27fab642e))
+* **history:** borders follow terrain; every people can rebel; founders drawn without replacement ([38a71f8](https://github.com/myarichuk/RoguelikeToolkit.World/commit/38a71f83e7cd3e977e409acb8e10939be9eb031f))
+* **history:** X1 expansion kernel - persons, offices, relations, battles, route state ([96c7ccf](https://github.com/myarichuk/RoguelikeToolkit.World/commit/96c7ccf38f06727eb2dc27eef66ca4b2cbcc76bf))
+* **history:** X2 the court - rulers, heirs, offices and deaths as data-driven persons ([62e7350](https://github.com/myarichuk/RoguelikeToolkit.World/commit/62e735051ec4e5f8aec229fb7e2087555af84930))
+* **history:** X3 battles - tactics, ways of war and a data-driven battle resolver ([87d22ae](https://github.com/myarichuk/RoguelikeToolkit.World/commit/87d22ae1276e733c9af364d6e60e1cfc8142b6d4))
+* **history:** X4 sieges, relief battles, forts, and per-culture settlement/fort/ruin stamps ([ba56616](https://github.com/myarichuk/RoguelikeToolkit.World/commit/ba5661689fe808d743d22fa2c0cd13565ab60978))
+* **history:** X5 logistics network, winter quarters, waystations and road projection ([ccdf850](https://github.com/myarichuk/RoguelikeToolkit.World/commit/ccdf850bf69aef125b6bd07287cc97d97151a649))
+* **history:** X6 commerce, merchant princes, outlaw bands and sponsored intrigue ([e02af2e](https://github.com/myarichuk/RoguelikeToolkit.World/commit/e02af2eb240348984346c21f68e73f92b0eac07d))
+* **history:** X9 the expansion is the default history ([9b39afb](https://github.com/myarichuk/RoguelikeToolkit.World/commit/9b39afb2e5863f43f2d2a9c2fb3bb5d515adc60b))
+* **names,editor:** realm titles and name kinds are per-people name data ([254a080](https://github.com/myarichuk/RoguelikeToolkit.World/commit/254a080086f3a8c3b5194bf676dca9fd85fa3ded))
+* **names:** own-word preference is table data (OwnWordWeight, default 2) ([ef74200](https://github.com/myarichuk/RoguelikeToolkit.World/commit/ef74200bc78eaf4fec0278c835a2d1783fc06154))
+
+
+### Bug Fixes
+
+* **determinism:** DetMath everywhere, total-ordered maritime queue, seeded Jint Math.random, ordinal string ops ([daa1f6b](https://github.com/myarichuk/RoguelikeToolkit.World/commit/daa1f6ba43ce208b90e3cf25e37049516f85ca7f))
+* **editor:** name persons by their stable key, not their id ([8740ebb](https://github.com/myarichuk/RoguelikeToolkit.World/commit/8740ebb5da0f2cec5ee417bff8682821e8f8daa5))
+* **hierarchy,picking:** unbiased local slope fit; flat-map and terrain picks hit the drawn surface ([783887b](https://github.com/myarichuk/RoguelikeToolkit.World/commit/783887b3630d669bf41a290f6c96b7ea2f6d8c7c))
+* **history:** regenerate starts clean, null-edit recompute no longer forks, old saves load ([a2b0384](https://github.com/myarichuk/RoguelikeToolkit.World/commit/a2b0384a7edf27f33cf5840c29d1b809f5737794))
+* **history:** rehome displaced people, capital successor seats, dependent proposals, route-scoped road conflicts ([d7492ac](https://github.com/myarichuk/RoguelikeToolkit.World/commit/d7492ac03fbe0dd1ab670e138a503e143050afc5))
+* **hydrology:** closed-lake basins drain into their lake; basin runoff feeds the lake ([90acdb8](https://github.com/myarichuk/RoguelikeToolkit.World/commit/90acdb8c11ecfa2ee7b67a9bf1d6d4105d02c44e))
+* **hydrology:** landlocked marine basins are endorheic, open lakes drain through their outlet, rivers can dry out ([22f2064](https://github.com/myarichuk/RoguelikeToolkit.World/commit/22f2064bcd527cb19a34cc8b26ec59682f4820e9))
+* **robustness:** release native stores on failed builds, enforce declared Jint reads, editor recovers from failed generate/boot ([9a46ae8](https://github.com/myarichuk/RoguelikeToolkit.World/commit/9a46ae8bb0bde1c23715a359c2cb5d9fde877286))
+
+
+### Performance Improvements
+
+* **history:** X0 legacy fixtures, border index, faster deposit and city-site scoring ([76c010a](https://github.com/myarichuk/RoguelikeToolkit.World/commit/76c010ae0586926f061cbce811981acd68acf586))
+
 ## [3.1.0](https://github.com/myarichuk/RoguelikeToolkit.World/compare/v3.0.0...v3.1.0) (2026-10-19)
 
 
