@@ -1,6 +1,7 @@
 import type { Editor } from '../engine/Editor';
 import { awardAchievements, type Achievement } from '../engine/world/history/achievements';
 import { actorsOf, eventsOf, standingSpan, statsOf, type Actor, type ActorStats, type Scope } from '../engine/world/history/actors';
+import { personIndex } from '../engine/world/history/persons';
 import { eventLine, MAJOR_KINDS, realmColor, realmName, type HistoryRecord } from '../engine/world/history/record';
 import { ViewModel } from './ViewModel';
 
@@ -103,12 +104,12 @@ export class HistoryWindowViewModel extends ViewModel<HistoryWindowState> {
   }
 
   private detailOf(an: Analysis, actor: Actor, majorOnly: boolean): ActorDetail {
-    const h = an.history, nameOf = (id: number) => realmName(h, id);
+    const h = an.history, nameOf = (id: number) => realmName(h, id), personOf = personIndex(h)?.nameOf;
     const matched = eventsOf(h, actor, (e) => !majorOnly || MAJOR_KINDS.has(e.kind));
     return {
       id: actor.id, name: actor.name, color: realmColor(actor.colorOf), figures: figuresOf(an.stats.get(actor.id)!),
       achievements: an.achievements.filter((x) => x.actor === actor.id),
-      events: matched.slice(0, LOG_ROWS).map((e) => ({ id: e.id, turn: e.turn, text: eventLine(e, nameOf), tile: e.tile, major: MAJOR_KINDS.has(e.kind) })),
+      events: matched.slice(0, LOG_ROWS).map((e) => ({ id: e.id, turn: e.turn, text: eventLine(e, nameOf, personOf), tile: e.tile, major: MAJOR_KINDS.has(e.kind) })),
       eventCount: matched.length,
     };
   }

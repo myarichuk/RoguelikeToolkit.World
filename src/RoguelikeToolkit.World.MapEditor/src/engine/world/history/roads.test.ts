@@ -1,5 +1,5 @@
 import { describe, expect, it } from 'vitest';
-import { MAP_W } from '../../core/geo';
+import { MAP_W, vecToMap } from '../../core/geo';
 import { buildRoads, chaikin, ROAD_STRIDE } from './roads';
 
 /** Tiles along the equator, 10 degrees apart: tile i sits at longitude (i * 10 + lon0). */
@@ -18,6 +18,13 @@ describe('buildRoads', () => {
     expect(roads[0].kind).toBe('trunk');
     expect(roads[0].points.length / 3).toBeGreaterThan(4);   // corner cutting adds points
     expect(roads[0].points[2]).toBeGreaterThan(0);           // carries a width
+  });
+
+  it('draws the same road from tile positions as from tile vectors', () => {
+    const segments = [...seg(0, 1), ...seg(1, 2), ...seg(2, 3)], v = ring(6);
+    const [byVector] = buildRoads({ segments, vectors: v, wet: dry, seed: 1 });
+    const [byXY] = buildRoads({ segments, xy: (t) => { const q = vecToMap(v[t * 3], v[t * 3 + 1], v[t * 3 + 2]); return [q.x, q.y]; }, wet: dry, seed: 1 });
+    expect([...byXY.points]).toEqual([...byVector.points]);
   });
 
   it('keeps the ends on their settlements', () => {

@@ -8,6 +8,7 @@ import type { DepositType } from '../world/protocol';
 import type { Camera } from './Camera';
 import { CapacityTint } from './CapacityTint';
 import { RealmLayer, overlaps, type Rect } from './RealmLayer';
+import { HistoryMarks } from './HistoryMarks';
 import { ClimateTint } from './ClimateTint';
 import { drawFlowArrows } from './FlowArrows';
 import { ClimatePaint } from './ClimatePaint';
@@ -38,6 +39,7 @@ export class Overlay {
   readonly climatePaint = new ClimatePaint();
   private readonly capacityTint = new CapacityTint();
   private readonly realms = new RealmLayer();
+  private readonly historyMarks = new HistoryMarks();
   private readonly climateTint = new ClimateTint();
   selection: { labels: Set<string>; stamps: Set<string>; feature: string | null; hoverFeature: string | null } = { labels: new Set(), stamps: new Set(), feature: null, hoverFeature: null };
   private plateArrows: { x: number; y: number; dx: number; dy: number }[] | null = null;
@@ -67,6 +69,7 @@ export class Overlay {
       if (view.layers.realms) this.realms.drawTint(ctx, doc, view.historyTurn);
       if (view.layers.borders) this.realms.drawBorders(ctx, doc, view.historyTurn, cam.zoom, view.layers.labels ? this.labelBoxes(cam, doc, theme, view, off, vis) : []);
       if (view.layers.climatePaint || this.showClimatePaint) this.drawClimatePaint(doc);
+      if (view.layers.battles || view.layers.outlaws || view.layers.routeSafety) this.historyMarks.draw(ctx, doc, view, cam.zoom);
       if (view.layers.labels) this.drawLabels(cam, doc, theme, view, off, vis);
       if (view.layers.resources && view.kinds.deposit) this.drawDeposits(cam, doc, view, off);
       if (view.layers.plateMotion) this.drawPlateMotion(cam, doc);

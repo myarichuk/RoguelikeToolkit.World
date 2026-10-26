@@ -1,5 +1,5 @@
 import { MAP_H, MAP_W } from '../core/geo';
-import type { HistoryRecordJson } from '../world/history/record';
+import { EXPANSION_ARRAYS, type ExpansionArray, type ExpansionRecord, type HistoryRecordJson } from '../world/history/record';
 import { widenClimate } from '../world/physics/climate';
 import { editsFromRows, editsToRows, type EditRow } from '../world/edits/edits';
 import { migrateLegacyLandUse } from '../world/physics/landuse';
@@ -17,7 +17,9 @@ const MAGIC = 0x50414d57; // "WMAP" little-endian
 // v4 adds the land-use raster (`landuse`); farmland and ashlands used to be biome ids 11 and 13 and are migrated out on load.
 export const WMAP_VERSION = 4;
 
-type BlobName = 'elevation' | 'biome' | 'tile' | 'tilePlate' | 'tileStyle' | 'plateDrift' | 'tileXY' | 'ownerBase' | 'ownerChanges' | 'warmth' | 'wetness' | 'landuse' | 'capacity' | 'seaIce' | 'climate';
+// The history expansion's arrays go as `history.<field>` blobs (only when a run wrote any: older and feature-off files have none).
+type BlobName = 'elevation' | 'biome' | 'tile' | 'tilePlate' | 'tileStyle' | 'plateDrift' | 'tileXY' | 'ownerBase' | 'ownerChanges' | 'warmth' | 'wetness' | 'landuse' | 'capacity' | 'seaIce' | 'climate'
+  | `history.${ExpansionArray}`;
 type Typed = Float32Array | Uint8Array | Int8Array | Int32Array | Uint32Array | Float64Array;
 const CTORS = { Float32Array, Uint8Array, Int8Array, Int32Array, Uint32Array, Float64Array } as const;
 
@@ -46,6 +48,8 @@ export function encodeDocument(doc: MapDocument): Uint8Array {
     ['warmth', doc.warmth], ['wetness', doc.wetness], ['landuse', doc.landuse],
   ];
   if (doc.history) arrays.push(['ownerBase', doc.history.ownerBase], ['ownerChanges', doc.history.changes]);
+  const x = doc.history?.expansion;
+  if (x) for (const k of EXPANSION_ARRAYS) arrays.push([`history.${k}`, x[k]]);
   if (doc.world.tileStyle?.length) arrays.push(['tileStyle', doc.world.tileStyle]);
   // Derived and cached: written so the capacity overlay works straight after opening, never read as an input.
   if (doc.physics?.capacity) arrays.push(['capacity', doc.physics.capacity]);
@@ -60,7 +64,7 @@ export function encodeDocument(doc: MapDocument): Uint8Array {
   const header: Header = {
     format: 'wmap', version: WMAP_VERSION, width: doc.width, height: doc.height, settings: doc.settings, styles: doc.world.styles,
     features: [...doc.features.all()], stamps: [...doc.stamps.all()], labels: [...doc.labels.all()].map(labelOut), rivers: [...doc.rivers.all()], roads: [...doc.roads.all()],
-    history: doc.history ? { turns: doc.history.turns, turnYears: doc.history.turnYears, polities: doc.history.polities, events: doc.history.events } : undefined,
+    history: doc.history ? { turns: doc.history.turns, turnYears: doc.history.turnYears, polities: doc.history.polities, events: doc.history.events, ...(x ? { expansion: expansionJson(x) } : {}) } : undefined,
     physics: doc.physics ? { edits: editsToRows(doc.physics.edits), generated: [...doc.physics.generated], tombstones: [...doc.physics.tombstones.values()] } : undefined,
     blobs,
   };
@@ -118,7 +122,13 @@ export function decodeDocument(bytes: Uint8Array): MapDocument {
   doc.rivers.reset(header.rivers ?? []);
   doc.roads.reset(header.roads ?? []);
   if (header.history && header.blobs.some((b) => b.name === 'ownerBase')) {
-    doc.history = { ...header.history, ownerBase: blob<Int32Array>('ownerBase'), changes: header.blobs.some((b) => b.name === 'ownerChanges') ? blob<Int32Array>('ownerChanges') : new Int32Array(0) };
+    const { expansion, ...rest } = header.history;
+    doc.history = { ...rest, ownerBase: blob<Int32Array>('ownerBase'), changes: header.blobs.some((b) => b.name === 'ownerChanges') ? blob<Int32Array>('ownerChanges') : new Int32Array(0) };
+    // The expansion needs every one of its arrays; a file missing any loads without it rather than half of it.
+    if (expansion && EXPANSION_ARRAYS.every((k) => header.blobs.some((b) => b.name === `history.${k}`))) {
+      const arrays = Object.fromEntries(EXPANSION_ARRAYS.map((k) => [k, blob<Int32Array>(`history.${k}`)])) as Pick<ExpansionRecord, ExpansionArray>;
+      doc.history.expansion = { ...expansion, ...arrays };
+    }
   }
   // The cache is only good for the world it was computed on: a length that does not match the tile count is dropped.
   const capacity = header.blobs.some((b) => b.name === 'capacity') ? blob<Uint8Array>('capacity') : undefined;
@@ -156,6 +166,12 @@ export async function loadDocument(file: Blob): Promise<MapDocument> {
 }
 
 const align8 = (n: number) => (n + 7) & ~7;
+/** An expansion record's string tables (its arrays travel as blobs). */
+const expansionJson = (x: ExpansionRecord): HistoryRecordJson['expansion'] => {
+  const out: Record<string, unknown> = { ...x };
+  for (const k of EXPANSION_ARRAYS) delete out[k];
+  return out as HistoryRecordJson['expansion'];
+};
 // JSON has no NaN: "style default" spacing travels as null.
 const labelOut = (l: LabelEntity) => (Number.isNaN(l.spacing) ? { ...l, spacing: null as unknown as number } : l);
 const labelIn = (l: LabelEntity) => (l.spacing === null || l.spacing === undefined ? { ...l, spacing: NaN } : l);

@@ -4,6 +4,7 @@ import { HistoryWindowViewModel } from './HistoryWindowViewModel';
 import { GenerateViewModel } from './GenerateViewModel';
 import { InspectorViewModel } from './InspectorViewModel';
 import { PacksViewModel } from './PacksViewModel';
+import { PersonCardViewModel } from './PersonCardViewModel';
 import { ShellViewModel } from './ShellViewModel';
 import { ThemeEditorViewModel } from './ThemeEditorViewModel';
 import { ToolsViewModel } from './ToolsViewModel';
@@ -17,6 +18,7 @@ export interface ViewModels {
   filters: ViewFiltersViewModel;
   history: HistoryViewModel;
   historyWindow: HistoryWindowViewModel;
+  person: PersonCardViewModel;
   tools: ToolsViewModel;
   inspector: InspectorViewModel;
   theme: ThemeEditorViewModel;
@@ -34,6 +36,7 @@ export function createViewModels(editor: Editor, files: FileService): ViewModels
     filters: new ViewFiltersViewModel(editor),
     history: new HistoryViewModel(editor),
     historyWindow: new HistoryWindowViewModel(editor),
+    person: new PersonCardViewModel(editor),
     tools: new ToolsViewModel(editor),
     inspector: new InspectorViewModel(editor),
     theme: new ThemeEditorViewModel(editor),

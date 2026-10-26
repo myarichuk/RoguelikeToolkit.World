@@ -16,6 +16,7 @@ or on an HTTP error from the page.
 | `mediterranean.cjs` | The Mediterranean biome covers a plausible share of land, sits on tiles that satisfy Core's rule, is named in the status bar, is offered (and the land-use slots are not) in the Biome palette, and has its tooltip. |
 | `sea-ice.cjs` | The engine reports seasonal and perennial ice, the status bar names each ("in winter" / "all year") only while the overlay is on, and the settlement export places every tier, repeats exactly for the same seed, and gives each site its factors in plain words. |
 | `wind-blend.cjs` | Calm belts off keeps unit wind everywhere, on fades it to a calm at the cell edges, changes the biomes (slightly more desert), survives Apply physics, and the tooltip warns that wind erosion builds fewer dunes. |
+| `history-expansion.cjs` | The wizard offers the expansion features; a world with all of them carries named persons, battles and route states and events with `person:` participants; a person card opens from a chronicle line and follows a bond; the battle and road-safety layers draw at the scrubbed turn; features off leaves the history record as it was; the expansion survives save/open. |
 
 ## Running
 
