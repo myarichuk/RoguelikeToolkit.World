@@ -146,27 +146,8 @@ public sealed class CourtOperator : IHistoryOperator
 
         /// <summary>Rolls a person of <paramref name="polity"/>'s folk and culture keyed by (polity, slot); not yet proposed.</summary>
         private Proposal.AddPerson Roll(TurnView.PolityState polity, int slot, PersonKind kind, int bornAbs, int house, int parent)
-        {
-            int key = _sink.StableKey(polity.Id, slot);
-            var rng = _sink.Rng(key, "person");
-            FolkDef? folk = null;
-            CultureDef? culture = null;
-            _op._store?.Folks.TryGetValue(polity.FolkKey, out folk);
-            _op._store?.Cultures.TryGetValue(polity.CultureKey, out culture);
-            var priors = folk?.ToTraitWeights() ?? new[] { TraitWeight.Balanced, TraitWeight.Balanced, TraitWeight.Balanced, TraitWeight.Balanced, TraitWeight.Balanced };
-            var traits = CourtProfile.RollTraits(ref rng, priors, culture);
-            bool feminine = rng.NextDouble() < Data.FeminineShare;
-            var skills = _profile.RollSkills(ref rng, traits);
-            var epithets = _profile.Epithets(ref rng, traits, skills);
-            int bornTurn = (int)Math.Floor(bornAbs / (double)Years);
-            return new Proposal.AddPerson
-            {
-                EntityId = polity.Id, PersonKind = kind, FolkKey = polity.FolkKey, CultureKey = polity.CultureKey, SeatSettlement = Seat(polity.Id),
-                HouseId = house, Parent = parent, Feminine = feminine, BornTurn = bornTurn, BornYear = bornAbs - bornTurn * Years,
-                Traits = traits, Martial = skills[0], Intrigue = skills[1], Stewardship = skills[2], Charisma = skills[3], Epithets = epithets,
-                StableKey = key,
-            };
-        }
+            => _profile.RollPerson(_sink, _op._store, _sink.StableKey(polity.Id, slot), polity.Id, polity.FolkKey, polity.CultureKey, Seat(polity.Id), kind,
+                bornAbs, house, parent, Years);
 
         /// <summary>An absolute birth year for someone <paramref name="minShare"/>..<paramref name="maxShare"/> of a lifespan old now, at least of age.</summary>
         private int BornAged(TurnView.PolityState polity, int slot, double minShare, double maxShare)

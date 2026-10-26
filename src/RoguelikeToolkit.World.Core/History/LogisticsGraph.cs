@@ -132,9 +132,15 @@ internal sealed class LogisticsGraph
             if (!byTile.TryGetValue(key.A, out int a) || !byTile.TryGetValue(key.B, out int b) || a == b) continue;
             double safety = HistoryRouteState.NewRouteSafety;
             int ways = 0;
-            if (states.TryGetValue(key, out var state)) { safety = state.Safety; ways = state.Waystations; }
+            bool sabotaged = false;
+            if (states.TryGetValue(key, out var state))
+            {
+                safety = state.Safety;
+                ways = state.Waystations;
+                sabotaged = state.SabotagedTurn >= 0 && state.SabotagedTurn >= view.Turn - data.SabotagedTurns;
+            }
             double cost = route.Length * data.RoadCost * (1 + data.RoadUnsafe * (1 - safety))
-                * (route.Severed ? data.SeveredCost : 1) * Math.Max(0, 1 - data.WaystationRelief * Math.Min(ways, Math.Max(0, data.WaystationsCounted)));
+                * (route.Severed || sabotaged ? data.SeveredCost : 1) * Math.Max(0, 1 - data.WaystationRelief * Math.Min(ways, Math.Max(0, data.WaystationsCounted)));
             g.Both(a, b, cost, LinkKind.Road);
         }
         return g;

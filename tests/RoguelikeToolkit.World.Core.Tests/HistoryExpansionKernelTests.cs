@@ -85,6 +85,7 @@ public class HistoryExpansionKernelTests
                 });
                 s.Emit(new Proposal.AdjustRoute { EntityId = 0, RouteA = 0, RouteB = 2, Safety = -0.1, Traffic = 0.4, Forts = 1 });
                 s.Emit(new Proposal.AdjustRoute { EntityId = 1, RouteA = 0, RouteB = 2, Safety = -0.15, Forts = -3 });
+                s.Emit(new Proposal.SetRouteFlag { EntityId = 1, RouteA = 0, RouteB = 2, Flag = RouteFlag.OutlawBand, Value = marshal }); // a sponsor pays a band
                 s.Emit(new Proposal.SetRouteFlag { EntityId = 1, RouteA = 0, RouteB = 2, Flag = RouteFlag.Sponsor, Value = 1 });
                 s.Emit(new Proposal.EndPerson { EntityId = 1, Person = rival, Cause = "battle" });
             }));

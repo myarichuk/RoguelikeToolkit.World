@@ -1,13 +1,17 @@
 abstract RoguelikeToolkit.World.Core.History.Proposal.Kind.get -> RoguelikeToolkit.World.Core.History.ProposalKind
 const RoguelikeToolkit.World.Core.Generation.StageOrder.Absorb = 73 -> int
 const RoguelikeToolkit.World.Core.Generation.StageOrder.Collapse = 72 -> int
+const RoguelikeToolkit.World.Core.Generation.StageOrder.Commerce = 82 -> int
 const RoguelikeToolkit.World.Core.Generation.StageOrder.Court = 38 -> int
 const RoguelikeToolkit.World.Core.Generation.StageOrder.Faith = 84 -> int
 const RoguelikeToolkit.World.Core.Generation.StageOrder.Fortification = 42 -> int
 const RoguelikeToolkit.World.Core.Generation.StageOrder.Hazard = 36 -> int
 const RoguelikeToolkit.World.Core.Generation.StageOrder.HolySite = 44 -> int
+const RoguelikeToolkit.World.Core.Generation.StageOrder.Intrigue = 75 -> int
 const RoguelikeToolkit.World.Core.Generation.StageOrder.Khan = 46 -> int
 const RoguelikeToolkit.World.Core.Generation.StageOrder.Logistics = 40 -> int
+const RoguelikeToolkit.World.Core.Generation.StageOrder.Merchant = 78 -> int
+const RoguelikeToolkit.World.Core.Generation.StageOrder.Outlaw = 74 -> int
 const RoguelikeToolkit.World.Core.Generation.StageOrder.Settle = 34 -> int
 const RoguelikeToolkit.World.Core.Generation.StageOrder.Tier = 35 -> int
 const RoguelikeToolkit.World.Core.Generation.StageOrder.Treaty = 48 -> int
@@ -56,6 +60,9 @@ const RoguelikeToolkit.World.Core.History.HistoryScar.Ruin = "ruin" -> string!
 const RoguelikeToolkit.World.Core.History.HistoryScar.ScorchedField = "scorched_field" -> string!
 const RoguelikeToolkit.World.Core.History.HolySiteOperator.AuraRelief = 0.1 -> double
 const RoguelikeToolkit.World.Core.History.HolySiteOperator.HolyChance = 0.5 -> double
+const RoguelikeToolkit.World.Core.History.IntrigueOperator.AssassinatedCause = "assassinated" -> string!
+const RoguelikeToolkit.World.Core.History.IntrigueOperator.ExecutedCause = "executed" -> string!
+const RoguelikeToolkit.World.Core.History.IntrigueOperator.RecalledCause = "recalled" -> string!
 const RoguelikeToolkit.World.Core.History.KhanOperator.KhanAdvantage = 2 -> double
 const RoguelikeToolkit.World.Core.History.KhanOperator.MaxSubmitChance = 0.9 -> double
 const RoguelikeToolkit.World.Core.History.KhanOperator.ResistGrudge = 2 -> int
@@ -66,6 +73,8 @@ const RoguelikeToolkit.World.Core.History.KhanOperator.TributeRelief = 0.1 -> do
 const RoguelikeToolkit.World.Core.History.KhanOperator.TributeWindowTurns = 5 -> int
 const RoguelikeToolkit.World.Core.History.KhanOperator.UltimatumChance = 0.35 -> double
 const RoguelikeToolkit.World.Core.History.LogisticsOperator.WaystationWhy = "waystation" -> string!
+const RoguelikeToolkit.World.Core.History.OutlawOperator.HangedCause = "hanged" -> string!
+const RoguelikeToolkit.World.Core.History.OutlawOperator.RuinedCause = "ruined" -> string!
 const RoguelikeToolkit.World.Core.History.ParticipantRoles.PersonPrefix = "person:" -> string!
 const RoguelikeToolkit.World.Core.History.ParticipantRoles.SettlementPrefix = "settlement:" -> string!
 const RoguelikeToolkit.World.Core.History.PluginStateBag.MaxKeyLength = 128 -> int
@@ -116,6 +125,7 @@ const RoguelikeToolkit.World.Core.History.WarOperator.DesecrationCoalitionGrudge
 const RoguelikeToolkit.World.Core.History.WarOperator.DesecrationGrudge = 3 -> int
 const RoguelikeToolkit.World.Core.History.WarOperator.GrudgeWarScale = 0.02 -> double
 const RoguelikeToolkit.World.Core.History.WarOperator.MaxWarChance = 0.6 -> double
+const RoguelikeToolkit.World.Core.History.WarOperator.MercenariesTag = "mercenaries" -> string!
 const RoguelikeToolkit.World.Core.History.WarOperator.MinWarPressure = 0.02 -> double
 const RoguelikeToolkit.World.Core.History.WarOperator.RazeCasualty = 0.3 -> double
 const RoguelikeToolkit.World.Core.History.WarOperator.RazeChance = 0.1 -> double
@@ -215,6 +225,11 @@ RoguelikeToolkit.World.Core.History.CollapseOperator.CollapseOperator() -> void
 RoguelikeToolkit.World.Core.History.CollapseOperator.Name.get -> string!
 RoguelikeToolkit.World.Core.History.CollapseOperator.Order.get -> int
 RoguelikeToolkit.World.Core.History.CollapseOperator.Propose(RoguelikeToolkit.World.Core.History.TurnView! view, RoguelikeToolkit.World.Core.History.ProposalSink! sink) -> void
+RoguelikeToolkit.World.Core.History.CommerceOperator
+RoguelikeToolkit.World.Core.History.CommerceOperator.CommerceOperator() -> void
+RoguelikeToolkit.World.Core.History.CommerceOperator.Name.get -> string!
+RoguelikeToolkit.World.Core.History.CommerceOperator.Order.get -> int
+RoguelikeToolkit.World.Core.History.CommerceOperator.Propose(RoguelikeToolkit.World.Core.History.TurnView! view, RoguelikeToolkit.World.Core.History.ProposalSink! sink) -> void
 RoguelikeToolkit.World.Core.History.ConquestOperator
 RoguelikeToolkit.World.Core.History.ConquestOperator.ConquestOperator() -> void
 RoguelikeToolkit.World.Core.History.ConquestOperator.Name.get -> string!
@@ -604,6 +619,11 @@ RoguelikeToolkit.World.Core.History.IHistoryOperator.Propose(RoguelikeToolkit.Wo
 RoguelikeToolkit.World.Core.History.IHistoryPostPass
 RoguelikeToolkit.World.Core.History.IHistoryPostPass.Name.get -> string!
 RoguelikeToolkit.World.Core.History.IHistoryPostPass.Run(RoguelikeToolkit.World.Core.Topology.WorldMap! map, RoguelikeToolkit.World.Core.History.HistoryCatalog! history, RoguelikeToolkit.World.Core.History.HistoryContext! context) -> void
+RoguelikeToolkit.World.Core.History.IntrigueOperator
+RoguelikeToolkit.World.Core.History.IntrigueOperator.IntrigueOperator() -> void
+RoguelikeToolkit.World.Core.History.IntrigueOperator.Name.get -> string!
+RoguelikeToolkit.World.Core.History.IntrigueOperator.Order.get -> int
+RoguelikeToolkit.World.Core.History.IntrigueOperator.Propose(RoguelikeToolkit.World.Core.History.TurnView! view, RoguelikeToolkit.World.Core.History.ProposalSink! sink) -> void
 RoguelikeToolkit.World.Core.History.KhanOperator
 RoguelikeToolkit.World.Core.History.KhanOperator.KhanOperator() -> void
 RoguelikeToolkit.World.Core.History.KhanOperator.Name.get -> string!
@@ -614,6 +634,16 @@ RoguelikeToolkit.World.Core.History.LogisticsOperator.LogisticsOperator() -> voi
 RoguelikeToolkit.World.Core.History.LogisticsOperator.Name.get -> string!
 RoguelikeToolkit.World.Core.History.LogisticsOperator.Order.get -> int
 RoguelikeToolkit.World.Core.History.LogisticsOperator.Propose(RoguelikeToolkit.World.Core.History.TurnView! view, RoguelikeToolkit.World.Core.History.ProposalSink! sink) -> void
+RoguelikeToolkit.World.Core.History.MerchantOperator
+RoguelikeToolkit.World.Core.History.MerchantOperator.MerchantOperator() -> void
+RoguelikeToolkit.World.Core.History.MerchantOperator.Name.get -> string!
+RoguelikeToolkit.World.Core.History.MerchantOperator.Order.get -> int
+RoguelikeToolkit.World.Core.History.MerchantOperator.Propose(RoguelikeToolkit.World.Core.History.TurnView! view, RoguelikeToolkit.World.Core.History.ProposalSink! sink) -> void
+RoguelikeToolkit.World.Core.History.OutlawOperator
+RoguelikeToolkit.World.Core.History.OutlawOperator.Name.get -> string!
+RoguelikeToolkit.World.Core.History.OutlawOperator.Order.get -> int
+RoguelikeToolkit.World.Core.History.OutlawOperator.OutlawOperator() -> void
+RoguelikeToolkit.World.Core.History.OutlawOperator.Propose(RoguelikeToolkit.World.Core.History.TurnView! view, RoguelikeToolkit.World.Core.History.ProposalSink! sink) -> void
 RoguelikeToolkit.World.Core.History.ParticipantEntity
 RoguelikeToolkit.World.Core.History.ParticipantEntity.Person = 1 -> RoguelikeToolkit.World.Core.History.ParticipantEntity
 RoguelikeToolkit.World.Core.History.ParticipantEntity.Polity = 0 -> RoguelikeToolkit.World.Core.History.ParticipantEntity
@@ -622,6 +652,7 @@ RoguelikeToolkit.World.Core.History.ParticipantRoles
 RoguelikeToolkit.World.Core.History.PeoplesLoader
 RoguelikeToolkit.World.Core.History.PersonKind
 RoguelikeToolkit.World.Core.History.PersonKind.Advisor = 2 -> RoguelikeToolkit.World.Core.History.PersonKind
+RoguelikeToolkit.World.Core.History.PersonKind.Agent = 10 -> RoguelikeToolkit.World.Core.History.PersonKind
 RoguelikeToolkit.World.Core.History.PersonKind.General = 3 -> RoguelikeToolkit.World.Core.History.PersonKind
 RoguelikeToolkit.World.Core.History.PersonKind.Heir = 1 -> RoguelikeToolkit.World.Core.History.PersonKind
 RoguelikeToolkit.World.Core.History.PersonKind.MerchantPrince = 5 -> RoguelikeToolkit.World.Core.History.PersonKind
@@ -1534,6 +1565,10 @@ RoguelikeToolkit.World.Core.Peoples.BattleDef.Besiege.get -> System.Collections.
 RoguelikeToolkit.World.Core.Peoples.BattleDef.Besiege.set -> void
 RoguelikeToolkit.World.Core.Peoples.BattleDef.BesiegeDeclined.get -> bool
 RoguelikeToolkit.World.Core.Peoples.BattleDef.BesiegeDeclined.set -> void
+RoguelikeToolkit.World.Core.Peoples.BattleDef.BetrayalBelow.get -> int
+RoguelikeToolkit.World.Core.Peoples.BattleDef.BetrayalBelow.set -> void
+RoguelikeToolkit.World.Core.Peoples.BattleDef.BetrayalPower.get -> double
+RoguelikeToolkit.World.Core.Peoples.BattleDef.BetrayalPower.set -> void
 RoguelikeToolkit.World.Core.Peoples.BattleDef.BiomeTerrain.get -> System.Collections.Generic.Dictionary<string!, string!>!
 RoguelikeToolkit.World.Core.Peoples.BattleDef.BiomeTerrain.set -> void
 RoguelikeToolkit.World.Core.Peoples.BattleDef.CasualtyCap.get -> double
@@ -1690,6 +1725,70 @@ RoguelikeToolkit.World.Core.Peoples.BattleEpithetDef.Spread.get -> double
 RoguelikeToolkit.World.Core.Peoples.BattleEpithetDef.Spread.set -> void
 RoguelikeToolkit.World.Core.Peoples.BattleEpithetDef.Tactics.get -> System.Collections.Generic.Dictionary<string!, double>!
 RoguelikeToolkit.World.Core.Peoples.BattleEpithetDef.Tactics.set -> void
+RoguelikeToolkit.World.Core.Peoples.CommerceDef
+RoguelikeToolkit.World.Core.Peoples.CommerceDef.AgeMax.get -> double
+RoguelikeToolkit.World.Core.Peoples.CommerceDef.AgeMax.set -> void
+RoguelikeToolkit.World.Core.Peoples.CommerceDef.AgeMin.get -> double
+RoguelikeToolkit.World.Core.Peoples.CommerceDef.AgeMin.set -> void
+RoguelikeToolkit.World.Core.Peoples.CommerceDef.CommerceDef() -> void
+RoguelikeToolkit.World.Core.Peoples.CommerceDef.CourtReserve.get -> int
+RoguelikeToolkit.World.Core.Peoples.CommerceDef.CourtReserve.set -> void
+RoguelikeToolkit.World.Core.Peoples.CommerceDef.Key.get -> string!
+RoguelikeToolkit.World.Core.Peoples.CommerceDef.Key.set -> void
+RoguelikeToolkit.World.Core.Peoples.CommerceDef.MaxMerchantsPerPolity.get -> int
+RoguelikeToolkit.World.Core.Peoples.CommerceDef.MaxMerchantsPerPolity.set -> void
+RoguelikeToolkit.World.Core.Peoples.CommerceDef.MaxMerchantsPerSettlement.get -> int
+RoguelikeToolkit.World.Core.Peoples.CommerceDef.MaxMerchantsPerSettlement.set -> void
+RoguelikeToolkit.World.Core.Peoples.CommerceDef.MaxPrivateers.get -> int
+RoguelikeToolkit.World.Core.Peoples.CommerceDef.MaxPrivateers.set -> void
+RoguelikeToolkit.World.Core.Peoples.CommerceDef.MercenaryCap.get -> double
+RoguelikeToolkit.World.Core.Peoples.CommerceDef.MercenaryCap.set -> void
+RoguelikeToolkit.World.Core.Peoples.CommerceDef.MercenaryPerWealth.get -> double
+RoguelikeToolkit.World.Core.Peoples.CommerceDef.MercenaryPerWealth.set -> void
+RoguelikeToolkit.World.Core.Peoples.CommerceDef.MerchantChance.get -> double
+RoguelikeToolkit.World.Core.Peoples.CommerceDef.MerchantChance.set -> void
+RoguelikeToolkit.World.Core.Peoples.CommerceDef.MerchantRouteDegrees.get -> double
+RoguelikeToolkit.World.Core.Peoples.CommerceDef.MerchantRouteDegrees.set -> void
+RoguelikeToolkit.World.Core.Peoples.CommerceDef.MerchantTier.get -> string!
+RoguelikeToolkit.World.Core.Peoples.CommerceDef.MerchantTier.set -> void
+RoguelikeToolkit.World.Core.Peoples.CommerceDef.MerchantWealth.get -> double
+RoguelikeToolkit.World.Core.Peoples.CommerceDef.MerchantWealth.set -> void
+RoguelikeToolkit.World.Core.Peoples.CommerceDef.PersonReserve.get -> int
+RoguelikeToolkit.World.Core.Peoples.CommerceDef.PersonReserve.set -> void
+RoguelikeToolkit.World.Core.Peoples.CommerceDef.PledgeFloor.get -> double
+RoguelikeToolkit.World.Core.Peoples.CommerceDef.PledgeFloor.set -> void
+RoguelikeToolkit.World.Core.Peoples.CommerceDef.PledgeGrudge.get -> int
+RoguelikeToolkit.World.Core.Peoples.CommerceDef.PledgeGrudge.set -> void
+RoguelikeToolkit.World.Core.Peoples.CommerceDef.PledgeShare.get -> double
+RoguelikeToolkit.World.Core.Peoples.CommerceDef.PledgeShare.set -> void
+RoguelikeToolkit.World.Core.Peoples.CommerceDef.PrivateerChance.get -> double
+RoguelikeToolkit.World.Core.Peoples.CommerceDef.PrivateerChance.set -> void
+RoguelikeToolkit.World.Core.Peoples.CommerceDef.PrivateerDegrees.get -> double
+RoguelikeToolkit.World.Core.Peoples.CommerceDef.PrivateerDegrees.set -> void
+RoguelikeToolkit.World.Core.Peoples.CommerceDef.PrivateerGrudge.get -> int
+RoguelikeToolkit.World.Core.Peoples.CommerceDef.PrivateerGrudge.set -> void
+RoguelikeToolkit.World.Core.Peoples.CommerceDef.PrivateerLoot.get -> double
+RoguelikeToolkit.World.Core.Peoples.CommerceDef.PrivateerLoot.set -> void
+RoguelikeToolkit.World.Core.Peoples.CommerceDef.PrivateerRaidChance.get -> double
+RoguelikeToolkit.World.Core.Peoples.CommerceDef.PrivateerRaidChance.set -> void
+RoguelikeToolkit.World.Core.Peoples.CommerceDef.RuinBelow.get -> double
+RoguelikeToolkit.World.Core.Peoples.CommerceDef.RuinBelow.set -> void
+RoguelikeToolkit.World.Core.Peoples.CommerceDef.SeveredTraffic.get -> double
+RoguelikeToolkit.World.Core.Peoples.CommerceDef.SeveredTraffic.set -> void
+RoguelikeToolkit.World.Core.Peoples.CommerceDef.SmuggleChance.get -> double
+RoguelikeToolkit.World.Core.Peoples.CommerceDef.SmuggleChance.set -> void
+RoguelikeToolkit.World.Core.Peoples.CommerceDef.SmuggleGain.get -> double
+RoguelikeToolkit.World.Core.Peoples.CommerceDef.SmuggleGain.set -> void
+RoguelikeToolkit.World.Core.Peoples.CommerceDef.TrafficBase.get -> double
+RoguelikeToolkit.World.Core.Peoples.CommerceDef.TrafficBase.set -> void
+RoguelikeToolkit.World.Core.Peoples.CommerceDef.TrafficDrift.get -> double
+RoguelikeToolkit.World.Core.Peoples.CommerceDef.TrafficDrift.set -> void
+RoguelikeToolkit.World.Core.Peoples.CommerceDef.TrafficWealth.get -> double
+RoguelikeToolkit.World.Core.Peoples.CommerceDef.TrafficWealth.set -> void
+RoguelikeToolkit.World.Core.Peoples.CommerceDef.WealthGrowth.get -> double
+RoguelikeToolkit.World.Core.Peoples.CommerceDef.WealthGrowth.set -> void
+RoguelikeToolkit.World.Core.Peoples.CommerceDef.WealthScale.get -> double
+RoguelikeToolkit.World.Core.Peoples.CommerceDef.WealthScale.set -> void
 RoguelikeToolkit.World.Core.Peoples.CourtDef
 RoguelikeToolkit.World.Core.Peoples.CourtDef.Candidates.get -> int
 RoguelikeToolkit.World.Core.Peoples.CourtDef.Candidates.set -> void
@@ -1808,6 +1907,78 @@ RoguelikeToolkit.World.Core.Peoples.FortKindDef.Walls.get -> double
 RoguelikeToolkit.World.Core.Peoples.FortKindDef.Walls.set -> void
 RoguelikeToolkit.World.Core.Peoples.FortKindDef.Watch.get -> double
 RoguelikeToolkit.World.Core.Peoples.FortKindDef.Watch.set -> void
+RoguelikeToolkit.World.Core.Peoples.IntrigueDef
+RoguelikeToolkit.World.Core.Peoples.IntrigueDef.AgentAgeMax.get -> double
+RoguelikeToolkit.World.Core.Peoples.IntrigueDef.AgentAgeMax.set -> void
+RoguelikeToolkit.World.Core.Peoples.IntrigueDef.AgentAgeMin.get -> double
+RoguelikeToolkit.World.Core.Peoples.IntrigueDef.AgentAgeMin.set -> void
+RoguelikeToolkit.World.Core.Peoples.IntrigueDef.AgentDiscovery.get -> double
+RoguelikeToolkit.World.Core.Peoples.IntrigueDef.AgentDiscovery.set -> void
+RoguelikeToolkit.World.Core.Peoples.IntrigueDef.AgentOpChance.get -> double
+RoguelikeToolkit.World.Core.Peoples.IntrigueDef.AgentOpChance.set -> void
+RoguelikeToolkit.World.Core.Peoples.IntrigueDef.AgentOps.get -> System.Collections.Generic.Dictionary<string!, double>!
+RoguelikeToolkit.World.Core.Peoples.IntrigueDef.AgentOps.set -> void
+RoguelikeToolkit.World.Core.Peoples.IntrigueDef.AgreeablenessLoyalty.get -> double
+RoguelikeToolkit.World.Core.Peoples.IntrigueDef.AgreeablenessLoyalty.set -> void
+RoguelikeToolkit.World.Core.Peoples.IntrigueDef.AssassinBase.get -> double
+RoguelikeToolkit.World.Core.Peoples.IntrigueDef.AssassinBase.set -> void
+RoguelikeToolkit.World.Core.Peoples.IntrigueDef.AssassinSpy.get -> double
+RoguelikeToolkit.World.Core.Peoples.IntrigueDef.AssassinSpy.set -> void
+RoguelikeToolkit.World.Core.Peoples.IntrigueDef.BribeLoyalty.get -> int
+RoguelikeToolkit.World.Core.Peoples.IntrigueDef.BribeLoyalty.set -> void
+RoguelikeToolkit.World.Core.Peoples.IntrigueDef.CasusBelliChance.get -> double
+RoguelikeToolkit.World.Core.Peoples.IntrigueDef.CasusBelliChance.set -> void
+RoguelikeToolkit.World.Core.Peoples.IntrigueDef.CasusBelliGrudge.get -> int
+RoguelikeToolkit.World.Core.Peoples.IntrigueDef.CasusBelliGrudge.set -> void
+RoguelikeToolkit.World.Core.Peoples.IntrigueDef.ConfessChance.get -> double
+RoguelikeToolkit.World.Core.Peoples.IntrigueDef.ConfessChance.set -> void
+RoguelikeToolkit.World.Core.Peoples.IntrigueDef.ExposeBase.get -> double
+RoguelikeToolkit.World.Core.Peoples.IntrigueDef.ExposeBase.set -> void
+RoguelikeToolkit.World.Core.Peoples.IntrigueDef.ExposedGrudge.get -> int
+RoguelikeToolkit.World.Core.Peoples.IntrigueDef.ExposedGrudge.set -> void
+RoguelikeToolkit.World.Core.Peoples.IntrigueDef.ExposeSpy.get -> double
+RoguelikeToolkit.World.Core.Peoples.IntrigueDef.ExposeSpy.set -> void
+RoguelikeToolkit.World.Core.Peoples.IntrigueDef.IntrigueDef() -> void
+RoguelikeToolkit.World.Core.Peoples.IntrigueDef.Key.get -> string!
+RoguelikeToolkit.World.Core.Peoples.IntrigueDef.Key.set -> void
+RoguelikeToolkit.World.Core.Peoples.IntrigueDef.LoyaltyBase.get -> double
+RoguelikeToolkit.World.Core.Peoples.IntrigueDef.LoyaltyBase.set -> void
+RoguelikeToolkit.World.Core.Peoples.IntrigueDef.LoyaltyDrift.get -> double
+RoguelikeToolkit.World.Core.Peoples.IntrigueDef.LoyaltyDrift.set -> void
+RoguelikeToolkit.World.Core.Peoples.IntrigueDef.MaxAgents.get -> int
+RoguelikeToolkit.World.Core.Peoples.IntrigueDef.MaxAgents.set -> void
+RoguelikeToolkit.World.Core.Peoples.IntrigueDef.MerchantPeace.get -> double
+RoguelikeToolkit.World.Core.Peoples.IntrigueDef.MerchantPeace.set -> void
+RoguelikeToolkit.World.Core.Peoples.IntrigueDef.NoSpymaster.get -> double
+RoguelikeToolkit.World.Core.Peoples.IntrigueDef.NoSpymaster.set -> void
+RoguelikeToolkit.World.Core.Peoples.IntrigueDef.PatronLoyalty.get -> double
+RoguelikeToolkit.World.Core.Peoples.IntrigueDef.PatronLoyalty.set -> void
+RoguelikeToolkit.World.Core.Peoples.IntrigueDef.PlotChance.get -> double
+RoguelikeToolkit.World.Core.Peoples.IntrigueDef.PlotChance.set -> void
+RoguelikeToolkit.World.Core.Peoples.IntrigueDef.PlotOffices.get -> System.Collections.Generic.List<string!>!
+RoguelikeToolkit.World.Core.Peoples.IntrigueDef.PlotOffices.set -> void
+RoguelikeToolkit.World.Core.Peoples.IntrigueDef.Plots.get -> System.Collections.Generic.Dictionary<string!, double>!
+RoguelikeToolkit.World.Core.Peoples.IntrigueDef.Plots.set -> void
+RoguelikeToolkit.World.Core.Peoples.IntrigueDef.RivalLoyalty.get -> double
+RoguelikeToolkit.World.Core.Peoples.IntrigueDef.RivalLoyalty.set -> void
+RoguelikeToolkit.World.Core.Peoples.IntrigueDef.RulerWeight.get -> double
+RoguelikeToolkit.World.Core.Peoples.IntrigueDef.RulerWeight.set -> void
+RoguelikeToolkit.World.Core.Peoples.IntrigueDef.SponsoredSabotage.get -> double
+RoguelikeToolkit.World.Core.Peoples.IntrigueDef.SponsoredSabotage.set -> void
+RoguelikeToolkit.World.Core.Peoples.IntrigueDef.SponsorExposeBase.get -> double
+RoguelikeToolkit.World.Core.Peoples.IntrigueDef.SponsorExposeBase.set -> void
+RoguelikeToolkit.World.Core.Peoples.IntrigueDef.SponsorExposeSpy.get -> double
+RoguelikeToolkit.World.Core.Peoples.IntrigueDef.SponsorExposeSpy.set -> void
+RoguelikeToolkit.World.Core.Peoples.IntrigueDef.TheftShare.get -> double
+RoguelikeToolkit.World.Core.Peoples.IntrigueDef.TheftShare.set -> void
+RoguelikeToolkit.World.Core.Peoples.IntrigueDef.TreatyBase.get -> double
+RoguelikeToolkit.World.Core.Peoples.IntrigueDef.TreatyBase.set -> void
+RoguelikeToolkit.World.Core.Peoples.IntrigueDef.TreatyDove.get -> double
+RoguelikeToolkit.World.Core.Peoples.IntrigueDef.TreatyDove.set -> void
+RoguelikeToolkit.World.Core.Peoples.IntrigueDef.WarBase.get -> double
+RoguelikeToolkit.World.Core.Peoples.IntrigueDef.WarBase.set -> void
+RoguelikeToolkit.World.Core.Peoples.IntrigueDef.WarHawk.get -> double
+RoguelikeToolkit.World.Core.Peoples.IntrigueDef.WarHawk.set -> void
 RoguelikeToolkit.World.Core.Peoples.LogisticsDef
 RoguelikeToolkit.World.Core.Peoples.LogisticsDef.BaseSafety.get -> double
 RoguelikeToolkit.World.Core.Peoples.LogisticsDef.BaseSafety.set -> void
@@ -1844,6 +2015,8 @@ RoguelikeToolkit.World.Core.Peoples.LogisticsDef.RoadCost.get -> double
 RoguelikeToolkit.World.Core.Peoples.LogisticsDef.RoadCost.set -> void
 RoguelikeToolkit.World.Core.Peoples.LogisticsDef.RoadUnsafe.get -> double
 RoguelikeToolkit.World.Core.Peoples.LogisticsDef.RoadUnsafe.set -> void
+RoguelikeToolkit.World.Core.Peoples.LogisticsDef.SabotagedTurns.get -> int
+RoguelikeToolkit.World.Core.Peoples.LogisticsDef.SabotagedTurns.set -> void
 RoguelikeToolkit.World.Core.Peoples.LogisticsDef.SeaCost.get -> double
 RoguelikeToolkit.World.Core.Peoples.LogisticsDef.SeaCost.set -> void
 RoguelikeToolkit.World.Core.Peoples.LogisticsDef.SeaDegrees.get -> double
@@ -1886,10 +2059,59 @@ RoguelikeToolkit.World.Core.Peoples.LogisticsDef.WinterQuartersBelow.get -> doub
 RoguelikeToolkit.World.Core.Peoples.LogisticsDef.WinterQuartersBelow.set -> void
 RoguelikeToolkit.World.Core.Peoples.LogisticsDef.WinterQuartersLoss.get -> double
 RoguelikeToolkit.World.Core.Peoples.LogisticsDef.WinterQuartersLoss.set -> void
+RoguelikeToolkit.World.Core.Peoples.OutlawDef
+RoguelikeToolkit.World.Core.Peoples.OutlawDef.AgeMax.get -> double
+RoguelikeToolkit.World.Core.Peoples.OutlawDef.AgeMax.set -> void
+RoguelikeToolkit.World.Core.Peoples.OutlawDef.AgeMin.get -> double
+RoguelikeToolkit.World.Core.Peoples.OutlawDef.AgeMin.set -> void
+RoguelikeToolkit.World.Core.Peoples.OutlawDef.BrigandShare.get -> double
+RoguelikeToolkit.World.Core.Peoples.OutlawDef.BrigandShare.set -> void
+RoguelikeToolkit.World.Core.Peoples.OutlawDef.DefeatChance.get -> double
+RoguelikeToolkit.World.Core.Peoples.OutlawDef.DefeatChance.set -> void
+RoguelikeToolkit.World.Core.Peoples.OutlawDef.DeserterChance.get -> double
+RoguelikeToolkit.World.Core.Peoples.OutlawDef.DeserterChance.set -> void
+RoguelikeToolkit.World.Core.Peoples.OutlawDef.DisplacedChance.get -> double
+RoguelikeToolkit.World.Core.Peoples.OutlawDef.DisplacedChance.set -> void
+RoguelikeToolkit.World.Core.Peoples.OutlawDef.DisplacedTurns.get -> int
+RoguelikeToolkit.World.Core.Peoples.OutlawDef.DisplacedTurns.set -> void
+RoguelikeToolkit.World.Core.Peoples.OutlawDef.DispossessedChance.get -> double
+RoguelikeToolkit.World.Core.Peoples.OutlawDef.DispossessedChance.set -> void
+RoguelikeToolkit.World.Core.Peoples.OutlawDef.HangBase.get -> double
+RoguelikeToolkit.World.Core.Peoples.OutlawDef.HangBase.set -> void
+RoguelikeToolkit.World.Core.Peoples.OutlawDef.HangForts.get -> double
+RoguelikeToolkit.World.Core.Peoples.OutlawDef.HangForts.set -> void
+RoguelikeToolkit.World.Core.Peoples.OutlawDef.HangSafety.get -> double
+RoguelikeToolkit.World.Core.Peoples.OutlawDef.HangSafety.set -> void
+RoguelikeToolkit.World.Core.Peoples.OutlawDef.HavenDegrees.get -> double
+RoguelikeToolkit.World.Core.Peoples.OutlawDef.HavenDegrees.set -> void
+RoguelikeToolkit.World.Core.Peoples.OutlawDef.HavenTerrains.get -> System.Collections.Generic.List<string!>!
+RoguelikeToolkit.World.Core.Peoples.OutlawDef.HavenTerrains.set -> void
+RoguelikeToolkit.World.Core.Peoples.OutlawDef.Key.get -> string!
+RoguelikeToolkit.World.Core.Peoples.OutlawDef.Key.set -> void
+RoguelikeToolkit.World.Core.Peoples.OutlawDef.OutlawDef() -> void
+RoguelikeToolkit.World.Core.Peoples.OutlawDef.PardonChance.get -> double
+RoguelikeToolkit.World.Core.Peoples.OutlawDef.PardonChance.set -> void
+RoguelikeToolkit.World.Core.Peoples.OutlawDef.PersonReserve.get -> int
+RoguelikeToolkit.World.Core.Peoples.OutlawDef.PersonReserve.set -> void
+RoguelikeToolkit.World.Core.Peoples.OutlawDef.RaidLoss.get -> double
+RoguelikeToolkit.World.Core.Peoples.OutlawDef.RaidLoss.set -> void
+RoguelikeToolkit.World.Core.Peoples.OutlawDef.RaidRate.get -> double
+RoguelikeToolkit.World.Core.Peoples.OutlawDef.RaidRate.set -> void
+RoguelikeToolkit.World.Core.Peoples.OutlawDef.RaidRenown.get -> int
+RoguelikeToolkit.World.Core.Peoples.OutlawDef.RaidRenown.set -> void
+RoguelikeToolkit.World.Core.Peoples.OutlawDef.RouteDegrees.get -> double
+RoguelikeToolkit.World.Core.Peoples.OutlawDef.RouteDegrees.set -> void
+RoguelikeToolkit.World.Core.Peoples.OutlawDef.RuinedChance.get -> double
+RoguelikeToolkit.World.Core.Peoples.OutlawDef.RuinedChance.set -> void
+RoguelikeToolkit.World.Core.Peoples.OutlawDef.TrafficFloor.get -> double
+RoguelikeToolkit.World.Core.Peoples.OutlawDef.TrafficFloor.set -> void
 RoguelikeToolkit.World.Core.Peoples.PeoplesStore.Battles.get -> System.Collections.Generic.Dictionary<string!, RoguelikeToolkit.World.Core.Peoples.BattleDef!>!
+RoguelikeToolkit.World.Core.Peoples.PeoplesStore.Commerce.get -> System.Collections.Generic.Dictionary<string!, RoguelikeToolkit.World.Core.Peoples.CommerceDef!>!
 RoguelikeToolkit.World.Core.Peoples.PeoplesStore.Courts.get -> System.Collections.Generic.Dictionary<string!, RoguelikeToolkit.World.Core.Peoples.CourtDef!>!
 RoguelikeToolkit.World.Core.Peoples.PeoplesStore.Fortifications.get -> System.Collections.Generic.Dictionary<string!, RoguelikeToolkit.World.Core.Peoples.FortificationDef!>!
+RoguelikeToolkit.World.Core.Peoples.PeoplesStore.Intrigues.get -> System.Collections.Generic.Dictionary<string!, RoguelikeToolkit.World.Core.Peoples.IntrigueDef!>!
 RoguelikeToolkit.World.Core.Peoples.PeoplesStore.Logistics.get -> System.Collections.Generic.Dictionary<string!, RoguelikeToolkit.World.Core.Peoples.LogisticsDef!>!
+RoguelikeToolkit.World.Core.Peoples.PeoplesStore.Outlaws.get -> System.Collections.Generic.Dictionary<string!, RoguelikeToolkit.World.Core.Peoples.OutlawDef!>!
 RoguelikeToolkit.World.Core.Peoples.PeoplesStore.Sieges.get -> System.Collections.Generic.Dictionary<string!, RoguelikeToolkit.World.Core.Peoples.SiegeDef!>!
 RoguelikeToolkit.World.Core.Peoples.PeoplesStore.Tactics.get -> System.Collections.Generic.Dictionary<string!, RoguelikeToolkit.World.Core.Peoples.TacticDef!>!
 RoguelikeToolkit.World.Core.Peoples.PeoplesStore.TraitTables.get -> System.Collections.Generic.Dictionary<string!, RoguelikeToolkit.World.Core.Peoples.TraitTableDef!>!

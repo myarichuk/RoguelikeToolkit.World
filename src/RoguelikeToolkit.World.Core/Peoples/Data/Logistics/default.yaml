@@ -4,6 +4,7 @@ Key: default
 RoadCost: 1.0
 RoadUnsafe: 1.0          # a road costs x (1 + RoadUnsafe x (1 - safety))
 SeveredCost: 2.5         # a severed road
+SabotagedTurns: 1        # a road sabotaged (intrigue) this recently costs as severed
 WaystationRelief: 0.1    # each waystation on a road takes this share off its cost
 RiverDegrees: 8
 RiverCost: 0.8

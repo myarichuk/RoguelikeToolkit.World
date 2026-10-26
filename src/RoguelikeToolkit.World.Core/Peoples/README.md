@@ -35,6 +35,9 @@ Namespace `RoguelikeToolkit.World.Core.Peoples`, layer rank 2 (see `docs/ARCHITE
 - **LogisticsDef**: the logistics network (link costs per road, river, sea lane and open country, ground factors, foreign and
   hostile passage, supply sources per tier), battle reach and winter quarters, the projection of power along roads and
   waystations. Lives in `Data/Logistics/`; the history reads `default`. Who sails is `Seafaring` in each way of war.
+- **CommerceDef / OutlawDef / IntrigueDef**: trade (traffic, merchant princes, pledges and mercenaries, smuggling,
+  privateers), outlaw bands (sources, havens, raids, ends) and intrigue (the court's hawk/dove lean, plots, exposure,
+  loyalty). Live in `Data/Commerce/`, `Data/Outlaws/`, `Data/Intrigue/`; the history reads `default`.
 - **CompatData**: pairwise offspring rules (`Data/compat.yaml`); unlisted pairs blend.
 - **PeoplesStore**: loads and validates the tables (shipped embedded resources plus an optional override dir); `FolkKeys` is the generated folk index. After every file loads, it checks cross-file references:
   - culture → profile;

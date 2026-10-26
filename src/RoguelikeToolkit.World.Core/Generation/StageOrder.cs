@@ -62,6 +62,18 @@ public static class StageOrder
     /// <summary>History operator: the logistics network's waystations and road safety; runs only with <c>HistoryFeatures.Logistics</c>.</summary>
     public const int Logistics = 40;
 
+    /// <summary>History operator: outlaw bands on the roads; runs only with <c>HistoryFeatures.Outlaws</c>.</summary>
+    public const int Outlaw = 74;
+
+    /// <summary>History operator: loyalty and plots; runs only with <c>HistoryFeatures.Intrigue</c>.</summary>
+    public const int Intrigue = 75;
+
+    /// <summary>History operator: merchant princes; runs only with <c>HistoryFeatures.Commerce</c>.</summary>
+    public const int Merchant = 78;
+
+    /// <summary>History operator: route traffic, smuggling and privateers; runs only with <c>HistoryFeatures.Commerce</c>.</summary>
+    public const int Commerce = 82;
+
     /// <summary>History operator: forts and road safety; runs only with <c>HistoryFeatures.Sieges</c>.</summary>
     public const int Fortification = 42;
 

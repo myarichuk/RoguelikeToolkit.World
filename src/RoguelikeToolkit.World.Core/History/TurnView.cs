@@ -180,10 +180,24 @@ public sealed class TurnView
     /// <summary>Living persons loyal to <paramref name="polityId"/>, in id order.</summary>
     public IReadOnlyList<PersonState> PersonsOf(int polityId)
     {
-        var list = new List<PersonState>();
-        foreach (var p in Persons) if (p.Alive && p.PolityId == polityId) list.Add(p);
-        return list;
+        if (_personsOf == null)
+        {
+            _personsOf = new Dictionary<int, List<PersonState>>();
+            foreach (var p in Persons)
+            {
+                if (!p.Alive) continue;
+                if (!_personsOf.TryGetValue(p.PolityId, out var list)) _personsOf[p.PolityId] = list = new List<PersonState>();
+                list.Add(p);
+            }
+        }
+        return _personsOf.TryGetValue(polityId, out var found) ? found : Array.Empty<PersonState>();
     }
+
+    private Dictionary<int, List<PersonState>>? _personsOf;
+    private List<TradeProfile.Route>? _tradeRoutes;
+
+    /// <summary>The turn's routes (built once; callers must not mutate them).</summary>
+    internal List<TradeProfile.Route> TradeRoutes => _tradeRoutes ??= TradeProfile.BuildRoutes(this);
 
     /// <summary>Person id holding <paramref name="office"/> of <paramref name="polityId"/> at the snapshot, or -1.</summary>
     public int OfficeHolder(int polityId, string office)

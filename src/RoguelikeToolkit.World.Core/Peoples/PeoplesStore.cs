@@ -48,6 +48,15 @@ public sealed class PeoplesStore
     /// <summary>Loaded logistics models keyed by <see cref="LogisticsDef.Key"/> (case-insensitive).</summary>
     public Dictionary<string, LogisticsDef> Logistics { get; } = new(StringComparer.OrdinalIgnoreCase);
 
+    /// <summary>Loaded trade models keyed by <see cref="CommerceDef.Key"/> (case-insensitive).</summary>
+    public Dictionary<string, CommerceDef> Commerce { get; } = new(StringComparer.OrdinalIgnoreCase);
+
+    /// <summary>Loaded outlaw models keyed by <see cref="OutlawDef.Key"/> (case-insensitive).</summary>
+    public Dictionary<string, OutlawDef> Outlaws { get; } = new(StringComparer.OrdinalIgnoreCase);
+
+    /// <summary>Loaded intrigue models keyed by <see cref="IntrigueDef.Key"/> (case-insensitive).</summary>
+    public Dictionary<string, IntrigueDef> Intrigues { get; } = new(StringComparer.OrdinalIgnoreCase);
+
     /// <summary>Pairwise offspring rules from <c>compat.yaml</c>; unlisted pairs blend.</summary>
     public CompatibilityMatrix Compatibility { get; } = new();
 
@@ -251,8 +260,14 @@ public sealed class PeoplesStore
             LoadKeyed(store.Sieges, "siege", d => d.Key, ValidateSiege);
         else if (rel.StartsWith("Logistics/", StringComparison.OrdinalIgnoreCase))
             LoadKeyed(store.Logistics, "logistics", d => d.Key, ValidateLogistics);
+        else if (rel.StartsWith("Commerce/", StringComparison.OrdinalIgnoreCase))
+            LoadKeyed(store.Commerce, "commerce", d => d.Key, ValidateCommerce);
+        else if (rel.StartsWith("Outlaws/", StringComparison.OrdinalIgnoreCase))
+            LoadKeyed(store.Outlaws, "outlaws", d => d.Key, ValidateOutlaws);
+        else if (rel.StartsWith("Intrigue/", StringComparison.OrdinalIgnoreCase))
+            LoadKeyed(store.Intrigues, "intrigue", d => d.Key, ValidateIntrigue);
         else
-            problems.Add($"{rel}: unrecognized location (want Folks/, Cultures/, Subsistence/, Resources/, Territory/, Court/, Traits/, Tactics/, Warfare/, Battle/, Fortification/, Siege/ or Logistics/*.yaml, or compat.yaml).");
+            problems.Add($"{rel}: unrecognized location (want Folks/, Cultures/, Subsistence/, Resources/, Territory/, Court/, Traits/, Tactics/, Warfare/, Battle/, Fortification/, Siege/, Logistics/, Commerce/, Outlaws/ or Intrigue/*.yaml, or compat.yaml).");
 
         void LoadKeyed<T>(Dictionary<string, T> into, string kind, Func<T, string> key, Action<string, T, List<string>> validate)
         {
@@ -510,8 +525,8 @@ public sealed class PeoplesStore
         foreach (var (field, v) in new[] { ("SeveredCost", data.SeveredCost), ("ForeignCost", data.ForeignCost), ("HostileCost", data.HostileCost) })
             if (!(v >= 1) || !Finite(v)) problems.Add($"{rel}: {field} must be at least 1 (a multiplier on cost).");
         if (!(data.SeaFrom >= 0 && data.SeaFrom <= 100)) problems.Add($"{rel}: SeaFrom must be in 0-100.");
-        if (data.WarTurns < 0 || data.WaystationsCounted < 0 || data.MaxWaystations < 0)
-            problems.Add($"{rel}: WarTurns, WaystationsCounted and MaxWaystations cannot be negative.");
+        if (data.WarTurns < 0 || data.WaystationsCounted < 0 || data.MaxWaystations < 0 || data.SabotagedTurns < 0)
+            problems.Add($"{rel}: WarTurns, WaystationsCounted, MaxWaystations and SabotagedTurns cannot be negative.");
         if (data.TerrainCost is null) problems.Add($"{rel}: TerrainCost is null (use an empty map).");
         else
             foreach (var kv in data.TerrainCost)
@@ -525,6 +540,80 @@ public sealed class PeoplesStore
         if (data.WaystationOffices is null || data.WaystationOffices.Any(string.IsNullOrWhiteSpace))
             problems.Add($"{rel}: WaystationOffices must be a list of office names (may be empty).");
     }
+
+    private static void Shares(string rel, List<string> problems, params (string Field, double Value)[] fields)
+    {
+        foreach (var (field, v) in fields)
+            if (!(v >= 0 && v <= 1)) problems.Add($"{rel}: {field} must be in 0-1.");
+    }
+
+    private static void NonNegative(string rel, List<string> problems, params (string Field, double Value)[] fields)
+    {
+        foreach (var (field, v) in fields)
+            if (!(v >= 0) || !Finite(v)) problems.Add($"{rel}: {field} must be a non-negative number.");
+    }
+
+    private static void ValidateCommerce(string rel, CommerceDef data, List<string> problems)
+    {
+        Shares(rel, problems, ("TrafficBase", data.TrafficBase), ("TrafficWealth", data.TrafficWealth), ("TrafficDrift", data.TrafficDrift),
+            ("SeveredTraffic", data.SeveredTraffic), ("MerchantChance", data.MerchantChance), ("AgeMin", data.AgeMin), ("AgeMax", data.AgeMax),
+            ("PledgeShare", data.PledgeShare), ("MercenaryCap", data.MercenaryCap), ("SmuggleChance", data.SmuggleChance),
+            ("PrivateerChance", data.PrivateerChance), ("PrivateerRaidChance", data.PrivateerRaidChance), ("PrivateerLoot", data.PrivateerLoot));
+        NonNegative(rel, problems, ("MerchantRouteDegrees", data.MerchantRouteDegrees), ("MerchantWealth", data.MerchantWealth),
+            ("WealthGrowth", data.WealthGrowth), ("MercenaryPerWealth", data.MercenaryPerWealth), ("PledgeFloor", data.PledgeFloor), ("SmuggleGain", data.SmuggleGain),
+            ("PrivateerDegrees", data.PrivateerDegrees), ("RuinBelow", data.RuinBelow));
+        if (!(data.WealthScale > 0) || !Finite(data.WealthScale)) problems.Add($"{rel}: WealthScale must be a positive number.");
+        if (data.AgeMin > data.AgeMax) problems.Add($"{rel}: AgeMin exceeds AgeMax.");
+        if (!TierNames.Contains(data.MerchantTier ?? string.Empty, StringComparer.OrdinalIgnoreCase)) problems.Add($"{rel}: MerchantTier '{data.MerchantTier}' is not a tier.");
+        if (data.MaxMerchantsPerSettlement < 0 || data.MaxMerchantsPerPolity < 0 || data.CourtReserve < 0 || data.PersonReserve < 0 || data.PledgeGrudge < 0
+            || data.PrivateerGrudge < 0 || data.MaxPrivateers < 0)
+            problems.Add($"{rel}: counts and grudges cannot be negative.");
+    }
+
+    private static void ValidateOutlaws(string rel, OutlawDef data, List<string> problems)
+    {
+        Shares(rel, problems, ("DisplacedChance", data.DisplacedChance), ("DeserterChance", data.DeserterChance), ("RuinedChance", data.RuinedChance),
+            ("DefeatChance", data.DefeatChance), ("DispossessedChance", data.DispossessedChance),
+            ("AgeMin", data.AgeMin), ("AgeMax", data.AgeMax), ("RaidLoss", data.RaidLoss), ("BrigandShare", data.BrigandShare),
+            ("HangBase", data.HangBase), ("PardonChance", data.PardonChance));
+        NonNegative(rel, problems, ("RouteDegrees", data.RouteDegrees), ("HavenDegrees", data.HavenDegrees), ("RaidRate", data.RaidRate),
+            ("TrafficFloor", data.TrafficFloor), ("HangSafety", data.HangSafety), ("HangForts", data.HangForts));
+        if (data.AgeMin > data.AgeMax) problems.Add($"{rel}: AgeMin exceeds AgeMax.");
+        if (data.DisplacedTurns < 0 || data.RaidRenown < 0 || data.PersonReserve < 0) problems.Add($"{rel}: DisplacedTurns, RaidRenown and PersonReserve cannot be negative.");
+        if (data.HavenTerrains is null || data.HavenTerrains.Any(string.IsNullOrWhiteSpace)) problems.Add($"{rel}: HavenTerrains must be a list of terrain classes (may be empty).");
+    }
+
+    private static void ValidateIntrigue(string rel, IntrigueDef data, List<string> problems)
+    {
+        Shares(rel, problems, ("PlotChance", data.PlotChance), ("ExposeBase", data.ExposeBase), ("SponsorExposeBase", data.SponsorExposeBase),
+            ("AssassinBase", data.AssassinBase), ("LoyaltyDrift", data.LoyaltyDrift), ("ConfessChance", data.ConfessChance),
+            ("CasusBelliChance", data.CasusBelliChance), ("AgentOpChance", data.AgentOpChance), ("AgentDiscovery", data.AgentDiscovery),
+            ("AgentAgeMin", data.AgentAgeMin), ("AgentAgeMax", data.AgentAgeMax), ("TheftShare", data.TheftShare), ("SponsoredSabotage", data.SponsoredSabotage), ("MerchantPeace", data.MerchantPeace));
+        NonNegative(rel, problems, ("WarBase", data.WarBase), ("WarHawk", data.WarHawk), ("TreatyBase", data.TreatyBase), ("TreatyDove", data.TreatyDove),
+            ("RulerWeight", data.RulerWeight), ("NoSpymaster", data.NoSpymaster), ("ExposeSpy", data.ExposeSpy), ("SponsorExposeSpy", data.SponsorExposeSpy),
+            ("AssassinSpy", data.AssassinSpy), ("PatronLoyalty", data.PatronLoyalty), ("RivalLoyalty", data.RivalLoyalty),
+            ("AgreeablenessLoyalty", data.AgreeablenessLoyalty));
+        if (!Finite(data.LoyaltyBase) || Math.Abs(data.LoyaltyBase) > 100) problems.Add($"{rel}: LoyaltyBase must be in -100..100.");
+        if (data.ExposedGrudge < 0 || data.BribeLoyalty < 0 || data.CasusBelliGrudge < 0) problems.Add($"{rel}: ExposedGrudge, BribeLoyalty and CasusBelliGrudge cannot be negative.");
+        if (data.PlotOffices is null || data.PlotOffices.Any(string.IsNullOrWhiteSpace)) problems.Add($"{rel}: PlotOffices must be a list of office names (may be empty).");
+        if (data.AgentAgeMin > data.AgentAgeMax) problems.Add($"{rel}: AgentAgeMin exceeds AgentAgeMax.");
+        if (data.MaxAgents < 0) problems.Add($"{rel}: MaxAgents cannot be negative.");
+        CheckWeights(rel, "Plots", data.Plots, PlotNames, problems);
+        CheckWeights(rel, "AgentOps", data.AgentOps, AgentOpNames, problems);
+    }
+
+    private static void CheckWeights(string rel, string field, Dictionary<string, double>? weights, string[] names, List<string> problems)
+    {
+        if (weights is null) { problems.Add($"{rel}: {field} is null (use an empty map)."); return; }
+        foreach (var kv in weights)
+        {
+            if (!names.Contains(kv.Key, StringComparer.OrdinalIgnoreCase)) problems.Add($"{rel}: unknown {field} entry '{kv.Key}' (want {string.Join(", ", names)}).");
+            if (!(kv.Value >= 0) || !Finite(kv.Value)) problems.Add($"{rel}: {field}.{kv.Key} must be a non-negative number.");
+        }
+    }
+
+    private static readonly string[] PlotNames = { "sponsorship", "spy_network" };
+    private static readonly string[] AgentOpNames = { "sabotage", "bribe", "assassination", "theft" };
 
     private static void ValidateSiege(string rel, SiegeDef data, List<string> problems)
     {

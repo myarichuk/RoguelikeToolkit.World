@@ -24,4 +24,6 @@ public enum PersonKind : byte
     Privateer = 8,
     /// <summary>A visionary who stirs the faithful.</summary>
     Prophet = 9,
+    /// <summary>A sponsor's spy planted in a rival's seat: runs sabotage, bribes, killings and thefts until caught.</summary>
+    Agent = 10,
 }

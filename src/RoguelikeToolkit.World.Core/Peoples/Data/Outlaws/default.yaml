@@ -1,0 +1,28 @@
+Key: default
+# Outlaw bands (HistoryFeatures.Outlaws): displaced people left unabsorbed, deserters of a routed (or beaten) host, the
+# dispossessed of a captured or razed settlement, ruined merchants. A band takes the nearest unworked road within RouteDegrees.
+DisplacedTurns: 2
+DisplacedChance: 0.3
+DeserterChance: 0.7
+DefeatChance: 0.3
+DispossessedChance: 0.3
+RuinedChance: 0.5
+RouteDegrees: 20
+HavenTerrains: [forest, hills, marsh, mountain]
+HavenDegrees: 6
+PersonReserve: 512        # no outlaw within this many of the world's person cap
+AgeMin: 0.2
+AgeMax: 0.45
+
+# Raids: (1 - safety) x RaidRate x (TrafficFloor + traffic) a turn; nameless brigands raid unworked roads at BrigandShare of that.
+RaidRate: 0.6
+TrafficFloor: 0.3
+RaidLoss: 0.25
+RaidRenown: 1
+BrigandShare: 0.15
+
+# Ends: hanged (HangBase + HangSafety x safety + HangForts x forts), pardoned (PardonChance x the ruler's agreeableness), age.
+HangBase: 0.04
+HangSafety: 0.2
+HangForts: 0.05
+PardonChance: 0.08

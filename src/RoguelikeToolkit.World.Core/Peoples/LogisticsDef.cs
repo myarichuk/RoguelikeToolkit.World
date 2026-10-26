@@ -19,6 +19,8 @@ public sealed class LogisticsDef
     public double RoadUnsafe { get; set; } = 1.0;
     /// <summary>A severed road costs this many times more.</summary>
     public double SeveredCost { get; set; } = 2.5;
+    /// <summary>A road sabotaged (intrigue) within this many turns costs as a severed one.</summary>
+    public int SabotagedTurns { get; set; } = 1;
     /// <summary>Each waystation on a road takes this share off its cost (at most <see cref="WaystationsCounted"/> of them).</summary>
     public double WaystationRelief { get; set; } = 0.1;
     /// <summary>Two river settlements this close are linked by the river.</summary>

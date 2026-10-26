@@ -74,6 +74,8 @@ VictoryMargin: 0.6
 StalemateMargin: 0.15
 DeclineBelow: 0.4
 MartialPower: 0.008
+BetrayalBelow: -30     # intrigue: a commander this disloyal betrays the host (it loses BetrayalPower of its power)
+BetrayalPower: 0.25
 WinterPenalty: 0.5
 WinterRange: 20
 WinterDefenderShare: 0.5
@@ -133,7 +135,8 @@ Beats:
   - { Key: general_fell, Always: true, When: [general_fell] }
   - { Key: general_captured, Always: true, When: [general_captured] }
   - { Key: heads_taken, Always: true, When: [outcome=decisive, custom=take_heads] }
-  - { Key: winter_quarters, Always: true, When: [wintered] }   # logistics: the host wintered in quarters and fought in spring
+  - { Key: winter_quarters, Always: true, When: [wintered] }
+  - { Key: turncoat, Always: true, When: [betrayed] }   # intrigue: a bribed or disloyal commander turned on his own host   # logistics: the host wintered in quarters and fought in spring
 
 # Commanders' epithets (Peoples/Data/Traits/epithets.yaml) in battle.
 Epithets:

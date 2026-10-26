@@ -43,7 +43,7 @@ internal sealed class WarfareProfile
     internal enum Test : byte
     {
         Season, Terrain, Kind, River, RiverBypassed, Initiative, Winner, Outcome, WinnerTactic, LoserTactic, WinnerArm, LoserArm, Custom,
-        GeneralFell, GeneralCaptured, Declined, SiegeEnd, Wintered,
+        GeneralFell, GeneralCaptured, Declined, SiegeEnd, Wintered, Betrayed,
     }
 
     /// <summary>One compiled beat condition: the test, its operand (an index or a name) and whether it is negated.</summary>
@@ -435,6 +435,7 @@ internal sealed class WarfareProfile
             case "general_captured" when eq < 0: condition = new Condition(Test.GeneralCaptured, 0, string.Empty, negate); return true;
             case "declined" when eq < 0: condition = new Condition(Test.Declined, 0, string.Empty, negate); return true;
             case "wintered" when eq < 0: condition = new Condition(Test.Wintered, 0, string.Empty, negate); return true;
+            case "betrayed" when eq < 0: condition = new Condition(Test.Betrayed, 0, string.Empty, negate); return true;
             case "end":
                 if (value.Length == 0) return false;
                 condition = new Condition(Test.SiegeEnd, 0, value, negate);

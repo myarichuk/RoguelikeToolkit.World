@@ -17,6 +17,9 @@ public sealed partial class WarOperator
     /// <summary>Tag of a campaign whose attacker refused a hopeless field and turned back.</summary>
     public const string DeclinedTag = "declined";
 
+    /// <summary>Tag of a war or campaign in which merchants' pledges hired mercenaries (commerce on).</summary>
+    public const string MercenariesTag = "mercenaries";
+
     /// <summary>Tag of a war or campaign whose host wintered in quarters and marched in the spring (logistics on).</summary>
     public const string WinterQuartersTag = "winter_quarters";
 
@@ -66,6 +69,7 @@ public sealed partial class WarOperator
         };
         if (result.Outcome == BattleOutcome.Averted) tags.Add(result.Declined ? DeclinedTag : SupplyFailedTag);
         if (result.Wintered) tags.Add(WinterQuartersTag);
+        if (view.Has(HistoryFeatures.Commerce) && (Pledges(view, sink, attacker.Id) | Pledges(view, sink, defender.Id))) tags.Add(MercenariesTag);
         var participants = new List<EventParticipant>();
         if (a.General != null) participants.Add(sink.Participant(a.General.Person, ParticipantRoles.PersonPrefix + "attacker_general"));
         if (d.General != null) participants.Add(sink.Participant(d.General.Person, ParticipantRoles.PersonPrefix + "defender_general"));
@@ -227,10 +231,31 @@ public sealed partial class WarOperator
             int ruler = view.OfficeHolder(polity.Id, Proposal.SetTenure.RulerOffice);
             if (ruler >= 0 && view.Persons[ruler].Alive) general = CommanderOf(view.Persons[ruler]);
         }
+        // With commerce on, the merchants' pledges hire mercenaries (spent by the war: Pledges).
+        if (view.Has(HistoryFeatures.Commerce))
+        {
+            double pledged = 0;
+            foreach (var p in view.PersonsOf(polity.Id)) pledged += Math.Max(0, p.Pledged);
+            var c = Trade.Commerce;
+            levy += Math.Min(pledged * c.MercenaryPerWealth, c.MercenaryCap * levy);
+        }
         return new BattleResolver.Side(polity.Id, levy, way, general, spy, culture?.Honor ?? 50, view.ScalarOf(polity.Id, ScalarRegistry.Pressure));
     }
 
-    private static BattleResolver.Commander CommanderOf(TurnView.PersonState p) => new(p.Id, p.Martial, p.Intrigue, p.Renown, p.Epithets);
+    /// <summary>Spends every pledge of <paramref name="polity"/>'s people (the war hired mercenaries with them); true when there were any.</summary>
+    private static bool Pledges(TurnView view, ProposalSink sink, int polity)
+    {
+        bool any = false;
+        foreach (var p in view.PersonsOf(polity))
+        {
+            if (p.Pledged <= 0) continue;
+            sink.Emit(new Proposal.AdjustPerson { EntityId = polity, Person = p.Id, Pledged = -p.Pledged });
+            any = true;
+        }
+        return any;
+    }
+
+    private static BattleResolver.Commander CommanderOf(TurnView.PersonState p) => new(p.Id, p.Martial, p.Intrigue, p.Renown, p.Epithets, p.Loyalty);
 
     private static Proposal.AddBattle.Side SideRecord(WarfareProfile profile, BattleResolver.Side side, BattleResolver.SideResult r)
         => new(side.Polity, side.General?.Person ?? -1, r.Strength, r.Loss, r.Supply, r.Morale,

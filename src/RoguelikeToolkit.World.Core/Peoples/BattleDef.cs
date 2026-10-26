@@ -112,6 +112,10 @@ public sealed class BattleDef
     public double DeclineBelow { get; set; } = 0.4;
     /// <summary>Power per point of the commander's martial skill above 50.</summary>
     public double MartialPower { get; set; } = 0.008;
+    /// <summary>A commander whose loyalty is below this betrays the host in battle (only intrigue lowers loyalty).</summary>
+    public int BetrayalBelow { get; set; } = -30;
+    /// <summary>Share of its power a betrayed host loses.</summary>
+    public double BetrayalPower { get; set; } = 0.25;
     /// <summary>Winter penalty on power: this times the field's seasonal range over <see cref="WinterRange"/> (capped at 1) times (1 - cold tolerance/100).</summary>
     public double WinterPenalty { get; set; } = 0.5;
     /// <summary>Seasonal temperature range at which winter bites fully.</summary>

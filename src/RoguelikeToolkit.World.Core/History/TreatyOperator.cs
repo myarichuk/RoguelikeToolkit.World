@@ -44,6 +44,8 @@ public sealed class TreatyOperator : IHistoryOperator
     /// <summary><see cref="StageOrder.Treaty"/> (48).</summary>
     public int Order => StageOrder.Treaty;
 
+    private TradeProfile? _trade;
+
     /// <summary>Proposes this turn's treaties and refusals from the snapshot.</summary>
     public void Propose(TurnView view, ProposalSink sink)
     {
@@ -74,6 +76,13 @@ public sealed class TreatyOperator : IHistoryOperator
                 var stream = sink.Rng(a * 100003 + b, "bond");
                 double chance = Math.Max(TreatyBase - (XenophobiaOf(first.CultureKey, _store)
                     + XenophobiaOf(second.CultureKey, _store)) / 2.0 * TreatyXenophobiaScale, MinTreatyChance);
+                if (view.Has(HistoryFeatures.Intrigue))
+                {
+                    // Dovish courts accept more readily (intrigue on): TreatyBase + TreatyDove x (1 - mean hawk of both courts).
+                    var t = _trade ??= TradeProfile.From(_store);
+                    double dove = 1 - (t.Hawk(view, a) + t.Hawk(view, b)) / 2;
+                    chance = Math.Min(1, chance * (t.Intrigue.TreatyBase + t.Intrigue.TreatyDove * dove));
+                }
                 bool accepted = stream.NextDouble() < chance;
                 if (!sink.TrySpendDecision()) continue;
                 if (!aHeir)

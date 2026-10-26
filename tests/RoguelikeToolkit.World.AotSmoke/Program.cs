@@ -126,23 +126,33 @@ Check(peoples.Sieges.TryGetValue("default", out var siegeTable) && siegeTable.Ga
 // The logistics network (a dictionary of terrain costs, lists of forms and offices), then the history runs with it on too.
 Check(peoples.Logistics.TryGetValue("default", out var logistics) && logistics.TerrainCost.Count > 0 && logistics.SourceCost.Count > 0
     && logistics.SeaForms.Count > 0 && logistics.FormProjection.Count > 0, "logistics table");
+// Trade, outlaws and intrigue (lists of terrain and office names, a dictionary of plot weights).
+Check(peoples.Commerce.TryGetValue("default", out var commerce) && commerce.MerchantWealth > 0, "commerce table");
+Check(peoples.Outlaws.TryGetValue("default", out var outlaws) && outlaws.HavenTerrains.Count > 0, "outlaw table");
+Check(peoples.Intrigues.TryGetValue("default", out var intrigue) && intrigue.Plots.Count > 0 && intrigue.PlotOffices.Count > 0, "intrigue table");
 Check(peoples.Warfare["dogfolk_pack"].Seafaring > peoples.Warfare["dwarven_clan"].Seafaring, "seafaring");
 Check(horde!.Fortify < peoples.Warfare["dwarven_clan"].Fortify && !string.IsNullOrEmpty(peoples.GetCulture("dwarven_clan").Architecture), "fortify and architecture");
 using (var courtly = new WorldBuilder().WithSize(3).WithSeed(7)
            .WithHistory(c => c.Features = RoguelikeToolkit.World.Core.History.HistoryFeatures.Persons
-               | RoguelikeToolkit.World.Core.History.HistoryFeatures.Battles | RoguelikeToolkit.World.Core.History.HistoryFeatures.Sieges
-               | RoguelikeToolkit.World.Core.History.HistoryFeatures.Logistics).Build())
+               | RoguelikeToolkit.World.Core.History.HistoryFeatures.All).Build())
 {
     Check(courtly.History.Persons.Count > 0 && courtly.History.Tenures.Count > 0, "court persons");
     Check(courtly.History.Battles.Count > 0, "battles");
-    foreach (var p in courtly.History.Persons) { Mix((ulong)(uint)p.StableKey); Mix(p.Martial); Mix((ulong)(uint)p.DiedTurn); }
+    foreach (var p in courtly.History.Persons)
+    {
+        Mix((ulong)(uint)p.StableKey); Mix(p.Martial); Mix((ulong)(uint)p.DiedTurn); Mix((ulong)p.Kind); Mix((ulong)(long)(p.Wealth * 1e6)); Mix((ulong)(long)p.Loyalty);
+    }
     foreach (var b in courtly.History.Battles)
     {
         Mix((ulong)b.Outcome); Mix((ulong)(uint)b.Tile); Mix((ulong)(uint)b.Attacker.Tactic); Mix((ulong)b.Kind); Mix((ulong)(uint)b.SiegeMonths);
         Mix((ulong)(long)(b.Attacker.LossShare * 1e9)); Mix((ulong)(long)(b.Defender.Strength * 1e3)); Mix((ulong)b.Season);
     }
     Check(courtly.History.RouteStates.Count > 0, "route states");
-    foreach (var r in courtly.History.RouteStates) { Mix((ulong)(long)(r.Safety * 1e9)); Mix((ulong)(uint)r.Forts); Mix((ulong)(uint)r.Waystations); }
+    foreach (var r in courtly.History.RouteStates)
+    {
+        Mix((ulong)(long)(r.Safety * 1e9)); Mix((ulong)(long)(r.Traffic * 1e9)); Mix((ulong)(uint)r.Forts); Mix((ulong)(uint)r.Waystations);
+        Mix((ulong)(uint)r.OutlawBand); Mix((ulong)(uint)r.Sponsor);
+    }
 }
 
 // 5. Entity store: spawn, snapshot, reload.

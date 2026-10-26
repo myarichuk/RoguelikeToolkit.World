@@ -28,7 +28,7 @@ namespace RoguelikeToolkit.World.Core.History;
 internal static class BattleResolver
 {
     /// <summary>A commander as the battle sees them.</summary>
-    internal sealed record Commander(int Person, double Martial, double Intrigue, int Renown, IReadOnlyList<string> Epithets);
+    internal sealed record Commander(int Person, double Martial, double Intrigue, int Renown, IReadOnlyList<string> Epithets, int Loyalty = 0);
 
     /// <summary>One side before the battle. <see cref="Levy"/> is the full levy, before reach or readiness.</summary>
     internal sealed record Side(int Polity, double Levy, WarfareProfile.Way Way, Commander? General = null, double SpyIntrigue = 50,
@@ -152,6 +152,10 @@ internal static class BattleResolver
         if (ta >= 0) delta *= profile.Tactics[ta].Cover;
         double pa = fa * ma * (1 - data.SupplyPower * (1 - sa)) * Fit(profile, ta, td, field.Terrain, season) * (1 + data.MartialPower * (MartialOf(attacker) - 50)) * (1 - wa);
         double pd = fd * md * (1 - data.SupplyPower * (1 - sd)) * Fit(profile, td, ta, field.Terrain, season) * (1 + data.MartialPower * (MartialOf(defender) - 50)) * (1 - wd) * (1 + delta);
+        // A commander bought or estranged (loyalty under BetrayalBelow; only intrigue moves loyalty) turns on the host.
+        bool betrayed = Betrays(data, attacker) || Betrays(data, defender);
+        if (Betrays(data, attacker)) pa *= 1 - data.BetrayalPower;
+        if (Betrays(data, defender)) pd *= 1 - data.BetrayalPower;
         double spread = Math.Max(data.MarginSpreadMin, data.MarginSpread * (1 + Spread(profile, attacker) + Spread(profile, defender)));
         double u = Clamp(noise, 1e-12, 1 - 1e-12);
         double margin = data.MarginScale * DetMath.Log(Math.Max(pa, 1e-12) / Math.Max(pd, 1e-12)) + spread * DetMath.Log(u / (1 - u));
@@ -201,7 +205,7 @@ internal static class BattleResolver
         var facts = new Facts(season, field.Terrain, kind, river, bypassed, attackerInitiative ? 0 : 1,
             attackerWon ? 0 : defenderWon ? 1 : 2, OutcomeClass(outcome),
             attackerWon ? ta : defenderWon ? td : -1, attackerWon ? td : defenderWon ? ta : -1,
-            attackerWon ? attacker : defenderWon ? defender : null, fellA || fellD, takenA || takenD, Wintered: wintered);
+            attackerWon ? attacker : defenderWon ? defender : null, fellA || fellD, takenA || takenD, Wintered: wintered, Betrayed: betrayed);
         var beats = Beats(profile, facts, beatRoll);
 
         return new Result(fieldIndex, (HistorySeason)season, year, kind, field.Terrain, river, bypassed, attackerInitiative, warned, outcome, margin,
@@ -216,6 +220,8 @@ internal static class BattleResolver
     private static double Muster(Peoples.BattleDef data, double local) => data.MusterFloor + (1 - data.MusterFloor) * Clamp(local, 0, 1);
 
     private static double MartialOf(Side side) => side.General?.Martial ?? 50;
+
+    private static bool Betrays(Peoples.BattleDef data, Side side) => side.General != null && side.General.Loyalty < data.BetrayalBelow;
 
     private static double Initiative(WarfareProfile profile, Side side, ref Rng rng)
     {
@@ -381,7 +387,7 @@ internal static class BattleResolver
     /// <summary>What the beat conditions test.</summary>
     internal sealed record Facts(int Season, int Terrain, BattleKind Kind, bool River, bool RiverBypassed, int Initiative, int Winner,
         int OutcomeClass, int WinnerTactic, int LoserTactic, Side? WinnerSide, bool GeneralFell, bool GeneralCaptured, bool Declined = false,
-        string SiegeEnd = "", bool Wintered = false);
+        string SiegeEnd = "", bool Wintered = false, bool Betrayed = false);
 
     private static bool Holds(WarfareProfile profile, WarfareProfile.Condition c, Facts f)
     {
@@ -406,6 +412,7 @@ internal static class BattleResolver
             WarfareProfile.Test.Declined => f.Declined,
             WarfareProfile.Test.SiegeEnd => string.Equals(f.SiegeEnd, c.Name, StringComparison.OrdinalIgnoreCase),
             WarfareProfile.Test.Wintered => f.Wintered,
+            WarfareProfile.Test.Betrayed => f.Betrayed,
             _ => false,
         };
         return v != c.Negate;

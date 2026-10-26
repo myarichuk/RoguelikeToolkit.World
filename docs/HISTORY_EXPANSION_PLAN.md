@@ -1,6 +1,6 @@
 # History expansion: battles, logistics, named persons
 
-Status: **in progress** (X0–X5 done; progress in [REVIEW_FIXES_TODO.md](REVIEW_FIXES_TODO.md), section Expansion X). Requested 2026-10-25. Builds on `Proposal.Requires` (batch F of
+Status: **in progress** (X0–X6 done; progress in [REVIEW_FIXES_TODO.md](REVIEW_FIXES_TODO.md), section Expansion X). Requested 2026-10-25. Builds on `Proposal.Requires` (batch F of
 [REVIEW_FIXES_TODO.md](REVIEW_FIXES_TODO.md), landed in `d7492ac`). Phases are **X0–X9** (§10).
 
 ## 0. Facts that shape the design
@@ -354,7 +354,7 @@ About 3k persons expected at 300 turns.
 | X3 | Tactics/Warfare/Traits YAML, `BattleResolver`, generals; War/Conquest behind the flag | statistical tests (§11); flag off identical. **Done** (see §12) |
 | X4 | `SiegeResolver`, relief battles; forts (pulled forward from X5) and per-culture map stamps | siege invariants; resupply lengthens sieges; cut supply raises the lifted share. **Done** (see §12) |
 | X5 | `LogisticsGraph`, `LogisticsOperator`, forts/waystations, winter quarters, route samples | safety in [0,1]; forts raise it; 300 turns at size 7 < 5 s. **Done** (see §12) |
-| X6 | Commerce, Outlaw, Merchant, Intrigue; `CourtInfluence` | corpus bands; an exposed sponsorship leads to a war in ≥1/25 worlds |
+| X6 | Commerce, Outlaw, Merchant, Intrigue; `CourtInfluence` | corpus bands; an exposed sponsorship leads to a war in ≥1/25 worlds. **Done** (see §12) |
 | X7 | Lexicon, Chronicle grammar, renderer | catalog bytes unchanged by rendering; repetition metrics; every template resolves for all 12 cultures |
 | X8 | Exports, TS overlay, person panel | layout tests, vitest, a Playwright path |
 | X9 | `HistoryFeatures` default All | one deliberate corpus re-baseline; PR listing every shift; milestone entry |
@@ -578,3 +578,61 @@ About 3k persons expected at 300 turns.
 - **Performance:** 300 turns at size 7, history only: 3.5 s with X4's flags, 3.9 s with logistics as well (acceptance < 5 s).
 - **Not in X5:** traffic and caravans (X6 commerce), outlaws reading safety (X6), sabotage (X6 intrigue), a dedicated waystation
   map stamp (the editor draws one as a village and names its role; X8).
+- **X6 commerce, merchants, outlaws and intrigue, all tuning in data** (`Commerce/`, `Outlaws/`, `Intrigue/default.yaml`;
+  `CommerceDef`, `OutlawDef`, `IntrigueDef`; flags `Commerce`, `Outlaws`, `Intrigue`, each runs on its own). The court's
+  person roll moved to `CourtProfile.RollPerson` (same draws), shared by every operator that creates persons.
+  - **`MerchantOperator` (78):** merchant princes in towns and cities on an active road or the coast (≤2 per settlement and
+    per polity, `CourtReserve` places left to the court). Wealth grows with the traffic of the busiest road near the seat ×
+    (0.5 + Stewardship/100). While the polity nurses a grudge, a merchant pledges `PledgeShare` of its wealth above
+    `PledgeFloor`; the next war spends every pledge of both sides on mercenaries (`MercenaryPerWealth` per unit, at most
+    `MercenaryCap` of the levy; the event is tagged `mercenaries`). A trading merchant (never a court office holder: merchant
+    republics appoint merchant princes with no wealth) under `RuinBelow` is ruined.
+  - **`CommerceOperator` (82):** route traffic drifts toward (TrafficBase + TrafficWealth × merchants' wealth) × safety (×
+    `SeveredTraffic` when severed); smuggling across severed roads with merchants at both ends; a seafaring polity commissions
+    a privateer against a coastal rival it holds a heavy grudge against, and takes prizes from that rival's richest merchant.
+  - **`OutlawOperator` (74):** bands rise from stale displaced groups, deserters of a host routed (`DeserterChance`) or beaten
+    (`DefeatChance`) last turn, the dispossessed of a settlement captured or razed last turn, and ruined merchants. A band
+    takes the nearest unworked road within `RouteDegrees` (a severed road included: the lawless kind) and a haven of
+    `HavenTerrains` ground beside it; its leader is a free person (no polity). It raids with (1 − safety) × `RaidRate` ×
+    (`TrafficFloor` + traffic); it ends hanged (base + safety + forts), pardoned by an agreeable ruler (the leader lives on,
+    `pardoned` relation) or by age. Nameless brigands raid unworked roads at `BrigandShare` with commerce on.
+  - **`IntrigueOperator` (75):** loyalty of office holders drifts toward base + patron − rivalries + agreeableness. The
+    holder of the first of `PlotOffices` (spymaster, council, seer, elder, chancellor, treasurer) plots against the
+    bordering rival its polity holds the heaviest grudge against. **Every covert act has a sponsor and an operative who can be
+    caught later** (requested 2026-10-26: sponsors for sabotage and spy operations, as for outlaw bands):
+    - `sponsorship` pays the band on a road touching the rival (or, with outlaws on, hires one onto it). The band raids the
+      end of the road its sponsor hates most and, with `SponsoredSabotage` a turn, cuts the road on the sponsor's account. The
+      sponsor is named when a raid is traced (`SponsorExpose*`) or the hanged leader confesses (`ConfessChance`).
+    - `spy_network` plants an agent (`PersonKind.Agent`: serves the sponsor, seated in the rival's capital, `agent_of` the
+      plotter; at most `MaxAgents`). Each turn it runs an operation with `AgentOpChance` × (0.5 + Intrigue/100), drawn from
+      `AgentOps`: sabotage (the road costs as severed on the logistics network for `Logistics.SabotagedTurns`), a bribe
+      (−`BribeLoyalty` to the rival's general), an assassination (`AssassinBase` + `AssassinSpy` × (agent − rival's spy)), a
+      theft (`TheftShare` of the rival's richest merchant's wealth, commerce on). Each operation risks capture (`ExposeBase` +
+      `ExposeSpy` × (rival's spy − agent's Intrigue)/100); counter-intelligence uncovers an idle agent with `AgentDiscovery` ×
+      spy. A caught agent is executed and names its sponsor: `ExposedGrudge`, a casus belli. The capture's grudge and event
+      wait on the execution (`Requires`), a killing's event on the victim's death, so a person who dies otherwise that turn
+      is never also caught or murdered. An agent whose seat falls to its sponsor or ends is recalled.
+    - Intrigue events always carry `actor:` (the sponsor) and, for an operation, `agent:` or `band:` (the operative), plus
+      `secret` or `exposed`/`caught`.
+  - **The court's sway** (intrigue on): war chance × (`WarBase` + `WarHawk` × hawk), hawk = the court's mean
+    (100 − A + E)/200 with the ruler weighted `RulerWeight`; × `MerchantPeace` when the attacker's merchants trade on a road to
+    the defender; treaty acceptance × (`TreatyBase` + `TreatyDove` × dove). A grudge of at least `CasusBelliGrudge` against
+    a neighbour is a casus belli: the attacker marches on it (the random-neighbour draw is still made) with
+    `CasusBelliChance` added. The first runs had `CasusBelliChance` 0.25, which doubled the wars and pushed sieges under 20%
+    of wars; 0.1 keeps the X3–X5 bands.
+  - **Betrayal:** a commander with loyalty under `BetrayalBelow` (−30, battle data) costs his host `BetrayalPower` (0.25) of
+    its power and the battle gets the always-beat `turncoat` (condition `betrayed`). Synthetic: a bought general's side wins
+    37% of even fights against 50% loyal.
+  - **Kernel changes:** a ruler is now exempt from the world person cap too (with X6, 300 turns at size 7 reach the cap, and a
+    polity must keep its throne filled); X6 operators stop creating persons within `PersonReserve` (512) of the cap. A
+    sponsor flag on a road with no band is refused (a band ended or refused this turn). `TurnView.PersonsOf` is indexed once
+    per turn.
+  - **Calibration history:** the first corpus had no intrigue at all (the default worlds have no kingdoms, the only form with
+    a spymaster office: hence `PlotOffices`), merchants "ruined" by the court's wealthless councillors, and bands only from
+    those; deserters rarely found a road (the median decisive battle lies 33° from one), hence the defeat and dispossessed
+    sources and `RouteDegrees` 20; sponsorships landed on bands ending the same turn, hence hiring and confession.
+- **Corpus (25 seeds, 30 turns, size 3, all flags):** 3.7 living persons per polity; 4.5 outlaw bands per world; raids 3.4%
+  of route-turns; an exposed sponsorship led to a war in 3 of 25 worlds; averted 31%, decisive 32% of fought, sieges 22% of
+  wars. With agents (25 worlds): 335 spy networks; operations bribe 190, assassination 99, sabotage 28 (by agents and
+  sponsored bands), theft 15; 87 sponsorships (15 exposed); an exposed sponsorship led to a war in 8 of 25 worlds; 3.8 living
+  persons per polity; averted 29%, decisive 30%, sieges 21.5%.

@@ -72,6 +72,43 @@ public sealed partial class WarOperator : IHistoryOperator
     /// <summary><see cref="StageOrder.War"/> (50).</summary>
     public int Order => StageOrder.War;
 
+    private TradeProfile? _trade;
+
+    internal TradeProfile Trade => _trade ??= TradeProfile.From(_store);
+
+    /// <summary>The bordering polity <paramref name="attacker"/> holds the heaviest grudge of at least <c>CasusBelliGrudge</c> against (not under a window); -1 for none.</summary>
+    private int CasusBelli(TurnView view, int attacker, IReadOnlyList<int> bordering)
+    {
+        int best = -1, heaviest = Math.Max(1, Trade.Intrigue.CasusBelliGrudge) - 1;
+        foreach (int q in bordering)
+        {
+            int g = view.GrudgeWeight(attacker, q);
+            if (g > heaviest && !view.IsWindowed(attacker, q)) { heaviest = g; best = q; }
+        }
+        return best;
+    }
+
+    /// <summary>
+    /// The court's sway on a war (intrigue on): <c>WarBase + WarHawk × hawk</c> of the attacker's court, times
+    /// <c>MerchantPeace</c> when its merchants (commerce on) trade on a road to the defender.
+    /// </summary>
+    private double Lean(TurnView view, int attacker, int defender)
+    {
+        var t = Trade;
+        double lean = t.Intrigue.WarBase + t.Intrigue.WarHawk * t.Hawk(view, attacker);
+        if (!view.Has(HistoryFeatures.Commerce)) return lean;
+        var vectors = view.Map.DataStore.GetTileVectors();
+        foreach (var route in TradeProfile.Routes(view))
+        {
+            if (!((route.KeeperA == attacker && route.KeeperB == defender) || (route.KeeperA == defender && route.KeeperB == attacker)) || route.Severed) continue;
+            foreach (var m in TradeProfile.PersonsOf(view, attacker, PersonKind.MerchantPrince))
+                if ((uint)m.SeatSettlement < (uint)view.Settlements.Count
+                    && TradeProfile.Within(vectors, route, view.Settlements[m.SeatSettlement].Tile, t.Commerce.MerchantRouteDegrees))
+                    return lean * t.Intrigue.MerchantPeace;
+        }
+        return lean;
+    }
+
     /// <summary>Proposes this turn's raids from the snapshot (pressure, grudges and windows as of the end of the last turn).</summary>
     public void Propose(TurnView view, ProposalSink sink)
     {
@@ -101,9 +138,13 @@ public sealed partial class WarOperator : IHistoryOperator
             if (bordering.Count == 0) continue;
             var stream = sink.Rng(attacker, "raid");
             int defender = bordering[(int)stream.NextUInt((uint)bordering.Count)];
+            int casusBelli = view.Has(HistoryFeatures.Intrigue) ? CasusBelli(view, attacker, bordering) : -1;
+            if (casusBelli >= 0) defender = casusBelli; // the draw above is still made: the stream stays aligned
             if (view.IsWindowed(attacker, defender)) continue;
             double chance = Math.Min(pressure * WarPressureScale + xeno * WarXenophobiaScale
                 + view.GrudgeWeight(attacker, defender) * GrudgeWarScale, MaxWarChance);
+            if (view.Has(HistoryFeatures.Intrigue))
+                chance = Math.Min(1, chance * Lean(view, attacker, defender) + (defender == casusBelli ? Trade.Intrigue.CasusBelliChance : 0));
             if (stream.NextDouble() >= chance) continue;
             if (!sink.TrySpendDecision()) continue;
             if (sink.Has(HistoryFeatures.Battles))

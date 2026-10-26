@@ -218,5 +218,11 @@ Log:
   the route-safety drift (projection from the keepers' network, forts, waystations, severance, war, outlaws) and builds
   waystations (`SettlementRole.Waystation`). `Logistics/` YAML. `LogisticsGraphTests` (6), `LogisticsWorldTests` (13, incl. X4
   byte pins). 300 turns at size 7: history 3.9 s with all flags. Notes in the plan's §12.
-- [ ] X6 Commerce, outlaws, merchant princes, intrigue (`CourtInfluence`); outlaws read route safety
+- [x] X6 `MerchantOperator` (78), `CommerceOperator` (82), `OutlawOperator` (74), `IntrigueOperator` (75) behind flags
+  `Commerce`, `Outlaws`, `Intrigue`: merchant princes, wealth and war pledges (mercenaries), traffic, smuggling, privateers;
+  outlaw bands from displaced, deserters, the dispossessed and ruined merchants, raids, hanging and pardons; loyalty, plots
+  with a sponsor behind every covert act (sponsored bands that raid and sabotage, planted agents that sabotage, bribe, kill
+  and steal until caught), exposure, the court's hawk/dove lean and casus belli; betrayal in battle.
+  `Commerce/`, `Outlaws/`, `Intrigue/` YAML. `CommerceWorldTests` (15, incl. X5 byte pins). Notes in the plan's §12.
+- [ ] X7 Chronicle: lexicon, grammar, renderer
 

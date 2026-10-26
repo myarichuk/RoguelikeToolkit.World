@@ -41,7 +41,7 @@ internal sealed class ExpansionCommit
 
     /// <summary>
     /// The structural person pre-pass: admits the turn's <see cref="Proposal.AddPerson"/>s in canonical order under the caps
-    /// (a ruler is exempt from the per-polity cap), assigns ids, then builds them with house and parent references resolved
+    /// (a ruler is exempt from both: every polity keeps its throne filled), assigns ids, then builds them with house and parent references resolved
     /// (a reference to a refused person reads -1). Returns the number refused.
     /// </summary>
     public int AddPersons(List<Proposal> proposals, HashSet<Proposal> applied)
@@ -55,7 +55,7 @@ internal sealed class ExpansionCommit
         {
             if (proposal is not Proposal.AddPerson ap) continue;
             bool polityOk = ap.EntityId == -1 || LivingPolity(ap.EntityId);
-            bool room = _history.Persons.Count + admitted.Count < _context.MaxPersons;
+            bool room = ap.PersonKind == PersonKind.Ruler || _history.Persons.Count + admitted.Count < _context.MaxPersons;
             bool slot = ap.PersonKind == PersonKind.Ruler || ap.EntityId < 0
                 || living.GetValueOrDefault(ap.EntityId) < _context.MaxLivingPersonsPerPolity;
             if (!polityOk || !room || !slot || ap.Pending > -2) { refused++; continue; }
@@ -310,6 +310,13 @@ internal sealed class ExpansionCommit
         return state;
     }
 
+    private bool HasBand(int a, int b)
+    {
+        foreach (var s in _history.RouteStates)
+            if (s.RouteA == a && s.RouteB == b) return s.OutlawBand >= 0;
+        return false;
+    }
+
     private bool SetRouteFlag(Proposal.SetRouteFlag sf)
     {
         if (!RouteExists(sf.RouteA, sf.RouteB) || !Enum.IsDefined(typeof(RouteFlag), sf.Flag)) return false;
@@ -322,6 +329,8 @@ internal sealed class ExpansionCommit
                 break;
             case RouteFlag.Sponsor:
                 if (value != -1 && (uint)value >= (uint)_history.Polities.Count) return false;
+                // A sponsor pays a band: none on the road (ended this turn, or never admitted) refuses it.
+                if (value != -1 && !HasBand(sf.RouteA, sf.RouteB)) return false;
                 break;
             default:
                 if (value < -1) return false;

@@ -183,4 +183,31 @@ internal sealed class CourtProfile
         double rate = Data.HazardBase * DetMath.Exp(Data.HazardGrowth * (ageYears + turnYears / 2.0) / Math.Max(1, lifespanYears));
         return 1 - DetMath.Exp(-turnYears * rate);
     }
+
+    /// <summary>
+    /// Rolls a person keyed by <paramref name="key"/> (a <see cref="ProposalSink.StableKey"/>): traits from the folk's priors and the
+    /// culture, sex, skills and epithets, in that order from one <c>person</c> stream. Not yet proposed.
+    /// </summary>
+    internal Proposal.AddPerson RollPerson(ProposalSink sink, PeoplesStore? store, int key, int entity, string folkKey, string cultureKey, int seat,
+        PersonKind kind, int bornAbs, int house, int parent, int years)
+    {
+        var rng = sink.Rng(key, "person");
+        FolkDef? folk = null;
+        CultureDef? culture = null;
+        store?.Folks.TryGetValue(folkKey, out folk);
+        store?.Cultures.TryGetValue(cultureKey, out culture);
+        var priors = folk?.ToTraitWeights() ?? new[] { TraitWeight.Balanced, TraitWeight.Balanced, TraitWeight.Balanced, TraitWeight.Balanced, TraitWeight.Balanced };
+        var traits = RollTraits(ref rng, priors, culture);
+        bool feminine = rng.NextDouble() < Data.FeminineShare;
+        var skills = RollSkills(ref rng, traits);
+        var epithets = Epithets(ref rng, traits, skills);
+        int bornTurn = (int)Math.Floor(bornAbs / (double)years);
+        return new Proposal.AddPerson
+        {
+            EntityId = entity, PersonKind = kind, FolkKey = folkKey, CultureKey = cultureKey, SeatSettlement = seat,
+            HouseId = house, Parent = parent, Feminine = feminine, BornTurn = bornTurn, BornYear = bornAbs - bornTurn * years,
+            Traits = traits, Martial = skills[0], Intrigue = skills[1], Stewardship = skills[2], Charisma = skills[3], Epithets = epithets,
+            StableKey = key,
+        };
+    }
 }
