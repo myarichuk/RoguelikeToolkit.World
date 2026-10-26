@@ -1,6 +1,6 @@
 # History expansion: battles, logistics, named persons
 
-Status: **in progress** (X0–X6 done; progress in [REVIEW_FIXES_TODO.md](REVIEW_FIXES_TODO.md), section Expansion X). Requested 2026-10-25. Builds on `Proposal.Requires` (batch F of
+Status: **done** (X0–X9; progress in [REVIEW_FIXES_TODO.md](REVIEW_FIXES_TODO.md), section Expansion X). Requested 2026-10-25. Builds on `Proposal.Requires` (batch F of
 [REVIEW_FIXES_TODO.md](REVIEW_FIXES_TODO.md), landed in `d7492ac`). Phases are **X0–X9** (§10).
 
 ## 0. Facts that shape the design
@@ -356,7 +356,7 @@ About 3k persons expected at 300 turns.
 | X5 | `LogisticsGraph`, `LogisticsOperator`, forts/waystations, winter quarters, route samples | safety in [0,1]; forts raise it; 300 turns at size 7 < 5 s. **Done** (see §12) |
 | X6 | Commerce, Outlaw, Merchant, Intrigue; `CourtInfluence` | corpus bands; an exposed sponsorship leads to a war in ≥1/25 worlds. **Done** (see §12) |
 | X7 | Lexicon, Chronicle grammar, renderer | catalog bytes unchanged by rendering; repetition metrics; every template resolves for all 12 cultures. **Done** (see §12) |
-| X8 | Exports, TS overlay, person panel | layout tests, vitest, a Playwright path |
+| X8 | Exports, TS overlay, person panel | layout tests, vitest, a Playwright path. **Done** (see §12) |
 | X9 | `HistoryFeatures` default All | one deliberate corpus re-baseline; PR listing every shift; milestone entry. **Done** (see §12 and HISTORY_MILESTONES.md) |
 
 ## 11. Testing
@@ -694,3 +694,19 @@ About 3k persons expected at 300 turns.
 - **X9: `HistoryFeatures` defaults to `All`.** `None` stays the legacy simulation (byte-identical; the legacy fixtures set it
   explicitly). The re-baseline and every shift are listed in `HISTORY_MILESTONES.md` ("X0–X9"). Rulers being exempt from the
   person cap (X6) matters here: 300-turn default worlds now pass `MaxPersons`.
+- **X8 editor.** Exports in `WorldExports.Persons.cs` (persons stride 25 with the stable key, bonds 6, tenures 5, battles 24 with
+  text, route states 10, route series 5, kind/outcome tables, `ConfigureHistoryFeatures`) and `WorldExports.Chronicle.cs`
+  (`HistoryChronicle(start, count)`, aligned with `HistoryEvents`; `ConfigureChronicleNames` takes the editor's realm titles,
+  base names and person names through Core's `ChronicleNameTable`, so the prose names things as the cards do; reset on every
+  new world). `NamePersons` names a person from (world seed, stable key, folk, culture, sex): stable keys, not ids, so a plugin
+  adding persons renames nobody. Editor: `persons.ts`, `battles.ts`, `routes.ts` decoders; the person card (lifespan bar,
+  offices, bonds, battles, sponsor, story); the People list and the Chronicle in the History tab; three map layers at the
+  scrubbed turn (battles and sieges, outlaws and raids, road safety); expansion feature toggles in the wizard; the expansion
+  rides in `.wmap` as extra blobs and leaves features-off records untouched. Tests: engine 76, editor vitest 465, Playwright
+  `history-expansion.cjs` (all features: 352 named persons, 53 battles, 599/599 events with chronicle prose, no unresolved
+  slots, realm names matching the editor's; person card; layers; features-off record; save/open) and `generate-save-open.cjs`.
+  Not done: picking battle markers or havens on the map; the wizard allows feature combinations that make little sense
+  (Sieges without Battles).
+- **Performance, measured on a quiet machine after X9 (size 7, 300 turns, history only):** legacy (`None`) 4.1 s, all features
+  5.8 s. The expansion costs 1.7 s; the plan's "< 5 s" acceptance is **missed by ~0.8 s** on this machine (the X5 measurement,
+  3.9 s, was before X6 and on a less loaded run; legacy alone measured faster then too).

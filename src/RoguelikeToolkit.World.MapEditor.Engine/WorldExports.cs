@@ -77,6 +77,8 @@ public static partial class WorldExports
             throw;
         }
         _world = built;
+        _chronicleNames = new(); // a new world's names come with it (ConfigureChronicleNames)
+        _chronicle = null;
         return built.TileCount;
     }
 

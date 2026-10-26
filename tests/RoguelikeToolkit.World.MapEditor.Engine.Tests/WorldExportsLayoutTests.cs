@@ -268,6 +268,25 @@ public class WorldExportsLayoutTests
     }
 
     [Fact]
+    public void HistoryChronicle_AlignsWithTheLog_AndUsesTheHostsNames()
+    {
+        WorldExports.ResetHistoryConfig();
+        Tiles();
+        int total = WorldExports.HistoryInfo()[7], polities = WorldExports.HistoryInfo()[3];
+        var prose = WorldExports.HistoryChronicle(0, total);
+        Assert.Equal(total, prose.Length);
+        Assert.True(prose.Count(t => t.Length > 0) > total / 2, "most events read as prose");
+        Assert.DoesNotContain(prose, t => t.Contains('{') || t.Contains('}'));
+        Assert.Equal(prose.Skip(5).Take(7), WorldExports.HistoryChronicle(5, 7)); // pages are slices of one rendering
+        // The host's realm titles take over (a title "X of Y" reads with "the" mid-sentence).
+        var titles = Enumerable.Range(0, polities).Select(i => $"Realm of Test{i}").ToArray();
+        WorldExports.ConfigureChronicleNames(titles, Enumerable.Range(0, polities).Select(i => $"Test{i}").ToArray(), Array.Empty<string>(), Array.Empty<string>());
+        var renamed = WorldExports.HistoryChronicle(0, total);
+        Assert.Contains(renamed, t => t.Contains("Realm of Test", StringComparison.Ordinal));
+        Assert.NotEqual(prose, renamed);
+    }
+
+    [Fact]
     public void HistoryEvents_DecodeWithACursor_AndMatchTheirTextPage()
     {
         WorldExports.ResetHistoryConfig();

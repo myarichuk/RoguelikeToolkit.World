@@ -179,6 +179,12 @@ override RoguelikeToolkit.World.Core.History.Proposal.SetRouteFlag.Kind.get -> R
 override RoguelikeToolkit.World.Core.History.Proposal.SetTenure.Kind.get -> RoguelikeToolkit.World.Core.History.ProposalKind
 override RoguelikeToolkit.World.Core.History.Proposal.SeverRoute.Kind.get -> RoguelikeToolkit.World.Core.History.ProposalKind
 override RoguelikeToolkit.World.Core.History.Proposal.SplitPolity.Kind.get -> RoguelikeToolkit.World.Core.History.ProposalKind
+RoguelikeToolkit.World.Core.Chronicle.ChronicleNameTable
+RoguelikeToolkit.World.Core.Chronicle.ChronicleNameTable.ChronicleNameTable(System.Collections.Generic.IReadOnlyList<string!>? realms = null, System.Collections.Generic.IReadOnlyList<string!>? realmShort = null, System.Collections.Generic.IReadOnlyList<string!>? persons = null, System.Collections.Generic.IReadOnlyList<string!>? settlements = null) -> void
+RoguelikeToolkit.World.Core.Chronicle.ChronicleNameTable.PersonName(RoguelikeToolkit.World.Core.History.HistoryCatalog! catalog, int personId) -> string!
+RoguelikeToolkit.World.Core.Chronicle.ChronicleNameTable.PolityName(RoguelikeToolkit.World.Core.History.HistoryCatalog! catalog, int polityId) -> string!
+RoguelikeToolkit.World.Core.Chronicle.ChronicleNameTable.PolityShortName(RoguelikeToolkit.World.Core.History.HistoryCatalog! catalog, int polityId) -> string?
+RoguelikeToolkit.World.Core.Chronicle.ChronicleNameTable.SettlementName(RoguelikeToolkit.World.Core.History.HistoryCatalog! catalog, int settlementIndex) -> string!
 RoguelikeToolkit.World.Core.Chronicle.ChronicleOptions
 RoguelikeToolkit.World.Core.Chronicle.ChronicleOptions.ChronicleOptions() -> void
 RoguelikeToolkit.World.Core.Chronicle.ChronicleOptions.DataDirectory.get -> string?

@@ -38,12 +38,20 @@ run('history expansion: persons, battles, overlay', async (t) => {
       battleTurns: [...new Set(Array.from({ length: e.battles.length / 24 }, (_, i) => e.battles[i * 24 + 1]))],
       // The first field battle (kind 0): its turn and tile, to scrub to and look at.
       field: (() => { for (let i = 0; i < e.battles.length / 24; i++) if (e.battles[i * 24 + 4] === 0) return { turn: e.battles[i * 24 + 1], tile: e.battles[i * 24 + 5] }; return null; })(),
-      chronicle: !!e.chronicle,
+      chronicle: e.chronicle ? e.chronicle.length : 0, events: h.events.length,
+      prose: e.chronicle ? e.chronicle.filter(Boolean).length : 0,
+      unresolved: e.chronicle ? e.chronicle.filter((t) => /[{}]/.test(t)).length : -1,
+      // The chronicle names realms as the editor does: some line carries a realm's own base name.
+      realmNamed: e.chronicle ? h.polities.some((p) => e.chronicle.some((t) => t.includes(p.name.split(' ').pop()))) : false,
+      sample: e.chronicle ? e.chronicle.find((t) => t.length > 60) : '',
     };
   });
   t.check('a world with every feature carries expansion records', !!x && x.persons > 0 && x.battles > 0 && x.routes > 0 && x.samples > 0, x);
   t.check('every person is named', !!x && x.named === x.persons, x && [x.named, x.persons]);
   t.check('events name their persons through person: participants', !!x && x.withParts > 0, x);
+  t.check('the chronicle renders prose for the log, one line per event', !!x && x.chronicle === x.events && x.prose > x.events / 2, x && [x.chronicle, x.prose, x.events]);
+  t.check('the chronicle has no unresolved slots', !!x && x.unresolved === 0, x && x.unresolved);
+  t.check('the chronicle names realms as the editor does', !!x && x.realmNamed, x && x.sample);
   t.note('expansion', x);
 
   // History tab: the chronicle lists events with links to their persons.

@@ -76,6 +76,7 @@ interface EngineApi {
   HistoryRouteSeries?(): Arr;
   /** Rendered prose per event, paged like `HistoryEvents` (the chronicle, X7). */
   HistoryChronicle?(start: number, count: number): string[];
+  ConfigureChronicleNames?(realmTitles: string[], realmBases: string[], persons: string[], settlements: string[]): void;
   NamePersons?(seeds: number[], folks: string[], cultures: string[], feminine: number[]): string[];
   WaterBodies(): Arr;
   Ranges(): Arr;
@@ -274,7 +275,7 @@ function historyRecord(e: EngineApi, seed: number, input: HistoryInput, chosenCo
     ownerBase: Int32Array.from(recorded ? e.HistoryOwnershipBase() : e.HistoryOwnershipAt(1 << 30)),
     changes: recorded ? Int32Array.from(e.HistoryTerritoryChanges()) : new Int32Array(0),
   };
-  const expansion = expansionRecord(e, seed, info, strings, events.length);
+  const expansion = expansionRecord(e, seed, info, strings, events.length, polities, Array.from(input.polityBases ?? []).map(String));
   if (expansion) record.expansion = expansion;
   return record;
 }
@@ -283,7 +284,7 @@ function historyRecord(e: EngineApi, seed: number, input: HistoryInput, chosenCo
  * The expansion's persons, bonds, offices, battles and route states; null when the run wrote none (every feature off) or
  * the engine predates them. Persons are named here, once, so their cards read the same after Open.
  */
-function expansionRecord(e: EngineApi, seed: number, info: Int32Array, strings: string[], eventCount: number): ExpansionRecord | null {
+function expansionRecord(e: EngineApi, seed: number, info: Int32Array, strings: string[], eventCount: number, polities: PolityRecord[], bases: string[]): ExpansionRecord | null {
   if (info.length < 16 || typeof e.HistoryPersons !== 'function') return null;
   if (info[11] + info[12] + info[13] + info[14] + info[15] === 0) return null;
   const persons = Int32Array.from(e.HistoryPersons()), personText = e.HistoryPersonText!();
@@ -306,6 +307,12 @@ function expansionRecord(e: EngineApi, seed: number, info: Int32Array, strings: 
   };
   // The chronicle (X7) renders prose per event, paged like the log; an engine without it leaves the record's summaries.
   if (typeof e.HistoryChronicle === 'function') {
+    // The prose names realms and persons as the editor does (titles, base names for later mentions, the persons' names).
+    if (typeof e.ConfigureChronicleNames === 'function') {
+      const titles: string[] = [], short: string[] = [];
+      polities.forEach((p, i) => { titles[p.id] = p.name; short[p.id] = bases[i] ?? ''; });
+      e.ConfigureChronicleNames(Array.from(titles, (t) => t ?? ''), Array.from(short, (t) => t ?? ''), x.personNames, []);
+    }
     const prose: string[] = [];
     for (let start = 0; start < eventCount; start += 512) {
       const page = e.HistoryChronicle(start, 512);
