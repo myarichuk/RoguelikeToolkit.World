@@ -1,0 +1,29 @@
+# Halfling hearths: home, larders, second breakfasts, and a courage nobody expects until it is too late.
+battle.intro:
+  - { id: hf_bi1, w: 3, t: "In {year}, much against its inclinations, {att.realm} put down its pipes, picked up its slings and went off to see about {def.realm}." }
+  - { id: hf_bi2, when: [att.general], w: 3, t: "{att.general} promised the families of {att.realm} that everyone would be home by harvest, and in {year} led the {att.host} against {def.realm}." }
+  - { id: hf_bi3, w: 2, t: "Nobody in {def.realm} had ever thought the halflings of {att.realm} dangerous. In {year} they learned otherwise." }
+battle.engage:
+  - { id: hf_en1, w: 2, t: "The {att.adj} slingers hid behind every hedge and stone, and every stone they threw found a mark." }
+battle.after:
+  - { id: hf_ba1, when: [winner=attacker], w: 3, t: "{att.realm|cap} celebrated with a feast that lasted longer than the campaign." }
+  - { id: hf_ba2, when: [winner=defender], w: 3, t: "{att.realm|cap} went home, counted its losses, and resolved never to leave the hearth again, a resolution it mostly kept." }
+event.Founding:
+  - { id: hf_fo1, w: 3, t: "In {year} the hearth-families agreed on boundaries, mostly hedges, and the land inside them became {realm}." }
+  - { id: hf_fo2, when: [place], w: 3, t: "In {year} the halflings dug the first round door at {place}, put the kettle on, and called the place {realm}." }
+event.PersonRose:
+  - { id: hf_ru1, when: [office=ruler], w: 3, t: "In {year} {who} became {who.office} of {realm}, chiefly because everyone else was busy at the harvest." }
+  - { id: hf_ap1, when: [office!=ruler, who.office], w: 2, t: "In {year} {who} was made {who.office} of {realm} at a dinner, between the fourth course and the fifth." }
+event.PersonDied:
+  - { id: hf_dd1, when: [cause=age, who], w: 3, t: "In {year} {who} died in an armchair by the fire, a pipe still warm; {realm} agreed there was no better way to go." }
+  - { id: hf_dd2, when: [who], w: 2, t: "{realm|cap} buried {who} in {year} under an apple tree, as is the custom, and the funeral feast was long remembered." }
+event.Grudge:
+  - { id: hf_gr1, when: [other.realm], w: 3, t: "In {year} {other.realm} snubbed {realm}; the halflings were not angry, only very, very disappointed." }
+event.Treaty:
+  - { id: hf_tr1, when: [other.realm], w: 2, t: "In {year} {realm} and {other.realm} settled their differences over a long lunch, and signed the pact on the tablecloth." }
+event.SettlementFounded:
+  - { id: hf_sf1, when: [settlement], w: 3, t: "In {year} a few families of {realm} wanted a little more room for their gardens, and {settlement} was the result." }
+event.Shock:
+  - { id: hf_sh1, when: [shock=famine|drought], w: 4, t: "In {year} the larders of {realm} ran empty, which for halflings is the worst of all disasters." }
+event.Conquest:
+  - { id: hf_cq1, when: [other.realm], w: 3, t: "In {year} {realm} somehow conquered {other.realm}, and nobody was more surprised than the halflings." }

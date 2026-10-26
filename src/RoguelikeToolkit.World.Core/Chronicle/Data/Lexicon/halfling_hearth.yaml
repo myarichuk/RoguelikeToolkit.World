@@ -1,0 +1,13 @@
+# Halfling hearths.
+host: ["hedge-guard", "hearth-muster", "slinger-band"]
+cry!: ["For the hearth!", "Mind the larder!", "Home by supper!", "Not in our gardens!"]
+office.ruler!: ["head of the hearths", "mayor of mayors"]
+office.elder: ["eldest at the table"]
+office.war_leader: ["captain of the hedge-guard"]
+terrain.open: ["hedged fields", "orchards"]
+season.autumn: ["the season of pies"]
+noun.song: ["drinking songs", "fireside tales"]
+noun.grief: ["a quiet, well-catered sorrow"]
+verb.won: ["won, to everyone's surprise", "held the hedges"]
+noun.goods: ["pipe-weed and cheese", "ale, honey and good bread"]
+noun.loot: ["the cheeses", "a cartload of pies"]

@@ -153,6 +153,16 @@ using (var courtly = new WorldBuilder().WithSize(3).WithSeed(7)
         Mix((ulong)(long)(r.Safety * 1e9)); Mix((ulong)(long)(r.Traffic * 1e9)); Mix((ulong)(uint)r.Forts); Mix((ulong)(uint)r.Waystations);
         Mix((ulong)(uint)r.OutlawBand); Mix((ulong)(uint)r.Sponsor);
     }
+    // The chronicle: its grammar and lexicon YAML (lists of rule DTOs) and a render of the whole log; rendering leaves the bytes alone.
+    int before = courtly.History.ToBytes().Length;
+    var chronicle = new RoguelikeToolkit.World.Core.Chronicle.TemplateChronicleTextProvider().RenderAll(courtly.History);
+    Check(chronicle.Count == courtly.History.Events.Count && chronicle.All(t => t.Length > 0 && t.IndexOf('{') < 0), "chronicle render");
+    Check(courtly.History.ToBytes().Length == before, "chronicle leaves the catalog unchanged");
+    for (int i = 0; i < chronicle.Count; i += 9)
+    {
+        Mix((ulong)chronicle[i].Length);
+        foreach (var ch in chronicle[i]) Mix(ch);
+    }
 }
 
 // 5. Entity store: spawn, snapshot, reload.

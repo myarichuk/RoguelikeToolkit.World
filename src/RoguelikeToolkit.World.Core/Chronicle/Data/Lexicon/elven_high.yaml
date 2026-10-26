@@ -1,0 +1,12 @@
+# High elves.
+host: ["silver host", "bright company", "array", "star-host"]
+cry!: ["Light unfading!", "By the elder stars!", "For the white towers!", "Remember the first dawn!"]
+office.ruler!: ["star-crowned sovereign", "high sovereign"]
+office.chancellor: ["keeper of the long annals"]
+office.marshal: ["lord of the silver host"]
+season.spring: ["the time of the first blossoms"]
+season.autumn: ["the gold of the leaf-fall"]
+noun.song: ["elegies", "lays in the old tongue"]
+noun.grief: ["a grief that lasted a hundred years"]
+verb.won: ["prevailed, as was expected", "carried the field with terrible grace"]
+noun.goods: ["moonsilver and fine glass", "star-woven silk and wine"]

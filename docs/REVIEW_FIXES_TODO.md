@@ -224,5 +224,10 @@ Log:
   with a sponsor behind every covert act (sponsored bands that raid and sabotage, planted agents that sabotage, bribe, kill
   and steal until caught), exposure, the court's hawk/dove lean and casus belli; betrayal in battle.
   `Commerce/`, `Outlaws/`, `Intrigue/` YAML. `CommerceWorldTests` (15, incl. X5 byte pins). Notes in the plan's §12.
-- [ ] X7 Chronicle: lexicon, grammar, renderer
+- [x] X7 Chronicle (slice `Chronicle/`, rank 5): `IChronicleTextProvider` / `TemplateChronicleTextProvider`, `ChronicleOptions`,
+  `IChronicleNameResolver`; YAML grammar (`{ id, when, w, cd, t }`, slots, modifiers, nested and optional symbols, predicates)
+  and lexicon, common plus an overlay of each for all 12 cultures; battles, sieges and every event kind including X6's; a
+  per-symbol LRU of rule draws, per-event word use, `HistoryRng` draws; rendering never touches the catalog. `ChronicleTests`
+  (32): lint clean, every rule through every culture, every kind for every culture, corpus top sentence 0.30% and trigram
+  repeats max 11.5% per 20-event window. Notes in the plan's §12.
 

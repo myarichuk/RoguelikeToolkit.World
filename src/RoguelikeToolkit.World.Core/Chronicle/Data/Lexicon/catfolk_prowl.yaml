@@ -1,0 +1,12 @@
+# Catfolk prowls.
+host: ["prowl", "hunting pride", "claw-band", "night-prowl"]
+cry!: ["Claws out!", "Swift and silent!", "The night is ours!", "Pounce!"]
+office.ruler!: ["first of the pride", "sun-throned"]
+office.spymaster: ["keeper of whispers and windowsills"]
+office.war_leader: ["first claw"]
+season.summer: ["the lazy heat"]
+season.winter: ["the cold no fire could chase away"]
+noun.song: ["purring ballads", "yowling chants"]
+noun.grief: ["a long, offended silence"]
+verb.won: ["toyed with the enemy, then finished it", "struck from the shadows and won"]
+noun.goods: ["spices and silk", "cream, fish and fine cushions"]

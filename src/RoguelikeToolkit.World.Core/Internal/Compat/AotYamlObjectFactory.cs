@@ -1,4 +1,5 @@
 using System.Diagnostics.CodeAnalysis;
+using RoguelikeToolkit.World.Core.Chronicle;
 using RoguelikeToolkit.World.Core.Localization;
 using RoguelikeToolkit.World.Core.Names;
 using RoguelikeToolkit.World.Core.Peoples;
@@ -60,6 +61,9 @@ internal sealed class AotYamlObjectFactory : DefaultObjectFactory
         if (type == typeof(IntrigueDef)) return new IntrigueDef();
         if (type == typeof(Dictionary<string, double>)) return new Dictionary<string, double>(StringComparer.OrdinalIgnoreCase);
         if (type == typeof(LocaleData)) return new LocaleData();
+        if (type == typeof(ChronicleRuleDef)) return new ChronicleRuleDef();
+        if (type == typeof(List<ChronicleRuleDef>)) return new List<ChronicleRuleDef>();
+        if (type == typeof(Dictionary<string, List<ChronicleRuleDef>>)) return new Dictionary<string, List<ChronicleRuleDef>>(StringComparer.Ordinal);
         if (type == typeof(List<MorphemeYaml>)) return new List<MorphemeYaml>();
         if (type == typeof(List<string>)) return new List<string>();
         if (type == typeof(Dictionary<string, List<string>>)) return new Dictionary<string, List<string>>(StringComparer.OrdinalIgnoreCase);
@@ -103,6 +107,17 @@ internal sealed class AotYamlObjectFactory : DefaultObjectFactory
     public static IDeserializer CreateDeserializer() => new DeserializerBuilder()
         .WithObjectFactory(new AotYamlObjectFactory())
         .WithNamingConvention(YamlDotNet.Serialization.NamingConventions.NullNamingConvention.Instance)
+        .IgnoreUnmatchedProperties()
+        .Build();
+
+    /// <summary>
+    /// Deserializer for the chronicle grammar and lexicon (<c>Chronicle/Data</c>): lower-case keys (<c>{ id, when, w, cd, t }</c>)
+    /// so a rule fits on one line; unmatched properties are ignored as for the other tables.
+    /// </summary>
+    [DynamicDependency(DynamicallyAccessedMemberTypes.PublicProperties | DynamicallyAccessedMemberTypes.PublicParameterlessConstructor, typeof(ChronicleRuleDef))]
+    public static IDeserializer CreateChronicleDeserializer() => new DeserializerBuilder()
+        .WithObjectFactory(new AotYamlObjectFactory())
+        .WithNamingConvention(YamlDotNet.Serialization.NamingConventions.LowerCaseNamingConvention.Instance)
         .IgnoreUnmatchedProperties()
         .Build();
 }

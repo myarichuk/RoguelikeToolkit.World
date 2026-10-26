@@ -1,0 +1,29 @@
+# Dogfolk packs: loyalty above everything, the howl before the charge, and a nose for treachery.
+battle.intro:
+  - { id: dg_bi1, w: 3, t: "In {year} the howl went up from every den of {att.realm}, and the {att.host} ran on the scent of {def.realm}." }
+  - { id: dg_bi2, when: [att.general], w: 3, t: "{att.general} led the {att.host} of {att.realm} out in {year}, and the pack followed {att.general.him} as a pack follows its leader: without a question." }
+  - { id: dg_bi3, w: 2, t: "{def.realm|cap} had wronged a member of the pack. In {year} the whole of {att.realm} came to collect." }
+battle.engage:
+  - { id: dg_en1, w: 2, t: "The {att.adj} line came on at a run, flanks wide, closing like jaws." }
+battle.after:
+  - { id: dg_ba1, when: [winner=attacker], w: 3, t: "{att.realm|cap} howled its victory from the hilltops, and every den in {def.realm} heard it." }
+  - { id: dg_ba2, when: [winner=defender], w: 3, t: "The pack of {att.realm} carried every one of its wounded home; dogfolk leave nobody on the field." }
+event.Founding:
+  - { id: dg_fo1, w: 3, t: "In {year} the scattered packs swore loyalty to one another under the full moon, and called their bond {realm}." }
+  - { id: dg_fo2, when: [place], w: 3, t: "In {year} the dogfolk marked the bounds of {place} as their own, and {realm} was born." }
+event.PersonRose:
+  - { id: dg_ru1, when: [office=ruler], w: 3, t: "In {year} {who} became pack-leader of {realm}, and every member of the pack bared their throat in turn." }
+  - { id: dg_ap1, when: [office!=ruler, who.office], w: 2, t: "In {year} {who} was trusted with the post of {who.office} of {realm}, and would sooner have died than betray it." }
+event.PersonDied:
+  - { id: dg_dd1, when: [cause=age, who], w: 3, t: "In {year} {who} died old and grey-muzzled, and the whole of {realm} howled for three nights." }
+  - { id: dg_dd2, when: [who], w: 2, t: "{realm|cap} lost {who} in {year}; the pack sat vigil by the pyre until dawn." }
+event.Grudge:
+  - { id: dg_gr1, when: [other.realm], w: 3, t: "In {year} {other.realm} broke faith with {realm}, and dogfolk never forget the smell of a traitor." }
+event.Treaty:
+  - { id: dg_tr1, when: [other.realm], w: 2, t: "In {year} {realm} took {other.realm} into its trust, and a dogfolk's trust is given only once." }
+event.SettlementFounded:
+  - { id: dg_sf1, when: [settlement], w: 3, t: "In {year} a young pack of {realm} went off to make its own den at {settlement}, with the blessing of the elders." }
+event.Conquest:
+  - { id: dg_cq1, when: [other.realm], w: 3, t: "In {year} {realm} brought {other.realm} into the pack, as a younger member that would have to earn its place." }
+event.Desecration:
+  - { id: dg_de1, when: [other.realm], w: 3, t: "In {year} soldiers of {realm} defiled a holy place of {other.realm}; the pack-leader had the guilty ones whipped, but the deed was done." }

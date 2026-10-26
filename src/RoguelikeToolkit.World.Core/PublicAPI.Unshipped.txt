@@ -179,6 +179,27 @@ override RoguelikeToolkit.World.Core.History.Proposal.SetRouteFlag.Kind.get -> R
 override RoguelikeToolkit.World.Core.History.Proposal.SetTenure.Kind.get -> RoguelikeToolkit.World.Core.History.ProposalKind
 override RoguelikeToolkit.World.Core.History.Proposal.SeverRoute.Kind.get -> RoguelikeToolkit.World.Core.History.ProposalKind
 override RoguelikeToolkit.World.Core.History.Proposal.SplitPolity.Kind.get -> RoguelikeToolkit.World.Core.History.ProposalKind
+RoguelikeToolkit.World.Core.Chronicle.ChronicleOptions
+RoguelikeToolkit.World.Core.Chronicle.ChronicleOptions.ChronicleOptions() -> void
+RoguelikeToolkit.World.Core.Chronicle.ChronicleOptions.DataDirectory.get -> string?
+RoguelikeToolkit.World.Core.Chronicle.ChronicleOptions.DataDirectory.set -> void
+RoguelikeToolkit.World.Core.Chronicle.ChronicleOptions.FirstYear.get -> int
+RoguelikeToolkit.World.Core.Chronicle.ChronicleOptions.FirstYear.set -> void
+RoguelikeToolkit.World.Core.Chronicle.ChronicleOptions.Names.get -> RoguelikeToolkit.World.Core.Chronicle.IChronicleNameResolver?
+RoguelikeToolkit.World.Core.Chronicle.ChronicleOptions.Names.set -> void
+RoguelikeToolkit.World.Core.Chronicle.ChronicleOptions.TurnYears.get -> int
+RoguelikeToolkit.World.Core.Chronicle.ChronicleOptions.TurnYears.set -> void
+RoguelikeToolkit.World.Core.Chronicle.IChronicleNameResolver
+RoguelikeToolkit.World.Core.Chronicle.IChronicleNameResolver.PersonName(RoguelikeToolkit.World.Core.History.HistoryCatalog! catalog, int personId) -> string!
+RoguelikeToolkit.World.Core.Chronicle.IChronicleNameResolver.PolityName(RoguelikeToolkit.World.Core.History.HistoryCatalog! catalog, int polityId) -> string!
+RoguelikeToolkit.World.Core.Chronicle.IChronicleNameResolver.SettlementName(RoguelikeToolkit.World.Core.History.HistoryCatalog! catalog, int settlementIndex) -> string!
+RoguelikeToolkit.World.Core.Chronicle.IChronicleTextProvider
+RoguelikeToolkit.World.Core.Chronicle.IChronicleTextProvider.Render(RoguelikeToolkit.World.Core.History.HistoryCatalog! catalog, int eventId) -> string!
+RoguelikeToolkit.World.Core.Chronicle.IChronicleTextProvider.RenderAll(RoguelikeToolkit.World.Core.History.HistoryCatalog! catalog, int start = 0, int count = 2147483647) -> System.Collections.Generic.IReadOnlyList<string!>!
+RoguelikeToolkit.World.Core.Chronicle.TemplateChronicleTextProvider
+RoguelikeToolkit.World.Core.Chronicle.TemplateChronicleTextProvider.Render(RoguelikeToolkit.World.Core.History.HistoryCatalog! catalog, int eventId) -> string!
+RoguelikeToolkit.World.Core.Chronicle.TemplateChronicleTextProvider.RenderAll(RoguelikeToolkit.World.Core.History.HistoryCatalog! catalog, int start = 0, int count = 2147483647) -> System.Collections.Generic.IReadOnlyList<string!>!
+RoguelikeToolkit.World.Core.Chronicle.TemplateChronicleTextProvider.TemplateChronicleTextProvider(RoguelikeToolkit.World.Core.Chronicle.ChronicleOptions? options = null) -> void
 RoguelikeToolkit.World.Core.History.AbsorbOperator
 RoguelikeToolkit.World.Core.History.AbsorbOperator.AbsorbOperator() -> void
 RoguelikeToolkit.World.Core.History.AbsorbOperator.Name.get -> string!

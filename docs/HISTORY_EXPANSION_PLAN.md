@@ -355,7 +355,7 @@ About 3k persons expected at 300 turns.
 | X4 | `SiegeResolver`, relief battles; forts (pulled forward from X5) and per-culture map stamps | siege invariants; resupply lengthens sieges; cut supply raises the lifted share. **Done** (see §12) |
 | X5 | `LogisticsGraph`, `LogisticsOperator`, forts/waystations, winter quarters, route samples | safety in [0,1]; forts raise it; 300 turns at size 7 < 5 s. **Done** (see §12) |
 | X6 | Commerce, Outlaw, Merchant, Intrigue; `CourtInfluence` | corpus bands; an exposed sponsorship leads to a war in ≥1/25 worlds. **Done** (see §12) |
-| X7 | Lexicon, Chronicle grammar, renderer | catalog bytes unchanged by rendering; repetition metrics; every template resolves for all 12 cultures |
+| X7 | Lexicon, Chronicle grammar, renderer | catalog bytes unchanged by rendering; repetition metrics; every template resolves for all 12 cultures. **Done** (see §12) |
 | X8 | Exports, TS overlay, person panel | layout tests, vitest, a Playwright path |
 | X9 | `HistoryFeatures` default All | one deliberate corpus re-baseline; PR listing every shift; milestone entry |
 
@@ -636,3 +636,58 @@ About 3k persons expected at 300 turns.
   wars. With agents (25 worlds): 335 spy networks; operations bribe 190, assassination 99, sabotage 28 (by agents and
   sponsored bands), theft 15; 87 sponsorships (15 exposed); an exposed sponsorship led to a war in 8 of 25 worlds; 3.8 living
   persons per polity; averted 29%, decisive 30%, sieges 21.5%.
+- **X7 chronicle** (slice `Chronicle/`, rank 5; read-only over the catalog). Requested 2026-10-25.
+  - **Public surface:** `IChronicleTextProvider` (`Render(catalog, eventId)`, `RenderAll(catalog, start, count)`),
+    `TemplateChronicleTextProvider`, `ChronicleOptions` (`TurnYears`, `FirstYear`, `Names`, `DataDirectory`) and
+    `IChronicleNameResolver` (realm, person and settlement names). Everything else is internal.
+  - **Data:** `Chronicle/Data/Grammar/common.yaml` (about 560 rules over 60 symbols) and `Chronicle/Data/Lexicon/common.yaml`,
+    plus a grammar and a lexicon overlay for each of the 12 cultures (15–22 rules each: intros, aftermaths, foundings,
+    rulers' rises and deaths, grudges, treaties, settlements, conquests, a few siege ends; host words, cries, ruler titles,
+    seasons, terrains, songs, goods). An overlay rule with an existing id replaces it, any other joins the pool; `name!`
+    replaces a symbol's pool or a lexicon list (overlays replace `cry` and `office.ruler`). Rules are `{ id, when, w, cd, t }`
+    read with a lower-case naming convention (`AotYamlObjectFactory.CreateChronicleDeserializer`, `ChronicleRuleDef`
+    registered for AOT).
+  - **Grammar:** slots `{att.general}`, `{terrain.noun}`...; modifiers `|cap |lower |pl |a |poss |ord |num |the`; nested
+    `{#symbol}` and optional `{#symbol?}`; predicates `k=v`, `k=a|b`, `k!=v`, `k`, `!k` over facts (`beat` and `tag` are
+    multi-valued). A rule is a candidate only when every slot it names resolves; a rule whose nested symbol fails is backed out
+    and the next candidate tried, so templates never render a hole. Every kind has `event.<Kind>`; `event.generic` catches the
+    rest. Battles compose intro + engagement (tactic per side) + turning point (beat) + fate (fallen or captured general,
+    heads, turncoat) + rout (winner and margin) + aftermath (outcome, winter quarters, mercenaries) + optional cry (the
+    winner's culture); sieges compose intro + course (beats, span) + end (six pools) + aftermath. A slot backed by the lexicon
+    (`terrain.noun` → `terrain.forest`) can name another culture's list (a cry is the winner's).
+  - **Facts** (`ChronicleFactBuilder`, keys declared in `ChronicleVocabulary`): the event's tags and participants, its
+    `HistoryBattle` (sides, generals with epithet and office at the time, units, tactics, loss bands, beats, season, terrain,
+    siege settlement, months, end, the relief's besieged town), persons (name, pronouns, age, epithet, office, parent, reign),
+    settlements, routes (the settlements at the two route tiles), faiths, myths. The X6 vocabulary is read as the operators
+    write it: `plot:` with `secret`/`exposed`/`caught`, `actor:`/`target:`, `person:` (the band of a sponsorship, the agent
+    of a spy network, else the victim), `agent:`, `band:`, `hired`, `raid`/`confession`, `killed`/`failed`; `commission` vs
+    `prize`; two `merchant:` tags on smuggling; `settlement:` on a merchant's rise. It reads only what was true when the event
+    happened, so appending to the log never changes how earlier events read.
+  - **Repetition control:** the log renders once in event order. `ChronicleMemory` keeps, per symbol, when each rule was last
+    drawn, ranked among the candidates actually competing: a rule cools while fewer than its `cd` (default half the
+    candidates) of the others were drawn since; if all are cooling the least recently used wins. Words of a lexicon list cool
+    the same way, and a word is used once per event. Draws come from `HistoryRng.Create(seed, "Chronicle", turn, eventId,
+    symbolPath)`. Catch-all rules carry low weights (0.25 with slots, 0.05 without) so they only fill gaps.
+  - **Names:** a host `IChronicleNameResolver`, else internal `DefaultChronicleNames` (shipped name tables, Latin script, keyed
+    on the world seed and `StableKey`; a realm is its people's title for its form, all realms named together and never
+    sharing a name; a settlement is named in its founder's tongue; `Overrides.Renames` win). A realm said in full is said by its
+    short name later in the same event and in the next six events (prose does this, and multiword titles otherwise dominate
+    trigram counts).
+  - **Caching:** `Render` needs the whole log (each text depends on the ones before), so the provider caches the last
+    catalog's texts, keyed by event count, first and last event id, seed and the rename table.
+  - **Measured** (`ChronicleTests.Corpus_TextStaysVaried`: seeds 1–6 with the default roster and 7–8 with orcs, wood elves and
+    halflings; size 3, 30 turns, all flags including X6): 5473 events, 6928 sentences; the most frequent sentence is 0.30%
+    (acceptance < 2%); word-trigram repeats in 20-event windows max 11.5%, mean 2.7% (acceptance < 15%); with one-word host
+    names max 8.2%, mean 1.5%. Before the short-name window the max was 18.9% (realm titles), and an end-of-history burst of
+    myths reached 18.4% until the myth pool grew. Rendering costs about 240 ms per size-3 world (~680 events), most of it name
+    generation.
+  - **Tests** (`ChronicleTests`, 32): the shipped data loads clean with an overlay for each of the 12 cultures; the lint
+    (`ChronicleLint`: every root, symbol, slot and lexicon list exists, every predicate names a declared fact and an allowed
+    value, no rule contradicts itself, every symbol is reachable) is clean for all 13 grammars and catches seeded faults;
+    every rule renders through every culture with full facts; a hand-built catalog (`ChronicleSynthetic`: one polity per
+    culture, every kind and tag variant including X6's) renders every kind for every culture with no empty text or stray
+    brace and draws 91% of all rules; caught agents name their sponsor; determinism; `ToBytes()` unchanged by rendering;
+    `Render` by id agrees with `RenderAll` and its slices; host names and renames; dates; modifiers, tidy, predicates and the
+    memory.
+  - **NativeAOT:** the smoke test renders a full-feature history and mixes the texts into the checksum; JIT and native agree.
+  - **Not in X7:** an editor panel for the text (X8), gendered titles (titles are neutral), and other languages.

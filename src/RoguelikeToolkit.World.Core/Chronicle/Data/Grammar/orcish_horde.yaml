@@ -1,0 +1,32 @@
+# Orcish hordes: the strongest rules, the war never really ends, and skulls are a kind of bookkeeping.
+battle.intro:
+  - { id: or_bi1, w: 3, t: "In {year} the war-drums of {att.realm} beat for three days and nights, and then the {att.host} poured into the lands of {def.realm}." }
+  - { id: or_bi2, when: [att.general], w: 3, t: "{att.general} had been told {def.realm} was too strong to attack. In {year} {att.general.he} attacked anyway, to prove a point." }
+  - { id: or_bi3, w: 2, t: "There was no reason for the war of {year} except that {att.realm} was bored, and {def.realm} was near." }
+battle.engage:
+  - { id: or_en1, w: 2, t: "The {att.adj} warriors did not bother with a battle line; they simply ran at the enemy, howling." }
+battle.after:
+  - { id: or_ba1, when: [winner=attacker], w: 3, t: "The skulls of {def.realm|poss} dead were piled into a cairn by the road, as a message to anyone who could read it." }
+  - { id: or_ba2, when: [winner=defender], w: 3, t: "{att.realm|cap} dragged its wounded home and blamed the war chief, who blamed the drummers, who were eaten." }
+event.Founding:
+  - { id: or_fo1, w: 3, t: "In {year} the strongest of the tusked warbands beat the others into line, and the horde called itself {realm}." }
+  - { id: or_fo2, when: [place], w: 3, t: "In {year} the orcs made their camp at {place} and refused to leave, and that was {realm}." }
+event.PersonRose:
+  - { id: or_ru1, when: [office=ruler], w: 3, t: "In {year} {who} broke the old chief's jaw in front of the whole horde and was hailed {who.office} of {realm}." }
+  - { id: or_ru2, when: [office=ruler], w: 3, t: "{who} took {realm} in {year} the orcish way: by being the last one standing." }
+  - { id: or_ap1, when: [office!=ruler, who.office], w: 2, t: "In {year} {who} won the post of {who.office} of {realm} with a single, very convincing argument, made with an axe." }
+event.PersonDied:
+  - { id: or_dd1, when: [cause=age, who], w: 3, t: "{who} committed the great orcish embarrassment in {year}: dying of old age. {realm|cap} pretended not to notice." }
+  - { id: or_dd2, when: [who], w: 2, t: "{who} died in {year}; the horde of {realm} feasted for a week, partly in grief and partly in relief." }
+event.Grudge:
+  - { id: or_gr1, when: [other.realm], w: 3, t: "In {year} {other.realm} insulted {realm}. The orcs took the insult very seriously, and began sharpening things." }
+event.Treaty:
+  - { id: or_tr1, when: [other.realm], w: 2, t: "In {year} {realm} made a pact with {other.realm}, sealed by both sides biting the same bone; it lasted longer than anyone expected." }
+event.Tribute:
+  - { id: or_tb1, when: [other.realm], w: 3, t: "In {year} {other.realm} paid {realm} to go away, and for once the horde went." }
+event.SettlementFounded:
+  - { id: or_sf1, when: [settlement], w: 3, t: "In {year} a warband of {realm} put up a stockade at {settlement} and dared anyone to take it down." }
+event.Conquest:
+  - { id: or_cq1, when: [other.realm], w: 3, t: "In {year} {realm} swallowed {other.realm} whole; the conquered learned orcish law, which has one rule and many bruises." }
+siege.end:
+  - { id: or_se1, when: [end=stormed], w: 4, t: "The horde did not wait for engines: it climbed the walls of {settlement} on the bodies of its own dead." }

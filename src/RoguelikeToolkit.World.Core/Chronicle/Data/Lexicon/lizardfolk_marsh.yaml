@@ -1,0 +1,13 @@
+# Lizardfolk of the marsh.
+host: ["brood-host", "marsh-host", "mound-guard", "reed-stalkers"]
+cry!: ["The marsh takes all!", "Cold blood, sure blade!", "Sun and silt!", "For the mound!"]
+office.ruler!: ["eldest of the mound", "sun-blessed"]
+office.elder: ["mound-elder"]
+office.admiral: ["master of the reed-boats"]
+terrain.marsh: ["home waters", "warm shallows"]
+season.winter: ["the sluggish cold"]
+season.summer: ["the basking season"]
+noun.song: ["hissing chants"]
+noun.grief: ["a cold, unblinking silence"]
+verb.won: ["dragged the enemy under", "won with cold patience"]
+noun.goods: ["reed-paper and dried fish", "pearls and swamp-herbs"]

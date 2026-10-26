@@ -1,0 +1,29 @@
+# Lizardfolk of the marsh: cold patience, warm sun, the egg-mounds, and a memory measured in floods.
+battle.intro:
+  - { id: lz_bi1, w: 3, t: "In {year} the {att.host} of {att.realm} rose from the reeds without a sound, and moved on {def.realm} as patiently as the tide." }
+  - { id: lz_bi2, when: [att.general], w: 3, t: "{att.general} waited until the sun was high and the blood ran warm, then in {year} led {att.realm} against {def.realm}." }
+  - { id: lz_bi3, when: [season=winter], w: 4, t: "The lizardfolk of {att.realm} hate the cold, but in {season.word} of {year} they marched anyway, sluggish and furious, on {def.realm}." }
+battle.engage:
+  - { id: lz_en1, w: 2, t: "The {att.adj} warriors fought in silence, without cries or drums, which unnerved their enemies more than any war-song." }
+battle.after:
+  - { id: lz_ba1, when: [winner=attacker], w: 3, t: "{att.realm|cap} returned to the marsh and basked in the sun of its victory for a month." }
+  - { id: lz_ba2, when: [winner=defender], w: 3, t: "{att.realm|cap} slid back into the reeds; the lizardfolk do not mourn defeats, they only wait for the next flood." }
+event.Founding:
+  - { id: lz_fo1, w: 3, t: "In {year} the brood-mothers laid their eggs in one great mound, and the marsh-folk who guarded it became {realm}." }
+  - { id: lz_fo2, when: [place], w: 3, t: "In {year} the lizardfolk raised their mud-halls among the reeds at {place}, and the realm was {realm}." }
+event.PersonRose:
+  - { id: lz_ru1, when: [office=ruler], w: 3, t: "In {year} {who} hatched into the purple, so to speak, and became {who.office} of {realm}." }
+  - { id: lz_ap1, when: [office!=ruler, who.office], w: 2, t: "In {year} the elders of the mound named {who} {who.office} of {realm}, after watching {who.him} in silence for a full season." }
+event.PersonDied:
+  - { id: lz_dd1, when: [cause=age, who], w: 3, t: "In {year} {who} grew cold and slow and finally still; {realm} returned {who.his} body to the marsh, as is the custom." }
+  - { id: lz_dd2, when: [cause=fever|illness, who], w: 3, t: "A marsh-fever took {who} in {year}; even the lizardfolk of {realm} are not proof against everything the swamp breeds." }
+event.Grudge:
+  - { id: lz_gr1, when: [other.realm], w: 3, t: "In {year} {other.realm} wronged {realm}. The lizardfolk said nothing, and remembered, as the marsh remembers every flood." }
+event.Treaty:
+  - { id: lz_tr1, when: [other.realm], w: 2, t: "In {year} {realm} and {other.realm} shared warm stones in the sun, which among lizardfolk is a binding oath." }
+event.SettlementFounded:
+  - { id: lz_sf1, when: [settlement], w: 3, t: "In {year} a new egg-mound was raised at {settlement}, and a village of mud-halls grew up around it." }
+event.Shock:
+  - { id: lz_sh1, when: [shock=flood], w: 4, t: "In {year} the waters rose over {realm}; the lizardfolk swam, and waited, and called it a good year." }
+event.Conquest:
+  - { id: lz_cq1, when: [other.realm], w: 3, t: "In {year} {realm} conquered {other.realm} and let the marsh creep slowly into its fields." }
