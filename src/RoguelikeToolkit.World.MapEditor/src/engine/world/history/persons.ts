@@ -93,12 +93,14 @@ export const openAt = (r: { from: number; to: number }, turn: number): boolean =
 
 /**
  * The request that names a person: the same world seed, person, people and sex always give the same name, so a card
- * reads the same after Open. Persons are named by folk under their culture's rule (the engine's `NamePersons`).
+ * reads the same after Open. `key` is the person's stable key (Core's `HistoryPerson.StableKey`), not its id: ids shift
+ * when a plugin adds persons, stable keys never do. Persons are named by folk under their culture's rule (the engine's
+ * `NamePersons`).
  */
 export interface PersonNameRequest { seed: number; folk: string; culture: string; feminine: boolean; }
 
-export const personNameRequest = (seed: number, person: number, folk: string, culture: string, feminine: boolean): PersonNameRequest =>
-  ({ seed: hash2(seed, 0x9e75 + person) & 0x7fffffff, folk, culture, feminine });
+export const personNameRequest = (seed: number, key: number, folk: string, culture: string, feminine: boolean): PersonNameRequest =>
+  ({ seed: hash2(seed, 0x9e75 ^ key) & 0x7fffffff, folk, culture, feminine });
 
 /** Person ids an event names through its participants whose role starts with `person:` (optionally one role, `person:outlaw`). */
 export function involvedPersons(e: EventRecord, role?: string): number[] {

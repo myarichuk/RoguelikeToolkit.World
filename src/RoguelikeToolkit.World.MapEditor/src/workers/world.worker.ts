@@ -289,7 +289,7 @@ function expansionRecord(e: EngineApi, seed: number, info: Int32Array, strings: 
   const persons = Int32Array.from(e.HistoryPersons()), personText = e.HistoryPersonText!();
   const reqs = personText.map((t, i) => {
     const [folk = '', culture = ''] = t.split('\t');
-    return personNameRequest(seed, persons[i * PERSON_STRIDE], folk, culture, persons[i * PERSON_STRIDE + 4] === 1);
+    return personNameRequest(seed, persons[i * PERSON_STRIDE + 24], folk, culture, persons[i * PERSON_STRIDE + 4] === 1); // the stable key
   });
   const personNames = typeof e.NamePersons === 'function' && reqs.length
     ? e.NamePersons(reqs.map((r) => r.seed), reqs.map((r) => r.folk), reqs.map((r) => r.culture), reqs.map((r) => (r.feminine ? 1 : 0)))
