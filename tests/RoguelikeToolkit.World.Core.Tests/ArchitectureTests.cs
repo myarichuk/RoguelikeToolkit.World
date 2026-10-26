@@ -29,7 +29,7 @@ public sealed class ArchitectureTests(ITestOutputHelper output)
         ["Generation"] = 2, ["Peoples"] = 2,
         ["Tectonics"] = 3, ["Elevation"] = 3, ["Climate"] = 3, ["Hydrology"] = 3, ["Biomes"] = 3, ["Lithosphere"] = 3, ["Settlement"] = 3,
         ["Features"] = 4, ["Hierarchy"] = 4, ["History"] = 4,
-        ["Sites"] = 5, ["Integration"] = 5, ["Queries"] = 5, ["Names"] = 5,
+        ["Sites"] = 5, ["Integration"] = 5, ["Queries"] = 5, ["Names"] = 5, ["Chronicle"] = 5,
         [Root] = 6,
     };
 

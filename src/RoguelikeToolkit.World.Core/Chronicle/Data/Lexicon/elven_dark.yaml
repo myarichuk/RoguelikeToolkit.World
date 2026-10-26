@@ -1,0 +1,12 @@
+# Dark elves.
+host: ["house-guard", "shadow cohort", "blade-host", "night-host"]
+cry!: ["No light, no mercy!", "For the House!", "Into the dark with them!", "Kneel or bleed!"]
+office.ruler!: ["matron of the first house", "lord of the deep throne"]
+office.spymaster: ["mistress of the web"]
+office.chancellor: ["keeper of the poison-key"]
+terrain.mountain: ["deep caverns", "lightless ways"]
+season.summer: ["the hated bright months"]
+noun.song: ["whispered verses", "songs of the knife"]
+noun.grief: ["a mourning nobody believed"]
+verb.won: ["closed the trap", "left no one to tell it otherwise"]
+noun.goods: ["spider-silk and black glass", "rare poisons and cave-pearls"]

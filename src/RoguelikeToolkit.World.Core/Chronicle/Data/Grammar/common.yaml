@@ -1,0 +1,850 @@
+# Chronicle grammar: symbol -> rules { id, when: [predicates], w: weight, cd: cooldown, t: "template" }.
+# Every event renders from event.<Kind> (event.generic as a fallback). Slots: {realm}, {att.general}, {terrain.noun}...;
+# modifiers |cap |lower |pl |a |poss |ord |num |the; nested symbols {#symbol}, optional {#symbol?}. Predicates: key=value,
+# key=a|b, key!=value, key (present), "!key" (absent). A rule is drawn only when every slot it names resolves.
+# Culture overlays (Grammar/<culture>.yaml) add rules; a rule with an existing id replaces it; "symbol!" replaces the pool.
+
+# =====================================================================================================================
+# Fallback
+# =====================================================================================================================
+event.generic:
+  - { id: g01, when: [realm], t: "In {year}, {realm} knew {what}." }
+  - { id: g02, when: [realm], t: "The annals of {realm} for {year} record {what}." }
+  - { id: g03, when: [realm], t: "{year}: {what|cap} came to {realm}." }
+  - { id: g04, t: "In {year} the chroniclers set down {what}." }
+  - { id: g05, t: "Of {year}, the records speak of {what}." }
+  - { id: g06, t: "{year} brought {what}." }
+
+# =====================================================================================================================
+# Field battles (War, with a battle record)
+# =====================================================================================================================
+event.War:
+  - { id: wb_full, when: [battle], w: 4, cd: 0, t: "{#battle.intro} {#battle.engage} {#battle.turn?} {#battle.fate?} {#battle.rout} {#battle.after?} {#battle.cry?}" }
+  - { id: wb_short, when: [battle], w: 2, cd: 0, t: "{#battle.intro} {#battle.turn} {#battle.fate?} {#battle.rout} {#battle.cry?}" }
+  - { id: wb_plain, when: [battle], w: 1, cd: 0, t: "{#battle.intro} {#battle.engage} {#battle.fate?} {#battle.rout} {#battle.after?}" }
+  - { id: wl01, when: ["!battle", att.realm, def.realm], t: "In {year} {att.realm} raided the borders of {def.realm}, burning what it could not carry off." }
+  - { id: wl02, when: ["!battle", att.realm, def.realm], t: "War came in {year}: {att.realm} fell upon {def.realm}." }
+  - { id: wl03, when: ["!battle", att.realm, def.realm], t: "The {att.adj} {att.host} of {att.realm} crossed into {def.realm} in {year} with fire and spear." }
+  - { id: wl04, when: ["!battle", att.realm, def.realm], t: "{year} saw {att.realm} and {def.realm} at each other's throats once more." }
+  - { id: wl05, when: ["!battle", att.realm, def.realm], t: "Border fighting flared in {year}, when {att.realm} struck at {def.realm}." }
+  - { id: wl06, when: ["!battle", att.realm, def.realm], t: "In {year} the {def.people} of {def.realm} woke to find the {att.adj} {att.host} among their fields." }
+  - { id: wl07, when: ["!battle"], w: 0.25, t: "In {year} there was war on the border." }
+
+battle.intro:
+  - { id: bi01, when: [season=winter, att.general], w: 2, t: "In {year}, in {season.word}, {att.general} led the {att.host} of {att.realm} against {def.realm}." }
+  - { id: bi02, when: [kind=Ambush], w: 2, t: "In {year} {def.realm|poss} {def.host} marched blind into the {terrain.noun}, and never saw the trap close around it." }
+  - { id: bi03, t: "In {year} {att.realm} marched on {def.realm}, and the two hosts met on the {terrain.noun}." }
+  - { id: bi04, when: [att.general, att.general.epithet], t: "{att.general} {att.general.epithet} called the banners of {att.realm} in {year} and went looking for the {def.host} of {def.realm}." }
+  - { id: bi05, when: [season=spring], w: 2, t: "With {season.word} of {year} the {att.adj} {att.host} came down upon {def.realm}." }
+  - { id: bi06, when: [season=summer], w: 2, t: "In {season.word} of {year} the {att.people} of {att.realm} crossed into the lands of {def.realm}." }
+  - { id: bi07, when: [season=autumn], w: 2, t: "When the harvest of {year} was in, {att.realm} turned its spears on {def.realm}." }
+  - { id: bi08, when: [att.general, def.general], w: 2, t: "In {year} {att.general} of {att.realm} and {def.general} of {def.realm} met at last on the {terrain.noun}." }
+  - { id: bi09, t: "{def.realm|cap} had word of the coming storm in {year}, and drew up its {def.host} to meet {att.realm} on the {terrain.noun}." }
+  - { id: bi10, when: [terrain=forest], w: 2, t: "The war of {year} came to the {terrain.noun}, where {att.realm} sought out {def.realm} beneath the trees." }
+  - { id: bi11, when: [terrain=hills|mountain], w: 2, t: "In {year} {att.realm} pushed up into the {terrain.noun} to bring {def.realm} to battle." }
+  - { id: bi12, when: [terrain=marsh], w: 2, t: "{year} found the {att.host} of {att.realm} wading through the {terrain.noun} after {def.realm}." }
+  - { id: bi13, when: [terrain=desert], w: 2, t: "Under the white sun of {year}, {att.realm} crossed the {terrain.noun} toward {def.realm}." }
+  - { id: bi14, when: [terrain=snow], w: 2, t: "In {year} the {att.adj} {att.host} trudged across the {terrain.noun} to strike at {def.realm}." }
+  - { id: bi15, when: [kind=Relief, parent.settlement], w: 6, t: "In {year} {att.realm} marched to break the siege of {parent.settlement}, and {def.realm} turned from its siege lines to meet it." }
+  - { id: bi16, when: [kind=Relief, parent.settlement, att.general], w: 6, t: "{att.general} brought the {att.host} of {att.realm} to the relief of {parent.settlement} in {year}, and the besiegers came out to fight." }
+  - { id: bi17, when: [tag=winter_quarters], w: 4, t: "The {att.host} of {att.realm} wintered hard in its quarters and took the field against {def.realm} only with the spring of {year}." }
+  - { id: bi18, when: [place], t: "The fighting of {year} came to the very walls of {place}, where {att.realm} met {def.realm}." }
+  - { id: bi19, when: [kind=Naval], w: 6, t: "In {year} the ships of {att.realm} and {def.realm} met on the grey sea." }
+  - { id: bi20, when: [att.general.age], t: "In {year} {att.general}, then {att.general.age} years of age, took the {att.host} of {att.realm} to war against {def.realm}." }
+  - { id: bi21, when: [season=winter], w: 2, t: "{att.realm|cap} went to war in {season.word} of {year}, when no sane captain marches, and caught {def.realm} by surprise." }
+  - { id: bi22, when: [kind=Ambush, def.general], w: 2, t: "{def.general} led the {def.host} of {def.realm} through the {terrain.noun} in {year}, never guessing that {att.realm} was waiting." }
+  - { id: bi23, t: "{year} was a year of war: {att.realm} gathered its {att.host} and went against {def.realm}." }
+  - { id: bi24, when: [tag=winter_quarters, att.general], w: 4, t: "{att.general} kept the {att.host} of {att.realm} in winter quarters through the cold, and in the spring of {year} fell on {def.realm}." }
+
+battle.engage:
+  - { id: en01, when: [att.tactic, def.tactic], w: 2, t: "{att.realm|cap} staked the day on {att.tactic}; {def.realm} answered with {def.tactic}." }
+  - { id: en02, when: [att.unit, def.unit], w: 2, t: "The {att.unit} of {att.realm} came on against the {def.unit} of {def.realm}." }
+  - { id: en03, t: "For an hour the two hosts only shouted across the {terrain.noun}, until the first ranks crashed together." }
+  - { id: en04, t: "The {att.adj} and the {def.adj} lines met with a crash heard for miles." }
+  - { id: en05, when: [att.general, def.general], t: "{att.general} and {def.general} each held back their best until the other should blink." }
+  - { id: en06, when: [att.tactic, def.unit], t: "Against the {def.unit} of {def.realm}, {att.realm} tried {att.tactic}." }
+  # attacker tactics
+  - { id: ea_ambush, when: [att.tactic=ambush], w: 3, t: "{att.realm|cap} would not fight in the open: its {att.unit} lay hidden in the {terrain.noun} and waited." }
+  - { id: ea_berserk, when: [att.tactic=berserk_rush], w: 3, t: "The {att.unit} of {att.realm} worked themselves into a frenzy and hurled themselves forward without order or mercy." }
+  - { id: ea_charge, when: [att.tactic=heavy_charge], w: 3, t: "{att.realm|cap} massed its {att.unit} for one great charge, lances lowered and banners streaming." }
+  - { id: ea_horsebow, when: [att.tactic=horse_archers], w: 3, t: "The {att.unit} of {att.realm} rode rings around the enemy, loosing as they wheeled." }
+  - { id: ea_arrows, when: [att.tactic=massed_archery], w: 3, t: "{att.realm|cap} opened the day with its {att.unit}, and {noun.sky} went dark with shafts." }
+  - { id: ea_pike, when: [att.tactic=pike_square], w: 3, t: "{att.realm|cap} advanced in deep squares of pikes, a moving hedge of iron." }
+  - { id: ea_shield, when: [att.tactic=shieldwall], w: 3, t: "The {att.adj} line locked shields and walked forward, step by heavy step." }
+  - { id: ea_engines, when: [att.tactic=siege_engines], w: 3, t: "{att.realm|cap} dragged its engines into range and let the stones speak first." }
+  - { id: ea_skirmish, when: [att.tactic=skirmish], w: 3, t: "{att.realm|cap} sent its {att.unit} forward in a loose screen, to sting and fall back and sting again." }
+  - { id: ea_beasts, when: [att.tactic=war_beasts], w: 3, t: "{att.realm|cap} drove its {att.unit} before the line, and the ground shook under them." }
+  # defender tactics
+  - { id: ed_ambush, when: [def.tactic=ambush], w: 3, t: "{def.realm|cap} had hidden its {def.unit} in the {terrain.noun}, and they rose from cover as the enemy passed." }
+  - { id: ed_berserk, when: [def.tactic=berserk_rush], w: 3, t: "{def.realm|cap} did not wait to be attacked: its {def.unit} came screaming down to meet the enemy." }
+  - { id: ed_charge, when: [def.tactic=heavy_charge], w: 3, t: "{def.realm|cap} answered with its {def.unit}, thundering across the {terrain.noun} knee to knee." }
+  - { id: ed_horsebow, when: [def.tactic=horse_archers], w: 3, t: "The {def.unit} of {def.realm} would not close, but rode and loosed and rode again." }
+  - { id: ed_arrows, when: [def.tactic=massed_archery], w: 3, t: "The {def.unit} of {def.realm} met the advance with arrow after arrow." }
+  - { id: ed_pike, when: [def.tactic=pike_square], w: 3, t: "{def.realm|cap} grounded its pikes and waited, and the {def.unit} did not flinch." }
+  - { id: ed_shield, when: [def.tactic=shieldwall], w: 3, t: "{def.realm|cap} stood behind a wall of shields and dared the enemy to break it." }
+  - { id: ed_engines, when: [def.tactic=siege_engines], w: 3, t: "{def.realm|cap} had dragged engines up behind its lines, and they threw stones into the advancing ranks." }
+  - { id: ed_skirmish, when: [def.tactic=skirmish], w: 3, t: "The {def.unit} of {def.realm} harried the enemy's every step from the {terrain.noun}." }
+  - { id: ed_beasts, when: [def.tactic=war_beasts], w: 3, t: "{def.realm|cap} loosed its {def.unit}, roaring, into the enemy's path." }
+
+battle.turn:
+  - { id: bt_flank1, when: [beat=flank, win.unit], w: 3, t: "Then the {win.unit} of {win.realm} swept round the flank, and the {lose.adj} line folded like wet parchment." }
+  - { id: bt_flank2, when: [beat=flank], w: 3, t: "The day turned when {win.realm} found an open flank and rode into it." }
+  - { id: bt_flank3, when: [beat=flank, win.general], w: 2, t: "{win.general} saw the gap on the enemy's left before anyone else did, and sent the horse through it." }
+  - { id: bt_line1, when: [beat=broke_the_line], w: 3, t: "At the third push the {lose.adj} line cracked, and then it shattered." }
+  - { id: bt_line2, when: [beat=broke_the_line, win.unit], w: 3, t: "The {win.unit} of {win.realm} drove a wedge through the centre, and the enemy {verb.broke}." }
+  - { id: bt_feint1, when: [beat=feigned_retreat], w: 3, t: "{win.realm|cap} feigned a rout; {lose.realm} chased, broke its own order, and was cut apart." }
+  - { id: bt_feint2, when: [beat=feigned_retreat, win.general], w: 3, t: "{win.general} ordered a retreat that was no retreat, and the enemy fell for it." }
+  - { id: bt_arrow1, when: [beat=arrow_storm], w: 3, t: "Arrows fell like {season.word} hail, and the {lose.adj} ranks thinned under them." }
+  - { id: bt_arrow2, when: [beat=arrow_storm, win.realm], w: 3, t: "The archers of {win.realm} emptied quiver after quiver until the enemy could stand no more." }
+  - { id: bt_shields1, when: [beat=shields_locked], w: 3, t: "Shield ground against shield for the length of the afternoon, and it was {win.realm} that pushed last." }
+  - { id: bt_shields2, when: [beat=shields_locked], w: 3, t: "The two walls of shields locked and heaved, and men drowned in the press without a blow struck." }
+  - { id: bt_pikes1, when: [beat=pikes_held], w: 3, t: "The pikes held. Horse after horse was spitted on them, and the charge broke like surf on rock." }
+  - { id: bt_pikes2, when: [beat=pikes_held, win.realm], w: 3, t: "Three times the enemy came at the pikes of {win.realm}, and three times it fell back." }
+  - { id: bt_harried1, when: [beat=harried], w: 3, t: "{win.realm|cap} harried the enemy from every side until its order dissolved into a mob." }
+  - { id: bt_harried2, when: [beat=harried], w: 3, t: "Stung from the flanks and the rear, the {lose.adj} host could neither fight nor flee in good order." }
+  - { id: bt_trap1, when: [beat=trap_sprung], w: 3, t: "The trap was sprung: the {terrain.noun} itself seemed to rise up with blades." }
+  - { id: bt_trap2, when: [beat=trap_sprung, lose.general], w: 3, t: "{lose.general} had led the {lose.host} straight into the jaws of the trap." }
+  - { id: bt_night1, when: [beat=night_attack], w: 3, t: "{win.realm|cap} came in the dark, and the {lose.adj} camp woke to fire and screaming." }
+  - { id: bt_night2, when: [beat=night_attack], w: 3, t: "It was a night attack; nobody on the field could tell friend from foe until dawn showed who had won." }
+  - { id: bt_frenzy1, when: [beat=frenzy], w: 3, t: "A frenzy took the {win.adj} ranks, and they fought like things possessed." }
+  - { id: bt_frenzy2, when: [beat=frenzy], w: 3, t: "The {win.host} of {win.realm} went mad with battle-rage, and no shield could stop them." }
+  - { id: bt_stampede1, when: [beat=stampede], w: 3, t: "The beasts stampeded, trampling friend and foe alike, and {lose.realm} got the worst of it." }
+  - { id: bt_stampede2, when: [beat=stampede], w: 3, t: "Maddened beasts tore through the {lose.adj} lines, and the {lose.host} never recovered." }
+  - { id: bt_rain1, when: [beat=rain_on_bowstrings], w: 3, t: "Spring rain soaked the bowstrings of {lose.realm}, and its archers stood useless." }
+  - { id: bt_rain2, when: [beat=rain_on_bowstrings], w: 3, t: "It rained, and wet strings and sodden fletching cost {lose.realm} the day." }
+  - { id: bt_ford1, when: [beat=river_ford_held], w: 3, t: "{win.realm|cap} held the ford. The river ran red with the {lose.people} who tried to cross it." }
+  - { id: bt_ford2, when: [beat=river_ford_held], w: 3, t: "All day {lose.realm} tried the river crossing, and all day the {win.adj} spears threw them back into the water." }
+  - { id: bt_ford3, when: [beat=river_ford_held, win.general], w: 2, t: "{win.general} planted the banner of {win.realm} at the ford and swore not to give a yard, and did not." }
+  - { id: bt_upstream1, when: [beat=forded_upstream], w: 3, t: "{win.realm|cap} found a ford upstream and was across before the enemy knew it." }
+  - { id: bt_upstream2, when: [beat=forded_upstream], w: 3, t: "A shepherd showed {win.realm} a crossing upstream, and the river that should have saved {lose.realm} was turned." }
+  - { id: bt_snow1, when: [beat=snowbound], w: 3, t: "The snow came down so thick that men froze where they stood, and the {lose.adj} host froze fastest." }
+  - { id: bt_snow2, when: [beat=snowbound], w: 3, t: "Snowbound and starving, the {lose.host} of {lose.realm} fought on half-frozen feet." }
+  - { id: bt_mired1, when: [beat=mired], w: 3, t: "The {lose.adj} riders charged into the mire and sank to their horses' bellies." }
+  - { id: bt_mired2, when: [beat=mired], w: 3, t: "The soft ground swallowed the enemy's horse, and with it the enemy's hopes." }
+  - { id: bt_duel1, when: [beat=champion_duel], w: 3, t: "Before the lines met, the champions of both hosts fought alone between them, and the champion of {win.realm} lived." }
+  - { id: bt_duel2, when: [beat=champion_duel, win.general], w: 3, t: "{win.general} answered the enemy's challenge in person, and won the duel and the day with one stroke." }
+  - { id: bt_held1, when: [beat=held_the_line], w: 3, t: "The line held, and held, and held, and at the end of it neither side had moved." }
+  - { id: bt_held2, when: [beat=held_the_line], w: 3, t: "{def.realm|cap} would not break and {att.realm} would not stop, and the dead piled up between them." }
+  - { id: bt_last1, when: [beat=last_stand], w: 3, t: "The last of the {lose.adj} host made a stand on a little rise, and sold their lives dearly." }
+  - { id: bt_last2, when: [beat=last_stand, lose.unit], w: 3, t: "The {lose.unit} of {lose.realm} formed a ring around their standard and died there, every one." }
+  - { id: bt_slaughter1, when: [beat=slaughter], w: 3, t: "{win.realm|cap} gave no quarter, and the field became a slaughter-yard." }
+  - { id: bt_slaughter2, when: [beat=slaughter], w: 3, t: "What followed was not a battle but a butchery: {win.realm} killed every {lose.adj} soldier it could reach." }
+  - { id: bt_hard1, when: [beat=hard_fought], w: 2, t: "It was a hard day, decided by inches." }
+  - { id: bt_hard2, when: [beat=hard_fought], w: 2, t: "The fighting swayed back and forth until both sides could barely lift their arms." }
+  - { id: bt_hard3, when: [beat=hard_fought], w: 2, t: "Nobody who fought on the {terrain.noun} that day called it an easy victory." }
+  - { id: bt_rout1, when: [beat=rout], w: 2, t: "When the enemy {verb.broke}, it {verb.broke} all at once." }
+  - { id: bt_rout2, when: [beat=rout], w: 2, t: "The rout began at the back of the {lose.adj} host, where men could not see the fighting but could hear it." }
+  - { id: bt_refused1, when: [beat=field_refused], w: 3, t: "{def.realm|cap} would not give battle, and shut itself behind its walls while {att.realm} burned the fields." }
+  - { id: bt_refused2, when: [beat=field_refused], w: 3, t: "Outnumbered, {def.realm} let the raiders pass and counted the smoke from behind its walls." }
+  - { id: bt_withdrew1, when: [beat=withdrew], w: 3, t: "Seeing the odds, {att.realm} turned back without a blow." }
+
+battle.fate:
+  - { id: bf_fell1, when: [beat=general_fell, fallen], w: 3, t: "{fallen} fell in the press, and the {adj.grim} news ran down the lines of {fallen.realm}." }
+  - { id: bf_fell2, when: [beat=general_fell, fallen], w: 3, t: "{fallen} was cut down at the height of the fighting; {fallen.his} body was carried from the field on a broken shield." }
+  - { id: bf_fell3, when: [beat=general_fell, fallen, fallen.age], w: 2, t: "{fallen} died on the field at {fallen.age}, sword in hand." }
+  - { id: bf_fell4, when: [beat=general_fell, fallen], w: 2, t: "An arrow found {fallen} at the turning of the day, and {fallen.realm} lost its captain." }
+  - { id: bf_fell5, when: [beat=general_fell, "!fallen"], w: 2, t: "A captain fell that day, and was mourned." }
+  - { id: bf_capt1, when: [beat=general_captured, lose.general], w: 3, t: "{lose.general} was taken alive and led away to await a ransom." }
+  - { id: bf_capt2, when: [beat=general_captured, lose.general], w: 3, t: "{lose.general} surrendered {lose.general.his} sword and was held for ransom by {win.realm}." }
+  - { id: bf_capt3, when: [beat=general_captured], w: 2, t: "The enemy captain was taken alive, a prize worth more than any plunder." }
+  - { id: bf_turn1, when: [beat=turncoat, lose.general], w: 4, t: "At the height of the fighting {lose.general} turned {lose.general.his} banner and went over to the enemy, bought long before." }
+  - { id: bf_turn2, when: [beat=turncoat], w: 4, t: "Then a captain of {lose.realm} betrayed the host, wheeling his company out of the line at the worst possible moment; somebody had paid him well." }
+  - { id: bf_turn3, when: [beat=turncoat], w: 3, t: "Treachery decided the day: a bribed commander of {lose.realm} opened the line to the enemy." }
+  - { id: bf_heads1, when: [beat=heads_taken], w: 3, t: "{win.realm|cap} took the heads of the slain, as was its custom, and stacked them by the road." }
+  - { id: bf_heads2, when: [beat=heads_taken], w: 3, t: "That night the victors took heads, and the {lose.people} never forgot it." }
+
+battle.rout:
+  - { id: br_ad1, when: [winner=attacker, margin=decisive], t: "{def.realm|poss} {def.host} {verb.broke} and ran, and the {att.adj} riders cut it down until dark." }
+  - { id: br_ad2, when: [winner=attacker, margin=decisive], t: "By nightfall {def.realm} had no army left, only {noun.dead}." }
+  - { id: br_ad3, when: [winner=attacker, margin=decisive], t: "{att.realm|cap} {verb.won}; {def.realm} fled the {terrain.noun} with {def.loss}." }
+  - { id: br_ad4, when: [winner=attacker, margin=decisive, def.general], t: "{def.general} rode from the field with a handful of guards; the rest of {def.realm|poss} {def.host} lay where it fell." }
+  - { id: br_av1, when: [winner=attacker, margin=victory], t: "By dusk {att.realm} held the field, and {def.realm} drew off with {def.loss}." }
+  - { id: br_av2, when: [winner=attacker, margin=victory], t: "{att.realm|cap} {verb.won}, though {def.realm} withdrew in good order." }
+  - { id: br_av3, when: [winner=attacker, margin=victory], t: "The {def.adj} {def.host} gave ground at last and fell back, leaving the field to {att.realm}." }
+  - { id: br_av4, when: [winner=attacker, margin=victory, att.general], t: "{att.general} camped on the field that night, and counted it a victory." }
+  - { id: br_ap1, when: [margin=pyrrhic], t: "{att.realm|cap} held the field, but limped from it with {att.loss}." }
+  - { id: br_ap2, when: [margin=pyrrhic], t: "It was a victory for {att.realm}, of the kind that ruins the victor." }
+  - { id: br_ap3, when: [margin=pyrrhic], t: "{att.realm|cap} won the day and lost the flower of its {att.host} doing it." }
+  - { id: br_st1, when: [margin=stalemate], t: "Neither side would yield; at nightfall the hosts drew apart, and {att.realm} and {def.realm} both claimed the day." }
+  - { id: br_st2, when: [margin=stalemate], t: "The battle ended where it began, with nothing won but graves." }
+  - { id: br_st3, when: [margin=stalemate], t: "When the light failed the two hosts were still facing each other across their own dead." }
+  - { id: br_dv1, when: [winner=defender, margin=victory], t: "{def.realm|cap} held, and the {att.adj} {att.host} fell back with {att.loss}." }
+  - { id: br_dv2, when: [winner=defender, margin=victory], t: "The attack failed; {att.realm} withdrew, and {def.realm} let it go." }
+  - { id: br_dv3, when: [winner=defender, margin=victory, def.general], t: "{def.general} {verb.won}, and {att.realm} went home with nothing to show for the march." }
+  - { id: br_dv4, when: [winner=defender, margin=victory], t: "{def.realm|cap} {verb.won}, and the invaders turned for home." }
+  - { id: br_dd1, when: [winner=defender, margin=decisive], t: "The {att.host} of {att.realm} was routed, and {def.realm} hunted its remnants for three days." }
+  - { id: br_dd2, when: [winner=defender, margin=decisive], t: "{att.realm|cap} {verb.broke}, and its {att.host} {verb.fled} across the {terrain.noun}, throwing down shields as it went." }
+  - { id: br_dd3, when: [winner=defender, margin=decisive], t: "Of the {att.adj} {att.host} that marched out, barely a remnant came home, with {att.loss}." }
+  - { id: br_dd4, when: [winner=defender, margin=decisive, att.general], t: "{att.general} escaped the rout by a hair; few of {att.general.his} soldiers were so lucky." }
+  - { id: br_x1, when: [win.realm, lose.realm], w: 0.5, t: "The day went to {win.realm}." }
+
+battle.after:
+  - { id: ba_ad1, when: [winner=attacker, margin=decisive], t: "The road to the heart of {def.realm} lay open." }
+  - { id: ba_ad2, when: [winner=attacker, margin=decisive], t: "{def.realm|cap} sued for whatever terms it could get." }
+  - { id: ba_av1, when: [winner=attacker, margin=victory], t: "The {att.adj} host spent the rest of the season looting the countryside of {def.realm}." }
+  - { id: ba_av2, when: [winner=attacker, margin=victory], t: "Smoke rose over the farms of {def.realm} for weeks after." }
+  - { id: ba_ap1, when: [margin=pyrrhic], t: "{noun.song|cap} were made of it in {att.realm}, but they were sung by widows." }
+  - { id: ba_ap2, when: [margin=pyrrhic], t: "{att.realm|cap} had won the battle and could not afford another." }
+  - { id: ba_st1, when: [margin=stalemate], t: "Both realms buried their dead and sharpened their grudges." }
+  - { id: ba_st2, when: [margin=stalemate], t: "Nothing was settled, and everyone knew it." }
+  - { id: ba_dv1, when: [winner=defender], t: "{def.realm|cap} remembered the day, and the grudge." }
+  - { id: ba_dv2, when: [winner=defender, margin=decisive], t: "The bones of {att.realm|poss} host whitened on the {terrain.noun} for a generation." }
+  - { id: ba_dv3, when: [winner=defender, margin=decisive], t: "In {def.realm} they still point out the place where the invaders broke." }
+  - { id: ba_x1, when: [win.realm, lose.realm], t: "{year} was remembered in {win.realm} as a year of triumph, and in {lose.realm} as a year of {noun.grief}." }
+  - { id: ba_x2, when: [win.realm], t: "{time.later|cap}, the {win.people} drank to that day." }
+  - { id: ba_m1, when: [tag=mercenaries], w: 3, t: "The merchants of {att.realm} had paid for sell-swords to swell the {att.host}, and expected their money's worth." }
+  - { id: ba_m2, when: [tag=mercenaries, winner=defender], w: 3, t: "The hired companies of {att.realm} were the first to leave the field, as hired companies are." }
+  - { id: ba_m3, when: [tag=mercenaries, winner=attacker], w: 3, t: "The merchants' gold had bought {att.realm} its victory, and the merchants did not let anyone forget it." }
+  - { id: ba_q1, when: [tag=winter_quarters], w: 0.5, t: "Few in the {att.host} who had wintered in quarters ever spoke well of that campaign." }
+
+battle.cry:
+  - { id: cry0, w: 3, cd: 0, t: "" }
+  - { id: cry1, when: [win.cry], t: "Long after, the {win.people} still told how the {win.host} had roared \"{win.cry}\"" }
+  - { id: cry2, when: [win.cry], t: "The cry of the victors carried across the field: \"{win.cry}\"" }
+  - { id: cry3, when: [lose.cry], t: "The last the field heard of the {lose.adj} host was its old cry, \"{lose.cry}\"" }
+  - { id: cry4, when: [win.cry, win.general], t: "{win.general} raised {win.general.his} blade and the whole host answered: \"{win.cry}\"" }
+
+# =====================================================================================================================
+# Campaigns that never came to battle
+# =====================================================================================================================
+event.Campaign:
+  - { id: ca_dec1, when: [tag=declined, winner=none], t: "In {year} {att.realm} marched against {def.realm}, but found its host outmatched and turned back without a blow." }
+  - { id: ca_dec2, when: [tag=declined], t: "{att.realm|cap} went to war with {def.realm} in {year}, looked at the odds across the {terrain.noun}, and thought better of it." }
+  - { id: ca_dec3, when: [tag=declined, att.general], t: "{att.general} led {att.realm} out in {year}, took one look at the {def.adj} lines, and ordered the march home." }
+  - { id: ca_dec4, when: [tag=declined], t: "The campaign of {year} ended before it began: {att.realm} would not risk its {att.host} against {def.realm}." }
+  - { id: ca_sup1, when: [tag=supply_failed], t: "In {year} {att.realm} marched on {def.realm}, but the wagons never caught up, and hunger did what no enemy had to." }
+  - { id: ca_sup2, when: [tag=supply_failed], t: "The campaign of {year} against {def.realm} died on the road: {att.realm|poss} {att.host} ate its horses and went home." }
+  - { id: ca_sup3, when: [tag=supply_failed, season=winter], t: "{att.realm|cap} marched on {def.realm} in {season.word} of {year}, and the cold and the empty stores broke the host before it ever saw the enemy." }
+  - { id: ca_sup4, when: [tag=supply_failed, att.general], t: "{att.general} could not feed the {att.host} of {att.realm} on the march to {def.realm} in {year}, and brought back a hungry, sullen army." }
+  - { id: ca_sup5, when: [tag=supply_failed], t: "Forage failed and the roads gave out; the war {att.realm} meant to wage on {def.realm} in {year} never reached a battlefield." }
+  - { id: ca_win1, when: [tag=winter_quarters], t: "{att.realm|cap} wintered its {att.host} in quarters in {year}, waiting on a spring that brought no battle with {def.realm}." }
+  - { id: ca_gen1, w: 0.05, t: "In {year} {att.realm} set out against {def.realm}, and came home again with nothing done." }
+  - { id: ca_gen2, w: 0.05, t: "The march of {year} against {def.realm} came to nothing, and {att.realm} said little about it afterward." }
+
+# =====================================================================================================================
+# Sieges
+# =====================================================================================================================
+event.Siege:
+  - { id: sg_full, when: [battle], w: 4, cd: 0, t: "{#siege.intro} {#siege.course?} {#siege.end} {#siege.after?}" }
+  - { id: sg_short, when: [battle], w: 2, cd: 0, t: "{#siege.intro} {#siege.end}" }
+  - { id: sg_bare1, when: ["!battle", settlement, att.realm], t: "In {year} {att.realm} besieged {settlement}." }
+  - { id: sg_bare2, when: ["!battle", settlement], t: "{settlement} was besieged in {year}." }
+  - { id: sg_bare3, when: ["!battle"], w: 0.25, t: "A siege was laid in {year}." }
+
+siege.intro:
+  - { id: si01, when: [settlement], t: "In {year} {att.realm} laid siege to {settlement}." }
+  - { id: si02, when: [settlement, att.general], t: "{att.general} drew lines around {settlement} in {year} and settled down to starve it." }
+  - { id: si03, when: [settlement, season=winter], w: 2, t: "In {season.word} of {year} the {att.host} of {att.realm} closed around {settlement}." }
+  - { id: si04, when: [settlement, season=summer], w: 2, t: "In {season.word} of {year} {att.realm} dug in before the walls of {settlement}." }
+  - { id: si05, when: [settlement], t: "After the field was won, {att.realm} turned on {settlement} in {year} and invested it." }
+  - { id: si06, when: [settlement], t: "{def.realm|cap} fell back behind the walls of {settlement} in {year}, and {att.realm} followed." }
+  - { id: si07, when: [settlement, settlement.kind], t: "The {settlement.kind} of {settlement} shut its gates against {att.realm} in {year}." }
+  - { id: si08, when: [settlement, span], t: "In {year} began the siege of {settlement}, which was to last {span}." }
+  - { id: si09, when: [settlement, def.people], t: "In {year} the {def.people} of {settlement} watched the camp-fires of {att.realm} ring their walls." }
+  - { id: si10, when: [settlement, season=autumn], w: 2, t: "When the leaves fell in {year}, {att.realm} was encamped around {settlement}." }
+  - { id: si11, when: [settlement, season=spring], w: 2, t: "In {season.word} of {year} {att.realm} brought its {att.host} to the walls of {settlement}." }
+
+siege.course:
+  - { id: sc_fever1, when: [beat=camp_fever], w: 3, t: "Fever broke out in the siege camp, and the besiegers began to bury more than the besieged." }
+  - { id: sc_fever2, when: [beat=camp_fever], w: 3, t: "The siege lines rotted with sickness; every morning the {att.adj} carts carried out the dead." }
+  - { id: sc_wcamp1, when: [beat=winter_camp], w: 3, t: "Winter came down on the siege camp, and the besiegers shivered harder than the besieged." }
+  - { id: sc_wcamp2, when: [beat=winter_camp], w: 3, t: "Snow filled the trenches, and the {att.host} huddled in its tents and cursed the walls." }
+  - { id: sc_starve1, when: [beat=starved_out], w: 3, t: "Inside, the stores ran low, then lower; the people of {settlement} ate their horses, then their dogs." }
+  - { id: sc_starve2, when: [beat=starved_out], w: 3, t: "Hunger walked the streets of {settlement}, and nobody could keep it out." }
+  - { id: sc_breach1, when: [beat=walls_breached], w: 3, t: "The engines battered the walls of {settlement} until a breach yawned wide enough for a column." }
+  - { id: sc_esc1, when: [beat=escalade], w: 3, t: "Night after night the besiegers came at the walls with ladders." }
+  - { id: sc_held1, when: [beat=held_out], w: 3, t: "{settlement} held out, month after month, long past the point anyone outside had expected." }
+  - { id: sc_span1, when: [span], t: "The siege dragged on for {span}." }
+  - { id: sc_span2, when: [span, months], t: "For {span} nothing went in or out of {settlement} but arrows." }
+  - { id: sc_span3, when: [span], t: "It was {span} of mud, hunger and waiting." }
+
+siege.end:
+  # stormed
+  - { id: se_st1, when: [end=stormed], t: "In the end {att.realm} stormed the walls, and {settlement} fell in a night of fire." }
+  - { id: se_st2, when: [end=stormed, beat=escalade], w: 2, t: "At last the ladders went up all at once, and by dawn the {att.adj} banner flew over {settlement}." }
+  - { id: se_st3, when: [end=stormed, beat=walls_breached], w: 2, t: "The breach was carried at the third assault, and the {att.host} poured into {settlement}." }
+  - { id: se_st4, when: [end=stormed, att.general], t: "{att.general} led the final assault {att.general.him}self, and {settlement} was taken by the sword." }
+  - { id: se_st5, when: [end=stormed], t: "{settlement} was taken by storm, and what followed is not written down." }
+  # surrendered
+  - { id: se_su1, when: [end=surrendered], t: "Starving, {settlement} opened its gates to {att.realm}." }
+  - { id: se_su2, when: [end=surrendered], t: "The garrison of {settlement} surrendered on terms, and marched out thin as ghosts." }
+  - { id: se_su3, when: [end=surrendered, def.realm], t: "With no help coming from {def.realm}, {settlement} gave itself up." }
+  - { id: se_su4, when: [end=surrendered], t: "When the last of the grain was gone, the elders of {settlement} carried the keys out to the {att.adj} camp." }
+  - { id: se_su5, when: [end=surrendered, beat=starved_out], w: 2, t: "{settlement} was starved into submission, and surrendered." }
+  # betrayed
+  - { id: se_be1, when: [end=betrayed], t: "{settlement} did not fall to the enemy: it was sold. A gate was left unbarred one night, and {att.realm} walked in." }
+  - { id: se_be2, when: [end=betrayed], t: "Treachery ended it: someone inside opened a postern to {att.realm}, and was paid in silver." }
+  - { id: se_be3, when: [end=betrayed, beat=gate_opened], w: 2, t: "A traitor opened the gate of {settlement} in the small hours, and the {att.host} was inside before the alarm was raised." }
+  - { id: se_be4, when: [end=betrayed], t: "{settlement} was betrayed from within, and the name of the traitor is still a curse among the {def.people}." }
+  # relieved
+  - { id: se_re1, when: [end=relieved], t: "Then a relief army appeared on the skyline, and {att.realm} broke camp and ran." }
+  - { id: se_re2, when: [end=relieved], t: "{def.realm|cap} sent a host to the relief of {settlement}, and the siege was broken." }
+  - { id: se_re3, when: [end=relieved, beat=relief_arrived], w: 2, t: "Help came at the last hour: banners on the road, and the besiegers caught between the walls and the relief." }
+  - { id: se_re4, when: [end=relieved], t: "{settlement} was relieved, and its people wept on the walls to see the banners of {def.realm}." }
+  # lifted
+  - { id: se_li1, when: [end=lifted], t: "In the end {att.realm} gave it up, lifted the siege, and marched away." }
+  - { id: se_li2, when: [end=lifted], t: "{settlement} outlasted its besiegers: {att.realm} struck its tents and went home." }
+  - { id: se_li3, when: [end=lifted, beat=camp_fever], w: 2, t: "Sickness did what the defenders could not, and {att.realm} lifted the siege." }
+  - { id: se_li4, when: [end=lifted, beat=winter_camp], w: 2, t: "Winter finished the siege: {att.realm} could not hold its lines through the snow, and withdrew." }
+  - { id: se_li5, when: [end=lifted], t: "The siege was lifted, and {settlement} rang its bells for a week." }
+  # abandoned
+  - { id: se_ab1, when: [end=abandoned], t: "The besiegers simply melted away, their supplies spent, and {settlement} found itself alone." }
+  - { id: se_ab2, when: [end=abandoned], t: "{att.realm|cap} abandoned the siege of {settlement}, its host too hungry and too few to go on." }
+  - { id: se_ab3, when: [end=abandoned, beat=held_out], w: 2, t: "{settlement} held out until there was nobody left outside to hold out against." }
+  - { id: se_x1, when: [winner=attacker, settlement], w: 0.5, t: "{settlement} fell to {att.realm}." }
+  - { id: se_x2, when: [winner=defender, settlement], w: 0.5, t: "{settlement} held against {att.realm}." }
+  - { id: se_x3, w: 0.2, t: "So the siege ended." }
+
+siege.after:
+  - { id: sa_st1, when: [end=stormed], t: "The town was given over to the sack." }
+  - { id: sa_st2, when: [end=stormed], t: "The {def.people} of {settlement} would remember the sack for three generations." }
+  - { id: sa_su1, when: [end=surrendered|betrayed], t: "{settlement} passed into the hands of {att.realm}." }
+  - { id: sa_su2, when: [end=surrendered|betrayed, att.general], t: "{att.general} rode through the gate of {settlement} and took its keys." }
+  - { id: sa_li1, when: [end=lifted|abandoned|relieved], t: "{att.realm|cap} went home with nothing but a grudge." }
+  - { id: sa_li2, when: [end=lifted|abandoned|relieved], t: "The walls of {settlement} were the stronger for it, in the minds of its people at least." }
+  - { id: sa_x1, when: [att.loss], t: "{att.realm|cap} came out of the siege lines with {att.loss}, by the reckoning of its own clerks." }
+
+# =====================================================================================================================
+# Realms: founding, conquest, rebellion, collapse, absorption
+# =====================================================================================================================
+event.Founding:
+  - { id: fo01, t: "In {year} the {people} raised {realm} and named its first hearth." }
+  - { id: fo02, when: [place], t: "{realm|cap} was founded in {year}, with its seat at {place}." }
+  - { id: fo03, t: "In {year} the {adj} clans swore themselves into one people, and called it {realm}." }
+  - { id: fo04, when: [form=Kingdom], w: 2, t: "{realm|cap} began in {year} as a kingdom, with a crown and a hall and a quarrel over both." }
+  - { id: fo05, when: [form=MerchantRepublic], w: 2, t: "In {year} the guilds and the great houses founded {realm}, a republic of ledgers and ships." }
+  - { id: fo06, when: [form=LooseAssociation], w: 2, t: "In {year} the {adj} steadings bound themselves loosely together as {realm}, each keeping its own counsel." }
+  - { id: fo07, when: [form=Horde], w: 2, t: "In {year} a war-banner was raised over the {adj} camps, and {realm} rode out for the first time." }
+  - { id: fo08, when: [place], t: "{year}: the {people} cut the first stones at {place}, and {realm} was born." }
+  - { id: fo09, t: "The {people} first gathered under the name of {realm} in {year}, or so their singers claim." }
+  - { id: fo10, when: [place, form=Kingdom], w: 2, t: "In {year} a hall was built at {place} and a crown set on a head, and that was the beginning of {realm}." }
+
+event.Conquest:
+  - { id: cq01, when: [other.realm], t: "In {year} {realm} bent {other.realm} to its will, and the {other.people} learned the customs of their conquerors." }
+  - { id: cq02, when: [other.realm], t: "{other.realm|cap} fell under the rule of {realm} in {year}; its old ways were not forbidden, only forgotten." }
+  - { id: cq03, when: [other.realm], t: "In {year} {realm} conquered {other.realm}, and {adj} governors took the halls of the {other.adj} lords." }
+  - { id: cq04, when: [other.realm], t: "The {other.people} of {other.realm} became subjects of {realm} in {year}, and their children spoke the conquerors' tongue." }
+  - { id: cq05, when: [other.realm], t: "{year} saw the end of {other.realm} as a free people: {realm} was master now." }
+  - { id: cq06, when: [other.realm], t: "In {year} {realm} raised its banners over the seat of {other.realm}, and the {other.adj} court knelt." }
+  - { id: cq07, when: [other.realm], t: "After the rout of {year}, {other.realm} had no choice: it took the yoke of {realm}." }
+  - { id: cq08, when: [other.realm], t: "The conquest of {other.realm} by {realm} was complete in {year}; {adj} law ran where {other.adj} law had run." }
+  - { id: cq09, w: 0.05, t: "In {year} {realm} conquered a neighbour." }
+
+event.Rebellion:
+  - { id: rb01, when: [other.realm], t: "In {year} the far provinces of {other.realm} rose in revolt and declared themselves {realm}." }
+  - { id: rb02, when: [other.realm], t: "{realm|cap} broke away from {other.realm} in {year}, tired of taxes paid to a distant hall." }
+  - { id: rb03, when: [other.realm, place], t: "In {year} {place} threw off the rule of {other.realm} and became the seat of a new realm, {realm}." }
+  - { id: rb04, when: [other.realm], t: "The rebels of {year} would not be called subjects of {other.realm} any more; they called themselves {realm}." }
+  - { id: rb05, when: [other.realm], t: "Oppressed and far from the capital, the people of the marches rose against {other.realm} in {year}, and {realm} was born in the rising." }
+  - { id: rb06, when: [other.realm], t: "In {year} the border lords of {other.realm} tore up their oaths and swore new ones, to {realm}." }
+  - { id: rb07, when: [other.realm], t: "{year}: rebellion in {other.realm}. When the smoke cleared there were two realms, and the new one was {realm}." }
+  - { id: rb08, w: 0.05, t: "In {year} {realm} rose in rebellion and won its freedom." }
+
+event.PolityCollapsed:
+  - { id: pc01, when: [successors], t: "In {year} {realm} fell apart, and from its pieces rose {successors}." }
+  - { id: pc02, when: [successors], t: "{realm|cap} could not hold together; in {year} it broke into {successors}." }
+  - { id: pc03, when: [successors], t: "{realm|cap} died in {year}, and its heirs were {successors}." }
+  - { id: pc04, when: [successors], t: "{year}: the collapse of {realm}. Its governors became kings, and their kingdoms were {successors}." }
+  - { id: pc05, when: [successors], t: "In {year} the bonds of {realm} snapped one by one, leaving {successors} to quarrel over the ruins." }
+  - { id: pc06, when: [successors], t: "Nobody could say afterward who struck the first blow, but by the end of {year} {realm} was gone and {successors} stood in its place." }
+  - { id: pc07, w: 0.05, t: "In {year} {realm} collapsed into warring fragments." }
+
+event.PolityAbsorbed:
+  - { id: pa01, when: [other.realm], t: "In {year} {realm} was absorbed into {other.realm}, its name kept only in old songs." }
+  - { id: pa02, when: [other.realm], t: "{realm|cap} ceased to be in {year}: its people became the people of {other.realm}." }
+  - { id: pa03, when: [other.realm], t: "In {year} the last lords of {realm} swore fealty to {other.realm}, and the old banner was rolled up for good." }
+  - { id: pa04, when: [other.realm], t: "{other.realm|cap} swallowed {realm} in {year}, and hardly anyone noticed the difference." }
+  - { id: pa05, when: [other.realm], t: "In {year} {realm} merged into {other.realm}; the marriage was not of equals." }
+  - { id: pa06, when: [other.realm], t: "By {year} {realm} was a province of {other.realm} in all but name, and soon in name too." }
+  - { id: pa07, w: 0.05, t: "In {year} {realm} was absorbed by a neighbour." }
+
+# =====================================================================================================================
+# Diplomacy: treaties, grudges, ultimatums, tribute
+# =====================================================================================================================
+event.Treaty:
+  - { id: tr_m1, when: [treaty=marriage, other.realm], t: "In {year} {realm} and {other.realm} sealed a peace with a marriage, and the feast lasted nine days." }
+  - { id: tr_m2, when: [treaty=marriage, other.realm], t: "A marriage joined the houses of {realm} and {other.realm} in {year}." }
+  - { id: tr_m3, when: [treaty=marriage, other.realm], t: "In {year} an heir of {realm} was wed to an heir of {other.realm}, and the two realms called each other kin." }
+  - { id: tr_m4, when: [treaty=marriage, other.realm], t: "The wedding of {year} bound {realm} to {other.realm}; whether the couple was happy, the chronicles do not say." }
+  - { id: tr_m5, when: [treaty=marriage, other.realm], t: "Rings were exchanged in {year} between the houses of {realm} and {other.realm}, and swords were put away for a while." }
+  - { id: tr_f1, when: [treaty=foster, other.realm], t: "In {year} {realm} sent a child of its ruling house to be fostered in {other.realm}, as a pledge of good faith." }
+  - { id: tr_f2, when: [treaty=foster, other.realm], t: "{realm|cap} and {other.realm} exchanged fosterlings in {year}, each holding the other's child as surety." }
+  - { id: tr_f3, when: [treaty=foster, other.realm], t: "A fostering bound {realm} to {other.realm} in {year}: the heir would grow up at a stranger's hearth." }
+  - { id: tr_f4, when: [treaty=foster, other.realm], t: "In {year} {other.realm} took in a fosterling from {realm}, and the border was quiet." }
+  - { id: tr_f5, when: [treaty=foster, other.realm], t: "In {year} {realm} and {other.realm} swore a fosterage pact, and the {adj} heir rode away to be raised among the {other.people}." }
+  - { id: tr_x1, when: [other.realm], w: 0.25, t: "In {year} {realm} and {other.realm} swore a pact." }
+  - { id: tr_x2, w: 0.05, t: "In {year} {realm} made a treaty with a neighbour." }
+
+event.Grudge:
+  - { id: gr_m1, when: [refused=marriage, other.realm], t: "In {year} {other.realm} refused a marriage with {realm}, and the insult was not forgotten." }
+  - { id: gr_m2, when: [refused=marriage, other.realm], t: "{realm|cap} offered a bride-price to {other.realm} in {year} and had it thrown back; the grudge was written down." }
+  - { id: gr_m3, when: [refused=marriage, other.realm], t: "The match {realm} proposed to {other.realm} in {year} came to nothing but bad blood." }
+  - { id: gr_f1, when: [refused=foster, other.realm], t: "In {year} {other.realm} would not take a fosterling from {realm}, and {realm} took it as a slight." }
+  - { id: gr_f2, when: [refused=foster, other.realm], t: "{realm|cap} sought a fosterage with {other.realm} in {year} and was turned away at the gate." }
+  - { id: gr_f3, when: [refused=foster, other.realm], t: "A refused fostering in {year} soured {realm} against {other.realm}." }
+  - { id: gr_f4, when: [refused=foster, other.realm], t: "The envoys of {realm} came home from {other.realm} in {year} empty-handed and angry." }
+  - { id: gr_f5, when: [refused=foster, other.realm], t: "In {year} {other.realm} answered {realm|poss} offer of fosterage with silence, which was worse than a refusal." }
+  - { id: gr_x1, when: [other.realm], t: "In {year} {realm} began to nurse a grudge against {other.realm}." }
+  - { id: gr_x2, when: [other.realm], t: "From {year} on, the name of {other.realm} was spoken in {realm} only with a curse." }
+  - { id: gr_x3, when: [other.realm], t: "{year} added another grievance to the long list {realm} kept against {other.realm}." }
+  - { id: gr_x4, when: [other.realm], t: "In {year} the court of {realm} swore that {other.realm} would one day pay for its pride." }
+  - { id: gr_x5, when: [other.realm], t: "Bad blood between {realm} and {other.realm} grew worse in {year}." }
+  - { id: gr_x6, when: [other.realm], t: "The {adj} heralds named {other.realm} an enemy of {realm} in {year}." }
+  - { id: gr_x7, w: 0.05, t: "In {year} {realm} nursed a grudge." }
+
+event.Ultimatum:
+  - { id: ul01, when: [other.realm, tag=resist], t: "In {year} {realm} demanded that {other.realm} bow and pay; {other.realm} sent back the envoy's head." }
+  - { id: ul02, when: [other.realm, tag=resist], t: "{other.realm|cap} refused the ultimatum of {realm} in {year}, and both sides knew what that meant." }
+  - { id: ul03, when: [other.realm, tag=resist], t: "Submit or burn, said the riders of {realm} in {year}; {other.realm} chose to fight." }
+  - { id: ul04, when: [other.realm, tag=resist], t: "In {year} {other.realm} defied {realm}, though its elders counselled otherwise." }
+  - { id: ul05, when: [other.realm, tag=submit], t: "In {year} {other.realm} bowed to the ultimatum of {realm}." }
+  - { id: ul06, when: [other.realm], t: "{realm|cap} sent its demands to {other.realm} in {year}: tribute, hostages, and a bended knee." }
+  - { id: ul07, when: [other.realm], t: "In {year} a herald of {realm} rode into the hall of {other.realm} and named the price of peace." }
+  - { id: ul08, w: 0.05, t: "In {year} {realm} issued an ultimatum." }
+
+event.Tribute:
+  - { id: tb01, when: [other.realm], t: "In {year} {other.realm} bent the knee and paid tribute to {realm}." }
+  - { id: tb02, when: [other.realm], t: "Wagons of silver rolled from {other.realm} to {realm} in {year}, the price of being left alone." }
+  - { id: tb03, when: [other.realm], t: "{other.realm|cap} bought peace from {realm} in {year} with gold, grain and hostages." }
+  - { id: tb04, when: [other.realm], t: "In {year} {other.realm} became a tributary of {realm}, and its rulers swallowed their pride." }
+  - { id: tb05, when: [other.realm], t: "From {year} {other.realm} paid {realm} every year, and the horsemen stayed on their own side of the border." }
+  - { id: tb06, when: [other.realm], t: "The tribute {other.realm} sent to {realm} in {year} was heavy, but cheaper than war." }
+  - { id: tb07, w: 0.05, t: "In {year} {realm} received tribute." }
+
+# =====================================================================================================================
+# Roads and trade
+# =====================================================================================================================
+event.RoadBuilt:
+  - { id: rd01, when: [route.a, route.b], t: "In {year} a road was laid between {route.a} and {route.b}." }
+  - { id: rd02, when: [route.a, route.b], t: "{realm|cap} paved the way from {route.a} to {route.b} in {year}, and the carts began to roll." }
+  - { id: rd03, when: [route.a, route.b, tag=spur], t: "In {year} a spur road was cut from {route.a} to {route.b}." }
+  - { id: rd04, when: [route.a, route.b], t: "The first caravan went from {route.a} to {route.b} in {year}, over a road still raw from the spade." }
+  - { id: rd05, when: [route.a, route.b], t: "In {year} the way between {route.a} and {route.b} was cleared, bridged and marked with stones." }
+  - { id: rd06, when: [route.a, route.b], t: "{year}: the {adj} road-builders finished their work between {route.a} and {route.b}." }
+  - { id: rd07, when: [route.a, route.b], t: "In {year} {route.a} and {route.b} were joined by a road, and {noun.goods} began to flow along it." }
+  - { id: rd08, when: [route.a, route.b, tag=spur], t: "A branch road reached out from {route.a} toward {route.b} in {year}." }
+  - { id: rd09, w: 0.05, t: "In {year} {realm} built a road." }
+
+event.RoadCut:
+  - { id: rc01, when: [route.a, route.b], t: "In {year} the war cut the road between {route.a} and {route.b}." }
+  - { id: rc02, when: [route.a, route.b], t: "Bridges burned and the road from {route.a} to {route.b} went silent in {year}." }
+  - { id: rc03, when: [route.a, route.b], t: "{realm|cap} severed the road between {route.a} and {route.b} in {year}, and the caravans stopped." }
+  - { id: rc04, when: [route.a, route.b], t: "In {year} no merchant dared the way from {route.a} to {route.b}; soldiers held it now." }
+  - { id: rc05, when: [route.a, route.b], t: "Grass began to grow on the road between {route.a} and {route.b} after the fighting of {year}." }
+  - { id: rc06, when: [route.a, route.b], t: "The war of {year} closed the road from {route.a} to {route.b}, and prices rose in both." }
+  - { id: rc07, w: 0.05, t: "In {year} a road was cut by war." }
+
+event.Exchange:
+  - { id: ex01, when: [route.a, route.b], t: "Along the road between {route.a} and {route.b}, words passed with the wares; by {year} each town used the other's names for things." }
+  - { id: ex02, when: [route.a, route.b], t: "In {year} the merchants of {route.a} and {route.b} were trading more than {noun.goods}: songs and words went too." }
+  - { id: ex03, when: [route.a, route.b], t: "By {year} the market at {route.a} was full of loanwords from {route.b}." }
+  - { id: ex04, when: [route.a, route.b], t: "The road from {route.a} to {route.b} carried {noun.goods}, and in {year} it carried new words as well." }
+  - { id: ex05, when: [route.a, route.b], t: "In {year} the children of {route.b} were singing songs first heard in {route.a}." }
+  - { id: ex06, when: [route.a, route.b], t: "Trade between {route.a} and {route.b} brought strange fashions in {year}, and the elders complained." }
+  - { id: ex07, when: [route.a, route.b], t: "Caravans moved between {route.a} and {route.b} all through {year}, and each town came home a little changed." }
+  - { id: ex08, w: 0.05, t: "In {year} trade carried new words along the roads." }
+
+event.Smuggling:
+  - { id: sm01, when: [route.a, route.b, merchant], t: "In {year} {merchant} ran {noun.goods} from {route.a} to {route.b} over a road the war had closed." }
+  - { id: sm02, when: [route.a, route.b], t: "The road from {route.a} to {route.b} was closed in {year}, but goods still moved along it by night." }
+  - { id: sm03, when: [route.a, route.b, merchant], t: "{merchant} made a fortune in {year} carrying what nobody was allowed to carry between {route.a} and {route.b}." }
+  - { id: sm04, when: [route.a, route.b], t: "In {year} smugglers found the goat-tracks around the closed road from {route.a} to {route.b}." }
+  - { id: sm05, when: [route.a, route.b, merchant], t: "Customs men watched the road from {route.a} to {route.b} in {year}; {merchant} paid them to watch something else." }
+  - { id: sm06, when: [route.a, route.b], t: "{noun.goods|cap} crossed from {route.a} to {route.b} in {year} in hidden carts and false-bottomed barrels." }
+  - { id: sm07, when: [merchant], w: 0.25, t: "In {year} {merchant} grew rich on contraband." }
+  - { id: sm09, when: [merchant, merchant2, route.a, route.b], w: 3, t: "In {year} {merchant} of {route.a} and {merchant2} of {route.b} kept trading across a road the war had closed, and both grew rich on the risk." }
+  - { id: sm10, when: [merchant, merchant2], w: 3, t: "{merchant} and {merchant2} had never met, but by {year} their mules knew every goat-track around the closed border." }
+  - { id: sm08, w: 0.05, t: "In {year} goods were smuggled over a closed road." }
+
+event.CaravanRaided:
+  - { id: cr01, when: [route.a, route.b, outlaw], t: "In {year} the band of {outlaw} fell on a caravan between {route.a} and {route.b}, and took {noun.loot}." }
+  - { id: cr02, when: [route.a, route.b, brigands], t: "Brigands struck a caravan on the road from {route.a} to {route.b} in {year}, and left the drivers tied to the wheels." }
+  - { id: cr03, when: [route.a, route.b, outlaw], t: "{outlaw} and {outlaw.his} riders waylaid the merchants of the {route.a} road in {year}." }
+  - { id: cr04, when: [route.a, route.b, other.realm], t: "In {year} a caravan of {other.realm} was robbed between {route.a} and {route.b}, and the realm swore vengeance on the robbers." }
+  - { id: cr05, when: [route.a, route.b, merchant], t: "The caravan of {merchant} never reached {route.b}: in {year} it was ambushed on the road from {route.a}." }
+  - { id: cr06, when: [route.a, route.b, outlaw, merchant], t: "In {year} {outlaw} robbed {merchant} on the {route.a} road, and sent {merchant.him} home on foot." }
+  - { id: cr07, when: [route.a, route.b, brigands], t: "Masked riders came out of the hills in {year} and emptied the wagons on the way from {route.a} to {route.b}." }
+  - { id: cr08, when: [route.a, route.b], t: "In {year} the road between {route.a} and {route.b} earned a bad name: a caravan was taken there with all its {noun.goods}." }
+  - { id: cr09, when: [outlaw], w: 0.25, t: "In {year} {outlaw} raided a caravan." }
+  - { id: cr10, w: 0.05, t: "In {year} outlaws raided a caravan." }
+
+# =====================================================================================================================
+# Faith
+# =====================================================================================================================
+event.HolyFound:
+  - { id: hf01, when: [faith.word], t: "In {year} {realm} raised a holy place, sacred to {faith.word}." }
+  - { id: hf02, when: [faith.word, place], t: "In {year} {place} was hallowed to {faith.word}, and pilgrims began to come." }
+  - { id: hf03, when: [faith=ancestor], w: 2, t: "In {year} the {people} of {realm} raised a barrow-shrine where their forebears were laid." }
+  - { id: hf04, when: [faith=animism], w: 2, t: "In {year} the {people} of {realm} found a spirit-place, a spring that never froze, and set stones around it." }
+  - { id: hf05, when: [faith=polytheism], w: 2, t: "In {year} {realm} built a temple to the many gods, and its altar was never cold." }
+  - { id: hf06, when: [faith=war_cult], w: 2, t: "In {year} {realm} raised a war-shrine, and hung it with the arms of fallen enemies." }
+  - { id: hf07, when: [faith=dark_cult], w: 2, t: "In {year} {realm} raised a shrine in a place where the light did not like to go." }
+  - { id: hf08, when: [faith.word], w: 0.25, t: "{year}: a holy site was dedicated in {realm} to {faith.word}." }
+  - { id: hf09, w: 0.05, t: "In {year} {realm} raised a holy place." }
+
+event.Desecration:
+  - { id: de01, when: [other.realm], t: "In {year} the soldiers of {realm} desecrated a holy place of {other.realm}, and the {other.people} swore it would be answered." }
+  - { id: de02, when: [other.realm, faith.word], t: "{realm|cap} defiled a shrine of {faith.word} in {year}, and every faithful soul in {other.realm} cried out for vengeance." }
+  - { id: de03, when: [other.realm], t: "In {year} the war reached a sacred place of {other.realm}; {realm} broke its altars and scattered its relics." }
+  - { id: de04, when: [other.realm], t: "The sacrilege of {year} made {realm} hated far beyond the borders of {other.realm}." }
+  - { id: de05, when: [other.realm], t: "In {year} {adj} soldiers stabled their horses in a holy place of {other.realm}." }
+  - { id: de06, when: [other.realm], t: "{year}: the holy place of {other.realm} was burned by {realm}, and neighbours who had never cared for {other.realm} took up its cause." }
+  - { id: de07, w: 0.05, t: "In {year} {realm} desecrated a holy place." }
+
+event.Myth:
+  - { id: my01, when: [faith.word, power.word], t: "The {people} of {realm} keep {faith.word}, and above all they honour the power of {power.word}." }
+  - { id: my02, when: [faith.word, power.word, power.second], t: "In the faith of {realm}, {power.word} and {power.second} sit highest among the powers." }
+  - { id: my03, when: [origin.people], t: "The priests of {realm} teach that the {origin.people} were made first, and everything after them was an afterthought." }
+  - { id: my04, when: [trauma=war, power.word], w: 2, t: "{realm|cap} remembers its wars in its prayers, and offers to {power.word} before every march." }
+  - { id: my05, when: [trauma=conquest], w: 2, t: "The faithful of {realm} still sing of the conquest as a wound the gods have not yet avenged." }
+  - { id: my06, when: [trauma=desecration], w: 2, t: "The faith of {realm} was shaped by a desecration: its prayers are full of vengeance." }
+  - { id: my07, when: [faith=ancestor], w: 2, t: "In {realm} the dead are never far: every hearth keeps a place for the forebears." }
+  - { id: my08, when: [faith=animism], w: 2, t: "The {people} of {realm} say every stone and stream has a spirit, and a wise traveller asks leave to pass." }
+  - { id: my09, when: [faith=polytheism], w: 2, t: "The temples of {realm} hold many gods, and the gods quarrel as much as their worshippers." }
+  - { id: my10, when: [faith.word], t: "By {year} the faith of {realm}, {faith.word}, had settled into the shape its priests still teach." }
+  - { id: my12, when: [power.word, power.second], t: "Ask a child of {realm} who rules the world and you will hear two answers: {power.word}, and {power.second}." }
+  - { id: my13, when: [power.word, adj], t: "Every {adj} hearth in {realm} keeps a small offering for {power.word}, and a smaller one for luck." }
+  - { id: my14, when: [power.word], t: "The oldest hymn of {realm} is addressed to {power.word}, and nobody now knows all its verses." }
+  - { id: my15, when: [origin.people, power.word], t: "In the tellings of {realm}, {power.word} shaped the first of the {origin.people} out of clay and breath, and has never quite let go of them." }
+  - { id: my16, when: [faith.word, people], t: "The {people} of {realm} hold to {faith.word}, and they hold to it hardest in bad years." }
+  - { id: my17, when: [trauma=war], w: 2, t: "The priests of {realm} teach that every war is a debt, and that the dead of the last one are still waiting to be paid." }
+  - { id: my18, when: [trauma=conquest, power.word], w: 2, t: "Since the conquest the faithful of {realm} pray to {power.word} in low voices, as if the conquerors might be listening." }
+  - { id: my19, when: [power.second], t: "On feast days the processions of {realm} carry the image of {power.second} through every street, and nobody works." }
+  - { id: my20, when: [faith.word], t: "Pilgrims who come to {realm} find {faith.word} practised more strictly there than anywhere else." }
+  - { id: my21, when: [power.word, realm], t: "In {realm} an oath sworn by {power.word} is the one oath nobody breaks." }
+  - { id: my11, w: 0.05, t: "The {people} of {realm} have their own myths, and tell them still." }
+
+# =====================================================================================================================
+# Villains and prophets
+# =====================================================================================================================
+event.Villain:
+  - { id: vi01, when: [agenda.word], t: "In {year} a long-lived terror rose to rule {realm}, bent on {agenda.word}." }
+  - { id: vi02, when: [agenda.word], t: "{year}: the shadow fell on {realm}. Its new master dreamed of {agenda.word}." }
+  - { id: vi03, when: [agenda=dominion], w: 2, t: "In {year} a tyrant took the throne of {realm} and turned its eyes on every border." }
+  - { id: vi04, when: [agenda=ruin], w: 2, t: "In {year} something old and patient seized {realm}, and began, quietly, to tear it down." }
+  - { id: vi05, when: [agenda=hunger], w: 2, t: "In {year} a ruler came to {realm} whose appetite had no bottom, and the granaries emptied." }
+  - { id: vi06, when: [agenda=shadow], w: 2, t: "In {year} a ruler who was never seen by daylight took the throne of {realm}." }
+  - { id: vi07, w: 0.05, t: "In {year} {realm} fell under the rule of a monster who would not die." }
+  - { id: vi08, t: "The old line of {realm} ended in {year}; what replaced it was older still, and crueller." }
+
+event.Prophecy:
+  - { id: pr01, when: [who], t: "In {year}, after the calamity, {who} began to prophesy in the streets of {realm}." }
+  - { id: pr02, when: [who], t: "{who} saw {noun.omen} in {year} and read in it the doom of {realm}." }
+  - { id: pr03, when: [who], t: "In {year} the prophet {who} told the people of {realm} that the gods were angry, and the people listened." }
+  - { id: pr04, when: [who], t: "{who} walked out of the wilderness in {year} with a message for {realm}, and nobody could make {who.him} stop speaking it." }
+  - { id: pr05, when: [who], t: "In {year} {who} preached repentance to the ruined towns of {realm}." }
+  - { id: pr06, when: [who], t: "Crowds followed {who} through {realm} in {year}, hungry for any word that made sense of their losses." }
+  - { id: pr07, w: 0.05, t: "In {year} a prophet arose in {realm}." }
+  - { id: pr08, w: 0.05, t: "In {year} {noun.omen} was seen over {realm}, and a prophet said what it meant." }
+
+# =====================================================================================================================
+# Calamities
+# =====================================================================================================================
+event.Shock:
+  - { id: sh01, when: [shock.word, struck], t: "{shock.word|cap} struck {realm} in {year}, and {struck|num} settlements suffered for it." }
+  - { id: sh02, when: [shock.word], t: "In {year} {realm} was visited by {shock.word}." }
+  - { id: sh03, when: [shock=earthquake], w: 2, t: "In {year} the earth heaved under {realm}; walls fell, and wells ran dry or ran with mud." }
+  - { id: sh04, when: [shock=plague], w: 2, t: "Plague came to {realm} in {year}; the bells tolled until there was nobody left to ring them." }
+  - { id: sh05, when: [shock=famine], w: 2, t: "In {year} the harvest failed in {realm}, and the poor ate bark and grass." }
+  - { id: sh06, when: [shock=drought], w: 2, t: "No rain fell on {realm} in {year}; the rivers shrank to their stones." }
+  - { id: sh07, when: [shock=flood], w: 2, t: "In {year} the rivers of {realm} rose over their banks and carried off fields, flocks and houses." }
+  - { id: sh08, when: [shock=tsunami], w: 2, t: "In {year} the sea drew back from the shores of {realm}, and then came back as a wall of water." }
+  - { id: sh09, when: [shock=volcano], w: 2, t: "In {year} a mountain split open above {realm}, and ash fell like black snow for a month." }
+  - { id: sh10, when: [shock.word, severity=dire], w: 2, t: "{shock.word|cap} fell on {realm} in {year}, worse than any in living memory." }
+  - { id: sh11, when: [shock.word, severity=mild], w: 2, t: "{realm|cap} weathered {shock.word} in {year}, though not without loss." }
+  - { id: sh12, when: [shock.word, severity=grave], w: 2, t: "{year} brought {shock.word} to {realm}, and the realm took years to mend." }
+  - { id: sh13, when: [shock.word], w: 0.25, t: "The chroniclers of {realm} called {year} the year of {shock.word}." }
+  - { id: sh14, w: 0.05, t: "Calamity struck {realm} in {year}." }
+  - { id: sh15, w: 0.05, t: "In {year} disaster fell on the land." }
+
+# =====================================================================================================================
+# Settlements
+# =====================================================================================================================
+event.SettlementFounded:
+  - { id: sf01, when: [settlement, settlement.kind], t: "In {year} {realm} founded the {settlement.kind} of {settlement}." }
+  - { id: sf02, when: [settlement, from.settlement], t: "In {year} settlers from {from.settlement} went out and built {settlement}." }
+  - { id: sf03, when: [settlement, role=Colony], w: 2, t: "{settlement} was founded in {year} on new land, by younger sons with nothing to inherit." }
+  - { id: sf04, when: [settlement, role=Colony, from.settlement], w: 2, t: "In {year} {from.settlement} had grown too full, and its overflow went off to build {settlement}." }
+  - { id: sf05, when: [settlement, role=Post], w: 2, t: "In {year} {realm} raised a fort at {settlement} to watch the border." }
+  - { id: sf06, when: [settlement, why=fort], w: 2, t: "{realm|cap} built the fort of {settlement} in {year}, where the enemy was most likely to come." }
+  - { id: sf07, when: [settlement, role=Waystation], w: 2, t: "In {year} a waystation was built at {settlement}, where travellers could sleep behind a wall." }
+  - { id: sf08, when: [settlement, why=waystation], w: 2, t: "{settlement} began in {year} as a road-house on a long and lonely road." }
+  - { id: sf09, when: [settlement, role=Shrine], w: 2, t: "Pilgrims settled at {settlement} in {year}, close by a holy place." }
+  - { id: sf10, when: [settlement, why=pilgrimage], w: 2, t: "In {year} the pilgrims who came to pray stayed to build, and {settlement} was founded." }
+  - { id: sf11, when: [settlement, role=Refuge], w: 2, t: "In {year} the homeless and the dispossessed found refuge at {settlement}, and built there." }
+  - { id: sf12, when: [settlement, role=Node], w: 2, t: "A market grew up at {settlement} in {year}, where the roads crossed." }
+  - { id: sf13, when: [settlement, why=garrison], w: 2, t: "In {year} a garrison was posted at {settlement}, and the camp became a town." }
+  - { id: sf14, when: [settlement], w: 0.25, t: "The first roofs went up at {settlement} in {year}." }
+  - { id: sf15, when: [settlement], t: "In {year} the {people} of {realm} broke ground at {settlement}." }
+  - { id: sf16, w: 0.05, t: "In {year} {realm} founded a new settlement." }
+
+event.SettlementEnded:
+  - { id: sx_r1, when: [settlement, cause=razed], w: 2, t: "In {year} {settlement} was razed, and salt was sown where its fields had been." }
+  - { id: sx_r2, when: [settlement, cause=razed], w: 2, t: "{settlement} was put to the torch in {year}, and nothing was rebuilt." }
+  - { id: sx_r3, when: [settlement, cause=razed], w: 2, t: "In {year} the conquerors pulled down {settlement} stone by stone." }
+  - { id: sx_q1, when: [settlement, cause=earthquake], w: 2, t: "An earthquake swallowed {settlement} in {year}; the survivors would not go back." }
+  - { id: sx_v1, when: [settlement, cause=volcano], w: 2, t: "Ash and fire buried {settlement} in {year}." }
+  - { id: sx_t1, when: [settlement, cause=tsunami], w: 2, t: "In {year} the sea took {settlement}, and did not give it back." }
+  - { id: sx_f1, when: [settlement, cause=flood], w: 2, t: "The flood of {year} washed {settlement} away." }
+  - { id: sx_p1, when: [settlement, cause=plague], w: 2, t: "Plague emptied {settlement} in {year}; the last survivors walked away and left the doors open." }
+  - { id: sx_h1, when: [settlement, cause=famine|drought], w: 2, t: "Hunger ended {settlement} in {year}: its people scattered in search of bread." }
+  - { id: sx_a1, when: [settlement, cause=abandoned], w: 2, t: "{settlement} was abandoned in {year}, and the forest took it back." }
+  - { id: sx_g1, when: [settlement], w: 0.25, t: "{settlement} was lost in {year}." }
+  - { id: sx_g2, when: [settlement], t: "In {year} {settlement} ceased to be; its people went where they could." }
+  - { id: sx_g3, when: [settlement], t: "After {year} nobody lived at {settlement} any more." }
+  - { id: sx_g4, when: [settlement], t: "The last hearth of {settlement} went cold in {year}." }
+  - { id: sx_x1, w: 0.05, t: "In {year} a settlement of {realm} was lost." }
+
+event.SettlementCaptured:
+  - { id: sc01, when: [settlement, other.realm], t: "In {year} {realm} took {settlement} from {other.realm}." }
+  - { id: sc02, when: [settlement, other.realm], t: "{settlement} changed hands in {year}: the banner of {other.realm} came down and that of {realm} went up." }
+  - { id: sc03, when: [settlement, other.realm], t: "{other.realm|cap} lost {settlement} to {realm} in {year}, and never got it back." }
+  - { id: sc04, when: [settlement, other.realm], t: "In {year} the {adj} soldiers of {realm} marched into {settlement}, and the {other.adj} officials marched out." }
+  - { id: sc05, when: [settlement, other.realm], t: "After the defeat of {year}, {other.realm} had to give up {settlement} to {realm}." }
+  - { id: sc06, when: [settlement, other.realm], t: "In {year} {settlement} learned to pay its taxes to {realm} instead of {other.realm}." }
+  - { id: sc07, when: [settlement, other.realm], t: "{realm|cap} seized {settlement} from {other.realm} in {year} and set a governor over it." }
+  - { id: sc08, when: [settlement], w: 0.25, t: "In {year} {realm} captured {settlement}." }
+  - { id: sc09, w: 0.05, t: "In {year} {realm} captured a town." }
+
+event.SettlementTierChanged:
+  - { id: st_u1, when: [settlement, dir=up, tier.to], t: "By {year} {settlement} had grown into a {tier.to}." }
+  - { id: st_u2, when: [settlement, dir=up, tier.from, tier.to], t: "In {year} {settlement} was no longer a {tier.from}: it had become a {tier.to}, with walls and a market." }
+  - { id: st_u3, when: [settlement, dir=up], t: "{settlement} prospered, and in {year} it was counted among the greater places of {realm}." }
+  - { id: st_u4, when: [settlement, dir=up, tier.to=City], w: 2, t: "In {year} {settlement} became a city, the pride of {realm}." }
+  - { id: st_u5, when: [settlement, dir=up], t: "New houses crowded the lanes of {settlement} in {year}, and new walls went up around them." }
+  - { id: st_u6, when: [settlement, dir=up, tier.to=Town], w: 2, t: "By {year} {settlement} had a market charter and called itself a town." }
+  - { id: st_d1, when: [settlement, dir=down, tier.to], t: "By {year} {settlement} had shrunk to a {tier.to}." }
+  - { id: st_d2, when: [settlement, dir=down], t: "{settlement} declined in {year}; half its houses stood empty." }
+  - { id: st_d3, when: [settlement, dir=down, tier.from], t: "Once a {tier.from}, {settlement} was a shadow of itself by {year}." }
+  - { id: st_d4, when: [settlement, dir=down], t: "In {year} grass grew in the market square of {settlement}." }
+  - { id: st_x1, w: 0.05, t: "In {year} the fortunes of a settlement changed." }
+
+event.SiteLost:
+  - { id: sl01, when: [place, tag=settlement], t: "In {year} the land under {place} was lost, and the town with it." }
+  - { id: sl02, when: [tag=holy], t: "In {year} a holy place of {realm} was lost to the changing land." }
+  - { id: sl03, when: [place], t: "{place} was lost in {year} when the land itself changed." }
+  - { id: sl04, w: 0.05, t: "In {year} the land shifted, and a place of {realm} was lost." }
+  - { id: sl05, w: 0.05, t: "In {year} a place was lost to the sea." }
+
+event.Fork:
+  - { id: fk01, when: [tiles], t: "In {year} the map was redrawn: {tiles} tiles changed hands at a stroke." }
+  - { id: fk02, w: 0.05, t: "In {year} the borders were redrawn by a hand above history." }
+  - { id: fk03, t: "Here the chronicle forks: in {year} the world was remade." }
+
+event.Plugin:
+  - { id: pl01, when: [plugin, realm], t: "In {year} {realm} saw {plugin|a}." }
+  - { id: pl02, when: [plugin], t: "In {year} there was {plugin|a}." }
+  - { id: pl03, when: [plugin], t: "The chronicles of {year} record {plugin|a}." }
+  - { id: pl04, w: 0.05, t: "Something happened in {year} that the chronicles could not name." }
+
+# =====================================================================================================================
+# Persons: rises and deaths
+# =====================================================================================================================
+event.PersonRose:
+  # rulers
+  - { id: ru_f1, when: [office=ruler, tag=founder], w: 2, t: "In {year} {who} became the first {who.office} of {realm}." }
+  - { id: ru_f2, when: [office=ruler, tag=founder], w: 2, t: "{who} gathered the {people} under one banner in {year} and was hailed {who.office} of {realm}." }
+  - { id: ru_f3, when: [office=ruler, tag=founder, who.age], w: 2, t: "{who} was {who.age} when {who.he} founded the line of {realm} in {year}." }
+  - { id: ru_s1, when: [office=ruler, tag=succession, who.parent], w: 2, t: "In {year} {who} succeeded {who.parent} as {who.office} of {realm}." }
+  - { id: ru_s2, when: [office=ruler, tag=succession, who.parent], w: 2, t: "When {who.parent} was laid to rest in {year}, the crown of {realm} passed to {who}." }
+  - { id: ru_s3, when: [office=ruler, tag=succession], w: 2, t: "{who} took up the rule of {realm} in {year}, as the law of inheritance required." }
+  - { id: ru_s4, when: [office=ruler, tag=succession, who.age], w: 2, t: "{who} came to the throne of {realm} in {year}, aged {who.age}." }
+  - { id: ru_s5, when: [office=ruler, tag=succession, who.epithet], w: 2, t: "In {year} the heir came into {who.his} own: {who}, later called {who.epithet}, was crowned {who.office} of {realm}." }
+  - { id: ru_r1, when: [office=ruler, tag=regency], w: 4, t: "In {year} the child {who} was crowned in {realm}, and a council of regents ruled in {who.his} name." }
+  - { id: ru_r2, when: [office=ruler, tag=regency], w: 4, t: "{who} was too young to rule when {who.he} inherited {realm} in {year}; others ruled for {who.him}, and not all of them well." }
+  - { id: ru_k1, when: [office=ruler, tag=kinsman], w: 2, t: "With no heir of the body, the throne of {realm} passed in {year} to {who}, a kinsman of the old line." }
+  - { id: ru_k2, when: [office=ruler, tag=kinsman], w: 2, t: "In {year} the great families of {realm} looked for a ruler and found {who}, a cousin of the dead {who.office}." }
+  - { id: ru_k3, when: [office=ruler, tag=kinsman, who.parent], w: 2, t: "In {year} {who}, child of {who.parent}, was brought from a minor branch of the house to rule {realm}." }
+  - { id: ru_k4, when: [office=ruler, tag=kinsman], w: 2, t: "{who} had never expected to rule, but in {year} the crown of {realm} came to {who.him} by the long way round." }
+  - { id: ru_k5, when: [office=ruler, tag=kinsman], w: 2, t: "The old line of {realm} had run thin by {year}; it was {who}, a distant kinsman, who picked up the crown." }
+  - { id: ru_a1, when: [office=ruler, tag=accession], w: 2, t: "In {year} {who} took the throne of {realm}." }
+  - { id: ru_a2, when: [office=ruler, tag=accession], w: 2, t: "{who} was raised to rule {realm} in {year}, by acclaim or by arrangement." }
+  - { id: ru_v1, when: [office=ruler, tag=villain, agenda.word], w: 4, t: "In {year} {who} seized the throne of {realm}, bent on {agenda.word}." }
+  - { id: ru_v2, when: [office=ruler, tag=villain], w: 4, t: "{who} overthrew the rightful line of {realm} in {year}, and nobody dared say so aloud." }
+  - { id: ru_g1, when: [office=ruler], w: 0.25, t: "{who} became {who.office} of {realm} in {year}." }
+  - { id: ru_g2, when: [office=ruler], t: "In {year} the court of {realm} knelt to {who}." }
+  # generals
+  - { id: gn01, when: [office=marshal|war_chief|war_leader|admiral], w: 2, t: "In {year} {realm} gave command of its {host} to {who}." }
+  - { id: gn02, when: [office=marshal|war_chief|war_leader|admiral, who.epithet], w: 2, t: "{who} {who.epithet} was named {who.office} of {realm} in {year}." }
+  - { id: gn03, when: [office=marshal|war_chief|war_leader], w: 2, t: "In {year} {who} took up the war-banner of {realm}, and the {host} learned a new voice in its ear." }
+  - { id: gn04, when: [office=war_leader], w: 2, t: "The steadings of {realm} chose {who} to lead their levies in {year}." }
+  - { id: gn05, when: [office=war_chief], w: 2, t: "In {year} {who} won the right to lead the warriors of {realm}, the only way it is ever won." }
+  - { id: gn06, when: [office=admiral], w: 2, t: "In {year} {who} was given the fleets of {realm}, and the harbour-masters began to worry." }
+  - { id: gn07, when: [office=marshal|war_chief|war_leader|admiral, who.age], w: 2, t: "{who} was only {who.age} when {who.he} became {who.office} of {realm}, in {year}." }
+  - { id: gn08, when: [office=war_leader], w: 2, t: "In {year} {who} was raised on the shields of {realm|poss} warriors and named {who.office}." }
+  # advisors and others
+  - { id: el01, when: [office=elder], w: 2, t: "In {year} {who} was chosen an elder of {realm}." }
+  - { id: el02, when: [office=elder], w: 2, t: "{who} took a seat among the elders of {realm} in {year}, and spoke rarely but well." }
+  - { id: el03, when: [office=elder, who.age], w: 2, t: "At {who.age}, {who} was counted wise enough to sit among the elders of {realm} in {year}." }
+  - { id: el04, when: [office=elder], w: 2, t: "The free folk of {realm} named {who} to the circle of elders in {year}." }
+  - { id: el05, when: [office=elder, who.epithet], w: 2, t: "{who} {who.epithet} joined the elders of {realm} in {year}." }
+  - { id: el06, when: [office=elder], w: 2, t: "In {year} {who} was given the elder's staff in {realm}." }
+  - { id: ch01, when: [office=chancellor|treasurer], w: 2, t: "In {year} {who} took charge of the coffers of {realm}." }
+  - { id: ch02, when: [office=chancellor], w: 2, t: "{who} was made {who.office} of {realm} in {year}, and the scribes learned to fear {who.his} ink." }
+  - { id: ch03, when: [office=treasurer], w: 2, t: "In {year} {who} became {who.office} of {realm}, and counted every coin twice." }
+  - { id: sp01, when: [office=spymaster], w: 2, t: "In {year} {who} became the {who.office} of {realm}, though few knew it." }
+  - { id: sp02, when: [office=spymaster], w: 2, t: "{who} took up the web of whispers of {realm} in {year}." }
+  - { id: se01, when: [office=seer], w: 2, t: "In {year} {who} became the {who.office} of {realm}, reading the future in smoke and entrails." }
+  - { id: co01, when: [office=council], w: 2, t: "In {year} {who} won a seat on the council of {realm}." }
+  - { id: co02, when: [office=council], w: 2, t: "{who} bought, begged or earned a council seat in {realm} in {year}; the chronicles disagree which." }
+  - { id: fv01, when: [tag=favourite, who.office], w: 3, t: "In {year} {who}, a favourite of the ruler, was made {who.office} of {realm}, over the heads of better candidates." }
+  - { id: fv02, when: [tag=favourite, who.office], w: 3, t: "{who} owed {who.his} appointment as {who.office} in {year} to the ruler's affection more than to any merit." }
+  - { id: fv03, when: [tag=favourite, who.office], w: 3, t: "The court of {realm} muttered in {year} when the ruler's friend {who} was named {who.office}." }
+  - { id: mc01, when: [tag=merchant], w: 4, t: "In {year} {who} rose to the first rank among the merchant houses of {realm}." }
+  - { id: mc02, when: [tag=merchant], w: 4, t: "{who} had started with one cart; by {year} {who.he} was a merchant prince of {realm}." }
+  - { id: mc04, when: [tag=merchant, settlement], w: 5, t: "In {year} {who} built the finest counting-house in {settlement}, and the ruler of {realm} began to borrow from {who.him}." }
+  - { id: mc05, when: [tag=merchant, settlement], w: 5, t: "By {year} half the warehouses of {settlement} belonged to {who}, and the other half owed {who.him} money." }
+  - { id: mc06, when: [tag=merchant, settlement], w: 5, t: "In {year} the guilds of {settlement} named {who} first among the merchants of {realm}." }
+  - { id: mc03, when: [tag=merchant], w: 4, t: "The counting-houses of {realm} spoke of nobody but {who} in {year}." }
+  - { id: ap01, when: [office!=ruler, who.office], t: "In {year} {realm} named {who} its {who.office}." }
+  - { id: ap02, when: [office!=ruler, who.office], t: "{who} became {who.office} of {realm} in {year}." }
+  - { id: ap03, when: [office!=ruler, who.office, who.age], t: "In {year} {who}, aged {who.age}, was appointed {who.office} of {realm}." }
+  - { id: ap04, when: [office!=ruler, who.office], t: "The ruler of {realm} chose {who} for {who.office} in {year}." }
+  - { id: ap05, when: [office!=ruler, who.office, who.epithet], t: "{who}, whom some already called {who.epithet}, was made {who.office} of {realm} in {year}." }
+  - { id: ap06, when: [office!=ruler, who.office], t: "{year}: {who} took office as {who.office} of {realm}." }
+  - { id: ap07, when: [office!=ruler, who.office, who.parent], t: "In {year} {who}, child of {who.parent}, rose to be {who.office} of {realm}." }
+  - { id: ap08, when: [office!=ruler, who.office], t: "In {year} the {who.office} of {realm} was a new face: {who}." }
+  - { id: px1, when: [who], w: 0.5, t: "In {year} {who} rose to prominence in {realm}." }
+  - { id: px2, w: 0.2, t: "In {year} a new name rose in {realm}." }
+
+event.PersonDied:
+  - { id: dd_age1, when: [cause=age, who], w: 2, t: "{who}, {who.office} of {realm}, died of old age in {year}." }
+  - { id: dd_age2, when: [cause=age, who, who.age], w: 2, t: "In {year} {who} died in {who.his} bed at the age of {who.age}, full of years." }
+  - { id: dd_age3, when: [cause=age, who, who.reign], w: 2, t: "After {who.reign} years on the throne, {who} died peacefully in {year}." }
+  - { id: dd_age4, when: [cause=age, who], w: 2, t: "{who} {verb.died} in {year}, old and grey, and {realm} went into {noun.grief}." }
+  - { id: dd_age5, when: [cause=age, who, who.epithet], w: 2, t: "In {year} {who} {who.epithet} was laid in the tomb of the rulers of {realm}." }
+  - { id: dd_age6, when: [cause=age, who], w: 2, t: "The long life of {who} ended quietly in {year}." }
+  - { id: dd_age7, when: [cause=age, who, who.age], w: 2, t: "{who} lived to see {who.age} winters and died in {year}, outliving most enemies and many friends." }
+  - { id: dd_age8, when: [cause=age, who, who.reign], w: 2, t: "{realm|cap} buried {who} in {year}, after a reign of {who.reign} years." }
+  - { id: dd_age9, when: [cause=age, who], w: 2, t: "In {year} the bells of {realm} rang for {who}, who had died in sleep." }
+  - { id: dd_bat1, when: [cause=battle, who], w: 3, t: "{who} fell in battle in {year}." }
+  - { id: dd_bat2, when: [cause=battle, who], w: 3, t: "In {year} {who} died on the field, at the head of the {host} of {realm}." }
+  - { id: dd_bat3, when: [cause=battle, who], w: 3, t: "{who} came home to {realm} in {year} on a shield." }
+  - { id: dd_acc1, when: [cause=accident, who], w: 3, t: "In {year} {who} broke {who.his} neck in a fall, and {realm} was without a ruler by nightfall." }
+  - { id: dd_acc2, when: [cause=accident, who], w: 3, t: "{who} died in {year} by a stupid accident, which the chroniclers of {realm} preferred not to describe." }
+  - { id: dd_acc3, when: [cause=accident, who], w: 3, t: "A bridge gave way under {who} in {year}, and the river took {who.him}." }
+  - { id: dd_hun1, when: [cause=hunting, who], w: 3, t: "{who} was killed by a boar while hunting in {year}." }
+  - { id: dd_hun2, when: [cause=hunting, who], w: 3, t: "In {year} {who} rode out to hunt and was carried home dead; some said the arrow was no accident." }
+  - { id: dd_hun3, when: [cause=hunting, who], w: 3, t: "The hunt of {year} cost {realm} its ruler: {who} was thrown and trampled." }
+  - { id: dd_fev1, when: [cause=fever|illness, who], w: 3, t: "Fever took {who} in {year}, swiftly, in the space of three nights." }
+  - { id: dd_fev2, when: [cause=fever|illness, who], w: 3, t: "{who} sickened in {year} and did not recover; the physicians of {realm} were blamed, and one was hanged." }
+  - { id: dd_fev3, when: [cause=illness, who], w: 3, t: "A long illness wasted {who}, who died in {year}." }
+  - { id: dd_fev4, when: [cause=fever, who, who.age], w: 3, t: "In {year} a fever carried off {who} at only {who.age}." }
+  - { id: dd_poi1, when: [cause=poison, who], w: 3, t: "{who} died in {year} after a feast, with blackened lips; nobody was ever charged." }
+  - { id: dd_poi2, when: [cause=poison, who], w: 3, t: "In {year} {who} was poisoned, and in {realm} every cup was tasted twice from then on." }
+  - { id: dd_poi3, when: [cause=poison, who], w: 3, t: "Poison ended {who} in {year}, and suspicion poisoned the court of {realm} for years after." }
+  - { id: dd_chb1, when: [cause=childbed, who], w: 3, t: "{who} died in childbed in {year}, and {realm} mourned a mother and a ruler." }
+  - { id: dd_chb2, when: [cause=childbed, who], w: 3, t: "In {year} {who} gave {realm} an heir and gave {who.his} life with it." }
+  - { id: dd_ovr1, when: [cause=overthrown, who], w: 3, t: "In {year} {who} was dragged from the throne of {realm} and did not survive the night." }
+  - { id: dd_ovr2, when: [cause=overthrown, who], w: 3, t: "{who} was overthrown in {year}, and died as fallen rulers usually do." }
+  - { id: dd_exi1, when: [cause=exile, who], w: 3, t: "{who} went into exile in {year} when {realm} ended, and died far from home." }
+  - { id: dd_exe1, when: [cause=executed, who], w: 3, t: "In {year} {who} was executed, to the satisfaction of a great many people." }
+  - { id: dd_exe2, when: [cause=executed, who], w: 3, t: "{who} was taken as a spy in {year} and put to death." }
+  - { id: dd_rec1, when: [cause=recalled, who], w: 3, t: "In {year} {who} was quietly recalled from a post abroad that no longer existed, and vanished from the records of {realm}." }
+  - { id: dd_ass1, when: [cause=assassinated, who], w: 3, t: "{who} was murdered in {year}; the assassin was never found, though everyone had a guess." }
+  - { id: dd_ass2, when: [cause=assassinated, who], w: 3, t: "In {year} a knife in the dark ended {who}." }
+  - { id: dd_han1, when: [cause=hanged, who], w: 3, t: "{who} was hanged in {year}." }
+  - { id: dd_rui1, when: [cause=ruined, who], w: 3, t: "{who} lost everything in {year}, and the shame of it was more than {who.he} could bear." }
+  - { id: dd_rui2, when: [cause=ruined, who], w: 3, t: "In {year} the creditors came for {who}, and took the house, the ships, and finally the will to live." }
+  - { id: dd_g1, when: [who], w: 0.25, t: "{who} died in {year}." }
+  - { id: dd_g2, when: [who], w: 0.25, t: "In {year} {realm} mourned {who}." }
+  - { id: dd_g3, when: [who, who.reign], t: "In {year} the reign of {who} ended after {who.reign} years." }
+  - { id: dd_x1, w: 0.2, t: "In {year} a notable of {realm} died." }
+
+# =====================================================================================================================
+# Outlaws, intrigue, privateers
+# =====================================================================================================================
+event.OutlawRose:
+  - { id: or01, when: [outlaw, source=displaced], w: 2, t: "In {year} {outlaw}, burned out of house and home, gathered other homeless folk and took to the roads." }
+  - { id: or02, when: [outlaw, source=deserters], w: 2, t: "In {year} {outlaw} walked away from the {other.host} of {other.realm} with a dozen others, and none of them went home." }
+  - { id: or03, when: [outlaw, source=ruined], w: 2, t: "{outlaw} lost everything in {year}, and decided the world owed {outlaw.him} the difference." }
+  - { id: or04, when: [outlaw, haven], t: "In {year} {outlaw} made a hideout near {haven} and gathered a band of hard men." }
+  - { id: or05, when: [outlaw, route.a, route.b], t: "From {year} the road between {route.a} and {route.b} belonged, after dark, to {outlaw}." }
+  - { id: or06, when: [outlaw, other.realm], t: "In {year} {outlaw} was declared outlaw by {other.realm}, which only made {outlaw.him} famous." }
+  - { id: or07, when: [outlaw], w: 0.25, t: "In {year} {outlaw} raised a band in {noun.wilds}." }
+  - { id: or08, when: [outlaw], w: 0.25, t: "The name of {outlaw} was first heard in {year}, whispered by frightened carters." }
+  - { id: or09, when: [outlaw, outlaw.epithet], t: "In {year} {outlaw}, soon called {outlaw.epithet}, gathered the desperate and the dispossessed into a band." }
+  - { id: or12, when: [outlaw, source=dispossessed], w: 2, t: "In {year} {outlaw} was turned off {outlaw.his} land by a new lord, and took to the woods with a bow and a grievance." }
+  - { id: or13, when: [outlaw, source=ruined, route.a], w: 2, t: "The ruined trader {outlaw} came back to the road near {route.a} in {year}, this time with a blade instead of a cart." }
+  - { id: or10, when: [outlaw, source=deserters], w: 2, t: "Deserters from the wars rallied to {outlaw} in {year}, bringing their weapons and their grudges." }
+  - { id: or11, w: 0.05, t: "In {year} an outlaw band formed in {noun.wilds}." }
+
+event.OutlawEnded:
+  - { id: oe01, when: [outlaw, end=hanged], w: 2, t: "In {year} {outlaw} was caught and hanged at a crossroads, as a lesson to others." }
+  - { id: oe02, when: [outlaw, end=hanged, other.realm], w: 2, t: "{other.realm|cap} hanged {outlaw} in {year}, and the roads were quieter for a season." }
+  - { id: oe03, when: [outlaw, end=pardoned], w: 2, t: "In {year} {outlaw} was pardoned, and took service as a captain; the poachers had become the keepers." }
+  - { id: oe04, when: [outlaw, end=pardoned, other.realm], w: 2, t: "{other.realm|cap} bought off {outlaw} with a pardon in {year}." }
+  - { id: oe05, when: [outlaw, end=age], w: 2, t: "{outlaw} died old in {year}, in a bed, which is more than any outlaw has a right to expect." }
+  - { id: oe06, when: [outlaw, end=slain], w: 2, t: "In {year} {outlaw} was cut down in a fight on the road, and the band scattered." }
+  - { id: oe07, when: [outlaw, end=slain, other.realm], w: 2, t: "The riders of {other.realm} cornered {outlaw} in {year} and left nothing to hang." }
+  - { id: oe08, when: [outlaw], w: 0.25, t: "The band of {outlaw} came to an end in {year}." }
+  - { id: oe11, when: [outlaw, end=hanged, route.a, route.b], w: 2, t: "In {year} {outlaw} swung from a gibbet beside the road from {route.a} to {route.b}, where every carter could see." }
+  - { id: oe12, when: [outlaw, end=age, route.a], w: 2, t: "{outlaw}, terror of the road to {route.a}, died of old age in {year}, and the band melted away without {outlaw.him}." }
+  - { id: oe09, when: [outlaw], w: 0.25, t: "After {year}, the carters stopped looking over their shoulders for {outlaw}." }
+  - { id: oe10, w: 0.05, t: "In {year} an outlaw band came to an end." }
+
+event.Intrigue:
+  # sponsorship: a realm pays (or hires) a band to bleed a rival's road; it stays secret until a raid or a confession.
+  - { id: in_sp1, when: [plot=sponsorship, other.realm, outlaw], w: 2, t: "In {year} silver from {realm} began to find its way, by roundabout hands, into the purse of {outlaw}, whose band worked the roads of {other.realm}." }
+  - { id: in_sp2, when: [plot=sponsorship, other.realm, route.a, route.b], w: 2, t: "In {year} the spymasters of {realm} quietly took the brigands on the road from {route.a} to {route.b} into their pay; {other.realm} would bleed for it, and never know why." }
+  - { id: in_sp3, when: [plot=sponsorship, tag=hired, other.realm, outlaw], w: 3, t: "{realm|cap} could not fight {other.realm} openly in {year}, so it hired {outlaw} and a band of cut-throats to do it on the roads." }
+  - { id: in_sp4, when: [plot=sponsorship, tag=hired, other.realm, route.a], w: 3, t: "In {year} a stranger with a heavy purse came to the taverns near {route.a}, recruiting hard men for work on the roads of {other.realm}; the purse belonged to {realm}." }
+  - { id: in_sp5, when: [plot=sponsorship, spymaster, other.realm], w: 2, t: "In {year} {spymaster}, who kept the secrets of {realm}, began paying brigands to harry the caravans of {other.realm}." }
+  # spy_network: an agent planted in the rival's court.
+  - { id: in_sn1, when: [plot=spy_network, agent, other.realm], w: 2, t: "In {year} {agent} arrived in {other.realm} as a wool-trader, and was never anything of the kind: {agent.he} answered to {realm}." }
+  - { id: in_sn2, when: [plot=spy_network, agent, spymaster, other.realm], w: 3, t: "{spymaster} of {realm} planted {agent} in the court of {other.realm} in {year}, with orders to listen, and to wait." }
+  - { id: in_sn3, when: [plot=spy_network, agent, other.realm], w: 2, t: "In {year} a new clerk took service in a great house of {other.realm}. {agent} wrote a fair hand, kept to {agent.him}self, and sent a letter to {realm} every month." }
+  - { id: in_sn4, when: [plot=spy_network, other.realm], w: 0.25, t: "In {year} {realm} wove a web of spies through {other.realm}." }
+  # sponsorship exposed: by a raid or a hanged man's confession.
+  - { id: in_ex1, when: [plot=sponsorship_exposed, tag=raid, other.realm], w: 2, t: "In {year} a raid went wrong, a brigand was taken alive, and {other.realm} learned whose silver had been paying for its burned caravans: that of {realm}." }
+  - { id: in_ex2, when: [plot=sponsorship_exposed, tag=confession, outlaw, other.realm], w: 3, t: "On the gallows in {year}, {outlaw} named {outlaw.his} paymaster: {realm}. {other.realm|cap} did not forget it." }
+  - { id: in_ex3, when: [plot=sponsorship_exposed, tag=confession, other.realm], w: 2, t: "A hanged man's confession in {year} laid the banditry on the roads of {other.realm} at the door of {realm}." }
+  - { id: in_ex4, when: [plot=sponsorship_exposed, other.realm, route.a, route.b], w: 2, t: "In {year} letters bearing the seal of {realm} were found in a saddlebag on the road from {route.a} to {route.b}, and {other.realm} called for war." }
+  - { id: in_ex5, when: [plot=sponsorship_exposed, other.realm, outlaw], w: 2, t: "The truth came out in {year}: {outlaw} had been robbing the caravans of {other.realm} on the orders, and the coin, of {realm}." }
+  # operations run by an agent (or by a sponsored band on its road): sabotage, bribery, murder, theft.
+  - { id: in_sa1, when: [tag!=caught, plot=sabotage, tag=secret, route.a, route.b], w: 2, t: "In {year} a bridge on the road from {route.a} to {route.b} burned in the night; nobody in {other.realm} could say how, and {realm} kept its counsel." }
+  - { id: in_sa2, when: [tag!=caught, plot=sabotage, tag=secret, agent, other.realm], w: 2, t: "In {year} {agent} fouled the wells and fired the waystations of {other.realm}, and slipped away before dawn." }
+  - { id: in_sa3, when: [tag!=caught, plot=sabotage, outlaw, route.a, route.b], w: 3, t: "In {year} the band of {outlaw} tore up the road between {route.a} and {route.b} at the bidding of {realm}, whose silver it had taken." }
+  - { id: in_sa4, when: [tag!=caught, plot=sabotage, other.realm], w: 0.25, t: "In {year} saboteurs of {realm} broke the roads of {other.realm}." }
+  - { id: in_br1, when: [tag!=caught, plot=bribe, victim, tag=secret], w: 3, t: "In {year} {victim} of {other.realm} quietly accepted a chest of gold from {realm}, and became a less loyal servant than {victim.he} looked." }
+  - { id: in_br2, when: [tag!=caught, plot=bribe, victim, agent], w: 3, t: "{agent} found the price of {victim} in {year}: it was lower than {other.realm} would have liked." }
+  - { id: in_br4, when: [tag!=caught, plot=bribe, victim, agent, tag=secret], w: 3, t: "In {year} {agent} sat down to dice with {victim} of {other.realm}, and lost, every night, a little more {realm} gold than any honest player could." }
+  - { id: in_br5, when: [tag!=caught, plot=bribe, victim, victim.office], w: 3, t: "The {victim.office} of {other.realm}, {victim}, began in {year} to live far beyond {victim.his} wages; the difference came from {realm}." }
+  - { id: in_br6, when: [tag!=caught, plot=bribe, victim], w: 3, t: "In {year} a letter, a ring and a promise from {realm} reached {victim} of {other.realm}; {victim.he} burned the letter and kept the ring, and the promise." }
+  - { id: in_br7, when: [tag!=caught, plot=bribe, victim, agent], w: 3, t: "{agent} bought {victim} in {year} the way one buys a horse: slowly, with a careful look at the teeth, and for {realm|poss} money." }
+  - { id: in_br8, when: [tag!=caught, plot=bribe, victim, tag=secret], w: 3, t: "By {year} {victim} of {other.realm} was taking the gold of {realm}, and would take its orders when the war came." }
+  - { id: in_br9, when: [tag!=caught, plot=bribe, agent, other.realm], w: 2, t: "In {year} {agent} spread the silver of {realm} among the captains of {other.realm}, where it would do the most harm." }
+  - { id: in_br3, when: [tag!=caught, plot=bribe, other.realm], w: 0.25, t: "In {year} the gold of {realm} bought a friend in the war councils of {other.realm}." }
+  - { id: in_as1, when: [tag!=caught, plot=assassination, tag=killed, victim, tag=secret], w: 3, t: "In {year} {victim} of {other.realm} was found dead in {victim.his} chamber, without a mark; the hand that did it belonged to {realm}, and nobody ever proved it." }
+  - { id: in_as2, when: [tag!=caught, plot=assassination, tag=killed, victim, agent], w: 3, t: "In {year} {agent}, an agent of {realm}, put a knife into {victim} of {other.realm} and walked away through the crowd." }
+  - { id: in_as3, when: [tag!=caught, plot=assassination, tag=failed, victim], w: 3, t: "In {year} an assassin came for {victim} of {other.realm} and missed by a hand's breadth." }
+  - { id: in_as4, when: [tag!=caught, plot=assassination, tag=failed, victim, agent], w: 3, t: "{agent} tried to poison {victim} in {year}, but the wrong cup was drunk, and {other.realm} lost only a taster." }
+  - { id: in_th1, when: [tag!=caught, plot=theft, victim, agent], w: 3, t: "In {year} {agent} emptied the strongroom of {victim}, the richest merchant of {other.realm}, and the gold went home to {realm}." }
+  - { id: in_th2, when: [tag!=caught, plot=theft, victim], w: 3, t: "In {year} the ledgers of {victim} came up short by a fortune, and the merchants of {other.realm} began to mistrust each other." }
+  - { id: in_th3, when: [tag!=caught, plot=theft, other.realm], w: 0.25, t: "In {year} agents of {realm} robbed the counting-houses of {other.realm}." }
+  # caught: the agent is taken and executed, and the sponsor named.
+  - { id: in_ca1, when: [tag=caught, agent, other.realm], w: 5, t: "In {year} {other.realm} caught {agent} at {agent.his} work, and hanged {agent.him} in the market square with a placard naming the paymaster: {realm}." }
+  - { id: in_ca2, when: [tag=caught, agent, other.realm, plot=assassination], w: 6, t: "The assassin {agent} was taken in {year} with blood still on {agent.his} hands; under the irons {agent.he} named {realm}, and was executed before the day was out." }
+  - { id: in_ca3, when: [tag=caught, agent, other.realm, plot=discovered], w: 6, t: "In {year} the watch of {other.realm} uncovered {agent}, who had sat quietly in the court for years writing letters to {realm}; the letters stopped, and so did {agent}." }
+  - { id: in_ca4, when: [tag=caught, other.realm, plot=sabotage], w: 6, t: "In {year} a saboteur was caught at the bridges of {other.realm}; before the axe fell, the name {realm} was heard by everyone in the square." }
+  - { id: in_ca5, when: [tag=caught, agent, other.realm, plot=bribe], w: 6, t: "In {year} {agent} was caught passing gold to the officers of {other.realm}; {agent.he} was executed, and the gold, and the grudge, were sent back to {realm}." }
+  - { id: in_ca6, when: [tag=caught, other.realm], w: 3, t: "In {year} {other.realm} executed a spy of {realm}, and the envoys of the two realms stopped speaking." }
+  - { id: in_ca7, when: [tag=caught, agent, other.realm, plot=theft], w: 6, t: "In {year} {agent} was taken with a merchant's gold in {agent.his} pack, and confessed on the rack that {realm} had sent {agent.him}." }
+  # fallbacks
+  - { id: in_g1, when: [tag=exposed, other.realm], w: 0.25, t: "In {year} {other.realm} uncovered a plot of {realm}." }
+  - { id: in_g2, when: [other.realm], w: 0.25, t: "Spies of {realm} were busy in {other.realm} all through {year}." }
+  - { id: in_g3, when: [other.realm], w: 0.25, t: "In {year} the court of {other.realm} was full of rumours, most of them started by {realm}." }
+  - { id: in_x1, w: 0.05, t: "In {year} there was intrigue in {realm}." }
+
+event.Privateering:
+  - { id: pv_c1, when: [tag=commission, privateer, other.realm], w: 3, t: "In {year} {realm} gave {privateer} a letter of marque against the shipping of {other.realm}: piracy, with a seal on it." }
+  - { id: pv_c2, when: [tag=commission, privateer], w: 3, t: "In {year} {privateer} was given a ship, a crew of hard cases and a royal licence to take what {privateer.he} could." }
+  - { id: pv_c3, when: [tag=commission, privateer, other.realm], w: 3, t: "{privateer} swore in {year} to serve {realm} at sea, against {other.realm} and anyone else who flew {other.realm|poss} colours." }
+  - { id: pv_p1, when: [tag=prize, privateer, other.realm], w: 3, t: "In {year} the privateer {privateer} took a merchantman of {other.realm} and brought its cargo home to {realm}." }
+  - { id: pv_p2, when: [tag=prize, privateer, merchant, other.realm], w: 4, t: "In {year} {privateer} ran down a ship of {merchant}, the great merchant of {other.realm}, and sold {merchant.his} cargo on the quays of {realm}." }
+  - { id: pv_p3, when: [tag=prize, privateer, other.realm], w: 3, t: "{privateer} burned three ships of {other.realm} off the coast in {year} and sold the fourth." }
+  - { id: pv_p4, when: [tag=prize, privateer, sponsor], w: 2, t: "{privateer} sailed under licence from {sponsor} in {year}, which made it legal, if not honest, and came home with a prize." }
+  - { id: pv_p5, when: [tag=prize, privateer, other.realm], w: 3, t: "The merchants of {other.realm} cursed the name of {privateer} in {year}, and insured their cargoes twice." }
+  - { id: pv05, when: [privateer], w: 0.25, t: "In {year} the sea-raider {privateer} made a name and a fortune." }
+  - { id: pv07, when: [other.realm], w: 0.25, t: "In {year} licensed raiders preyed on the ships of {other.realm}." }
+  - { id: pv08, w: 0.05, t: "In {year} privateers prowled the coasts." }

@@ -1,0 +1,11 @@
+# The realms of men.
+host: ["company", "chivalry", "shire-levy", "banner-host"]
+cry!: ["For the crown!", "Gods and the realm!", "Hold the line!", "No surrender!", "Remember the fallen!"]
+office.ruler: ["crowned sovereign", "anointed ruler"]
+office.marshal: ["lord marshal", "constable"]
+office.chancellor: ["lord chancellor"]
+season.spring: ["sowing time"]
+season.autumn: ["harvest-tide"]
+noun.song: ["ballads", "chronicles in verse"]
+verb.won: ["carried the day", "won great honour"]
+noun.goods: ["wool and wine", "grain and iron"]

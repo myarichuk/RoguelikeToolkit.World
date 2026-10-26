@@ -44,6 +44,7 @@
     <EmbeddedResource Include="Names\Data\*.yaml"/>
     <EmbeddedResource Include="Peoples\Data\**\*.yaml"/>
     <EmbeddedResource Include="Localization\*.yaml"/>
+    <EmbeddedResource Include="Chronicle\Data\**\*.yaml"/>
   </ItemGroup>
 
 </Project>

@@ -1,0 +1,29 @@
+# Dragonfolk aeries: fire, hoards, honour weighed in gold, and the sky as a battlefield.
+battle.intro:
+  - { id: dr_bi1, w: 3, t: "In {year} the aerie-fires of {att.realm} were lit on every peak, and the {att.host} came down on {def.realm} out of a burning sky." }
+  - { id: dr_bi2, when: [att.general], w: 3, t: "{att.general} judged that {def.realm} had insulted the hoard-honour of {att.realm}, and in {year} {att.general.he} came to collect the debt in fire." }
+  - { id: dr_bi3, w: 2, t: "In {season.word} of {year} the wings of {att.realm} darkened the {terrain.noun}, and {def.realm} looked up in terror." }
+battle.engage:
+  - { id: dr_en1, w: 2, t: "The {att.adj} warriors breathed fire into the enemy ranks before a single blade was drawn." }
+battle.after:
+  - { id: dr_ba1, when: [winner=attacker], w: 3, t: "The plunder of {def.realm} was carried up to the aeries of {att.realm} and added to the hoard, coin by counted coin." }
+  - { id: dr_ba2, when: [winner=defender], w: 3, t: "{att.realm|cap} flew home with scorched wings and wounded pride, which for dragonfolk is the worse injury." }
+event.Founding:
+  - { id: dr_fo1, w: 3, t: "In {year} the broods gathered at the high nests and kindled a common fire, and from its flame rose {realm}." }
+  - { id: dr_fo2, when: [place], w: 3, t: "In {year} the dragonfolk built their aerie above {place}, and laid the first coin of the hoard of {realm}." }
+event.PersonRose:
+  - { id: dr_ru1, when: [office=ruler], w: 3, t: "In {year} {who} was anointed with fire and named {who.office} of {realm}, keeper of the great hoard." }
+  - { id: dr_ap1, when: [office!=ruler, who.office], w: 2, t: "In {year} {who} was granted the scale-seal of the {who.office} of {realm}, and a key to one small chamber of the hoard." }
+event.PersonDied:
+  - { id: dr_dd1, when: [cause=age, who], w: 3, t: "In {year} {who} died ancient and hoard-proud, and {realm} burned {who.his} body on the highest peak." }
+  - { id: dr_dd2, when: [who], w: 2, t: "{realm|cap} lit a pyre for {who} in {year}; it burned for a week and could be seen three realms away." }
+event.Grudge:
+  - { id: dr_gr1, when: [other.realm], w: 3, t: "In {year} {other.realm} slighted the honour of {realm}, and the slight was weighed, valued and entered into the debt-ledgers of the aerie." }
+event.Treaty:
+  - { id: dr_tr1, when: [other.realm], w: 2, t: "In {year} {realm} and {other.realm} exchanged gold for gold, weight for weight, and called it friendship." }
+event.Tribute:
+  - { id: dr_tb1, when: [other.realm], w: 3, t: "In {year} {other.realm} paid tribute to {realm} in gold, which the dragonfolk counted twice, then counted again." }
+event.SettlementFounded:
+  - { id: dr_sf1, when: [settlement], w: 3, t: "In {year} a young brood of {realm} flew off to nest at {settlement}." }
+event.Conquest:
+  - { id: dr_cq1, when: [other.realm], w: 3, t: "In {year} {realm} conquered {other.realm} and inventoried it, down to the last silver spoon." }

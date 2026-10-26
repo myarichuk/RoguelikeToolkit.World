@@ -1,0 +1,29 @@
+# Gnomish burrows: engines, measurements, clever tunnels and a committee for everything.
+battle.intro:
+  - { id: gm_bi1, w: 3, t: "In {year} the war committee of {att.realm} concluded, after eleven sessions and one small explosion, that {def.realm} must be dealt with." }
+  - { id: gm_bi2, when: [att.general], w: 3, t: "{att.general} had calculated the march to {def.realm} to the hour; in {year} the {att.host} of {att.realm} arrived only slightly late." }
+  - { id: gm_bi3, w: 2, t: "In {year} the {att.host} of {att.realm} rolled out of the burrows with its engines clanking, bound for {def.realm}." }
+battle.engage:
+  - { id: gm_en1, w: 2, t: "The {att.adj} engines threw bolts and pots of fire, mostly at the enemy." }
+battle.after:
+  - { id: gm_ba1, when: [winner=attacker], w: 3, t: "The engineers of {att.realm} published a full report on the victory, with diagrams." }
+  - { id: gm_ba2, when: [winner=defender], w: 3, t: "{att.realm|cap} convened an inquiry into the defeat; it concluded that the engines had been sound and the weather had not." }
+event.Founding:
+  - { id: gm_fo1, w: 3, t: "In {year} the burrow-clans signed a charter of three hundred clauses, and {realm} was founded at clause one hundred and twelve." }
+  - { id: gm_fo2, when: [place], w: 3, t: "In {year} the gnomes dug their first warren under {place}, measured it twice, and named it {realm}." }
+event.PersonRose:
+  - { id: gm_ru1, when: [office=ruler], w: 3, t: "In {year} {who} was elected {who.office} of {realm} by a margin the clerks are still recounting." }
+  - { id: gm_ap1, when: [office!=ruler, who.office], w: 2, t: "In {year} {who} passed the examinations for {who.office} of {realm} with the highest marks in a generation." }
+event.PersonDied:
+  - { id: gm_dd1, when: [cause=age, who], w: 3, t: "In {year} {who} died at {who.his} workbench, a half-finished device still in {who.his} hands; {realm} keeps it under glass." }
+  - { id: gm_dd2, when: [cause=accident, who], w: 3, t: "{who} died in {year} in a workshop accident; the device that caused it was declared a success." }
+event.Grudge:
+  - { id: gm_gr1, when: [other.realm], w: 3, t: "In {year} {realm} filed a formal grievance against {other.realm}, in triplicate." }
+event.Treaty:
+  - { id: gm_tr1, when: [other.realm], w: 2, t: "In {year} {realm} and {other.realm} signed a treaty with footnotes longer than the text." }
+event.SettlementFounded:
+  - { id: gm_sf1, when: [settlement], w: 3, t: "In {year} a tunnelling party of {realm} broke into a dry cavern at {settlement} and decided it would do nicely." }
+siege.end:
+  - { id: gm_se1, when: [end=stormed], w: 4, t: "The gnomish engines knocked a hole in the wall of {settlement} exactly where the engineers said they would." }
+event.RoadBuilt:
+  - { id: gm_rd1, when: [route.a, route.b], w: 3, t: "In {year} the surveyors of {realm} laid a perfectly level road between {route.a} and {route.b}, and were insufferable about it." }

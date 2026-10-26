@@ -1,0 +1,32 @@
+# Dark elves: great houses, poison, spiders in the deep, and a courtesy sharper than any knife.
+battle.intro:
+  - { id: de_bi1, w: 3, t: "In {year} the great houses of {att.realm} set aside their own feuds for a season, which is to say they agreed to murder {def.realm} first." }
+  - { id: de_bi2, when: [att.general], w: 3, t: "{att.general} came up out of the deep ways in {year} with the {att.host} of {att.realm}, and {def.realm} learned to fear moonless nights." }
+  - { id: de_bi3, when: [kind=Ambush], w: 4, t: "In {year} {att.realm} let {def.realm} march a full day into the dark before it closed the trap." }
+battle.engage:
+  - { id: de_en1, w: 2, t: "The {att.adj} blades were blackened and their edges were wet; a scratch was enough." }
+battle.after:
+  - { id: de_ba1, when: [winner=attacker], w: 3, t: "The captives of {def.realm} were led down into the deep ways, and were not seen again." }
+  - { id: de_ba2, when: [winner=defender], w: 3, t: "{att.realm|cap} blamed the defeat on a rival house, and the house was duly extinguished." }
+event.Founding:
+  - { id: de_fo1, w: 3, t: "In {year} the exiled houses carved {realm} out of the dark beneath the world, and swore to return to the light only as its masters." }
+  - { id: de_fo2, when: [place], w: 3, t: "In {year} the dark elves claimed the caverns below {place}, and the first of many poisonings settled who would rule {realm}." }
+event.PersonRose:
+  - { id: de_ru1, when: [office=ruler], w: 3, t: "In {year} {who} rose to rule {realm}, having survived everyone with a better claim." }
+  - { id: de_ru2, when: [office=ruler, who.parent], w: 3, t: "{who} inherited {realm} in {year} from {who.parent}, and had the food tasted twice from that day." }
+  - { id: de_ap1, when: [office!=ruler, who.office], w: 2, t: "In {year} {who} was named {who.office} of {realm}; the previous holder was not available for comment." }
+event.PersonDied:
+  - { id: de_dd1, when: [cause=poison, who], w: 4, t: "In {year} {who} died of poison, as rulers of {realm} so often do; the funeral was splendid and nobody was surprised." }
+  - { id: de_dd2, when: [cause=age, who], w: 3, t: "{who} died of old age in {year}, a rare distinction among the rulers of {realm}." }
+event.Grudge:
+  - { id: de_gr1, when: [other.realm], w: 3, t: "In {year} {realm} smiled at the envoys of {other.realm}, thanked them, and began quietly to plan their ruin." }
+event.Treaty:
+  - { id: de_tr1, when: [other.realm], w: 2, t: "In {year} {realm} signed a pact with {other.realm} in ink mixed with blood, and both sides kept a poisoner on retainer just in case." }
+event.Intrigue:
+  - { id: de_in1, when: [other.realm], w: 3, t: "In {year} the spiders of {realm} spun a new web through the court of {other.realm}." }
+event.SettlementFounded:
+  - { id: de_sf1, when: [settlement], w: 3, t: "In {year} a lesser house of {realm} was granted the caverns of {settlement}, and began at once to scheme for better." }
+event.Conquest:
+  - { id: de_cq1, when: [other.realm], w: 3, t: "In {year} {realm} conquered {other.realm}, and its nobles learned to bow very low and never turn their backs." }
+siege.end:
+  - { id: de_se1, when: [end=betrayed], w: 4, t: "{settlement} was opened from within; the dark elves had bought the traitor years before, against just such a day." }

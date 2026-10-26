@@ -1,0 +1,27 @@
+# The realms of men: banners, oaths, saints and ledgers, and short memories that make for long wars.
+battle.intro:
+  - { id: hu_bi1, w: 3, t: "In {year} the banners of {att.realm} were blessed in every temple, and the {att.host} marched on {def.realm} with priests at its head." }
+  - { id: hu_bi2, when: [att.general], w: 3, t: "{att.general} raised the levies of {att.realm} in {year}, promising them plunder in {def.realm} and glory, in that order." }
+  - { id: hu_bi3, w: 2, t: "The heralds of {att.realm} declared war on {def.realm} in {year}, with trumpets, as the old laws of chivalry demand." }
+battle.after:
+  - { id: hu_ba1, when: [winner=attacker], w: 3, t: "{att.realm|cap} gave thanks in its temples, and its bards made the victory greater with every telling." }
+  - { id: hu_ba2, when: [winner=defender], w: 3, t: "In {att.realm} the blame for the defeat was laid at many doors, none of them the ruler's." }
+event.Founding:
+  - { id: hu_fo1, w: 3, t: "In {year} the free towns and their lords swore one oath on one altar, and {realm} was founded." }
+  - { id: hu_fo2, when: [place], w: 3, t: "In {year} a warlord with more ambition than ancestry built a hall at {place}, and called the land around it {realm}." }
+event.PersonRose:
+  - { id: hu_ru1, when: [office=ruler], w: 3, t: "In {year} {who} was crowned {who.office} of {realm} before the high altar, with every lord of the realm swearing fealty." }
+  - { id: hu_ap1, when: [office!=ruler, who.office], w: 2, t: "In {year} {who} knelt to receive the chain of office as {who.office} of {realm}." }
+event.PersonDied:
+  - { id: hu_dd1, when: [cause=age, who], w: 3, t: "In {year} {who} died in {who.his} bed, shriven and anointed, and {realm} wore black for forty days." }
+  - { id: hu_dd2, when: [who], w: 2, t: "The temple bells of {realm} tolled for {who} in {year}." }
+event.Grudge:
+  - { id: hu_gr1, when: [other.realm], w: 3, t: "In {year} {other.realm} insulted the honour of {realm}, and the lords of {realm} swore an oath of vengeance on their swords." }
+event.Treaty:
+  - { id: hu_tr1, when: [other.realm], w: 2, t: "In {year} {realm} and {other.realm} swore peace on holy relics, before witnesses, with every seal in its place." }
+event.SettlementFounded:
+  - { id: hu_sf1, when: [settlement], w: 3, t: "In {year} {realm} granted a charter to the settlers of {settlement}, with rights of market and fair." }
+event.Rebellion:
+  - { id: hu_rb1, when: [other.realm], w: 3, t: "In {year} the barons of the march rose against {other.realm}, and made a new crown for {realm}." }
+event.Conquest:
+  - { id: hu_cq1, when: [other.realm], w: 3, t: "In {year} {realm} annexed {other.realm} by right of conquest, and its lawyers found the precedents afterwards." }
