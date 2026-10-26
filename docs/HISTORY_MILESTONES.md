@@ -992,3 +992,20 @@ their own founding and loss, and not only end-state decoration.
 - **Tests:** Core 903 (`HistoryFoundersTests`), Engine 73.
 - **Not done:** a modal step-by-step "new world" wizard (the section is the same choices in the sidebar), picking a capital by
   clicking the map, and per-people affinity overrides (the seeds list is persisted, so that needs a schema bump).
+
+### X0–X9 History expansion: the expansion is the default history (2026-10-26)
+
+`HistoryContext.Features` now defaults to `HistoryFeatures.All`: named persons and courts (X2), battles with tactics and ways
+of war (X3), sieges, relief battles and forts (X4), the logistics network, winter quarters and waystations (X5), commerce,
+merchant princes, outlaw bands and sponsored intrigue (X6). The design and every as-built decision are in
+`HISTORY_EXPANSION_PLAN.md`. `HistoryFeatures.None` is the legacy simulation, byte-identical to before the expansion (the legacy
+fixtures pin it with the flag set explicitly), and each phase's flags-off path is pinned by hash against the previous phase.
+- **Re-baseline (12 default worlds, size 3, 30 turns; mean per world, legacy → All):** events 245 → 655 (person events 0 →
+  306, intrigue 0 → 32, sieges 0 → 8, campaigns 0 → 12, outlaw rises 0 → 5, raids 0 → 2.4); wars 26 → 32; conquests 4.2 → 2.2
+  (a conquest now needs a rout or a fallen capital); settlements founded 15.8 → 27.9 and standing 24 → 37 (forts, waystations);
+  roads 15 → 28 and road-building events 6.4 → 12.8 (fewer razings: many campaigns end averted); captures 0.2 → 0.6;
+  population −6% (battle and siege casualties); polities 11.2 → 11.7, alive 10.6 → 10.8; owned tiles unchanged.
+- **Tests whose intent changed:** the legacy fixtures, `CourtOperatorTests` (legacy projection, no persons when off) and
+  `ConquestOperatorTests` (the legacy conquest rule) now set `Features = None`; `FoundingSourcesTests` knows `why:fort` and
+  `why:waystation` and lets a settlement end as a new polity's seat; the engine's event-decoding test dispatches participants by
+  role prefix (`person:`, `settlement:`).

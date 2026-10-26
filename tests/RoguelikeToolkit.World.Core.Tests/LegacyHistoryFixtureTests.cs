@@ -27,7 +27,7 @@ public class LegacyHistoryFixtureTests
     [InlineData(5, 4, "AF966D68BD1F3084D7E6AB83DD48B313A3BC3A3D5CB0604D1E382E59560E9812", "290C8B97FC6465597F71B53EDC2B599C4292B596C06A56F8939EC4D431616665")]
     public void LegacyHistory_IsPinned(int seed, int size, string projection, string bytes)
     {
-        using var world = new WorldBuilder().WithSize(size).WithSeed(seed).Build();
+        using var world = new WorldBuilder().WithSize(size).WithSeed(seed).WithHistory(c => c.Features = HistoryFeatures.None).Build();
         var history = world.History;
         string actualProjection = HistoryProjection.Hash(history);
         string actualBytes = Convert.ToHexString(SHA256.HashData(history.ToBytes()));
@@ -38,7 +38,7 @@ public class LegacyHistoryFixtureTests
     [Fact]
     public void Projection_IgnoresSchemaAndInterning_ButSeesDecisions()
     {
-        using var world = new WorldBuilder().WithSize(3).WithSeed(1).Build();
+        using var world = new WorldBuilder().WithSize(3).WithSeed(1).WithHistory(c => c.Features = HistoryFeatures.None).Build();
         var history = world.History;
         string before = HistoryProjection.Hash(history);
 

@@ -357,7 +357,7 @@ About 3k persons expected at 300 turns.
 | X6 | Commerce, Outlaw, Merchant, Intrigue; `CourtInfluence` | corpus bands; an exposed sponsorship leads to a war in ≥1/25 worlds. **Done** (see §12) |
 | X7 | Lexicon, Chronicle grammar, renderer | catalog bytes unchanged by rendering; repetition metrics; every template resolves for all 12 cultures |
 | X8 | Exports, TS overlay, person panel | layout tests, vitest, a Playwright path |
-| X9 | `HistoryFeatures` default All | one deliberate corpus re-baseline; PR listing every shift; milestone entry |
+| X9 | `HistoryFeatures` default All | one deliberate corpus re-baseline; PR listing every shift; milestone entry. **Done** (see §12 and HISTORY_MILESTONES.md) |
 
 ## 11. Testing
 
@@ -636,3 +636,6 @@ About 3k persons expected at 300 turns.
   wars. With agents (25 worlds): 335 spy networks; operations bribe 190, assassination 99, sabotage 28 (by agents and
   sponsored bands), theft 15; 87 sponsorships (15 exposed); an exposed sponsorship led to a war in 8 of 25 worlds; 3.8 living
   persons per polity; averted 29%, decisive 30%, sieges 21.5%.
+- **X9: `HistoryFeatures` defaults to `All`.** `None` stays the legacy simulation (byte-identical; the legacy fixtures set it
+  explicitly). The re-baseline and every shift are listed in `HISTORY_MILESTONES.md` ("X0–X9"). Rulers being exempt from the
+  person cap (X6) matters here: 300-turn default worlds now pass `MaxPersons`.

@@ -27,9 +27,12 @@ public sealed class FoundingSourcesTests
                     "pilgrimage" => SettlementRole.Shrine,
                     "route" => SettlementRole.Node,
                     "sedentarized" => SettlementRole.Colony,
+                    FortificationOperator.FortWhy => SettlementRole.Post,
+                    LogisticsOperator.WaystationWhy => SettlementRole.Waystation,
                     _ => throw new Xunit.Sdk.XunitException("unknown why " + why),
                 };
-                Assert.Equal(expected, s.Role);
+                // A settlement keeps its founding role unless a split later made it a new polity's seat.
+                Assert.True(s.Role == expected || s.Role == SettlementRole.Capital, $"{why} settlement is a {s.Role}");
                 Assert.Equal($"role:{expected}", e.Tags.First(t => t.StartsWith("role:", StringComparison.Ordinal)));
                 Assert.True(s.Parent >= 0);
                 seen.Add(why);

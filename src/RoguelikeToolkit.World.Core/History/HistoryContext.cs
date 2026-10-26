@@ -126,10 +126,11 @@ public sealed class HistoryContext
     }
 
     /// <summary>
-    /// Which parts of the history expansion run (default <see cref="HistoryFeatures.None"/>: the legacy simulation). With every
-    /// flag off no operator writes persons, battles or route state, and the legacy catalog is unchanged in what it decides.
+    /// Which parts of the history expansion run (default <see cref="HistoryFeatures.All"/>). <see cref="HistoryFeatures.None"/>
+    /// is the legacy simulation: no operator writes persons, battles or route state, and the catalog is byte-identical to the
+    /// one before the expansion (the legacy fixtures pin it).
     /// </summary>
-    public HistoryFeatures Features { get; set; } = HistoryFeatures.None;
+    public HistoryFeatures Features { get; set; } = HistoryFeatures.All;
 
     /// <summary>True when every flag of <paramref name="features"/> is on.</summary>
     public bool Has(HistoryFeatures features) => (Features & features) == features;

@@ -225,4 +225,6 @@ Log:
   and steal until caught), exposure, the court's hawk/dove lean and casus belli; betrayal in battle.
   `Commerce/`, `Outlaws/`, `Intrigue/` YAML. `CommerceWorldTests` (15, incl. X5 byte pins). Notes in the plan's §12.
 - [ ] X7 Chronicle: lexicon, grammar, renderer
-
+- [ ] X8 Editor: exports done (`WorldExports.Persons.cs`: persons, bonds, tenures, battles, route states and series, feature
+  config; `HistoryInfo` 16 ints); TS person card, overlays and chronicle pane pending
+- [x] X9 `HistoryFeatures` defaults to `All`; legacy fixtures pin `None`; re-baseline listed in HISTORY_MILESTONES.md

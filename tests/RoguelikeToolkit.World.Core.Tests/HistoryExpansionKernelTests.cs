@@ -293,9 +293,9 @@ public class HistoryExpansionKernelTests
     }
 
     [Fact]
-    public void FeaturesDefaultOff_AndTheViewCarriesThem()
+    public void FeaturesDefaultAll_AndTheViewCarriesThem()
     {
-        Assert.Equal(HistoryFeatures.None, new HistoryContext().Features);
+        Assert.Equal(HistoryFeatures.All, new HistoryContext().Features); // X9: the expansion is the default history
         var (history, ctx) = World(turns: 2);
         ctx.Features = HistoryFeatures.Persons | HistoryFeatures.Battles;
         HistoryFeatures seen = HistoryFeatures.None;

@@ -275,7 +275,8 @@ public class WorldExportsLayoutTests
         int total = WorldExports.HistoryInfo()[7];
         int polities = WorldExports.HistoryInfo()[3];
         var kinds = WorldExports.HistoryEventKindNames();
-        int strings = WorldExports.HistoryStrings().Length;
+        var names = WorldExports.HistoryStrings();
+        int strings = names.Length, persons = WorldExports.HistoryInfo()[11], settlements = WorldExports.HistoryInfo()[4];
         var page = WorldExports.HistoryEvents(0, total);
         Assert.Equal(total, page[0]);
         Assert.Equal(total, WorldExports.HistoryEventText(0, total).Length);
@@ -292,8 +293,12 @@ public class WorldExportsLayoutTests
             c += 8;
             for (int k = 0; k < parts; k++, c += 2)
             {
-                Assert.InRange(page[c], 0, polities - 1);
                 Assert.InRange(page[c + 1], 0, strings - 1);
+                // A participant's role names its entity: person:, settlement:, else a polity.
+                string role = names[page[c + 1]];
+                int limit = role.StartsWith("person:", StringComparison.Ordinal) ? persons
+                    : role.StartsWith("settlement:", StringComparison.Ordinal) ? settlements : polities;
+                Assert.InRange(page[c], 0, limit - 1);
             }
         }
         Assert.Equal(page.Length, c);
