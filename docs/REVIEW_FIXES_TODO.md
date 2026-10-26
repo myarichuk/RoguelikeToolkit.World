@@ -230,4 +230,6 @@ Log:
   per-symbol LRU of rule draws, per-event word use, `HistoryRng` draws; rendering never touches the catalog. `ChronicleTests`
   (32): lint clean, every rule through every culture, every kind for every culture, corpus top sentence 0.30% and trigram
   repeats max 11.5% per 20-event window. Notes in the plan's §12.
-
+- [ ] X8 Editor: exports done (`WorldExports.Persons.cs`: persons, bonds, tenures, battles, route states and series, feature
+  config; `HistoryInfo` 16 ints); TS person card, overlays and chronicle pane pending
+- [x] X9 `HistoryFeatures` defaults to `All`; legacy fixtures pin `None`; re-baseline listed in HISTORY_MILESTONES.md

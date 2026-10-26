@@ -11,7 +11,7 @@ public class ConquestOperatorTests
             .AddOperator(new PopulationOperator())
             .AddOperator(new WarOperator())
             .AddOperator(new ConquestOperator())
-            .Apply(w.Map, w.History, new HistoryContext());
+            .Apply(w.Map, w.History, new HistoryContext { Features = HistoryFeatures.None }); // the legacy conquest rule; SiegeWorldTests covers it with battles
 
     [Fact]
     public void Conquests_AnswerAWarOfThePreviousTurn_AndOnlyOverlayCultures()

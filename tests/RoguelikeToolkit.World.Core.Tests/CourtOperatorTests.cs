@@ -45,7 +45,7 @@ public class CourtOperatorTests
     [InlineData(3, 4)]
     public void PersonsOn_LeavesTheLegacyProjectionUnchanged(int seed, int size)
     {
-        using var off = new WorldBuilder().WithSize(size).WithSeed(seed).Build();
+        using var off = new WorldBuilder().WithSize(size).WithSeed(seed).WithHistory(c => c.Features = HistoryFeatures.None).Build();
         using var on = Build(seed, size);
         Assert.NotEmpty(on.History.Persons);
         Assert.Equal(HistoryProjection.Hash(off.History), HistoryProjection.Hash(on.History));
@@ -146,7 +146,7 @@ public class CourtOperatorTests
     [Fact]
     public void PersonsOff_WritesNoPersons()
     {
-        using var world = new WorldBuilder().WithSize(3).WithSeed(1).Build();
+        using var world = new WorldBuilder().WithSize(3).WithSeed(1).WithHistory(c => c.Features = HistoryFeatures.None).Build();
         Assert.Empty(world.History.Persons);
         Assert.Empty(world.History.Tenures);
     }

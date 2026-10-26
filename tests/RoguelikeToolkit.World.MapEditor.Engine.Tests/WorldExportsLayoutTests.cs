@@ -224,6 +224,50 @@ public class WorldExportsLayoutTests
     }
 
     [Fact]
+    public void ExpansionArrays_HaveTheirDocumentedStride_AndPointAtRealThings()
+    {
+        WorldExports.ResetHistoryConfig();
+        WorldExports.ConfigureHistoryFeatures((int)RoguelikeToolkit.World.Core.History.HistoryFeatures.All);
+        try
+        {
+            Tiles();
+            var info = WorldExports.HistoryInfo();
+            int persons = info[11], relations = info[12], tenures = info[13], battles = info[14], routes = info[15];
+            Assert.True(persons > 0 && tenures > 0 && battles > 0 && routes > 0);
+            int strings = WorldExports.HistoryStrings().Length;
+            var p = WorldExports.HistoryPersons();
+            Assert.Equal(persons * WorldExports.PersonStride, p.Length);
+            Assert.Equal(persons, WorldExports.HistoryPersonText().Length);
+            Assert.All(WorldExports.HistoryPersonText(), t => Assert.Equal(3, t.Split('\t').Length));
+            var kinds = WorldExports.HistoryPersonKindNames();
+            for (int i = 0; i < persons; i++)
+            {
+                int o = i * WorldExports.PersonStride;
+                Assert.Equal(i, p[o]);
+                Assert.False(string.IsNullOrEmpty(kinds[p[o + 1]]));
+                Assert.InRange(p[o + 10], -1, strings - 1);
+            }
+            Assert.Equal(relations * WorldExports.RelationStride, WorldExports.HistoryRelations().Length);
+            var t = WorldExports.HistoryTenures();
+            Assert.Equal(tenures * WorldExports.TenureStride, t.Length);
+            for (int i = 0; i < tenures; i++) Assert.InRange(t[i * WorldExports.TenureStride], 0, persons - 1);
+            var b = WorldExports.HistoryBattles();
+            Assert.Equal(battles * WorldExports.BattleStride, b.Length);
+            Assert.Equal(battles, WorldExports.HistoryBattleText().Length);
+            Assert.All(WorldExports.HistoryBattleText(), x => Assert.Equal(6, x.Split('\t').Length));
+            var outcomes = WorldExports.HistoryBattleOutcomeNames();
+            for (int i = 0; i < battles; i++) Assert.False(string.IsNullOrEmpty(outcomes[b[i * WorldExports.BattleStride + 7]]));
+            Assert.Equal(routes * WorldExports.RouteStateStride, WorldExports.HistoryRouteStates().Length);
+            Assert.Equal(0, WorldExports.HistoryRouteSeries().Length % WorldExports.RouteSampleStride);
+            Assert.Contains(WorldExports.HistoryFeatureNames(), n => n.StartsWith("Battles\t", StringComparison.Ordinal));
+        }
+        finally
+        {
+            WorldExports.ResetHistoryConfig();
+        }
+    }
+
+    [Fact]
     public void HistoryEvents_DecodeWithACursor_AndMatchTheirTextPage()
     {
         WorldExports.ResetHistoryConfig();
@@ -231,7 +275,8 @@ public class WorldExportsLayoutTests
         int total = WorldExports.HistoryInfo()[7];
         int polities = WorldExports.HistoryInfo()[3];
         var kinds = WorldExports.HistoryEventKindNames();
-        int strings = WorldExports.HistoryStrings().Length;
+        var names = WorldExports.HistoryStrings();
+        int strings = names.Length, persons = WorldExports.HistoryInfo()[11], settlements = WorldExports.HistoryInfo()[4];
         var page = WorldExports.HistoryEvents(0, total);
         Assert.Equal(total, page[0]);
         Assert.Equal(total, WorldExports.HistoryEventText(0, total).Length);
@@ -248,8 +293,12 @@ public class WorldExportsLayoutTests
             c += 8;
             for (int k = 0; k < parts; k++, c += 2)
             {
-                Assert.InRange(page[c], 0, polities - 1);
                 Assert.InRange(page[c + 1], 0, strings - 1);
+                // A participant's role names its entity: person:, settlement:, else a polity.
+                string role = names[page[c + 1]];
+                int limit = role.StartsWith("person:", StringComparison.Ordinal) ? persons
+                    : role.StartsWith("settlement:", StringComparison.Ordinal) ? settlements : polities;
+                Assert.InRange(page[c], 0, limit - 1);
             }
         }
         Assert.Equal(page.Length, c);
