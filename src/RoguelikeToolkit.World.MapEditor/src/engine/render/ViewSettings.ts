@@ -31,6 +31,12 @@ export interface Layers {
   realms: boolean;
   /** Realm outlines and names at the same turn. */
   borders: boolean;
+  /** Battle markers coloured by outcome and rings on besieged places, at the history turn (expansion worlds). */
+  battles: boolean;
+  /** Outlaw havens and caravan raids at the history turn. */
+  outlaws: boolean;
+  /** Trade roads coloured by how safe they were at the history turn. */
+  routeSafety: boolean;
 }
 
 /**
@@ -58,6 +64,7 @@ const allDeposits = (v: boolean) => Object.fromEntries(DEPOSIT_TYPES.map((k) => 
 const LAYERS_OFF: Layers = {
   hillshade: false, contours: false, plateBoundaries: false, plateMotion: false, graticule: false,
   ripples: false, coastline: false, rivers: false, roads: false, stamps: false, labels: false, resources: false, climatePaint: false, capacity: false, climate: false, wind: false, currents: false, realms: false, borders: false,
+  battles: false, outlaws: false, routeSafety: false,
 };
 
 export const DEFAULT_VIEW: ViewSettings = {

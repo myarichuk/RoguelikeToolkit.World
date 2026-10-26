@@ -9,7 +9,8 @@ import { buildAdjacency, extractFeatures } from '../engine/world/features';
 import { polityStyleIndex, tileNamingStyles } from '../engine/world/naming';
 import { parseRealmNaming, realmNameRequest, realmTitle, type RealmNaming } from '../engine/world/history/realmNames';
 import { buildRoads } from '../engine/world/history/roads';
-import type { EventRecord, HistoryRecord, PolityRecord } from '../engine/world/history/record';
+import type { EventRecord, ExpansionRecord, HistoryRecord, PolityRecord } from '../engine/world/history/record';
+import { PERSON_STRIDE, personNameRequest } from '../engine/world/history/persons';
 import type { HistoryInput } from '../engine/world/history/historySettlements';
 import { parsePolityKey } from '../engine/world/history/polityKeys';
 import {
@@ -59,6 +60,23 @@ interface EngineApi {
   HistoryScars(): Arr;
   HistoryScarKinds(): string[];
   HistoryEvents(start: number, count: number): Arr;
+  // History expansion (docs/HISTORY_EXPANSION_PLAN.md §7). Optional: an engine built before them still runs the editor.
+  ConfigureHistoryFeatures?(features: number): void;
+  HistoryFeatureNames?(): string[];
+  HistoryPersons?(): Arr;
+  HistoryPersonText?(): string[];
+  HistoryPersonKindNames?(): string[];
+  HistoryRelations?(): Arr;
+  HistoryTenures?(): Arr;
+  HistoryBattles?(): Arr;
+  HistoryBattleText?(): string[];
+  HistoryBattleKindNames?(): string[];
+  HistoryBattleOutcomeNames?(): string[];
+  HistoryRouteStates?(): Arr;
+  HistoryRouteSeries?(): Arr;
+  /** Rendered prose per event, paged like `HistoryEvents` (the chronicle, X7). */
+  HistoryChronicle?(start: number, count: number): string[];
+  NamePersons?(seeds: number[], folks: string[], cultures: string[], feminine: number[]): string[];
   WaterBodies(): Arr;
   Ranges(): Arr;
   Deposits(): Arr;
@@ -110,6 +128,8 @@ const generateWorld = (e: EngineApi, p: GenerateParams): number => {
   e.ConfigureHistoryPeoples(h.roster.map((r) => r.folk), h.roster.map((r) => r.culture));
   e.ConfigureHistoryFounders(h.founders.map((f) => f.folk), h.founders.map((f) => f.culture), h.founders.map((f) => f.form),
     h.founders.map((f) => (f.lat === null || f.lon === null ? NaN : f.lat)), h.founders.map((f) => (f.lat === null || f.lon === null ? NaN : f.lon)));
+  // An engine without the expansion has nothing to configure; one with it is reset to Core's default unless the settings say otherwise.
+  if (typeof e.ConfigureHistoryFeatures === 'function') e.ConfigureHistoryFeatures(h.features ?? -1);
   return e.Generate(p.seed, p.size, p.plates, w.obliquity, w.flux, w.rotation, m.climateRefresh, m.meridionalWind, m.windCellBlend, m.oceanHeat, m.oceanRain, m.aeolian);
 };
 
@@ -215,7 +235,7 @@ function historyInput(e: EngineApi, seed: number, chosen: NameStyle[], all: Name
 }
 
 /** The run's polities, event log and territory, for the document to keep. Null when the world has no history. */
-function historyRecord(e: EngineApi, input: HistoryInput, chosenCount: number): HistoryRecord | null {
+function historyRecord(e: EngineApi, seed: number, input: HistoryInput, chosenCount: number): HistoryRecord | null {
   const ids = Array.from(input.polityIds ?? []);
   if (!ids.length) return null;
   const info = Int32Array.from(e.HistoryInfo()), pol = e.HistoryPolities(), keys = e.HistoryPolityKeys();
@@ -237,16 +257,64 @@ function historyRecord(e: EngineApi, input: HistoryInput, chosenCount: number): 
     let o = 1;
     for (let i = 0; i < n; i++) {
       const [plugin = '', ...tags] = (text[i] ?? '').split('\t');
-      events.push({ id: page[o], kind: kinds[page[o + 1]] ?? 'Plugin', turn: page[o + 2], polity: page[o + 3], tile: page[o + 4], cause: page[o + 5], importance: page[o + 6], plugin, tags });
-      o += 8 + page[o + 7] * 2;
+      const event: EventRecord = { id: page[o], kind: kinds[page[o + 1]] ?? 'Plugin', turn: page[o + 2], polity: page[o + 3], tile: page[o + 4], cause: page[o + 5], importance: page[o + 6], plugin, tags };
+      // Participants only where there are any: legacy events have none, and their record stays as it was.
+      const parts = page[o + 7];
+      if (parts > 0) {
+        event.parts = [];
+        for (let k = 0; k < parts; k++) event.parts.push({ entity: page[o + 8 + k * 2], role: strings[page[o + 9 + k * 2]] ?? '' });
+      }
+      events.push(event);
+      o += 8 + parts * 2;
     }
   }
   const recorded = info[0] === 1;
-  return {
+  const record: HistoryRecord = {
     turns: info[1], turnYears: info[2], polities, events,
     ownerBase: Int32Array.from(recorded ? e.HistoryOwnershipBase() : e.HistoryOwnershipAt(1 << 30)),
     changes: recorded ? Int32Array.from(e.HistoryTerritoryChanges()) : new Int32Array(0),
   };
+  const expansion = expansionRecord(e, seed, info, strings, events.length);
+  if (expansion) record.expansion = expansion;
+  return record;
+}
+
+/**
+ * The expansion's persons, bonds, offices, battles and route states; null when the run wrote none (every feature off) or
+ * the engine predates them. Persons are named here, once, so their cards read the same after Open.
+ */
+function expansionRecord(e: EngineApi, seed: number, info: Int32Array, strings: string[], eventCount: number): ExpansionRecord | null {
+  if (info.length < 16 || typeof e.HistoryPersons !== 'function') return null;
+  if (info[11] + info[12] + info[13] + info[14] + info[15] === 0) return null;
+  const persons = Int32Array.from(e.HistoryPersons()), personText = e.HistoryPersonText!();
+  const reqs = personText.map((t, i) => {
+    const [folk = '', culture = ''] = t.split('\t');
+    return personNameRequest(seed, persons[i * PERSON_STRIDE], folk, culture, persons[i * PERSON_STRIDE + 4] === 1);
+  });
+  const personNames = typeof e.NamePersons === 'function' && reqs.length
+    ? e.NamePersons(reqs.map((r) => r.seed), reqs.map((r) => r.folk), reqs.map((r) => r.culture), reqs.map((r) => (r.feminine ? 1 : 0)))
+    : reqs.map(() => '');
+  const settlements = e.HistorySettlements(), settlementTiles = new Int32Array(Math.floor(settlements.length / 9));
+  for (let i = 0; i < settlementTiles.length; i++) settlementTiles[i] = settlements[i * 9];
+  const x: ExpansionRecord = {
+    strings, personKinds: e.HistoryPersonKindNames!(), battleKinds: e.HistoryBattleKindNames!(), battleOutcomes: e.HistoryBattleOutcomeNames!(),
+    persons, personText, personNames: Array.from(personNames),
+    relations: Int32Array.from(e.HistoryRelations!()), tenures: Int32Array.from(e.HistoryTenures!()),
+    battles: Int32Array.from(e.HistoryBattles!()), battleText: e.HistoryBattleText!(),
+    routeStates: Int32Array.from(e.HistoryRouteStates!()), routeSeries: Int32Array.from(e.HistoryRouteSeries!()),
+    roads: Int32Array.from(e.HistoryRoads()), settlementTiles,
+  };
+  // The chronicle (X7) renders prose per event, paged like the log; an engine without it leaves the record's summaries.
+  if (typeof e.HistoryChronicle === 'function') {
+    const prose: string[] = [];
+    for (let start = 0; start < eventCount; start += 512) {
+      const page = e.HistoryChronicle(start, 512);
+      if (!page.length) break;
+      prose.push(...page);
+    }
+    x.chronicle = prose.slice(0, eventCount);
+  }
+  return x;
 }
 
 function pull(e: EngineApi, p: GenerateParams, tileCount: number, timings: Record<string, number>, want: { features: boolean; names: boolean }): WorldSnapshot {
@@ -286,7 +354,7 @@ function pull(e: EngineApi, p: GenerateParams, tileCount: number, timings: Recor
     t = performance.now();
     const historyIn = historyInput(e, p.seed, chosen, all);
     realmBases = Array.from(historyIn.polityBases ?? []);
-    history = historyRecord(e, historyIn, chosen.length);
+    history = historyRecord(e, p.seed, historyIn, chosen.length);
     const adj = buildAdjacency(tileCount, faces);
     const polityStyle = new Map<number, number>();
     Array.from(historyIn.polityIds!).forEach((id, i) => { if (historyIn.polityStyle![i] >= 0) polityStyle.set(id, historyIn.polityStyle![i]); });
@@ -354,7 +422,10 @@ self.addEventListener('message', async (ev: MessageEvent<WorkerRequest>) => {
           const [folk, culture, folkName, cultureName, subsistence, affinity] = line.split('\t');
           return { folk, culture, folkName, cultureName, subsistence, affinity: (affinity ?? '').split(',').filter(Boolean).map((a) => { const [form, w] = a.split(':'); return { form, weight: Number(w) }; }) };
         });
-        post({ id: req.id, ok: true, type: 'peoples', peoples, forms: e.HistoryFormNames() });
+        const features = typeof e.HistoryFeatureNames === 'function'
+          ? e.HistoryFeatureNames().map((line) => { const [name = '', bit = '0'] = line.split('\t'); return { name, bit: Number(bit) }; }).filter((f) => f.name && f.bit > 0)
+          : [];
+        post({ id: req.id, ok: true, type: 'peoples', peoples, forms: e.HistoryFormNames(), features });
         break;
       }
     }

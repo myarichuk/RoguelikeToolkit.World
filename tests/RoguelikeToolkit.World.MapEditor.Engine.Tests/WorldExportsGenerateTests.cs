@@ -101,4 +101,15 @@ public class WorldExportsGenerateTests
         Assert.Throws<ArgumentException>(() => WorldExports.NamePlaces(["town", "city"], [1], ["human", "human"], ["a", "b"], [0, 0]));
         Assert.Throws<ArgumentException>(() => WorldExports.NamePlaces(["town"], [1], ["human"], ["a"], []));
     }
+
+    [Fact]
+    public void NamePersons_IsDeterministic_AndNamesNobodyForAnUnknownPeople()
+    {
+        var a = WorldExports.NamePersons([7, 7, 8, 7], ["human", "human", "human", "nobody"], ["human_common", "human_common", "human_common", "nowhere"], [0, 0, 0, 0]);
+        Assert.False(string.IsNullOrEmpty(a[0]));
+        Assert.Equal(a[0], a[1]);
+        Assert.NotEqual(a[0], a[2]);
+        Assert.Equal(string.Empty, a[3]);
+        Assert.Throws<ArgumentException>(() => WorldExports.NamePersons([1], ["human"], ["human_common"], []));
+    }
 }

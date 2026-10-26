@@ -463,5 +463,33 @@ public static partial class WorldExports
         return result;
     }
 
+    /// <summary>
+    /// Batch person naming for history's persons: each is named by its folk under its culture's naming rule (the Peoples
+    /// culture key, as <see cref="HistoryPersonText"/> gives it), feminine where <paramref name="feminine"/> is non-zero.
+    /// Latin script, as for places. An unknown folk or culture names nobody (an empty string) rather than failing the batch.
+    /// </summary>
+    [JSExport]
+    public static string[] NamePersons(int[] seeds, string[] folks, string[] cultures, int[] feminine)
+    {
+        if (folks.Length != seeds.Length || cultures.Length != seeds.Length || feminine.Length != seeds.Length)
+            throw new ArgumentException("Person arrays must have equal lengths.");
+        var peoples = Core.Peoples.PeoplesStore.Load();
+        var result = new string[seeds.Length];
+        for (int i = 0; i < seeds.Length; i++)
+        {
+            try
+            {
+                var ancestry = Core.Lineage.Ancestry.From(new Core.Lineage.AncestryShare(string.IsNullOrWhiteSpace(folks[i]) ? FantasyRaces.Human : folks[i], 1));
+                result[i] = FantasyNameGenerator.GenerateMixedPerson(ancestry, cultures[i], peoples, seeds[i], feminine: feminine[i] != 0, script: NameScript.Latin).Text;
+            }
+            catch (Exception e) when (e is ArgumentException or KeyNotFoundException or InvalidOperationException
+                or Core.Peoples.UnknownPeoplesKeyException or UnknownNameKeyException)
+            {
+                result[i] = string.Empty;
+            }
+        }
+        return result;
+    }
+
     private static CoreWorld Current => _world ?? throw new InvalidOperationException("Generate first.");
 }

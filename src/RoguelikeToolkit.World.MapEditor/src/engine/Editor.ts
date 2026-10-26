@@ -38,7 +38,7 @@ import { TextTool } from './tools/TextTool';
 import { DEFAULT_TOOL_OPTIONS, type Tool, type ToolContext, type ToolId, type ToolOptions } from './tools/Tool';
 import { ToolController, type ToolHost } from './tools/ToolController';
 import { derivePhysics, describeReport, type PhysicsMode } from './world/physics/derivePhysics';
-import { CLIMATE_MODEL_DEFAULTS, EARTH, NameCtx, type GenerateParams, type NameRequest, type NameStyle, type PeopleOption } from './world/protocol';
+import { CLIMATE_MODEL_DEFAULTS, EARTH, NameCtx, type GenerateParams, type HistoryFeature, type NameRequest, type NameStyle, type PeopleOption } from './world/protocol';
 import { WorldService } from './world/WorldService';
 import { uniqueNamesAsync } from './world/history/uniqueNames';
 
@@ -97,6 +97,7 @@ export class Editor implements ToolContext, ToolHost {
   private _styles: NameStyle[] = [];
   private _peoples: PeopleOption[] = [];
   private _forms: string[] = [];
+  private _historyFeatures: HistoryFeature[] = [];
   private renderer: MapRenderer | null = null;
   private overlay: Overlay | null = null;
   private controller: ToolController | null = null;
@@ -133,7 +134,7 @@ export class Editor implements ToolContext, ToolHost {
     this.undo.events.on('change', () => { this.requestRender(); this.session.changed(); });
     this.contentReady = this.refreshContent();
     void this.world.styles().then((s) => { this._styles = s; this.events.emit('content', this.packs); }).catch((e) => this.fail(e));
-    void this.world.peoples().then((r) => { this._peoples = r.peoples; this._forms = r.forms; this.events.emit('content', this.packs); }).catch((e) => this.fail(e));
+    void this.world.peoples().then((r) => { this._peoples = r.peoples; this._forms = r.forms; this._historyFeatures = r.features; this.events.emit('content', this.packs); }).catch((e) => this.fail(e));
   }
 
   // --- state accessors ---------------------------------------------------------------------
@@ -149,6 +150,8 @@ export class Editor implements ToolContext, ToolHost {
   /** The peoples a world can be founded by, and the polity form names (founders pin a form by index). */
   get peoples(): readonly PeopleOption[] { return this._peoples; }
   get formNames(): readonly string[] { return this._forms; }
+  /** The history expansion features the engine offers (empty for an engine without them). */
+  get historyFeatures(): readonly HistoryFeature[] { return this._historyFeatures; }
   get stats(): FrameStats | null { return this.renderer?.stats ?? null; }
   theme(): Theme { return this.packs.theme(this._themeId); }
   view(): ViewSettings { return this._view; }

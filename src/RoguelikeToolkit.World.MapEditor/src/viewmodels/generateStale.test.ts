@@ -11,6 +11,7 @@ function fakeEditor() {
     nameStyles: [],
     peoples: [],
     formNames: [],
+    historyFeatures: [{ name: 'Persons', bit: 1 }, { name: 'Battles', bit: 2 }],
     events: { on: (n: string, f: (v?: unknown) => void) => { handlers.set(n, [...(handlers.get(n) ?? []), f]); return () => {}; } },
     setSettings: () => {},
   };
@@ -103,5 +104,25 @@ describe('GenerateViewModel realms and name styles', () => {
     vm.addFounder();
     vm.setFounderPeople(0, 'orc|orcish_horde');
     expect(vm.state.styles).toContain('orc|fantasy_common');
+  });
+});
+
+describe('GenerateViewModel history features', () => {
+  it('leaves the features to the engine until one is ticked, then starts from none', () => {
+    const { editor } = fakeEditor();
+    const vm = new GenerateViewModel(editor);
+    expect(vm.state.historyFeatures.map((f) => f.name)).toEqual(['Persons', 'Battles']);
+    expect(vm.state.history.features).toBeUndefined();
+    vm.toggleFeature(2);
+    expect(vm.state.history.features).toBe(2);
+    expect(vm.state.stale).toBe(true);
+    vm.toggleFeature(1);
+    vm.toggleFeature(2);
+    expect(vm.state.history.features).toBe(1);
+    vm.allFeatures();
+    expect(vm.state.history.features).toBe(3);
+    vm.defaultFeatures();
+    expect('features' in vm.state.history).toBe(false);
+    expect(vm.state.stale).toBe(false);
   });
 });

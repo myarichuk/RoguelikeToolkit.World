@@ -12,6 +12,7 @@ const LAYERS: { key: keyof Layers; label: string }[] = [
   { key: 'labels', label: 'Labels' }, { key: 'resources', label: 'Resource markers' }, { key: 'plateBoundaries', label: 'Plate boundaries' },
   { key: 'plateMotion', label: 'Plate motion' }, { key: 'graticule', label: 'Graticule' }, { key: 'climatePaint', label: 'Climate paint' }, { key: 'capacity', label: 'Land capacity' },
   { key: 'climate', label: 'Climate' }, { key: 'wind', label: 'Wind arrows' }, { key: 'currents', label: 'Current arrows' }, { key: 'realms', label: 'Realms' }, { key: 'borders', label: 'Realm borders' },
+  { key: 'battles', label: 'Battles & sieges' }, { key: 'outlaws', label: 'Outlaws & raids' }, { key: 'routeSafety', label: 'Road safety' },
 ];
 
 const BASES: { value: BaseMode; label: string }[] = [
